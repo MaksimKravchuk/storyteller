@@ -1,0 +1,15 @@
+[project]
+name = "storyteller"
+version = "0.1.0"
+description = "AI-powered text quest engine with theater-style multi-agent architecture"
+requires-python = ">=3.11"
+dependencies = [
+    "networkx>=3.0",
+    "aiohttp>=3.9",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.0"]
+anthropic = ["anthropic>=0.25"]
+dev = ["pytest", "pytest-asyncio", "mypy"]
