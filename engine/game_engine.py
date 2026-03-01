@@ -17,7 +17,8 @@ from llm import create_llm_client
 from models.game_state import GameState
 from models.location import Location
 from models.setting import Setting
-from timeline.event import GameEvent
+from timeline.autonomy import AutonomyManager
+from timeline.event import EventEffect, GameEvent
 from timeline.event_manager import EventManager
 
 
@@ -66,8 +67,9 @@ class GameEngine:
         1. Data Miner researches the setting via Wikipedia.
         2. Knowledge graph is populated with setting data.
         3. Event manager is created.
-        4. All agents are wired together.
-        5. An opening scene is generated.
+        4. Historical events are scheduled on the timeline.
+        5. All agents are wired together.
+        6. An opening scene is generated.
 
         Returns the opening narration.
         """
@@ -111,10 +113,20 @@ class GameEngine:
             knowledge_graph=self._knowledge_graph,
         )
 
+        # Schedule historical events on the timeline
+        self._schedule_historical_events(setting)
+
         # Create agents
         scene_builder = SceneBuilder(llm_client=agent_llm)
         npc_generator = NPCGenerator(llm_client=agent_llm)
         narrator = Narrator(llm_client=narrator_llm)
+
+        # Autonomy manager
+        autonomy_manager = AutonomyManager(
+            game_state=self._game_state,
+            llm_client=agent_llm,
+            memory_manager=memory_manager,
+        )
 
         # Create the Director — wires everything together
         self._director = Director(
@@ -126,6 +138,7 @@ class GameEngine:
             narrator=narrator,
             npc_generator=npc_generator,
             data_miner=data_miner,
+            autonomy_manager=autonomy_manager,
         )
 
         # Generate opening scene
@@ -160,6 +173,63 @@ class GameEngine:
     # Internal
     # ------------------------------------------------------------------
 
+    def _schedule_historical_events(self, setting: Setting) -> None:
+        """Convert key_events from the Setting into GameEvents on the timeline.
+
+        Events with hours_from_game_start > 0 are scheduled as future
+        GameEvents. Events with null offset are already in the knowledge
+        graph as historical facts (populated by _populate_graph_from_setting).
+        """
+        for i, event_data in enumerate(setting.key_events):
+            hours_offset = event_data.get("hours_from_game_start")
+
+            # Skip events without a gameplay offset (they're pre-game history)
+            if hours_offset is None:
+                continue
+
+            try:
+                hours_offset = float(hours_offset)
+            except (TypeError, ValueError):
+                hours_offset = 24 + (i * 48)  # Fallback spacing
+
+            if hours_offset <= 0:
+                continue
+
+            scope = event_data.get("scope", "country")
+            duration = event_data.get("duration_hours", 1.0)
+            try:
+                duration = float(duration)
+            except (TypeError, ValueError):
+                duration = 1.0
+
+            # When the event fires, add it as knowledge that propagates
+            effects = [
+                EventEffect(
+                    effect_type="ADD_KNOWLEDGE",
+                    target_id="world",
+                    params={
+                        "content": (
+                            f"{event_data.get('name', 'Event')}: "
+                            f"{event_data.get('description', '')}"
+                        ),
+                        "scope": scope,
+                        "tags": ["historical_event", "current_events"],
+                    },
+                )
+            ]
+
+            game_event = GameEvent(
+                name=event_data.get("name", f"Historical event {i + 1}"),
+                scheduled_at=hours_offset,
+                duration=duration,
+                owner_id=None,  # World event
+                location_id=event_data.get("location_id"),
+                scope=scope,
+                effects=effects,
+                on_complete_description=event_data.get("description", ""),
+            )
+            self._event_manager.schedule(game_event)
+
     def _populate_graph_from_setting(self, setting: Setting) -> None:
         """Convert Setting data into knowledge graph nodes."""
         graph = self._knowledge_graph
@@ -190,8 +260,12 @@ class GameEngine:
             )
             graph.add_node(node)
 
-        # Key events
+        # Key events (only pre-game events go into the knowledge graph)
         for event in setting.key_events:
+            # Events with hours_from_game_start are scheduled as GameEvents,
+            # not added to the knowledge graph upfront
+            if event.get("hours_from_game_start") is not None:
+                continue
             node = KnowledgeNode(
                 content=(
                     f"{event.get('name', 'Unknown event')} "

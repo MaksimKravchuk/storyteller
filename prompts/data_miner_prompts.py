@@ -45,12 +45,27 @@ DATA_MINER_RESEARCH = PromptTemplate([
             '  "region": "e.g. Roman Empire, Italia",\n'
             '  "summary": "2-3 paragraph overview",\n'
             '  "key_persons": [{{"name": "...", "role": "...", "description": "..."}}],\n'
-            '  "key_events": [{{"name": "...", "date": "...", "description": "..."}}],\n'
+            '  "key_events": [\n'
+            '    {{\n'
+            '      "name": "Event name",\n'
+            '      "date": "Historical date",\n'
+            '      "description": "What happened",\n'
+            '      "hours_from_game_start": null or positive number,\n'
+            '      "scope": "local|city|region|country|world",\n'
+            '      "duration_hours": 1\n'
+            '    }}\n'
+            '  ],\n'
             '  "locations": [{{"name": "...", "type": "...", "description": "..."}}],\n'
             '  "traditions": ["..."],\n'
             '  "technologies": ["..."],\n'
             '  "social_structure": "Description of social hierarchy"\n'
-            '}}'
+            '}}\n\n'
+            "IMPORTANT for key_events:\n"
+            "- Events that happened BEFORE the game starts: set hours_from_game_start to null\n"
+            "- Events that should UNFOLD during gameplay: set hours_from_game_start to a positive number\n"
+            "  (e.g. 24 = happens after 1 day of game time, 72 = after 3 days)\n"
+            "- Order gameplay events chronologically and space them out realistically\n"
+            "- scope determines how widely news of the event spreads"
         ),
         required_vars=["setting_request", "raw_research"],
     ),

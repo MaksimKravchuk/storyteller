@@ -178,6 +178,27 @@ class EventManager:
                     gs.current_scene.npcs_present.remove(npc_id)
                 del gs.npcs[npc_id]
 
+        elif etype == "CHANGE_MOOD":
+            npc_id = effect.params.get("npc_id", effect.target_id)
+            mood = effect.params.get("mood", "neutral")
+            npc = gs.npcs.get(npc_id)
+            if npc:
+                npc.current_mood = mood
+
+        elif etype == "UPDATE_ATTITUDE":
+            npc_id = effect.params.get("npc_id", effect.target_id)
+            target_id = effect.params.get("target_id", "")
+            emotion = effect.params.get("emotion", "")
+            delta = float(effect.params.get("delta", 0.0))
+            npc = gs.npcs.get(npc_id)
+            if npc and target_id and emotion:
+                if target_id not in npc.emotional_attitudes:
+                    npc.emotional_attitudes[target_id] = {}
+                current = npc.emotional_attitudes[target_id].get(emotion, 0.0)
+                npc.emotional_attitudes[target_id][emotion] = max(
+                    -1.0, min(1.0, current + delta)
+                )
+
         # SPAWN_NPC is handled at a higher level by the Director
         # (it needs to call the NPC Generator agent)
 

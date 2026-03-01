@@ -39,6 +39,7 @@ class KnowledgeSource(Enum):
     RUMOR = "rumor"                     # May be inaccurate
     PERSONAL_EXPERIENCE = "personal"    # Known from direct experience
     HEARSAY = "hearsay"                 # Heard from someone else
+    BELIEF = "belief"                   # NPC's subjective belief, may contradict facts
 
 
 class EdgeType(Enum):
@@ -68,6 +69,8 @@ class KnowledgeNode(BaseModel):
         location_id: str | None = None,
         timestamp: float | None = None,
         confidence: float = 1.0,
+        emotional_valence: float = 0.0,
+        decay_rate: float = 0.0,
     ):
         super().__init__()
         self.content = content
@@ -79,3 +82,5 @@ class KnowledgeNode(BaseModel):
         self.location_id = location_id
         self.timestamp = timestamp  # Game-clock time when learned
         self.confidence = confidence  # 0.0 – 1.0
+        self.emotional_valence = emotional_valence  # -1.0 (negative) to 1.0 (positive)
+        self.decay_rate = decay_rate  # Confidence decrease per game-hour (0 = never forgets)

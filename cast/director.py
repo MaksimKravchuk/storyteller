@@ -18,8 +18,8 @@ class Director(BasePerformer):
     """Central orchestrator.
 
     Receives player input, classifies the action, advances game time,
-    resolves completed events, delegates to specialist agents, and
-    passes everything through the Narrator for final output.
+    runs NPC autonomy, resolves completed events, delegates to specialist
+    agents, and passes everything through the Narrator for final output.
     """
 
     def __init__(
@@ -34,6 +34,7 @@ class Director(BasePerformer):
         npc_generator: Any,  # NPCGenerator
         data_miner: Any,     # DataMiner
         actors: dict[str, Any] | None = None,  # NPC UUID -> Actor
+        autonomy_manager: Any | None = None,  # AutonomyManager
     ):
         super().__init__(
             llm_client=llm_client,
@@ -47,6 +48,7 @@ class Director(BasePerformer):
         self.npc_generator = npc_generator
         self.data_miner = data_miner
         self.actors: dict[str, Any] = actors or {}  # NPC UUID -> Actor
+        self.autonomy_manager = autonomy_manager
 
     # ------------------------------------------------------------------
     # Public API
@@ -70,15 +72,32 @@ class Director(BasePerformer):
                 "Could you be more specific about what you want to do?",
             )
 
-        # 4. Advance time and resolve events
+        # 4. Compute time cost
         action_type = routing_plan.get("action_type", "OTHER")
         time_override = routing_plan.get("time_cost_override")
-        completed_events = self._advance_and_resolve(action_type, time_override)
+        hours = resolve_time_cost(action_type, time_override)
 
-        # 5. Execute the plan by delegating to agents
-        result = await self._execute_plan(routing_plan, input_data, completed_events)
+        # 5. Run NPC autonomy tick for the elapsed time
+        autonomy_decisions = []
+        if self.autonomy_manager and hours > 0:
+            autonomy_decisions = await self.autonomy_manager.tick(
+                elapsed_hours=hours,
+                current_time=self.game_state.game_clock,
+            )
+            # Schedule any resulting events
+            for decision in autonomy_decisions:
+                for event in decision.resulting_events:
+                    self.event_manager.schedule(event)
 
-        # 6. Update game state bookkeeping
+        # 6. Advance time and resolve events (including autonomy events)
+        completed_events = self.event_manager.advance_time(hours)
+
+        # 7. Execute the plan by delegating to agents
+        result = await self._execute_plan(
+            routing_plan, input_data, completed_events, autonomy_decisions
+        )
+
+        # 8. Update game state bookkeeping
         self.game_state.turn_count += 1
         self.game_state.conversation_log.append({
             "turn": self.game_state.turn_count,
@@ -107,58 +126,6 @@ class Director(BasePerformer):
         return await self._send_json(prompt)
 
     # ------------------------------------------------------------------
-    # Internal: time & events
-    # ------------------------------------------------------------------
-
-    def _advance_and_resolve(
-        self, action_type: str, time_override: float | None
-    ) -> list[GameEvent]:
-        """Advance the game clock and return completed events."""
-        hours = resolve_time_cost(action_type, time_override)
-        return self.event_manager.advance_time(hours)
-
-    def _partition_events(
-        self, events: list[GameEvent]
-    ) -> tuple[list[GameEvent], list[GameEvent]]:
-        """Split events into local (visible to player) and remote."""
-        player_loc = self.game_state.player.location_id
-        local: list[GameEvent] = []
-        remote: list[GameEvent] = []
-        for ev in events:
-            if ev.location_id == player_loc:
-                local.append(ev)
-            else:
-                remote.append(ev)
-        return local, remote
-
-    async def _process_remote_events(self, events: list[GameEvent]) -> None:
-        """Feed remote events into the memory system as rumours / knowledge."""
-        for ev in events:
-            scope_map = {
-                "local": KnowledgeScope.LOCAL,
-                "city": KnowledgeScope.CITY,
-                "region": KnowledgeScope.REGION,
-                "country": KnowledgeScope.COUNTRY,
-                "world": KnowledgeScope.WORLD,
-            }
-            scope = scope_map.get(ev.scope, KnowledgeScope.LOCAL)
-
-            # Find NPCs at the event location to be witnesses
-            witnesses: list[str] = []
-            if ev.location_id and ev.location_id in self.game_state.locations:
-                witnesses = list(
-                    self.game_state.locations[ev.location_id].npcs_present
-                )
-
-            await self.memory_manager.create_memory_from_event(
-                event_description=ev.on_complete_description or ev.name,
-                witness_ids=witnesses,
-                scope=scope,
-                location_id=ev.location_id,
-                game_time=self.game_state.game_clock,
-            )
-
-    # ------------------------------------------------------------------
     # Internal: delegation
     # ------------------------------------------------------------------
 
@@ -167,6 +134,7 @@ class Director(BasePerformer):
         plan: dict,
         player_action: str,
         completed_events: list[GameEvent],
+        autonomy_decisions: list | None = None,
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
         action_type = plan.get("action_type", "OTHER")
@@ -218,6 +186,23 @@ class Director(BasePerformer):
                 ev.on_complete_description or ev.name for ev in local_events
             ]
 
+        # --- Add visible NPC autonomy actions ---
+        if autonomy_decisions:
+            player_loc = self.game_state.player.location_id
+            visible_actions = [
+                d.description
+                for d in autonomy_decisions
+                if (
+                    d.npc_id in self.game_state.npcs
+                    and self.game_state.npcs[d.npc_id].location_id == player_loc
+                    and d.action_type.value != "idle"
+                )
+            ]
+            if visible_actions:
+                raw_outputs.setdefault("completed_events", []).extend(
+                    visible_actions
+                )
+
         # --- Always pass through Narrator ---
         narrated = await self.narrator.act(
             input_data=raw_outputs,
@@ -233,6 +218,8 @@ class Director(BasePerformer):
     ) -> list[dict[str, str]]:
         """Route dialogue to the correct Actor agents."""
         results: list[dict[str, str]] = []
+        character_names = self._build_character_name_map()
+
         for npc_uuid, actor in self.actors.items():
             npc = self.game_state.npcs.get(npc_uuid)
             if npc and npc.name.lower() in [t.lower() for t in target_names]:
@@ -242,9 +229,21 @@ class Director(BasePerformer):
                         "npc": npc,
                         "game_state": self.game_state,
                         "location_name": self._get_location_name(npc.location_id),
+                        "character_names": character_names,
                     },
                 )
                 results.append({"npc_name": npc.name, "response": response})
+
+                # Create episodic memory for the NPC
+                interaction_log = (
+                    f"Player: {player_action}\n{npc.name}: {response}"
+                )
+                await self.memory_manager.summarize_interaction(
+                    interaction_log=interaction_log,
+                    npc_id=npc_uuid,
+                    game_time=self.game_state.game_clock,
+                )
+
         return results
 
     async def _ensure_npcs_exist(self, npc_names_or_roles: list[str]) -> None:
@@ -285,6 +284,51 @@ class Director(BasePerformer):
         self.register_actor(npc.uuid, actor)
 
     # ------------------------------------------------------------------
+    # Internal: events
+    # ------------------------------------------------------------------
+
+    def _partition_events(
+        self, events: list[GameEvent]
+    ) -> tuple[list[GameEvent], list[GameEvent]]:
+        """Split events into local (visible to player) and remote."""
+        player_loc = self.game_state.player.location_id
+        local: list[GameEvent] = []
+        remote: list[GameEvent] = []
+        for ev in events:
+            if ev.location_id == player_loc:
+                local.append(ev)
+            else:
+                remote.append(ev)
+        return local, remote
+
+    async def _process_remote_events(self, events: list[GameEvent]) -> None:
+        """Feed remote events into the memory system as rumours / knowledge."""
+        for ev in events:
+            scope_map = {
+                "local": KnowledgeScope.LOCAL,
+                "city": KnowledgeScope.CITY,
+                "region": KnowledgeScope.REGION,
+                "country": KnowledgeScope.COUNTRY,
+                "world": KnowledgeScope.WORLD,
+            }
+            scope = scope_map.get(ev.scope, KnowledgeScope.LOCAL)
+
+            # Find NPCs at the event location to be witnesses
+            witnesses: list[str] = []
+            if ev.location_id and ev.location_id in self.game_state.locations:
+                witnesses = list(
+                    self.game_state.locations[ev.location_id].npcs_present
+                )
+
+            await self.memory_manager.create_memory_from_event(
+                event_description=ev.on_complete_description or ev.name,
+                witness_ids=witnesses,
+                scope=scope,
+                location_id=ev.location_id,
+                game_time=self.game_state.game_clock,
+            )
+
+    # ------------------------------------------------------------------
     # Internal: helpers
     # ------------------------------------------------------------------
 
@@ -305,6 +349,19 @@ class Director(BasePerformer):
             else "None"
         )
 
+        # Fetch upcoming events for foreshadowing (next 48 game hours)
+        pending = self.event_manager.get_pending_events()
+        upcoming = [
+            ev for ev in pending
+            if ev.owner_id is None  # World events only
+            and ev.scheduled_at <= self.game_state.game_clock + 48
+        ]
+        upcoming_text = "\n".join(
+            f"- {ev.name} (in ~{ev.scheduled_at - self.game_state.game_clock:.0f}h): "
+            f"{(ev.on_complete_description or '')[:100]}"
+            for ev in upcoming[:5]
+        ) or "None imminent"
+
         self.set_context(
             setting_name=self.game_state.setting.name,
             time_period=self.game_state.setting.time_period,
@@ -315,9 +372,18 @@ class Director(BasePerformer):
             points_of_interest=pois,
             game_time=self.game_state.game_time,
             game_clock=str(round(self.game_state.game_clock, 1)),
+            upcoming_events=upcoming_text,
         )
 
     def _get_location_name(self, location_id: str | None) -> str:
         if location_id and location_id in self.game_state.locations:
             return self.game_state.locations[location_id].name
         return "this place"
+
+    def _build_character_name_map(self) -> dict[str, str]:
+        """Build UUID -> name map for all known characters."""
+        names: dict[str, str] = {}
+        for uid, npc in self.game_state.npcs.items():
+            names[uid] = npc.name
+        names[self.game_state.player.uuid] = self.game_state.player.name
+        return names

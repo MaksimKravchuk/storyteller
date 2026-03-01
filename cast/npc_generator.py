@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
-from models.npc_card import NPCCard
+from models.npc_card import Goal, NPCCard
 from prompts.npc_generator_prompts import NPC_GENERATOR_CREATE, NPC_GENERATOR_SYSTEM
 
 
@@ -47,6 +47,18 @@ class NPCGenerator(BasePerformer):
             prompt = NPC_GENERATOR_CREATE.render(npc_request=npc_request)
             npc_data = await self._send_json(prompt)
 
+            # Parse goals from LLM response
+            raw_goals = npc_data.get("goals", [])
+            goals = []
+            for g in raw_goals:
+                if isinstance(g, dict):
+                    goals.append(Goal(
+                        description=g.get("description", ""),
+                        priority=g.get("priority", 5),
+                        related_check=g.get("related_check", ""),
+                        target_id=g.get("target_id"),
+                    ))
+
             card = NPCCard(
                 name=npc_data.get("name", "Unknown"),
                 biography=npc_data.get("biography", ""),
@@ -62,6 +74,11 @@ class NPCGenerator(BasePerformer):
                     if game_state.current_scene
                     else None
                 ),
+                goals=goals,
+                secrets=npc_data.get("secrets", []),
+                fears=npc_data.get("fears", []),
+                obligations=npc_data.get("obligations", []),
+                importance=npc_data.get("importance", 5),
             )
             npcs.append(card)
 

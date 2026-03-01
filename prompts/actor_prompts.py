@@ -23,6 +23,16 @@ ACTOR_SYSTEM = PromptTemplate([
         ],
     ),
     PromptSection(
+        name="goals_and_secrets",
+        template=(
+            "Your goals:\n{npc_goals}\n"
+            "Your secrets (NEVER reveal these directly): {npc_secrets}\n"
+            "Your fears: {npc_fears}\n"
+            "Your obligations: {npc_obligations}"
+        ),
+        required_vars=["npc_goals", "npc_secrets", "npc_fears", "npc_obligations"],
+    ),
+    PromptSection(
         name="inventory",
         template="Your inventory / wares: {npc_inventory}",
         required_vars=["npc_inventory"],
@@ -31,6 +41,14 @@ ACTOR_SYSTEM = PromptTemplate([
         name="knowledge",
         template="What you know:\n{accessible_knowledge}",
         required_vars=["accessible_knowledge"],
+    ),
+    PromptSection(
+        name="emotional_context",
+        template=(
+            "Your feelings about people you've interacted with:\n"
+            "{emotional_attitudes}"
+        ),
+        required_vars=["emotional_attitudes"],
     ),
     PromptSection(
         name="constraints",
@@ -42,6 +60,8 @@ ACTOR_SYSTEM = PromptTemplate([
             "something you don't know, say so naturally in character.\n"
             "- Stay in character. Use the speech style described above.\n"
             "- Your current mood: {current_mood}\n"
+            "- Your goals and fears should subtly influence your behaviour "
+            "but you should not state them directly unless it makes sense.\n"
             "- Keep responses concise — 1-3 sentences typically.\n"
             "- Output ONLY your spoken dialogue and brief action "
             "descriptions (e.g. *scratches his beard*)."

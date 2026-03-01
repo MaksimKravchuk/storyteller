@@ -41,6 +41,16 @@ DIRECTOR_SYSTEM = PromptTemplate([
             "game_clock",
         ],
     ),
+    PromptSection(
+        name="upcoming_events",
+        template=(
+            "Upcoming historical events (for foreshadowing):\n"
+            "{upcoming_events}\n"
+            "You should subtly foreshadow these through NPC dialogue, "
+            "rumours, and environmental details. Do NOT spoil them directly."
+        ),
+        required_vars=["upcoming_events"],
+    ),
 ])
 
 

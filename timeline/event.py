@@ -26,6 +26,8 @@ class EventEffect:
       - CHANGE_ATTRIBUTE:  {"target_id": str, "attribute": str, "value": int}
       - SPAWN_NPC:         {"npc_request": str}   (triggers NPC generator)
       - REMOVE_NPC:        {"npc_id": str}
+      - CHANGE_MOOD:       {"npc_id": str, "mood": str}
+      - UPDATE_ATTITUDE:   {"npc_id": str, "target_id": str, "emotion": str, "delta": float}
     """
     effect_type: str
     target_id: str
