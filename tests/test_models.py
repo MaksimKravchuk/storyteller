@@ -183,8 +183,8 @@ class TestGameState:
         assert game_state.locations == {}
 
     def test_advance_clock_morning(self, game_state):
-        game_state.advance_clock(2)
-        assert game_state.game_clock == 2.0
+        game_state.advance_clock(8)
+        assert game_state.game_clock == 8.0
         assert game_state.game_time == "morning"
 
     def test_advance_clock_afternoon(self, game_state):
