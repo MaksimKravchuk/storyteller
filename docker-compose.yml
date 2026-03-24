@@ -1,0 +1,7 @@
+services:
+  storyteller:
+    build: .
+    stdin_open: true
+    tty: true
+    env_file:
+      - .env
