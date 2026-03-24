@@ -16,4 +16,15 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=1.0"]
 anthropic = ["anthropic>=0.25"]
+telegram = ["python-telegram-bot>=21.0"]
 dev = ["pytest", "pytest-asyncio", "mypy"]
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["llm.*", "research.*"]
+ignore_errors = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["cast", "config.py", "defaults", "engine", "interfaces", "knowledge", "llm", "models", "prompts", "research", "timeline"]

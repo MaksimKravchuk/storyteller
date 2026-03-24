@@ -5,31 +5,13 @@ Simple CLI entry-point for testing the engine.
 
 import asyncio
 
-from config import load_config, resolve_model_config
-from engine.game_engine import GameEngine
+from config import load_config
+from engine.factory import create_engine
 
 
 async def main() -> None:
-    # Load configuration from .env / environment variables
     cfg = load_config()
-
-    # Build ModelConfig instances from env-configured model names
-    director_model = resolve_model_config(cfg.director_model, cfg)
-    agent_model = resolve_model_config(cfg.agent_model, cfg)
-    narrator_model = resolve_model_config(cfg.narrator_model, cfg)
-
-    # Collect API keys per provider
-    api_keys = {
-        "openai": cfg.openai_api_key,
-        "anthropic": cfg.anthropic_api_key,
-    }
-
-    engine = GameEngine(
-        director_model=director_model,
-        agent_model=agent_model,
-        narrator_model=narrator_model,
-        api_keys=api_keys,
-    )
+    engine = create_engine(cfg)
 
     print("=" * 60)
     print("  STORYTELLER — AI Text Quest Engine")
