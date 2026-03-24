@@ -22,14 +22,19 @@ class OpenAIClient(BaseLLMClient):
 
         self._client = AsyncOpenAI(api_key=self.api_key)
 
+    @staticmethod
+    def _sanitize(text: str) -> str:
+        """Strip lone surrogate characters that break UTF-8 JSON serialization."""
+        return text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
+
     def _format_messages(
         self, messages: list[Message], system_prompt: str = ""
     ) -> list[dict[str, str]]:
         formatted: list[dict[str, str]] = []
         if system_prompt:
-            formatted.append({"role": "system", "content": system_prompt})
+            formatted.append({"role": "system", "content": self._sanitize(system_prompt)})
         for msg in messages:
-            formatted.append({"role": msg.role.value, "content": msg.content})
+            formatted.append({"role": msg.role.value, "content": self._sanitize(msg.content)})
         return formatted
 
     async def send_message(
@@ -46,7 +51,7 @@ class OpenAIClient(BaseLLMClient):
             "model": self.model,
             "messages": formatted,
             "temperature": temperature if temperature is not None else self.temperature,
-            "max_tokens": max_tokens if max_tokens is not None else self.max_tokens,
+            "max_completion_tokens": max_tokens if max_tokens is not None else self.max_tokens,
         }
         if response_format:
             kwargs["response_format"] = response_format
@@ -75,7 +80,7 @@ class OpenAIClient(BaseLLMClient):
             model=self.model,
             messages=formatted,
             temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            max_completion_tokens=self.max_tokens,
             stream=True,
         )
 
