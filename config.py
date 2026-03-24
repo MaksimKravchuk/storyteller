@@ -23,6 +23,9 @@ class Config:
     agent_model: str = "gpt-3.5-turbo"
     narrator_model: str = "gpt-4"
 
+    # Telegram
+    telegram_bot_token: str | None = None
+
     # Defaults
     default_provider: str = "openai"
     temperature: float = 0.7
@@ -45,6 +48,7 @@ def load_config(env_path: str | None = None) -> Config:
         default_provider=os.getenv("DEFAULT_PROVIDER", "openai"),
         temperature=float(os.getenv("TEMPERATURE", "0.7")),
         max_tokens=int(os.getenv("MAX_TOKENS", "2048")),
+        telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
     )
 
 
