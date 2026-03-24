@@ -76,6 +76,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             "Researching setting and generating opening scene... "
             "(this may take a minute)"
         )
+        assert _cfg is not None
         engine = create_engine(_cfg)
         try:
             opening = await engine.start_game(text)
@@ -92,6 +93,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         return
 
     # PLAYING state
+    assert session.engine is not None
     try:
         response = await session.engine.process_action(text)
     except Exception:
