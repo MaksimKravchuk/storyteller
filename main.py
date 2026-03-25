@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 async def run_migrations(database_url: str) -> None:
     """Run Alembic migrations programmatically."""
-    from alembic import command
-    from alembic.config import Config as AlembicConfig
+    from alembic import command  # type: ignore[attr-defined]
+    from alembic.config import Config as AlembicConfig  # type: ignore[attr-defined]
 
     alembic_cfg = AlembicConfig("alembic.ini")
     alembic_cfg.set_main_option("sqlalchemy.url", database_url)

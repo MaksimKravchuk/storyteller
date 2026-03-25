@@ -27,5 +27,9 @@ ignore_missing_imports = true
 module = ["llm.*", "research.*"]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = ["alembic.*"]
+ignore_errors = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "models", "prompts", "research", "timeline"]

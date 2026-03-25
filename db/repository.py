@@ -256,7 +256,7 @@ class GameRepository:
                 t.knowledge_edges.c.game_state_id == game_state_id
             )
         )
-        edge_rows = []
+        edge_rows: list[dict] = []
         for node in nodes:
             for target_id, edge_type in knowledge_graph.get_edges_from(node.uuid):
                 edge_rows.append({
