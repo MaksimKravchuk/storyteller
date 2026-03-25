@@ -48,4 +48,9 @@ ACTOR_SYSTEM = PromptTemplate([
         ),
         required_vars=["current_mood"],
     ),
+    PromptSection(
+        name="language",
+        template="Respond in {language}.",
+        required_vars=["language"],
+    ),
 ])

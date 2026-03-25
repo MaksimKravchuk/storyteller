@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 from enum import Enum, auto
 
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     Application,
+    CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
     MessageHandler,
@@ -23,16 +24,28 @@ logger = logging.getLogger(__name__)
 
 class SessionState(Enum):
     IDLE = auto()
+    AWAITING_LANGUAGE = auto()
     AWAITING_SETTING = auto()
     PLAYING = auto()
 
 
+_LANGUAGE_OPTIONS = [
+    ("🇬🇧 English", "English"),
+    ("🇷🇺 Russian", "Russian"),
+    ("🇪🇸 Spanish", "Spanish"),
+    ("🇫🇷 French", "French"),
+    ("🇩🇪 German", "German"),
+    ("🇯🇵 Japanese", "Japanese"),
+]
+
+
 class UserSession:
-    __slots__ = ("state", "engine")
+    __slots__ = ("state", "engine", "language")
 
     def __init__(self) -> None:
         self.state = SessionState.IDLE
         self.engine: GameEngine | None = None
+        self.language: str = "English"
 
 
 _sessions: dict[int, UserSession] = {}
@@ -47,10 +60,37 @@ def _get_session(chat_id: int) -> UserSession:
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     session = _get_session(update.effective_chat.id)
-    session.state = SessionState.AWAITING_SETTING
+    session.state = SessionState.AWAITING_LANGUAGE
     session.engine = None
+
+    keyboard = [
+        [InlineKeyboardButton(label, callback_data=f"lang:{value}")]
+        for label, value in _LANGUAGE_OPTIONS
+    ]
     await update.message.reply_text(
-        "Welcome to Storyteller!\n\n"
+        "Welcome to Storyteller!\n\nChoose your story language:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+    )
+
+
+async def handle_language_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    query = update.callback_query
+    await query.answer()
+
+    chat_id = update.effective_chat.id
+    session = _get_session(chat_id)
+
+    if session.state != SessionState.AWAITING_LANGUAGE:
+        return
+
+    language = query.data.split(":", 1)[1]
+    session.language = language
+    session.state = SessionState.AWAITING_SETTING
+
+    await query.edit_message_text(
+        f"Language set to {language}.\n\n"
         "Describe your desired setting (e.g. 'Rome, 1st century AD'):"
     )
 
@@ -77,7 +117,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             "(this may take a minute)"
         )
         assert _cfg is not None
-        engine = create_engine(_cfg)
+        engine = create_engine(_cfg, language=session.language)
         try:
             opening = await engine.start_game(text)
         except Exception:
@@ -116,6 +156,7 @@ def run_bot() -> None:
 
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("quit", cmd_quit))
+    app.add_handler(CallbackQueryHandler(handle_language_callback, pattern=r"^lang:"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     logger.info("Storyteller Telegram bot starting...")

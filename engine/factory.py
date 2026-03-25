@@ -6,7 +6,7 @@ from config import Config, resolve_model_config
 from engine.game_engine import GameEngine
 
 
-def create_engine(cfg: Config) -> GameEngine:
+def create_engine(cfg: Config, language: str = "English") -> GameEngine:
     """Build a GameEngine from application config."""
     director_model = resolve_model_config(cfg.director_model, cfg)
     agent_model = resolve_model_config(cfg.agent_model, cfg)
@@ -22,4 +22,5 @@ def create_engine(cfg: Config) -> GameEngine:
         agent_model=agent_model,
         narrator_model=narrator_model,
         api_keys=api_keys,
+        language=language,
     )

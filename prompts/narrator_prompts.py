@@ -24,6 +24,11 @@ NARRATOR_SYSTEM = PromptTemplate([
         template="Time of day: {time_of_day}",
         required_vars=["time_of_day"],
     ),
+    PromptSection(
+        name="language",
+        template="Write all your output in {language}.",
+        required_vars=["language"],
+    ),
 ])
 
 
