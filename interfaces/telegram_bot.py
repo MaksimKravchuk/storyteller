@@ -1,9 +1,8 @@
-"""Telegram bot interface for Storyteller."""
+"""Telegram bot interface for Storyteller — DB-backed sessions."""
 
 from __future__ import annotations
 
 import logging
-from enum import Enum, auto
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -15,53 +14,37 @@ from telegram.ext import (
     filters,
 )
 
-from config import Config, load_config
-from engine.factory import create_engine
-from engine.game_engine import GameEngine
+from config import Config
+from db.engine import get_db
+from db.repository import GameRepository
+from engine.factory import create_engine, create_engine_from_state
 
 logger = logging.getLogger(__name__)
 
-
-class SessionState(Enum):
-    IDLE = auto()
-    AWAITING_LANGUAGE = auto()
-    AWAITING_SETTING = auto()
-    PLAYING = auto()
-
-
 _LANGUAGE_OPTIONS = [
-    ("🇬🇧 English", "English"),
-    ("🇷🇺 Russian", "Russian"),
-    ("🇪🇸 Spanish", "Spanish"),
-    ("🇫🇷 French", "French"),
-    ("🇩🇪 German", "German"),
-    ("🇯🇵 Japanese", "Japanese"),
+    ("\U0001f1ec\U0001f1e7 English", "English"),
+    ("\U0001f1f7\U0001f1fa Russian", "Russian"),
+    ("\U0001f1ea\U0001f1f8 Spanish", "Spanish"),
+    ("\U0001f1eb\U0001f1f7 French", "French"),
+    ("\U0001f1e9\U0001f1ea German", "German"),
+    ("\U0001f1ef\U0001f1f5 Japanese", "Japanese"),
 ]
 
 
-class UserSession:
-    __slots__ = ("state", "engine", "language")
-
-    def __init__(self) -> None:
-        self.state = SessionState.IDLE
-        self.engine: GameEngine | None = None
-        self.language: str = "English"
+def _db_factory(context: ContextTypes.DEFAULT_TYPE):
+    return context.bot_data["db_session_factory"]
 
 
-_sessions: dict[int, UserSession] = {}
-_cfg: Config | None = None
-
-
-def _get_session(chat_id: int) -> UserSession:
-    if chat_id not in _sessions:
-        _sessions[chat_id] = UserSession()
-    return _sessions[chat_id]
+def _cfg(context: ContextTypes.DEFAULT_TYPE) -> Config:
+    return context.bot_data["cfg"]
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    session = _get_session(update.effective_chat.id)
-    session.state = SessionState.AWAITING_LANGUAGE
-    session.engine = None
+    chat_id = update.effective_chat.id
+    async with get_db(_db_factory(context)) as db:
+        repo = GameRepository(db)
+        session = await repo.get_or_create_session(chat_id)
+        await repo.update_session(session["id"], state="awaiting_language")
 
     keyboard = [
         [InlineKeyboardButton(label, callback_data=f"lang:{value}")]
@@ -80,14 +63,14 @@ async def handle_language_callback(
     await query.answer()
 
     chat_id = update.effective_chat.id
-    session = _get_session(chat_id)
-
-    if session.state != SessionState.AWAITING_LANGUAGE:
-        return
-
     language = query.data.split(":", 1)[1]
-    session.language = language
-    session.state = SessionState.AWAITING_SETTING
+
+    async with get_db(_db_factory(context)) as db:
+        repo = GameRepository(db)
+        session = await repo.get_or_create_session(chat_id)
+        if session["state"] != "awaiting_language":
+            return
+        await repo.update_session(session["id"], state="awaiting_setting", language=language)
 
     await query.edit_message_text(
         f"Language set to {language}.\n\n"
@@ -96,73 +79,106 @@ async def handle_language_callback(
 
 
 async def cmd_quit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    session = _get_session(update.effective_chat.id)
-    session.state = SessionState.IDLE
-    session.engine = None
+    chat_id = update.effective_chat.id
+    async with get_db(_db_factory(context)) as db:
+        repo = GameRepository(db)
+        session = await repo.get_or_create_session(chat_id)
+        await repo.update_session(session["id"], state="idle")
     await update.message.reply_text("Game ended. Send /start to play again.")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
-    session = _get_session(chat_id)
     text = update.message.text.strip()
+    cfg = _cfg(context)
 
-    if session.state == SessionState.IDLE:
-        await update.message.reply_text("Send /start to begin a new game.")
-        return
+    async with get_db(_db_factory(context)) as db:
+        repo = GameRepository(db)
+        session = await repo.get_or_create_session(chat_id)
+        state = session["state"]
+        session_id = session["id"]
+        language = session["language"]
 
-    if session.state == SessionState.AWAITING_SETTING:
-        await update.message.reply_text(
-            "Researching setting and generating opening scene... "
-            "(this may take a minute)"
-        )
-        assert _cfg is not None
-        engine = create_engine(_cfg, language=session.language)
-        try:
-            opening = await engine.start_game(text)
-        except Exception:
-            logger.exception("Failed to start game for chat %s", chat_id)
-            await update.message.reply_text(
-                "Something went wrong. Try /start again."
-            )
-            session.state = SessionState.IDLE
+        if state == "idle":
+            await update.message.reply_text("Send /start to begin a new game.")
             return
-        session.engine = engine
-        session.state = SessionState.PLAYING
-        await update.message.reply_text(opening)
-        return
 
-    # PLAYING state
-    assert session.engine is not None
-    try:
-        response = await session.engine.process_action(text)
-    except Exception:
-        logger.exception("Error processing action for chat %s", chat_id)
-        await update.message.reply_text(
-            "Something went wrong processing your action. Try again."
+        if state == "awaiting_setting":
+            await update.message.reply_text(
+                "Researching setting and generating opening scene... "
+                "(this may take a minute)"
+            )
+            engine = create_engine(cfg, language=language)
+            try:
+                opening = await engine.start_game(text)
+            except Exception:
+                logger.exception("Failed to start game for chat %s", chat_id)
+                await update.message.reply_text(
+                    "Something went wrong. Try /start again."
+                )
+                await repo.update_session(session_id, state="idle")
+                return
+
+            # Persist the new game state
+            game_state = engine.get_game_state()
+            assert game_state is not None
+            assert engine.knowledge_graph is not None
+            await repo.save_game_state(
+                session_id,
+                game_state,
+                engine.knowledge_graph,
+                engine.event_manager.all_events if engine.event_manager else [],
+            )
+            await repo.update_session(session_id, state="playing")
+            await update.message.reply_text(opening)
+            return
+
+        # PLAYING state
+        loaded = await repo.load_game_state(session_id)
+        if loaded is None:
+            await update.message.reply_text("No game found. Send /start to begin.")
+            await repo.update_session(session_id, state="idle")
+            return
+
+        game_state, kg, events = loaded
+        engine = await create_engine_from_state(cfg, game_state, kg, events, language=language)
+
+        try:
+            response = await engine.process_action(text)
+        except Exception:
+            logger.exception("Error processing action for chat %s", chat_id)
+            await update.message.reply_text(
+                "Something went wrong processing your action. Try again."
+            )
+            return
+
+        # Flush updated state back to PG
+        updated_state = engine.get_game_state()
+        assert updated_state is not None
+        assert engine.knowledge_graph is not None
+        await repo.save_game_state(
+            session_id,
+            updated_state,
+            engine.knowledge_graph,
+            engine.event_manager.all_events if engine.event_manager else [],
         )
-        return
-    await update.message.reply_text(response)
+        await update.message.reply_text(response)
 
 
-def run_bot() -> None:
-    global _cfg
-    _cfg = load_config()
-
-    if not _cfg.telegram_bot_token:
+def build_bot(cfg: Config, db_session_factory) -> Application:
+    """Build and configure the Telegram bot Application (does not start it)."""
+    if not cfg.telegram_bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN not set in environment / .env")
 
-    app = Application.builder().token(_cfg.telegram_bot_token).build()
+    app = Application.builder().token(cfg.telegram_bot_token).build()
+
+    # Store shared state in bot_data
+    app.bot_data["cfg"] = cfg
+    app.bot_data["db_session_factory"] = db_session_factory
 
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("quit", cmd_quit))
     app.add_handler(CallbackQueryHandler(handle_language_callback, pattern=r"^lang:"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    logger.info("Storyteller Telegram bot starting...")
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    run_bot()
+    return app

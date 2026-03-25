@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install dependencies (cached layer — only re-runs when lockfile changes)
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --extra openai --extra anthropic --extra telegram --no-install-project
+RUN uv sync --frozen --extra openai --extra anthropic --extra telegram --extra database --no-install-project
 
 # Copy application code
 COPY . .
