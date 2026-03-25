@@ -1,20 +1,96 @@
 """Storyteller — AI-powered text quest engine.
 
-Simple CLI entry-point for testing the engine.
+Unified entry-point: runs both the Telegram bot and the admin dashboard.
 """
 
+from __future__ import annotations
+
 import asyncio
+import logging
+import signal
+import sys
 
 from config import load_config
-from engine.factory import create_engine
+from db.engine import create_async_engine, create_session_factory
+
+logger = logging.getLogger(__name__)
 
 
-async def main() -> None:
+async def run_migrations(database_url: str) -> None:
+    """Run Alembic migrations programmatically."""
+    from alembic import command
+    from alembic.config import Config as AlembicConfig
+
+    alembic_cfg = AlembicConfig("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", database_url)
+    # Run in a thread to avoid blocking the event loop
+    await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
+
+
+async def async_main() -> None:
+    """Run Telegram bot and admin server concurrently."""
+    cfg = load_config()
+
+    # Database setup
+    engine = create_async_engine(cfg.database_url)
+    db_session_factory = create_session_factory(engine)
+
+    # Run migrations
+    logger.info("Running database migrations...")
+    try:
+        await run_migrations(cfg.database_url)
+        logger.info("Migrations complete.")
+    except Exception:
+        logger.exception("Migration failed — ensure PostgreSQL is running")
+        await engine.dispose()
+        sys.exit(1)
+
+    # Build Telegram bot
+    from interfaces.telegram_bot import build_bot
+
+    bot_app = build_bot(cfg, db_session_factory)
+    await bot_app.initialize()
+    await bot_app.start()
+    await bot_app.updater.start_polling()
+    logger.info("Telegram bot started.")
+
+    # Start admin server
+    from interfaces.admin import AdminServer
+
+    admin = AdminServer(
+        db_session_factory,
+        port=cfg.admin_port,
+        token=cfg.admin_token,
+    )
+    await admin.start()
+
+    # Wait for shutdown signal
+    stop = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop.set)
+    logger.info("Storyteller is running. Press Ctrl+C to stop.")
+    await stop.wait()
+
+    # Graceful shutdown
+    logger.info("Shutting down...")
+    await admin.stop()
+    await bot_app.updater.stop()
+    await bot_app.stop()
+    await bot_app.shutdown()
+    await engine.dispose()
+    logger.info("Goodbye.")
+
+
+def main_cli() -> None:
+    """Original CLI entry-point for local testing (no DB required)."""
+    from engine.factory import create_engine
+
     cfg = load_config()
     engine = create_engine(cfg)
 
     print("=" * 60)
-    print("  STORYTELLER — AI Text Quest Engine")
+    print("  STORYTELLER — AI Text Quest Engine (CLI mode)")
     print("=" * 60)
     print(f"  Director: {cfg.director_model}")
     print(f"  Agents:   {cfg.agent_model}")
@@ -22,25 +98,34 @@ async def main() -> None:
     print("=" * 60)
     print()
 
-    setting = input("Describe your desired setting (e.g. 'Rome, 1st century AD'): ")
-    print("\nResearching setting and generating opening scene...\n")
+    async def _cli_loop():
+        setting = input("Describe your desired setting (e.g. 'Rome, 1st century AD'): ")
+        print("\nResearching setting and generating opening scene...\n")
+        opening = await engine.start_game(setting)
+        print(opening)
+        while True:
+            print()
+            action = input("> ").strip()
+            if not action:
+                continue
+            if action.lower() in ("quit", "exit", "q"):
+                print("Thanks for playing!")
+                break
+            response = await engine.process_action(action)
+            print()
+            print(response)
 
-    opening = await engine.start_game(setting)
-    print(opening)
-
-    while True:
-        print()
-        action = input("> ").strip()
-        if not action:
-            continue
-        if action.lower() in ("quit", "exit", "q"):
-            print("Thanks for playing!")
-            break
-
-        response = await engine.process_action(action)
-        print()
-        print(response)
+    asyncio.run(_cli_loop())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)-5s [%(name)s] %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+    if "--cli" in sys.argv:
+        main_cli()
+    else:
+        asyncio.run(async_main())

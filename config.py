@@ -26,6 +26,13 @@ class Config:
     # Telegram
     telegram_bot_token: str | None = None
 
+    # Database
+    database_url: str = "postgresql+asyncpg://storyteller:storyteller@localhost:5432/storyteller"
+
+    # Admin
+    admin_port: int = 8080
+    admin_token: str | None = None
+
     # Defaults
     default_provider: str = "openai"
     temperature: float = 0.7
@@ -49,6 +56,12 @@ def load_config(env_path: str | None = None) -> Config:
         temperature=float(os.getenv("TEMPERATURE", "0.7")),
         max_tokens=int(os.getenv("MAX_TOKENS", "2048")),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+        database_url=os.getenv(
+            "DATABASE_URL",
+            "postgresql+asyncpg://storyteller:storyteller@localhost:5432/storyteller",
+        ),
+        admin_port=int(os.getenv("ADMIN_PORT", "8080")),
+        admin_token=os.getenv("ADMIN_TOKEN"),
     )
 
 

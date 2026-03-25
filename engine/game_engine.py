@@ -159,6 +159,74 @@ class GameEngine:
         """Access the current game state for inspection."""
         return self._game_state
 
+    @property
+    def knowledge_graph(self) -> KnowledgeGraph | None:
+        return self._knowledge_graph
+
+    @property
+    def event_manager(self) -> EventManager | None:
+        return self._event_manager
+
+    async def restore_session(
+        self,
+        game_state: GameState,
+        knowledge_graph: KnowledgeGraph,
+        events: list[GameEvent],
+    ) -> None:
+        """Restore a game session from previously saved state.
+
+        Wires up all agents using the provided state objects instead of
+        calling ``start_game()``.
+        """
+        self._game_state = game_state
+        self._knowledge_graph = knowledge_graph
+
+        # Create LLM clients
+        director_llm = create_llm_client(
+            self._director_model,
+            api_key=self._api_keys.get(self._director_model.provider),
+        )
+        agent_llm = create_llm_client(
+            self._agent_model,
+            api_key=self._api_keys.get(self._agent_model.provider),
+        )
+        narrator_llm = create_llm_client(
+            self._narrator_model,
+            api_key=self._api_keys.get(self._narrator_model.provider),
+        )
+
+        # Memory manager
+        memory_manager = MemoryManager(
+            graph=self._knowledge_graph,
+            llm_client=agent_llm,
+        )
+
+        # Event manager (restore events)
+        self._event_manager = EventManager(
+            game_state=self._game_state,
+            knowledge_graph=self._knowledge_graph,
+        )
+        self._event_manager.all_events = events
+
+        # Create agents
+        data_miner = DataMiner(llm_client=agent_llm)
+        scene_builder = SceneBuilder(llm_client=agent_llm)
+        npc_generator = NPCGenerator(llm_client=agent_llm)
+        narrator = Narrator(llm_client=narrator_llm, language=self._language)
+
+        # Create the Director
+        self._director = Director(
+            llm_client=director_llm,
+            game_state=self._game_state,
+            event_manager=self._event_manager,
+            memory_manager=memory_manager,
+            scene_builder=scene_builder,
+            narrator=narrator,
+            npc_generator=npc_generator,
+            data_miner=data_miner,
+            language=self._language,
+        )
+
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------

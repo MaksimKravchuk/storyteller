@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storyteller Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #e0e0e0; display: flex; height: 100vh; }
+  a { color: #7c83ff; }
+  .sidebar { width: 340px; background: #16213e; border-right: 1px solid #0f3460; overflow-y: auto; flex-shrink: 0; }
+  .sidebar h2 { padding: 16px; font-size: 18px; border-bottom: 1px solid #0f3460; color: #e94560; }
+  .session-item { padding: 12px 16px; border-bottom: 1px solid #0f3460; cursor: pointer; transition: background 0.15s; }
+  .session-item:hover { background: #0f3460; }
+  .session-item.active { background: #0f3460; border-left: 3px solid #e94560; }
+  .session-item .chat-id { font-weight: 600; color: #fff; }
+  .session-item .meta { font-size: 12px; color: #999; margin-top: 4px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-playing { background: #1b5e20; color: #81c784; }
+  .badge-idle { background: #424242; color: #bbb; }
+  .badge-awaiting { background: #e65100; color: #ffcc80; }
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+  .placeholder { color: #666; font-size: 18px; margin-top: 40vh; text-align: center; }
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid #0f3460; margin-bottom: 16px; }
+  .tab { padding: 8px 20px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #999; transition: all 0.15s; }
+  .tab:hover { color: #fff; }
+  .tab.active { color: #e94560; border-bottom-color: #e94560; }
+  .card { background: #16213e; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .card h3 { color: #e94560; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 14px; }
+  .kv .label { color: #999; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px; color: #999; border-bottom: 1px solid #0f3460; }
+  td { padding: 8px; border-bottom: 1px solid #0f3460; }
+  .log-entry { background: #16213e; border-radius: 6px; padding: 12px; margin-bottom: 8px; }
+  .log-entry .action { color: #7c83ff; font-weight: 600; }
+  .log-entry .response { margin-top: 6px; white-space: pre-wrap; font-size: 13px; color: #ccc; }
+  .log-entry .turn-info { font-size: 11px; color: #666; margin-bottom: 4px; }
+  .empty { color: #666; font-style: italic; padding: 16px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Storyteller Sessions</h2>
+  <div id="session-list"></div>
+</div>
+
+<div class="main" id="main">
+  <div class="placeholder">Select a session to inspect</div>
+</div>
+
+<script>
+const API = '';
+let currentSessionId = null;
+let currentTab = 'overview';
+
+function badgeClass(state) {
+  if (state === 'playing') return 'badge-playing';
+  if (state === 'idle') return 'badge-idle';
+  return 'badge-awaiting';
+}
+
+async function fetchJSON(url) {
+  const res = await fetch(API + url);
+  return res.json();
+}
+
+async function loadSessions() {
+  const data = await fetchJSON('/api/sessions');
+  const list = document.getElementById('session-list');
+  list.innerHTML = data.sessions.map(s => `
+    <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
+      <div class="chat-id">Chat ${s.telegram_chat_id} <span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
+      <div class="meta">${s.language} | Turn ${s.turn_count ?? 0} | ${s.game_time ?? '-'}</div>
+    </div>
+  `).join('');
+}
+
+async function selectSession(id) {
+  currentSessionId = id;
+  loadSessions();
+  renderTab();
+}
+
+async function renderTab() {
+  if (!currentSessionId) return;
+  const main = document.getElementById('main');
+  const tabs = `<div class="tabs">
+    ${['overview','npcs','locations','events','conversation','knowledge'].map(t =>
+      `<div class="tab ${t === currentTab ? 'active' : ''}" onclick="switchTab('${t}')">${t}</div>`
+    ).join('')}
+  </div><div id="tab-content"></div>`;
+  main.innerHTML = tabs;
+
+  const content = document.getElementById('tab-content');
+  try {
+    if (currentTab === 'overview') await renderOverview(content);
+    else if (currentTab === 'npcs') await renderNPCs(content);
+    else if (currentTab === 'locations') await renderLocations(content);
+    else if (currentTab === 'events') await renderEvents(content);
+    else if (currentTab === 'conversation') await renderConversation(content);
+    else if (currentTab === 'knowledge') await renderKnowledge(content);
+  } catch (e) { content.innerHTML = `<div class="empty">Error loading data: ${e.message}</div>`; }
+}
+
+function switchTab(tab) { currentTab = tab; renderTab(); }
+
+async function renderOverview(el) {
+  const d = await fetchJSON(`/api/sessions/${currentSessionId}`);
+  if (d.error) { el.innerHTML = `<div class="empty">${d.error}</div>`; return; }
+  const s = d.session, gs = d.game_state, p = d.player, st = d.setting;
+  el.innerHTML = `
+    <div class="card"><h3>Session</h3><div class="kv">
+      <div class="label">Chat ID</div><div>${s.telegram_chat_id}</div>
+      <div class="label">State</div><div><span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
+      <div class="label">Language</div><div>${s.language}</div>
+      <div class="label">Created</div><div>${new Date(s.created_at).toLocaleString()}</div>
+    </div></div>
+    ${gs ? `<div class="card"><h3>Game State</h3><div class="kv">
+      <div class="label">Turn</div><div>${gs.turn_count}</div>
+      <div class="label">Game Clock</div><div>${gs.game_clock.toFixed(1)}h</div>
+      <div class="label">Time of Day</div><div>${gs.game_time}</div>
+      <div class="label">Locations</div><div>${d.location_count}</div>
+      <div class="label">NPCs</div><div>${d.npc_count}</div>
+      <div class="label">Knowledge</div><div>${d.knowledge_node_count} nodes</div>
+      <div class="label">Events</div><div>${d.event_count}</div>
+    </div></div>` : '<div class="empty">No active game</div>'}
+    ${st ? `<div class="card"><h3>Setting</h3><div class="kv">
+      <div class="label">Name</div><div>${st.name}</div>
+      <div class="label">Period</div><div>${st.time_period}</div>
+      <div class="label">Region</div><div>${st.region}</div>
+      <div class="label">Summary</div><div>${st.summary}</div>
+    </div></div>` : ''}
+    ${p ? `<div class="card"><h3>Player</h3><div class="kv">
+      <div class="label">Name</div><div>${p.name}</div>
+      <div class="label">Inventory</div><div>${(p.inventory||[]).join(', ') || 'empty'}</div>
+      <div class="label">Appearance</div><div>${p.appearance || '-'}</div>
+    </div></div>` : ''}`;
+}
+
+async function renderNPCs(el) {
+  const d = await fetchJSON(`/api/sessions/${currentSessionId}/npcs`);
+  if (!d.npcs.length) { el.innerHTML = '<div class="empty">No NPCs</div>'; return; }
+  el.innerHTML = `<table><tr><th>Name</th><th>Occupation</th><th>Mood</th><th>Location</th><th>Inventory</th></tr>
+    ${d.npcs.map(n => `<tr><td>${n.name}</td><td>${n.occupation}</td><td>${n.current_mood}</td><td>${n.location_id || '-'}</td><td>${(n.inventory||[]).join(', ') || '-'}</td></tr>`).join('')}</table>`;
+}
+
+async function renderLocations(el) {
+  const d = await fetchJSON(`/api/sessions/${currentSessionId}/locations`);
+  if (!d.locations.length) { el.innerHTML = '<div class="empty">No locations</div>'; return; }
+  el.innerHTML = `<table><tr><th>Name</th><th>Type</th><th>NPCs Present</th><th>Tags</th></tr>
+    ${d.locations.map(l => `<tr><td>${l.name}</td><td>${l.location_type}</td><td>${(l.npcs_present||[]).length}</td><td>${(l.tags||[]).join(', ')}</td></tr>`).join('')}</table>`;
+}
+
+async function renderEvents(el) {
+  const d = await fetchJSON(`/api/sessions/${currentSessionId}/events`);
+  if (!d.events.length) { el.innerHTML = '<div class="empty">No events</div>'; return; }
+  el.innerHTML = `<table><tr><th>Name</th><th>Status</th><th>Scheduled</th><th>Completes</th><th>Scope</th></tr>
+    ${d.events.map(e => `<tr><td>${e.name}</td><td><span class="badge ${e.status === 'pending' ? 'badge-awaiting' : e.status === 'completed' ? 'badge-playing' : 'badge-idle'}">${e.status}</span></td><td>${e.scheduled_at.toFixed(1)}h</td><td>${e.completes_at.toFixed(1)}h</td><td>${e.scope}</td></tr>`).join('')}</table>`;
+}
+
+async function renderConversation(el) {
+  const d = await fetchJSON(`/api/sessions/${currentSessionId}/conversation`);
+  if (!d.log.length) { el.innerHTML = '<div class="empty">No conversation yet</div>'; return; }
+  el.innerHTML = d.log.map(e => `
+    <div class="log-entry">
+      <div class="turn-info">Turn ${e.turn} | ${e.game_clock?.toFixed(1) ?? '?'}h</div>
+      <div class="action">> ${e.player_action}</div>
+      <div class="response">${e.response}</div>
+    </div>
+  `).join('');
+}
+
+async function renderKnowledge(el) {
+  const d = await fetchJSON(`/api/sessions/${currentSessionId}/knowledge`);
+  const nodes = d.nodes || [];
+  const edges = d.edges || [];
+  el.innerHTML = `<div class="card"><h3>Stats</h3><div class="kv">
+    <div class="label">Nodes</div><div>${nodes.length}</div>
+    <div class="label">Edges</div><div>${edges.length}</div>
+  </div></div>
+  <table><tr><th>Content</th><th>Scope</th><th>Source</th><th>Confidence</th><th>Tags</th></tr>
+    ${nodes.slice(0, 100).map(n => `<tr><td>${n.content.substring(0, 120)}${n.content.length > 120 ? '...' : ''}</td><td>${n.scope}</td><td>${n.source}</td><td>${n.confidence}</td><td>${(n.tags||[]).join(', ')}</td></tr>`).join('')}
+  </table>
+  ${nodes.length > 100 ? `<div class="empty">Showing first 100 of ${nodes.length} nodes</div>` : ''}`;
+}
+
+// Auto-refresh session list every 5s
+loadSessions();
+setInterval(loadSessions, 5000);
+</script>
+</body>
+</html>

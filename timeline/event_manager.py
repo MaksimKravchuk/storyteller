@@ -34,6 +34,16 @@ class EventManager:
         self._graph = knowledge_graph
         self._events: list[GameEvent] = []
 
+    @property
+    def all_events(self) -> list[GameEvent]:
+        """Return a copy of the events list (for persistence)."""
+        return list(self._events)
+
+    @all_events.setter
+    def all_events(self, events: list[GameEvent]) -> None:
+        """Restore events from persistence."""
+        self._events = list(events)
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------

@@ -17,6 +17,7 @@ dependencies = [
 openai = ["openai>=1.0"]
 anthropic = ["anthropic>=0.25"]
 telegram = ["python-telegram-bot>=21.0"]
+database = ["sqlalchemy[asyncio]>=2.0", "asyncpg>=0.29", "alembic>=1.13"]
 dev = ["pytest", "pytest-asyncio", "mypy"]
 
 [tool.mypy]
@@ -27,4 +28,4 @@ module = ["llm.*", "research.*"]
 ignore_errors = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["cast", "config.py", "defaults", "engine", "interfaces", "knowledge", "llm", "models", "prompts", "research", "timeline"]
+packages = ["cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "models", "prompts", "research", "timeline"]
