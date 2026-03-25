@@ -51,6 +51,7 @@ async def async_main() -> None:
     bot_app = build_bot(cfg, db_session_factory)
     await bot_app.initialize()
     await bot_app.start()
+    assert bot_app.updater is not None
     await bot_app.updater.start_polling()
     logger.info("Telegram bot started.")
 
@@ -75,7 +76,8 @@ async def async_main() -> None:
     # Graceful shutdown
     logger.info("Shutting down...")
     await admin.stop()
-    await bot_app.updater.stop()
+    if bot_app.updater:
+        await bot_app.updater.stop()
     await bot_app.stop()
     await bot_app.shutdown()
     await engine.dispose()

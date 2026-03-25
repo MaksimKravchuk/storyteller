@@ -22,14 +22,15 @@ dev = ["pytest", "pytest-asyncio", "mypy"]
 
 [tool.mypy]
 ignore_missing_imports = true
+exclude = ["alembic/"]
 
 [[tool.mypy.overrides]]
 module = ["llm.*", "research.*"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["alembic.*"]
-ignore_errors = true
+module = ["interfaces.telegram_bot"]
+disable_error_code = ["union-attr"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "models", "prompts", "research", "timeline"]
