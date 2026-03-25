@@ -45,11 +45,13 @@ class GameEngine:
         agent_model: ModelConfig = AI_MODELS.GPT_3_5_TURBO,
         narrator_model: ModelConfig = AI_MODELS.GPT_4,
         api_keys: dict[str, str | None] | None = None,
+        language: str = "English",
     ):
         self._director_model = director_model
         self._agent_model = agent_model
         self._narrator_model = narrator_model
         self._api_keys: dict[str, str | None] = api_keys or {}
+        self._language = language
 
         self._director: Director | None = None
         self._game_state: GameState | None = None
@@ -114,7 +116,7 @@ class GameEngine:
         # Create agents
         scene_builder = SceneBuilder(llm_client=agent_llm)
         npc_generator = NPCGenerator(llm_client=agent_llm)
-        narrator = Narrator(llm_client=narrator_llm)
+        narrator = Narrator(llm_client=narrator_llm, language=self._language)
 
         # Create the Director — wires everything together
         self._director = Director(
@@ -126,6 +128,7 @@ class GameEngine:
             narrator=narrator,
             npc_generator=npc_generator,
             data_miner=data_miner,
+            language=self._language,
         )
 
         # Generate opening scene

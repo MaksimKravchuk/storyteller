@@ -34,6 +34,7 @@ class Director(BasePerformer):
         npc_generator: Any,  # NPCGenerator
         data_miner: Any,     # DataMiner
         actors: dict[str, Any] | None = None,  # NPC UUID -> Actor
+        language: str = "English",
     ):
         super().__init__(
             llm_client=llm_client,
@@ -47,6 +48,7 @@ class Director(BasePerformer):
         self.npc_generator = npc_generator
         self.data_miner = data_miner
         self.actors: dict[str, Any] = actors or {}  # NPC UUID -> Actor
+        self._language = language
 
     # ------------------------------------------------------------------
     # Public API
@@ -282,6 +284,7 @@ class Director(BasePerformer):
             npc=npc,
             knowledge_query=KnowledgeQueryEngine(self.game_state.knowledge_graph),
         )
+        actor.set_context(language=self._language)
         self.register_actor(npc.uuid, actor)
 
     # ------------------------------------------------------------------
