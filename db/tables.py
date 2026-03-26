@@ -36,9 +36,11 @@ game_states = Table(
     Column("id", UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
     Column("session_id", UUID(as_uuid=False), ForeignKey("sessions.id", ondelete="CASCADE"), unique=True, nullable=False),
     Column("turn_count", Integer, nullable=False, server_default="0"),
+    Column("scene_number", Integer, nullable=False, server_default="0"),
     Column("game_clock", Float, nullable=False, server_default="0.0"),
     Column("game_time", String(16), nullable=False, server_default="morning"),
     Column("conversation_log", JSONB, nullable=False, server_default="[]"),
+    Column("scene_conversation_log", JSONB, nullable=False, server_default="[]"),
     Column("pending_clarification", JSONB, nullable=True),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
 )

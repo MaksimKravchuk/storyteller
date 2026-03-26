@@ -45,6 +45,11 @@ DIRECTOR_SYSTEM = PromptTemplate([
             "game_clock",
         ],
     ),
+    PromptSection(
+        name="scene_history",
+        template="Recent actions in this scene:\n{scene_history_summary}",
+        required_vars=["scene_history_summary"],
+    ),
 ])
 
 
