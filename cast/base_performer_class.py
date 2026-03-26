@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import time
 from abc import ABC, abstractmethod
 from typing import Any
 
 from llm.base_client import BaseLLMClient
+from llm.call_logger import call_log_buffer, current_session_id
 from llm.message import LLMResponse, Message, Role
 from prompts.base_template import PromptTemplate
 
@@ -60,14 +62,35 @@ class BasePerformer(ABC):
         """
         messages = list(conversation or [])
         messages.append(Message(role=Role.USER, content=user_message))
+        system_prompt = self._build_system_prompt()
 
+        start = time.monotonic()
         response: LLMResponse = await self.llm_client.send_message(
             messages=messages,
-            system_prompt=self._build_system_prompt(),
+            system_prompt=system_prompt,
             response_format=response_format,
             temperature=temperature,
             max_tokens=max_tokens,
         )
+        duration_ms = int((time.monotonic() - start) * 1000)
+
+        # Capture call for admin dashboard logging
+        session_id = current_session_id.get(None)
+        if session_id is not None:
+            buf = call_log_buffer.get([])
+            buf.append({
+                "session_id": session_id,
+                "agent_name": type(self).__name__,
+                "model": response.model or self.llm_client.model,
+                "system_prompt": system_prompt,
+                "messages": [{"role": m.role.value, "content": m.content} for m in messages],
+                "response_content": response.content,
+                "prompt_tokens": response.usage.get("prompt_tokens"),
+                "completion_tokens": response.usage.get("completion_tokens"),
+                "duration_ms": duration_ms,
+            })
+            call_log_buffer.set(buf)
+
         return response.content
 
     async def _send_json(
