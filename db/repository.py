@@ -121,9 +121,11 @@ class GameRepository:
         game_state = GameState(setting=setting, knowledge_graph=kg)
         game_state.uuid = gs_row["id"]
         game_state.turn_count = gs_row["turn_count"]
+        game_state.scene_number = gs_row.get("scene_number", 0)
         game_state.game_clock = gs_row["game_clock"]
         game_state.game_time = gs_row["game_time"]
         game_state.conversation_log = gs_row["conversation_log"]
+        game_state.scene_conversation_log = gs_row.get("scene_conversation_log", [])
         game_state.pending_clarification = gs_row.get("pending_clarification")
 
         # Load player
@@ -184,17 +186,21 @@ class GameRepository:
             id=game_state.uuid,
             session_id=session_id,
             turn_count=game_state.turn_count,
+            scene_number=game_state.scene_number,
             game_clock=game_state.game_clock,
             game_time=game_state.game_time,
             conversation_log=game_state.conversation_log,
+            scene_conversation_log=game_state.scene_conversation_log,
             pending_clarification=game_state.pending_clarification,
         ).on_conflict_do_update(
             index_elements=["session_id"],
             set_={
                 "turn_count": game_state.turn_count,
+                "scene_number": game_state.scene_number,
                 "game_clock": game_state.game_clock,
                 "game_time": game_state.game_time,
                 "conversation_log": game_state.conversation_log,
+                "scene_conversation_log": game_state.scene_conversation_log,
                 "pending_clarification": game_state.pending_clarification,
             },
         ).returning(t.game_states.c.id)

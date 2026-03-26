@@ -35,6 +35,8 @@ class Narrator(BasePerformer):
 
         game_state: GameState = context["game_state"]
         player_action: str = context.get("player_action", "")
+        scene_history: list[dict] = context.get("scene_history", [])
+        is_new_scene: bool = "scene" in input_data
 
         self.set_context(
             setting_name=game_state.setting.name,
@@ -46,7 +48,19 @@ class Narrator(BasePerformer):
         # Assemble raw material
         raw_parts: list[str] = []
 
-        if "scene" in input_data:
+        # On CONTINUATION turns, inject recent scene history so the narrator
+        # knows what happened before (e.g. an ongoing fight).
+        if scene_history and not is_new_scene:
+            history_lines = [
+                f"- Player: {e['player_action']} → {e.get('response_summary', '')[:200]}"
+                for e in scene_history
+            ]
+            raw_parts.append(
+                "What happened earlier in this scene:\n"
+                + "\n".join(history_lines)
+            )
+
+        if is_new_scene:
             scene = input_data["scene"]
             if hasattr(scene, "description"):
                 raw_parts.append(f"Scene: {scene.description}")
@@ -83,9 +97,11 @@ class Narrator(BasePerformer):
         raw_material = "\n".join(raw_parts) if raw_parts else "No specific scene data."
 
         # Build the narration prompt
+        scene_type = "NEW_SCENE" if is_new_scene else "CONTINUATION"
         kwargs: dict[str, str] = {
             "player_action": player_action,
             "raw_material": raw_material,
+            "scene_type": scene_type,
         }
 
         # Completed events (local ones the player can see)

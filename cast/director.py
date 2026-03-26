@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
@@ -13,6 +14,12 @@ from prompts.director_prompts import DIRECTOR_ACTION_ROUTING, DIRECTOR_SYSTEM
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 from timeline.time_costs import resolve_time_cost
+
+# Actions that increment the turn counter.
+TURN_COUNTING_ACTIONS = {"EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP"}
+
+# Actions that trigger a scene rebuild (new location, time-of-day shift, etc.).
+SCENE_CHANGING_ACTIONS = {"EXPLORE", "MOVE", "SLEEP"}
 
 
 class Director(BasePerformer):
@@ -90,12 +97,18 @@ class Director(BasePerformer):
         result = await self._execute_plan(routing_plan, input_data, completed_events)
 
         # 6. Update game state bookkeeping
-        self.game_state.turn_count += 1
+        if action_type in TURN_COUNTING_ACTIONS:
+            self.game_state.turn_count += 1
         self.game_state.conversation_log.append({
             "turn": self.game_state.turn_count,
             "player_action": input_data,
             "response": result,
             "game_clock": self.game_state.game_clock,
+        })
+        self.game_state.scene_conversation_log.append({
+            "player_action": input_data,
+            "response_summary": result[:500],
+            "action_type": action_type,
         })
 
         return result
@@ -119,24 +132,30 @@ class Director(BasePerformer):
         raw answer is sent as a plain follow-up message (NOT wrapped in
         the routing prompt template) so the LLM treats it as a direct
         answer to the prior question rather than a new standalone action.
+
+        For normal (non-clarification) calls, scene conversation history
+        is injected so the Director remembers what happened in prior turns
+        within the same scene.
         """
         history = self._load_pending_clarification()
         if history:
-            # Follow-up to a clarification — send raw answer
+            # Follow-up to a clarification — prepend scene history so the
+            # LLM retains context of what happened earlier in the scene
+            # (e.g. an ongoing fight) when resolving the follow-up.
+            scene_history = self._build_scene_history() or []
             return await self._send_json(
                 player_action,
-                conversation=history,
+                conversation=scene_history + history,
             )
-        # Normal routing — wrap in the full routing prompt
+        # Normal routing — wrap in the full routing prompt with scene history
+        scene_history = self._build_scene_history()
         prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
-        return await self._send_json(prompt)
+        return await self._send_json(prompt, conversation=scene_history)
 
     def _save_pending_clarification(
         self, player_action: str, routing_plan: dict
     ) -> None:
         """Persist a clarification exchange in game state (survives restarts)."""
-        import json as _json
-
         prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
         self.game_state.pending_clarification = [
             {"role": "user", "content": prompt},
@@ -152,6 +171,31 @@ class Director(BasePerformer):
             Message(role=Role.USER if m["role"] == "user" else Role.ASSISTANT, content=m["content"])
             for m in raw
         ]
+
+    def _build_scene_history(self) -> list[Message] | None:
+        """Build a conversation history from the current scene's log.
+
+        Returns ``Message`` pairs (user action + assistant routing response)
+        for the last 10 exchanges so the Director LLM maintains context
+        across turns within the same scene.
+        """
+        log = self.game_state.scene_conversation_log
+        if not log:
+            return None
+        messages: list[Message] = []
+        for entry in log[-10:]:
+            messages.append(Message(
+                role=Role.USER,
+                content=f'Player action: "{entry["player_action"]}"',
+            ))
+            messages.append(Message(
+                role=Role.ASSISTANT,
+                content=_json.dumps({
+                    "action_type": entry.get("action_type", "OTHER"),
+                    "result_summary": entry.get("response_summary", ""),
+                }, ensure_ascii=False),
+            ))
+        return messages if messages else None
 
     # ------------------------------------------------------------------
     # Internal: time & events
@@ -226,13 +270,15 @@ class Director(BasePerformer):
             await self._process_remote_events(remote_events)
 
         # --- Scene building ---
-        if "scene_builder" in delegates or action_type in ("EXPLORE", "MOVE"):
+        if "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS:
             scene = await self.scene_builder.act(
                 input_data=player_action,
                 context={"game_state": self.game_state},
             )
             raw_outputs["scene"] = scene
             self.game_state.current_scene = scene
+            self.game_state.scene_number += 1
+            self.game_state.scene_conversation_log = []
 
         # --- Always initialise any uninitialized scene NPCs ---
         await self._init_scene_npcs()
@@ -280,6 +326,7 @@ class Director(BasePerformer):
             context={
                 "player_action": player_action,
                 "game_state": self.game_state,
+                "scene_history": self.game_state.scene_conversation_log[-5:],
             },
         )
         return narrated
@@ -426,7 +473,7 @@ class Director(BasePerformer):
             else "None"
         )
 
-        self.set_context(
+        context_vars = dict(
             setting_name=self.game_state.setting.name,
             time_period=self.game_state.setting.time_period,
             scene_description=(
@@ -437,6 +484,20 @@ class Director(BasePerformer):
             game_time=self.game_state.game_time,
             game_clock=str(round(self.game_state.game_clock, 1)),
         )
+
+        # Compact summary of recent scene actions for the system prompt.
+        # The section is silently skipped by PromptTemplate when this var
+        # is absent (first turn of a scene).
+        scene_log = self.game_state.scene_conversation_log
+        if scene_log:
+            lines = []
+            for entry in scene_log[-5:]:
+                lines.append(
+                    f"- Player: {entry['player_action']} -> {entry.get('action_type', '?')}"
+                )
+            context_vars["scene_history_summary"] = "\n".join(lines)
+
+        self.set_context(**context_vars)
 
     def _get_location_name(self, location_id: str | None) -> str:
         if location_id and location_id in self.game_state.locations:

@@ -45,9 +45,11 @@ class GameState(BaseModel):
         self.locations: dict[str, Location] = {}  # UUID -> Location
         self.npcs: dict[str, NPCCard] = {}  # UUID -> NPCCard
         self.turn_count: int = 0
+        self.scene_number: int = 0
         self.game_clock: float = 0.0  # Game time in hours
         self.game_time: str = "morning"  # Human-readable time of day
         self.conversation_log: list[dict] = []  # Full session log
+        self.scene_conversation_log: list[dict] = []  # Resets on scene change
         # Pending clarification exchange for the Director (persisted so it
         # survives engine recreation between Telegram messages).
         self.pending_clarification: list[dict] | None = None

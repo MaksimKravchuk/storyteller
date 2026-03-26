@@ -11,11 +11,16 @@ NARRATOR_SYSTEM = PromptTemplate([
             "raw scene data and event information into vivid, literary "
             "prose. Write in second person (\"You see...\", \"You hear...\").\n\n"
             "Style guidelines:\n"
-            "- Engage all senses: sight, sound, smell, touch, taste.\n"
-            "- Be evocative but concise — 2-4 paragraphs maximum.\n"
+            "- Be evocative but concise.\n"
             "- Do NOT add information that is not in the raw data.\n"
             "- Do NOT make decisions for the player.\n"
-            "- When NPCs speak, present their dialogue naturally."
+            "- When NPCs speak, present their dialogue naturally.\n"
+            "- On a NEW SCENE: paint a full picture of the environment "
+            "(2-4 paragraphs, sensory details).\n"
+            "- On a CONTINUATION (action within the same scene): focus ONLY on "
+            "the direct result of the player's action and character reactions. "
+            "Do NOT describe the environment, atmosphere, lighting, smells, or "
+            "sounds unless the action directly changes them. Keep it short."
         ),
         required_vars=["setting_name", "time_period"],
     ),
@@ -36,12 +41,12 @@ NARRATOR_NARRATE = PromptTemplate([
     PromptSection(
         name="task",
         template=(
-            'Player action: "{player_action}"\n\n'
+            'Player action: "{player_action}"\n'
+            "Scene type: {scene_type}\n\n"
             "Raw material to narrate:\n{raw_material}\n\n"
-            "Transform the above into literary narration. "
-            "Write in second person, engaging all senses."
+            "Transform the above into literary narration in second person."
         ),
-        required_vars=["player_action", "raw_material"],
+        required_vars=["player_action", "raw_material", "scene_type"],
     ),
     PromptSection(
         name="events",

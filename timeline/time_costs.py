@@ -9,13 +9,13 @@ from __future__ import annotations
 
 # Base time costs in hours, keyed by action type (uppercase)
 BASE_ACTION_COSTS: dict[str, float] = {
-    "TALK": 0.5,
-    "EXPLORE": 1.0,
-    "EXAMINE": 0.25,
-    "INTERACT": 0.5,
+    "TALK": 0.05,       # ~3 minutes — a quick exchange
+    "EXPLORE": 0.5,     # 30 minutes
+    "EXAMINE": 0.01,    # ~30 seconds — a glance
+    "INTERACT": 0.02,   # ~1 minute — grab, push, open
     "SLEEP": 8.0,
-    "MOVE": 1.0,      # Default for local movement; LLM should override for long distance
-    "OTHER": 0.5,
+    "MOVE": 0.5,        # 30 min local; LLM should override for long distance
+    "OTHER": 0.02,      # ~1 minute
 }
 
 
