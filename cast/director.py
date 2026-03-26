@@ -7,6 +7,7 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from knowledge.memory import MemoryManager
 from knowledge.node import KnowledgeScope
+from llm.message import Message, Role
 from models.game_state import GameState
 from prompts.director_prompts import DIRECTOR_ACTION_ROUTING, DIRECTOR_SYSTEM
 from timeline.event import GameEvent
@@ -62,15 +63,23 @@ class Director(BasePerformer):
         # 1. Update system prompt from current game state
         self._sync_context_from_state()
 
-        # 2. Route the action — LLM classifies + produces a plan
+        # 2. Route the action — LLM classifies + produces a plan.
+        #    Pass pending clarification context so the model can resolve
+        #    follow-up replies like "да" or "1".
         routing_plan = await self._route_action(input_data)
 
-        # 3. If clarification needed, return question
+        # 3. If clarification needed, persist the exchange and return
         if routing_plan.get("needs_clarification"):
-            return routing_plan.get(
+            question = routing_plan.get(
                 "clarification_question",
                 "Could you be more specific about what you want to do?",
             )
+            # Persist exchange in game state (survives engine recreation)
+            self._save_pending_clarification(input_data, routing_plan)
+            return question
+
+        # Successful routing — clear pending clarification
+        self.game_state.pending_clarification = None
 
         # 4. Advance time and resolve events
         action_type = routing_plan.get("action_type", "OTHER")
@@ -104,9 +113,45 @@ class Director(BasePerformer):
     # ------------------------------------------------------------------
 
     async def _route_action(self, player_action: str) -> dict:
-        """Use the LLM to classify the action and produce a routing plan."""
+        """Use the LLM to classify the action and produce a routing plan.
+
+        If a pending clarification exists in the game state, the player's
+        raw answer is sent as a plain follow-up message (NOT wrapped in
+        the routing prompt template) so the LLM treats it as a direct
+        answer to the prior question rather than a new standalone action.
+        """
+        history = self._load_pending_clarification()
+        if history:
+            # Follow-up to a clarification — send raw answer
+            return await self._send_json(
+                player_action,
+                conversation=history,
+            )
+        # Normal routing — wrap in the full routing prompt
         prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
         return await self._send_json(prompt)
+
+    def _save_pending_clarification(
+        self, player_action: str, routing_plan: dict
+    ) -> None:
+        """Persist a clarification exchange in game state (survives restarts)."""
+        import json as _json
+
+        prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
+        self.game_state.pending_clarification = [
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": _json.dumps(routing_plan, ensure_ascii=False)},
+        ]
+
+    def _load_pending_clarification(self) -> list[Message] | None:
+        """Restore pending clarification from game state as Message objects."""
+        raw = self.game_state.pending_clarification
+        if not raw:
+            return None
+        return [
+            Message(role=Role.USER if m["role"] == "user" else Role.ASSISTANT, content=m["content"])
+            for m in raw
+        ]
 
     # ------------------------------------------------------------------
     # Internal: time & events
@@ -189,13 +234,22 @@ class Director(BasePerformer):
             raw_outputs["scene"] = scene
             self.game_state.current_scene = scene
 
-            # Auto-generate NPCs mentioned in the scene
-            if scene.npcs_present:
-                await self._ensure_npcs_exist(scene.npcs_present)
+        # --- Always initialise any uninitialized scene NPCs ---
+        await self._init_scene_npcs()
 
-        # --- Dialogue ---
-        if "actor" in delegates or action_type == "TALK":
-            target_names = plan.get("targets", [])
+        # --- Ensure targeted NPCs are in the scene ---
+        target_names = plan.get("targets", [])
+        if target_names:
+            self._ensure_targets_in_scene(target_names)
+            # Init any newly added SceneNPCs
+            await self._init_scene_npcs()
+
+        # --- Actor / NPC interaction ---
+        # Deterministic: if any targets resolve to initialised NPCs in the
+        # scene, always invoke their Actors — don't rely on the LLM to
+        # include "actor" in delegate_to.
+        has_npc_targets = self._targets_match_scene_npcs(target_names)
+        if has_npc_targets or "actor" in delegates or action_type == "TALK":
             dialogue = await self._handle_dialogue(player_action, target_names)
             if dialogue:
                 raw_outputs["dialogue"] = dialogue
@@ -233,11 +287,32 @@ class Director(BasePerformer):
     async def _handle_dialogue(
         self, player_action: str, target_names: list[str]
     ) -> list[dict[str, str]]:
-        """Route dialogue to the correct Actor agents."""
+        """Route dialogue to the correct Actor agents.
+
+        Matches targets by NPC name **and** by the SceneNPC role
+        description, so that both "караульный стражник" (role) and
+        "Теодорос" (generated name) resolve correctly.
+        """
+        targets_lower = {t.lower() for t in target_names}
+
+        # Build a set of NPC UUIDs whose role also matches a target
+        scene = self.game_state.current_scene
+        role_matched_uuids: set[str] = set()
+        if scene:
+            for snpc in scene.npcs_present:
+                if snpc.uuid and snpc.role.lower() in targets_lower:
+                    role_matched_uuids.add(snpc.uuid)
+
         results: list[dict[str, str]] = []
         for npc_uuid, actor in self.actors.items():
             npc = self.game_state.npcs.get(npc_uuid)
-            if npc and npc.name.lower() in [t.lower() for t in target_names]:
+            if not npc:
+                continue
+            matched = (
+                npc.name.lower() in targets_lower
+                or npc_uuid in role_matched_uuids
+            )
+            if matched:
                 response = await actor.act(
                     input_data=player_action,
                     context={
@@ -249,23 +324,66 @@ class Director(BasePerformer):
                 results.append({"npc_name": npc.name, "response": response})
         return results
 
-    async def _ensure_npcs_exist(self, npc_names_or_roles: list[str]) -> None:
-        """If the scene mentions NPCs that don't exist yet, generate them."""
+    async def _init_scene_npcs(self) -> None:
+        """Initialise any ``SceneNPC`` objects that haven't been turned into
+        full ``NPCCard`` + ``Actor`` instances yet.
+
+        This runs unconditionally on every turn so that NPC availability
+        never depends on the LLM's routing decision.
+        """
+        from models.scene import SceneNPC  # noqa: F811 (re-import for clarity)
+
+        scene = self.game_state.current_scene
+        if not scene:
+            return
+        uninit = [snpc for snpc in scene.npcs_present if snpc.need_init]
+        if not uninit:
+            return
+        roles = [snpc.role for snpc in uninit]
+        new_cards = await self.npc_generator.act(
+            input_data=roles,
+            context={"game_state": self.game_state},
+        )
+        for scene_npc, card in zip(uninit, new_cards):
+            self._register_new_npc(card)
+            scene_npc.uuid = card.uuid
+
+    def _targets_match_scene_npcs(self, target_names: list[str]) -> bool:
+        """Return ``True`` if any target name matches an initialised SceneNPC."""
+        scene = self.game_state.current_scene
+        if not scene or not target_names:
+            return False
+        targets_lower = {t.lower() for t in target_names}
+        for snpc in scene.npcs_present:
+            if not snpc.uuid or snpc.uuid not in self.game_state.npcs:
+                continue
+            npc = self.game_state.npcs[snpc.uuid]
+            # Match by role description or by generated NPC name
+            if snpc.role.lower() in targets_lower or npc.name.lower() in targets_lower:
+                return True
+        return False
+
+    def _ensure_targets_in_scene(self, target_names: list[str]) -> None:
+        """Make sure that every target the Director identified is represented
+        as a ``SceneNPC`` in the current scene.  If a target matches an
+        existing ``SceneNPC`` by role, nothing happens.  Otherwise a new
+        ``SceneNPC`` is appended (with ``need_init=True``).
+        """
+        from models.scene import SceneNPC
+
+        scene = self.game_state.current_scene
+        if not scene:
+            return
+        existing_roles = {snpc.role.lower() for snpc in scene.npcs_present}
+        # Also check already-initialised NPC names
         existing_names = {
-            npc.name.lower() for npc in self.game_state.npcs.values()
+            self.game_state.npcs[snpc.uuid].name.lower()
+            for snpc in scene.npcs_present
+            if snpc.uuid and snpc.uuid in self.game_state.npcs
         }
-        missing = [
-            name
-            for name in npc_names_or_roles
-            if name.lower() not in existing_names
-        ]
-        if missing:
-            new_npcs = await self.npc_generator.act(
-                input_data=missing,
-                context={"game_state": self.game_state},
-            )
-            for npc in new_npcs:
-                self._register_new_npc(npc)
+        for target in target_names:
+            if target.lower() not in existing_roles and target.lower() not in existing_names:
+                scene.npcs_present.append(SceneNPC(role=target))
 
     def _register_new_npc(self, npc: Any) -> None:
         """Register a new NPC in the game state and create an Actor for it."""
@@ -296,9 +414,9 @@ class Director(BasePerformer):
         scene = self.game_state.current_scene
         npc_names = (
             ", ".join(
-                self.game_state.npcs[uid].name
-                for uid in (scene.npcs_present if scene else [])
-                if uid in self.game_state.npcs
+                self.game_state.npcs[snpc.uuid].name
+                for snpc in (scene.npcs_present if scene else [])
+                if snpc.uuid and snpc.uuid in self.game_state.npcs
             )
             or "None"
         )

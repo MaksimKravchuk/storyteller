@@ -1,4 +1,4 @@
-"""Tests for models: BaseModel, Character, NPCCard, Location, Setting, GameState."""
+"""Tests for models: BaseModel, Character, NPCCard, Location, Setting, GameState, SceneNPC."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from models.character import Character
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
+from models.scene import SceneNPC
 from models.setting import Setting
 
 
@@ -207,3 +208,52 @@ class TestGameState:
         game_state.advance_clock(6)
         game_state.advance_clock(6)
         assert game_state.game_clock == 12.0
+
+
+# ---------------------------------------------------------------------------
+# SceneNPC
+# ---------------------------------------------------------------------------
+
+class TestSceneNPC:
+    def test_need_init_true_by_default(self):
+        snpc = SceneNPC(role="guard")
+        assert snpc.need_init is True
+        assert snpc.uuid is None
+
+    def test_need_init_false_after_uuid_set(self):
+        snpc = SceneNPC(role="guard")
+        snpc.uuid = "some-uuid-1234"
+        assert snpc.need_init is False
+
+    def test_need_init_false_when_constructed_with_uuid(self):
+        snpc = SceneNPC(role="merchant", uuid="abc-123")
+        assert snpc.need_init is False
+        assert snpc.uuid == "abc-123"
+
+    def test_to_dict(self):
+        snpc = SceneNPC(role="beggar", uuid="uuid-42")
+        d = snpc.to_dict()
+        assert d == {"role": "beggar", "uuid": "uuid-42"}
+
+    def test_to_dict_uninitialised(self):
+        snpc = SceneNPC(role="guard")
+        d = snpc.to_dict()
+        assert d == {"role": "guard", "uuid": None}
+
+    def test_from_dict_roundtrip(self):
+        original = SceneNPC(role="scribe", uuid="uuid-99")
+        restored = SceneNPC.from_dict(original.to_dict())
+        assert restored.role == "scribe"
+        assert restored.uuid == "uuid-99"
+        assert restored.need_init is False
+
+    def test_from_dict_without_uuid(self):
+        restored = SceneNPC.from_dict({"role": "merchant"})
+        assert restored.role == "merchant"
+        assert restored.need_init is True
+
+    def test_repr(self):
+        snpc = SceneNPC(role="guard")
+        assert "uninit" in repr(snpc)
+        snpc.uuid = "abc"
+        assert "abc" in repr(snpc)

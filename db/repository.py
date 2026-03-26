@@ -124,6 +124,7 @@ class GameRepository:
         game_state.game_clock = gs_row["game_clock"]
         game_state.game_time = gs_row["game_time"]
         game_state.conversation_log = gs_row["conversation_log"]
+        game_state.pending_clarification = gs_row.get("pending_clarification")
 
         # Load player
         result = await self._s.execute(
@@ -186,6 +187,7 @@ class GameRepository:
             game_clock=game_state.game_clock,
             game_time=game_state.game_time,
             conversation_log=game_state.conversation_log,
+            pending_clarification=game_state.pending_clarification,
         ).on_conflict_do_update(
             index_elements=["session_id"],
             set_={
@@ -193,6 +195,7 @@ class GameRepository:
                 "game_clock": game_state.game_clock,
                 "game_time": game_state.game_time,
                 "conversation_log": game_state.conversation_log,
+                "pending_clarification": game_state.pending_clarification,
             },
         ).returning(t.game_states.c.id)
         result = await self._s.execute(stmt)

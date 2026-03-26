@@ -10,7 +10,7 @@ from knowledge.node import (
 )
 from models.location import Location
 from models.npc_card import NPCCard
-from models.scene import Scene
+from models.scene import Scene, SceneNPC
 from models.setting import Setting
 from models.game_state import PlayerState
 from timeline.event import EventEffect, EventStatus, GameEvent
@@ -161,7 +161,7 @@ def scene_to_row(scene: Scene, game_state_id: str, is_current: bool = False) -> 
         "is_current": is_current,
         "location_id": scene.location_id,
         "description": scene.description,
-        "npcs_present": scene.npcs_present,
+        "npcs_present": [snpc.to_dict() for snpc in scene.npcs_present],
         "points_of_interest": scene.points_of_interest,
         "ambient_description": scene.ambient_description,
         "time_of_day": scene.time_of_day,
@@ -170,10 +170,17 @@ def scene_to_row(scene: Scene, game_state_id: str, is_current: bool = False) -> 
 
 
 def row_to_scene(row) -> Scene:
+    # Backward-compatible: old rows store NPC UUIDs as plain strings.
+    raw_npcs = row["npcs_present"]
+    npcs = [
+        SceneNPC.from_dict(item) if isinstance(item, dict)
+        else SceneNPC(role=item, uuid=item)  # legacy UUID string
+        for item in raw_npcs
+    ]
     s = Scene(
         location_id=row["location_id"],
         description=row["description"],
-        npcs_present=row["npcs_present"],
+        npcs_present=npcs,
         points_of_interest=row["points_of_interest"],
         ambient_description=row["ambient_description"],
         time_of_day=row["time_of_day"],

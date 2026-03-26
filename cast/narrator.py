@@ -53,7 +53,18 @@ class Narrator(BasePerformer):
                 if scene.ambient_description:
                     raw_parts.append(f"Atmosphere: {scene.ambient_description}")
                 if scene.npcs_present:
-                    raw_parts.append(f"People visible: {', '.join(scene.npcs_present)}")
+                    npc_descriptions: list[str] = []
+                    for snpc in scene.npcs_present:
+                        if snpc.uuid and snpc.uuid in game_state.npcs:
+                            npc = game_state.npcs[snpc.uuid]
+                            npc_descriptions.append(
+                                f"{npc.name} ({npc.occupation})"
+                            )
+                        else:
+                            npc_descriptions.append(snpc.role)
+                    raw_parts.append(
+                        f"People visible: {', '.join(npc_descriptions)}"
+                    )
                 if scene.points_of_interest:
                     raw_parts.append(
                         f"Notable things: {', '.join(scene.points_of_interest)}"

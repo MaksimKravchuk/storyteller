@@ -39,6 +39,7 @@ game_states = Table(
     Column("game_clock", Float, nullable=False, server_default="0.0"),
     Column("game_time", String(16), nullable=False, server_default="morning"),
     Column("conversation_log", JSONB, nullable=False, server_default="[]"),
+    Column("pending_clarification", JSONB, nullable=True),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
 )
 
