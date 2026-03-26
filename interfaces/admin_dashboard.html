@@ -37,6 +37,30 @@
   .log-entry .response { margin-top: 6px; white-space: pre-wrap; font-size: 13px; color: #ccc; }
   .log-entry .turn-info { font-size: 11px; color: #666; margin-bottom: 4px; }
   .empty { color: #666; font-style: italic; padding: 16px; }
+
+  /* AI Call Logs */
+  .ai-calls-toggle { margin-top: 8px; cursor: pointer; font-size: 12px; color: #7c83ff; user-select: none; }
+  .ai-calls-toggle:hover { color: #aab0ff; }
+  .ai-calls-container { display: none; margin-top: 8px; padding-left: 12px; border-left: 2px solid #0f3460; }
+  .ai-calls-container.open { display: block; }
+  .ai-call-entry { background: #111a30; border-radius: 4px; padding: 10px; margin-bottom: 6px; font-size: 12px; }
+  .ai-call-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .agent-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .agent-Director { background: #4a1525; color: #e94560; }
+  .agent-Narrator { background: #152545; color: #5b9bd5; }
+  .agent-SceneBuilder { background: #153525; color: #5bd58a; }
+  .agent-Actor { background: #2d1545; color: #b57cff; }
+  .agent-NPCGenerator { background: #453015; color: #ffb347; }
+  .agent-DataMiner { background: #154540; color: #5bd5c8; }
+  .agent-MemoryManager { background: #3d3515; color: #d5c85b; }
+  .ai-call-meta { color: #666; font-size: 11px; }
+  .ai-call-detail-toggle { cursor: pointer; color: #7c83ff; font-size: 11px; margin-top: 4px; user-select: none; }
+  .ai-call-detail-toggle:hover { color: #aab0ff; }
+  .ai-call-detail { display: none; margin-top: 6px; }
+  .ai-call-detail.open { display: block; }
+  .ai-call-detail pre { background: #0a0f1e; border-radius: 4px; padding: 8px; font-size: 11px; color: #aaa; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; }
+  .ai-call-detail h4 { color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin: 6px 0 4px; }
+  .setup-header { color: #999; font-size: 13px; font-weight: 600; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid #0f3460; }
 </style>
 </head>
 <body>
@@ -160,16 +184,103 @@ async function renderEvents(el) {
     ${d.events.map(e => `<tr><td>${e.name}</td><td><span class="badge ${e.status === 'pending' ? 'badge-awaiting' : e.status === 'completed' ? 'badge-playing' : 'badge-idle'}">${e.status}</span></td><td>${e.scheduled_at.toFixed(1)}h</td><td>${e.completes_at.toFixed(1)}h</td><td>${e.scope}</td></tr>`).join('')}</table>`;
 }
 
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderAiCallEntries(calls) {
+  if (!calls || !calls.length) return '';
+  return calls.map((c, i) => {
+    const tokens = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
+    const tokenStr = tokens.length ? tokens.join('+') + ' tok' : '';
+    const durStr = c.duration_ms != null ? c.duration_ms + 'ms' : '';
+    const metaParts = [c.model, tokenStr, durStr].filter(Boolean).join(' | ');
+    const uid = 'aic-' + Math.random().toString(36).slice(2, 10);
+    return `
+      <div class="ai-call-entry">
+        <div class="ai-call-header">
+          <span class="agent-badge agent-${c.agent_name}">${c.agent_name}</span>
+          <span class="ai-call-meta">${metaParts}</span>
+        </div>
+        <div class="ai-call-detail-toggle" onclick="toggleDetail('${uid}')">Show prompt &amp; response</div>
+        <div class="ai-call-detail" id="${uid}">
+          <h4>System Prompt</h4>
+          <pre>${escapeHtml(c.system_prompt || '')}</pre>
+          <h4>Messages Sent</h4>
+          <pre>${escapeHtml(JSON.stringify(c.messages, null, 2))}</pre>
+          <h4>Response</h4>
+          <pre>${escapeHtml(c.response_content || '')}</pre>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleAiCalls(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+function toggleDetail(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
 async function renderConversation(el) {
-  const d = await fetchJSON(`/api/sessions/${currentSessionId}/conversation`);
-  if (!d.log.length) { el.innerHTML = '<div class="empty">No conversation yet</div>'; return; }
-  el.innerHTML = d.log.map(e => `
-    <div class="log-entry">
-      <div class="turn-info">Turn ${e.turn} | ${e.game_clock?.toFixed(1) ?? '?'}h</div>
-      <div class="action">> ${e.player_action}</div>
-      <div class="response">${e.response}</div>
-    </div>
-  `).join('');
+  const [convData, aiData] = await Promise.all([
+    fetchJSON(`/api/sessions/${currentSessionId}/conversation`),
+    fetchJSON(`/api/sessions/${currentSessionId}/ai-calls`),
+  ]);
+
+  const aiCalls = aiData.ai_calls || [];
+  const callsByTurn = {};
+  for (const call of aiCalls) {
+    const key = call.turn_number != null ? call.turn_number : 'setup';
+    (callsByTurn[key] = callsByTurn[key] || []).push(call);
+  }
+
+  let html = '';
+
+  // Setup calls (turn_number = null)
+  if (callsByTurn['setup'] && callsByTurn['setup'].length) {
+    const sid = 'ai-setup-' + Math.random().toString(36).slice(2, 10);
+    html += `
+      <div class="log-entry">
+        <div class="setup-header">Game Setup</div>
+        <div class="ai-calls-toggle" onclick="toggleAiCalls('${sid}')">
+          AI Calls (${callsByTurn['setup'].length})
+        </div>
+        <div class="ai-calls-container" id="${sid}">
+          ${renderAiCallEntries(callsByTurn['setup'])}
+        </div>
+      </div>`;
+  }
+
+  if (!convData.log.length && !aiCalls.length) {
+    el.innerHTML = '<div class="empty">No conversation yet</div>';
+    return;
+  }
+
+  html += convData.log.map(e => {
+    const turnCalls = callsByTurn[e.turn] || [];
+    const cid = 'ai-turn-' + e.turn + '-' + Math.random().toString(36).slice(2, 10);
+    const aiSection = turnCalls.length ? `
+      <div class="ai-calls-toggle" onclick="toggleAiCalls('${cid}')">
+        AI Calls (${turnCalls.length})
+      </div>
+      <div class="ai-calls-container" id="${cid}">
+        ${renderAiCallEntries(turnCalls)}
+      </div>` : '';
+    return `
+      <div class="log-entry">
+        <div class="turn-info">Turn ${e.turn} | ${e.game_clock?.toFixed(1) ?? '?'}h</div>
+        <div class="action">&gt; ${escapeHtml(e.player_action)}</div>
+        <div class="response">${escapeHtml(e.response)}</div>
+        ${aiSection}
+      </div>`;
+  }).join('');
+
+  el.innerHTML = html;
 }
 
 async function renderKnowledge(el) {

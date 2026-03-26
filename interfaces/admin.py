@@ -54,6 +54,7 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/events", self._events)
         self._app.router.add_get("/api/sessions/{id}/npcs", self._npcs)
         self._app.router.add_get("/api/sessions/{id}/locations", self._locations)
+        self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
 
     @web.middleware
     async def _auth_middleware(self, request: web.Request, handler):
@@ -135,3 +136,12 @@ class AdminServer:
             repo = GameRepository(db)
             locations = await repo.get_locations(session_id)
         return _json_response({"locations": locations})
+
+    async def _ai_calls(self, request: web.Request) -> web.Response:
+        session_id = request.match_info["id"]
+        turn = request.query.get("turn")
+        turn_number = int(turn) if turn else None
+        async with get_db(self._db_factory) as db:
+            repo = GameRepository(db)
+            logs = await repo.get_ai_call_logs(session_id, turn_number=turn_number)
+        return _json_response({"ai_calls": logs})

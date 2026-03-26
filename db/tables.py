@@ -157,6 +157,26 @@ knowledge_edges = Table(
     Index("idx_ke_to", "game_state_id", "to_node_id"),
 )
 
+ai_call_logs = Table(
+    "ai_call_logs",
+    metadata,
+    Column("id", UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
+    Column("session_id", UUID(as_uuid=False), ForeignKey("sessions.id", ondelete="CASCADE"), nullable=False),
+    Column("turn_number", Integer, nullable=True),
+    Column("agent_name", String(64), nullable=False),
+    Column("model", String(128), nullable=False),
+    Column("system_prompt", Text, nullable=False),
+    Column("messages", JSONB, nullable=False),
+    Column("response_content", Text, nullable=False),
+    Column("prompt_tokens", Integer, nullable=True),
+    Column("completion_tokens", Integer, nullable=True),
+    Column("duration_ms", Integer, nullable=True),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
+    Index("idx_ai_calls_session", "session_id"),
+    Index("idx_ai_calls_session_turn", "session_id", "turn_number"),
+    Index("idx_ai_calls_created", "created_at"),
+)
+
 game_events = Table(
     "game_events",
     metadata,

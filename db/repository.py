@@ -178,11 +178,9 @@ class GameRepository:
         events: list[GameEvent],
     ) -> None:
         """Persist full game state to PG (upsert game_states, delete+insert children)."""
-        game_state_id = game_state.uuid
-
         # Upsert game_states row
         stmt = pg_insert(t.game_states).values(
-            id=game_state_id,
+            id=game_state.uuid,
             session_id=session_id,
             turn_count=game_state.turn_count,
             game_clock=game_state.game_clock,
@@ -196,8 +194,10 @@ class GameRepository:
                 "game_time": game_state.game_time,
                 "conversation_log": game_state.conversation_log,
             },
-        )
-        await self._s.execute(stmt)
+        ).returning(t.game_states.c.id)
+        result = await self._s.execute(stmt)
+        game_state_id = result.scalar_one()
+        await self._s.flush()
 
         # Setting (upsert)
         setting_row = setting_to_row(game_state.setting, game_state_id)
@@ -417,4 +417,48 @@ class GameRepository:
             .where(t.game_states.c.session_id == session_id)
             .order_by(t.game_events.c.scheduled_at)
         )
+        return [dict(row) for row in result.mappings()]
+
+    # ── AI call logs ──────────────────────────────────────
+
+    async def save_ai_call_logs(
+        self, logs: list[dict[str, Any]], turn_number: int | None = None
+    ) -> None:
+        """Batch insert AI call log entries."""
+        if not logs:
+            return
+        rows = [
+            {
+                "id": str(_uuid.uuid4()),
+                "session_id": entry["session_id"],
+                "turn_number": turn_number,
+                "agent_name": entry["agent_name"],
+                "model": entry["model"],
+                "system_prompt": entry["system_prompt"],
+                "messages": entry["messages"],
+                "response_content": entry["response_content"],
+                "prompt_tokens": entry.get("prompt_tokens"),
+                "completion_tokens": entry.get("completion_tokens"),
+                "duration_ms": entry.get("duration_ms"),
+            }
+            for entry in logs
+        ]
+        await self._s.execute(t.ai_call_logs.insert(), rows)
+
+    async def get_ai_call_logs(
+        self,
+        session_id: str,
+        turn_number: int | None = None,
+        limit: int = 200,
+    ) -> list[dict]:
+        """Get AI call logs for a session, optionally filtered by turn."""
+        stmt = (
+            select(t.ai_call_logs)
+            .where(t.ai_call_logs.c.session_id == session_id)
+            .order_by(t.ai_call_logs.c.created_at)
+            .limit(limit)
+        )
+        if turn_number is not None:
+            stmt = stmt.where(t.ai_call_logs.c.turn_number == turn_number)
+        result = await self._s.execute(stmt)
         return [dict(row) for row in result.mappings()]
