@@ -1,4 +1,4 @@
-"""Tests for Director turn/scene logic."""
+"""Tests for Director turn/scene logic and Actor mood extraction."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from cast.actor import Actor
 from cast.director import (
     Director,
     SCENE_CHANGING_ACTIONS,
@@ -15,8 +16,10 @@ from cast.director import (
 )
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
+from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
 from models.game_state import GameState
+from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
 from timeline.event_manager import EventManager
@@ -535,3 +538,349 @@ class TestClarificationPreservesSceneHistory:
         assert "scene_history" in context
         assert len(context["scene_history"]) == 1
         assert context["scene_history"][0]["player_action"] == "attack guard"
+
+
+# ---------------------------------------------------------------------------
+# Actor._extract_mood
+# ---------------------------------------------------------------------------
+
+
+class TestExtractMood:
+    def test_no_mood_tag(self):
+        text, mood = Actor._extract_mood("*draws his sword* — Stand back!")
+        assert text == "*draws his sword* — Stand back!"
+        assert mood is None
+
+    def test_mood_tag_at_end(self):
+        text, mood = Actor._extract_mood(
+            "*lunges at you with a spear*\n[MOOD: hostile]"
+        )
+        assert text == "*lunges at you with a spear*"
+        assert mood == "hostile"
+
+    def test_mood_tag_uppercase_normalised(self):
+        text, mood = Actor._extract_mood("Back off!\n[MOOD: ENRAGED]")
+        assert mood == "enraged"
+
+    def test_mood_tag_with_extra_space_before_word(self):
+        text, mood = Actor._extract_mood("Help!\n[MOOD:  terrified]")
+        assert mood == "terrified"
+
+    def test_mood_tag_not_at_end_is_ignored(self):
+        text, mood = Actor._extract_mood(
+            "[MOOD: hostile]\nI will destroy you!"
+        )
+        assert mood is None
+        assert "[MOOD: hostile]" in text
+
+    def test_empty_string(self):
+        text, mood = Actor._extract_mood("")
+        assert text == ""
+        assert mood is None
+
+
+# ---------------------------------------------------------------------------
+# Actor mood update integration
+# ---------------------------------------------------------------------------
+
+
+class TestActorMoodUpdate:
+    @pytest.mark.asyncio
+    async def test_mood_updated_after_response(self):
+        npc = NPCCard(
+            name="Guard",
+            occupation="city guard",
+            personality_traits=["aggressive"],
+            speech_style="curt, military",
+        )
+        assert npc.current_mood == "neutral"
+
+        kg = KnowledgeGraph()
+        kq = KnowledgeQueryEngine(kg)
+        llm_client = AsyncMock()
+
+        actor = Actor(llm_client=llm_client, npc=npc, knowledge_query=kq)
+        # Mock _send to return text with mood tag
+        actor._send = AsyncMock(
+            return_value="*tackles you to the ground*\n[MOOD: hostile]"
+        )
+
+        result = await actor.act("attack guard", {"location_name": "forum"})
+        assert npc.current_mood == "hostile"
+        assert "[MOOD:" not in result
+
+    @pytest.mark.asyncio
+    async def test_mood_unchanged_when_no_tag(self):
+        npc = NPCCard(
+            name="Merchant",
+            occupation="merchant",
+            personality_traits=["friendly"],
+            speech_style="cheerful",
+        )
+        kg = KnowledgeGraph()
+        kq = KnowledgeQueryEngine(kg)
+        llm_client = AsyncMock()
+
+        actor = Actor(llm_client=llm_client, npc=npc, knowledge_query=kq)
+        actor._send = AsyncMock(return_value="Welcome, friend!")
+
+        await actor.act("hello", {"location_name": "market"})
+        assert npc.current_mood == "neutral"
+
+    @pytest.mark.asyncio
+    async def test_conversation_history_excludes_mood_tag(self):
+        npc = NPCCard(name="Guard", occupation="guard")
+        kg = KnowledgeGraph()
+        kq = KnowledgeQueryEngine(kg)
+        llm_client = AsyncMock()
+
+        actor = Actor(llm_client=llm_client, npc=npc, knowledge_query=kq)
+        actor._send = AsyncMock(
+            return_value="*blocks your strike*\n[MOOD: hostile]"
+        )
+
+        await actor.act("punch guard", {"location_name": "gate"})
+        # The mood tag should be stripped from conversation history
+        assert len(actor._conversation) == 2
+        assert "[MOOD:" not in actor._conversation[1].content
+
+
+# ---------------------------------------------------------------------------
+# Combat dice integration in Director
+# ---------------------------------------------------------------------------
+
+
+class TestCombatDiceIntegration:
+    def _make_director_with_npc(
+        self, is_aggressive: bool, combat_skill: int = 5
+    ) -> tuple[Director, AsyncMock]:
+        """Create a Director with a registered NPC and mock Actor."""
+        gs = _make_game_state()
+        npc = NPCCard(
+            name="Guard",
+            occupation="city guard",
+            attributes={"combat_skill": combat_skill},
+        )
+        npc.uuid = "npc-1"  # match the SceneNPC uuid
+        gs.npcs["npc-1"] = npc
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "INTERACT",
+                "is_aggressive": is_aggressive,
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+
+        # Create a mock actor
+        mock_actor = AsyncMock()
+        mock_actor.act = AsyncMock(return_value="*fights back*")
+        director.actors["npc-1"] = mock_actor
+
+        return director, mock_actor
+
+    @pytest.mark.asyncio
+    async def test_aggressive_action_injects_dice_roll(self):
+        director, mock_actor = self._make_director_with_npc(is_aggressive=True)
+        await director.act("punch the guard")
+
+        # Actor should have been called with dice roll in input
+        call_args = mock_actor.act.call_args
+        input_text = call_args.kwargs.get("input_data") or call_args.args[0]
+        assert "[DICE ROLL:" in input_text
+        assert "OUTCOME:" in input_text
+
+    @pytest.mark.asyncio
+    async def test_non_aggressive_action_no_dice_roll(self):
+        director, mock_actor = self._make_director_with_npc(is_aggressive=False)
+        await director.act("talk to the guard")
+
+        call_args = mock_actor.act.call_args
+        input_text = call_args.kwargs.get("input_data") or call_args.args[0]
+        assert "[DICE ROLL:" not in input_text
+
+    @pytest.mark.asyncio
+    async def test_combat_roll_included_in_dialogue_result(self):
+        director, mock_actor = self._make_director_with_npc(is_aggressive=True)
+        await director.act("attack guard")
+
+        # Check that narrator received combat_roll in the dialogue data
+        narrator_call = director.narrator.act.call_args
+        raw_input = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
+        dialogue = raw_input.get("dialogue", [])
+        assert len(dialogue) == 1
+        assert "combat_roll" in dialogue[0]
+
+    @pytest.mark.asyncio
+    async def test_npc_without_combat_skill_uses_default(self):
+        """NPC with no combat_skill attribute defaults to 3."""
+        gs = _make_game_state()
+        npc = NPCCard(name="Merchant", occupation="merchant")
+        npc.uuid = "npc-1"
+        gs.npcs["npc-1"] = npc
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "INTERACT",
+                "is_aggressive": True,
+                "targets": ["merchant"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+        mock_actor = AsyncMock()
+        mock_actor.act = AsyncMock(return_value="*cowers*")
+        director.actors["npc-1"] = mock_actor
+
+        await director.act("punch the merchant")
+
+        call_args = mock_actor.act.call_args
+        input_text = call_args.kwargs.get("input_data") or call_args.args[0]
+        # Default combat_skill=3, so bonus should be +3
+        assert "+3]" in input_text
+
+
+# ---------------------------------------------------------------------------
+# NPC retaliation after mood change
+# ---------------------------------------------------------------------------
+
+
+class TestNPCRetaliation:
+    @pytest.mark.asyncio
+    async def test_retaliation_on_mood_change_to_hostile(self):
+        """When NPC mood changes to hostile and dice pass, NPC retaliates."""
+        gs = _make_game_state()
+        npc = NPCCard(
+            name="Guard",
+            occupation="city guard",
+            attributes={"combat_skill": 7},
+        )
+        npc.uuid = "npc-1"
+        npc.current_mood = "neutral"
+        gs.npcs["npc-1"] = npc
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "INTERACT",
+                "is_aggressive": True,
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+
+        call_count = 0
+
+        async def mock_act(input_data, context):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                # First call: player attacks, NPC mood changes
+                npc.current_mood = "hostile"
+                return "*blocks the strike*\n[MOOD: hostile]"
+            else:
+                # Second call: retaliation
+                return "*swings sword at you*"
+
+        mock_actor = AsyncMock()
+        mock_actor.act = AsyncMock(side_effect=mock_act)
+        director.actors["npc-1"] = mock_actor
+
+        # Patch roll_aggression to always trigger
+        import cast.director as director_module
+        original_roll = director_module.roll_aggression
+
+        def always_attacks(mood, _rng=None):
+            from cast.dice import AggressionRoll
+            return AggressionRoll(will_attack=True, roll=15, threshold=5, mood=mood)
+
+        director_module.roll_aggression = always_attacks
+        try:
+            await director.act("attack the guard")
+        finally:
+            director_module.roll_aggression = original_roll
+
+        # Actor should have been called twice: once for attack, once for retaliation
+        assert mock_actor.act.call_count == 2
+        second_call = mock_actor.act.call_args_list[1]
+        input_text = second_call.kwargs.get("input_data") or second_call.args[0]
+        assert "retaliates" in input_text
+        assert "[DICE ROLL:" in input_text
+
+    @pytest.mark.asyncio
+    async def test_no_retaliation_when_mood_unchanged(self):
+        """No retaliation if mood doesn't change."""
+        gs = _make_game_state()
+        npc = NPCCard(name="Guard", occupation="guard")
+        npc.uuid = "npc-1"
+        npc.current_mood = "neutral"
+        gs.npcs["npc-1"] = npc
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "TALK",
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+
+        mock_actor = AsyncMock()
+        mock_actor.act = AsyncMock(return_value="Hello there.")
+        director.actors["npc-1"] = mock_actor
+
+        await director.act("greet the guard")
+
+        # Actor should only be called once (no retaliation)
+        assert mock_actor.act.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_no_retaliation_when_dice_fail(self):
+        """Mood changes but dice don't pass → no retaliation."""
+        gs = _make_game_state()
+        npc = NPCCard(name="Guard", occupation="guard")
+        npc.uuid = "npc-1"
+        npc.current_mood = "neutral"
+        gs.npcs["npc-1"] = npc
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "INTERACT",
+                "is_aggressive": True,
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+
+        async def mock_act(input_data, context):
+            npc.current_mood = "hostile"
+            return "*shoves you back*"
+
+        mock_actor = AsyncMock()
+        mock_actor.act = AsyncMock(side_effect=mock_act)
+        director.actors["npc-1"] = mock_actor
+
+        # Patch roll_aggression to never trigger
+        import cast.director as director_module
+        original_roll = director_module.roll_aggression
+
+        def never_attacks(mood, _rng=None):
+            from cast.dice import AggressionRoll
+            return AggressionRoll(will_attack=False, roll=2, threshold=5, mood=mood)
+
+        director_module.roll_aggression = never_attacks
+        try:
+            await director.act("punch the guard")
+        finally:
+            director_module.roll_aggression = original_roll
+
+        # Only one call — no retaliation
+        assert mock_actor.act.call_count == 1
