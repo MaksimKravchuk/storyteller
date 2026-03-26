@@ -20,7 +20,10 @@ NARRATOR_SYSTEM = PromptTemplate([
             "- On a CONTINUATION (action within the same scene): focus ONLY on "
             "the direct result of the player's action and character reactions. "
             "Do NOT describe the environment, atmosphere, lighting, smells, or "
-            "sounds unless the action directly changes them. Keep it short."
+            "sounds unless the action directly changes them. Keep it short.\n"
+            "- When violence occurs, narrate physical consequences honestly — "
+            "impacts, injuries, struggle. Do not soften or skip the result of "
+            "aggressive actions."
         ),
         required_vars=["setting_name", "time_period"],
     ),

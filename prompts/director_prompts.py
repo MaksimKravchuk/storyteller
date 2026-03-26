@@ -26,6 +26,9 @@ DIRECTOR_SYSTEM = PromptTemplate([
             "resolve it based on context and proceed — do NOT re-ask.\n"
             "- Categorise actions as: EXPLORE, TALK, INTERACT, EXAMINE, MOVE, SLEEP, OTHER.\n"
             "- NPCs should act as real people would — they do NOT try to advance the plot.\n"
+            "- When the player uses violence or aggression, NPCs must respond with "
+            "proportional physical reactions (fight, flee, restrain, call for help) "
+            "— NOT just verbal warnings.\n"
             "- Output ONLY valid JSON, nothing else."
         ),
     ),
@@ -61,6 +64,7 @@ DIRECTOR_ACTION_ROUTING = PromptTemplate([
             "Analyse this action and produce a JSON routing plan with these fields:\n"
             '{{\n'
             '  "action_type": "EXPLORE|TALK|INTERACT|EXAMINE|MOVE|SLEEP|OTHER",\n'
+            '  "is_aggressive": true/false,  // true if the player attacks, threatens, or physically provokes an NPC\n'
             '  "targets": ["list of relevant NPC names or object names"],\n'
             '  "needs_clarification": true/false,\n'
             '  "clarification_question": "question if needs_clarification is true, else empty string",\n'

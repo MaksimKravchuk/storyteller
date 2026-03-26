@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
@@ -9,6 +10,8 @@ from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
 from models.npc_card import NPCCard
 from prompts.actor_prompts import ACTOR_SYSTEM
+
+_MOOD_RE = re.compile(r"\n?\[MOOD:\s*(\w+)\]\s*$")
 
 
 class Actor(BasePerformer):
@@ -64,6 +67,9 @@ class Actor(BasePerformer):
             input_data, conversation=self._conversation
         )
 
+        # Extract and apply mood update if present
+        response, new_mood = self._extract_mood(response)
+
         # Track conversation for multi-turn dialogue
         self._conversation.append(
             Message(role=Role.USER, content=input_data)
@@ -72,7 +78,22 @@ class Actor(BasePerformer):
             Message(role=Role.ASSISTANT, content=response)
         )
 
+        if new_mood:
+            self.npc.current_mood = new_mood
+
         return response.strip()
+
+    @staticmethod
+    def _extract_mood(text: str) -> tuple[str, str | None]:
+        """Strip a ``[MOOD: <word>]`` tag from the end of *text*.
+
+        Returns ``(cleaned_text, mood)`` where *mood* is ``None``
+        when no tag was found.
+        """
+        m = _MOOD_RE.search(text)
+        if m:
+            return text[: m.start()], m.group(1).lower()
+        return text, None
 
     def reset_conversation(self) -> None:
         """Clear conversation history (e.g. when player walks away)."""
