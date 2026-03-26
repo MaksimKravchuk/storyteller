@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
-from models.scene import Scene
+from models.scene import Scene, SceneNPC
 from prompts.scene_builder_prompts import SCENE_BUILDER_GENERATE, SCENE_BUILDER_SYSTEM
 
 
@@ -47,10 +47,16 @@ class SceneBuilder(BasePerformer):
         )
         scene_data = await self._send_json(prompt)
 
+        # Convert raw NPC role strings into typed SceneNPC objects.
+        npcs = [
+            SceneNPC(role=r)
+            for r in scene_data.get("npcs_present", [])
+        ]
+
         return Scene(
             location_id=scene_data.get("location_id", "unknown"),
             description=scene_data.get("description", ""),
-            npcs_present=scene_data.get("npcs_present", []),
+            npcs_present=npcs,
             points_of_interest=scene_data.get("points_of_interest", []),
             ambient_description=scene_data.get("ambient_description", ""),
             time_of_day=scene_data.get("time_of_day", game_state.game_time),

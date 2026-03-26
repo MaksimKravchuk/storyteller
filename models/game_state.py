@@ -48,6 +48,9 @@ class GameState(BaseModel):
         self.game_clock: float = 0.0  # Game time in hours
         self.game_time: str = "morning"  # Human-readable time of day
         self.conversation_log: list[dict] = []  # Full session log
+        # Pending clarification exchange for the Director (persisted so it
+        # survives engine recreation between Telegram messages).
+        self.pending_clarification: list[dict] | None = None
 
     def advance_clock(self, hours: float) -> None:
         """Advance the game clock and update time-of-day label."""

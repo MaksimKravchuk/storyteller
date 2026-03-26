@@ -137,8 +137,14 @@ class EventManager:
                     gs.locations[to_loc].add_npc(npc_id)
                 # Update current scene if applicable
                 if gs.current_scene and gs.current_scene.location_id == npc.location_id:
-                    if npc_id not in gs.current_scene.npcs_present:
-                        gs.current_scene.npcs_present.append(npc_id)
+                    from models.scene import SceneNPC
+                    already = any(
+                        snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present
+                    )
+                    if not already:
+                        gs.current_scene.npcs_present.append(
+                            SceneNPC(role=npc.occupation or npc.name, uuid=npc_id)
+                        )
 
         elif etype == "ADD_ITEM":
             npc_id = effect.params.get("npc_id", effect.target_id)
@@ -184,8 +190,11 @@ class EventManager:
             if npc:
                 if npc.location_id and npc.location_id in gs.locations:
                     gs.locations[npc.location_id].remove_npc(npc_id)
-                if gs.current_scene and npc_id in gs.current_scene.npcs_present:
-                    gs.current_scene.npcs_present.remove(npc_id)
+                if gs.current_scene:
+                    gs.current_scene.npcs_present = [
+                        snpc for snpc in gs.current_scene.npcs_present
+                        if snpc.uuid != npc_id
+                    ]
                 del gs.npcs[npc_id]
 
         # SPAWN_NPC is handled at a higher level by the Director

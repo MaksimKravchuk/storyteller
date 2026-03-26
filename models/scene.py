@@ -3,6 +3,35 @@ from __future__ import annotations
 from models.base_model import BaseModel
 
 
+class SceneNPC:
+    """Lightweight NPC descriptor within a scene.
+
+    Created by Scene Builder from LLM output.  The Director
+    initialises it (generates an ``NPCCard`` + ``Actor``)
+    deterministically on every turn.
+    """
+
+    def __init__(self, *, role: str, uuid: str | None = None):
+        self.role = role  # Short role from LLM, e.g. "guard", "merchant"
+        self.uuid: str | None = uuid  # Set after NPCCard generation
+
+    @property
+    def need_init(self) -> bool:
+        """``True`` while no ``NPCCard`` has been generated for this entry."""
+        return self.uuid is None
+
+    def to_dict(self) -> dict:
+        return {"role": self.role, "uuid": self.uuid}
+
+    @classmethod
+    def from_dict(cls, data: dict) -> SceneNPC:
+        return cls(role=data["role"], uuid=data.get("uuid"))
+
+    def __repr__(self) -> str:
+        status = "uninit" if self.need_init else self.uuid
+        return f"SceneNPC(role={self.role!r}, {status})"
+
+
 class Scene(BaseModel):
     """A snapshot of a specific place at a specific time.
 
@@ -14,7 +43,7 @@ class Scene(BaseModel):
         *,
         location_id: str,
         description: str = "",
-        npcs_present: list[str] | None = None,
+        npcs_present: list[SceneNPC] | None = None,
         points_of_interest: list[str] | None = None,
         ambient_description: str = "",
         time_of_day: str = "day",
@@ -22,7 +51,7 @@ class Scene(BaseModel):
         super().__init__()
         self.location_id = location_id
         self.description = description
-        self.npcs_present: list[str] = npcs_present or []  # NPC UUIDs
+        self.npcs_present: list[SceneNPC] = npcs_present or []
         self.points_of_interest: list[str] = points_of_interest or []
         self.ambient_description = ambient_description
         self.time_of_day = time_of_day

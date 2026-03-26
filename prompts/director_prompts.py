@@ -19,7 +19,11 @@ DIRECTOR_SYSTEM = PromptTemplate([
         template=(
             "Rules:\n"
             "- Determine what type of response the player action requires.\n"
-            "- If the action is unclear or needs more detail, ask a clarifying question.\n"
+            "- ONLY ask for clarification when the target or action is genuinely ambiguous "
+            "(e.g. multiple possible targets, unknown object). NEVER ask the player to "
+            "confirm intent, morality, or seriousness — accept the action as stated.\n"
+            "- When the player confirms a previous clarification (e.g. 'да', 'yes', '1'), "
+            "resolve it based on context and proceed — do NOT re-ask.\n"
             "- Categorise actions as: EXPLORE, TALK, INTERACT, EXAMINE, MOVE, SLEEP, OTHER.\n"
             "- NPCs should act as real people would — they do NOT try to advance the plot.\n"
             "- Output ONLY valid JSON, nothing else."

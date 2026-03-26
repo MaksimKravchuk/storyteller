@@ -227,9 +227,37 @@ class GameEngine:
             language=self._language,
         )
 
+        # Restore Actor agents for NPCs that were already initialised in
+        # previous turns.  Without this, self.actors is empty after engine
+        # recreation (e.g. between Telegram messages) and dialogue routing
+        # silently produces no output.
+        self._restore_actors(agent_llm)
+
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------
+
+    def _restore_actors(self, llm_client: Any) -> None:
+        """Recreate Actor agents for every NPC already present in game state.
+
+        Called during ``restore_session`` so that NPCs initialised in prior
+        turns get working Actor agents even though the engine was rebuilt
+        from scratch.
+        """
+        from cast.actor import Actor
+        from knowledge.query import KnowledgeQueryEngine
+
+        if not self._director or not self._game_state or not self._knowledge_graph:
+            return
+
+        for npc_uuid, npc in self._game_state.npcs.items():
+            actor = Actor(
+                llm_client=llm_client,
+                npc=npc,
+                knowledge_query=KnowledgeQueryEngine(self._knowledge_graph),
+            )
+            actor.set_context(language=self._language)
+            self._director.register_actor(npc_uuid, actor)
 
     def _populate_graph_from_setting(self, setting: Setting) -> None:
         """Convert Setting data into knowledge graph nodes."""
