@@ -148,9 +148,8 @@ class Director(BasePerformer):
                 conversation=scene_history + history,
             )
         # Normal routing — wrap in the full routing prompt with scene history
-        scene_history = self._build_scene_history()
         prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
-        return await self._send_json(prompt, conversation=scene_history)
+        return await self._send_json(prompt, conversation=self._build_scene_history())
 
     def _save_pending_clarification(
         self, player_action: str, routing_plan: dict

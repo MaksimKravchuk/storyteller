@@ -92,7 +92,7 @@ def _make_director(
 
     # Patch _send_json to return the desired routing response
     if route_response:
-        director._send_json = AsyncMock(return_value=route_response)
+        director._send_json = AsyncMock(return_value=route_response)  # type: ignore[method-assign]
 
     return director
 
