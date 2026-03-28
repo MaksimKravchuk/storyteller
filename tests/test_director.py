@@ -59,19 +59,24 @@ def _make_director(
     # Mock LLM client — _send_json returns the routing plan
     llm_client = AsyncMock()
 
-    # Mock agents
-    scene_builder = AsyncMock()
-    scene_builder.act = AsyncMock(return_value=Scene(
+    # Mock agents — wire both .act and .execute so Director can call
+    # .execute() while tests can still inspect call args on either.
+    scene_result = Scene(
         location_id="new-loc",
         description="A new place.",
         npcs_present=[SceneNPC(role="merchant")],
-    ))
+    )
+    scene_builder = AsyncMock()
+    scene_builder.act = AsyncMock(return_value=scene_result)
+    scene_builder.execute = AsyncMock(return_value=scene_result)
 
     narrator = AsyncMock()
     narrator.act = AsyncMock(return_value=narrator_response)
+    narrator.execute = AsyncMock(return_value=narrator_response)
 
     npc_generator = AsyncMock()
     npc_generator.act = AsyncMock(return_value=[])
+    npc_generator.execute = AsyncMock(return_value=[])
 
     data_miner = AsyncMock()
 
@@ -209,7 +214,7 @@ class TestSceneChanges:
         assert director.game_state.scene_number == 0
         await director.act("go to the market")
         assert director.game_state.scene_number == 1
-        director.scene_builder.act.assert_called_once()
+        director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_explore_triggers_scene_change(self):
@@ -221,7 +226,7 @@ class TestSceneChanges:
         })
         await director.act("explore the area")
         assert director.game_state.scene_number == 1
-        director.scene_builder.act.assert_called_once()
+        director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_sleep_triggers_scene_change(self):
@@ -233,7 +238,7 @@ class TestSceneChanges:
         })
         await director.act("go to sleep")
         assert director.game_state.scene_number == 1
-        director.scene_builder.act.assert_called_once()
+        director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_talk_does_not_trigger_scene_change(self):
@@ -530,8 +535,42 @@ class TestClarificationPreservesSceneHistory:
         )
         await director.act("attack again")
 
-        narrator_call = director.narrator.act.call_args
+        narrator_call = director.narrator.execute.call_args
         context = narrator_call.kwargs.get("context") or narrator_call.args[1]
         assert "scene_history" in context
         assert len(context["scene_history"]) == 1
         assert context["scene_history"][0]["player_action"] == "attack guard"
+
+
+# ---------------------------------------------------------------------------
+# Call chain delegation
+# ---------------------------------------------------------------------------
+
+
+class TestCallChainDelegation:
+    """Director must call sub-agents via execute() for call-chain tracking."""
+
+    @pytest.mark.asyncio
+    async def test_narrator_called_via_execute(self):
+        director = _make_director(route_response={
+            "action_type": "OTHER",
+            "targets": [],
+            "needs_clarification": False,
+            "delegate_to": ["narrator"],
+        })
+        await director.act("look around")
+
+        # Narrator.execute() should have been called (not just .act())
+        director.narrator.execute.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_scene_builder_called_via_execute(self):
+        director = _make_director(route_response={
+            "action_type": "EXPLORE",
+            "targets": [],
+            "needs_clarification": False,
+            "delegate_to": ["scene_builder"],
+        })
+        await director.act("explore the ruins")
+
+        director.scene_builder.execute.assert_called_once()

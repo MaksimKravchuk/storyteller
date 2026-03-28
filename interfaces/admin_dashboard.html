@@ -61,6 +61,13 @@
   .ai-call-detail pre { background: #0a0f1e; border-radius: 4px; padding: 8px; font-size: 11px; color: #aaa; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; }
   .ai-call-detail h4 { color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin: 6px 0 4px; }
   .setup-header { color: #999; font-size: 13px; font-weight: 600; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid #0f3460; }
+
+  /* Call chain tree */
+  .ai-call-tree-root { margin-bottom: 4px; }
+  .ai-call-tree-children { margin-left: 20px; border-left: 2px solid #0f3460; padding-left: 12px; }
+  .ai-call-tree-child { position: relative; }
+  .ai-call-tree-child::before { content: ''; position: absolute; left: -14px; top: 14px; width: 12px; height: 0; border-top: 2px solid #0f3460; }
+  .call-seq-badge { display: inline-block; background: #0f3460; color: #7c83ff; font-size: 10px; padding: 1px 5px; border-radius: 8px; margin-right: 4px; }
 </style>
 </head>
 <body>
@@ -190,29 +197,69 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+function renderSingleCall(c) {
+  const tokens = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
+  const tokenStr = tokens.length ? tokens.join('+') + ' tok' : '';
+  const durStr = c.duration_ms != null ? c.duration_ms + 'ms' : '';
+  const metaParts = [c.model, tokenStr, durStr].filter(Boolean).join(' | ');
+  const uid = 'aic-' + Math.random().toString(36).slice(2, 10);
+  const seqBadge = c.call_sequence != null ? `<span class="call-seq-badge">#${c.call_sequence}</span>` : '';
+  return `
+    <div class="ai-call-entry">
+      <div class="ai-call-header">
+        ${seqBadge}
+        <span class="agent-badge agent-${c.agent_name}">${c.agent_name}</span>
+        <span class="ai-call-meta">${metaParts}</span>
+      </div>
+      <div class="ai-call-detail-toggle" onclick="toggleDetail('${uid}')">Show prompt &amp; response</div>
+      <div class="ai-call-detail" id="${uid}">
+        <h4>System Prompt</h4>
+        <pre>${escapeHtml(c.system_prompt || '')}</pre>
+        <h4>Messages Sent</h4>
+        <pre>${escapeHtml(JSON.stringify(c.messages, null, 2))}</pre>
+        <h4>Response</h4>
+        <pre>${escapeHtml(c.response_content || '')}</pre>
+      </div>
+    </div>`;
+}
+
 function renderAiCallEntries(calls) {
   if (!calls || !calls.length) return '';
-  return calls.map((c, i) => {
-    const tokens = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
-    const tokenStr = tokens.length ? tokens.join('+') + ' tok' : '';
-    const durStr = c.duration_ms != null ? c.duration_ms + 'ms' : '';
-    const metaParts = [c.model, tokenStr, durStr].filter(Boolean).join(' | ');
-    const uid = 'aic-' + Math.random().toString(36).slice(2, 10);
+
+  // Sort by call_sequence (fallback to original order)
+  const sorted = [...calls].sort((a, b) =>
+    (a.call_sequence ?? 0) - (b.call_sequence ?? 0)
+  );
+
+  // Build tree: root nodes (parent_agent=null), children grouped under parent
+  const roots = [];
+  for (const call of sorted) {
+    if (!call.parent_agent) {
+      roots.push({ call, children: [] });
+    } else {
+      // Attach to most recent root from the parent agent
+      let attached = false;
+      for (let i = roots.length - 1; i >= 0; i--) {
+        if (roots[i].call.agent_name === call.parent_agent) {
+          roots[i].children.push(call);
+          attached = true;
+          break;
+        }
+      }
+      if (!attached) roots.push({ call, children: [] });
+    }
+  }
+
+  return roots.map(node => {
+    const rootHtml = renderSingleCall(node.call);
+    if (!node.children.length) return rootHtml;
+    const childHtml = node.children
+      .map(c => `<div class="ai-call-tree-child">${renderSingleCall(c)}</div>`)
+      .join('');
     return `
-      <div class="ai-call-entry">
-        <div class="ai-call-header">
-          <span class="agent-badge agent-${c.agent_name}">${c.agent_name}</span>
-          <span class="ai-call-meta">${metaParts}</span>
-        </div>
-        <div class="ai-call-detail-toggle" onclick="toggleDetail('${uid}')">Show prompt &amp; response</div>
-        <div class="ai-call-detail" id="${uid}">
-          <h4>System Prompt</h4>
-          <pre>${escapeHtml(c.system_prompt || '')}</pre>
-          <h4>Messages Sent</h4>
-          <pre>${escapeHtml(JSON.stringify(c.messages, null, 2))}</pre>
-          <h4>Response</h4>
-          <pre>${escapeHtml(c.response_content || '')}</pre>
-        </div>
+      <div class="ai-call-tree-root">
+        ${rootHtml}
+        <div class="ai-call-tree-children">${childHtml}</div>
       </div>`;
   }).join('');
 }

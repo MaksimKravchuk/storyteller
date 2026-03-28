@@ -174,6 +174,8 @@ ai_call_logs = Table(
     Column("prompt_tokens", Integer, nullable=True),
     Column("completion_tokens", Integer, nullable=True),
     Column("duration_ms", Integer, nullable=True),
+    Column("call_sequence", Integer, nullable=True),
+    Column("parent_agent", String(64), nullable=True),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
     Index("idx_ai_calls_session", "session_id"),
     Index("idx_ai_calls_session_turn", "session_id", "turn_number"),

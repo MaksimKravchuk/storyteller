@@ -449,6 +449,8 @@ class GameRepository:
                 "prompt_tokens": entry.get("prompt_tokens"),
                 "completion_tokens": entry.get("completion_tokens"),
                 "duration_ms": entry.get("duration_ms"),
+                "call_sequence": entry.get("call_sequence"),
+                "parent_agent": entry.get("parent_agent"),
             }
             for entry in logs
         ]
