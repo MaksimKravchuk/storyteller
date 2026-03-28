@@ -6,6 +6,7 @@ import json as _json
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
+from cast.dice import AggressionRoll, CombatRoll, roll_aggression, roll_combat
 from knowledge.memory import MemoryManager
 from knowledge.node import KnowledgeScope
 from llm.message import Message, Role
@@ -293,11 +294,25 @@ class Director(BasePerformer):
         # Deterministic: if any targets resolve to initialised NPCs in the
         # scene, always invoke their Actors — don't rely on the LLM to
         # include "actor" in delegate_to.
+        is_aggressive = bool(plan.get("is_aggressive"))
         has_npc_targets = self._targets_match_scene_npcs(target_names)
         if has_npc_targets or "actor" in delegates or action_type == "TALK":
-            dialogue = await self._handle_dialogue(player_action, target_names)
+            # Snapshot NPC moods before dialogue to detect changes
+            mood_snapshot = {
+                uuid: npc.current_mood
+                for uuid, npc in self.game_state.npcs.items()
+            }
+
+            dialogue = await self._handle_dialogue(
+                player_action, target_names, is_aggressive=is_aggressive,
+            )
             if dialogue:
                 raw_outputs["dialogue"] = dialogue
+
+            # Check for NPC retaliation after mood changes
+            retaliation = await self._check_retaliation(mood_snapshot)
+            if retaliation:
+                raw_outputs.setdefault("dialogue", []).extend(retaliation)
 
         # --- NPC generation (explicit request) ---
         if "npc_generator" in delegates:
@@ -331,13 +346,20 @@ class Director(BasePerformer):
         return narrated
 
     async def _handle_dialogue(
-        self, player_action: str, target_names: list[str]
+        self,
+        player_action: str,
+        target_names: list[str],
+        is_aggressive: bool = False,
     ) -> list[dict[str, str]]:
         """Route dialogue to the correct Actor agents.
 
         Matches targets by NPC name **and** by the SceneNPC role
         description, so that both "караульный стражник" (role) and
         "Теодорос" (generated name) resolve correctly.
+
+        When ``is_aggressive`` is True, a combat dice roll is performed
+        for each targeted NPC and the outcome is injected into the
+        Actor's input so the LLM must narrate that result.
         """
         targets_lower = {t.lower() for t in target_names}
 
@@ -359,15 +381,39 @@ class Director(BasePerformer):
                 or npc_uuid in role_matched_uuids
             )
             if matched:
+                action_text = player_action
+                combat_roll: CombatRoll | None = None
+
+                if is_aggressive:
+                    combat_skill = npc.get_attribute("combat_skill", 3)
+                    combat_roll = roll_combat(combat_skill)
+                    action_text = (
+                        f"{player_action}\n\n"
+                        f"[DICE ROLL: player {combat_roll.player_roll} vs "
+                        f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus}]\n"
+                        f"OUTCOME: {combat_roll.description}\n"
+                        f"You MUST narrate this outcome. Do NOT override the dice result."
+                    )
+
                 response = await actor.execute(
-                    input_data=player_action,
+                    input_data=action_text,
                     context={
                         "npc": npc,
                         "game_state": self.game_state,
                         "location_name": self._get_location_name(npc.location_id),
                     },
                 )
-                results.append({"npc_name": npc.name, "response": response})
+                result_entry: dict[str, str] = {
+                    "npc_name": npc.name,
+                    "response": response,
+                }
+                if combat_roll:
+                    result_entry["combat_roll"] = (
+                        f"d20: player {combat_roll.player_roll} vs "
+                        f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus} "
+                        f"→ {combat_roll.outcome.value}"
+                    )
+                results.append(result_entry)
         return results
 
     async def _init_scene_npcs(self) -> None:
@@ -450,6 +496,71 @@ class Director(BasePerformer):
         )
         actor.set_context(language=self._language)
         self.register_actor(npc.uuid, actor)
+
+    # ------------------------------------------------------------------
+    # Internal: NPC retaliation
+    # ------------------------------------------------------------------
+
+    async def _check_retaliation(
+        self, mood_snapshot: dict[str, str],
+    ) -> list[dict[str, str]]:
+        """After dialogue, check if any NPC whose mood changed wants to
+        attack the player.
+
+        Rolls 1d20 against a mood-based threshold (e.g. hostile=5+).
+        If the roll passes, the NPC retaliates — a combat dice roll is
+        performed and injected into a second Actor call.
+        """
+        results: list[dict[str, str]] = []
+        for npc_uuid, actor in self.actors.items():
+            npc = self.game_state.npcs.get(npc_uuid)
+            if not npc:
+                continue
+            old_mood = mood_snapshot.get(npc_uuid, "neutral")
+            if npc.current_mood == old_mood:
+                continue
+
+            aggression = roll_aggression(npc.current_mood)
+            if aggression is None or not aggression.will_attack:
+                continue
+
+            # NPC retaliates — roll combat from NPC's initiative
+            combat_skill = npc.get_attribute("combat_skill", 3)
+            combat_roll = roll_combat(combat_skill)
+
+            retaliation_input = (
+                f"{npc.name} retaliates against the player!\n\n"
+                f"[DICE ROLL: player {combat_roll.player_roll} vs "
+                f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus}]\n"
+                f"OUTCOME: {combat_roll.description}\n"
+                f"You MUST narrate this outcome. The NPC attacks FIRST — "
+                f"they are the aggressor now. Do NOT override the dice result."
+            )
+
+            response = await actor.execute(
+                input_data=retaliation_input,
+                context={
+                    "npc": npc,
+                    "game_state": self.game_state,
+                    "location_name": self._get_location_name(npc.location_id),
+                },
+            )
+            result_entry: dict[str, str] = {
+                "npc_name": npc.name,
+                "response": response,
+                "is_retaliation": "true",
+                "aggression_roll": (
+                    f"d20: {aggression.roll} vs threshold {aggression.threshold} "
+                    f"(mood: {aggression.mood}) → attacks"
+                ),
+                "combat_roll": (
+                    f"d20: player {combat_roll.player_roll} vs "
+                    f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus} "
+                    f"→ {combat_roll.outcome.value}"
+                ),
+            }
+            results.append(result_entry)
+        return results
 
     # ------------------------------------------------------------------
     # Internal: helpers
