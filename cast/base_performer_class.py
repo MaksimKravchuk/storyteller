@@ -8,7 +8,12 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from llm.base_client import BaseLLMClient
-from llm.call_logger import call_log_buffer, current_session_id
+from llm.call_logger import (
+    agent_stack,
+    call_log_buffer,
+    call_sequence_counter,
+    current_session_id,
+)
 from llm.message import LLMResponse, Message, Role
 from prompts.base_template import PromptTemplate
 
@@ -45,6 +50,26 @@ class BasePerformer(ABC):
         return self.system_prompt_template.render(**self._system_prompt_vars)
 
     # ------------------------------------------------------------------
+    # Public entry-point (wraps act with call-chain tracking)
+    # ------------------------------------------------------------------
+
+    async def execute(self, input_data: Any, context: dict | None = None) -> Any:
+        """Run this agent's ``act()`` while tracking the call chain.
+
+        Pushes the agent name onto the shared stack so that any LLM call
+        made inside ``act()`` records the correct ``parent_agent``.
+        """
+        stack = agent_stack.get([])
+        stack.append(type(self).__name__)
+        agent_stack.set(stack)
+        try:
+            return await self.act(input_data, context or {})
+        finally:
+            stack = agent_stack.get([])
+            stack.pop()
+            agent_stack.set(stack)
+
+    # ------------------------------------------------------------------
     # LLM helpers
     # ------------------------------------------------------------------
 
@@ -77,6 +102,11 @@ class BasePerformer(ABC):
         # Capture call for admin dashboard logging
         session_id = current_session_id.get(None)
         if session_id is not None:
+            stack = agent_stack.get([])
+            parent = stack[-2] if len(stack) >= 2 else None
+            seq = call_sequence_counter.get(0)
+            call_sequence_counter.set(seq + 1)
+
             buf = call_log_buffer.get([])
             buf.append({
                 "session_id": session_id,
@@ -88,6 +118,8 @@ class BasePerformer(ABC):
                 "prompt_tokens": response.usage.get("prompt_tokens"),
                 "completion_tokens": response.usage.get("completion_tokens"),
                 "duration_ms": duration_ms,
+                "parent_agent": parent,
+                "call_sequence": seq,
             })
             call_log_buffer.set(buf)
 

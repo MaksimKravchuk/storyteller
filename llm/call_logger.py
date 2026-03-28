@@ -15,10 +15,22 @@ call_log_buffer: contextvars.ContextVar[list[dict[str, Any]]] = contextvars.Cont
     "call_log_buffer", default=[]
 )
 
+# Stack of agent names for tracking call chains (parent→child).
+agent_stack: contextvars.ContextVar[list[str]] = contextvars.ContextVar(
+    "agent_stack", default=[]
+)
+
+# Auto-incrementing counter for ordering LLM calls within a turn.
+call_sequence_counter: contextvars.ContextVar[int] = contextvars.ContextVar(
+    "call_sequence_counter", default=0
+)
+
 
 def reset_buffer() -> None:
-    """Clear the buffer for a new turn."""
+    """Clear the buffer and call-chain tracking for a new turn."""
     call_log_buffer.set([])
+    agent_stack.set([])
+    call_sequence_counter.set(0)
 
 
 def get_and_clear_buffer() -> list[dict[str, Any]]:

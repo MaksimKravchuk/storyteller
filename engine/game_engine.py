@@ -89,7 +89,7 @@ class GameEngine:
 
         # Research the setting
         data_miner = DataMiner(llm_client=agent_llm)
-        setting = await data_miner.act(setting_description)
+        setting = await data_miner.execute(setting_description)
 
         # Initialise knowledge graph
         self._knowledge_graph = KnowledgeGraph()
@@ -132,7 +132,7 @@ class GameEngine:
         )
 
         # Generate opening scene
-        opening = await self._director.act(
+        opening = await self._director.execute(
             "Look around and describe the starting scene"
         )
         return opening
@@ -141,7 +141,7 @@ class GameEngine:
         """Process a player action and return the narrated response."""
         if not self._director:
             raise RuntimeError("Game not started. Call start_game() first.")
-        return await self._director.act(player_action)
+        return await self._director.execute(player_action)
 
     def schedule_event(self, event: GameEvent) -> str:
         """Schedule a world or NPC event on the timeline."""

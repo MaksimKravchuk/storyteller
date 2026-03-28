@@ -271,7 +271,7 @@ class Director(BasePerformer):
 
         # --- Scene building ---
         if "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS:
-            scene = await self.scene_builder.act(
+            scene = await self.scene_builder.execute(
                 input_data=player_action,
                 context={"game_state": self.game_state},
             )
@@ -318,7 +318,7 @@ class Director(BasePerformer):
         if "npc_generator" in delegates:
             targets = plan.get("targets", [])
             if targets:
-                new_npcs = await self.npc_generator.act(
+                new_npcs = await self.npc_generator.execute(
                     input_data=targets,
                     context={"game_state": self.game_state},
                 )
@@ -335,7 +335,7 @@ class Director(BasePerformer):
             ]
 
         # --- Always pass through Narrator ---
-        narrated = await self.narrator.act(
+        narrated = await self.narrator.execute(
             input_data=raw_outputs,
             context={
                 "player_action": player_action,
@@ -395,7 +395,7 @@ class Director(BasePerformer):
                         f"You MUST narrate this outcome. Do NOT override the dice result."
                     )
 
-                response = await actor.act(
+                response = await actor.execute(
                     input_data=action_text,
                     context={
                         "npc": npc,
@@ -432,7 +432,7 @@ class Director(BasePerformer):
         if not uninit:
             return
         roles = [snpc.role for snpc in uninit]
-        new_cards = await self.npc_generator.act(
+        new_cards = await self.npc_generator.execute(
             input_data=roles,
             context={"game_state": self.game_state},
         )
@@ -537,7 +537,7 @@ class Director(BasePerformer):
                 f"they are the aggressor now. Do NOT override the dice result."
             )
 
-            response = await actor.act(
+            response = await actor.execute(
                 input_data=retaliation_input,
                 context={
                     "npc": npc,

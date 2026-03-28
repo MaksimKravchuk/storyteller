@@ -62,19 +62,24 @@ def _make_director(
     # Mock LLM client — _send_json returns the routing plan
     llm_client = AsyncMock()
 
-    # Mock agents
-    scene_builder = AsyncMock()
-    scene_builder.act = AsyncMock(return_value=Scene(
+    # Mock agents — wire both .act and .execute so Director can call
+    # .execute() while tests can still inspect call args on either.
+    scene_result = Scene(
         location_id="new-loc",
         description="A new place.",
         npcs_present=[SceneNPC(role="merchant")],
-    ))
+    )
+    scene_builder = AsyncMock()
+    scene_builder.act = AsyncMock(return_value=scene_result)
+    scene_builder.execute = AsyncMock(return_value=scene_result)
 
     narrator = AsyncMock()
     narrator.act = AsyncMock(return_value=narrator_response)
+    narrator.execute = AsyncMock(return_value=narrator_response)
 
     npc_generator = AsyncMock()
     npc_generator.act = AsyncMock(return_value=[])
+    npc_generator.execute = AsyncMock(return_value=[])
 
     data_miner = AsyncMock()
 
@@ -212,7 +217,7 @@ class TestSceneChanges:
         assert director.game_state.scene_number == 0
         await director.act("go to the market")
         assert director.game_state.scene_number == 1
-        director.scene_builder.act.assert_called_once()
+        director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_explore_triggers_scene_change(self):
@@ -224,7 +229,7 @@ class TestSceneChanges:
         })
         await director.act("explore the area")
         assert director.game_state.scene_number == 1
-        director.scene_builder.act.assert_called_once()
+        director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_sleep_triggers_scene_change(self):
@@ -236,7 +241,7 @@ class TestSceneChanges:
         })
         await director.act("go to sleep")
         assert director.game_state.scene_number == 1
-        director.scene_builder.act.assert_called_once()
+        director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_talk_does_not_trigger_scene_change(self):
@@ -533,11 +538,45 @@ class TestClarificationPreservesSceneHistory:
         )
         await director.act("attack again")
 
-        narrator_call = director.narrator.act.call_args
+        narrator_call = director.narrator.execute.call_args
         context = narrator_call.kwargs.get("context") or narrator_call.args[1]
         assert "scene_history" in context
         assert len(context["scene_history"]) == 1
         assert context["scene_history"][0]["player_action"] == "attack guard"
+
+
+# ---------------------------------------------------------------------------
+# Call chain delegation
+# ---------------------------------------------------------------------------
+
+
+class TestCallChainDelegation:
+    """Director must call sub-agents via execute() for call-chain tracking."""
+
+    @pytest.mark.asyncio
+    async def test_narrator_called_via_execute(self):
+        director = _make_director(route_response={
+            "action_type": "OTHER",
+            "targets": [],
+            "needs_clarification": False,
+            "delegate_to": ["narrator"],
+        })
+        await director.act("look around")
+
+        # Narrator.execute() should have been called (not just .act())
+        director.narrator.execute.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_scene_builder_called_via_execute(self):
+        director = _make_director(route_response={
+            "action_type": "EXPLORE",
+            "targets": [],
+            "needs_clarification": False,
+            "delegate_to": ["scene_builder"],
+        })
+        await director.act("explore the ruins")
+
+        director.scene_builder.execute.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -675,9 +714,10 @@ class TestCombatDiceIntegration:
             },
         )
 
-        # Create a mock actor
+        # Create a mock actor — wire both .act and .execute
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(return_value="*fights back*")
+        mock_actor.execute = AsyncMock(return_value="*fights back*")
         director.actors["npc-1"] = mock_actor
 
         return director, mock_actor
@@ -688,7 +728,7 @@ class TestCombatDiceIntegration:
         await director.act("punch the guard")
 
         # Actor should have been called with dice roll in input
-        call_args = mock_actor.act.call_args
+        call_args = mock_actor.execute.call_args
         input_text = call_args.kwargs.get("input_data") or call_args.args[0]
         assert "[DICE ROLL:" in input_text
         assert "OUTCOME:" in input_text
@@ -698,7 +738,7 @@ class TestCombatDiceIntegration:
         director, mock_actor = self._make_director_with_npc(is_aggressive=False)
         await director.act("talk to the guard")
 
-        call_args = mock_actor.act.call_args
+        call_args = mock_actor.execute.call_args
         input_text = call_args.kwargs.get("input_data") or call_args.args[0]
         assert "[DICE ROLL:" not in input_text
 
@@ -708,7 +748,7 @@ class TestCombatDiceIntegration:
         await director.act("attack guard")
 
         # Check that narrator received combat_roll in the dialogue data
-        narrator_call = director.narrator.act.call_args
+        narrator_call = director.narrator.execute.call_args
         raw_input = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
         dialogue = raw_input.get("dialogue", [])
         assert len(dialogue) == 1
@@ -734,11 +774,12 @@ class TestCombatDiceIntegration:
         )
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(return_value="*cowers*")
+        mock_actor.execute = AsyncMock(return_value="*cowers*")
         director.actors["npc-1"] = mock_actor
 
         await director.act("punch the merchant")
 
-        call_args = mock_actor.act.call_args
+        call_args = mock_actor.execute.call_args
         input_text = call_args.kwargs.get("input_data") or call_args.args[0]
         # Default combat_skill=3, so bonus should be +3
         assert "+3]" in input_text
@@ -789,6 +830,7 @@ class TestNPCRetaliation:
 
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(side_effect=mock_act)
+        mock_actor.execute = AsyncMock(side_effect=mock_act)
         director.actors["npc-1"] = mock_actor
 
         # Patch roll_aggression to always trigger
@@ -806,8 +848,8 @@ class TestNPCRetaliation:
             director_module.roll_aggression = original_roll
 
         # Actor should have been called twice: once for attack, once for retaliation
-        assert mock_actor.act.call_count == 2
-        second_call = mock_actor.act.call_args_list[1]
+        assert mock_actor.execute.call_count == 2
+        second_call = mock_actor.execute.call_args_list[1]
         input_text = second_call.kwargs.get("input_data") or second_call.args[0]
         assert "retaliates" in input_text
         assert "[DICE ROLL:" in input_text
@@ -833,12 +875,13 @@ class TestNPCRetaliation:
 
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(return_value="Hello there.")
+        mock_actor.execute = AsyncMock(return_value="Hello there.")
         director.actors["npc-1"] = mock_actor
 
         await director.act("greet the guard")
 
         # Actor should only be called once (no retaliation)
-        assert mock_actor.act.call_count == 1
+        assert mock_actor.execute.call_count == 1
 
     @pytest.mark.asyncio
     async def test_no_retaliation_when_dice_fail(self):
@@ -866,6 +909,7 @@ class TestNPCRetaliation:
 
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(side_effect=mock_act)
+        mock_actor.execute = AsyncMock(side_effect=mock_act)
         director.actors["npc-1"] = mock_actor
 
         # Patch roll_aggression to never trigger
@@ -883,4 +927,4 @@ class TestNPCRetaliation:
             director_module.roll_aggression = original_roll
 
         # Only one call — no retaliation
-        assert mock_actor.act.call_count == 1
+        assert mock_actor.execute.call_count == 1
