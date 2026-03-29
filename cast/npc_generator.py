@@ -18,9 +18,7 @@ class NPCGenerator(BasePerformer):
             system_prompt_template=NPC_GENERATOR_SYSTEM,
         )
 
-    async def act(
-        self, input_data: list[str], context: dict
-    ) -> list[NPCCard]:
+    async def act(self, input_data: list[str], context: dict) -> list[NPCCard]:
         """Generate NPC cards.
 
         ``input_data``: List of NPC role descriptions (e.g. ["tavern merchant", "city guard"]).
@@ -35,9 +33,7 @@ class NPCGenerator(BasePerformer):
         self.set_context(
             setting_summary=game_state.setting.summary[:500],
             location_name=(
-                game_state.current_scene.description[:200]
-                if game_state.current_scene
-                else "Unknown location"
+                game_state.current_scene.description[:200] if game_state.current_scene else "Unknown location"
             ),
             social_structure=game_state.setting.social_structure[:300],
         )
@@ -57,11 +53,7 @@ class NPCGenerator(BasePerformer):
                 knowledge_scope=npc_data.get("knowledge_scope", "local"),
                 attributes=npc_data.get("attributes", {}),
                 inventory=npc_data.get("inventory", []),
-                location_id=(
-                    game_state.current_scene.location_id
-                    if game_state.current_scene
-                    else None
-                ),
+                location_id=(game_state.current_scene.location_id if game_state.current_scene else None),
             )
             npcs.append(card)
 

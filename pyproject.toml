@@ -48,3 +48,4 @@ dev = [
 
 [tool.ruff]
 line-length = 120
+exclude = ["alembic/", ".venv/", "__pycache__", ".git"]
