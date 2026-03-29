@@ -18,13 +18,9 @@ from config import Config
 from db.engine import get_db
 from db.repository import GameRepository
 from engine.factory import create_engine, create_engine_from_state
-from interfaces.formatting_backends import TelegramHTMLBackend
-from interfaces.text_styler import TextStyler
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
 
 logger = logging.getLogger(__name__)
-
-_styler = TextStyler(TelegramHTMLBackend())
 
 _LANGUAGE_OPTIONS = [
     ("\U0001f1ec\U0001f1e7 English", "English"),
@@ -140,7 +136,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             if ai_logs:
                 await repo.save_ai_call_logs(ai_logs, turn_number=None)
             await repo.update_session(session_id, state="playing")
-            await update.message.reply_text(_styler.format(opening), parse_mode="HTML")
+            await update.message.reply_text(opening)
             return
 
         # PLAYING state
@@ -177,7 +173,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         ai_logs = get_and_clear_buffer()
         if ai_logs:
             await repo.save_ai_call_logs(ai_logs, turn_number=updated_state.turn_count)
-        await update.message.reply_text(_styler.format(response), parse_mode="HTML")
+        await update.message.reply_text(response)
 
 
 def build_bot(cfg: Config, db_session_factory) -> Application:

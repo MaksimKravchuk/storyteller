@@ -87,12 +87,9 @@ async def async_main() -> None:
 def main_cli() -> None:
     """Original CLI entry-point for local testing (no DB required)."""
     from engine.factory import create_engine
-    from interfaces.formatting_backends import PlainTextBackend
-    from interfaces.text_styler import TextStyler
 
     cfg = load_config()
     engine = create_engine(cfg)
-    styler = TextStyler(PlainTextBackend())
 
     print("=" * 60)
     print("  STORYTELLER — AI Text Quest Engine (CLI mode)")
@@ -107,7 +104,7 @@ def main_cli() -> None:
         setting = input("Describe your desired setting (e.g. 'Rome, 1st century AD'): ")
         print("\nResearching setting and generating opening scene...\n")
         opening = await engine.start_game(setting)
-        print(styler.format(opening))
+        print(opening)
         while True:
             print()
             action = input("> ").strip()
@@ -118,7 +115,7 @@ def main_cli() -> None:
                 break
             response = await engine.process_action(action)
             print()
-            print(styler.format(response))
+            print(response)
 
     asyncio.run(_cli_loop())
 
