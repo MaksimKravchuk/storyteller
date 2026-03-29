@@ -8,8 +8,17 @@ from llm.message import Message, LLMResponse
 
 
 def _sanitize(text: str) -> str:
-    """Strip lone surrogate characters that break UTF-8 JSON serialization."""
-    return text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
+    """Strip characters that break JSON serialization or OpenAI's HTTP parser.
+
+    Handles lone surrogates, null bytes, and other control characters
+    (below 0x20 or 0x7F) that are illegal in JSON strings. Tab, newline,
+    and carriage-return are preserved.
+    """
+    # Replace lone surrogates first
+    cleaned = text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
+    # Strip null bytes and other control characters illegal in JSON strings
+    # Keep \t (0x09), \n (0x0A), \r (0x0D); remove everything else below 0x20 and 0x7F
+    return "".join(ch for ch in cleaned if (ch >= "\x20" and ch != "\x7f") or ch in "\t\n\r")
 
 
 class OpenAIClient(BaseLLMClient):

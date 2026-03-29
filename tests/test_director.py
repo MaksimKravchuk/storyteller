@@ -16,7 +16,7 @@ from cast.director import (
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
 from knowledge.query import KnowledgeQueryEngine
-from llm.message import Role
+from llm.message import LLMResponse, Role
 from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
@@ -1099,3 +1099,122 @@ class TestDuplicateNPCNames:
         # 1 dialogue call + 1 retaliation = 2 total (not 2+2=4)
         total_calls = mock_actor1.execute.call_count + mock_actor2.execute.call_count
         assert total_calls == 2
+
+
+# ---------------------------------------------------------------------------
+# NPC generator call deduplication
+# ---------------------------------------------------------------------------
+
+
+class TestNPCGeneratorDeduplication:
+    """NPC generator must be called exactly once per new NPC, not twice.
+
+    Regression guard: previously the explicit 'npc_generator' in delegates
+    branch ran in addition to _ensure_targets_in_scene + _init_scene_npcs,
+    doubling AI calls for any turn that targeted an uninitialised NPC.
+    """
+
+    @pytest.mark.asyncio
+    async def test_new_target_npc_generates_exactly_once(self):
+        """Targeting an NPC not in the scene triggers one generator call."""
+        gs = GameState(setting=_make_setting(), knowledge_graph=KnowledgeGraph())
+        gs.current_scene = Scene(
+            location_id="market",
+            description="The market square.",
+            npcs_present=[],  # no NPCs yet
+        )
+
+        generated = NPCCard(name="Blacksmith", occupation="blacksmith")
+        generated.uuid = "gen-1"
+
+        npc_generator_mock = AsyncMock()
+        npc_generator_mock.execute = AsyncMock(return_value=[generated])
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "TALK",
+                "targets": ["blacksmith"],
+                "needs_clarification": False,
+                "delegate_to": ["npc_generator", "actor", "narrator"],
+            },
+        )
+        director.npc_generator = npc_generator_mock
+        # Make the LLM client return a valid string so the actor created by
+        # _register_new_npc can complete its _send() call without crashing.
+        director.llm_client.send_message = AsyncMock(
+            return_value=LLMResponse(content="I'm the blacksmith!", model="test", usage={})
+        )
+
+        await director.act("talk to the blacksmith")
+
+        assert npc_generator_mock.execute.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_existing_npc_target_does_not_call_generator(self):
+        """Targeting an already-initialised NPC must not call the generator."""
+        gs = _make_game_state()  # has SceneNPC(role="guard", uuid="npc-1")
+        npc = NPCCard(name="Guard", occupation="city guard")
+        npc.uuid = "npc-1"
+        gs.npcs["npc-1"] = npc
+
+        npc_generator_mock = AsyncMock()
+        npc_generator_mock.execute = AsyncMock(return_value=[])
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "TALK",
+                "targets": ["guard"],
+                "needs_clarification": False,
+                # Routing plan says to use npc_generator — used to cause
+                # duplication because the explicit branch ran on top of
+                # _ensure_targets_in_scene + _init_scene_npcs.
+                "delegate_to": ["npc_generator", "actor", "narrator"],
+            },
+        )
+        director.npc_generator = npc_generator_mock
+        mock_actor = AsyncMock()
+        mock_actor.execute = AsyncMock(return_value="Hello!")
+        director.actors["npc-1"] = mock_actor
+
+        await director.act("talk to the guard")
+
+        assert npc_generator_mock.execute.call_count == 0
+
+    @pytest.mark.asyncio
+    async def test_new_npc_announced_to_narrator(self):
+        """When a new NPC is generated, narrator receives 'new_npcs' in input."""
+        gs = GameState(setting=_make_setting(), knowledge_graph=KnowledgeGraph())
+        gs.current_scene = Scene(
+            location_id="market",
+            description="The market.",
+            npcs_present=[],
+        )
+
+        generated = NPCCard(name="Merchant", occupation="cloth merchant")
+        generated.uuid = "gen-2"
+
+        npc_generator_mock = AsyncMock()
+        npc_generator_mock.execute = AsyncMock(return_value=[generated])
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "TALK",
+                "targets": ["merchant"],
+                "needs_clarification": False,
+                "delegate_to": ["npc_generator", "narrator"],
+            },
+        )
+        director.npc_generator = npc_generator_mock
+        director.llm_client.send_message = AsyncMock(
+            return_value=LLMResponse(content="Fine silks, my friend!", model="test", usage={})
+        )
+
+        await director.act("talk to the merchant")
+
+        narrator_call = director.narrator.execute.call_args
+        input_data = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
+        assert "new_npcs" in input_data
+        assert any("Merchant" in desc for desc in input_data["new_npcs"])

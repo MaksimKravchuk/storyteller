@@ -286,11 +286,14 @@ class Director(BasePerformer):
         await self._init_scene_npcs()
 
         # --- Ensure targeted NPCs are in the scene ---
+        # Any targets not already present are appended as uninit SceneNPCs, then
+        # _init_scene_npcs generates exactly those — one generator call total.
         target_names = plan.get("targets", [])
         if target_names:
             self._ensure_targets_in_scene(target_names)
-            # Init any newly added SceneNPCs
-            await self._init_scene_npcs()
+            new_npcs = await self._init_scene_npcs()
+            if new_npcs:
+                raw_outputs["new_npcs"] = [f"{new_npc.name} ({new_npc.occupation})" for new_npc in new_npcs]
 
         # --- Actor / NPC interaction ---
         # Deterministic: if any targets resolve to initialised NPCs in the
@@ -314,18 +317,6 @@ class Director(BasePerformer):
             retaliation = await self._check_retaliation(mood_snapshot)
             if retaliation:
                 raw_outputs.setdefault("dialogue", []).extend(retaliation)
-
-        # --- NPC generation (explicit request) ---
-        if "npc_generator" in delegates:
-            targets = plan.get("targets", [])
-            if targets:
-                new_npcs = await self.npc_generator.execute(
-                    input_data=targets,
-                    context={"game_state": self.game_state},
-                )
-                for npc in new_npcs:
-                    self._register_new_npc(npc)
-                raw_outputs["new_npcs"] = [f"{new_npc.name} ({new_npc.occupation})" for new_npc in new_npcs]
 
         # --- Add local events to narrator context ---
         if local_events:
@@ -415,20 +406,22 @@ class Director(BasePerformer):
                 dialogue_entries.append(result_entry)
         return dialogue_entries
 
-    async def _init_scene_npcs(self) -> None:
+    async def _init_scene_npcs(self) -> list[Any]:
         """Initialise any ``SceneNPC`` objects that haven't been turned into
         full ``NPCCard`` + ``Actor`` instances yet.
 
         This runs unconditionally on every turn so that NPC availability
         never depends on the LLM's routing decision.
-        """
 
+        Returns the list of newly created ``NPCCard`` objects (empty when
+        nothing needed initialisation).
+        """
         scene = self.game_state.current_scene
         if not scene:
-            return
+            return []
         uninit = [snpc for snpc in scene.npcs_present if snpc.need_init]
         if not uninit:
-            return
+            return []
         roles = [snpc.role for snpc in uninit]
         new_cards = await self.npc_generator.execute(
             input_data=roles,
@@ -437,6 +430,7 @@ class Director(BasePerformer):
         for scene_npc, card in zip(uninit, new_cards):
             self._register_new_npc(card)
             scene_npc.uuid = card.uuid
+        return list(new_cards)
 
     def _targets_match_scene_npcs(self, target_names: list[str]) -> bool:
         """Return ``True`` if any target name matches an initialised SceneNPC."""

@@ -56,18 +56,15 @@ class BasePerformer(ABC):
 
         Pushes the agent name onto the shared stack so that any LLM call
         made inside ``act()`` records the correct ``parent_agent``.
+        Uses a ContextVar token so the previous stack is restored exactly,
+        even if ``act()`` raises.
         """
-        stack = agent_stack.get([])
-        stack.append(type(self).__name__)
-        agent_stack.set(stack)
-        try:
+        new_stack = list(agent_stack.get(None) or []) + [type(self).__name__]
+        token = agent_stack.set(new_stack)
+        try:  # noqa: WPS501
             return await self.act(input_data, context or {})
-        except Exception:
-            raise
         finally:
-            stack = agent_stack.get([])
-            stack.pop()
-            agent_stack.set(stack)
+            agent_stack.reset(token)
 
     # ------------------------------------------------------------------
     # Abstract interface
@@ -114,12 +111,12 @@ class BasePerformer(ABC):
         # Capture call for admin dashboard logging
         session_id = current_session_id.get(None)
         if session_id is not None:
-            stack = agent_stack.get([])
+            stack = agent_stack.get(None) or []
             parent = stack[-2] if len(stack) >= 2 else None
             seq = call_sequence_counter.get(0)
             call_sequence_counter.set(seq + 1)
 
-            buf = call_log_buffer.get([])
+            buf = call_log_buffer.get(None) or []
             buf.append(
                 {
                     "session_id": session_id,

@@ -11,10 +11,12 @@ current_session_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
 # Accumulates log entry dicts during a turn; flushed to DB afterward.
 _CallLogEntry = dict[str, Any]
 
-call_log_buffer: contextvars.ContextVar[list[_CallLogEntry]] = contextvars.ContextVar("call_log_buffer", default=[])
+call_log_buffer: contextvars.ContextVar[list[_CallLogEntry] | None] = contextvars.ContextVar(
+    "call_log_buffer", default=None
+)
 
 # Stack of agent names for tracking call chains (parent→child).
-agent_stack: contextvars.ContextVar[list[str]] = contextvars.ContextVar("agent_stack", default=[])
+agent_stack: contextvars.ContextVar[list[str] | None] = contextvars.ContextVar("agent_stack", default=None)
 
 # Auto-incrementing counter for ordering LLM calls within a turn.
 call_sequence_counter: contextvars.ContextVar[int] = contextvars.ContextVar("call_sequence_counter", default=0)
@@ -29,6 +31,6 @@ def reset_buffer() -> None:
 
 def get_and_clear_buffer() -> list[dict[str, Any]]:
     """Return accumulated log entries and reset the buffer."""
-    buf = call_log_buffer.get([])
-    call_log_buffer.set([])
+    buf = call_log_buffer.get(None) or []
+    call_log_buffer.set(None)
     return list(buf)

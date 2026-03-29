@@ -41,7 +41,7 @@ class AdminServer:
         self._db_factory = db_session_factory
         self._port = port
         self._token = token
-        self._app = web.Application(middlewares=[self._auth_middleware])  # type: ignore[list-item]
+        self._app = web.Application(middlewares=[self._build_auth_middleware()])
         self._setup_routes()
         self._runner: web.AppRunner | None = None
 
@@ -67,13 +67,16 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/locations", self._locations)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
 
-    @web.middleware
-    async def _auth_middleware(self, request: web.Request, next_handler: Handler) -> web.StreamResponse:
-        if self._token and request.path.startswith("/api/"):
-            auth = request.headers.get("Authorization", "")
-            if auth != f"Bearer {self._token}":
-                return _json_response({"error": "Unauthorized"}, status=401)
-        return await next_handler(request)
+    def _build_auth_middleware(self) -> Handler:
+        @web.middleware
+        async def auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
+            if self._token and request.path.startswith("/api/"):
+                auth = request.headers.get("Authorization", "")
+                if auth != f"Bearer {self._token}":
+                    return _json_response({"error": "Unauthorized"}, status=401)
+            return await handler(request)
+
+        return auth_middleware  # type: ignore[return-value]
 
     # ── Route handlers ────────────────────────────────────
 
