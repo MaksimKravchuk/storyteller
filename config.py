@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
-from defaults import ModelConfig
+from defaults.models import ModelConfig
 
 
 @dataclass

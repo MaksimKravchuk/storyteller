@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from knowledge.graph import KnowledgeGraph
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 @dataclass
 class KnowledgeFilter:
     """Filter criteria for querying the knowledge graph."""
+
     max_scope: KnowledgeScope = KnowledgeScope.WORLD
     max_education_required: int = 10
     max_social_status_required: int = 10

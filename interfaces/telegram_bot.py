@@ -18,18 +18,22 @@ from config import Config
 from db.engine import get_db
 from db.repository import GameRepository
 from engine.factory import create_engine, create_engine_from_state
+from interfaces.formatting_backends import TelegramHTMLBackend
+from interfaces.text_styler import TextStyler
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
 
 logger = logging.getLogger(__name__)
 
-_LANGUAGE_OPTIONS = [
+_styler = TextStyler(TelegramHTMLBackend())
+
+_LANGUAGE_OPTIONS: tuple[tuple[str, str], ...] = (
     ("\U0001f1ec\U0001f1e7 English", "English"),
     ("\U0001f1f7\U0001f1fa Russian", "Russian"),
     ("\U0001f1ea\U0001f1f8 Spanish", "Spanish"),
     ("\U0001f1eb\U0001f1f7 French", "French"),
     ("\U0001f1e9\U0001f1ea German", "German"),
     ("\U0001f1ef\U0001f1f5 Japanese", "Japanese"),
-]
+)
 
 
 def _db_factory(context: ContextTypes.DEFAULT_TYPE):
@@ -47,19 +51,14 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         session = await repo.get_or_create_session(chat_id)
         await repo.update_session(session["id"], state="awaiting_language")
 
-    keyboard = [
-        [InlineKeyboardButton(label, callback_data=f"lang:{value}")]
-        for label, value in _LANGUAGE_OPTIONS
-    ]
+    keyboard = [[InlineKeyboardButton(label, callback_data=f"lang:{value}")] for label, value in _LANGUAGE_OPTIONS]
     await update.message.reply_text(
         "Welcome to Storyteller!\n\nChoose your story language:",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
 
 
-async def handle_language_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
 
@@ -74,8 +73,7 @@ async def handle_language_callback(
         await repo.update_session(session["id"], state="awaiting_setting", language=language)
 
     await query.edit_message_text(
-        f"Language set to {language}.\n\n"
-        "Describe your desired setting (e.g. 'Rome, 1st century AD'):"
+        f"Language set to {language}.\n\nDescribe your desired setting (e.g. 'Rome, 1st century AD'):"
     )
 
 
@@ -106,8 +104,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         if state == "awaiting_setting":
             await update.message.reply_text(
-                "Researching setting and generating opening scene... "
-                "(this may take a minute)"
+                "Researching setting and generating opening scene... (this may take a minute)"
             )
             current_session_id.set(session_id)
             reset_buffer()
@@ -116,9 +113,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 opening = await engine.start_game(text)
             except Exception:
                 logger.exception("Failed to start game for chat %s", chat_id)
-                await update.message.reply_text(
-                    "Something went wrong. Try /start again."
-                )
+                await update.message.reply_text("Something went wrong. Try /start again.")
                 await repo.update_session(session_id, state="idle")
                 return
 
@@ -136,7 +131,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             if ai_logs:
                 await repo.save_ai_call_logs(ai_logs, turn_number=None)
             await repo.update_session(session_id, state="playing")
-            await update.message.reply_text(opening)
+            await update.message.reply_text(_styler.format(opening), parse_mode="HTML")
             return
 
         # PLAYING state
@@ -155,9 +150,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             response = await engine.process_action(text)
         except Exception:
             logger.exception("Error processing action for chat %s", chat_id)
-            await update.message.reply_text(
-                "Something went wrong processing your action. Try again."
-            )
+            await update.message.reply_text("Something went wrong processing your action. Try again.")
             return
 
         # Flush updated state back to PG
@@ -173,7 +166,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         ai_logs = get_and_clear_buffer()
         if ai_logs:
             await repo.save_ai_call_logs(ai_logs, turn_number=updated_state.turn_count)
-        await update.message.reply_text(response)
+        await update.message.reply_text(_styler.format(response), parse_mode="HTML")
 
 
 def build_bot(cfg: Config, db_session_factory) -> Application:

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -13,6 +12,7 @@ from models.character import Character
 # ---------------------------------------------------------------------------
 # KnowledgeScope ordering
 # ---------------------------------------------------------------------------
+
 
 class TestKnowledgeScopeOrdering:
     def test_local_lt_city(self):
@@ -40,6 +40,7 @@ class TestKnowledgeScopeOrdering:
 # ---------------------------------------------------------------------------
 # KnowledgeNode
 # ---------------------------------------------------------------------------
+
 
 class TestKnowledgeNode:
     def test_defaults(self):
@@ -71,6 +72,7 @@ class TestKnowledgeNode:
 # ---------------------------------------------------------------------------
 # KnowledgeGraph
 # ---------------------------------------------------------------------------
+
 
 class TestKnowledgeGraph:
     def test_add_and_get_node(self, empty_graph):
@@ -176,6 +178,7 @@ class TestKnowledgeGraph:
 # ---------------------------------------------------------------------------
 # KnowledgeQueryEngine
 # ---------------------------------------------------------------------------
+
 
 class TestKnowledgeQueryEngine:
     def test_query_all_world_scope(self, populated_graph):

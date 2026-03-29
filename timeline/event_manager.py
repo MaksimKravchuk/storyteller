@@ -8,7 +8,6 @@ from timeline.event import EventEffect, EventStatus, GameEvent
 
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
-    from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
     from models.game_state import GameState
 
 
@@ -74,11 +73,7 @@ class EventManager:
         # Gather events that complete within [old_clock, new_clock]
         completed: list[GameEvent] = []
         for ev in self._events:
-            if (
-                ev.status == EventStatus.PENDING
-                and ev.completes_at <= new_clock
-                and ev.completes_at > old_clock
-            ):
+            if ev.status == EventStatus.PENDING and ev.completes_at <= new_clock and ev.completes_at > old_clock:
                 ev.status = EventStatus.COMPLETED
                 completed.append(ev)
 
@@ -97,17 +92,12 @@ class EventManager:
         return [
             ev
             for ev in self._events
-            if ev.status == EventStatus.PENDING
-            and (owner_id is None or ev.owner_id == owner_id)
+            if ev.status == EventStatus.PENDING and (owner_id is None or ev.owner_id == owner_id)
         ]
 
     def get_completed_since(self, since_time: float) -> list[GameEvent]:
         """Return events that completed after ``since_time``."""
-        return [
-            ev
-            for ev in self._events
-            if ev.status == EventStatus.COMPLETED and ev.completes_at > since_time
-        ]
+        return [ev for ev in self._events if ev.status == EventStatus.COMPLETED and ev.completes_at > since_time]
 
     # ------------------------------------------------------------------
     # Internal
@@ -138,13 +128,10 @@ class EventManager:
                 # Update current scene if applicable
                 if gs.current_scene and gs.current_scene.location_id == npc.location_id:
                     from models.scene import SceneNPC
-                    already = any(
-                        snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present
-                    )
+
+                    already = any(snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present)
                     if not already:
-                        gs.current_scene.npcs_present.append(
-                            SceneNPC(role=npc.occupation or npc.name, uuid=npc_id)
-                        )
+                        gs.current_scene.npcs_present.append(SceneNPC(role=npc.occupation or npc.name, uuid=npc_id))
 
         elif etype == "ADD_ITEM":
             npc_id = effect.params.get("npc_id", effect.target_id)
@@ -192,8 +179,7 @@ class EventManager:
                     gs.locations[npc.location_id].remove_npc(npc_id)
                 if gs.current_scene:
                     gs.current_scene.npcs_present = [
-                        snpc for snpc in gs.current_scene.npcs_present
-                        if snpc.uuid != npc_id
+                        snpc for snpc in gs.current_scene.npcs_present if snpc.uuid != npc_id
                     ]
                 del gs.npcs[npc_id]
 
@@ -210,13 +196,8 @@ class EventManager:
                 owner_id=follow_up_data.get("owner_id", event.owner_id),
                 location_id=follow_up_data.get("location_id", event.location_id),
                 scope=follow_up_data.get("scope", event.scope),
-                effects=[
-                    EventEffect(**eff)
-                    for eff in follow_up_data.get("effects", [])
-                ],
+                effects=[EventEffect(**eff) for eff in follow_up_data.get("effects", [])],
                 follow_up_events=follow_up_data.get("follow_up_events", []),
-                on_complete_description=follow_up_data.get(
-                    "on_complete_description", ""
-                ),
+                on_complete_description=follow_up_data.get("on_complete_description", ""),
             )
             self.schedule(follow_up)

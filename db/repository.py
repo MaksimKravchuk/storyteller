@@ -27,9 +27,8 @@ from db.converters import (
     setting_to_row,
 )
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import EdgeType, KnowledgeNode
-from models.game_state import GameState, PlayerState
-from models.scene import Scene
+from knowledge.node import EdgeType
+from models.game_state import GameState
 from timeline.event import GameEvent
 
 
@@ -43,41 +42,35 @@ class GameRepository:
 
     async def get_or_create_session(self, telegram_chat_id: int) -> dict:
         """Return session row dict, creating one if it doesn't exist."""
-        stmt = pg_insert(t.sessions).values(
-            id=str(_uuid.uuid4()),
-            telegram_chat_id=telegram_chat_id,
-        ).on_conflict_do_nothing(index_elements=["telegram_chat_id"])
+        stmt = (
+            pg_insert(t.sessions)
+            .values(
+                id=str(_uuid.uuid4()),
+                telegram_chat_id=telegram_chat_id,
+            )
+            .on_conflict_do_nothing(index_elements=["telegram_chat_id"])
+        )
         await self._s.execute(stmt)
 
-        result = await self._s.execute(
-            select(t.sessions).where(t.sessions.c.telegram_chat_id == telegram_chat_id)
-        )
+        result = await self._s.execute(select(t.sessions).where(t.sessions.c.telegram_chat_id == telegram_chat_id))
         row = result.mappings().one()
         return dict(row)
 
-    async def update_session(
-        self, session_id: str, *, state: str | None = None, language: str | None = None
-    ) -> None:
+    async def update_session(self, session_id: str, *, state: str | None = None, language: str | None = None) -> None:
         values: dict[str, Any] = {}
         if state is not None:
             values["state"] = state
         if language is not None:
             values["language"] = language
         if values:
-            await self._s.execute(
-                update(t.sessions).where(t.sessions.c.id == session_id).values(**values)
-            )
+            await self._s.execute(update(t.sessions).where(t.sessions.c.id == session_id).values(**values))
 
     # ── Full state load ───────────────────────────────────
 
-    async def load_game_state(
-        self, session_id: str
-    ) -> tuple[GameState, KnowledgeGraph, list[GameEvent]] | None:
+    async def load_game_state(self, session_id: str) -> tuple[GameState, KnowledgeGraph, list[GameEvent]] | None:
         """Load full game state from PG. Returns None if no game exists for this session."""
         # Load game_states row
-        result = await self._s.execute(
-            select(t.game_states).where(t.game_states.c.session_id == session_id)
-        )
+        result = await self._s.execute(select(t.game_states).where(t.game_states.c.session_id == session_id))
         gs_row = result.mappings().first()
         if gs_row is None:
             return None
@@ -85,9 +78,7 @@ class GameRepository:
         game_state_id = gs_row["id"]
 
         # Load setting
-        result = await self._s.execute(
-            select(t.settings).where(t.settings.c.game_state_id == game_state_id)
-        )
+        result = await self._s.execute(select(t.settings).where(t.settings.c.game_state_id == game_state_id))
         setting_row = result.mappings().first()
         if setting_row is None:
             return None
@@ -96,18 +87,14 @@ class GameRepository:
         # Load knowledge graph
         kg = KnowledgeGraph()
         result = await self._s.execute(
-            select(t.knowledge_nodes).where(
-                t.knowledge_nodes.c.game_state_id == game_state_id
-            )
+            select(t.knowledge_nodes).where(t.knowledge_nodes.c.game_state_id == game_state_id)
         )
         for row in result.mappings():
             node = row_to_knowledge_node(dict(row))
             kg.add_node(node)
 
         result = await self._s.execute(
-            select(t.knowledge_edges).where(
-                t.knowledge_edges.c.game_state_id == game_state_id
-            )
+            select(t.knowledge_edges).where(t.knowledge_edges.c.game_state_id == game_state_id)
         )
         for row in result.mappings():
             kg.add_edge(
@@ -129,25 +116,19 @@ class GameRepository:
         game_state.pending_clarification = gs_row.get("pending_clarification")
 
         # Load player
-        result = await self._s.execute(
-            select(t.players).where(t.players.c.game_state_id == game_state_id)
-        )
+        result = await self._s.execute(select(t.players).where(t.players.c.game_state_id == game_state_id))
         player_row = result.mappings().first()
         if player_row:
             game_state.player = row_to_player(dict(player_row))
 
         # Load locations
-        result = await self._s.execute(
-            select(t.locations).where(t.locations.c.game_state_id == game_state_id)
-        )
+        result = await self._s.execute(select(t.locations).where(t.locations.c.game_state_id == game_state_id))
         for row in result.mappings():
             loc = row_to_location(dict(row))
             game_state.locations[loc.uuid] = loc
 
         # Load NPCs
-        result = await self._s.execute(
-            select(t.npcs).where(t.npcs.c.game_state_id == game_state_id)
-        )
+        result = await self._s.execute(select(t.npcs).where(t.npcs.c.game_state_id == game_state_id))
         for row in result.mappings():
             npc = row_to_npc(dict(row))
             game_state.npcs[npc.uuid] = npc
@@ -164,9 +145,7 @@ class GameRepository:
             game_state.current_scene = row_to_scene(dict(scene_row))
 
         # Load events
-        result = await self._s.execute(
-            select(t.game_events).where(t.game_events.c.game_state_id == game_state_id)
-        )
+        result = await self._s.execute(select(t.game_events).where(t.game_events.c.game_state_id == game_state_id))
         events = [row_to_game_event(dict(row)) for row in result.mappings()]
 
         return game_state, kg, events
@@ -182,106 +161,105 @@ class GameRepository:
     ) -> None:
         """Persist full game state to PG (upsert game_states, delete+insert children)."""
         # Upsert game_states row
-        stmt = pg_insert(t.game_states).values(
-            id=game_state.uuid,
-            session_id=session_id,
-            turn_count=game_state.turn_count,
-            scene_number=game_state.scene_number,
-            game_clock=game_state.game_clock,
-            game_time=game_state.game_time,
-            conversation_log=game_state.conversation_log,
-            scene_conversation_log=game_state.scene_conversation_log,
-            pending_clarification=game_state.pending_clarification,
-        ).on_conflict_do_update(
-            index_elements=["session_id"],
-            set_={
-                "turn_count": game_state.turn_count,
-                "scene_number": game_state.scene_number,
-                "game_clock": game_state.game_clock,
-                "game_time": game_state.game_time,
-                "conversation_log": game_state.conversation_log,
-                "scene_conversation_log": game_state.scene_conversation_log,
-                "pending_clarification": game_state.pending_clarification,
-            },
-        ).returning(t.game_states.c.id)
+        stmt = (
+            pg_insert(t.game_states)
+            .values(
+                id=game_state.uuid,
+                session_id=session_id,
+                turn_count=game_state.turn_count,
+                scene_number=game_state.scene_number,
+                game_clock=game_state.game_clock,
+                game_time=game_state.game_time,
+                conversation_log=game_state.conversation_log,
+                scene_conversation_log=game_state.scene_conversation_log,
+                pending_clarification=game_state.pending_clarification,
+            )
+            .on_conflict_do_update(
+                index_elements=["session_id"],
+                set_={
+                    "turn_count": game_state.turn_count,
+                    "scene_number": game_state.scene_number,
+                    "game_clock": game_state.game_clock,
+                    "game_time": game_state.game_time,
+                    "conversation_log": game_state.conversation_log,
+                    "scene_conversation_log": game_state.scene_conversation_log,
+                    "pending_clarification": game_state.pending_clarification,
+                },
+            )
+            .returning(t.game_states.c.id)
+        )
         result = await self._s.execute(stmt)
         game_state_id = result.scalar_one()
         await self._s.flush()
 
         # Setting (upsert)
         setting_row = setting_to_row(game_state.setting, game_state_id)
-        stmt = pg_insert(t.settings).values(**setting_row).on_conflict_do_update(
-            index_elements=["game_state_id"],
-            set_={k: v for k, v in setting_row.items() if k not in ("id", "game_state_id")},
+        stmt = (
+            pg_insert(t.settings)
+            .values(**setting_row)
+            .on_conflict_do_update(
+                index_elements=["game_state_id"],
+                set_={k: v for k, v in setting_row.items() if k not in ("id", "game_state_id")},
+            )
         )
         await self._s.execute(stmt)
 
         # Player (upsert)
         player_row = player_to_row(game_state.player, game_state_id)
-        stmt = pg_insert(t.players).values(**player_row).on_conflict_do_update(
-            index_elements=["game_state_id"],
-            set_={k: v for k, v in player_row.items() if k not in ("id", "game_state_id")},
+        stmt = (
+            pg_insert(t.players)
+            .values(**player_row)
+            .on_conflict_do_update(
+                index_elements=["game_state_id"],
+                set_={k: v for k, v in player_row.items() if k not in ("id", "game_state_id")},
+            )
         )
         await self._s.execute(stmt)
 
         # Locations (delete + insert)
-        await self._s.execute(
-            delete(t.locations).where(t.locations.c.game_state_id == game_state_id)
-        )
+        await self._s.execute(delete(t.locations).where(t.locations.c.game_state_id == game_state_id))
         if game_state.locations:
             rows = [location_to_row(loc, game_state_id) for loc in game_state.locations.values()]
             await self._s.execute(t.locations.insert(), rows)
 
         # NPCs (delete + insert)
-        await self._s.execute(
-            delete(t.npcs).where(t.npcs.c.game_state_id == game_state_id)
-        )
+        await self._s.execute(delete(t.npcs).where(t.npcs.c.game_state_id == game_state_id))
         if game_state.npcs:
             rows = [npc_to_row(npc, game_state_id) for npc in game_state.npcs.values()]
             await self._s.execute(t.npcs.insert(), rows)
 
         # Scenes (delete + insert current)
-        await self._s.execute(
-            delete(t.scenes).where(t.scenes.c.game_state_id == game_state_id)
-        )
+        await self._s.execute(delete(t.scenes).where(t.scenes.c.game_state_id == game_state_id))
         if game_state.current_scene:
             row = scene_to_row(game_state.current_scene, game_state_id, is_current=True)
             await self._s.execute(t.scenes.insert().values(**row))
 
         # Knowledge nodes (delete + insert)
-        await self._s.execute(
-            delete(t.knowledge_nodes).where(
-                t.knowledge_nodes.c.game_state_id == game_state_id
-            )
-        )
+        await self._s.execute(delete(t.knowledge_nodes).where(t.knowledge_nodes.c.game_state_id == game_state_id))
         nodes = knowledge_graph.all_nodes()
         if nodes:
             rows = [knowledge_node_to_row(n, game_state_id) for n in nodes]
             await self._s.execute(t.knowledge_nodes.insert(), rows)
 
         # Knowledge edges (delete + insert)
-        await self._s.execute(
-            delete(t.knowledge_edges).where(
-                t.knowledge_edges.c.game_state_id == game_state_id
-            )
-        )
+        await self._s.execute(delete(t.knowledge_edges).where(t.knowledge_edges.c.game_state_id == game_state_id))
         edge_rows: list[dict] = []
         for node in nodes:
             for target_id, edge_type in knowledge_graph.get_edges_from(node.uuid):
-                edge_rows.append({
-                    "game_state_id": game_state_id,
-                    "from_node_id": node.uuid,
-                    "to_node_id": target_id,
-                    "edge_type": edge_type.value,
-                    "metadata_": {},
-                })
+                edge_rows.append(
+                    {
+                        "game_state_id": game_state_id,
+                        "from_node_id": node.uuid,
+                        "to_node_id": target_id,
+                        "edge_type": edge_type.value,
+                        "metadata_": {},
+                    }
+                )
         if edge_rows:
             await self._s.execute(t.knowledge_edges.insert(), edge_rows)
 
         # Events (delete + insert)
-        await self._s.execute(
-            delete(t.game_events).where(t.game_events.c.game_state_id == game_state_id)
-        )
+        await self._s.execute(delete(t.game_events).where(t.game_events.c.game_state_id == game_state_id))
         if events:
             rows = [game_event_to_row(ev, game_state_id) for ev in events]
             await self._s.execute(t.game_events.insert(), rows)
@@ -312,18 +290,14 @@ class GameRepository:
 
     async def get_session_detail(self, session_id: str) -> dict | None:
         """Get full session detail for admin view."""
-        result = await self._s.execute(
-            select(t.sessions).where(t.sessions.c.id == session_id)
-        )
+        result = await self._s.execute(select(t.sessions).where(t.sessions.c.id == session_id))
         session_row = result.mappings().first()
         if not session_row:
             return None
         detail: dict[str, Any] = {"session": dict(session_row)}
 
         # Game state
-        result = await self._s.execute(
-            select(t.game_states).where(t.game_states.c.session_id == session_id)
-        )
+        result = await self._s.execute(select(t.game_states).where(t.game_states.c.session_id == session_id))
         gs_row = result.mappings().first()
         if not gs_row:
             detail["game_state"] = None
@@ -333,16 +307,12 @@ class GameRepository:
         detail["game_state"] = gs_row
 
         # Setting
-        result = await self._s.execute(
-            select(t.settings).where(t.settings.c.game_state_id == game_state_id)
-        )
+        result = await self._s.execute(select(t.settings).where(t.settings.c.game_state_id == game_state_id))
         row = result.mappings().first()
         detail["setting"] = dict(row) if row else None
 
         # Player
-        result = await self._s.execute(
-            select(t.players).where(t.players.c.game_state_id == game_state_id)
-        )
+        result = await self._s.execute(select(t.players).where(t.players.c.game_state_id == game_state_id))
         row = result.mappings().first()
         detail["player"] = dict(row) if row else None
 
@@ -356,9 +326,7 @@ class GameRepository:
             ("event_count", t.game_events),
         ]:
             result = await self._s.execute(
-                select(func.count()).select_from(table).where(
-                    table.c.game_state_id == game_state_id
-                )
+                select(func.count()).select_from(table).where(table.c.game_state_id == game_state_id)
             )
             detail[table_name] = result.scalar()
 
@@ -367,9 +335,7 @@ class GameRepository:
     async def get_conversation_log(self, session_id: str) -> list[dict]:
         """Get conversation log for a session."""
         result = await self._s.execute(
-            select(t.game_states.c.conversation_log).where(
-                t.game_states.c.session_id == session_id
-            )
+            select(t.game_states.c.conversation_log).where(t.game_states.c.session_id == session_id)
         )
         row = result.scalar()
         return row if row else []
@@ -395,24 +361,18 @@ class GameRepository:
     async def get_knowledge_graph(self, session_id: str) -> dict:
         """Get knowledge graph nodes and edges for a session."""
         # Get game_state_id
-        result = await self._s.execute(
-            select(t.game_states.c.id).where(t.game_states.c.session_id == session_id)
-        )
+        result = await self._s.execute(select(t.game_states.c.id).where(t.game_states.c.session_id == session_id))
         game_state_id = result.scalar()
         if not game_state_id:
             return {"nodes": [], "edges": []}
 
         result = await self._s.execute(
-            select(t.knowledge_nodes).where(
-                t.knowledge_nodes.c.game_state_id == game_state_id
-            )
+            select(t.knowledge_nodes).where(t.knowledge_nodes.c.game_state_id == game_state_id)
         )
         nodes = [dict(row) for row in result.mappings()]
 
         result = await self._s.execute(
-            select(t.knowledge_edges).where(
-                t.knowledge_edges.c.game_state_id == game_state_id
-            )
+            select(t.knowledge_edges).where(t.knowledge_edges.c.game_state_id == game_state_id)
         )
         edges = [dict(row) for row in result.mappings()]
 
@@ -430,9 +390,7 @@ class GameRepository:
 
     # ── AI call logs ──────────────────────────────────────
 
-    async def save_ai_call_logs(
-        self, logs: list[dict[str, Any]], turn_number: int | None = None
-    ) -> None:
+    async def save_ai_call_logs(self, logs: list[dict[str, Any]], turn_number: int | None = None) -> None:
         """Batch insert AI call log entries."""
         if not logs:
             return

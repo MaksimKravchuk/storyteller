@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from llm.base_client import BaseLLMClient
-from llm.message import Message, LLMResponse, Role
+from llm.message import Message, LLMResponse
 
 
 class OpenAIClient(BaseLLMClient):
@@ -27,9 +27,7 @@ class OpenAIClient(BaseLLMClient):
         """Strip lone surrogate characters that break UTF-8 JSON serialization."""
         return text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
 
-    def _format_messages(
-        self, messages: list[Message], system_prompt: str = ""
-    ) -> list[dict[str, str]]:
+    def _format_messages(self, messages: list[Message], system_prompt: str = "") -> list[dict[str, str]]:
         formatted: list[dict[str, str]] = []
         if system_prompt:
             formatted.append({"role": "system", "content": self._sanitize(system_prompt)})

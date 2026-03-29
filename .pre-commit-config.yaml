@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.8
+    hooks:
+      - id: ruff
+      - id: ruff-format
+
+  # flake8 + wemake-python-styleguide will be added here once all
+  # violations are resolved — tracked in setup.cfg

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -17,7 +16,7 @@ from cast.director import (
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
 from knowledge.query import KnowledgeQueryEngine
-from llm.message import Message, Role
+from llm.message import Role
 from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
@@ -128,57 +127,67 @@ class TestGameStateSceneFields:
 class TestTurnCounting:
     @pytest.mark.asyncio
     async def test_turn_increments_on_talk(self):
-        director = _make_director(route_response={
-            "action_type": "TALK",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "TALK",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("talk to someone")
         assert director.game_state.turn_count == 1
 
     @pytest.mark.asyncio
     async def test_turn_increments_on_interact(self):
-        director = _make_director(route_response={
-            "action_type": "INTERACT",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "INTERACT",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("open the door")
         assert director.game_state.turn_count == 1
 
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_examine(self):
-        director = _make_director(route_response={
-            "action_type": "EXAMINE",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "EXAMINE",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("look at the fountain")
         assert director.game_state.turn_count == 0
 
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_other(self):
-        director = _make_director(route_response={
-            "action_type": "OTHER",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "OTHER",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("wait")
         assert director.game_state.turn_count == 0
 
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_clarification(self):
-        director = _make_director(route_response={
-            "action_type": "INTERACT",
-            "targets": [],
-            "needs_clarification": True,
-            "clarification_question": "Which door?",
-            "delegate_to": [],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "INTERACT",
+                "targets": [],
+                "needs_clarification": True,
+                "clarification_question": "Which door?",
+                "delegate_to": [],
+            }
+        )
         await director.act("open door")
         assert director.game_state.turn_count == 0
 
@@ -208,12 +217,14 @@ class TestTurnCounting:
 class TestSceneChanges:
     @pytest.mark.asyncio
     async def test_move_triggers_scene_change(self):
-        director = _make_director(route_response={
-            "action_type": "MOVE",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "MOVE",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         assert director.game_state.scene_number == 0
         await director.act("go to the market")
         assert director.game_state.scene_number == 1
@@ -221,48 +232,56 @@ class TestSceneChanges:
 
     @pytest.mark.asyncio
     async def test_explore_triggers_scene_change(self):
-        director = _make_director(route_response={
-            "action_type": "EXPLORE",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "EXPLORE",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("explore the area")
         assert director.game_state.scene_number == 1
         director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_sleep_triggers_scene_change(self):
-        director = _make_director(route_response={
-            "action_type": "SLEEP",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "SLEEP",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("go to sleep")
         assert director.game_state.scene_number == 1
         director.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_talk_does_not_trigger_scene_change(self):
-        director = _make_director(route_response={
-            "action_type": "TALK",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "TALK",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("hello")
         assert director.game_state.scene_number == 0
         director.scene_builder.act.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_examine_does_not_trigger_scene_change(self):
-        director = _make_director(route_response={
-            "action_type": "EXAMINE",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "EXAMINE",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("look around")
         assert director.game_state.scene_number == 0
         director.scene_builder.act.assert_not_called()
@@ -301,12 +320,14 @@ class TestSceneChanges:
 class TestSceneConversationLog:
     @pytest.mark.asyncio
     async def test_action_appended_to_scene_log(self):
-        director = _make_director(route_response={
-            "action_type": "TALK",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "TALK",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("hello guard")
         log = director.game_state.scene_conversation_log
         assert len(log) == 1
@@ -352,13 +373,15 @@ class TestSceneConversationLog:
 
     @pytest.mark.asyncio
     async def test_clarification_does_not_append_to_scene_log(self):
-        director = _make_director(route_response={
-            "action_type": "INTERACT",
-            "targets": [],
-            "needs_clarification": True,
-            "clarification_question": "Which one?",
-            "delegate_to": [],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "INTERACT",
+                "targets": [],
+                "needs_clarification": True,
+                "clarification_question": "Which one?",
+                "delegate_to": [],
+            }
+        )
         await director.act("take it")
         assert len(director.game_state.scene_conversation_log) == 0
 
@@ -392,8 +415,7 @@ class TestBuildSceneHistory:
     def test_caps_at_10_entries(self):
         gs = _make_game_state()
         gs.scene_conversation_log = [
-            {"player_action": f"action-{i}", "response_summary": f"resp-{i}", "action_type": "TALK"}
-            for i in range(15)
+            {"player_action": f"action-{i}", "response_summary": f"resp-{i}", "action_type": "TALK"} for i in range(15)
         ]
         director = _make_director(game_state=gs)
         history = director._build_scene_history()
@@ -432,14 +454,11 @@ class TestSyncContextSceneHistory:
 
     def test_scene_history_summary_caps_at_5(self):
         gs = _make_game_state()
-        gs.scene_conversation_log = [
-            {"player_action": f"action-{i}", "action_type": "TALK"}
-            for i in range(10)
-        ]
+        gs.scene_conversation_log = [{"player_action": f"action-{i}", "action_type": "TALK"} for i in range(10)]
         director = _make_director(game_state=gs)
         director._sync_context_from_state()
         summary = director._system_prompt_vars["scene_history_summary"]
-        lines = [l for l in summary.split("\n") if l.strip()]
+        lines = [line for line in summary.split("\n") if line.strip()]
         assert len(lines) == 5
         # Should be last 5: action-5 through action-9
         assert "action-5" in summary
@@ -464,24 +483,35 @@ class TestClarificationPreservesSceneHistory:
         # Simulate a pending clarification (saved from prior turn)
         gs.pending_clarification = [
             {"role": "user", "content": 'Player action: "grab his weapon"'},
-            {"role": "assistant", "content": json.dumps({
-                "needs_clarification": True,
-                "clarification_question": "Whose weapon?",
-            })},
+            {
+                "role": "assistant",
+                "content": json.dumps(
+                    {
+                        "needs_clarification": True,
+                        "clarification_question": "Whose weapon?",
+                    }
+                ),
+            },
         ]
         director = _make_director(game_state=gs)
         # Mock _send_json to capture the conversation kwarg
-        director._send_json = AsyncMock(return_value={
-            "action_type": "INTERACT",
-            "targets": ["guard"],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director._send_json = AsyncMock(
+            return_value={
+                "action_type": "INTERACT",
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
 
         await director._route_action("the guard")
 
         call_kwargs = director._send_json.call_args
-        conversation = call_kwargs.kwargs.get("conversation") or call_kwargs.args[1] if len(call_kwargs.args) > 1 else call_kwargs.kwargs["conversation"]
+        conversation = (
+            call_kwargs.kwargs.get("conversation") or call_kwargs.args[1]
+            if len(call_kwargs.args) > 1
+            else call_kwargs.kwargs["conversation"]
+        )
 
         # Should have: 2 scene history messages + 2 clarification messages = 4
         assert len(conversation) == 4
@@ -499,23 +529,34 @@ class TestClarificationPreservesSceneHistory:
         gs = _make_game_state()
         gs.pending_clarification = [
             {"role": "user", "content": 'Player action: "take it"'},
-            {"role": "assistant", "content": json.dumps({
-                "needs_clarification": True,
-                "clarification_question": "Take what?",
-            })},
+            {
+                "role": "assistant",
+                "content": json.dumps(
+                    {
+                        "needs_clarification": True,
+                        "clarification_question": "Take what?",
+                    }
+                ),
+            },
         ]
         director = _make_director(game_state=gs)
-        director._send_json = AsyncMock(return_value={
-            "action_type": "INTERACT",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director._send_json = AsyncMock(
+            return_value={
+                "action_type": "INTERACT",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
 
         await director._route_action("the sword")
 
         call_kwargs = director._send_json.call_args
-        conversation = call_kwargs.kwargs.get("conversation") or call_kwargs.args[1] if len(call_kwargs.args) > 1 else call_kwargs.kwargs["conversation"]
+        conversation = (
+            call_kwargs.kwargs.get("conversation") or call_kwargs.args[1]
+            if len(call_kwargs.args) > 1
+            else call_kwargs.kwargs["conversation"]
+        )
 
         # Only clarification messages, no scene history
         assert len(conversation) == 2
@@ -555,12 +596,14 @@ class TestCallChainDelegation:
 
     @pytest.mark.asyncio
     async def test_narrator_called_via_execute(self):
-        director = _make_director(route_response={
-            "action_type": "OTHER",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["narrator"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "OTHER",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["narrator"],
+            }
+        )
         await director.act("look around")
 
         # Narrator.execute() should have been called (not just .act())
@@ -568,12 +611,14 @@ class TestCallChainDelegation:
 
     @pytest.mark.asyncio
     async def test_scene_builder_called_via_execute(self):
-        director = _make_director(route_response={
-            "action_type": "EXPLORE",
-            "targets": [],
-            "needs_clarification": False,
-            "delegate_to": ["scene_builder"],
-        })
+        director = _make_director(
+            route_response={
+                "action_type": "EXPLORE",
+                "targets": [],
+                "needs_clarification": False,
+                "delegate_to": ["scene_builder"],
+            }
+        )
         await director.act("explore the ruins")
 
         director.scene_builder.execute.assert_called_once()
@@ -591,9 +636,7 @@ class TestExtractMood:
         assert mood is None
 
     def test_mood_tag_at_end(self):
-        text, mood = Actor._extract_mood(
-            "*lunges at you with a spear*\n[MOOD: hostile]"
-        )
+        text, mood = Actor._extract_mood("*lunges at you with a spear*\n[MOOD: hostile]")
         assert text == "*lunges at you with a spear*"
         assert mood == "hostile"
 
@@ -606,9 +649,7 @@ class TestExtractMood:
         assert mood == "terrified"
 
     def test_mood_tag_not_at_end_is_ignored(self):
-        text, mood = Actor._extract_mood(
-            "[MOOD: hostile]\nI will destroy you!"
-        )
+        text, mood = Actor._extract_mood("[MOOD: hostile]\nI will destroy you!")
         assert mood is None
         assert "[MOOD: hostile]" in text
 
@@ -640,9 +681,7 @@ class TestActorMoodUpdate:
 
         actor = Actor(llm_client=llm_client, npc=npc, knowledge_query=kq)
         # Mock _send to return text with mood tag
-        actor._send = AsyncMock(
-            return_value="*tackles you to the ground*\n[MOOD: hostile]"
-        )
+        actor._send = AsyncMock(return_value="*tackles you to the ground*\n[MOOD: hostile]")
 
         result = await actor.act("attack guard", {"location_name": "forum"})
         assert npc.current_mood == "hostile"
@@ -674,9 +713,7 @@ class TestActorMoodUpdate:
         llm_client = AsyncMock()
 
         actor = Actor(llm_client=llm_client, npc=npc, knowledge_query=kq)
-        actor._send = AsyncMock(
-            return_value="*blocks your strike*\n[MOOD: hostile]"
-        )
+        actor._send = AsyncMock(return_value="*blocks your strike*\n[MOOD: hostile]")
 
         await actor.act("punch guard", {"location_name": "gate"})
         # The mood tag should be stripped from conversation history
@@ -690,9 +727,7 @@ class TestActorMoodUpdate:
 
 
 class TestCombatDiceIntegration:
-    def _make_director_with_npc(
-        self, is_aggressive: bool, combat_skill: int = 5
-    ) -> tuple[Director, AsyncMock]:
+    def _make_director_with_npc(self, is_aggressive: bool, combat_skill: int = 5) -> tuple[Director, AsyncMock]:
         """Create a Director with a registered NPC and mock Actor."""
         gs = _make_game_state()
         npc = NPCCard(
@@ -834,11 +869,13 @@ class TestNPCRetaliation:
         director.actors["npc-1"] = mock_actor
 
         # Patch roll_aggression to always trigger
-        import cast.director as director_module
+        from cast import director as director_module
+
         original_roll = director_module.roll_aggression
 
         def always_attacks(mood, _rng=None):
             from cast.dice import AggressionRoll
+
             return AggressionRoll(will_attack=True, roll=15, threshold=5, mood=mood)
 
         director_module.roll_aggression = always_attacks
@@ -913,11 +950,13 @@ class TestNPCRetaliation:
         director.actors["npc-1"] = mock_actor
 
         # Patch roll_aggression to never trigger
-        import cast.director as director_module
+        from cast import director as director_module
+
         original_roll = director_module.roll_aggression
 
         def never_attacks(mood, _rng=None):
             from cast.dice import AggressionRoll
+
             return AggressionRoll(will_attack=False, roll=2, threshold=5, mood=mood)
 
         director_module.roll_aggression = never_attacks
@@ -928,3 +967,136 @@ class TestNPCRetaliation:
 
         # Only one call — no retaliation
         assert mock_actor.execute.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Duplicate NPC name deduplication
+# ---------------------------------------------------------------------------
+
+
+class TestDuplicateNPCNames:
+    @pytest.mark.asyncio
+    async def test_duplicate_npc_names_only_one_actor_called(self):
+        """When multiple NPCs share the same name, only one Actor is called."""
+        gs = _make_game_state()
+
+        # Two NPCs with the same name but different UUIDs
+        npc1 = NPCCard(name="Guard", occupation="night guard")
+        npc1.uuid = "npc-1"
+        gs.npcs["npc-1"] = npc1
+
+        npc2 = NPCCard(name="Guard", occupation="dock guard")
+        npc2.uuid = "npc-2"
+        gs.npcs["npc-2"] = npc2
+
+        gs.current_scene = Scene(
+            location_id="docks",
+            description="The docks.",
+            npcs_present=[
+                SceneNPC(role="night guard", uuid="npc-1"),
+                SceneNPC(role="dock guard", uuid="npc-2"),
+            ],
+        )
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "TALK",
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+
+        mock_actor1 = AsyncMock()
+        mock_actor1.execute = AsyncMock(return_value="Hello.")
+        mock_actor2 = AsyncMock()
+        mock_actor2.execute = AsyncMock(return_value="Hi there.")
+        director.actors["npc-1"] = mock_actor1
+        director.actors["npc-2"] = mock_actor2
+
+        await director.act("talk to the guard")
+
+        # Only ONE actor should be called, not both
+        total_calls = mock_actor1.execute.call_count + mock_actor2.execute.call_count
+        assert total_calls == 1
+
+    @pytest.mark.asyncio
+    async def test_retaliation_skips_duplicate_names(self):
+        """When multiple same-name NPCs change mood, only one retaliates."""
+        gs = _make_game_state()
+
+        npc1 = NPCCard(
+            name="Guard",
+            occupation="night guard",
+            attributes={"combat_skill": 5},
+        )
+        npc1.uuid = "npc-1"
+        npc1.current_mood = "neutral"
+        gs.npcs["npc-1"] = npc1
+
+        npc2 = NPCCard(
+            name="Guard",
+            occupation="dock guard",
+            attributes={"combat_skill": 5},
+        )
+        npc2.uuid = "npc-2"
+        npc2.current_mood = "neutral"
+        gs.npcs["npc-2"] = npc2
+
+        gs.current_scene = Scene(
+            location_id="docks",
+            description="The docks.",
+            npcs_present=[
+                SceneNPC(role="night guard", uuid="npc-1"),
+                SceneNPC(role="dock guard", uuid="npc-2"),
+            ],
+        )
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "INTERACT",
+                "is_aggressive": True,
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+
+        call_count = 0
+
+        async def mock_act(input_data, context):
+            nonlocal call_count
+            call_count += 1
+            # Both NPCs become hostile after the attack
+            npc1.current_mood = "hostile"
+            npc2.current_mood = "hostile"
+            return "*blocks*\n[MOOD: hostile]"
+
+        mock_actor1 = AsyncMock()
+        mock_actor1.execute = AsyncMock(side_effect=mock_act)
+        mock_actor2 = AsyncMock()
+        mock_actor2.execute = AsyncMock(side_effect=mock_act)
+        director.actors["npc-1"] = mock_actor1
+        director.actors["npc-2"] = mock_actor2
+
+        # Patch roll_aggression to always trigger
+        from cast import director as director_module
+
+        original_roll = director_module.roll_aggression
+
+        def always_attacks(mood, _rng=None):
+            from cast.dice import AggressionRoll
+
+            return AggressionRoll(will_attack=True, roll=15, threshold=5, mood=mood)
+
+        director_module.roll_aggression = always_attacks
+        try:
+            await director.act("attack the guard")
+        finally:
+            director_module.roll_aggression = original_roll
+
+        # 1 dialogue call + 1 retaliation = 2 total (not 2+2=4)
+        total_calls = mock_actor1.execute.call_count + mock_actor2.execute.call_count
+        assert total_calls == 2

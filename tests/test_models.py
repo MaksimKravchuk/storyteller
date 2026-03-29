@@ -6,9 +6,7 @@ import pytest
 
 from models.base_model import BaseModel
 from models.character import Character
-from models.game_state import GameState, PlayerState
-from models.location import Location
-from models.npc_card import NPCCard
+from models.game_state import PlayerState
 from models.scene import SceneNPC
 from models.setting import Setting
 
@@ -16,6 +14,7 @@ from models.setting import Setting
 # ---------------------------------------------------------------------------
 # BaseModel
 # ---------------------------------------------------------------------------
+
 
 class TestBaseModel:
     def test_uuid_generated_on_init(self):
@@ -31,6 +30,7 @@ class TestBaseModel:
 # ---------------------------------------------------------------------------
 # Character
 # ---------------------------------------------------------------------------
+
 
 class TestCharacter:
     def test_defaults(self):
@@ -75,6 +75,7 @@ class TestCharacter:
 # NPCCard
 # ---------------------------------------------------------------------------
 
+
 class TestNPCCard:
     def test_to_prompt_context_contains_name(self, sample_npc):
         ctx = sample_npc.to_prompt_context()
@@ -109,6 +110,7 @@ class TestNPCCard:
 # Location
 # ---------------------------------------------------------------------------
 
+
 class TestLocation:
     def test_defaults(self, sample_location):
         assert sample_location.name == "Forum Romanum"
@@ -137,6 +139,7 @@ class TestLocation:
 # Setting
 # ---------------------------------------------------------------------------
 
+
 class TestSetting:
     def test_required_fields(self, simple_setting):
         assert simple_setting.name == "Ancient Rome"
@@ -162,6 +165,7 @@ class TestSetting:
 # ---------------------------------------------------------------------------
 # GameState / PlayerState
 # ---------------------------------------------------------------------------
+
 
 class TestPlayerState:
     def test_defaults(self):
@@ -215,6 +219,7 @@ class TestGameState:
 # ---------------------------------------------------------------------------
 # SceneNPC
 # ---------------------------------------------------------------------------
+
 
 class TestSceneNPC:
     def test_need_init_true_by_default(self):

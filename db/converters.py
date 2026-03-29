@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from knowledge.node import (
-    EdgeType,
     KnowledgeNode,
     KnowledgeScope,
     KnowledgeSource,
@@ -17,6 +16,7 @@ from timeline.event import EventEffect, EventStatus, GameEvent
 
 
 # ── Setting ───────────────────────────────────────────────
+
 
 def setting_to_row(setting: Setting, game_state_id: str) -> dict:
     return {
@@ -56,6 +56,7 @@ def row_to_setting(row) -> Setting:
 
 # ── PlayerState ───────────────────────────────────────────
 
+
 def player_to_row(player: PlayerState, game_state_id: str) -> dict:
     return {
         "id": player.uuid,
@@ -79,6 +80,7 @@ def row_to_player(row) -> PlayerState:
 
 
 # ── Location ─────────────────────────────────────────────
+
 
 def location_to_row(loc: Location, game_state_id: str) -> dict:
     return {
@@ -111,6 +113,7 @@ def row_to_location(row) -> Location:
 
 
 # ── NPCCard ──────────────────────────────────────────────
+
 
 def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
     return {
@@ -154,6 +157,7 @@ def row_to_npc(row) -> NPCCard:
 
 # ── Scene ────────────────────────────────────────────────
 
+
 def scene_to_row(scene: Scene, game_state_id: str, is_current: bool = False) -> dict:
     return {
         "id": scene.uuid,
@@ -173,8 +177,7 @@ def row_to_scene(row) -> Scene:
     # Backward-compatible: old rows store NPC UUIDs as plain strings.
     raw_npcs = row["npcs_present"]
     npcs = [
-        SceneNPC.from_dict(item) if isinstance(item, dict)
-        else SceneNPC(role=item, uuid=item)  # legacy UUID string
+        SceneNPC.from_dict(item) if isinstance(item, dict) else SceneNPC(role=item, uuid=item)  # legacy UUID string
         for item in raw_npcs
     ]
     s = Scene(
@@ -191,6 +194,7 @@ def row_to_scene(row) -> Scene:
 
 
 # ── KnowledgeNode ────────────────────────────────────────
+
 
 def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
     return {
@@ -226,6 +230,7 @@ def row_to_knowledge_node(row) -> KnowledgeNode:
 
 # ── GameEvent ────────────────────────────────────────────
 
+
 def game_event_to_row(event: GameEvent, game_state_id: str) -> dict:
     return {
         "id": event.uuid,
@@ -239,8 +244,7 @@ def game_event_to_row(event: GameEvent, game_state_id: str) -> dict:
         "location_id": event.location_id,
         "scope": event.scope,
         "effects": [
-            {"effect_type": e.effect_type, "target_id": e.target_id, "params": e.params}
-            for e in event.effects
+            {"effect_type": e.effect_type, "target_id": e.target_id, "params": e.params} for e in event.effects
         ],
         "follow_up_events": event.follow_up_events,
         "on_complete_description": event.on_complete_description,

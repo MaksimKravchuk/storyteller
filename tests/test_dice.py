@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import random
 
-import pytest
 
 from cast.dice import (
     AGGRESSION_THRESHOLDS,
-    AggressionRoll,
     CombatOutcome,
     CombatRoll,
     roll_aggression,
@@ -19,7 +17,6 @@ from cast.dice import (
 class TestCombatOutcomes:
     def test_npc_overpowers_high_skill_high_roll(self):
         """NPC with high combat_skill and high roll should overpower."""
-        rng = random.Random(42)
         # Force specific rolls: we'll try many seeds to find one
         # Instead, test with known math: npc_roll+bonus - player_roll >= 5
         result = roll_combat(10, _rng=_fixed_rng(npc=18, player=5))
@@ -78,7 +75,10 @@ class TestCombatRollFields:
     def test_description_not_empty(self):
         for outcome in CombatOutcome:
             roll = CombatRoll(
-                outcome=outcome, npc_roll=10, player_roll=10, npc_bonus=0,
+                outcome=outcome,
+                npc_roll=10,
+                player_roll=10,
+                npc_bonus=0,
             )
             assert len(roll.description) > 0
 
@@ -163,10 +163,7 @@ class TestAggressionRoll:
 
     def test_hostile_high_attack_rate(self):
         """Hostile (threshold 5): 16/20 = 80% chance to attack."""
-        attacks = sum(
-            1 for seed in range(1000)
-            if roll_aggression("hostile", _rng=random.Random(seed)).will_attack
-        )
+        attacks = sum(1 for seed in range(1000) if roll_aggression("hostile", _rng=random.Random(seed)).will_attack)
         # Should be roughly 80%, allow wide margin
         assert 700 < attacks < 900
 
