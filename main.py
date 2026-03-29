@@ -94,13 +94,13 @@ def main_cli() -> None:
     engine = create_engine(cfg)
     styler = TextStyler(PlainTextBackend())
 
-    sys.stdout.write("=" * 60 + "\n")
+    sys.stdout.write(f"{'=' * 60}\n")
     sys.stdout.write("  STORYTELLER — AI Text Quest Engine (CLI mode)\n")
-    sys.stdout.write("=" * 60 + "\n")
+    sys.stdout.write(f"{'=' * 60}\n")
     sys.stdout.write(f"  Director: {cfg.director_model}\n")
     sys.stdout.write(f"  Agents:   {cfg.agent_model}\n")
     sys.stdout.write(f"  Narrator: {cfg.narrator_model}\n")
-    sys.stdout.write("=" * 60 + "\n")
+    sys.stdout.write(f"{'=' * 60}\n")
     sys.stdout.write("\n")
 
     async def _cli_loop():
@@ -109,7 +109,7 @@ def main_cli() -> None:
         setting = sys.stdin.readline().rstrip("\n")
         sys.stdout.write("\nResearching setting and generating opening scene...\n\n")
         opening = await engine.start_game(setting)
-        sys.stdout.write(styler.format(opening) + "\n")
+        sys.stdout.write(f"{styler.format(opening)}\n")
         while True:
             sys.stdout.write("\n")
             sys.stdout.write("> ")
@@ -122,7 +122,7 @@ def main_cli() -> None:
                 break
             response = await engine.process_action(action)
             sys.stdout.write("\n")
-            sys.stdout.write(styler.format(response) + "\n")
+            sys.stdout.write(f"{styler.format(response)}\n")
 
     asyncio.run(_cli_loop())
 

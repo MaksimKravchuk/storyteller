@@ -44,6 +44,17 @@ class AdminServer:
         self._setup_routes()
         self._runner: web.AppRunner | None = None
 
+    async def start(self) -> None:
+        self._runner = web.AppRunner(self._app)
+        await self._runner.setup()
+        site = web.TCPSite(self._runner, "0.0.0.0", self._port)
+        await site.start()
+        logger.info("Admin dashboard running on http://0.0.0.0:%d", self._port)
+
+    async def stop(self) -> None:
+        if self._runner:
+            await self._runner.cleanup()
+
     def _setup_routes(self) -> None:
         self._app.router.add_get("/", self._dashboard)
         self._app.router.add_get("/api/sessions", self._list_sessions)
@@ -62,17 +73,6 @@ class AdminServer:
             if auth != f"Bearer {self._token}":
                 return _json_response({"error": "Unauthorized"}, status=401)
         return await next_handler(request)
-
-    async def start(self) -> None:
-        self._runner = web.AppRunner(self._app)
-        await self._runner.setup()
-        site = web.TCPSite(self._runner, "0.0.0.0", self._port)
-        await site.start()
-        logger.info("Admin dashboard running on http://0.0.0.0:%d", self._port)
-
-    async def stop(self) -> None:
-        if self._runner:
-            await self._runner.cleanup()
 
     # ── Route handlers ────────────────────────────────────
 

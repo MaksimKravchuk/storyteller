@@ -11,6 +11,8 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
+)
+from sqlalchemy import (
     Table,
     Text,
     func,

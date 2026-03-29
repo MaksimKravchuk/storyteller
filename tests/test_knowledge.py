@@ -33,8 +33,8 @@ class TestKnowledgeScopeOrdering:
             KnowledgeScope.COUNTRY,
             KnowledgeScope.WORLD,
         ]
-        for i in range(len(order) - 1):
-            assert order[i] < order[i + 1]
+        for idx in range(len(order) - 1):
+            assert order[idx] < order[idx + 1]
 
 
 # ---------------------------------------------------------------------------
@@ -44,17 +44,17 @@ class TestKnowledgeScopeOrdering:
 
 class TestKnowledgeNode:
     def test_defaults(self):
-        n = KnowledgeNode(content="Test fact")
-        assert n.scope == KnowledgeScope.LOCAL
-        assert n.source == KnowledgeSource.FACT
-        assert n.required_education == 0
-        assert n.required_social_status == 0
-        assert n.tags == []
-        assert n.confidence == 1.0
-        assert isinstance(n.uuid, str)
+        node = KnowledgeNode(content="Test fact")
+        assert node.scope == KnowledgeScope.LOCAL
+        assert node.source == KnowledgeSource.FACT
+        assert node.required_education == 0
+        assert node.required_social_status == 0
+        assert node.tags == []
+        assert node.confidence == 1.0  # noqa: WPS459
+        assert isinstance(node.uuid, str)
 
     def test_custom_fields(self):
-        n = KnowledgeNode(
+        node = KnowledgeNode(
             content="Secret",
             scope=KnowledgeScope.COUNTRY,
             source=KnowledgeSource.RUMOR,
@@ -62,11 +62,11 @@ class TestKnowledgeNode:
             tags=["politics"],
             confidence=0.6,
         )
-        assert n.scope == KnowledgeScope.COUNTRY
-        assert n.source == KnowledgeSource.RUMOR
-        assert n.required_education == 5
-        assert n.tags == ["politics"]
-        assert n.confidence == 0.6
+        assert node.scope == KnowledgeScope.COUNTRY
+        assert node.source == KnowledgeSource.RUMOR
+        assert node.required_education == 5
+        assert node.tags == ["politics"]
+        assert node.confidence == 0.6  # noqa: WPS459
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +131,7 @@ class TestKnowledgeGraph:
     def test_query_by_scope(self, populated_graph):
         # Only LOCAL and CITY nodes should come back when max_scope is CITY
         matching_nodes = populated_graph.query_by_scope(KnowledgeScope.CITY)
-        scopes = {n.scope for n in matching_nodes}
+        scopes = {node.scope for node in matching_nodes}
         assert KnowledgeScope.WORLD not in scopes
 
     def test_query_by_tags_match(self, populated_graph):
@@ -157,12 +157,12 @@ class TestKnowledgeGraph:
         n1 = KnowledgeNode(content="Root")
         n2 = KnowledgeNode(content="Child")
         n3 = KnowledgeNode(content="Grandchild")
-        for n in (n1, n2, n3):
-            empty_graph.add_node(n)
+        for node in (n1, n2, n3):
+            empty_graph.add_node(node)
         empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.RELATED_TO)
         empty_graph.add_edge(n2.uuid, n3.uuid, EdgeType.RELATED_TO)
         related = empty_graph.get_related(n1.uuid, depth=2)
-        uuids = {n.uuid for n in related}
+        uuids = {rel_node.uuid for rel_node in related}
         assert n2.uuid in uuids
         assert n3.uuid in uuids
 
@@ -192,7 +192,7 @@ class TestKnowledgeQueryEngine:
         filt = KnowledgeFilter(max_scope=KnowledgeScope.LOCAL)
         matching_nodes = engine.query(filt)
         # Only the LOCAL node should pass
-        assert all(n.scope == KnowledgeScope.LOCAL for n in matching_nodes)
+        assert all(node.scope == KnowledgeScope.LOCAL for node in matching_nodes)
 
     def test_query_filters_by_education(self, empty_graph):
         low_node = KnowledgeNode(content="Common knowledge", required_education=0)
@@ -202,7 +202,7 @@ class TestKnowledgeQueryEngine:
         engine = KnowledgeQueryEngine(empty_graph)
         filt = KnowledgeFilter(max_education_required=3)
         matching_nodes = engine.query(filt)
-        uuids = {n.uuid for n in matching_nodes}
+        uuids = {node.uuid for node in matching_nodes}
         assert low_node.uuid in uuids
         assert high_node.uuid not in uuids
 
@@ -210,7 +210,7 @@ class TestKnowledgeQueryEngine:
         engine = KnowledgeQueryEngine(populated_graph)
         filt = KnowledgeFilter(sources=[KnowledgeSource.FACT])
         matching_nodes = engine.query(filt)
-        assert all(n.source == KnowledgeSource.FACT for n in matching_nodes)
+        assert all(node.source == KnowledgeSource.FACT for node in matching_nodes)
 
     def test_query_filters_by_tag(self, populated_graph):
         engine = KnowledgeQueryEngine(populated_graph)

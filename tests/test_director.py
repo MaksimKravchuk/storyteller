@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from cast.actor import Actor
+from cast.actor import Actor, _extract_mood as _actor_extract_mood
 from cast.director import (
     Director,
     SCENE_CHANGING_ACTIONS,
@@ -116,7 +116,7 @@ class TestGameStateSceneFields:
 
     def test_initial_scene_conversation_log(self):
         gs = _make_game_state()
-        assert gs.scene_conversation_log == []
+        assert not gs.scene_conversation_log
 
 
 # ---------------------------------------------------------------------------
@@ -339,7 +339,7 @@ class TestSceneConversationLog:
     async def test_multiple_actions_accumulate(self):
         gs = _make_game_state()
 
-        for action_text in ["hello", "what news?", "examine sword"]:
+        for action_text in ("hello", "what news?", "examine sword"):
             director = _make_director(
                 game_state=gs,
                 route_response={
@@ -415,7 +415,8 @@ class TestBuildSceneHistory:
     def test_caps_at_10_entries(self):
         gs = _make_game_state()
         gs.scene_conversation_log = [
-            {"player_action": f"action-{i}", "response_summary": f"resp-{i}", "action_type": "TALK"} for i in range(15)
+            {"player_action": f"action-{idx}", "response_summary": f"resp-{idx}", "action_type": "TALK"}
+            for idx in range(15)
         ]
         director = _make_director(game_state=gs)
         history = director._build_scene_history()
@@ -454,7 +455,7 @@ class TestSyncContextSceneHistory:
 
     def test_scene_history_summary_caps_at_5(self):
         gs = _make_game_state()
-        gs.scene_conversation_log = [{"player_action": f"action-{i}", "action_type": "TALK"} for i in range(10)]
+        gs.scene_conversation_log = [{"player_action": f"action-{idx}", "action_type": "TALK"} for idx in range(10)]
         director = _make_director(game_state=gs)
         director._sync_context_from_state()
         summary = director._system_prompt_vars["scene_history_summary"]
@@ -631,30 +632,30 @@ class TestCallChainDelegation:
 
 class TestExtractMood:
     def test_no_mood_tag(self):
-        text, mood = Actor._extract_mood("*draws his sword* — Stand back!")
+        text, mood = _actor_extract_mood("*draws his sword* — Stand back!")
         assert text == "*draws his sword* — Stand back!"
         assert mood is None
 
     def test_mood_tag_at_end(self):
-        text, mood = Actor._extract_mood("*lunges at you with a spear*\n[MOOD: hostile]")
+        text, mood = _actor_extract_mood("*lunges at you with a spear*\n[MOOD: hostile]")
         assert text == "*lunges at you with a spear*"
         assert mood == "hostile"
 
     def test_mood_tag_uppercase_normalised(self):
-        text, mood = Actor._extract_mood("Back off!\n[MOOD: ENRAGED]")
+        text, mood = _actor_extract_mood("Back off!\n[MOOD: ENRAGED]")
         assert mood == "enraged"
 
     def test_mood_tag_with_extra_space_before_word(self):
-        text, mood = Actor._extract_mood("Help!\n[MOOD:  terrified]")
+        text, mood = _actor_extract_mood("Help!\n[MOOD:  terrified]")
         assert mood == "terrified"
 
     def test_mood_tag_not_at_end_is_ignored(self):
-        text, mood = Actor._extract_mood("[MOOD: hostile]\nI will destroy you!")
+        text, mood = _actor_extract_mood("[MOOD: hostile]\nI will destroy you!")
         assert mood is None
         assert "[MOOD: hostile]" in text
 
     def test_empty_string(self):
-        text, mood = Actor._extract_mood("")
+        text, mood = _actor_extract_mood("")
         assert text == ""
         assert mood is None
 
@@ -727,36 +728,6 @@ class TestActorMoodUpdate:
 
 
 class TestCombatDiceIntegration:
-    def _make_director_with_npc(self, is_aggressive: bool, combat_skill: int = 5) -> tuple[Director, AsyncMock]:
-        """Create a Director with a registered NPC and mock Actor."""
-        gs = _make_game_state()
-        npc = NPCCard(
-            name="Guard",
-            occupation="city guard",
-            attributes={"combat_skill": combat_skill},
-        )
-        npc.uuid = "npc-1"  # match the SceneNPC uuid
-        gs.npcs["npc-1"] = npc
-
-        director = _make_director(
-            game_state=gs,
-            route_response={
-                "action_type": "INTERACT",
-                "is_aggressive": is_aggressive,
-                "targets": ["guard"],
-                "needs_clarification": False,
-                "delegate_to": ["actor", "narrator"],
-            },
-        )
-
-        # Create a mock actor — wire both .act and .execute
-        mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(return_value="*fights back*")
-        mock_actor.execute = AsyncMock(return_value="*fights back*")
-        director.actors["npc-1"] = mock_actor
-
-        return director, mock_actor
-
     @pytest.mark.asyncio
     async def test_aggressive_action_injects_dice_roll(self):
         director, mock_actor = self._make_director_with_npc(is_aggressive=True)
@@ -819,6 +790,36 @@ class TestCombatDiceIntegration:
         # Default combat_skill=3, so bonus should be +3
         assert "+3]" in input_text
 
+    def _make_director_with_npc(self, is_aggressive: bool, combat_skill: int = 5) -> tuple[Director, AsyncMock]:
+        """Create a Director with a registered NPC and mock Actor."""
+        gs = _make_game_state()
+        npc = NPCCard(
+            name="Guard",
+            occupation="city guard",
+            attributes={"combat_skill": combat_skill},
+        )
+        npc.uuid = "npc-1"  # match the SceneNPC uuid
+        gs.npcs["npc-1"] = npc
+
+        director = _make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "INTERACT",
+                "is_aggressive": is_aggressive,
+                "targets": ["guard"],
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+
+        # Create a mock actor — wire both .act and .execute
+        mock_actor = AsyncMock()
+        mock_actor.act = AsyncMock(return_value="*fights back*")
+        mock_actor.execute = AsyncMock(return_value="*fights back*")
+        director.actors["npc-1"] = mock_actor
+
+        return director, mock_actor
+
 
 # ---------------------------------------------------------------------------
 # NPC retaliation after mood change
@@ -850,12 +851,11 @@ class TestNPCRetaliation:
             },
         )
 
-        call_count = 0
+        call_count = [0]
 
         async def mock_act(input_data, context):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
+            call_count[0] += 1
+            if call_count[0] == 1:
                 # First call: player attacks, NPC mood changes
                 npc.current_mood = "hostile"
                 return "*blocks the strike*\n[MOOD: hostile]"
@@ -1064,11 +1064,10 @@ class TestDuplicateNPCNames:
             },
         )
 
-        call_count = 0
+        call_count = [0]
 
         async def mock_act(input_data, context):
-            nonlocal call_count
-            call_count += 1
+            call_count[0] += 1
             # Both NPCs become hostile after the attack
             npc1.current_mood = "hostile"
             npc2.current_mood = "hostile"

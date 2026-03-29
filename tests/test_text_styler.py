@@ -24,32 +24,32 @@ class TestParsingPlainText:
     def test_parse_empty_string(self):
         styler = TextStyler(PlainTextBackend())
         segments = styler.parse("")
-        assert segments == []
+        assert not segments
 
 
 class TestParsingDialogue:
     def test_parse_quoted_dialogue_detected(self):
         styler = TextStyler(PlainTextBackend())
         segments = styler.parse('You hear a voice. "Hello there," someone says.')
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         assert SegmentType.DIALOGUE in types
-        dialogue = [s for s in segments if s.segment_type == SegmentType.DIALOGUE]
-        assert any('"Hello there,"' in d.text for d in dialogue)
+        dialogue = [seg for seg in segments if seg.segment_type == SegmentType.DIALOGUE]
+        assert any('"Hello there,"' in dlg.text for dlg in dialogue)
 
     def test_parse_npc_name_before_speech_verb(self):
         styler = TextStyler(PlainTextBackend())
         segments = styler.parse('Marcus says: "Halt!"')
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         assert SegmentType.NPC_NAME in types
         assert SegmentType.DIALOGUE in types
-        npc = [s for s in segments if s.segment_type == SegmentType.NPC_NAME]
-        assert any("Marcus" in n.text for n in npc)
+        npc = [seg for seg in segments if seg.segment_type == SegmentType.NPC_NAME]
+        assert any("Marcus" in npc_seg.text for npc_seg in npc)
 
     def test_parse_npc_name_after_speech_verb(self):
         """Handle patterns like: 'said Marcus' or '"Hello," whispered the guard.'"""
         styler = TextStyler(PlainTextBackend())
         segments = styler.parse('"Welcome," said Marcus.')
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         assert SegmentType.DIALOGUE in types
         assert SegmentType.NPC_NAME in types
 
@@ -57,16 +57,16 @@ class TestParsingDialogue:
         styler = TextStyler(PlainTextBackend())
         text = 'Marcus says: "Hello." Livia replies: "Greetings."'
         segments = styler.parse(text)
-        dialogues = [s for s in segments if s.segment_type == SegmentType.DIALOGUE]
+        dialogues = [seg for seg in segments if seg.segment_type == SegmentType.DIALOGUE]
         assert len(dialogues) == 2
 
     def test_parse_speech_verbs_varied(self):
         """Test recognition of various speech verbs: whispered, shouted, etc."""
         styler = TextStyler(PlainTextBackend())
-        for verb in ["whispered", "shouted", "exclaimed", "muttered", "replied"]:
+        for verb in ("whispered", "shouted", "exclaimed", "muttered", "replied"):
             text = f'Guard {verb}: "Stop right there!"'
             segments = styler.parse(text)
-            types = [s.segment_type for s in segments]
+            types = [seg.segment_type for seg in segments]
             assert SegmentType.NPC_NAME in types, f"Failed for verb: {verb}"
             assert SegmentType.DIALOGUE in types, f"Failed for verb: {verb}"
 
@@ -80,9 +80,9 @@ class TestParsingSceneHeader:
             "You step into the bustling heart of ancient Rome. Merchants hawk their wares beneath marble columns."
         )
         segments = styler.parse(text)
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         assert SegmentType.SCENE_HEADER in types
-        header = [s for s in segments if s.segment_type == SegmentType.SCENE_HEADER]
+        header = [seg for seg in segments if seg.segment_type == SegmentType.SCENE_HEADER]
         assert header[0].text == "The Forum Romanum"
 
     def test_long_first_line_not_treated_as_header(self):
@@ -93,7 +93,7 @@ class TestParsingSceneHeader:
             " taking in every detail of the architecture.\n\nThe sun beats down overhead."
         )
         segments = styler.parse(text)
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         assert SegmentType.SCENE_HEADER not in types
 
 
@@ -102,14 +102,14 @@ class TestParsingSectionSeparator:
         styler = TextStyler(PlainTextBackend())
         text = "First paragraph.\n\n---\n\nSecond paragraph."
         segments = styler.parse(text)
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         assert SegmentType.SECTION_SEPARATOR in types
 
     def test_parse_section_separator_asterisks(self):
         styler = TextStyler(PlainTextBackend())
         text = "First paragraph.\n\n***\n\nSecond paragraph."
         segments = styler.parse(text)
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         assert SegmentType.SECTION_SEPARATOR in types
 
 
@@ -226,7 +226,7 @@ class TestEdgeCases:
     def test_nested_quotes(self):
         """Inner single quotes inside double quotes should not break parsing."""
         styler = TextStyler(TelegramHTMLBackend())
-        text = """She said, "He told me 'run!' and I listened." """
+        text = """She said, "He told me 'run!' and I listened." """  # noqa: WPS322
         formatted_text = styler.format(text)
         # Should still detect the outer dialogue
         assert "<i>" in formatted_text
@@ -252,7 +252,7 @@ class TestEdgeCases:
         styler = TextStyler(PlainTextBackend())
         text = 'The sign reads "Beware of the dog" in faded letters.'
         segments = styler.parse(text)
-        types = [s.segment_type for s in segments]
+        types = [seg.segment_type for seg in segments]
         # Should have DIALOGUE (quoted text) but NOT NPC_NAME
         assert SegmentType.NPC_NAME not in types
         assert SegmentType.DIALOGUE in types

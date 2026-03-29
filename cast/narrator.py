@@ -52,13 +52,11 @@ class Narrator(BasePerformer):
         # knows what happened before (e.g. an ongoing fight).
         if scene_history and not is_new_scene:
             history_lines = [
-                f"- Player: {e['player_action']} → {e.get('response_summary', '')[:200]}"
-                for e in scene_history
+                f"- Player: {entry['player_action']} → {entry.get('response_summary', '')[:200]}"
+                for entry in scene_history
             ]
-            raw_parts.append(
-                "What happened earlier in this scene:\n"
-                + "\n".join(history_lines)
-            )
+            history = "\n".join(history_lines)
+            raw_parts.append(f"What happened earlier in this scene:\n{history}")
 
         if is_new_scene:
             scene = input_data["scene"]
@@ -71,28 +69,20 @@ class Narrator(BasePerformer):
                     for snpc in scene.npcs_present:
                         if snpc.uuid and snpc.uuid in game_state.npcs:
                             npc = game_state.npcs[snpc.uuid]
-                            npc_descriptions.append(
-                                f"{npc.name} ({npc.occupation})"
-                            )
+                            npc_descriptions.append(f"{npc.name} ({npc.occupation})")
                         else:
                             npc_descriptions.append(snpc.role)
-                    raw_parts.append(
-                        f"People visible: {', '.join(npc_descriptions)}"
-                    )
+                    raw_parts.append(f"People visible: {', '.join(npc_descriptions)}")
                 if scene.points_of_interest:
-                    raw_parts.append(
-                        f"Notable things: {', '.join(scene.points_of_interest)}"
-                    )
+                    raw_parts.append(f"Notable things: {', '.join(scene.points_of_interest)}")
             else:
                 raw_parts.append(f"Scene: {scene}")
 
-        if "dialogue" in input_data:
-            for d in input_data["dialogue"]:
-                raw_parts.append(f'{d["npc_name"]} says: {d["response"]}')
+        for dialogue_entry in input_data.get("dialogue", []):
+            raw_parts.append(f"{dialogue_entry['npc_name']} says: {dialogue_entry['response']}")
 
-        if "new_npcs" in input_data:
-            for npc_desc in input_data["new_npcs"]:
-                raw_parts.append(f"New person appears: {npc_desc}")
+        for npc_desc in input_data.get("new_npcs", []):
+            raw_parts.append(f"New person appears: {npc_desc}")
 
         raw_material = "\n".join(raw_parts) if raw_parts else "No specific scene data."
 
@@ -106,9 +96,7 @@ class Narrator(BasePerformer):
 
         # Completed events (local ones the player can see)
         if "completed_events" in input_data and input_data["completed_events"]:
-            kwargs["completed_events"] = "\n".join(
-                f"- {ev}" for ev in input_data["completed_events"]
-            )
+            kwargs["completed_events"] = "\n".join(f"- {ev}" for ev in input_data["completed_events"])
 
         prompt = NARRATOR_NARRATE.render(**kwargs)
         narrated = await self._send(prompt, max_tokens=800)

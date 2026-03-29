@@ -16,7 +16,7 @@ class PromptSection:
     required_vars: list[str] = field(default_factory=list)
 
     def render(self, **kwargs: str) -> str:
-        missing = [v for v in self.required_vars if v not in kwargs]
+        missing = [required_var for required_var in self.required_vars if required_var not in kwargs]
         if missing:
             raise ValueError(f"Missing template variables for section '{self.name}': {missing}")
         return self.template.format(**kwargs)
@@ -47,7 +47,7 @@ class PromptTemplate:
         """Render all sections whose required vars are satisfied."""
         parts: list[str] = []
         for section in self._sections:
-            if all(v in kwargs for v in section.required_vars):
+            if all(required_var in kwargs for required_var in section.required_vars):
                 parts.append(section.render(**kwargs))
         return self._separator.join(parts)
 
@@ -55,10 +55,10 @@ class PromptTemplate:
     def required_vars(self) -> set[str]:
         """Union of all required vars across every section."""
         all_vars: set[str] = set()
-        for s in self._sections:
-            all_vars.update(s.required_vars)
+        for section in self._sections:
+            all_vars.update(section.required_vars)
         return all_vars
 
     def __repr__(self) -> str:
-        names = [s.name for s in self._sections]
+        names = [section.name for section in self._sections]
         return f"PromptTemplate(sections={names})"

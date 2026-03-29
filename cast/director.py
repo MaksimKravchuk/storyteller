@@ -17,10 +17,10 @@ from timeline.event_manager import EventManager
 from timeline.time_costs import resolve_time_cost
 
 # Actions that increment the turn counter.
-TURN_COUNTING_ACTIONS: frozenset[str] = frozenset({"EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP"})
+TURN_COUNTING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP"))
 
 # Actions that trigger a scene rebuild (new location, time-of-day shift, etc.).
-SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset({"EXPLORE", "MOVE", "SLEEP"})
+SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
 
 
 class Director(BasePerformer):
@@ -169,7 +169,9 @@ class Director(BasePerformer):
         raw = self.game_state.pending_clarification
         if not raw:
             return None
-        return [Message(role=Role.USER if m["role"] == "user" else Role.ASSISTANT, content=m["content"]) for m in raw]
+        return [
+            Message(role=Role.USER if msg["role"] == "user" else Role.ASSISTANT, content=msg["content"]) for msg in raw
+        ]
 
     def _build_scene_history(self) -> list[Message] | None:
         """Build a conversation history from the current scene's log.
@@ -323,7 +325,7 @@ class Director(BasePerformer):
                 )
                 for npc in new_npcs:
                     self._register_new_npc(npc)
-                raw_outputs["new_npcs"] = [f"{npc.name} ({npc.occupation})" for npc in new_npcs]
+                raw_outputs["new_npcs"] = [f"{new_npc.name} ({new_npc.occupation})" for new_npc in new_npcs]
 
         # --- Add local events to narrator context ---
         if local_events:
@@ -356,7 +358,7 @@ class Director(BasePerformer):
         for each targeted NPC and the outcome is injected into the
         Actor's input so the LLM must narrate that result.
         """
-        targets_lower = {t.lower() for t in target_names}
+        targets_lower = {target.lower() for target in target_names}
 
         # Build a set of NPC UUIDs whose role also matches a target
         scene = self.game_state.current_scene
@@ -441,7 +443,7 @@ class Director(BasePerformer):
         scene = self.game_state.current_scene
         if not scene or not target_names:
             return False
-        targets_lower = {t.lower() for t in target_names}
+        targets_lower = {target.lower() for target in target_names}
         for snpc in scene.npcs_present:
             if not snpc.uuid or snpc.uuid not in self.game_state.npcs:
                 continue

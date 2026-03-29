@@ -78,7 +78,7 @@ class EventManager:
                 completed.append(ev)
 
         # Sort by completion time so effects apply in chronological order
-        completed.sort(key=lambda e: e.completes_at)
+        completed.sort(key=lambda event: event.completes_at)
 
         # Resolve each completed event
         for ev in completed:
@@ -123,8 +123,9 @@ class EventManager:
                     gs.locations[npc.location_id].remove_npc(npc_id)
                 # Move to new location
                 npc.location_id = to_loc
-                if to_loc in gs.locations:
-                    gs.locations[to_loc].add_npc(npc_id)
+                loc_obj = gs.locations.get(to_loc)
+                if loc_obj:
+                    loc_obj.add_npc(npc_id)
                 # Update current scene if applicable
                 if gs.current_scene and gs.current_scene.location_id == npc.location_id:
                     from models.scene import SceneNPC
@@ -181,7 +182,7 @@ class EventManager:
                     gs.current_scene.npcs_present = [
                         snpc for snpc in gs.current_scene.npcs_present if snpc.uuid != npc_id
                     ]
-                del gs.npcs[npc_id]
+                gs.npcs.pop(npc_id)
 
         # SPAWN_NPC is handled at a higher level by the Director
         # (it needs to call the NPC Generator agent)

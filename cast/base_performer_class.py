@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import time
 from abc import ABC, abstractmethod
@@ -46,9 +47,6 @@ class BasePerformer(ABC):
         """Set / update variables used to render the system prompt template."""
         self._system_prompt_vars.update(kwargs)
 
-    def _build_system_prompt(self) -> str:
-        return self.system_prompt_template.render(**self._system_prompt_vars)
-
     # ------------------------------------------------------------------
     # Public entry-point (wraps act with call-chain tracking)
     # ------------------------------------------------------------------
@@ -72,8 +70,20 @@ class BasePerformer(ABC):
             agent_stack.set(stack)
 
     # ------------------------------------------------------------------
+    # Abstract interface
+    # ------------------------------------------------------------------
+
+    @abstractmethod
+    async def act(self, input_data: Any, context: dict) -> Any:
+        """Perform this agent's primary action."""
+        ...
+
+    # ------------------------------------------------------------------
     # LLM helpers
     # ------------------------------------------------------------------
+
+    def _build_system_prompt(self) -> str:
+        return self.system_prompt_template.render(**self._system_prompt_vars)
 
     async def _send(
         self,
@@ -116,7 +126,7 @@ class BasePerformer(ABC):
                     "agent_name": type(self).__name__,
                     "model": response.model or self.llm_client.model,
                     "system_prompt": system_prompt,
-                    "messages": [{"role": m.role.value, "content": m.content} for m in messages],
+                    "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
                     "response_content": response.content,
                     "prompt_tokens": response.usage.get("prompt_tokens"),
                     "completion_tokens": response.usage.get("completion_tokens"),
@@ -150,20 +160,9 @@ class BasePerformer(ABC):
                     start = raw.find("{")
                     end = raw.rfind("}") + 1
                     if start != -1 and end > start:
-                        try:
+                        with contextlib.suppress(json.JSONDecodeError):
                             return json.loads(raw[start:end])
-                        except json.JSONDecodeError:
-                            pass
                     raise ValueError(
                         f"Agent failed to produce valid JSON after {retries + 1} attempts. Last response: {raw[:200]}"
                     )
         return {}  # unreachable
-
-    # ------------------------------------------------------------------
-    # Abstract interface
-    # ------------------------------------------------------------------
-
-    @abstractmethod
-    async def act(self, input_data: Any, context: dict) -> Any:
-        """Perform this agent's primary action."""
-        ...
