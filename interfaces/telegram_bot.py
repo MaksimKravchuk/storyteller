@@ -118,7 +118,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 return
 
             # Persist the new game state
-            game_state = engine.get_game_state()
+            game_state = engine.game_state
             assert game_state is not None
             assert engine.knowledge_graph is not None
             await repo.save_game_state(
@@ -154,7 +154,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return
 
         # Flush updated state back to PG
-        updated_state = engine.get_game_state()
+        updated_state = engine.game_state
         assert updated_state is not None
         assert engine.knowledge_graph is not None
         await repo.save_game_state(

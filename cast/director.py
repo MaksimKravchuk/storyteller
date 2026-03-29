@@ -464,10 +464,9 @@ class Director(BasePerformer):
             return
         existing_roles = {snpc.role.lower() for snpc in scene.npcs_present}
         # Also check already-initialised NPC names
+        npcs = self.game_state.npcs
         existing_names = {
-            self.game_state.npcs[snpc.uuid].name.lower()
-            for snpc in scene.npcs_present
-            if snpc.uuid and snpc.uuid in self.game_state.npcs
+            npcs[snpc.uuid].name.lower() for snpc in scene.npcs_present if snpc.uuid and snpc.uuid in npcs
         }
         for target in target_names:
             if target.lower() not in existing_roles and target.lower() not in existing_names:
@@ -570,10 +569,11 @@ class Director(BasePerformer):
     def _sync_context_from_state(self) -> None:
         """Update system prompt variables from the current game state."""
         scene = self.game_state.current_scene
+        npcs_present = scene.npcs_present if scene else []
         npc_names = (
             ", ".join(
                 self.game_state.npcs[snpc.uuid].name
-                for snpc in (scene.npcs_present if scene else [])
+                for snpc in npcs_present
                 if snpc.uuid and snpc.uuid in self.game_state.npcs
             )
             or "None"

@@ -64,6 +64,8 @@ class BasePerformer(ABC):
         agent_stack.set(stack)
         try:
             return await self.act(input_data, context or {})
+        except Exception:
+            raise
         finally:
             stack = agent_stack.get([])
             stack.pop()
@@ -108,19 +110,21 @@ class BasePerformer(ABC):
             call_sequence_counter.set(seq + 1)
 
             buf = call_log_buffer.get([])
-            buf.append({
-                "session_id": session_id,
-                "agent_name": type(self).__name__,
-                "model": response.model or self.llm_client.model,
-                "system_prompt": system_prompt,
-                "messages": [{"role": m.role.value, "content": m.content} for m in messages],
-                "response_content": response.content,
-                "prompt_tokens": response.usage.get("prompt_tokens"),
-                "completion_tokens": response.usage.get("completion_tokens"),
-                "duration_ms": duration_ms,
-                "parent_agent": parent,
-                "call_sequence": seq,
-            })
+            buf.append(
+                {
+                    "session_id": session_id,
+                    "agent_name": type(self).__name__,
+                    "model": response.model or self.llm_client.model,
+                    "system_prompt": system_prompt,
+                    "messages": [{"role": m.role.value, "content": m.content} for m in messages],
+                    "response_content": response.content,
+                    "prompt_tokens": response.usage.get("prompt_tokens"),
+                    "completion_tokens": response.usage.get("completion_tokens"),
+                    "duration_ms": duration_ms,
+                    "parent_agent": parent,
+                    "call_sequence": seq,
+                }
+            )
             call_log_buffer.set(buf)
 
         return response.content
@@ -151,8 +155,7 @@ class BasePerformer(ABC):
                         except json.JSONDecodeError:
                             pass
                     raise ValueError(
-                        f"Agent failed to produce valid JSON after "
-                        f"{retries + 1} attempts. Last response: {raw[:200]}"
+                        f"Agent failed to produce valid JSON after {retries + 1} attempts. Last response: {raw[:200]}"
                     )
         return {}  # unreachable
 

@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import aiohttp
 
+WIKIPEDIA_REST_BASE = "https://en.wikipedia.org/api/rest_v1"
+WIKIPEDIA_MW_API = "https://en.wikipedia.org/w/api.php"
+
 
 class WikipediaClient:
     """Lightweight async client for the Wikipedia REST / MediaWiki APIs.
 
     Used by the Data Miner to ground game settings in real historical data.
     """
-
-    REST_BASE = "https://en.wikipedia.org/api/rest_v1"
-    MW_API = "https://en.wikipedia.org/w/api.php"
 
     def __init__(self, language: str = "en") -> None:
         self._lang = language
@@ -55,9 +55,7 @@ class WikipediaClient:
                     "description": "Article not found",
                 }
 
-    async def get_full_article(
-        self, title: str, max_chars: int = 5000
-    ) -> str:
+    async def get_full_article(self, title: str, max_chars: int = 5000) -> str:
         """Fetch the full plain-text content of an article, truncated.
 
         Uses the MediaWiki API ``extracts`` module.
