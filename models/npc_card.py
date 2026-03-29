@@ -56,6 +56,6 @@ class NPCCard(Character):
         if self.inventory:
             lines.append(f"Inventory: {', '.join(self.inventory)}")
         if self.attributes:
-            attrs = ", ".join(f"{k}={v}" for k, v in self.attributes.items())
+            attrs = ", ".join(f"{attr_name}={attr_val}" for attr_name, attr_val in self.attributes.items())
             lines.append(f"Attributes: {attrs}")
         return "\n".join(lines)

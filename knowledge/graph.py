@@ -61,16 +61,16 @@ class KnowledgeGraph:
 
     def query_by_scope(self, max_scope: KnowledgeScope) -> list[KnowledgeNode]:
         """Return all nodes whose scope is at or below ``max_scope``."""
-        return [n for n in self.all_nodes() if n.scope <= max_scope]
+        return [node for node in self.all_nodes() if node.scope <= max_scope]
 
     def query_by_tags(self, tags: list[str]) -> list[KnowledgeNode]:
         """Return nodes that have at least one matching tag."""
         tag_set = set(tags)
-        return [n for n in self.all_nodes() if tag_set & set(n.tags)]
+        return [node for node in self.all_nodes() if tag_set & set(node.tags)]
 
     def query_by_location(self, location_id: str) -> list[KnowledgeNode]:
         """Return nodes associated with a specific location."""
-        return [n for n in self.all_nodes() if n.location_id == location_id]
+        return [node for node in self.all_nodes() if node.location_id == location_id]
 
     def get_related(self, node_id: str, depth: int = 2) -> list[KnowledgeNode]:
         """BFS traversal: find nodes within ``depth`` hops of ``node_id``."""

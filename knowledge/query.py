@@ -133,7 +133,7 @@ class KnowledgeQueryEngine:
             KnowledgeSource.HEARSAY: 2,
             KnowledgeSource.RUMOR: 3,
         }
-        nodes.sort(key=lambda n: source_priority.get(n.source, 99))
+        nodes.sort(key=lambda node: source_priority.get(node.source, 99))
 
         lines: list[str] = []
         for node in nodes:

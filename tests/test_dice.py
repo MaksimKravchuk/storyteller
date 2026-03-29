@@ -189,7 +189,7 @@ def _fixed_rng(*, npc: int, player: int) -> random.Random:
         def __init__(self):
             self._calls = iter([player, npc])
 
-        def randint(self, a: int, b: int) -> int:
+        def randint(self, low: int, high: int) -> int:
             return next(self._calls)
 
     return _FixedRng()  # type: ignore[return-value]
@@ -199,7 +199,7 @@ def _single_rng(fixed_roll: int) -> random.Random:
     """Return a fake RNG that always yields *fixed_roll*."""
 
     class _SingleRng:
-        def randint(self, a: int, b: int) -> int:
+        def randint(self, low: int, high: int) -> int:
             return fixed_roll
 
     return _SingleRng()  # type: ignore[return-value]

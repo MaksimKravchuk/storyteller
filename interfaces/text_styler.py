@@ -81,12 +81,12 @@ class TextStyler:
         claimed: list[tuple[int, int, StyledSegment]] = []
 
         # 1. Section separators
-        for m in _SEPARATOR.finditer(text):
+        for match in _SEPARATOR.finditer(text):
             claimed.append(
                 (
-                    m.start(),
-                    m.end(),
-                    StyledSegment(m.group(), SegmentType.SECTION_SEPARATOR),
+                    match.start(),
+                    match.end(),
+                    StyledSegment(match.group(), SegmentType.SECTION_SEPARATOR),
                 )
             )
 
@@ -102,58 +102,58 @@ class TextStyler:
             )
 
         # 3. Name + verb + dialogue  (e.g. Marcus says: "...")
-        for m in _NAME_VERB_DIALOGUE.finditer(text):
+        for match in _NAME_VERB_DIALOGUE.finditer(text):
             claimed.append(
                 (
-                    m.start("name"),
-                    m.end("name"),
-                    StyledSegment(m.group("name"), SegmentType.NPC_NAME),
+                    match.start("name"),
+                    match.end("name"),
+                    StyledSegment(match.group("name"), SegmentType.NPC_NAME),
                 )
             )
             claimed.append(
                 (
-                    m.start("dialogue"),
-                    m.end("dialogue"),
-                    StyledSegment(m.group("dialogue"), SegmentType.DIALOGUE),
+                    match.start("dialogue"),
+                    match.end("dialogue"),
+                    StyledSegment(match.group("dialogue"), SegmentType.DIALOGUE),
                 )
             )
 
         # 4. Dialogue + verb + name  (e.g. "Hello," said Marcus)
-        for m in _DIALOGUE_VERB_NAME.finditer(text):
+        for match in _DIALOGUE_VERB_NAME.finditer(text):
             # Avoid duplicate dialogue claims
-            d_start, d_end = m.start("dialogue"), m.end("dialogue")
+            d_start, d_end = match.start("dialogue"), match.end("dialogue")
             if not _overlaps(claimed, d_start, d_end):
                 claimed.append(
                     (
                         d_start,
                         d_end,
-                        StyledSegment(m.group("dialogue"), SegmentType.DIALOGUE),
+                        StyledSegment(match.group("dialogue"), SegmentType.DIALOGUE),
                     )
                 )
-            n_start, n_end = m.start("name"), m.end("name")
+            n_start, n_end = match.start("name"), match.end("name")
             if not _overlaps(claimed, n_start, n_end):
                 claimed.append(
                     (
                         n_start,
                         n_end,
-                        StyledSegment(m.group("name"), SegmentType.NPC_NAME),
+                        StyledSegment(match.group("name"), SegmentType.NPC_NAME),
                     )
                 )
 
         # 5. Standalone quoted text (dialogue without attribution)
-        for m in _STANDALONE_QUOTE.finditer(text):
-            d_start, d_end = m.start("dialogue"), m.end("dialogue")
+        for match in _STANDALONE_QUOTE.finditer(text):
+            d_start, d_end = match.start("dialogue"), match.end("dialogue")
             if not _overlaps(claimed, d_start, d_end):
                 claimed.append(
                     (
                         d_start,
                         d_end,
-                        StyledSegment(m.group("dialogue"), SegmentType.DIALOGUE),
+                        StyledSegment(match.group("dialogue"), SegmentType.DIALOGUE),
                     )
                 )
 
         # Sort claimed by start position
-        claimed.sort(key=lambda c: c[0])
+        claimed.sort(key=lambda claim: claim[0])
 
         # Fill gaps with PLAIN segments
         pos = 0

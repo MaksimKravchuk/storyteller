@@ -37,7 +37,7 @@ def setting_to_row(setting: Setting, game_state_id: str) -> dict:
 
 
 def row_to_setting(row) -> Setting:
-    s = Setting(
+    setting = Setting(
         name=row["name"],
         time_period=row["time_period"],
         region=row["region"],
@@ -50,8 +50,8 @@ def row_to_setting(row) -> Setting:
         social_structure=row["social_structure"],
         raw_sources=row["raw_sources"],
     )
-    s.uuid = row["id"]
-    return s
+    setting.uuid = row["id"]
+    return setting
 
 
 # ── PlayerState ───────────────────────────────────────────
@@ -70,13 +70,13 @@ def player_to_row(player: PlayerState, game_state_id: str) -> dict:
 
 
 def row_to_player(row) -> PlayerState:
-    p = PlayerState(name=row["name"])
-    p.uuid = row["id"]
-    p.location_id = row["location_id"]
-    p.inventory = row["inventory"]
-    p.appearance = row["appearance"]
-    p.interaction_history = row["interaction_history"]
-    return p
+    player = PlayerState(name=row["name"])
+    player.uuid = row["id"]
+    player.location_id = row["location_id"]
+    player.inventory = row["inventory"]
+    player.appearance = row["appearance"]
+    player.interaction_history = row["interaction_history"]
+    return player
 
 
 # ── Location ─────────────────────────────────────────────
@@ -182,7 +182,7 @@ def row_to_scene(row) -> Scene:
         else SceneNPC(role=npc_entry, uuid=npc_entry)  # legacy UUID string
         for npc_entry in raw_npcs
     ]
-    s = Scene(
+    scene = Scene(
         location_id=row["location_id"],
         description=row["description"],
         npcs_present=npcs,
@@ -190,9 +190,9 @@ def row_to_scene(row) -> Scene:
         ambient_description=row["ambient_description"],
         time_of_day=row["time_of_day"],
     )
-    s.uuid = row["id"]
-    s.narrated_text = row["narrated_text"]
-    return s
+    scene.uuid = row["id"]
+    scene.narrated_text = row["narrated_text"]
+    return scene
 
 
 # ── KnowledgeNode ────────────────────────────────────────
@@ -246,7 +246,7 @@ def game_event_to_row(event: GameEvent, game_state_id: str) -> dict:
         "location_id": event.location_id,
         "scope": event.scope,
         "effects": [
-            {"effect_type": e.effect_type, "target_id": e.target_id, "params": e.params} for e in event.effects
+            {"effect_type": eff.effect_type, "target_id": eff.target_id, "params": eff.params} for eff in event.effects
         ],
         "follow_up_events": event.follow_up_events,
         "on_complete_description": event.on_complete_description,
@@ -261,7 +261,7 @@ def row_to_game_event(row) -> GameEvent:
         owner_id=row["owner_id"],
         location_id=row["location_id"],
         scope=row["scope"],
-        effects=[EventEffect(**e) for e in row["effects"]],
+        effects=[EventEffect(**eff) for eff in row["effects"]],
         follow_up_events=row["follow_up_events"],
         on_complete_description=row["on_complete_description"],
     )
