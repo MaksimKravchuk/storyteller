@@ -9,7 +9,7 @@ from __future__ import annotations
 import types
 
 # Base time costs in hours, keyed by action type (uppercase)
-BASE_ACTION_COSTS: dict[str, float] = types.MappingProxyType(
+BASE_ACTION_COSTS: types.MappingProxyType[str, float] = types.MappingProxyType(
     {
         "TALK": 0.05,  # ~3 minutes — a quick exchange
         "EXPLORE": 0.5,  # 30 minutes

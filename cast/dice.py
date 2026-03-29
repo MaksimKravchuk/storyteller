@@ -13,7 +13,7 @@ from enum import Enum
 # Lower = more likely to attack.  Mood not listed here → no retaliation.
 # ---------------------------------------------------------------------------
 
-AGGRESSION_THRESHOLDS: dict[str, int] = types.MappingProxyType(
+AGGRESSION_THRESHOLDS: types.MappingProxyType[str, int] = types.MappingProxyType(
     {
         "hostile": 5,
         "enraged": 3,

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from aiohttp import web
+from aiohttp.typedefs import Handler
 
 from db.engine import get_db
 from db.repository import GameRepository
@@ -40,7 +41,7 @@ class AdminServer:
         self._db_factory = db_session_factory
         self._port = port
         self._token = token
-        self._app = web.Application(middlewares=[self._auth_middleware])
+        self._app = web.Application(middlewares=[self._auth_middleware])  # type: ignore[list-item]
         self._setup_routes()
         self._runner: web.AppRunner | None = None
 
@@ -67,7 +68,7 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
 
     @web.middleware
-    async def _auth_middleware(self, request: web.Request, next_handler):
+    async def _auth_middleware(self, request: web.Request, next_handler: Handler) -> web.StreamResponse:
         if self._token and request.path.startswith("/api/"):
             auth = request.headers.get("Authorization", "")
             if auth != f"Bearer {self._token}":
