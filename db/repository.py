@@ -52,51 +52,53 @@ class GameRepository:
         )
         await self._s.execute(stmt)
 
-        result = await self._s.execute(select(t.sessions).where(t.sessions.c.telegram_chat_id == telegram_chat_id))
-        row = result.mappings().one()
+        query_result = await self._s.execute(
+            select(t.sessions).where(t.sessions.c.telegram_chat_id == telegram_chat_id)
+        )
+        row = query_result.mappings().one()
         return dict(row)
 
     async def update_session(self, session_id: str, *, state: str | None = None, language: str | None = None) -> None:
-        values: dict[str, Any] = {}
+        update_fields: dict[str, Any] = {}
         if state is not None:
-            values["state"] = state
+            update_fields["state"] = state
         if language is not None:
-            values["language"] = language
-        if values:
-            await self._s.execute(update(t.sessions).where(t.sessions.c.id == session_id).values(**values))
+            update_fields["language"] = language
+        if update_fields:
+            await self._s.execute(update(t.sessions).where(t.sessions.c.id == session_id).values(**update_fields))
 
     # ── Full state load ───────────────────────────────────
 
     async def load_game_state(self, session_id: str) -> tuple[GameState, KnowledgeGraph, list[GameEvent]] | None:
         """Load full game state from PG. Returns None if no game exists for this session."""
         # Load game_states row
-        result = await self._s.execute(select(t.game_states).where(t.game_states.c.session_id == session_id))
-        gs_row = result.mappings().first()
+        gs_query = await self._s.execute(select(t.game_states).where(t.game_states.c.session_id == session_id))
+        gs_row = gs_query.mappings().first()
         if gs_row is None:
             return None
         gs_row = dict(gs_row)
         game_state_id = gs_row["id"]
 
         # Load setting
-        result = await self._s.execute(select(t.settings).where(t.settings.c.game_state_id == game_state_id))
-        setting_row = result.mappings().first()
+        setting_query = await self._s.execute(select(t.settings).where(t.settings.c.game_state_id == game_state_id))
+        setting_row = setting_query.mappings().first()
         if setting_row is None:
             return None
         setting = row_to_setting(dict(setting_row))
 
         # Load knowledge graph
         kg = KnowledgeGraph()
-        result = await self._s.execute(
+        nodes_query = await self._s.execute(
             select(t.knowledge_nodes).where(t.knowledge_nodes.c.game_state_id == game_state_id)
         )
-        for row in result.mappings():
+        for row in nodes_query.mappings():
             node = row_to_knowledge_node(dict(row))
             kg.add_node(node)
 
-        result = await self._s.execute(
+        edges_query = await self._s.execute(
             select(t.knowledge_edges).where(t.knowledge_edges.c.game_state_id == game_state_id)
         )
-        for row in result.mappings():
+        for row in edges_query.mappings():
             kg.add_edge(
                 row["from_node_id"],
                 row["to_node_id"],
@@ -116,37 +118,39 @@ class GameRepository:
         game_state.pending_clarification = gs_row.get("pending_clarification")
 
         # Load player
-        result = await self._s.execute(select(t.players).where(t.players.c.game_state_id == game_state_id))
-        player_row = result.mappings().first()
+        player_query = await self._s.execute(select(t.players).where(t.players.c.game_state_id == game_state_id))
+        player_row = player_query.mappings().first()
         if player_row:
             game_state.player = row_to_player(dict(player_row))
 
         # Load locations
-        result = await self._s.execute(select(t.locations).where(t.locations.c.game_state_id == game_state_id))
-        for row in result.mappings():
+        locations_query = await self._s.execute(select(t.locations).where(t.locations.c.game_state_id == game_state_id))
+        for row in locations_query.mappings():
             loc = row_to_location(dict(row))
             game_state.locations[loc.uuid] = loc
 
         # Load NPCs
-        result = await self._s.execute(select(t.npcs).where(t.npcs.c.game_state_id == game_state_id))
-        for row in result.mappings():
+        npcs_query = await self._s.execute(select(t.npcs).where(t.npcs.c.game_state_id == game_state_id))
+        for row in npcs_query.mappings():
             npc = row_to_npc(dict(row))
             game_state.npcs[npc.uuid] = npc
 
         # Load current scene
-        result = await self._s.execute(
+        scene_query = await self._s.execute(
             select(t.scenes).where(
                 t.scenes.c.game_state_id == game_state_id,
                 t.scenes.c.is_current == True,  # noqa: E712
             )
         )
-        scene_row = result.mappings().first()
+        scene_row = scene_query.mappings().first()
         if scene_row:
             game_state.current_scene = row_to_scene(dict(scene_row))
 
         # Load events
-        result = await self._s.execute(select(t.game_events).where(t.game_events.c.game_state_id == game_state_id))
-        events = [row_to_game_event(dict(row)) for row in result.mappings()]
+        events_query = await self._s.execute(
+            select(t.game_events).where(t.game_events.c.game_state_id == game_state_id)
+        )
+        events = [row_to_game_event(dict(row)) for row in events_query.mappings()]
 
         return game_state, kg, events
 
@@ -188,8 +192,8 @@ class GameRepository:
             )
             .returning(t.game_states.c.id)
         )
-        result = await self._s.execute(stmt)
-        game_state_id = result.scalar_one()
+        upsert_result = await self._s.execute(stmt)
+        game_state_id = upsert_result.scalar_one()
         await self._s.flush()
 
         # Setting (upsert)
@@ -285,20 +289,20 @@ class GameRepository:
             .limit(limit)
             .offset(offset)
         )
-        result = await self._s.execute(stmt)
-        return [dict(row) for row in result.mappings()]
+        sessions_query = await self._s.execute(stmt)
+        return [dict(row) for row in sessions_query.mappings()]
 
     async def get_session_detail(self, session_id: str) -> dict | None:
         """Get full session detail for admin view."""
-        result = await self._s.execute(select(t.sessions).where(t.sessions.c.id == session_id))
-        session_row = result.mappings().first()
+        session_query = await self._s.execute(select(t.sessions).where(t.sessions.c.id == session_id))
+        session_row = session_query.mappings().first()
         if not session_row:
             return None
         detail: dict[str, Any] = {"session": dict(session_row)}
 
         # Game state
-        result = await self._s.execute(select(t.game_states).where(t.game_states.c.session_id == session_id))
-        gs_row = result.mappings().first()
+        gs_query = await self._s.execute(select(t.game_states).where(t.game_states.c.session_id == session_id))
+        gs_row = gs_query.mappings().first()
         if not gs_row:
             detail["game_state"] = None
             return detail
@@ -307,13 +311,13 @@ class GameRepository:
         detail["game_state"] = gs_row
 
         # Setting
-        result = await self._s.execute(select(t.settings).where(t.settings.c.game_state_id == game_state_id))
-        row = result.mappings().first()
+        setting_query = await self._s.execute(select(t.settings).where(t.settings.c.game_state_id == game_state_id))
+        row = setting_query.mappings().first()
         detail["setting"] = dict(row) if row else None
 
         # Player
-        result = await self._s.execute(select(t.players).where(t.players.c.game_state_id == game_state_id))
-        row = result.mappings().first()
+        player_query = await self._s.execute(select(t.players).where(t.players.c.game_state_id == game_state_id))
+        row = player_query.mappings().first()
         detail["player"] = dict(row) if row else None
 
         # Counts
@@ -325,68 +329,68 @@ class GameRepository:
             ("knowledge_node_count", t.knowledge_nodes),
             ("event_count", t.game_events),
         ]:
-            result = await self._s.execute(
+            count_query = await self._s.execute(
                 select(func.count()).select_from(table).where(table.c.game_state_id == game_state_id)
             )
-            detail[table_name] = result.scalar()
+            detail[table_name] = count_query.scalar()
 
         return detail
 
     async def get_conversation_log(self, session_id: str) -> list[dict]:
         """Get conversation log for a session."""
-        result = await self._s.execute(
+        log_query = await self._s.execute(
             select(t.game_states.c.conversation_log).where(t.game_states.c.session_id == session_id)
         )
-        row = result.scalar()
+        row = log_query.scalar()
         return row if row else []
 
     async def get_npcs(self, session_id: str) -> list[dict]:
         """Get all NPCs for a session."""
-        result = await self._s.execute(
+        npcs_query = await self._s.execute(
             select(t.npcs)
             .join(t.game_states, t.game_states.c.id == t.npcs.c.game_state_id)
             .where(t.game_states.c.session_id == session_id)
         )
-        return [dict(row) for row in result.mappings()]
+        return [dict(row) for row in npcs_query.mappings()]
 
     async def get_locations(self, session_id: str) -> list[dict]:
         """Get all locations for a session."""
-        result = await self._s.execute(
+        locations_query = await self._s.execute(
             select(t.locations)
             .join(t.game_states, t.game_states.c.id == t.locations.c.game_state_id)
             .where(t.game_states.c.session_id == session_id)
         )
-        return [dict(row) for row in result.mappings()]
+        return [dict(row) for row in locations_query.mappings()]
 
     async def get_knowledge_graph(self, session_id: str) -> dict:
         """Get knowledge graph nodes and edges for a session."""
         # Get game_state_id
-        result = await self._s.execute(select(t.game_states.c.id).where(t.game_states.c.session_id == session_id))
-        game_state_id = result.scalar()
+        gs_id_query = await self._s.execute(select(t.game_states.c.id).where(t.game_states.c.session_id == session_id))
+        game_state_id = gs_id_query.scalar()
         if not game_state_id:
             return {"nodes": [], "edges": []}
 
-        result = await self._s.execute(
+        kg_nodes_query = await self._s.execute(
             select(t.knowledge_nodes).where(t.knowledge_nodes.c.game_state_id == game_state_id)
         )
-        nodes = [dict(row) for row in result.mappings()]
+        nodes = [dict(row) for row in kg_nodes_query.mappings()]
 
-        result = await self._s.execute(
+        kg_edges_query = await self._s.execute(
             select(t.knowledge_edges).where(t.knowledge_edges.c.game_state_id == game_state_id)
         )
-        edges = [dict(row) for row in result.mappings()]
+        edges = [dict(row) for row in kg_edges_query.mappings()]
 
         return {"nodes": nodes, "edges": edges}
 
     async def get_events(self, session_id: str) -> list[dict]:
         """Get all events for a session."""
-        result = await self._s.execute(
+        events_query = await self._s.execute(
             select(t.game_events)
             .join(t.game_states, t.game_states.c.id == t.game_events.c.game_state_id)
             .where(t.game_states.c.session_id == session_id)
             .order_by(t.game_events.c.scheduled_at)
         )
-        return [dict(row) for row in result.mappings()]
+        return [dict(row) for row in events_query.mappings()]
 
     # ── AI call logs ──────────────────────────────────────
 
@@ -429,5 +433,5 @@ class GameRepository:
         )
         if turn_number is not None:
             stmt = stmt.where(t.ai_call_logs.c.turn_number == turn_number)
-        result = await self._s.execute(stmt)
-        return [dict(row) for row in result.mappings()]
+        ai_logs_query = await self._s.execute(stmt)
+        return [dict(row) for row in ai_logs_query.mappings()]

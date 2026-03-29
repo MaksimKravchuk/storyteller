@@ -24,8 +24,8 @@ class SceneNPC:
         return {"role": self.role, "uuid": self.uuid}
 
     @classmethod
-    def from_dict(cls, data: dict) -> SceneNPC:
-        return cls(role=data["role"], uuid=data.get("uuid"))
+    def from_dict(cls, npc_dict: dict) -> SceneNPC:
+        return cls(role=npc_dict["role"], uuid=npc_dict.get("uuid"))
 
     def __repr__(self) -> str:
         status = "uninit" if self.need_init else self.uuid

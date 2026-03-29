@@ -135,28 +135,28 @@ class EventManager:
 
         elif etype == "ADD_ITEM":
             npc_id = effect.params.get("npc_id", effect.target_id)
-            item = effect.params.get("item", "")
+            inventory_item = effect.params.get("item", "")
             npc = gs.npcs.get(npc_id)
-            if npc and item:
-                npc.add_item_to_inventory(item)
+            if npc and inventory_item:
+                npc.add_item_to_inventory(inventory_item)
 
         elif etype == "REMOVE_ITEM":
             npc_id = effect.params.get("npc_id", effect.target_id)
-            item = effect.params.get("item", "")
+            inventory_item = effect.params.get("item", "")
             npc = gs.npcs.get(npc_id)
-            if npc and item and item in npc.inventory:
-                npc.remove_item_from_inventory(item)
+            if npc and inventory_item and inventory_item in npc.inventory:
+                npc.remove_item_from_inventory(inventory_item)
 
         elif etype == "ADD_KNOWLEDGE":
             # Dynamically import to avoid circular deps at module level
             from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 
-            content = effect.params.get("content", "")
+            knowledge_text = effect.params.get("content", "")
             scope_str = effect.params.get("scope", "local")
             tags = effect.params.get("tags", [])
-            if content:
+            if knowledge_text:
                 node = KnowledgeNode(
-                    content=content,
+                    content=knowledge_text,
                     scope=KnowledgeScope(scope_str),
                     source=KnowledgeSource.FACT,
                     tags=tags,
@@ -167,9 +167,9 @@ class EventManager:
         elif etype == "CHANGE_ATTRIBUTE":
             target = gs.npcs.get(effect.target_id)
             attr = effect.params.get("attribute", "")
-            value = effect.params.get("value", 0)
+            attribute_value = effect.params.get("value", 0)
             if target and attr:
-                target.update_attribute(attr, value)
+                target.update_attribute(attr, attribute_value)
 
         elif etype == "REMOVE_NPC":
             npc_id = effect.target_id

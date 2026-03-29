@@ -95,7 +95,7 @@ class Director(BasePerformer):
         completed_events = self._advance_and_resolve(action_type, time_override)
 
         # 5. Execute the plan by delegating to agents
-        result = await self._execute_plan(routing_plan, input_data, completed_events)
+        narrated_response = await self._execute_plan(routing_plan, input_data, completed_events)
 
         # 6. Update game state bookkeeping
         if action_type in TURN_COUNTING_ACTIONS:
@@ -104,19 +104,19 @@ class Director(BasePerformer):
             {
                 "turn": self.game_state.turn_count,
                 "player_action": input_data,
-                "response": result,
+                "response": narrated_response,
                 "game_clock": self.game_state.game_clock,
             }
         )
         self.game_state.scene_conversation_log.append(
             {
                 "player_action": input_data,
-                "response_summary": result[:500],
+                "response_summary": narrated_response[:500],
                 "action_type": action_type,
             }
         )
 
-        return result
+        return narrated_response
 
     def register_actor(self, npc_uuid: str, actor: Any) -> None:
         """Register an Actor agent for an NPC."""
@@ -366,7 +366,7 @@ class Director(BasePerformer):
                 if snpc.uuid and snpc.role.lower() in targets_lower:
                     role_matched_uuids.add(snpc.uuid)
 
-        results: list[dict[str, str]] = []
+        dialogue_entries: list[dict[str, str]] = []
         matched_names: set[str] = set()
         for npc_uuid, actor in self.actors.items():
             npc = self.game_state.npcs.get(npc_uuid)
@@ -410,8 +410,8 @@ class Director(BasePerformer):
                         f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus} "
                         f"→ {combat_roll.outcome.value}"
                     )
-                results.append(result_entry)
-        return results
+                dialogue_entries.append(result_entry)
+        return dialogue_entries
 
     async def _init_scene_npcs(self) -> None:
         """Initialise any ``SceneNPC`` objects that haven't been turned into
@@ -507,7 +507,7 @@ class Director(BasePerformer):
         If the roll passes, the NPC retaliates — a combat dice roll is
         performed and injected into a second Actor call.
         """
-        results: list[dict[str, str]] = []
+        retaliation_entries: list[dict[str, str]] = []
         retaliated_names: set[str] = set()
         for npc_uuid, actor in self.actors.items():
             npc = self.game_state.npcs.get(npc_uuid)
@@ -559,8 +559,8 @@ class Director(BasePerformer):
                     f"→ {combat_roll.outcome.value}"
                 ),
             }
-            results.append(result_entry)
-        return results
+            retaliation_entries.append(result_entry)
+        return retaliation_entries
 
     # ------------------------------------------------------------------
     # Internal: helpers

@@ -18,16 +18,16 @@ logger = logging.getLogger(__name__)
 _DASHBOARD_HTML = Path(__file__).parent / "admin_dashboard.html"
 
 
-def _json_serial(obj: Any) -> Any:
+def _json_serial(unknown: Any) -> Any:
     """JSON serializer for objects not handled by default json."""
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    raise TypeError(f"Type {type(obj)} not serializable")
+    if isinstance(unknown, datetime):
+        return unknown.isoformat()
+    raise TypeError(f"Type {type(unknown)} not serializable")
 
 
-def _json_response(data: Any, status: int = 200) -> web.Response:
+def _json_response(payload: Any, status: int = 200) -> web.Response:
     return web.Response(
-        text=json.dumps(data, default=_json_serial),
+        text=json.dumps(payload, default=_json_serial),
         content_type="application/json",
         status=status,
     )
@@ -56,12 +56,12 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
 
     @web.middleware
-    async def _auth_middleware(self, request: web.Request, handler):
+    async def _auth_middleware(self, request: web.Request, next_handler):
         if self._token and request.path.startswith("/api/"):
             auth = request.headers.get("Authorization", "")
             if auth != f"Bearer {self._token}":
                 return _json_response({"error": "Unauthorized"}, status=401)
-        return await handler(request)
+        return await next_handler(request)
 
     async def start(self) -> None:
         self._runner = web.AppRunner(self._app)

@@ -27,9 +27,10 @@ class EventEffect:
       - SPAWN_NPC:         {"npc_request": str}   (triggers NPC generator)
       - REMOVE_NPC:        {"npc_id": str}
     """
+
     effect_type: str
     target_id: str
-    params: dict = field(default_factory=dict)
+    params: dict = field(default_factory=dict)  # noqa: WPS110
 
 
 class GameEvent(BaseModel):
@@ -59,9 +60,9 @@ class GameEvent(BaseModel):
         self.duration = duration
         self.completes_at: float = scheduled_at + duration
         self.status: EventStatus = EventStatus.PENDING
-        self.owner_id = owner_id          # NPC UUID or None for world events
-        self.location_id = location_id    # Where the event takes place
-        self.scope = scope                # "local"/"city"/"region"/"country"/"world"
+        self.owner_id = owner_id  # NPC UUID or None for world events
+        self.location_id = location_id  # Where the event takes place
+        self.scope = scope  # "local"/"city"/"region"/"country"/"world"
         self.effects: list[EventEffect] = effects or []
         self.follow_up_events: list[dict] = follow_up_events or []
         self.on_complete_description = on_complete_description

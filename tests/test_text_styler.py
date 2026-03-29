@@ -167,22 +167,22 @@ class TestFormatTelegram:
             "while senators hurry past in white togas.\n\n"
             'Marcus says: "Welcome, stranger. What brings you here?"'
         )
-        result = styler.format(text)
+        formatted_text = styler.format(text)
         # Scene header should be bold
-        assert "<b>The Roman Forum</b>" in result
+        assert "<b>The Roman Forum</b>" in formatted_text
         # NPC name should be bold
-        assert "<b>Marcus</b>" in result
+        assert "<b>Marcus</b>" in formatted_text
         # Dialogue should be italic
-        assert "<i>" in result
+        assert "<i>" in formatted_text
         # HTML entities in plain text should be escaped (no raw < or >)
         # The original text has no < or >, so just check structure
-        assert "</b>" in result
+        assert "</b>" in formatted_text
 
     def test_format_continuation_with_dialogue(self):
         styler = TextStyler(TelegramHTMLBackend())
         text = 'The guard eyes you suspiciously. "State your business," he growls.'
-        result = styler.format(text)
-        assert "<i>" in result  # dialogue formatted
+        formatted_text = styler.format(text)
+        assert "<i>" in formatted_text  # dialogue formatted
 
     def test_format_empty_string(self):
         styler = TextStyler(TelegramHTMLBackend())
@@ -191,32 +191,32 @@ class TestFormatTelegram:
     def test_format_text_with_html_entities_escaped(self):
         styler = TextStyler(TelegramHTMLBackend())
         text = "The temperature dropped & the wind howled < the mountains."
-        result = styler.format(text)
-        assert "&amp;" in result
-        assert "&lt;" in result
+        formatted_text = styler.format(text)
+        assert "&amp;" in formatted_text
+        assert "&lt;" in formatted_text
         # No raw & or < outside of HTML tags
         # Remove tags, then check
         import re
 
-        stripped = re.sub(r"<[^>]+>", "", result)
+        stripped = re.sub(r"<[^>]+>", "", formatted_text)
         assert "<" not in stripped
-        assert "&" not in stripped or "&amp;" in result
+        assert "&" not in stripped or "&amp;" in formatted_text
 
     def test_format_preserves_newlines(self):
         styler = TextStyler(TelegramHTMLBackend())
         text = "First paragraph.\n\nSecond paragraph."
-        result = styler.format(text)
-        assert "\n" in result
+        formatted_text = styler.format(text)
+        assert "\n" in formatted_text
 
 
 class TestFormatPlain:
     def test_format_plain_returns_readable_text(self):
         styler = TextStyler(PlainTextBackend())
         text = 'Marcus says: "Hello, friend."'
-        result = styler.format(text)
+        formatted_text = styler.format(text)
         # Plain backend should return text that is still readable
-        assert "Marcus" in result
-        assert "Hello, friend." in result
+        assert "Marcus" in formatted_text
+        assert "Hello, friend." in formatted_text
 
 
 # ── Phase 4: Edge cases ──────────────────────────────────────────────
@@ -227,25 +227,25 @@ class TestEdgeCases:
         """Inner single quotes inside double quotes should not break parsing."""
         styler = TextStyler(TelegramHTMLBackend())
         text = """She said, "He told me 'run!' and I listened." """
-        result = styler.format(text)
+        formatted_text = styler.format(text)
         # Should still detect the outer dialogue
-        assert "<i>" in result
+        assert "<i>" in formatted_text
 
     def test_non_english_quotes(self):
         """Unicode quote marks (Russian guillemets, French quotes) should be detected."""
         styler = TextStyler(TelegramHTMLBackend())
         # Russian-style quotes
         text = "Marcus says: \u00abHello, friend.\u00bb"
-        result = styler.format(text)
-        assert "<b>Marcus</b>" in result
-        assert "<i>" in result
+        formatted_text = styler.format(text)
+        assert "<b>Marcus</b>" in formatted_text
+        assert "<i>" in formatted_text
 
     def test_multiline_dialogue(self):
         """Dialogue that spans a line break within quotes."""
         styler = TextStyler(TelegramHTMLBackend())
         text = 'Marcus says: "I have traveled\nfar and wide."'
-        result = styler.format(text)
-        assert "<i>" in result
+        formatted_text = styler.format(text)
+        assert "<i>" in formatted_text
 
     def test_no_false_positive_on_regular_quotes(self):
         """Quotes used for emphasis, not dialogue, shouldn't get NPC_NAME."""
@@ -259,5 +259,5 @@ class TestEdgeCases:
 
     def test_text_with_only_separator(self):
         styler = TextStyler(TelegramHTMLBackend())
-        result = styler.format("---")
-        assert len(result.strip()) > 0
+        formatted_text = styler.format("---")
+        assert len(formatted_text.strip()) > 0

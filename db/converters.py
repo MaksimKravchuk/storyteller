@@ -177,8 +177,10 @@ def row_to_scene(row) -> Scene:
     # Backward-compatible: old rows store NPC UUIDs as plain strings.
     raw_npcs = row["npcs_present"]
     npcs = [
-        SceneNPC.from_dict(item) if isinstance(item, dict) else SceneNPC(role=item, uuid=item)  # legacy UUID string
-        for item in raw_npcs
+        SceneNPC.from_dict(npc_entry)
+        if isinstance(npc_entry, dict)
+        else SceneNPC(role=npc_entry, uuid=npc_entry)  # legacy UUID string
+        for npc_entry in raw_npcs
     ]
     s = Scene(
         location_id=row["location_id"],

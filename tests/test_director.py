@@ -683,9 +683,9 @@ class TestActorMoodUpdate:
         # Mock _send to return text with mood tag
         actor._send = AsyncMock(return_value="*tackles you to the ground*\n[MOOD: hostile]")
 
-        result = await actor.act("attack guard", {"location_name": "forum"})
+        actor_response = await actor.act("attack guard", {"location_name": "forum"})
         assert npc.current_mood == "hostile"
-        assert "[MOOD:" not in result
+        assert "[MOOD:" not in actor_response
 
     @pytest.mark.asyncio
     async def test_mood_unchanged_when_no_tag(self):

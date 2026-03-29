@@ -65,6 +65,6 @@ class TestCallSequenceCounter:
 
     def test_increment(self):
         reset_buffer()
-        val = call_sequence_counter.get(0)
-        call_sequence_counter.set(val + 1)
+        current_count = call_sequence_counter.get(0)
+        call_sequence_counter.set(current_count + 1)
         assert call_sequence_counter.get(0) == 1

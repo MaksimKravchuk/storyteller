@@ -51,7 +51,9 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         session = await repo.get_or_create_session(chat_id)
         await repo.update_session(session["id"], state="awaiting_language")
 
-    keyboard = [[InlineKeyboardButton(label, callback_data=f"lang:{value}")] for label, value in _LANGUAGE_OPTIONS]
+    keyboard = [
+        [InlineKeyboardButton(label, callback_data=f"lang:{lang_code}")] for label, lang_code in _LANGUAGE_OPTIONS
+    ]
     await update.message.reply_text(
         "Welcome to Storyteller!\n\nChoose your story language:",
         reply_markup=InlineKeyboardMarkup(keyboard),

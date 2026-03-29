@@ -61,7 +61,7 @@ class KnowledgeNode(BaseModel):
     def __init__(
         self,
         *,
-        content: str,
+        content: str,  # noqa: WPS110
         scope: KnowledgeScope = KnowledgeScope.LOCAL,
         source: KnowledgeSource = KnowledgeSource.FACT,
         required_education: int = 0,
@@ -72,7 +72,7 @@ class KnowledgeNode(BaseModel):
         confidence: float = 1.0,
     ):
         super().__init__()
-        self.content = content
+        self.content = content  # noqa: WPS110
         self.scope = scope
         self.source = source
         self.required_education = required_education  # 0-10

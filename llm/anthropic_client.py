@@ -22,9 +22,7 @@ class AnthropicClient(BaseLLMClient):
 
         self._client = AsyncAnthropic(api_key=self.api_key)
 
-    def _format_messages(
-        self, messages: list[Message]
-    ) -> list[dict[str, str]]:
+    def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         """Format messages for the Anthropic API.
 
         Note: Anthropic uses a separate ``system`` parameter rather than a
@@ -58,13 +56,13 @@ class AnthropicClient(BaseLLMClient):
 
         response = await self._client.messages.create(**kwargs)
 
-        content = ""
+        response_text = ""
         for block in response.content:
             if block.type == "text":
-                content += block.text
+                response_text += block.text
 
         return LLMResponse(
-            content=content,
+            content=response_text,
             raw_response=response,
             usage={
                 "prompt_tokens": response.usage.input_tokens,

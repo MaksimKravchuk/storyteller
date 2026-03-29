@@ -10,6 +10,7 @@ class PromptSection:
     ``template`` uses Python str.format() placeholders, e.g. ``{setting_name}``.
     ``required_vars`` lists the placeholder names this section needs.
     """
+
     name: str
     template: str
     required_vars: list[str] = field(default_factory=list)
@@ -17,9 +18,7 @@ class PromptSection:
     def render(self, **kwargs: str) -> str:
         missing = [v for v in self.required_vars if v not in kwargs]
         if missing:
-            raise ValueError(
-                f"Missing template variables for section '{self.name}': {missing}"
-            )
+            raise ValueError(f"Missing template variables for section '{self.name}': {missing}")
         return self.template.format(**kwargs)
 
 
@@ -55,10 +54,10 @@ class PromptTemplate:
     @property
     def required_vars(self) -> set[str]:
         """Union of all required vars across every section."""
-        result: set[str] = set()
+        all_vars: set[str] = set()
         for s in self._sections:
-            result.update(s.required_vars)
-        return result
+            all_vars.update(s.required_vars)
+        return all_vars
 
     def __repr__(self) -> str:
         names = [s.name for s in self._sections]

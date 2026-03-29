@@ -38,7 +38,7 @@ class KnowledgeQueryEngine:
 
     def query(self, filt: KnowledgeFilter) -> list[KnowledgeNode]:
         """Return all knowledge nodes matching ``filt``."""
-        results: list[KnowledgeNode] = []
+        matching_nodes: list[KnowledgeNode] = []
 
         for node in self._graph.all_nodes():
             # Scope check: node scope must be ≤ filter's max scope
@@ -70,7 +70,7 @@ class KnowledgeQueryEngine:
                 if node.source not in filt.sources:
                     continue
 
-            results.append(node)
+            matching_nodes.append(node)
 
         # If npc_id is set, also include personal memories linked to that NPC
         if filt.npc_id:
@@ -79,10 +79,10 @@ class KnowledgeQueryEngine:
                     # Check if this memory is linked to the NPC via edges
                     edges = self._graph.get_edges_from(filt.npc_id)
                     for target_id, _ in edges:
-                        if target_id == node.uuid and node not in results:
-                            results.append(node)
+                        if target_id == node.uuid and node not in matching_nodes:
+                            matching_nodes.append(node)
 
-        return results
+        return matching_nodes
 
     def build_npc_filter(self, npc: Character) -> KnowledgeFilter:
         """Build a KnowledgeFilter from an NPC's attributes.

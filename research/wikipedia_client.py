@@ -21,17 +21,17 @@ class WikipediaClient:
 
     async def search(self, query: str, limit: int = 5) -> list[str]:
         """Search Wikipedia and return matching article titles."""
-        params = {
+        query_params = {
             "action": "opensearch",
             "search": query,
             "limit": limit,
             "format": "json",
         }
         async with aiohttp.ClientSession() as session:
-            async with session.get(self._mw_api, params=params) as resp:
+            async with session.get(self._mw_api, params=query_params) as resp:
                 if resp.status == 200:
-                    data = await resp.json()
-                    return data[1] if len(data) > 1 else []
+                    search_json = await resp.json()
+                    return search_json[1] if len(search_json) > 1 else []
                 return []
 
     async def get_summary(self, title: str) -> dict[str, str]:
@@ -43,11 +43,11 @@ class WikipediaClient:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as resp:
                 if resp.status == 200:
-                    data = await resp.json()
+                    summary_json = await resp.json()
                     return {
-                        "title": data.get("title", title),
-                        "extract": data.get("extract", ""),
-                        "description": data.get("description", ""),
+                        "title": summary_json.get("title", title),
+                        "extract": summary_json.get("extract", ""),
+                        "description": summary_json.get("description", ""),
                     }
                 return {
                     "title": title,
@@ -60,7 +60,7 @@ class WikipediaClient:
 
         Uses the MediaWiki API ``extracts`` module.
         """
-        params = {
+        query_params = {
             "action": "query",
             "titles": title,
             "prop": "extracts",
@@ -69,11 +69,11 @@ class WikipediaClient:
             "format": "json",
         }
         async with aiohttp.ClientSession() as session:
-            async with session.get(self._mw_api, params=params) as resp:
+            async with session.get(self._mw_api, params=query_params) as resp:
                 if resp.status != 200:
                     return ""
-                data = await resp.json()
-                pages = data.get("query", {}).get("pages", {})
+                article_json = await resp.json()
+                pages = article_json.get("query", {}).get("pages", {})
                 for page in pages.values():
                     text = page.get("extract", "")
                     return text[:max_chars]
