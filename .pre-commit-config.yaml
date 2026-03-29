@@ -5,5 +5,8 @@ repos:
       - id: ruff
       - id: ruff-format
 
-  # flake8 + wemake-python-styleguide will be added here once all
-  # violations are resolved — tracked in setup.cfg
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [wemake-python-styleguide==1.6.1]
