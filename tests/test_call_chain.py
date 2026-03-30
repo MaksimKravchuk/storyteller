@@ -24,6 +24,7 @@ from prompts.base_template import PromptTemplate
 _SESSION_ID = "test-session"
 _HI = "hi"
 _CALL_SEQUENCE = "call_sequence"
+_MESSAGE_KEY = "message"
 
 
 # ---------------------------------------------------------------------------
@@ -150,6 +151,34 @@ class TestParentAgentTracking:
         # Second call: AgentB._send() — parent is AgentA
         assert buf[1]["agent_name"] == "AgentB"
         assert buf[1]["parent_agent"] == "AgentA"
+
+
+class TestLogging:
+    @pytest.mark.asyncio
+    async def test_send_emits_llm_structured_log(self, loguru_sink):
+        """_send() must emit an INFO record with agent, model, tokens, and duration."""
+        reset_buffer()
+        agent = AgentB(llm_client=_mock_llm())
+        await agent.execute(_HI)
+        llm_records = [rec for rec in loguru_sink if rec[_MESSAGE_KEY].startswith("LLM |")]
+        assert len(llm_records) == 1
+        msg = llm_records[0][_MESSAGE_KEY]
+        assert "agent=AgentB" in msg
+        assert "model=test-model" in msg
+        assert "prompt_tokens=10" in msg
+        assert "completion_tokens=5" in msg
+        assert "duration_ms=" in msg
+
+    @pytest.mark.asyncio
+    async def test_execute_log_parent_in_nested_call(self, loguru_sink):
+        """The child agent's start log must include the parent agent name."""
+        reset_buffer()
+        child = AgentB(llm_client=_mock_llm())
+        parent = AgentA(llm_client=_mock_llm(), child=child)
+        await parent.execute(_HI)
+        start_records = [rec for rec in loguru_sink if "| start" in rec[_MESSAGE_KEY]]
+        child_start = next(rec for rec in start_records if "AgentB" in rec[_MESSAGE_KEY])
+        assert "parent=AgentA" in child_start[_MESSAGE_KEY]
 
 
 class TestCallSequence:

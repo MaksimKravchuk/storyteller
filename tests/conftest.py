@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from loguru import logger
 
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -10,6 +11,15 @@ from models.game_state import GameState
 from models.location import Location
 from models.npc_card import NPCCard
 from models.setting import Setting
+
+
+@pytest.fixture
+def loguru_sink():
+    """Capture loguru records during a test without disturbing other handlers."""
+    records = []
+    handler_id = logger.add(lambda msg: records.append(msg.record), level="DEBUG")
+    yield records
+    logger.remove(handler_id)
 
 
 @pytest.fixture
