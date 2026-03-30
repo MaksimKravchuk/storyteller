@@ -16,6 +16,10 @@ from db.repository import GameRepository
 
 logger = logging.getLogger(__name__)
 
+_HTTP_UNAUTHORIZED = 401
+_HTTP_NOT_FOUND = 404
+_SESSION_ID_PARAM = "id"
+
 _DASHBOARD_HTML = Path(__file__).parent / "admin_dashboard.html"
 
 
@@ -73,7 +77,7 @@ class AdminServer:
             if self._token and request.path.startswith("/api/"):
                 auth = request.headers.get("Authorization", "")
                 if auth != f"Bearer {self._token}":
-                    return _json_response({"error": "Unauthorized"}, status=401)
+                    return _json_response({"error": "Unauthorized"}, status=_HTTP_UNAUTHORIZED)
             return await handler(request)
 
         return auth_middleware
@@ -86,7 +90,7 @@ class AdminServer:
                 text=_DASHBOARD_HTML.read_text(),
                 content_type="text/html",
             )
-        return web.Response(text="Dashboard HTML not found", status=404)
+        return web.Response(text="Dashboard HTML not found", status=_HTTP_NOT_FOUND)
 
     async def _list_sessions(self, request: web.Request) -> web.Response:
         limit = int(request.query.get("limit", "50"))
@@ -97,51 +101,51 @@ class AdminServer:
         return _json_response({"sessions": sessions})
 
     async def _session_detail(self, request: web.Request) -> web.Response:
-        session_id = request.match_info["id"]
+        session_id = request.match_info[_SESSION_ID_PARAM]
         async with get_db(self._db_factory) as db:
             repo = GameRepository(db)
             detail = await repo.get_session_detail(session_id)
         if not detail:
-            return _json_response({"error": "Session not found"}, status=404)
+            return _json_response({"error": "Session not found"}, status=_HTTP_NOT_FOUND)
         return _json_response(detail)
 
     async def _conversation(self, request: web.Request) -> web.Response:
-        session_id = request.match_info["id"]
+        session_id = request.match_info[_SESSION_ID_PARAM]
         async with get_db(self._db_factory) as db:
             repo = GameRepository(db)
             log = await repo.get_conversation_log(session_id)
         return _json_response({"log": log})
 
     async def _knowledge(self, request: web.Request) -> web.Response:
-        session_id = request.match_info["id"]
+        session_id = request.match_info[_SESSION_ID_PARAM]
         async with get_db(self._db_factory) as db:
             repo = GameRepository(db)
             graph = await repo.get_knowledge_graph(session_id)
         return _json_response(graph)
 
     async def _events(self, request: web.Request) -> web.Response:
-        session_id = request.match_info["id"]
+        session_id = request.match_info[_SESSION_ID_PARAM]
         async with get_db(self._db_factory) as db:
             repo = GameRepository(db)
             events = await repo.get_events(session_id)
         return _json_response({"events": events})
 
     async def _npcs(self, request: web.Request) -> web.Response:
-        session_id = request.match_info["id"]
+        session_id = request.match_info[_SESSION_ID_PARAM]
         async with get_db(self._db_factory) as db:
             repo = GameRepository(db)
             npcs = await repo.get_npcs(session_id)
         return _json_response({"npcs": npcs})
 
     async def _locations(self, request: web.Request) -> web.Response:
-        session_id = request.match_info["id"]
+        session_id = request.match_info[_SESSION_ID_PARAM]
         async with get_db(self._db_factory) as db:
             repo = GameRepository(db)
             locations = await repo.get_locations(session_id)
         return _json_response({"locations": locations})
 
     async def _ai_calls(self, request: web.Request) -> web.Response:
-        session_id = request.match_info["id"]
+        session_id = request.match_info[_SESSION_ID_PARAM]
         turn = request.query.get("turn")
         turn_number = int(turn) if turn else None
         async with get_db(self._db_factory) as db:

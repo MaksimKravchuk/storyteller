@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+_D20 = 20
+
 # ---------------------------------------------------------------------------
 # Aggression thresholds — minimum d20 roll for an NPC to retaliate.
 # Lower = more likely to attack.  Mood not listed here → no retaliation.
@@ -85,7 +87,7 @@ def roll_aggression(mood: str, _rng: random.Random | None = None) -> AggressionR
     if threshold is None:
         return None
     rng = _rng or random.Random()
-    roll = rng.randint(1, 20)
+    roll = rng.randint(1, _D20)
     return AggressionRoll(
         will_attack=roll >= threshold,
         roll=roll,
@@ -107,8 +109,8 @@ def roll_combat(npc_combat_skill: int, _rng: random.Random | None = None) -> Com
     - NPC total <  player roll - 5  → PLAYER_DOMINATES
     """
     rng = _rng or random.Random()
-    player_roll = rng.randint(1, 20)
-    npc_roll = rng.randint(1, 20)
+    player_roll = rng.randint(1, _D20)
+    npc_roll = rng.randint(1, _D20)
     npc_total = npc_roll + npc_combat_skill
 
     diff = npc_total - player_roll

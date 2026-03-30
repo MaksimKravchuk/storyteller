@@ -12,6 +12,11 @@ if TYPE_CHECKING:
     from models.setting import Setting
 
 
+_DAWN_HOUR = 6
+_NOON_HOUR = 12
+_EVENING_HOUR = 18
+
+
 class PlayerState(BaseModel):
     """Mutable state for the player character."""
 
@@ -58,11 +63,11 @@ class GameState(BaseModel):
         """Advance the game clock and update time-of-day label."""
         self.game_clock += hours
         hour_of_day = self.game_clock % 24
-        if hour_of_day < 6:
+        if hour_of_day < _DAWN_HOUR:
             self.game_time = "night"
-        elif hour_of_day < 12:
+        elif hour_of_day < _NOON_HOUR:
             self.game_time = "morning"
-        elif hour_of_day < 18:
+        elif hour_of_day < _EVENING_HOUR:
             self.game_time = "afternoon"
         else:
             self.game_time = "evening"

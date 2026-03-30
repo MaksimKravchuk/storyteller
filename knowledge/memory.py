@@ -15,6 +15,8 @@ from knowledge.node import (
 if TYPE_CHECKING:
     from llm.base_client import BaseLLMClient
 
+_SUMMARY_MAX_TOKENS = 200
+
 
 class MemoryManager:
     """Creates and manages memory nodes from in-game interactions.
@@ -54,7 +56,7 @@ class MemoryManager:
             messages=[Message(role=Role.USER, content=prompt)],
             system_prompt="You are a memory summariser for a text adventure game. "
             "Output only the summary, nothing else.",
-            max_tokens=200,
+            max_tokens=_SUMMARY_MAX_TOKENS,
         )
 
         node = KnowledgeNode(

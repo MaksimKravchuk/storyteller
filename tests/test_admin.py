@@ -10,6 +10,14 @@ import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_API_SESSIONS = "/api/sessions"
+_HTTP_OK = 200
+_HTTP_UNAUTHORIZED = 401
+
 
 def _stub_db_modules() -> None:
     """Inject stub db modules so AdminServer can be imported without sqlalchemy."""
@@ -55,30 +63,30 @@ async def test_middleware_no_token_allows_api(app_no_token: web.Application) -> 
         ):
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
-            resp = await client.get("/api/sessions")
-            assert resp.status == 200
+            resp = await client.get(_API_SESSIONS)
+            assert resp.status == _HTTP_OK
 
 
 @pytest.mark.asyncio
-async def test_middleware_with_token_rejects_missing_auth(app_with_token: web.Application) -> None:
+async def test_token_rejects_missing_auth(app_with_token: web.Application) -> None:
     """With a token configured, requests without Authorization header get 401."""
     async with TestClient(TestServer(app_with_token)) as client:
-        resp = await client.get("/api/sessions")
-        assert resp.status == 401
+        resp = await client.get(_API_SESSIONS)
+        assert resp.status == _HTTP_UNAUTHORIZED
         resp_body = await resp.json()
         assert resp_body == {"error": "Unauthorized"}
 
 
 @pytest.mark.asyncio
-async def test_middleware_with_token_rejects_wrong_token(app_with_token: web.Application) -> None:
+async def test_token_rejects_wrong_token(app_with_token: web.Application) -> None:
     """Wrong token yields 401."""
     async with TestClient(TestServer(app_with_token)) as client:
-        resp = await client.get("/api/sessions", headers={"Authorization": "Bearer wrong"})
-        assert resp.status == 401
+        resp = await client.get(_API_SESSIONS, headers={"Authorization": "Bearer wrong"})
+        assert resp.status == _HTTP_UNAUTHORIZED
 
 
 @pytest.mark.asyncio
-async def test_middleware_with_token_allows_correct_token(app_with_token: web.Application) -> None:
+async def test_token_allows_correct_token(app_with_token: web.Application) -> None:
     """Correct Bearer token allows the request through."""
     async with TestClient(TestServer(app_with_token)) as client:
         mock_repo = AsyncMock()
@@ -89,8 +97,8 @@ async def test_middleware_with_token_allows_correct_token(app_with_token: web.Ap
         ):
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
-            resp = await client.get("/api/sessions", headers={"Authorization": "Bearer secret"})
-            assert resp.status == 200
+            resp = await client.get(_API_SESSIONS, headers={"Authorization": "Bearer secret"})
+            assert resp.status == _HTTP_OK
 
 
 @pytest.mark.asyncio

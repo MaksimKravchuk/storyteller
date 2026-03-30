@@ -17,6 +17,14 @@ from llm.call_logger import (
 from llm.message import LLMResponse
 from prompts.base_template import PromptTemplate
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_SESSION_ID = "test-session"
+_HI = "hi"
+_CALL_SEQUENCE = "call_sequence"
+
 
 # ---------------------------------------------------------------------------
 # Test agent stubs
@@ -90,21 +98,21 @@ class TestExecuteStackManagement:
     @pytest.mark.asyncio
     async def test_stack_empty_before_and_after(self):
         reset_buffer()
-        current_session_id.set("test-session")
+        current_session_id.set(_SESSION_ID)
         agent = AgentB(llm_client=_mock_llm())
 
         assert agent_stack.get([]) == []
-        await agent.execute("hi")
+        await agent.execute(_HI)
         assert agent_stack.get([]) == []
 
     @pytest.mark.asyncio
     async def test_stack_cleaned_on_exception(self):
         reset_buffer()
-        current_session_id.set("test-session")
+        current_session_id.set(_SESSION_ID)
         agent = FailingAgent(llm_client=_mock_llm())
 
         with pytest.raises(RuntimeError, match="boom"):
-            await agent.execute("hi")
+            await agent.execute(_HI)
 
         assert agent_stack.get([]) == []
 
@@ -113,10 +121,10 @@ class TestParentAgentTracking:
     @pytest.mark.asyncio
     async def test_root_agent_has_no_parent(self):
         reset_buffer()
-        current_session_id.set("test-session")
+        current_session_id.set(_SESSION_ID)
         agent = AgentB(llm_client=_mock_llm())
 
-        await agent.execute("hi")
+        await agent.execute(_HI)
 
         buf = call_log_buffer.get([])
         assert len(buf) == 1
@@ -126,11 +134,11 @@ class TestParentAgentTracking:
     @pytest.mark.asyncio
     async def test_nested_agent_has_parent(self):
         reset_buffer()
-        current_session_id.set("test-session")
+        current_session_id.set(_SESSION_ID)
         child = AgentB(llm_client=_mock_llm())
         parent = AgentA(llm_client=_mock_llm(), child=child)
 
-        await parent.execute("hi")
+        await parent.execute(_HI)
 
         buf = call_log_buffer.get([])
         assert len(buf) == 2
@@ -148,26 +156,26 @@ class TestCallSequence:
     @pytest.mark.asyncio
     async def test_sequence_increments(self):
         reset_buffer()
-        current_session_id.set("test-session")
+        current_session_id.set(_SESSION_ID)
         child = AgentB(llm_client=_mock_llm())
         parent = AgentA(llm_client=_mock_llm(), child=child)
 
-        await parent.execute("hi")
+        await parent.execute(_HI)
 
         buf = call_log_buffer.get([])
-        assert buf[0]["call_sequence"] == 0
-        assert buf[1]["call_sequence"] == 1
+        assert buf[0][_CALL_SEQUENCE] == 0
+        assert buf[1][_CALL_SEQUENCE] == 1
 
     @pytest.mark.asyncio
     async def test_sequence_resets_with_buffer(self):
         reset_buffer()
-        current_session_id.set("test-session")
+        current_session_id.set(_SESSION_ID)
         agent = AgentB(llm_client=_mock_llm())
 
-        await agent.execute("hi")
-        assert call_log_buffer.get([])[0]["call_sequence"] == 0
+        await agent.execute(_HI)
+        assert call_log_buffer.get([])[0][_CALL_SEQUENCE] == 0
 
         reset_buffer()
-        current_session_id.set("test-session")
+        current_session_id.set(_SESSION_ID)
         await agent.execute("hi again")
-        assert call_log_buffer.get([])[0]["call_sequence"] == 0
+        assert call_log_buffer.get([])[0][_CALL_SEQUENCE] == 0

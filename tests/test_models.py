@@ -10,6 +10,22 @@ from models.game_state import PlayerState
 from models.scene import SceneNPC
 from models.setting import Setting
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_UUID_LEN = 36
+_DAGGER = "dagger"
+_NPC_A = "npc-1"
+_GUARD = "guard"
+_CLOCK_MORNING = 8.0
+_CLOCK_NOON = 12.0
+_AGE_MORNING = 8
+_AGE_AFTERNOON = 13
+_AGE_EVENING = 19
+_AGE_THREE_AM = 3
+_AGE_NIGHT = 25
+
 
 # ---------------------------------------------------------------------------
 # BaseModel
@@ -20,7 +36,7 @@ class TestBaseModel:
     def test_uuid_generated_on_init(self):
         model = BaseModel()
         assert isinstance(model.uuid, str)
-        assert len(model.uuid) == 36  # standard UUID4 format
+        assert len(model.uuid) == _UUID_LEN  # standard UUID4 format
 
     def test_unique_uuids(self):
         uuids = {BaseModel().uuid for _ in range(100)}
@@ -56,14 +72,14 @@ class TestCharacter:
 
     def test_inventory_add_and_remove(self):
         char = Character(name="Cassius")
-        char.add_item_to_inventory("dagger")
-        assert "dagger" in char.inventory
-        char.remove_item_from_inventory("dagger")
-        assert "dagger" not in char.inventory
+        char.add_item_to_inventory(_DAGGER)
+        assert _DAGGER in char.inventory
+        char.remove_item_from_inventory(_DAGGER)
+        assert _DAGGER not in char.inventory
 
     def test_remove_item_not_in_inventory_raises(self):
         char = Character(name="Cassius")
-        with pytest.raises(ValueError, match="dagger"):
+        with pytest.raises(ValueError, match=_DAGGER):
             char.remove_item_from_inventory("dagger")
 
     def test_talk(self):
@@ -118,18 +134,18 @@ class TestLocation:
         assert sample_location.points_of_interest == []
 
     def test_add_npc(self, sample_location):
-        sample_location.add_npc("npc-1")
-        assert "npc-1" in sample_location.npcs_present
+        sample_location.add_npc(_NPC_A)
+        assert _NPC_A in sample_location.npcs_present
 
     def test_add_npc_idempotent(self, sample_location):
-        sample_location.add_npc("npc-1")
-        sample_location.add_npc("npc-1")
-        assert sample_location.npcs_present.count("npc-1") == 1
+        sample_location.add_npc(_NPC_A)
+        sample_location.add_npc(_NPC_A)
+        assert sample_location.npcs_present.count(_NPC_A) == 1
 
     def test_remove_npc(self, sample_location):
-        sample_location.add_npc("npc-1")
-        sample_location.remove_npc("npc-1")
-        assert "npc-1" not in sample_location.npcs_present
+        sample_location.add_npc(_NPC_A)
+        sample_location.remove_npc(_NPC_A)
+        assert _NPC_A not in sample_location.npcs_present
 
     def test_remove_npc_not_present_is_noop(self, sample_location):
         sample_location.remove_npc("ghost")  # should not raise
@@ -159,7 +175,7 @@ class TestSetting:
         assert simple_setting.key_persons[0]["name"] == "Augustus"
 
     def test_has_uuid(self, simple_setting):
-        assert isinstance(simple_setting.uuid, str) and len(simple_setting.uuid) == 36
+        assert isinstance(simple_setting.uuid, str) and len(simple_setting.uuid) == _UUID_LEN
 
 
 # ---------------------------------------------------------------------------
@@ -190,30 +206,30 @@ class TestGameState:
         assert game_state.scene_conversation_log == []
 
     def test_advance_clock_morning(self, game_state):
-        game_state.advance_clock(8)
-        assert game_state.game_clock == 8.0  # noqa: WPS459
+        game_state.advance_clock(_AGE_MORNING)
+        assert game_state.game_clock == _CLOCK_MORNING  # noqa: WPS459
         assert game_state.game_time == "morning"
 
     def test_advance_clock_afternoon(self, game_state):
-        game_state.advance_clock(13)
+        game_state.advance_clock(_AGE_AFTERNOON)
         assert game_state.game_time == "afternoon"
 
     def test_advance_clock_evening(self, game_state):
-        game_state.advance_clock(19)
+        game_state.advance_clock(_AGE_EVENING)
         assert game_state.game_time == "evening"
 
     def test_advance_clock_night(self, game_state):
-        game_state.advance_clock(3)  # 3 AM
+        game_state.advance_clock(_AGE_THREE_AM)  # 3 AM
         assert game_state.game_time == "night"
 
     def test_advance_clock_wraps_around_midnight(self, game_state):
-        game_state.advance_clock(25)  # 25 hours => 1 AM next day
+        game_state.advance_clock(_AGE_NIGHT)  # 25 hours => 1 AM next day
         assert game_state.game_time == "night"
 
     def test_advance_clock_accumulates(self, game_state):
         game_state.advance_clock(6)
         game_state.advance_clock(6)
-        assert game_state.game_clock == 12.0  # noqa: WPS459
+        assert game_state.game_clock == _CLOCK_NOON  # noqa: WPS459
 
 
 # ---------------------------------------------------------------------------
@@ -223,16 +239,16 @@ class TestGameState:
 
 class TestSceneNPC:
     def test_need_init_true_by_default(self):
-        snpc = SceneNPC(role="guard")
+        snpc = SceneNPC(role=_GUARD)
         assert snpc.need_init is True
         assert snpc.uuid is None
 
     def test_need_init_false_after_uuid_set(self):
-        snpc = SceneNPC(role="guard")
+        snpc = SceneNPC(role=_GUARD)
         snpc.uuid = "some-uuid-1234"
         assert snpc.need_init is False
 
-    def test_need_init_false_when_constructed_with_uuid(self):
+    def test_need_init_false_with_uuid_arg(self):
         snpc = SceneNPC(role="merchant", uuid="abc-123")
         assert snpc.need_init is False
         assert snpc.uuid == "abc-123"
@@ -243,7 +259,7 @@ class TestSceneNPC:
         assert snpc_dict == {"role": "beggar", "uuid": "uuid-42"}
 
     def test_to_dict_uninitialised(self):
-        snpc = SceneNPC(role="guard")
+        snpc = SceneNPC(role=_GUARD)
         snpc_dict = snpc.to_dict()
         assert snpc_dict == {"role": "guard", "uuid": None}
 
@@ -260,7 +276,7 @@ class TestSceneNPC:
         assert restored.need_init is True
 
     def test_repr(self):
-        snpc = SceneNPC(role="guard")
+        snpc = SceneNPC(role=_GUARD)
         assert "uninit" in repr(snpc)
         snpc.uuid = "abc"
         assert "abc" in repr(snpc)

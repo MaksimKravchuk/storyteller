@@ -7,6 +7,10 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from prompts.narrator_prompts import NARRATOR_NARRATE, NARRATOR_SYSTEM
 
+_HISTORY_PREVIEW_CHARS = 200
+_NARRATION_MAX_TOKENS = 800
+_KEY_COMPLETED_EVENTS = "completed_events"
+
 
 class Narrator(BasePerformer):
     """Transforms raw agent outputs into vivid, literary narration."""
@@ -25,7 +29,7 @@ class Narrator(BasePerformer):
             - "scene": Scene description text
             - "dialogue": list of {"npc_name": str, "response": str}
             - "new_npcs": list of NPC descriptions
-            - "completed_events": list of event descriptions
+            - _KEY_COMPLETED_EVENTS: list of event descriptions
 
         ``context``: Must contain ``player_action`` and ``game_state``.
 
@@ -52,7 +56,7 @@ class Narrator(BasePerformer):
         # knows what happened before (e.g. an ongoing fight).
         if scene_history and not is_new_scene:
             history_lines = [
-                f"- Player: {entry['player_action']} → {entry.get('response_summary', '')[:200]}"
+                f"- Player: {entry['player_action']} → {entry.get('response_summary', '')[:_HISTORY_PREVIEW_CHARS]}"
                 for entry in scene_history
             ]
             history = "\n".join(history_lines)
@@ -95,9 +99,9 @@ class Narrator(BasePerformer):
         }
 
         # Completed events (local ones the player can see)
-        if "completed_events" in input_data and input_data["completed_events"]:
-            kwargs["completed_events"] = "\n".join(f"- {ev}" for ev in input_data["completed_events"])
+        if _KEY_COMPLETED_EVENTS in input_data and input_data[_KEY_COMPLETED_EVENTS]:
+            kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data[_KEY_COMPLETED_EVENTS])
 
         prompt = NARRATOR_NARRATE.render(**kwargs)
-        narrated = await self._send(prompt, max_tokens=800)
+        narrated = await self._send(prompt, max_tokens=_NARRATION_MAX_TOKENS)
         return narrated.strip()

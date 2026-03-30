@@ -33,6 +33,9 @@ from knowledge.node import EdgeType
 from models.game_state import GameState
 from timeline.event import GameEvent
 
+_COL_ID = "id"
+_COL_GAME_STATE_ID = "game_state_id"
+
 
 class GameRepository:
     """Async repository for loading/saving game state to PostgreSQL."""
@@ -83,7 +86,7 @@ class GameRepository:
         if gs_row is None:
             return None
         gs_row = dict(gs_row)
-        game_state_id = gs_row["id"]
+        game_state_id = gs_row[_COL_ID]
 
         # Load setting
         setting_query = await self._session.execute(
@@ -116,7 +119,7 @@ class GameRepository:
 
         # Build GameState
         game_state = GameState(setting=setting, knowledge_graph=kg)
-        game_state.uuid = gs_row["id"]
+        game_state.uuid = gs_row[_COL_ID]
         game_state.turn_count = gs_row["turn_count"]
         game_state.scene_number = gs_row.get("scene_number", 0)
         game_state.game_clock = gs_row["game_clock"]
@@ -214,8 +217,8 @@ class GameRepository:
             pg_insert(tbl.settings)
             .values(**setting_row)
             .on_conflict_do_update(
-                index_elements=["game_state_id"],
-                set_={key: col_val for key, col_val in setting_row.items() if key not in ("id", "game_state_id")},
+                index_elements=[_COL_GAME_STATE_ID],
+                set_={key: col_val for key, col_val in setting_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
             )
         )
         await self._session.execute(stmt)
@@ -226,8 +229,8 @@ class GameRepository:
             pg_insert(tbl.players)
             .values(**player_row)
             .on_conflict_do_update(
-                index_elements=["game_state_id"],
-                set_={key: col_val for key, col_val in player_row.items() if key not in ("id", "game_state_id")},
+                index_elements=[_COL_GAME_STATE_ID],
+                set_={key: col_val for key, col_val in player_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
             )
         )
         await self._session.execute(stmt)
@@ -325,7 +328,7 @@ class GameRepository:
             detail["game_state"] = None
             return detail
         gs_row = dict(gs_row)
-        game_state_id = gs_row["id"]
+        game_state_id = gs_row[_COL_ID]
         detail["game_state"] = gs_row
 
         # Setting

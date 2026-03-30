@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 
 from defaults.models import ModelConfig
 
+_GPT4 = "gpt-4"
+_GPT35_TURBO = "gpt-3.5-turbo"
+_PROVIDER_OPENAI = "openai"
+
 
 @dataclass
 class Config:
@@ -19,9 +23,9 @@ class Config:
     anthropic_api_key: str | None = None
 
     # Model selection per agent role
-    director_model: str = "gpt-4"
-    agent_model: str = "gpt-3.5-turbo"
-    narrator_model: str = "gpt-4"
+    director_model: str = _GPT4
+    agent_model: str = _GPT35_TURBO
+    narrator_model: str = _GPT4
 
     # Telegram
     telegram_bot_token: str | None = None
@@ -34,7 +38,7 @@ class Config:
     admin_token: str | None = None
 
     # Defaults
-    default_provider: str = "openai"
+    default_provider: str = _PROVIDER_OPENAI
     temperature: float = 0.7
     max_tokens: int = 2048
 
@@ -49,10 +53,10 @@ def load_config(env_path: str | None = None) -> Config:
     return Config(
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
-        director_model=os.getenv("DIRECTOR_MODEL", "gpt-4"),
-        agent_model=os.getenv("AGENT_MODEL", "gpt-3.5-turbo"),
-        narrator_model=os.getenv("NARRATOR_MODEL", "gpt-4"),
-        default_provider=os.getenv("DEFAULT_PROVIDER", "openai"),
+        director_model=os.getenv("DIRECTOR_MODEL", _GPT4),
+        agent_model=os.getenv("AGENT_MODEL", _GPT35_TURBO),
+        narrator_model=os.getenv("NARRATOR_MODEL", _GPT4),
+        default_provider=os.getenv("DEFAULT_PROVIDER", _PROVIDER_OPENAI),
         temperature=float(os.getenv("TEMPERATURE", "0.7")),
         max_tokens=int(os.getenv("MAX_TOKENS", "2048")),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),

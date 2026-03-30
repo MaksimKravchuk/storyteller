@@ -22,6 +22,9 @@ from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buff
 
 logger = logging.getLogger(__name__)
 
+_SESSION_ID_KEY = "id"
+_STATE_IDLE = "idle"
+
 _LANGUAGE_OPTIONS: tuple[tuple[str, str], ...] = (
     ("\U0001f1ec\U0001f1e7 English", "English"),
     ("\U0001f1f7\U0001f1fa Russian", "Russian"),
@@ -45,7 +48,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     async with get_db(_db_factory(context)) as db:
         repo = GameRepository(db)
         session = await repo.get_or_create_session(chat_id)
-        await repo.update_session(session["id"], state="awaiting_language")
+        await repo.update_session(session[_SESSION_ID_KEY], state="awaiting_language")
 
     keyboard = [
         [InlineKeyboardButton(label, callback_data=f"lang:{lang_code}")] for label, lang_code in _LANGUAGE_OPTIONS
@@ -68,7 +71,7 @@ async def handle_language_callback(update: Update, context: ContextTypes.DEFAULT
         session = await repo.get_or_create_session(chat_id)
         if session["state"] != "awaiting_language":
             return
-        await repo.update_session(session["id"], state="awaiting_setting", language=language)
+        await repo.update_session(session[_SESSION_ID_KEY], state="awaiting_setting", language=language)
 
     await query.edit_message_text(
         f"Language set to {language}.\n\nDescribe your desired setting (e.g. 'Rome, 1st century AD'):"
@@ -80,7 +83,7 @@ async def cmd_quit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     async with get_db(_db_factory(context)) as db:
         repo = GameRepository(db)
         session = await repo.get_or_create_session(chat_id)
-        await repo.update_session(session["id"], state="idle")
+        await repo.update_session(session[_SESSION_ID_KEY], state=_STATE_IDLE)
     await update.message.reply_text("Game ended. Send /start to play again.")
 
 
@@ -93,10 +96,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         repo = GameRepository(db)
         session = await repo.get_or_create_session(chat_id)
         state = session["state"]
-        session_id = session["id"]
+        session_id = session[_SESSION_ID_KEY]
         language = session["language"]
 
-        if state == "idle":
+        if state == _STATE_IDLE:
             await update.message.reply_text("Send /start to begin a new game.")
             return
 
@@ -112,7 +115,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             except Exception:
                 logger.exception("Failed to start game for chat %s", chat_id)
                 await update.message.reply_text("Something went wrong. Try /start again.")
-                await repo.update_session(session_id, state="idle")
+                await repo.update_session(session_id, state=_STATE_IDLE)
                 return
 
             # Persist the new game state
@@ -136,7 +139,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         loaded = await repo.load_game_state(session_id)
         if loaded is None:
             await update.message.reply_text("No game found. Send /start to begin.")
-            await repo.update_session(session_id, state="idle")
+            await repo.update_session(session_id, state=_STATE_IDLE)
             return
 
         game_state, kg, events = loaded

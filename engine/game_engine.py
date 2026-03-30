@@ -40,9 +40,9 @@ class GameEngine:
     def __init__(
         self,
         *,
-        director_model: ModelConfig = AI_MODELS.gpt_4,
-        agent_model: ModelConfig = AI_MODELS.gpt_3_5_turbo,
-        narrator_model: ModelConfig = AI_MODELS.gpt_4,
+        director_model: ModelConfig = AI_MODELS.gpt4,
+        agent_model: ModelConfig = AI_MODELS.gpt35_turbo,
+        narrator_model: ModelConfig = AI_MODELS.gpt4,
         api_keys: dict[str, str | None] | None = None,
         language: str = "English",
     ):
