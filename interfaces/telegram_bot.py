@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+from loguru import logger
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -19,8 +19,6 @@ from db.engine import get_db
 from db.repository import GameRepository
 from engine.factory import create_engine, create_engine_from_state
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
-
-logger = logging.getLogger(__name__)
 
 _SESSION_ID_KEY = "id"
 _STATE_IDLE = "idle"
@@ -107,32 +105,33 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await update.message.reply_text(
                 "Researching setting and generating opening scene... (this may take a minute)"
             )
-            current_session_id.set(session_id)
-            reset_buffer()
-            engine = create_engine(cfg, language=language)
-            try:
-                opening = await engine.start_game(text)
-            except Exception:
-                logger.exception("Failed to start game for chat %s", chat_id)
-                await update.message.reply_text("Something went wrong. Try /start again.")
-                await repo.update_session(session_id, state=_STATE_IDLE)
-                return
+            async with logger.contextualize(session_id=session_id):
+                current_session_id.set(session_id)
+                reset_buffer()
+                engine = create_engine(cfg, language=language)
+                try:
+                    opening = await engine.start_game(text)
+                except Exception:
+                    logger.exception("Failed to start game for chat {}", chat_id)
+                    await update.message.reply_text("Something went wrong. Try /start again.")
+                    await repo.update_session(session_id, state=_STATE_IDLE)
+                    return
 
-            # Persist the new game state
-            game_state = engine.game_state
-            assert game_state is not None
-            assert engine.knowledge_graph is not None
-            await repo.save_game_state(
-                session_id,
-                game_state,
-                engine.knowledge_graph,
-                engine.event_manager.all_events if engine.event_manager else [],
-            )
-            ai_logs = get_and_clear_buffer()
-            if ai_logs:
-                await repo.save_ai_call_logs(ai_logs, turn_number=None)
-            await repo.update_session(session_id, state="playing")
-            await update.message.reply_text(opening)
+                # Persist the new game state
+                game_state = engine.game_state
+                assert game_state is not None
+                assert engine.knowledge_graph is not None
+                await repo.save_game_state(
+                    session_id,
+                    game_state,
+                    engine.knowledge_graph,
+                    engine.event_manager.all_events if engine.event_manager else [],
+                )
+                ai_logs = get_and_clear_buffer()
+                if ai_logs:
+                    await repo.save_ai_call_logs(ai_logs, turn_number=None)
+                await repo.update_session(session_id, state="playing")
+                await update.message.reply_text(opening)
             return
 
         # PLAYING state
@@ -145,29 +144,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         game_state, kg, events = loaded
         engine = await create_engine_from_state(cfg, game_state, kg, events, language=language)
 
-        current_session_id.set(session_id)
-        reset_buffer()
-        try:
-            response = await engine.process_action(text)
-        except Exception:
-            logger.exception("Error processing action for chat %s", chat_id)
-            await update.message.reply_text("Something went wrong processing your action. Try again.")
-            return
+        async with logger.contextualize(session_id=session_id):
+            current_session_id.set(session_id)
+            reset_buffer()
+            try:
+                response = await engine.process_action(text)
+            except Exception:
+                logger.exception("Error processing action for chat {}", chat_id)
+                await update.message.reply_text("Something went wrong processing your action. Try again.")
+                return
 
-        # Flush updated state back to PG
-        updated_state = engine.game_state
-        assert updated_state is not None
-        assert engine.knowledge_graph is not None
-        await repo.save_game_state(
-            session_id,
-            updated_state,
-            engine.knowledge_graph,
-            engine.event_manager.all_events if engine.event_manager else [],
-        )
-        ai_logs = get_and_clear_buffer()
-        if ai_logs:
-            await repo.save_ai_call_logs(ai_logs, turn_number=updated_state.turn_count)
-        await update.message.reply_text(response)
+            # Flush updated state back to PG
+            updated_state = engine.game_state
+            assert updated_state is not None
+            assert engine.knowledge_graph is not None
+            await repo.save_game_state(
+                session_id,
+                updated_state,
+                engine.knowledge_graph,
+                engine.event_manager.all_events if engine.event_manager else [],
+            )
+            ai_logs = get_and_clear_buffer()
+            if ai_logs:
+                await repo.save_ai_call_logs(ai_logs, turn_number=updated_state.turn_count)
+            await update.message.reply_text(response)
 
 
 def build_bot(cfg: Config, db_session_factory) -> Application:
