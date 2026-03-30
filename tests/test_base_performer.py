@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -55,6 +55,7 @@ class _StackSnapshotPerformer(BasePerformer):
 @pytest.fixture(autouse=True)
 def clean_stack():
     """Reset the agent stack before each test."""
+    _StackSnapshotPerformer.captured = []
     reset_buffer()
     yield
     reset_buffer()
@@ -174,3 +175,58 @@ async def test_execute_empty_context_defaults_to_empty_dict():
 
     await _ContextCapture(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute("x")
     assert received_ctx["ctx"] == {}
+
+
+# ---------------------------------------------------------------------------
+# _send_json tests
+# ---------------------------------------------------------------------------
+
+
+class _JsonPerformer(BasePerformer):
+    async def act(self, input_data, context):
+        return await self._send_json(input_data)
+
+
+def _make_json_performer() -> _JsonPerformer:
+    return _JsonPerformer(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+
+
+@pytest.mark.asyncio
+async def test_send_json_returns_parsed_dict_on_first_success():
+    """_send_json returns a dict immediately when the first response is valid JSON."""
+    performer = _make_json_performer()
+    with patch.object(performer, "_send", new=AsyncMock(return_value='{"key": "value"}')):
+        parsed = await performer._send_json("prompt")
+    assert parsed == {"key": "value"}
+
+
+@pytest.mark.asyncio
+async def test_send_json_bracket_extraction_fallback():
+    """After exhausting retries, _send_json extracts JSON from surrounding text."""
+    performer = _make_json_performer()
+    # All responses have embedded JSON but surrounded by noise
+    with patch.object(performer, "_send", new=AsyncMock(return_value='noise {"extracted": true} noise')):
+        parsed = await performer._send_json("prompt", retries=0)
+    assert parsed == {"extracted": True}
+
+
+@pytest.mark.asyncio
+async def test_send_json_raises_value_error_when_all_retries_fail():
+    """_send_json raises ValueError when every attempt returns non-JSON."""
+    performer = _make_json_performer()
+    with patch.object(performer, "_send", new=AsyncMock(return_value="not json at all")):
+        with pytest.raises(ValueError, match="failed to produce valid JSON"):
+            await performer._send_json("prompt", retries=2)
+
+
+@pytest.mark.asyncio
+async def test_send_json_non_json_exception_propagates():
+    """Non-JSONDecodeError exceptions must not be swallowed by the bracket-extraction block."""
+    performer = _make_json_performer()
+
+    async def _bad_send(*args, **kwargs):
+        raise UnicodeDecodeError("utf-8", b"", 0, 1, "reason")
+
+    with patch.object(performer, "_send", new=_bad_send):
+        with pytest.raises(UnicodeDecodeError):
+            await performer._send_json("prompt", retries=0)

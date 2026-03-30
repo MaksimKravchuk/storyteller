@@ -18,9 +18,9 @@ from db.converters import (
     player_to_row,
     row_to_game_event,
     row_to_knowledge_node,
-    row_to_location,
 )
 from db.converters import (
+    row_to_location,
     row_to_npc,
     row_to_player,
     row_to_scene,

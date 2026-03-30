@@ -98,4 +98,4 @@ async def test_middleware_does_not_block_dashboard(app_with_token: web.Applicati
     """Non-/api/ routes are not subject to token check."""
     async with TestClient(TestServer(app_with_token)) as client:
         resp = await client.get("/")
-        assert resp.status != 401
+        assert resp.status in {200, 404}
