@@ -183,7 +183,7 @@ async def test_execute_empty_context_is_empty_dict():
             return "ok"
 
     await _ContextCapture(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute("x")
-    assert received_ctx["ctx"] == {}  # noqa: WPS520
+    assert not received_ctx["ctx"]
 
 
 # ---------------------------------------------------------------------------
