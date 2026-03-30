@@ -9,9 +9,9 @@ from typing import Any
 
 from aiohttp import web
 from aiohttp.typedefs import Handler, Middleware
+from loguru import logger
 
 from db.engine import get_db
-from loguru import logger
 from db.repository import GameRepository
 
 _HTTP_UNAUTHORIZED = 401

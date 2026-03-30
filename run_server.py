@@ -39,7 +39,13 @@ class _InterceptHandler(logging.Handler):
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
             depth += 1
-        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        try:
+            logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        except Exception as exc:
+            sys.stderr.write(
+                f"_InterceptHandler: loguru failed ({type(exc).__name__}: {exc}). "
+                f"Original: [{record.levelname}] {record.name}: {record.getMessage()}\n"
+            )
 
 
 logger.configure(
@@ -58,7 +64,12 @@ def _run_migrations() -> None:
         text=True,
     )
     if proc.returncode != 0:
-        logger.error("Migration failed:\n{}", proc.stderr)
+        logger.error(
+            "Migration failed (exit code {}).\nstdout:\n{}\nstderr:\n{}",
+            proc.returncode,
+            proc.stdout or "(empty)",
+            proc.stderr or "(empty)",
+        )
         sys.exit(1)
     logger.info("Migrations complete.")
 
@@ -77,23 +88,21 @@ async def main() -> None:
     )
     await admin.start()
 
-    if cfg.telegram_bot_token:
-        bot = build_bot(cfg, session_factory)
-        async with bot:
-            await bot.initialize()
-            await bot.start()
-            await bot.updater.start_polling()
-            logger.info("Telegram bot polling started.")
-            # Run until interrupted
+    try:  # noqa: WPS501
+        if cfg.telegram_bot_token:
+            bot = build_bot(cfg, session_factory)
+            async with bot:
+                await bot.initialize()
+                await bot.start()
+                await bot.updater.start_polling()
+                logger.info("Telegram bot polling started.")
+                await asyncio.Event().wait()
+        else:
+            logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled, admin only.")
             await asyncio.Event().wait()
-            await bot.updater.stop()
-            await bot.stop()
-    else:
-        logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled, admin only.")
-        await asyncio.Event().wait()
-
-    await admin.stop()
-    await engine.dispose()
+    finally:
+        await admin.stop()
+        await engine.dispose()
 
 
 if __name__ == "__main__":
