@@ -130,7 +130,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             await update.message.reply_text(
                 "Researching setting and generating opening scene... (this may take a minute)"
             )
-            async with logger.contextualize(session_id=session_id):
+            with logger.contextualize(session_id=session_id):
                 current_session_id.set(session_id)
                 reset_buffer()
                 engine = create_engine(cfg, language=language)
@@ -155,7 +155,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         game_state, kg, events = loaded
         engine = await create_engine_from_state(cfg, game_state, kg, events, language=language)
 
-        async with logger.contextualize(session_id=session_id):
+        with logger.contextualize(session_id=session_id):
             current_session_id.set(session_id)
             reset_buffer()
             try:
