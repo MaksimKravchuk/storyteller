@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from aiohttp import web
-from aiohttp.typedefs import Handler
+from aiohttp.typedefs import Handler, Middleware
 
 from db.engine import get_db
 from db.repository import GameRepository
@@ -67,7 +67,7 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/locations", self._locations)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
 
-    def _build_auth_middleware(self) -> Handler:
+    def _build_auth_middleware(self) -> Middleware:
         @web.middleware
         async def auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
             if self._token and request.path.startswith("/api/"):
@@ -76,7 +76,7 @@ class AdminServer:
                     return _json_response({"error": "Unauthorized"}, status=401)
             return await handler(request)
 
-        return auth_middleware  # type: ignore[return-value]
+        return auth_middleware
 
     # ── Route handlers ────────────────────────────────────
 
