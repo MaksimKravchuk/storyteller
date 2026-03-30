@@ -32,5 +32,5 @@ def reset_buffer() -> None:
 def get_and_clear_buffer() -> list[dict[str, Any]]:
     """Return accumulated log entries and reset the buffer."""
     buf = call_log_buffer.get(None) or []
-    call_log_buffer.set(None)
+    call_log_buffer.set([])
     return list(buf)

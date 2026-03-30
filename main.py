@@ -114,7 +114,7 @@ def main_cli() -> None:
             line = sys.stdin.readline()
             if not line:  # EOF
                 break
-            action = line.rstrip("\n").strip()
+            action = line.rstrip("\r\n").strip()
             if not action:
                 continue
             if action.lower() in ("quit", "exit", "q"):

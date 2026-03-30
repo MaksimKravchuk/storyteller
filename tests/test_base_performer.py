@@ -214,9 +214,19 @@ async def test_send_json_bracket_extraction_fallback():
 async def test_send_json_raises_value_error_when_all_retries_fail():
     """_send_json raises ValueError when every attempt returns non-JSON."""
     performer = _make_json_performer()
-    with patch.object(performer, "_send", new=AsyncMock(return_value="not json at all")):
+    with patch.object(performer, "_send", new=AsyncMock(return_value="not json at all")) as mock_send:
         with pytest.raises(ValueError, match="failed to produce valid JSON"):
             await performer._send_json("prompt", retries=2)
+    assert mock_send.call_count == 3
+
+
+@pytest.mark.asyncio
+async def test_send_json_bracket_extraction_invalid_inner_braces():
+    """Bracket extraction that finds {…} but inner content is invalid JSON raises ValueError."""
+    performer = _make_json_performer()
+    with patch.object(performer, "_send", new=AsyncMock(return_value="prefix {broken json} suffix")):
+        with pytest.raises(ValueError, match="failed to produce valid JSON"):
+            await performer._send_json("prompt", retries=0)
 
 
 @pytest.mark.asyncio

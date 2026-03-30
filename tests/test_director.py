@@ -968,6 +968,55 @@ class TestNPCRetaliation:
         # Only one call — no retaliation
         assert mock_actor.execute.call_count == 1
 
+    @pytest.mark.asyncio
+    async def test_retaliation_deduplication_by_name(self):
+        """Two actor entries for NPCs with the same name produce only one retaliation."""
+        from cast import director as director_module
+        from cast.dice import AggressionRoll, CombatOutcome, CombatRoll
+
+        gs = _make_game_state()
+        npc1 = NPCCard(name="Bandit", occupation="bandit")
+        npc1.uuid = "uuid-1"
+        npc1.current_mood = "neutral"
+        npc2 = NPCCard(name="Bandit", occupation="bandit")
+        npc2.uuid = "uuid-2"
+        npc2.current_mood = "neutral"
+        gs.npcs["uuid-1"] = npc1
+        gs.npcs["uuid-2"] = npc2
+
+        director = _make_director(game_state=gs)
+        actor1 = AsyncMock(return_value="I attack!")
+        actor2 = AsyncMock(return_value="Me too!")
+        director.actors = {"uuid-1": actor1, "uuid-2": actor2}
+
+        # Both NPCs changed mood from neutral
+        mood_snapshot = {"uuid-1": "neutral", "uuid-2": "neutral"}
+        npc1.current_mood = "hostile"
+        npc2.current_mood = "hostile"
+
+        def always_attacks(mood, _rng=None):
+            return AggressionRoll(will_attack=True, roll=15, threshold=5, mood=mood)
+
+        def fixed_combat(combat_skill, _rng=None):
+            return CombatRoll(
+                outcome=CombatOutcome.NPC_OVERPOWERS,
+                npc_roll=15,
+                player_roll=5,
+                npc_bonus=combat_skill,
+            )
+
+        original_roll = director_module.roll_aggression
+        original_combat = director_module.roll_combat
+        director_module.roll_aggression = always_attacks
+        director_module.roll_combat = fixed_combat
+        try:
+            entries = await director._check_retaliation(mood_snapshot)
+        finally:
+            director_module.roll_aggression = original_roll
+            director_module.roll_combat = original_combat
+
+        assert len(entries) == 1
+
 
 # ---------------------------------------------------------------------------
 # Duplicate NPC name deduplication

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import time
 from abc import ABC, abstractmethod
 from typing import Any
@@ -17,6 +18,8 @@ from llm.call_logger import (
 )
 from llm.message import LLMResponse, Message, Role
 from prompts.base_template import PromptTemplate
+
+logger = logging.getLogger(__name__)
 
 
 class BasePerformer(ABC):
@@ -152,6 +155,13 @@ class BasePerformer(ABC):
             try:
                 return json.loads(raw)
             except json.JSONDecodeError:
+                logger.warning(
+                    "LLM returned malformed JSON on attempt %d/%d; trying bracket extraction. "
+                    "Raw (first 200 chars): %s",
+                    attempt + 1,
+                    retries + 1,
+                    raw[:200],
+                )
                 if attempt == retries:
                     # Last attempt: try to extract JSON from the response
                     start = raw.find("{")
@@ -162,4 +172,4 @@ class BasePerformer(ABC):
                     raise ValueError(
                         f"Agent failed to produce valid JSON after {retries + 1} attempts. Last response: {raw[:200]}"
                     )
-        return {}  # unreachable
+        raise AssertionError("_send_json loop exhausted without returning — this is a bug")

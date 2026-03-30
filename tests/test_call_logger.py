@@ -94,3 +94,14 @@ class TestGetAndClearBuffer:
         get_and_clear_buffer()
         second = get_and_clear_buffer()
         assert second == []
+
+    def test_returned_list_is_a_copy(self):
+        """Mutating the returned list must not affect the buffer on the next call."""
+        reset_buffer()
+        call_log_buffer.set([{"agent_name": "Director"}])
+
+        snapshot = get_and_clear_buffer()
+        snapshot.append({"agent_name": "Intruder"})  # mutate the returned copy
+
+        second = get_and_clear_buffer()
+        assert second == []
