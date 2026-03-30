@@ -3,18 +3,16 @@
 from __future__ import annotations
 
 import json
-import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from aiohttp import web
 from aiohttp.typedefs import Handler, Middleware
+from loguru import logger
 
 from db.engine import get_db
 from db.repository import GameRepository
-
-logger = logging.getLogger(__name__)
 
 _HTTP_UNAUTHORIZED = 401
 _HTTP_NOT_FOUND = 404
@@ -54,7 +52,7 @@ class AdminServer:
         await self._runner.setup()
         site = web.TCPSite(self._runner, "0.0.0.0", self._port)
         await site.start()
-        logger.info("Admin dashboard running on http://0.0.0.0:%d", self._port)
+        logger.info("Admin dashboard running on http://0.0.0.0:{}", self._port)
 
     async def stop(self) -> None:
         if self._runner:

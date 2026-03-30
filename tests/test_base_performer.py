@@ -17,6 +17,7 @@ from prompts.base_template import PromptTemplate
 _INPUT = "input"
 _SEND_METHOD = "_send"
 _PROMPT = "prompt"
+_MESSAGE_KEY = "message"
 
 
 # ---------------------------------------------------------------------------
@@ -182,7 +183,7 @@ async def test_execute_empty_context_is_empty_dict():
             return "ok"
 
     await _ContextCapture(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute("x")
-    assert received_ctx["ctx"] == {}
+    assert not received_ctx["ctx"]
 
 
 # ---------------------------------------------------------------------------
@@ -248,3 +249,43 @@ async def test_send_json_non_json_exception_propagates():
     with patch.object(performer, _SEND_METHOD, new=_bad_send):
         with pytest.raises(UnicodeDecodeError):
             await performer._send_json(_PROMPT, retries=0)
+
+
+# ---------------------------------------------------------------------------
+# Logging tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_execute_emits_start_and_done_logs(loguru_sink):
+    """execute() must emit a start record and a done record with duration_ms."""
+    await _OKPerformer("hello").execute(_INPUT)
+    messages = [rec[_MESSAGE_KEY] for rec in loguru_sink]
+    assert any("| start" in msg and "_OKPerformer" in msg for msg in messages)
+    assert any("| done" in msg and "_OKPerformer" in msg and "duration_ms=" in msg for msg in messages)
+
+
+@pytest.mark.asyncio
+async def test_execute_error_log_has_exc_type(loguru_sink):
+    """execute() must emit an ERROR record with exc_type and attached traceback."""
+    with pytest.raises(ValueError):
+        await _RaisingPerformer(ValueError("boom")).execute(_INPUT)
+    error_records = [rec for rec in loguru_sink if rec["level"].name == "ERROR"]
+    assert len(error_records) == 1
+    assert "| error" in error_records[0][_MESSAGE_KEY]
+    assert "exc_type=ValueError" in error_records[0][_MESSAGE_KEY]
+    assert "duration_ms=" in error_records[0][_MESSAGE_KEY]
+    assert error_records[0]["exception"] is not None
+
+
+@pytest.mark.asyncio
+async def test_send_json_warning_per_attempt(loguru_sink):
+    """_send_json must log one WARNING per failed JSON parse attempt."""
+    performer = _make_json_performer()
+    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="not json")):
+        with pytest.raises(ValueError):
+            await performer._send_json(_PROMPT, retries=1)
+    warnings = [rec for rec in loguru_sink if rec["level"].name == "WARNING"]
+    assert len(warnings) == 2
+    assert "attempt 1/2" in warnings[0][_MESSAGE_KEY]
+    assert "attempt 2/2" in warnings[1][_MESSAGE_KEY]

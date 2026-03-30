@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import contextlib
 import json
-import logging
 import time
 from abc import ABC, abstractmethod
 from typing import Any
@@ -17,11 +15,17 @@ from llm.call_logger import (
     current_session_id,
 )
 from llm.message import LLMResponse, Message, Role
+from loguru import logger
 from prompts.base_template import PromptTemplate
 
-logger = logging.getLogger(__name__)
-
 _LOG_PREVIEW_CHARS = 200
+
+
+def _parent_agent(stack: list[str] | None) -> str | None:
+    """Return the parent agent name from the call stack, or None if at root."""
+    if stack and len(stack) >= 2:  # noqa: WPS507
+        return stack[-2]
+    return None
 
 
 class BasePerformer(ABC):
@@ -64,10 +68,28 @@ class BasePerformer(ABC):
         Uses a ContextVar token so the previous stack is restored exactly,
         even if ``act()`` raises.
         """
-        new_stack = list(agent_stack.get(None) or []) + [type(self).__name__]
+        agent_name = type(self).__name__
+        new_stack = list(agent_stack.get(None) or []) + [agent_name]
         token = agent_stack.set(new_stack)
+        parent = _parent_agent(new_stack)
+        start = time.monotonic()
+        logger.info("agent={} parent={} | start", agent_name, parent)
         try:  # noqa: WPS501
-            return await self.act(input_data, context or {})
+            act_response = await self.act(input_data, context or {})
+        except Exception as exc:
+            duration_ms = int((time.monotonic() - start) * 1000)
+            logger.exception(
+                "agent={} parent={} | error | exc_type={} | duration_ms={}",
+                agent_name,
+                parent,
+                type(exc).__name__,
+                duration_ms,
+            )
+            raise
+        else:
+            duration_ms = int((time.monotonic() - start) * 1000)
+            logger.info("agent={} parent={} | done | duration_ms={}", agent_name, parent, duration_ms)
+            return act_response
         finally:
             agent_stack.reset(token)
 
@@ -113,20 +135,30 @@ class BasePerformer(ABC):
         )
         duration_ms = int((time.monotonic() - start) * 1000)
 
-        # Capture call for admin dashboard logging
+        stack = agent_stack.get(None) or []
+        parent = _parent_agent(stack)
+        model = response.model or self.llm_client.model
+        logger.info(
+            "LLM | agent={} model={} parent={} | prompt_tokens={} completion_tokens={} duration_ms={}",
+            type(self).__name__,
+            model,
+            parent,
+            response.usage.get("prompt_tokens"),
+            response.usage.get("completion_tokens"),
+            duration_ms,
+        )
+
+        # Capture call for admin dashboard
         session_id = current_session_id.get(None)
         if session_id is not None:
-            stack = agent_stack.get(None) or []
-            parent = stack[-2] if len(stack) >= 2 else None
             seq = call_sequence_counter.get(0)
             call_sequence_counter.set(seq + 1)
-
             buf = call_log_buffer.get(None) or []
             buf.append(
                 {
                     "session_id": session_id,
                     "agent_name": type(self).__name__,
-                    "model": response.model or self.llm_client.model,
+                    "model": model,
                     "system_prompt": system_prompt,
                     "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
                     "response_content": response.content,
@@ -158,8 +190,8 @@ class BasePerformer(ABC):
                 return json.loads(raw)
             except json.JSONDecodeError:
                 logger.warning(
-                    "LLM returned malformed JSON on attempt %d/%d; trying bracket extraction. "
-                    "Raw (first 200 chars): %s",
+                    "LLM returned malformed JSON on attempt {}/{}: trying bracket extraction. "
+                    "Raw (first 200 chars): {}",
                     attempt + 1,
                     retries + 1,
                     raw[:_LOG_PREVIEW_CHARS],
@@ -169,8 +201,16 @@ class BasePerformer(ABC):
                     start = raw.find("{")
                     end = raw.rfind("}") + 1
                     if start != -1 and end > start:
-                        with contextlib.suppress(json.JSONDecodeError):
+                        try:
                             return json.loads(raw[start:end])
+                        except json.JSONDecodeError:
+                            logger.warning(
+                                "Bracket extraction also failed on attempt {}/{}: raw (first {} chars): {}",
+                                attempt + 1,
+                                retries + 1,
+                                _LOG_PREVIEW_CHARS,
+                                raw[:_LOG_PREVIEW_CHARS],
+                            )
                     raise ValueError(
                         f"Agent failed to produce valid JSON after {retries + 1} attempts. "
                         f"Last response: {raw[:_LOG_PREVIEW_CHARS]}"
