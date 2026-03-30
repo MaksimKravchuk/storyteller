@@ -82,10 +82,10 @@ class GameRepository:
         gs_query = await self._session.execute(
             select(tbl.game_states).where(tbl.game_states.c.session_id == session_id)
         )
-        gs_row = gs_query.mappings().first()
-        if gs_row is None:
+        gs_mapping = gs_query.mappings().first()
+        if gs_mapping is None:
             return None
-        gs_row = dict(gs_row)
+        gs_row = dict(gs_mapping)
         game_state_id = gs_row[_COL_ID]
 
         # Load setting
@@ -213,7 +213,7 @@ class GameRepository:
 
         # Setting (upsert)
         setting_row = setting_to_row(game_state.setting, game_state_id)
-        stmt = (
+        setting_stmt = (
             pg_insert(tbl.settings)
             .values(**setting_row)
             .on_conflict_do_update(
@@ -221,11 +221,11 @@ class GameRepository:
                 set_={key: col_val for key, col_val in setting_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
             )
         )
-        await self._session.execute(stmt)
+        await self._session.execute(setting_stmt)
 
         # Player (upsert)
         player_row = player_to_row(game_state.player, game_state_id)
-        stmt = (
+        player_stmt = (
             pg_insert(tbl.players)
             .values(**player_row)
             .on_conflict_do_update(
@@ -233,7 +233,7 @@ class GameRepository:
                 set_={key: col_val for key, col_val in player_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
             )
         )
-        await self._session.execute(stmt)
+        await self._session.execute(player_stmt)
 
         # Locations (delete + insert)
         await self._session.execute(delete(tbl.locations).where(tbl.locations.c.game_state_id == game_state_id))
@@ -323,11 +323,11 @@ class GameRepository:
         gs_query = await self._session.execute(
             select(tbl.game_states).where(tbl.game_states.c.session_id == session_id)
         )
-        gs_row = gs_query.mappings().first()
-        if not gs_row:
+        gs_mapping = gs_query.mappings().first()
+        if not gs_mapping:
             detail["game_state"] = None
             return detail
-        gs_row = dict(gs_row)
+        gs_row = dict(gs_mapping)
         game_state_id = gs_row[_COL_ID]
         detail["game_state"] = gs_row
 
