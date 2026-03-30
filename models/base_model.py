@@ -1,5 +1,6 @@
 import uuid
 
+
 class BaseModel:
     def __init__(self):
         self.uuid: str = self._generate_uuid()

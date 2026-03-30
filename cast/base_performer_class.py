@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
+import logging
 import time
 from abc import ABC, abstractmethod
 from typing import Any
@@ -16,6 +18,8 @@ from llm.call_logger import (
 )
 from llm.message import LLMResponse, Message, Role
 from prompts.base_template import PromptTemplate
+
+logger = logging.getLogger(__name__)
 
 
 class BasePerformer(ABC):
@@ -46,9 +50,6 @@ class BasePerformer(ABC):
         """Set / update variables used to render the system prompt template."""
         self._system_prompt_vars.update(kwargs)
 
-    def _build_system_prompt(self) -> str:
-        return self.system_prompt_template.render(**self._system_prompt_vars)
-
     # ------------------------------------------------------------------
     # Public entry-point (wraps act with call-chain tracking)
     # ------------------------------------------------------------------
@@ -58,20 +59,31 @@ class BasePerformer(ABC):
 
         Pushes the agent name onto the shared stack so that any LLM call
         made inside ``act()`` records the correct ``parent_agent``.
+        Uses a ContextVar token so the previous stack is restored exactly,
+        even if ``act()`` raises.
         """
-        stack = agent_stack.get([])
-        stack.append(type(self).__name__)
-        agent_stack.set(stack)
-        try:
+        new_stack = list(agent_stack.get(None) or []) + [type(self).__name__]
+        token = agent_stack.set(new_stack)
+        try:  # noqa: WPS501
             return await self.act(input_data, context or {})
         finally:
-            stack = agent_stack.get([])
-            stack.pop()
-            agent_stack.set(stack)
+            agent_stack.reset(token)
+
+    # ------------------------------------------------------------------
+    # Abstract interface
+    # ------------------------------------------------------------------
+
+    @abstractmethod
+    async def act(self, input_data: Any, context: dict) -> Any:
+        """Perform this agent's primary action."""
+        ...
 
     # ------------------------------------------------------------------
     # LLM helpers
     # ------------------------------------------------------------------
+
+    def _build_system_prompt(self) -> str:
+        return self.system_prompt_template.render(**self._system_prompt_vars)
 
     async def _send(
         self,
@@ -102,25 +114,27 @@ class BasePerformer(ABC):
         # Capture call for admin dashboard logging
         session_id = current_session_id.get(None)
         if session_id is not None:
-            stack = agent_stack.get([])
+            stack = agent_stack.get(None) or []
             parent = stack[-2] if len(stack) >= 2 else None
             seq = call_sequence_counter.get(0)
             call_sequence_counter.set(seq + 1)
 
-            buf = call_log_buffer.get([])
-            buf.append({
-                "session_id": session_id,
-                "agent_name": type(self).__name__,
-                "model": response.model or self.llm_client.model,
-                "system_prompt": system_prompt,
-                "messages": [{"role": m.role.value, "content": m.content} for m in messages],
-                "response_content": response.content,
-                "prompt_tokens": response.usage.get("prompt_tokens"),
-                "completion_tokens": response.usage.get("completion_tokens"),
-                "duration_ms": duration_ms,
-                "parent_agent": parent,
-                "call_sequence": seq,
-            })
+            buf = call_log_buffer.get(None) or []
+            buf.append(
+                {
+                    "session_id": session_id,
+                    "agent_name": type(self).__name__,
+                    "model": response.model or self.llm_client.model,
+                    "system_prompt": system_prompt,
+                    "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
+                    "response_content": response.content,
+                    "prompt_tokens": response.usage.get("prompt_tokens"),
+                    "completion_tokens": response.usage.get("completion_tokens"),
+                    "duration_ms": duration_ms,
+                    "parent_agent": parent,
+                    "call_sequence": seq,
+                }
+            )
             call_log_buffer.set(buf)
 
         return response.content
@@ -141,26 +155,21 @@ class BasePerformer(ABC):
             try:
                 return json.loads(raw)
             except json.JSONDecodeError:
+                logger.warning(
+                    "LLM returned malformed JSON on attempt %d/%d; trying bracket extraction. "
+                    "Raw (first 200 chars): %s",
+                    attempt + 1,
+                    retries + 1,
+                    raw[:200],
+                )
                 if attempt == retries:
                     # Last attempt: try to extract JSON from the response
                     start = raw.find("{")
                     end = raw.rfind("}") + 1
                     if start != -1 and end > start:
-                        try:
+                        with contextlib.suppress(json.JSONDecodeError):
                             return json.loads(raw[start:end])
-                        except json.JSONDecodeError:
-                            pass
                     raise ValueError(
-                        f"Agent failed to produce valid JSON after "
-                        f"{retries + 1} attempts. Last response: {raw[:200]}"
+                        f"Agent failed to produce valid JSON after {retries + 1} attempts. Last response: {raw[:200]}"
                     )
-        return {}  # unreachable
-
-    # ------------------------------------------------------------------
-    # Abstract interface
-    # ------------------------------------------------------------------
-
-    @abstractmethod
-    async def act(self, input_data: Any, context: dict) -> Any:
-        """Perform this agent's primary action."""
-        ...
+        raise AssertionError("_send_json loop exhausted without returning — this is a bug")

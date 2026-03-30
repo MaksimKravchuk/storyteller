@@ -91,31 +91,38 @@ def main_cli() -> None:
     cfg = load_config()
     engine = create_engine(cfg)
 
-    print("=" * 60)
-    print("  STORYTELLER — AI Text Quest Engine (CLI mode)")
-    print("=" * 60)
-    print(f"  Director: {cfg.director_model}")
-    print(f"  Agents:   {cfg.agent_model}")
-    print(f"  Narrator: {cfg.narrator_model}")
-    print("=" * 60)
-    print()
+    sys.stdout.write(f"{'=' * 60}\n")
+    sys.stdout.write("  STORYTELLER — AI Text Quest Engine (CLI mode)\n")
+    sys.stdout.write(f"{'=' * 60}\n")
+    sys.stdout.write(f"  Director: {cfg.director_model}\n")
+    sys.stdout.write(f"  Agents:   {cfg.agent_model}\n")
+    sys.stdout.write(f"  Narrator: {cfg.narrator_model}\n")
+    sys.stdout.write(f"{'=' * 60}\n")
+    sys.stdout.write("\n")
 
     async def _cli_loop():
-        setting = input("Describe your desired setting (e.g. 'Rome, 1st century AD'): ")
-        print("\nResearching setting and generating opening scene...\n")
+        sys.stdout.write("Describe your desired setting (e.g. 'Rome, 1st century AD'): ")
+        sys.stdout.flush()
+        setting = sys.stdin.readline().rstrip("\n")
+        sys.stdout.write("\nResearching setting and generating opening scene...\n\n")
         opening = await engine.start_game(setting)
-        print(opening)
+        sys.stdout.write(f"{opening}\n")
         while True:
-            print()
-            action = input("> ").strip()
+            sys.stdout.write("\n")
+            sys.stdout.write("> ")
+            sys.stdout.flush()
+            line = sys.stdin.readline()
+            if not line:  # EOF
+                break
+            action = line.rstrip("\r\n").strip()
             if not action:
                 continue
             if action.lower() in ("quit", "exit", "q"):
-                print("Thanks for playing!")
+                sys.stdout.write("Thanks for playing!\n")
                 break
             response = await engine.process_action(action)
-            print()
-            print(response)
+            sys.stdout.write("\n")
+            sys.stdout.write(f"{response}\n")
 
     asyncio.run(_cli_loop())
 

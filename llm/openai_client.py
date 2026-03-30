@@ -4,7 +4,21 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from llm.base_client import BaseLLMClient
-from llm.message import Message, LLMResponse, Role
+from llm.message import Message, LLMResponse
+
+
+def _sanitize(text: str) -> str:
+    """Strip characters that break JSON serialization or OpenAI's HTTP parser.
+
+    Handles lone surrogates, null bytes, and other control characters
+    (below 0x20 or 0x7F) that are illegal in JSON strings. Tab, newline,
+    and carriage-return are preserved.
+    """
+    # Replace lone surrogates first
+    cleaned = text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
+    # Strip null bytes and other control characters illegal in JSON strings
+    # Keep \t (0x09), \n (0x0A), \r (0x0D); remove everything else below 0x20 and 0x7F
+    return "".join(ch for ch in cleaned if (ch >= "\x20" and ch != "\x7f") or ch in "\t\n\r")
 
 
 class OpenAIClient(BaseLLMClient):
@@ -22,21 +36,6 @@ class OpenAIClient(BaseLLMClient):
 
         self._client = AsyncOpenAI(api_key=self.api_key)
 
-    @staticmethod
-    def _sanitize(text: str) -> str:
-        """Strip lone surrogate characters that break UTF-8 JSON serialization."""
-        return text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
-
-    def _format_messages(
-        self, messages: list[Message], system_prompt: str = ""
-    ) -> list[dict[str, str]]:
-        formatted: list[dict[str, str]] = []
-        if system_prompt:
-            formatted.append({"role": "system", "content": self._sanitize(system_prompt)})
-        for msg in messages:
-            formatted.append({"role": msg.role.value, "content": self._sanitize(msg.content)})
-        return formatted
-
     async def send_message(
         self,
         messages: list[Message],
@@ -50,8 +49,8 @@ class OpenAIClient(BaseLLMClient):
         kwargs: dict[str, Any] = {
             "model": self.model,
             "messages": formatted,
-            "temperature": temperature if temperature is not None else self.temperature,
-            "max_completion_tokens": max_tokens if max_tokens is not None else self.max_tokens,
+            "temperature": self.temperature if temperature is None else temperature,
+            "max_completion_tokens": self.max_tokens if max_tokens is None else max_tokens,
         }
         if response_format:
             kwargs["response_format"] = response_format
@@ -88,3 +87,11 @@ class OpenAIClient(BaseLLMClient):
             delta = chunk.choices[0].delta
             if delta.content:
                 yield delta.content
+
+    def _format_messages(self, messages: list[Message], system_prompt: str = "") -> list[dict[str, str]]:
+        formatted: list[dict[str, str]] = []
+        if system_prompt:
+            formatted.append({"role": "system", "content": _sanitize(system_prompt)})
+        for msg in messages:
+            formatted.append({"role": msg.role.value, "content": _sanitize(msg.content)})
+        return formatted

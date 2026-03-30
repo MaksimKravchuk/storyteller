@@ -35,11 +35,13 @@ def _make_game_state() -> GameState:
 
 def _make_narrator() -> Narrator:
     llm_client = AsyncMock()
-    llm_client.send_message = AsyncMock(return_value=AsyncMock(
-        content="Narrated text.",
-        model="test-model",
-        usage={"prompt_tokens": 10, "completion_tokens": 5},
-    ))
+    llm_client.send_message = AsyncMock(
+        return_value=AsyncMock(
+            content="Narrated text.",
+            model="test-model",
+            usage={"prompt_tokens": 10, "completion_tokens": 5},
+        )
+    )
     return Narrator(llm_client=llm_client, language="English")
 
 

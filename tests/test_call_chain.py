@@ -11,7 +11,6 @@ from cast.base_performer_class import BasePerformer
 from llm.call_logger import (
     agent_stack,
     call_log_buffer,
-    call_sequence_counter,
     current_session_id,
     reset_buffer,
 )
@@ -28,11 +27,13 @@ def _mock_llm() -> AsyncMock:
     """Create a mock LLM client that returns a valid LLMResponse."""
     client = AsyncMock()
     client.model = "test-model"
-    client.send_message = AsyncMock(return_value=LLMResponse(
-        content="test response",
-        model="test-model",
-        usage={"prompt_tokens": 10, "completion_tokens": 5},
-    ))
+    client.send_message = AsyncMock(
+        return_value=LLMResponse(
+            content="test response",
+            model="test-model",
+            usage={"prompt_tokens": 10, "completion_tokens": 5},
+        )
+    )
     return client
 
 

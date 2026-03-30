@@ -7,6 +7,7 @@ from typing import Any
 
 class Role(Enum):
     """Message roles for LLM conversations."""
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -15,15 +16,17 @@ class Role(Enum):
 @dataclass
 class Message:
     """A single message in a conversation."""
+
     role: Role
-    content: str
+    content: str  # noqa: WPS110
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class LLMResponse:
     """Response from an LLM provider."""
-    content: str
+
+    content: str  # noqa: WPS110
     raw_response: Any = None
     usage: dict[str, int] = field(default_factory=dict)
     model: str = ""

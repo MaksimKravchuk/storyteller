@@ -71,5 +71,5 @@ class DataMiner(BasePerformer):
     async def _extract_search_terms(self, description: str) -> list[str]:
         """Ask the LLM to generate Wikipedia search terms."""
         prompt = DATA_MINER_SEARCH_TERMS.render(setting_request=description)
-        data = await self._send_json(prompt)
-        return data.get("search_terms", [description])
+        search_json = await self._send_json(prompt)
+        return search_json.get("search_terms", [description])

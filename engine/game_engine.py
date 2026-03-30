@@ -9,13 +9,12 @@ from cast.director import Director
 from cast.narrator import Narrator
 from cast.npc_generator import NPCGenerator
 from cast.scene_builder import SceneBuilder
-from defaults import AI_MODELS, ModelConfig
+from defaults.models import AI_MODELS, ModelConfig
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
-from llm import create_llm_client
+from llm.factory import create_llm_client
 from models.game_state import GameState
-from models.location import Location
 from models.setting import Setting
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
@@ -41,9 +40,9 @@ class GameEngine:
     def __init__(
         self,
         *,
-        director_model: ModelConfig = AI_MODELS.GPT_4,
-        agent_model: ModelConfig = AI_MODELS.GPT_3_5_TURBO,
-        narrator_model: ModelConfig = AI_MODELS.GPT_4,
+        director_model: ModelConfig = AI_MODELS.gpt_4,
+        agent_model: ModelConfig = AI_MODELS.gpt_3_5_turbo,
+        narrator_model: ModelConfig = AI_MODELS.gpt_4,
         api_keys: dict[str, str | None] | None = None,
         language: str = "English",
     ):
@@ -132,9 +131,7 @@ class GameEngine:
         )
 
         # Generate opening scene
-        opening = await self._director.execute(
-            "Look around and describe the starting scene"
-        )
+        opening = await self._director.execute("Look around and describe the starting scene")
         return opening
 
     async def process_action(self, player_action: str) -> str:
@@ -155,7 +152,8 @@ class GameEngine:
             return 0.0
         return self._game_state.game_clock
 
-    def get_game_state(self) -> GameState | None:
+    @property
+    def game_state(self) -> GameState | None:
         """Access the current game state for inspection."""
         return self._game_state
 
@@ -277,11 +275,7 @@ class GameEngine:
         # Key persons
         for person in setting.key_persons:
             node = KnowledgeNode(
-                content=(
-                    f"{person.get('name', 'Unknown')}: "
-                    f"{person.get('role', '')}. "
-                    f"{person.get('description', '')}"
-                ),
+                content=(f"{person.get('name', 'Unknown')}: {person.get('role', '')}. {person.get('description', '')}"),
                 scope=KnowledgeScope.COUNTRY,
                 source=KnowledgeSource.FACT,
                 required_education=3,  # Need some education to know political figures
@@ -293,9 +287,7 @@ class GameEngine:
         for event in setting.key_events:
             node = KnowledgeNode(
                 content=(
-                    f"{event.get('name', 'Unknown event')} "
-                    f"({event.get('date', '')}): "
-                    f"{event.get('description', '')}"
+                    f"{event.get('name', 'Unknown event')} ({event.get('date', '')}): {event.get('description', '')}"
                 ),
                 scope=KnowledgeScope.REGION,
                 source=KnowledgeSource.FACT,
@@ -307,11 +299,7 @@ class GameEngine:
         # Locations
         for loc in setting.locations:
             node = KnowledgeNode(
-                content=(
-                    f"{loc.get('name', 'Unknown place')} "
-                    f"({loc.get('type', '')}): "
-                    f"{loc.get('description', '')}"
-                ),
+                content=(f"{loc.get('name', 'Unknown place')} ({loc.get('type', '')}): {loc.get('description', '')}"),
                 scope=KnowledgeScope.CITY,
                 source=KnowledgeSource.FACT,
                 tags=["location"],

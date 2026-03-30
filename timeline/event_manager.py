@@ -8,7 +8,6 @@ from timeline.event import EventEffect, EventStatus, GameEvent
 
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
-    from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
     from models.game_state import GameState
 
 
@@ -74,16 +73,12 @@ class EventManager:
         # Gather events that complete within [old_clock, new_clock]
         completed: list[GameEvent] = []
         for ev in self._events:
-            if (
-                ev.status == EventStatus.PENDING
-                and ev.completes_at <= new_clock
-                and ev.completes_at > old_clock
-            ):
+            if ev.status == EventStatus.PENDING and ev.completes_at <= new_clock and ev.completes_at > old_clock:
                 ev.status = EventStatus.COMPLETED
                 completed.append(ev)
 
         # Sort by completion time so effects apply in chronological order
-        completed.sort(key=lambda e: e.completes_at)
+        completed.sort(key=lambda event: event.completes_at)
 
         # Resolve each completed event
         for ev in completed:
@@ -97,17 +92,12 @@ class EventManager:
         return [
             ev
             for ev in self._events
-            if ev.status == EventStatus.PENDING
-            and (owner_id is None or ev.owner_id == owner_id)
+            if ev.status == EventStatus.PENDING and (owner_id is None or ev.owner_id == owner_id)
         ]
 
     def get_completed_since(self, since_time: float) -> list[GameEvent]:
         """Return events that completed after ``since_time``."""
-        return [
-            ev
-            for ev in self._events
-            if ev.status == EventStatus.COMPLETED and ev.completes_at > since_time
-        ]
+        return [ev for ev in self._events if ev.status == EventStatus.COMPLETED and ev.completes_at > since_time]
 
     # ------------------------------------------------------------------
     # Internal
@@ -133,43 +123,41 @@ class EventManager:
                     gs.locations[npc.location_id].remove_npc(npc_id)
                 # Move to new location
                 npc.location_id = to_loc
-                if to_loc in gs.locations:
-                    gs.locations[to_loc].add_npc(npc_id)
+                loc_obj = gs.locations.get(to_loc)
+                if loc_obj:
+                    loc_obj.add_npc(npc_id)
                 # Update current scene if applicable
                 if gs.current_scene and gs.current_scene.location_id == npc.location_id:
                     from models.scene import SceneNPC
-                    already = any(
-                        snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present
-                    )
+
+                    already = any(snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present)
                     if not already:
-                        gs.current_scene.npcs_present.append(
-                            SceneNPC(role=npc.occupation or npc.name, uuid=npc_id)
-                        )
+                        gs.current_scene.npcs_present.append(SceneNPC(role=npc.occupation or npc.name, uuid=npc_id))
 
         elif etype == "ADD_ITEM":
             npc_id = effect.params.get("npc_id", effect.target_id)
-            item = effect.params.get("item", "")
+            inventory_item = effect.params.get("item", "")
             npc = gs.npcs.get(npc_id)
-            if npc and item:
-                npc.add_item_to_inventory(item)
+            if npc and inventory_item:
+                npc.add_item_to_inventory(inventory_item)
 
         elif etype == "REMOVE_ITEM":
             npc_id = effect.params.get("npc_id", effect.target_id)
-            item = effect.params.get("item", "")
+            inventory_item = effect.params.get("item", "")
             npc = gs.npcs.get(npc_id)
-            if npc and item and item in npc.inventory:
-                npc.remove_item_from_inventory(item)
+            if npc and inventory_item and inventory_item in npc.inventory:
+                npc.remove_item_from_inventory(inventory_item)
 
         elif etype == "ADD_KNOWLEDGE":
             # Dynamically import to avoid circular deps at module level
             from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 
-            content = effect.params.get("content", "")
+            knowledge_text = effect.params.get("content", "")
             scope_str = effect.params.get("scope", "local")
             tags = effect.params.get("tags", [])
-            if content:
+            if knowledge_text:
                 node = KnowledgeNode(
-                    content=content,
+                    content=knowledge_text,
                     scope=KnowledgeScope(scope_str),
                     source=KnowledgeSource.FACT,
                     tags=tags,
@@ -180,9 +168,9 @@ class EventManager:
         elif etype == "CHANGE_ATTRIBUTE":
             target = gs.npcs.get(effect.target_id)
             attr = effect.params.get("attribute", "")
-            value = effect.params.get("value", 0)
+            attribute_value = effect.params.get("value", 0)
             if target and attr:
-                target.update_attribute(attr, value)
+                target.update_attribute(attr, attribute_value)
 
         elif etype == "REMOVE_NPC":
             npc_id = effect.target_id
@@ -192,10 +180,9 @@ class EventManager:
                     gs.locations[npc.location_id].remove_npc(npc_id)
                 if gs.current_scene:
                     gs.current_scene.npcs_present = [
-                        snpc for snpc in gs.current_scene.npcs_present
-                        if snpc.uuid != npc_id
+                        snpc for snpc in gs.current_scene.npcs_present if snpc.uuid != npc_id
                     ]
-                del gs.npcs[npc_id]
+                gs.npcs.pop(npc_id)
 
         # SPAWN_NPC is handled at a higher level by the Director
         # (it needs to call the NPC Generator agent)
@@ -210,13 +197,8 @@ class EventManager:
                 owner_id=follow_up_data.get("owner_id", event.owner_id),
                 location_id=follow_up_data.get("location_id", event.location_id),
                 scope=follow_up_data.get("scope", event.scope),
-                effects=[
-                    EventEffect(**eff)
-                    for eff in follow_up_data.get("effects", [])
-                ],
+                effects=[EventEffect(**eff) for eff in follow_up_data.get("effects", [])],
                 follow_up_events=follow_up_data.get("follow_up_events", []),
-                on_complete_description=follow_up_data.get(
-                    "on_complete_description", ""
-                ),
+                on_complete_description=follow_up_data.get("on_complete_description", ""),
             )
             self.schedule(follow_up)

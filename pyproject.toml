@@ -18,7 +18,7 @@ openai = ["openai>=1.0"]
 anthropic = ["anthropic>=0.25"]
 telegram = ["python-telegram-bot>=21.0"]
 database = ["sqlalchemy[asyncio]>=2.0", "asyncpg>=0.29", "alembic>=1.13"]
-dev = ["pytest", "pytest-asyncio", "mypy"]
+dev = ["pytest", "pytest-asyncio", "mypy", "flake8", "wemake-python-styleguide"]
 
 [tool.mypy]
 ignore_missing_imports = true
@@ -34,3 +34,18 @@ disable_error_code = ["union-attr"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "models", "prompts", "research", "timeline"]
+
+[dependency-groups]
+dev = [
+    "flake8>=7.3.0",
+    "mypy>=1.0",
+    "pre-commit>=4.5.1",
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.15.8",
+    "wemake-python-styleguide>=1.6.1",
+]
+
+[tool.ruff]
+line-length = 120
+exclude = ["alembic/", ".venv/", "__pycache__", ".git"]

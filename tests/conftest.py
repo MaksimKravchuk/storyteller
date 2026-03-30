@@ -36,24 +36,30 @@ def empty_graph() -> KnowledgeGraph:
 @pytest.fixture
 def populated_graph(simple_setting) -> KnowledgeGraph:
     kg = KnowledgeGraph()
-    kg.add_node(KnowledgeNode(
-        content="Rome is the capital of the empire.",
-        scope=KnowledgeScope.WORLD,
-        source=KnowledgeSource.FACT,
-        tags=["setting", "overview"],
-    ))
-    kg.add_node(KnowledgeNode(
-        content="Whispers of a conspiracy in the Senate.",
-        scope=KnowledgeScope.CITY,
-        source=KnowledgeSource.RUMOR,
-        tags=["politics"],
-    ))
-    kg.add_node(KnowledgeNode(
-        content="The market on the Via Sacra sells fine silks.",
-        scope=KnowledgeScope.LOCAL,
-        source=KnowledgeSource.FACT,
-        tags=["trade"],
-    ))
+    kg.add_node(
+        KnowledgeNode(
+            content="Rome is the capital of the empire.",
+            scope=KnowledgeScope.WORLD,
+            source=KnowledgeSource.FACT,
+            tags=["setting", "overview"],
+        )
+    )
+    kg.add_node(
+        KnowledgeNode(
+            content="Whispers of a conspiracy in the Senate.",
+            scope=KnowledgeScope.CITY,
+            source=KnowledgeSource.RUMOR,
+            tags=["politics"],
+        )
+    )
+    kg.add_node(
+        KnowledgeNode(
+            content="The market on the Via Sacra sells fine silks.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.FACT,
+            tags=["trade"],
+        )
+    )
     return kg
 
 

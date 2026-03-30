@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+import types
 from dataclasses import dataclass
 from enum import Enum
 
@@ -12,15 +13,17 @@ from enum import Enum
 # Lower = more likely to attack.  Mood not listed here → no retaliation.
 # ---------------------------------------------------------------------------
 
-AGGRESSION_THRESHOLDS: dict[str, int] = {
-    "hostile": 5,
-    "enraged": 3,
-    "furious": 3,
-    "angry": 8,
-    "threatened": 10,
-    "irritated": 13,
-    "suspicious": 15,
-}
+AGGRESSION_THRESHOLDS: types.MappingProxyType[str, int] = types.MappingProxyType(
+    {
+        "hostile": 5,
+        "enraged": 3,
+        "furious": 3,
+        "angry": 8,
+        "threatened": 10,
+        "irritated": 13,
+        "suspicious": 15,
+    }
+)
 
 
 class CombatOutcome(Enum):
@@ -46,16 +49,13 @@ class CombatRoll:
         """Human-readable description of the outcome for prompt injection."""
         descs = {
             CombatOutcome.NPC_OVERPOWERS: (
-                "The NPC overpowers the player — they counterattack, "
-                "pin them down, or deliver a decisive blow."
+                "The NPC overpowers the player — they counterattack, pin them down, or deliver a decisive blow."
             ),
             CombatOutcome.NPC_DEFENDS: (
-                "The NPC successfully defends — they block the attack, "
-                "shove the player back, or dodge and retaliate."
+                "The NPC successfully defends — they block the attack, shove the player back, or dodge and retaliate."
             ),
             CombatOutcome.PLAYER_SUCCEEDS: (
-                "The player's attack lands — the NPC takes a hit, "
-                "stumbles, loses their weapon, or is knocked back."
+                "The player's attack lands — the NPC takes a hit, stumbles, loses their weapon, or is knocked back."
             ),
             CombatOutcome.PLAYER_DOMINATES: (
                 "The player completely overwhelms the NPC — a devastating "

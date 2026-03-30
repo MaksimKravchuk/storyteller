@@ -22,14 +22,14 @@ from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buff
 
 logger = logging.getLogger(__name__)
 
-_LANGUAGE_OPTIONS = [
+_LANGUAGE_OPTIONS: tuple[tuple[str, str], ...] = (
     ("\U0001f1ec\U0001f1e7 English", "English"),
     ("\U0001f1f7\U0001f1fa Russian", "Russian"),
     ("\U0001f1ea\U0001f1f8 Spanish", "Spanish"),
     ("\U0001f1eb\U0001f1f7 French", "French"),
     ("\U0001f1e9\U0001f1ea German", "German"),
     ("\U0001f1ef\U0001f1f5 Japanese", "Japanese"),
-]
+)
 
 
 def _db_factory(context: ContextTypes.DEFAULT_TYPE):
@@ -48,8 +48,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await repo.update_session(session["id"], state="awaiting_language")
 
     keyboard = [
-        [InlineKeyboardButton(label, callback_data=f"lang:{value}")]
-        for label, value in _LANGUAGE_OPTIONS
+        [InlineKeyboardButton(label, callback_data=f"lang:{lang_code}")] for label, lang_code in _LANGUAGE_OPTIONS
     ]
     await update.message.reply_text(
         "Welcome to Storyteller!\n\nChoose your story language:",
@@ -57,9 +56,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
-async def handle_language_callback(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def handle_language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
 
@@ -74,8 +71,7 @@ async def handle_language_callback(
         await repo.update_session(session["id"], state="awaiting_setting", language=language)
 
     await query.edit_message_text(
-        f"Language set to {language}.\n\n"
-        "Describe your desired setting (e.g. 'Rome, 1st century AD'):"
+        f"Language set to {language}.\n\nDescribe your desired setting (e.g. 'Rome, 1st century AD'):"
     )
 
 
@@ -106,8 +102,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         if state == "awaiting_setting":
             await update.message.reply_text(
-                "Researching setting and generating opening scene... "
-                "(this may take a minute)"
+                "Researching setting and generating opening scene... (this may take a minute)"
             )
             current_session_id.set(session_id)
             reset_buffer()
@@ -116,14 +111,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 opening = await engine.start_game(text)
             except Exception:
                 logger.exception("Failed to start game for chat %s", chat_id)
-                await update.message.reply_text(
-                    "Something went wrong. Try /start again."
-                )
+                await update.message.reply_text("Something went wrong. Try /start again.")
                 await repo.update_session(session_id, state="idle")
                 return
 
             # Persist the new game state
-            game_state = engine.get_game_state()
+            game_state = engine.game_state
             assert game_state is not None
             assert engine.knowledge_graph is not None
             await repo.save_game_state(
@@ -155,13 +148,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             response = await engine.process_action(text)
         except Exception:
             logger.exception("Error processing action for chat %s", chat_id)
-            await update.message.reply_text(
-                "Something went wrong processing your action. Try again."
-            )
+            await update.message.reply_text("Something went wrong processing your action. Try again.")
             return
 
         # Flush updated state back to PG
-        updated_state = engine.get_game_state()
+        updated_state = engine.game_state
         assert updated_state is not None
         assert engine.knowledge_graph is not None
         await repo.save_game_state(

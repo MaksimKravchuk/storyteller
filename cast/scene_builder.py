@@ -29,11 +29,7 @@ class SceneBuilder(BasePerformer):
         from models.game_state import GameState
 
         game_state: GameState = context["game_state"]
-        current_loc = (
-            game_state.current_scene.description
-            if game_state.current_scene
-            else "Starting area"
-        )
+        current_loc = game_state.current_scene.description if game_state.current_scene else "Starting area"
 
         self.set_context(
             setting_summary=game_state.setting.summary[:500],
@@ -48,10 +44,7 @@ class SceneBuilder(BasePerformer):
         scene_data = await self._send_json(prompt)
 
         # Convert raw NPC role strings into typed SceneNPC objects.
-        npcs = [
-            SceneNPC(role=r)
-            for r in scene_data.get("npcs_present", [])
-        ]
+        npcs = [SceneNPC(role=role_str) for role_str in scene_data.get("npcs_present", [])]
 
         return Scene(
             location_id=scene_data.get("location_id", "unknown"),

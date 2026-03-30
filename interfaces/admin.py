@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from aiohttp import web
+from aiohttp.typedefs import Handler, Middleware
 
 from db.engine import get_db
 from db.repository import GameRepository
@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 _DASHBOARD_HTML = Path(__file__).parent / "admin_dashboard.html"
 
 
-def _json_serial(obj: Any) -> Any:
+def _json_serial(unknown: Any) -> Any:
     """JSON serializer for objects not handled by default json."""
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    raise TypeError(f"Type {type(obj)} not serializable")
+    if isinstance(unknown, datetime):
+        return unknown.isoformat()
+    raise TypeError(f"Type {type(unknown)} not serializable")
 
 
-def _json_response(data: Any, status: int = 200) -> web.Response:
+def _json_response(payload: Any, status: int = 200) -> web.Response:
     return web.Response(
-        text=json.dumps(data, default=_json_serial),
+        text=json.dumps(payload, default=_json_serial),
         content_type="application/json",
         status=status,
     )
@@ -41,9 +41,20 @@ class AdminServer:
         self._db_factory = db_session_factory
         self._port = port
         self._token = token
-        self._app = web.Application(middlewares=[self._auth_middleware])
+        self._app = web.Application(middlewares=[self._build_auth_middleware()])
         self._setup_routes()
         self._runner: web.AppRunner | None = None
+
+    async def start(self) -> None:
+        self._runner = web.AppRunner(self._app)
+        await self._runner.setup()
+        site = web.TCPSite(self._runner, "0.0.0.0", self._port)
+        await site.start()
+        logger.info("Admin dashboard running on http://0.0.0.0:%d", self._port)
+
+    async def stop(self) -> None:
+        if self._runner:
+            await self._runner.cleanup()
 
     def _setup_routes(self) -> None:
         self._app.router.add_get("/", self._dashboard)
@@ -56,24 +67,16 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/locations", self._locations)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
 
-    @web.middleware
-    async def _auth_middleware(self, request: web.Request, handler):
-        if self._token and request.path.startswith("/api/"):
-            auth = request.headers.get("Authorization", "")
-            if auth != f"Bearer {self._token}":
-                return _json_response({"error": "Unauthorized"}, status=401)
-        return await handler(request)
+    def _build_auth_middleware(self) -> Middleware:
+        @web.middleware
+        async def auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
+            if self._token and request.path.startswith("/api/"):
+                auth = request.headers.get("Authorization", "")
+                if auth != f"Bearer {self._token}":
+                    return _json_response({"error": "Unauthorized"}, status=401)
+            return await handler(request)
 
-    async def start(self) -> None:
-        self._runner = web.AppRunner(self._app)
-        await self._runner.setup()
-        site = web.TCPSite(self._runner, "0.0.0.0", self._port)
-        await site.start()
-        logger.info("Admin dashboard running on http://0.0.0.0:%d", self._port)
-
-    async def stop(self) -> None:
-        if self._runner:
-            await self._runner.cleanup()
+        return auth_middleware
 
     # ── Route handlers ────────────────────────────────────
 

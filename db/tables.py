@@ -11,6 +11,8 @@ from sqlalchemy import (
     Integer,
     MetaData,
     String,
+)
+from sqlalchemy import (
     Table,
     Text,
     func,
@@ -34,7 +36,9 @@ game_states = Table(
     "game_states",
     metadata,
     Column("id", UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
-    Column("session_id", UUID(as_uuid=False), ForeignKey("sessions.id", ondelete="CASCADE"), unique=True, nullable=False),
+    Column(
+        "session_id", UUID(as_uuid=False), ForeignKey("sessions.id", ondelete="CASCADE"), unique=True, nullable=False
+    ),
     Column("turn_count", Integer, nullable=False, server_default="0"),
     Column("scene_number", Integer, nullable=False, server_default="0"),
     Column("game_clock", Float, nullable=False, server_default="0.0"),
@@ -49,7 +53,13 @@ settings = Table(
     "settings",
     metadata,
     Column("id", UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
-    Column("game_state_id", UUID(as_uuid=False), ForeignKey("game_states.id", ondelete="CASCADE"), unique=True, nullable=False),
+    Column(
+        "game_state_id",
+        UUID(as_uuid=False),
+        ForeignKey("game_states.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    ),
     Column("name", Text, nullable=False),
     Column("time_period", Text, nullable=False),
     Column("region", Text, nullable=False),
@@ -67,7 +77,13 @@ players = Table(
     "players",
     metadata,
     Column("id", UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
-    Column("game_state_id", UUID(as_uuid=False), ForeignKey("game_states.id", ondelete="CASCADE"), unique=True, nullable=False),
+    Column(
+        "game_state_id",
+        UUID(as_uuid=False),
+        ForeignKey("game_states.id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    ),
     Column("name", String(128), nullable=False, server_default="Player"),
     Column("location_id", Text, nullable=True),
     Column("inventory", JSONB, nullable=False, server_default="[]"),

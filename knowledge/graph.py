@@ -49,9 +49,7 @@ class KnowledgeGraph:
         edge_type: EdgeType,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        self._graph.add_edge(
-            from_id, to_id, edge_type=edge_type, **(metadata or {})
-        )
+        self._graph.add_edge(from_id, to_id, edge_type=edge_type, **(metadata or {}))
 
     # ------------------------------------------------------------------
     # Queries
@@ -59,50 +57,38 @@ class KnowledgeGraph:
 
     def all_nodes(self) -> list[KnowledgeNode]:
         """Return every node in the graph."""
-        return [
-            self._graph.nodes[nid]["data"]
-            for nid in self._graph.nodes
-            if "data" in self._graph.nodes[nid]
-        ]
+        return [self._graph.nodes[nid]["data"] for nid in self._graph.nodes if "data" in self._graph.nodes[nid]]
 
     def query_by_scope(self, max_scope: KnowledgeScope) -> list[KnowledgeNode]:
         """Return all nodes whose scope is at or below ``max_scope``."""
-        return [n for n in self.all_nodes() if n.scope <= max_scope]
+        return [node for node in self.all_nodes() if node.scope <= max_scope]
 
     def query_by_tags(self, tags: list[str]) -> list[KnowledgeNode]:
         """Return nodes that have at least one matching tag."""
         tag_set = set(tags)
-        return [n for n in self.all_nodes() if tag_set & set(n.tags)]
+        return [node for node in self.all_nodes() if tag_set & set(node.tags)]
 
     def query_by_location(self, location_id: str) -> list[KnowledgeNode]:
         """Return nodes associated with a specific location."""
-        return [n for n in self.all_nodes() if n.location_id == location_id]
+        return [node for node in self.all_nodes() if node.location_id == location_id]
 
-    def get_related(
-        self, node_id: str, depth: int = 2
-    ) -> list[KnowledgeNode]:
+    def get_related(self, node_id: str, depth: int = 2) -> list[KnowledgeNode]:
         """BFS traversal: find nodes within ``depth`` hops of ``node_id``."""
         if node_id not in self._graph:
             return []
         visited: set[str] = set()
         # Use networkx BFS with depth limit
-        for _, target in nx.bfs_edges(
-            self._graph, node_id, depth_limit=depth
-        ):
+        for _, target in nx.bfs_edges(self._graph, node_id, depth_limit=depth):
             visited.add(target)
-        return [
-            self._graph.nodes[nid]["data"]
-            for nid in visited
-            if "data" in self._graph.nodes[nid]
-        ]
+        return [self._graph.nodes[nid]["data"] for nid in visited if "data" in self._graph.nodes[nid]]
 
     def get_edges_from(self, node_id: str) -> list[tuple[str, EdgeType]]:
         """Return (target_id, edge_type) for all outgoing edges."""
         if node_id not in self._graph:
             return []
         return [
-            (target, data.get("edge_type", EdgeType.RELATED_TO))
-            for _, target, data in self._graph.out_edges(node_id, data=True)
+            (target, edge_attrs.get("edge_type", EdgeType.RELATED_TO))
+            for _, target, edge_attrs in self._graph.out_edges(node_id, data=True)
         ]
 
     @property
@@ -122,8 +108,8 @@ class KnowledgeGraph:
         return nx.node_link_data(self._graph)
 
     @classmethod
-    def from_dict(cls, data: dict) -> KnowledgeGraph:
+    def from_dict(cls, graph_dict: dict) -> KnowledgeGraph:
         """Restore a graph from serialised data."""
         kg = cls()
-        kg._graph = nx.node_link_graph(data)
+        kg._graph = nx.node_link_graph(graph_dict)
         return kg

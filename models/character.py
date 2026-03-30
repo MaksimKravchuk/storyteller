@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from models.base_model import BaseModel
 
 
@@ -47,22 +46,22 @@ class Character(BaseModel):
 
     # --- Attribute helpers ---
 
-    def update_attribute(self, attribute: str, value: int) -> None:
-        self.attributes[attribute] = value
+    def update_attribute(self, attribute: str, attribute_value: int) -> None:
+        self.attributes[attribute] = attribute_value
 
     def get_attribute(self, attribute: str, default: int = 0) -> int:
         return self.attributes.get(attribute, default)
 
     # --- Inventory helpers ---
 
-    def add_item_to_inventory(self, item: str) -> None:
-        self.inventory.append(item)
+    def add_item_to_inventory(self, inventory_item: str) -> None:
+        self.inventory.append(inventory_item)
 
-    def remove_item_from_inventory(self, item: str) -> None:
-        if item in self.inventory:
-            self.inventory.remove(item)
+    def remove_item_from_inventory(self, inventory_item: str) -> None:
+        if inventory_item in self.inventory:
+            self.inventory.remove(inventory_item)
         else:
-            raise ValueError(f"Item '{item}' not found in inventory.")
+            raise ValueError(f"Item '{inventory_item}' not found in inventory.")
 
     def talk(self) -> str:
         return f"{self.name} says: Hello!"

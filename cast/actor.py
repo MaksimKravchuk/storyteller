@@ -14,6 +14,18 @@ from prompts.actor_prompts import ACTOR_SYSTEM
 _MOOD_RE = re.compile(r"\n?\[MOOD:\s*(\w+)\]\s*$")
 
 
+def _extract_mood(text: str) -> tuple[str, str | None]:
+    """Strip a ``[MOOD: <word>]`` tag from the end of *text*.
+
+    Returns ``(cleaned_text, mood)`` where *mood* is ``None``
+    when no tag was found.
+    """
+    mood_match = _MOOD_RE.search(text)
+    if mood_match:
+        return text[: mood_match.start()], mood_match.group(1).lower()
+    return text, None
+
+
 class Actor(BasePerformer):
     """An NPC actor that responds to player interaction in character.
 
@@ -46,9 +58,7 @@ class Actor(BasePerformer):
         Returns the NPC's spoken response.
         """
         # Build knowledge context for this NPC
-        accessible_knowledge = self.knowledge_query.get_context_for_npc(
-            self.npc, topic_tags=None
-        )
+        accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc, topic_tags=None)
 
         self.set_context(
             npc_name=self.npc.name,
@@ -63,37 +73,19 @@ class Actor(BasePerformer):
             current_mood=self.npc.current_mood,
         )
 
-        response = await self._send(
-            input_data, conversation=self._conversation
-        )
+        response = await self._send(input_data, conversation=self._conversation)
 
         # Extract and apply mood update if present
-        response, new_mood = self._extract_mood(response)
+        response, new_mood = _extract_mood(response)
 
         # Track conversation for multi-turn dialogue
-        self._conversation.append(
-            Message(role=Role.USER, content=input_data)
-        )
-        self._conversation.append(
-            Message(role=Role.ASSISTANT, content=response)
-        )
+        self._conversation.append(Message(role=Role.USER, content=input_data))
+        self._conversation.append(Message(role=Role.ASSISTANT, content=response))
 
         if new_mood:
             self.npc.current_mood = new_mood
 
         return response.strip()
-
-    @staticmethod
-    def _extract_mood(text: str) -> tuple[str, str | None]:
-        """Strip a ``[MOOD: <word>]`` tag from the end of *text*.
-
-        Returns ``(cleaned_text, mood)`` where *mood* is ``None``
-        when no tag was found.
-        """
-        m = _MOOD_RE.search(text)
-        if m:
-            return text[: m.start()], m.group(1).lower()
-        return text, None
 
     def reset_conversation(self) -> None:
         """Clear conversation history (e.g. when player walks away)."""
