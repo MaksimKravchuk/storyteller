@@ -196,8 +196,8 @@ async def test_send_json_returns_parsed_dict_on_first_success():
     """_send_json returns a dict immediately when the first response is valid JSON."""
     performer = _make_json_performer()
     with patch.object(performer, "_send", new=AsyncMock(return_value='{"key": "value"}')):
-        parsed = await performer._send_json("prompt")
-    assert parsed == {"key": "value"}
+        output = await performer._send_json("prompt")
+    assert output == {"key": "value"}
 
 
 @pytest.mark.asyncio
@@ -206,8 +206,8 @@ async def test_send_json_bracket_extraction_fallback():
     performer = _make_json_performer()
     # All responses have embedded JSON but surrounded by noise
     with patch.object(performer, "_send", new=AsyncMock(return_value='noise {"extracted": true} noise')):
-        parsed = await performer._send_json("prompt", retries=0)
-    assert parsed == {"extracted": True}
+        extracted = await performer._send_json("prompt", retries=0)
+    assert extracted == {"extracted": True}
 
 
 @pytest.mark.asyncio

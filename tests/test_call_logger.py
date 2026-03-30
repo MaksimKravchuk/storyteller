@@ -75,8 +75,7 @@ class TestGetAndClearBuffer:
     def test_returns_empty_list_when_buffer_never_initialized(self):
         """get_and_clear_buffer() returns [] (not None) when reset_buffer was never called."""
         call_log_buffer.set(None)
-        cleared = get_and_clear_buffer()
-        assert cleared == []
+        assert get_and_clear_buffer() == []
 
     def test_returns_accumulated_entries_and_clears(self):
         """Returns entries written after reset_buffer(), then clears on next call."""
@@ -84,8 +83,8 @@ class TestGetAndClearBuffer:
         entries = [{"agent_name": "Director"}, {"agent_name": "Narrator"}]
         call_log_buffer.set(entries)
 
-        cleared = get_and_clear_buffer()
-        assert cleared == entries
+        snapshot = get_and_clear_buffer()
+        assert snapshot == entries
 
     def test_second_call_returns_empty(self):
         """Buffer is cleared after the first get_and_clear_buffer() call."""
