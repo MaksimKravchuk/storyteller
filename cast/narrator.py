@@ -29,7 +29,7 @@ class Narrator(BasePerformer):
             - "scene": Scene description text
             - "dialogue": list of {"npc_name": str, "response": str}
             - "new_npcs": list of NPC descriptions
-            - _KEY_COMPLETED_EVENTS: list of event descriptions
+            - "completed_events": list of event descriptions
 
         ``context``: Must contain ``player_action`` and ``game_state``.
 

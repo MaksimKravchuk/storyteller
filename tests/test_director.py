@@ -44,7 +44,7 @@ _LOOK_AROUND = "look around"
 _PLAYER_ACTION = "player_action"
 _RESPONSE_SUMMARY = "response_summary"
 _SUMMARY_MAX_LEN = 500
-_SCENE_LOG_CAP = 15
+_SCENE_LOG_FEED_SIZE = 15
 _SCENE_MSG_COUNT = 20
 _HOSTILE = "hostile"
 _ATTACK_GUARD = "attack guard"
@@ -459,7 +459,7 @@ class TestBuildSceneHistory:
         gs = _make_game_state()
         gs.scene_conversation_log = [
             {_PLAYER_ACTION: f"action-{idx}", _RESPONSE_SUMMARY: f"resp-{idx}", _ACTION_TYPE: _TALK}
-            for idx in range(_SCENE_LOG_CAP)
+            for idx in range(_SCENE_LOG_FEED_SIZE)
         ]
         director = _make_director(game_state=gs)
         history = director._build_scene_history()

@@ -20,11 +20,11 @@ _NPC_A = "npc-1"
 _GUARD = "guard"
 _CLOCK_MORNING = 8.0
 _CLOCK_NOON = 12.0
-_AGE_MORNING = 8
-_AGE_AFTERNOON = 13
-_AGE_EVENING = 19
-_AGE_THREE_AM = 3
-_AGE_NIGHT = 25
+_HOURS_MORNING = 8
+_HOURS_AFTERNOON = 13
+_HOURS_EVENING = 19
+_HOURS_THREE_AM = 3
+_HOURS_NIGHT = 25
 
 
 # ---------------------------------------------------------------------------
@@ -206,24 +206,24 @@ class TestGameState:
         assert game_state.scene_conversation_log == []
 
     def test_advance_clock_morning(self, game_state):
-        game_state.advance_clock(_AGE_MORNING)
+        game_state.advance_clock(_HOURS_MORNING)
         assert game_state.game_clock == _CLOCK_MORNING  # noqa: WPS459
         assert game_state.game_time == "morning"
 
     def test_advance_clock_afternoon(self, game_state):
-        game_state.advance_clock(_AGE_AFTERNOON)
+        game_state.advance_clock(_HOURS_AFTERNOON)
         assert game_state.game_time == "afternoon"
 
     def test_advance_clock_evening(self, game_state):
-        game_state.advance_clock(_AGE_EVENING)
+        game_state.advance_clock(_HOURS_EVENING)
         assert game_state.game_time == "evening"
 
     def test_advance_clock_night(self, game_state):
-        game_state.advance_clock(_AGE_THREE_AM)  # 3 AM
+        game_state.advance_clock(_HOURS_THREE_AM)  # 3 AM
         assert game_state.game_time == "night"
 
     def test_advance_clock_wraps_around_midnight(self, game_state):
-        game_state.advance_clock(_AGE_NIGHT)  # 25 hours => 1 AM next day
+        game_state.advance_clock(_HOURS_NIGHT)  # 25 hours => 1 AM next day
         assert game_state.game_time == "night"
 
     def test_advance_clock_accumulates(self, game_state):
