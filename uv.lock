@@ -1502,18 +1502,16 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
+    { name = "alembic" },
+    { name = "asyncpg" },
     { name = "networkx" },
     { name = "python-dotenv" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
 ]
 
 [package.optional-dependencies]
 anthropic = [
     { name = "anthropic" },
-]
-database = [
-    { name = "alembic" },
-    { name = "asyncpg" },
-    { name = "sqlalchemy", extra = ["asyncio"] },
 ]
 dev = [
     { name = "flake8" },
@@ -1543,9 +1541,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.9" },
-    { name = "alembic", marker = "extra == 'database'", specifier = ">=1.13" },
+    { name = "alembic", specifier = ">=1.13" },
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.25" },
-    { name = "asyncpg", marker = "extra == 'database'", specifier = ">=0.29" },
+    { name = "asyncpg", specifier = ">=0.29" },
     { name = "flake8", marker = "extra == 'dev'" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "networkx", specifier = ">=3.0" },
@@ -1554,10 +1552,10 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'dev'" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "python-telegram-bot", marker = "extra == 'telegram'", specifier = ">=21.0" },
-    { name = "sqlalchemy", extras = ["asyncio"], marker = "extra == 'database'", specifier = ">=2.0" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0" },
     { name = "wemake-python-styleguide", marker = "extra == 'dev'" },
 ]
-provides-extras = ["openai", "anthropic", "telegram", "database", "dev"]
+provides-extras = ["openai", "anthropic", "telegram", "dev"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -16,7 +16,7 @@ class ModelConfig:
 class AI_MODELS:
     """Registry of available model configurations."""
 
-    gpt_4 = ModelConfig(provider="openai", model_id="gpt-4")
-    gpt_3_5_turbo = ModelConfig(provider="openai", model_id="gpt-3.5-turbo")
+    gpt4 = ModelConfig(provider="openai", model_id="gpt-4")
+    gpt35_turbo = ModelConfig(provider="openai", model_id="gpt-3.5-turbo")
     claude_sonnet = ModelConfig(provider="anthropic", model_id="claude-sonnet-4-20250514")
     claude_haiku = ModelConfig(provider="anthropic", model_id="claude-haiku-4-20250514")

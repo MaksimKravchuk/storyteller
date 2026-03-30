@@ -13,6 +13,17 @@ from models.scene import Scene, SceneNPC
 from models.setting import Setting
 from prompts.narrator_prompts import NARRATOR_SYSTEM
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_PLAYER_ACTION = "player_action"
+_GAME_STATE = "game_state"
+_MESSAGES = "messages"
+_DIALOGUE = "dialogue"
+_NPC_NAME = "npc_name"
+_RESPONSE = "response"
+
 
 def _make_game_state() -> GameState:
     setting = Setting(
@@ -54,27 +65,27 @@ class TestNarratorSceneType:
 
         await narrator.act(
             input_data={"scene": scene},
-            context={"player_action": "go to the forum", "game_state": gs},
+            context={_PLAYER_ACTION: "go to the forum", _GAME_STATE: gs},
         )
 
         # Check that the LLM was called with NEW_SCENE in the prompt
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         assert "NEW_SCENE" in user_msg
 
     @pytest.mark.asyncio
-    async def test_continuation_passes_scene_type_continuation(self):
+    async def test_continuation_passes_scene_type(self):
         narrator = _make_narrator()
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"dialogue": [{"npc_name": "Marcus", "response": "Hello."}]},
-            context={"player_action": "talk to Marcus", "game_state": gs},
+            input_data={_DIALOGUE: [{_NPC_NAME: "Marcus", _RESPONSE: "Hello."}]},
+            context={_PLAYER_ACTION: "talk to Marcus", _GAME_STATE: gs},
         )
 
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         assert "CONTINUATION" in user_msg
 
@@ -86,11 +97,11 @@ class TestNarratorSceneType:
 
         await narrator.act(
             input_data={"scene": scene},
-            context={"player_action": "explore", "game_state": gs},
+            context={_PLAYER_ACTION: "explore", _GAME_STATE: gs},
         )
 
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         assert "Atmosphere:" in user_msg
         assert "roasted nuts" in user_msg
@@ -102,11 +113,11 @@ class TestNarratorSceneType:
 
         await narrator.act(
             input_data={},
-            context={"player_action": "look around", "game_state": gs},
+            context={_PLAYER_ACTION: "look around", _GAME_STATE: gs},
         )
 
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         # No scene/atmosphere data should be in the prompt
         assert "Atmosphere:" not in user_msg
@@ -119,12 +130,12 @@ class TestNarratorSceneType:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"dialogue": [{"npc_name": "Guard", "response": "Halt!"}]},
-            context={"player_action": "approach guard", "game_state": gs},
+            input_data={_DIALOGUE: [{_NPC_NAME: "Guard", _RESPONSE: "Halt!"}]},
+            context={_PLAYER_ACTION: "approach guard", _GAME_STATE: gs},
         )
 
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         assert "Guard says: Halt!" in user_msg
         assert "Atmosphere:" not in user_msg
@@ -137,20 +148,20 @@ class TestNarratorSceneHistory:
         narrator = _make_narrator()
         gs = _make_game_state()
         scene_history = [
-            {"player_action": "punch guard", "response_summary": "Guard blocks your fist.", "action_type": "INTERACT"},
+            {_PLAYER_ACTION: "punch guard", "response_summary": "Guard blocks your fist.", "action_type": "INTERACT"},
         ]
 
         await narrator.act(
-            input_data={"dialogue": [{"npc_name": "Guard", "response": "Stop!"}]},
+            input_data={_DIALOGUE: [{_NPC_NAME: "Guard", _RESPONSE: "Stop!"}]},
             context={
-                "player_action": "punch again",
-                "game_state": gs,
+                _PLAYER_ACTION: "punch again",
+                _GAME_STATE: gs,
                 "scene_history": scene_history,
             },
         )
 
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         assert "What happened earlier" in user_msg
         assert "punch guard" in user_msg
@@ -162,20 +173,20 @@ class TestNarratorSceneHistory:
         narrator = _make_narrator()
         gs = _make_game_state()
         scene_history = [
-            {"player_action": "old action", "response_summary": "old response", "action_type": "TALK"},
+            {_PLAYER_ACTION: "old action", "response_summary": "old response", "action_type": "TALK"},
         ]
 
         await narrator.act(
             input_data={"scene": gs.current_scene},
             context={
-                "player_action": "go to market",
-                "game_state": gs,
+                _PLAYER_ACTION: "go to market",
+                _GAME_STATE: gs,
                 "scene_history": scene_history,
             },
         )
 
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         assert "What happened earlier" not in user_msg
 
@@ -186,22 +197,22 @@ class TestNarratorSceneHistory:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"dialogue": [{"npc_name": "Guard", "response": "Hello."}]},
+            input_data={_DIALOGUE: [{_NPC_NAME: "Guard", _RESPONSE: "Hello."}]},
             context={
-                "player_action": "greet guard",
-                "game_state": gs,
+                _PLAYER_ACTION: "greet guard",
+                _GAME_STATE: gs,
             },
         )
 
         call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs["messages"]
+        messages = call_args.kwargs[_MESSAGES]
         user_msg = messages[-1].content
         assert "What happened earlier" not in user_msg
         assert "Guard says: Hello." in user_msg
 
 
 class TestNarratorSystemPrompt:
-    def test_system_prompt_mentions_new_scene_and_continuation(self):
+    def test_system_prompt_has_scene_modes(self):
         """Verify the system prompt contains guidance for both modes."""
         rendered = NARRATOR_SYSTEM.render(
             setting_name="Test",

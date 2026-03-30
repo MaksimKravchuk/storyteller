@@ -8,6 +8,8 @@ from cast.base_performer_class import BasePerformer
 from models.scene import Scene, SceneNPC
 from prompts.scene_builder_prompts import SCENE_BUILDER_GENERATE, SCENE_BUILDER_SYSTEM
 
+_SETTING_SUMMARY_MAX = 500
+
 
 class SceneBuilder(BasePerformer):
     """Generates structured scene data for the Narrator to narrate."""
@@ -32,7 +34,7 @@ class SceneBuilder(BasePerformer):
         current_loc = game_state.current_scene.description if game_state.current_scene else "Starting area"
 
         self.set_context(
-            setting_summary=game_state.setting.summary[:500],
+            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
             current_location=current_loc,
             time_of_day=game_state.game_time,
         )

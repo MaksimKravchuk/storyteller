@@ -10,6 +10,14 @@ from cast.base_performer_class import BasePerformer
 from llm.call_logger import agent_stack, reset_buffer
 from prompts.base_template import PromptTemplate
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_INPUT = "input"
+_SEND_METHOD = "_send"
+_PROMPT = "prompt"
+
 
 # ---------------------------------------------------------------------------
 # Minimal concrete performer for testing
@@ -68,21 +76,21 @@ def clean_stack():
 
 @pytest.mark.asyncio
 async def test_execute_returns_act_result():
-    outcome = await _OKPerformer("hello").execute("input")
+    outcome = await _OKPerformer("hello").execute(_INPUT)
     assert outcome == "hello"
 
 
 @pytest.mark.asyncio
 async def test_execute_pushes_agent_name_during_act():
     performer = _StackSnapshotPerformer()
-    await performer.execute("input")
+    await performer.execute(_INPUT)
     assert "_StackSnapshotPerformer" in _StackSnapshotPerformer.captured
 
 
 @pytest.mark.asyncio
 async def test_execute_pops_agent_name_after_completion():
     before = list(agent_stack.get(None) or [])
-    await _OKPerformer().execute("input")
+    await _OKPerformer().execute(_INPUT)
     after = list(agent_stack.get(None) or [])
     assert after == before
 
@@ -92,7 +100,7 @@ async def test_execute_pops_agent_name_when_act_raises():
     """Stack must be restored even if act() raises — no IndexError masking."""
     before = list(agent_stack.get(None) or [])
     with pytest.raises(ValueError, match="boom"):
-        await _RaisingPerformer(ValueError("boom")).execute("input")
+        await _RaisingPerformer(ValueError("boom")).execute(_INPUT)
     after = list(agent_stack.get(None) or [])
     assert after == before
 
@@ -101,7 +109,7 @@ async def test_execute_pops_agent_name_when_act_raises():
 async def test_execute_propagates_exception_unchanged():
     exc = RuntimeError("original error")
     with pytest.raises(RuntimeError, match="original error"):
-        await _RaisingPerformer(exc).execute("input")
+        await _RaisingPerformer(exc).execute(_INPUT)
 
 
 @pytest.mark.asyncio
@@ -114,7 +122,7 @@ async def test_execute_nested_stack_is_correct():
             return await inner.execute(input_data)
 
     outer = _OuterPerformer(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
-    await outer.execute("input")
+    await outer.execute(_INPUT)
 
     stack = _StackSnapshotPerformer.captured
     assert "_OuterPerformer" in stack
@@ -123,7 +131,7 @@ async def test_execute_nested_stack_is_correct():
 
 
 @pytest.mark.asyncio
-async def test_execute_nested_stack_restored_after_inner_raises():
+async def test_nested_stack_restored_after_inner_raises():
     """Outer execute's finally must fire correctly even if inner execute raises."""
 
     class _InnerRaiser(BasePerformer):
@@ -142,7 +150,7 @@ async def test_execute_nested_stack_restored_after_inner_raises():
 
     outer = _OuterCatcher(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
     before = list(agent_stack.get(None) or [])
-    await outer.execute("input")
+    await outer.execute(_INPUT)
     after = list(agent_stack.get(None) or [])
 
     assert after == before
@@ -159,12 +167,12 @@ async def test_execute_context_passed_to_act():
             return "ok"
 
     performer = _ContextCapture(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
-    await performer.execute("input", context={"key": "value"})
+    await performer.execute(_INPUT, context={"key": "value"})
     assert received == {"key": "value"}
 
 
 @pytest.mark.asyncio
-async def test_execute_empty_context_defaults_to_empty_dict():
+async def test_execute_empty_context_is_empty_dict():
     """None context becomes {} when passed to act()."""
     received_ctx = {}
 
@@ -192,11 +200,11 @@ def _make_json_performer() -> _JsonPerformer:
 
 
 @pytest.mark.asyncio
-async def test_send_json_returns_parsed_dict_on_first_success():
+async def test_send_json_returns_dict_on_success():
     """_send_json returns a dict immediately when the first response is valid JSON."""
     performer = _make_json_performer()
-    with patch.object(performer, "_send", new=AsyncMock(return_value='{"key": "value"}')):
-        output = await performer._send_json("prompt")
+    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value='{"key": "value"}')):
+        output = await performer._send_json(_PROMPT)
     assert output == {"key": "value"}
 
 
@@ -205,28 +213,28 @@ async def test_send_json_bracket_extraction_fallback():
     """After exhausting retries, _send_json extracts JSON from surrounding text."""
     performer = _make_json_performer()
     # All responses have embedded JSON but surrounded by noise
-    with patch.object(performer, "_send", new=AsyncMock(return_value='noise {"extracted": true} noise')):
-        extracted = await performer._send_json("prompt", retries=0)
+    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value='noise {"extracted": true} noise')):
+        extracted = await performer._send_json(_PROMPT, retries=0)
     assert extracted == {"extracted": True}
 
 
 @pytest.mark.asyncio
-async def test_send_json_raises_value_error_when_all_retries_fail():
+async def test_send_json_raises_when_all_retries_fail():
     """_send_json raises ValueError when every attempt returns non-JSON."""
     performer = _make_json_performer()
-    with patch.object(performer, "_send", new=AsyncMock(return_value="not json at all")) as mock_send:
+    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="not json at all")) as mock_send:
         with pytest.raises(ValueError, match="failed to produce valid JSON"):
-            await performer._send_json("prompt", retries=2)
+            await performer._send_json(_PROMPT, retries=2)
     assert mock_send.call_count == 3
 
 
 @pytest.mark.asyncio
-async def test_send_json_bracket_extraction_invalid_inner_braces():
+async def test_send_json_invalid_inner_braces():
     """Bracket extraction that finds {…} but inner content is invalid JSON raises ValueError."""
     performer = _make_json_performer()
-    with patch.object(performer, "_send", new=AsyncMock(return_value="prefix {broken json} suffix")):
+    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="prefix {broken json} suffix")):
         with pytest.raises(ValueError, match="failed to produce valid JSON"):
-            await performer._send_json("prompt", retries=0)
+            await performer._send_json(_PROMPT, retries=0)
 
 
 @pytest.mark.asyncio
@@ -237,6 +245,6 @@ async def test_send_json_non_json_exception_propagates():
     async def _bad_send(*args, **kwargs):
         raise UnicodeDecodeError("utf-8", b"", 0, 1, "reason")
 
-    with patch.object(performer, "_send", new=_bad_send):
+    with patch.object(performer, _SEND_METHOD, new=_bad_send):
         with pytest.raises(UnicodeDecodeError):
-            await performer._send_json("prompt", retries=0)
+            await performer._send_json(_PROMPT, retries=0)

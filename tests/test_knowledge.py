@@ -8,6 +8,13 @@ from knowledge.node import EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSou
 from knowledge.query import KnowledgeFilter, KnowledgeQueryEngine
 from models.character import Character
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_POLITICS = "politics"
+_CONFIDENCE = 0.6
+
 
 # ---------------------------------------------------------------------------
 # KnowledgeScope ordering
@@ -59,14 +66,14 @@ class TestKnowledgeNode:
             scope=KnowledgeScope.COUNTRY,
             source=KnowledgeSource.RUMOR,
             required_education=5,
-            tags=["politics"],
-            confidence=0.6,
+            tags=[_POLITICS],
+            confidence=_CONFIDENCE,
         )
         assert node.scope == KnowledgeScope.COUNTRY
         assert node.source == KnowledgeSource.RUMOR
         assert node.required_education == 5
-        assert node.tags == ["politics"]
-        assert node.confidence == 0.6  # noqa: WPS459
+        assert node.tags == [_POLITICS]
+        assert node.confidence == _CONFIDENCE  # noqa: WPS459
 
 
 # ---------------------------------------------------------------------------
@@ -232,14 +239,14 @@ class TestKnowledgeQueryEngine:
         assert filt.max_education_required == 6
         assert filt.max_social_status_required == 4
 
-    def test_build_npc_filter_unknown_scope_defaults_to_local(self):
+    def test_npc_filter_unknown_scope_defaults_local(self):
         npc = Character(name="Mystery", knowledge_scope="galaxy")
         graph = KnowledgeGraph()
         engine = KnowledgeQueryEngine(graph)
         filt = engine.build_npc_filter(npc)
         assert filt.max_scope == KnowledgeScope.LOCAL
 
-    def test_get_context_empty_graph_returns_default_message(self, empty_graph):
+    def test_empty_graph_returns_default_message(self, empty_graph):
         engine = KnowledgeQueryEngine(empty_graph)
         npc = Character(name="Joe", knowledge_scope="world")
         ctx = engine.get_context_for_npc(npc)

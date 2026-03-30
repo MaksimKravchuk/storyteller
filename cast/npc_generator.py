@@ -8,6 +8,10 @@ from cast.base_performer_class import BasePerformer
 from models.npc_card import NPCCard
 from prompts.npc_generator_prompts import NPC_GENERATOR_CREATE, NPC_GENERATOR_SYSTEM
 
+_SETTING_SUMMARY_MAX = 500
+_SCENE_DESC_MAX = 200
+_SOCIAL_STRUCTURE_MAX = 300
+
 
 class NPCGenerator(BasePerformer):
     """Creates NPC cards with bio, appearance, knowledge level, etc."""
@@ -31,11 +35,13 @@ class NPCGenerator(BasePerformer):
         game_state: GameState = context["game_state"]
 
         self.set_context(
-            setting_summary=game_state.setting.summary[:500],
+            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
             location_name=(
-                game_state.current_scene.description[:200] if game_state.current_scene else "Unknown location"
+                game_state.current_scene.description[:_SCENE_DESC_MAX]
+                if game_state.current_scene
+                else "Unknown location"
             ),
-            social_structure=game_state.setting.social_structure[:300],
+            social_structure=game_state.setting.social_structure[:_SOCIAL_STRUCTURE_MAX],
         )
 
         npcs: list[NPCCard] = []

@@ -21,6 +21,8 @@ from prompts.base_template import PromptTemplate
 
 logger = logging.getLogger(__name__)
 
+_LOG_PREVIEW_CHARS = 200
+
 
 class BasePerformer(ABC):
     """Abstract base for every agent in the theater.
@@ -160,7 +162,7 @@ class BasePerformer(ABC):
                     "Raw (first 200 chars): %s",
                     attempt + 1,
                     retries + 1,
-                    raw[:200],
+                    raw[:_LOG_PREVIEW_CHARS],
                 )
                 if attempt == retries:
                     # Last attempt: try to extract JSON from the response
@@ -170,6 +172,7 @@ class BasePerformer(ABC):
                         with contextlib.suppress(json.JSONDecodeError):
                             return json.loads(raw[start:end])
                     raise ValueError(
-                        f"Agent failed to produce valid JSON after {retries + 1} attempts. Last response: {raw[:200]}"
+                        f"Agent failed to produce valid JSON after {retries + 1} attempts. "
+                        f"Last response: {raw[:_LOG_PREVIEW_CHARS]}"
                     )
         raise AssertionError("_send_json loop exhausted without returning — this is a bug")

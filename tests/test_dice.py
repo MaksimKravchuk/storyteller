@@ -13,42 +13,59 @@ from cast.dice import (
     roll_combat,
 )
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_HOSTILE = "hostile"
+_EIGHTEEN = 18
+_FOURTEEN = 14
+_THIRTEEN = 13
+_FIFTEEN = 15
+_SIXTEEN = 16
+_TWELVE = 12
+_SEED = 12345
+_SAMPLE_SIZE = 200
+_D20 = 20
+_LOW_ATTACK_RATE = 700
+_HIGH_ATTACK_RATE = 900
+
 
 class TestCombatOutcomes:
     def test_npc_overpowers_high_skill_high_roll(self):
         """NPC with high combat_skill and high roll should overpower."""
         # Force specific rolls: we'll try many seeds to find one
         # Instead, test with known math: npc_roll+bonus - player_roll >= 5
-        combat_roll = roll_combat(10, _rng=_fixed_rng(npc=18, player=5))
+        combat_roll = roll_combat(10, _rng=_fixed_rng(npc=_EIGHTEEN, player=5))
         assert combat_roll.outcome == CombatOutcome.NPC_OVERPOWERS
 
     def test_npc_defends(self):
         """NPC total >= player roll but < player+5 → NPC_DEFENDS."""
-        combat_roll = roll_combat(5, _rng=_fixed_rng(npc=10, player=14))
+        combat_roll = roll_combat(5, _rng=_fixed_rng(npc=10, player=_FOURTEEN))
         # npc_total = 10+5 = 15, diff = 15-14 = 1 >= 0 → NPC_DEFENDS
         assert combat_roll.outcome == CombatOutcome.NPC_DEFENDS
 
     def test_player_succeeds(self):
         """Player roll > NPC total but by less than 5 → PLAYER_SUCCEEDS."""
-        combat_roll = roll_combat(2, _rng=_fixed_rng(npc=8, player=13))
+        combat_roll = roll_combat(2, _rng=_fixed_rng(npc=8, player=_THIRTEEN))
         # npc_total = 8+2 = 10, diff = 10-13 = -3 → PLAYER_SUCCEEDS
         assert combat_roll.outcome == CombatOutcome.PLAYER_SUCCEEDS
 
     def test_player_dominates(self):
         """Player roll > NPC total by 6+ → PLAYER_DOMINATES."""
-        combat_roll = roll_combat(0, _rng=_fixed_rng(npc=3, player=15))
+        combat_roll = roll_combat(0, _rng=_fixed_rng(npc=3, player=_FIFTEEN))
         # npc_total = 3+0 = 3, diff = 3-15 = -12 → PLAYER_DOMINATES
         assert combat_roll.outcome == CombatOutcome.PLAYER_DOMINATES
 
     def test_exact_boundary_npc_defends(self):
         """diff == 0 → NPC_DEFENDS (tie goes to NPC)."""
-        combat_roll = roll_combat(5, _rng=_fixed_rng(npc=10, player=15))
+        combat_roll = roll_combat(5, _rng=_fixed_rng(npc=10, player=_FIFTEEN))
         # npc_total = 15, diff = 0 → NPC_DEFENDS
         assert combat_roll.outcome == CombatOutcome.NPC_DEFENDS
 
     def test_exact_boundary_player_succeeds(self):
         """diff == -1 → PLAYER_SUCCEEDS."""
-        combat_roll = roll_combat(5, _rng=_fixed_rng(npc=10, player=16))
+        combat_roll = roll_combat(5, _rng=_fixed_rng(npc=10, player=_SIXTEEN))
         # npc_total = 15, diff = -1 → PLAYER_SUCCEEDS
         assert combat_roll.outcome == CombatOutcome.PLAYER_SUCCEEDS
 
@@ -60,15 +77,15 @@ class TestCombatOutcomes:
 
     def test_exact_boundary_player_dominates(self):
         """diff == -6 → PLAYER_DOMINATES."""
-        combat_roll = roll_combat(0, _rng=_fixed_rng(npc=7, player=13))
+        combat_roll = roll_combat(0, _rng=_fixed_rng(npc=7, player=_THIRTEEN))
         # npc_total = 7, diff = -6 → PLAYER_DOMINATES
         assert combat_roll.outcome == CombatOutcome.PLAYER_DOMINATES
 
 
 class TestCombatRollFields:
     def test_roll_values_recorded(self):
-        combat_roll = roll_combat(7, _rng=_fixed_rng(npc=12, player=8))
-        assert combat_roll.npc_roll == 12
+        combat_roll = roll_combat(7, _rng=_fixed_rng(npc=_TWELVE, player=8))
+        assert combat_roll.npc_roll == _TWELVE
         assert combat_roll.player_roll == 8
         assert combat_roll.npc_bonus == 7
 
@@ -86,11 +103,11 @@ class TestCombatRollFields:
 class TestRollRandomness:
     def test_rolls_in_valid_range(self):
         """All rolls should be 1-20."""
-        rng = random.Random(12345)
-        for _ in range(200):
+        rng = random.Random(_SEED)
+        for _ in range(_SAMPLE_SIZE):
             combat_roll = roll_combat(5, _rng=rng)
-            assert 1 <= combat_roll.player_roll <= 20
-            assert 1 <= combat_roll.npc_roll <= 20
+            assert 1 <= combat_roll.player_roll <= _D20
+            assert 1 <= combat_roll.npc_roll <= _D20
 
     def test_different_seeds_different_outcomes(self):
         """With enough rolls, we should see multiple outcomes."""
@@ -117,14 +134,14 @@ class TestZeroCombatSkill:
 class TestAggressionRoll:
     def test_hostile_low_threshold(self):
         """Hostile mood: threshold is 5, roll of 5 should attack."""
-        aggression_roll = roll_aggression("hostile", _rng=_single_rng(5))
+        aggression_roll = roll_aggression(_HOSTILE, _rng=_single_rng(5))
         assert aggression_roll is not None
         assert aggression_roll.will_attack is True
         assert aggression_roll.threshold == 5
 
     def test_hostile_below_threshold(self):
         """Hostile mood: roll of 4 should not attack."""
-        aggression_roll = roll_aggression("hostile", _rng=_single_rng(4))
+        aggression_roll = roll_aggression(_HOSTILE, _rng=_single_rng(4))
         assert aggression_roll is not None
         assert aggression_roll.will_attack is False
 
@@ -159,18 +176,18 @@ class TestAggressionRoll:
 
     def test_all_thresholds_have_valid_values(self):
         for mood, threshold in AGGRESSION_THRESHOLDS.items():
-            assert 1 <= threshold <= 20, f"{mood} has invalid threshold {threshold}"
+            assert 1 <= threshold <= _D20, f"{mood} has invalid threshold {threshold}"
 
     def test_hostile_high_attack_rate(self):
         """Hostile (threshold 5): 16/20 = 80% chance to attack."""
-        attacks = sum(1 for seed in range(1000) if roll_aggression("hostile", _rng=random.Random(seed)).will_attack)
+        attacks = sum(1 for seed in range(1000) if roll_aggression(_HOSTILE, _rng=random.Random(seed)).will_attack)
         # Should be roughly 80%, allow wide margin
-        assert 700 < attacks < 900
+        assert _LOW_ATTACK_RATE < attacks < _HIGH_ATTACK_RATE
 
     def test_aggression_roll_fields(self):
-        aggression_roll = roll_aggression("hostile", _rng=_single_rng(12))
-        assert aggression_roll.roll == 12
-        assert aggression_roll.mood == "hostile"
+        aggression_roll = roll_aggression(_HOSTILE, _rng=_single_rng(_TWELVE))
+        assert aggression_roll.roll == _TWELVE
+        assert aggression_roll.mood == _HOSTILE
         assert aggression_roll.threshold == 5
 
 

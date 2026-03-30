@@ -9,6 +9,9 @@ import networkx as nx
 from knowledge.node import EdgeType, KnowledgeNode, KnowledgeScope
 
 
+_NODE_DATA_KEY = "data"
+
+
 class KnowledgeGraph:
     """Directed graph storing facts, memories, and their relationships.
 
@@ -31,7 +34,7 @@ class KnowledgeGraph:
 
     def get_node(self, node_id: str) -> KnowledgeNode | None:
         if node_id in self._graph:
-            return self._graph.nodes[node_id].get("data")
+            return self._graph.nodes[node_id].get(_NODE_DATA_KEY)
         return None
 
     def remove_node(self, node_id: str) -> None:
@@ -57,7 +60,11 @@ class KnowledgeGraph:
 
     def all_nodes(self) -> list[KnowledgeNode]:
         """Return every node in the graph."""
-        return [self._graph.nodes[nid]["data"] for nid in self._graph.nodes if "data" in self._graph.nodes[nid]]
+        return [
+            self._graph.nodes[nid][_NODE_DATA_KEY]
+            for nid in self._graph.nodes
+            if _NODE_DATA_KEY in self._graph.nodes[nid]
+        ]
 
     def query_by_scope(self, max_scope: KnowledgeScope) -> list[KnowledgeNode]:
         """Return all nodes whose scope is at or below ``max_scope``."""
@@ -80,7 +87,7 @@ class KnowledgeGraph:
         # Use networkx BFS with depth limit
         for _, target in nx.bfs_edges(self._graph, node_id, depth_limit=depth):
             visited.add(target)
-        return [self._graph.nodes[nid]["data"] for nid in visited if "data" in self._graph.nodes[nid]]
+        return [self._graph.nodes[nid][_NODE_DATA_KEY] for nid in visited if _NODE_DATA_KEY in self._graph.nodes[nid]]
 
     def get_edges_from(self, node_id: str) -> list[tuple[str, EdgeType]]:
         """Return (target_id, edge_type) for all outgoing edges."""

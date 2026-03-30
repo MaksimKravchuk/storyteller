@@ -16,6 +16,10 @@ from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 from timeline.time_costs import resolve_time_cost
 
+_SCENE_SUMMARY_CHARS = 500
+_KEY_ACTION_TYPE = "action_type"
+_KEY_GAME_STATE = "game_state"
+
 # Actions that increment the turn counter.
 TURN_COUNTING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP"))
 
@@ -90,7 +94,7 @@ class Director(BasePerformer):
         self.game_state.pending_clarification = None
 
         # 4. Advance time and resolve events
-        action_type = routing_plan.get("action_type", "OTHER")
+        action_type = routing_plan.get(_KEY_ACTION_TYPE, "OTHER")
         time_override = routing_plan.get("time_cost_override")
         completed_events = self._advance_and_resolve(action_type, time_override)
 
@@ -111,8 +115,8 @@ class Director(BasePerformer):
         self.game_state.scene_conversation_log.append(
             {
                 "player_action": input_data,
-                "response_summary": narrated_response[:500],
-                "action_type": action_type,
+                "response_summary": narrated_response[:_SCENE_SUMMARY_CHARS],
+                _KEY_ACTION_TYPE: action_type,
             }
         )
 
@@ -196,7 +200,7 @@ class Director(BasePerformer):
                     role=Role.ASSISTANT,
                     content=_json.dumps(
                         {
-                            "action_type": entry.get("action_type", "OTHER"),
+                            _KEY_ACTION_TYPE: entry.get(_KEY_ACTION_TYPE, "OTHER"),
                             "result_summary": entry.get("response_summary", ""),
                         },
                         ensure_ascii=False,
@@ -262,7 +266,7 @@ class Director(BasePerformer):
         completed_events: list[GameEvent],
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
-        action_type = plan.get("action_type", "OTHER")
+        action_type = plan.get(_KEY_ACTION_TYPE, "OTHER")
         delegates = plan.get("delegate_to", [])
         raw_outputs: dict[str, Any] = {}
 
@@ -275,7 +279,7 @@ class Director(BasePerformer):
         if "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS:
             scene = await self.scene_builder.execute(
                 input_data=player_action,
-                context={"game_state": self.game_state},
+                context={_KEY_GAME_STATE: self.game_state},
             )
             raw_outputs["scene"] = scene
             self.game_state.current_scene = scene
@@ -327,7 +331,7 @@ class Director(BasePerformer):
             input_data=raw_outputs,
             context={
                 "player_action": player_action,
-                "game_state": self.game_state,
+                _KEY_GAME_STATE: self.game_state,
                 "scene_history": self.game_state.scene_conversation_log[-5:],
             },
         )
@@ -389,7 +393,7 @@ class Director(BasePerformer):
                     input_data=action_text,
                     context={
                         "npc": npc,
-                        "game_state": self.game_state,
+                        _KEY_GAME_STATE: self.game_state,
                         "location_name": self._get_location_name(npc.location_id),
                     },
                 )
@@ -425,7 +429,7 @@ class Director(BasePerformer):
         roles = [snpc.role for snpc in uninit]
         new_cards = await self.npc_generator.execute(
             input_data=roles,
-            context={"game_state": self.game_state},
+            context={_KEY_GAME_STATE: self.game_state},
         )
         for scene_npc, card in zip(uninit, new_cards):
             self._register_new_npc(card)
@@ -538,7 +542,7 @@ class Director(BasePerformer):
                 input_data=retaliation_input,
                 context={
                     "npc": npc,
-                    "game_state": self.game_state,
+                    _KEY_GAME_STATE: self.game_state,
                     "location_name": self._get_location_name(npc.location_id),
                 },
             )

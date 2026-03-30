@@ -10,11 +10,18 @@ from llm.call_logger import (
     reset_buffer,
 )
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_AGENT_NAME = "agent_name"
+_DIRECTOR = "Director"
+
 
 class TestResetBuffer:
     def test_clears_call_log_buffer(self):
         buf = call_log_buffer.get([])
-        buf.append({"agent_name": "Director"})
+        buf.append({_AGENT_NAME: _DIRECTOR})
         call_log_buffer.set(buf)
 
         reset_buffer()
@@ -23,7 +30,7 @@ class TestResetBuffer:
 
     def test_clears_agent_stack(self):
         stack = agent_stack.get([])
-        stack.append("Director")
+        stack.append(_DIRECTOR)
         agent_stack.set(stack)
 
         reset_buffer()
@@ -46,17 +53,17 @@ class TestAgentStack:
     def test_push_and_pop(self):
         reset_buffer()
         stack = agent_stack.get([])
-        stack.append("Director")
+        stack.append(_DIRECTOR)
         agent_stack.set(stack)
-        assert agent_stack.get([]) == ["Director"]
+        assert agent_stack.get([]) == [_DIRECTOR]
 
         stack.append("Narrator")
         agent_stack.set(stack)
-        assert agent_stack.get([]) == ["Director", "Narrator"]
+        assert agent_stack.get([]) == [_DIRECTOR, "Narrator"]
 
         stack.pop()
         agent_stack.set(stack)
-        assert agent_stack.get([]) == ["Director"]
+        assert agent_stack.get([]) == [_DIRECTOR]
 
 
 class TestCallSequenceCounter:
@@ -72,7 +79,7 @@ class TestCallSequenceCounter:
 
 
 class TestGetAndClearBuffer:
-    def test_returns_empty_list_when_buffer_never_initialized(self):
+    def test_returns_empty_when_not_initialized(self):
         """get_and_clear_buffer() returns [] (not None) when reset_buffer was never called."""
         call_log_buffer.set(None)
         assert get_and_clear_buffer() == []
@@ -80,7 +87,7 @@ class TestGetAndClearBuffer:
     def test_returns_accumulated_entries_and_clears(self):
         """Returns entries written after reset_buffer(), then clears on next call."""
         reset_buffer()
-        entries = [{"agent_name": "Director"}, {"agent_name": "Narrator"}]
+        entries = [{_AGENT_NAME: _DIRECTOR}, {_AGENT_NAME: "Narrator"}]
         call_log_buffer.set(entries)
 
         snapshot = get_and_clear_buffer()
@@ -89,7 +96,7 @@ class TestGetAndClearBuffer:
     def test_second_call_returns_empty(self):
         """Buffer is cleared after the first get_and_clear_buffer() call."""
         reset_buffer()
-        call_log_buffer.set([{"agent_name": "Director"}])
+        call_log_buffer.set([{_AGENT_NAME: _DIRECTOR}])
 
         get_and_clear_buffer()
         second = get_and_clear_buffer()
@@ -98,10 +105,10 @@ class TestGetAndClearBuffer:
     def test_returned_list_is_a_copy(self):
         """Mutating the returned list must not affect the buffer on the next call."""
         reset_buffer()
-        call_log_buffer.set([{"agent_name": "Director"}])
+        call_log_buffer.set([{_AGENT_NAME: _DIRECTOR}])
 
         snapshot = get_and_clear_buffer()
-        snapshot.append({"agent_name": "Intruder"})  # mutate the returned copy
+        snapshot.append({_AGENT_NAME: "Intruder"})  # mutate the returned copy
 
         second = get_and_clear_buffer()
         assert second == []

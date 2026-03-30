@@ -11,6 +11,8 @@ from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 if TYPE_CHECKING:
     from models.character import Character
 
+_DEFAULT_SORT_PRIORITY = 99
+
 
 @dataclass
 class KnowledgeFilter:
@@ -133,7 +135,7 @@ class KnowledgeQueryEngine:
             KnowledgeSource.HEARSAY: 2,
             KnowledgeSource.RUMOR: 3,
         }
-        nodes.sort(key=lambda node: source_priority.get(node.source, 99))
+        nodes.sort(key=lambda node: source_priority.get(node.source, _DEFAULT_SORT_PRIORITY))
 
         lines: list[str] = []
         for node in nodes:
