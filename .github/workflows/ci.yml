@@ -56,8 +56,6 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    # Run on main pushes and on PRs labelled 'run-e2e' to avoid burning API credits on every PR
-    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
     steps:
       - uses: actions/checkout@v4
 
@@ -70,12 +68,15 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --group dev --extra anthropic
+        run: uv sync --frozen --group dev --extra anthropic --extra openai
 
       - name: Run e2e tests
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DIRECTOR_MODEL: gpt-5.4-mini
+          AGENT_MODEL: gpt-5.4-nano
+          NARRATOR_MODEL: gpt-5.4-mini
         run: uv run pytest tests/e2e/ --alluredir=allure-results -v
 
       - name: Upload Allure results

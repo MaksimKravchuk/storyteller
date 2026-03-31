@@ -6,7 +6,8 @@ Simple CLI entry-point for testing the engine.
 from __future__ import annotations
 
 import asyncio
-import sys
+
+import click
 
 from config import load_config
 from engine.factory import create_engine
@@ -15,39 +16,43 @@ _SEPARATOR = "=" * 60
 _QUIT_COMMANDS = frozenset(("quit", "exit", "q"))
 
 
-async def main() -> None:
+async def _run_game() -> None:
     cfg = load_config()
     engine = create_engine(cfg)
 
-    sys.stdout.write(f"{_SEPARATOR}\n")
-    sys.stdout.write("  STORYTELLER — AI Text Quest Engine\n")
-    sys.stdout.write(f"{_SEPARATOR}\n")
-    sys.stdout.write(f"  Director: {cfg.director_model}\n")
-    sys.stdout.write(f"  Agents:   {cfg.agent_model}\n")
-    sys.stdout.write(f"  Narrator: {cfg.narrator_model}\n")
-    sys.stdout.write(f"{_SEPARATOR}\n\n")
+    click.echo(_SEPARATOR)
+    click.echo("  STORYTELLER — AI Text Quest Engine")
+    click.echo(_SEPARATOR)
+    click.echo(f"  Director: {cfg.director_model}")
+    click.echo(f"  Agents:   {cfg.agent_model}")
+    click.echo(f"  Narrator: {cfg.narrator_model}")
+    click.echo(_SEPARATOR)
+    click.echo()
 
-    sys.stdout.write("Describe your desired setting (e.g. 'Rome, 1st century AD'): ")
-    sys.stdout.flush()
-    setting = sys.stdin.readline().strip()
+    setting = click.prompt("Describe your desired setting (e.g. 'Rome, 1st century AD')")
 
-    sys.stdout.write("\nResearching setting and generating opening scene...\n\n")
+    click.echo("\nResearching setting and generating opening scene...\n")
     opening = await engine.start_game(setting)
-    sys.stdout.write(f"{opening}\n")
+    click.echo(opening)
 
     while True:
-        sys.stdout.write("\n> ")
-        sys.stdout.flush()
-        action = sys.stdin.readline().strip()
+        click.echo("\n> ", nl=False)
+        action = click.get_text_stream("stdin").readline().strip()
         if not action:
             continue
         if action.lower() in _QUIT_COMMANDS:
-            sys.stdout.write("Thanks for playing!\n")
+            click.echo("Thanks for playing!")
             break
 
         response = await engine.process_action(action)
-        sys.stdout.write(f"\n{response}\n")
+        click.echo(f"\n{response}")
+
+
+@click.command()
+def main() -> None:
+    """Launch the Storyteller text quest engine."""
+    asyncio.run(_run_game())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
