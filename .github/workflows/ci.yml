@@ -48,11 +48,42 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --extra dev
 
-      - name: Run tests
-        run: uv run pytest tests/ -v
+      - name: Run unit tests
+        run: uv run pytest tests/ --ignore=tests/e2e -v
 
       - name: Run type checking
         run: uv run mypy .
+
+  e2e:
+    runs-on: ubuntu-latest
+    # Run on main pushes and on PRs labelled 'run-e2e' to avoid burning API credits on every PR
+    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev --extra anthropic
+
+      - name: Run e2e tests
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: uv run pytest tests/e2e/ --alluredir=allure-results -v
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results/
 
   build:
     runs-on: ubuntu-latest
