@@ -3,7 +3,7 @@
 import allure
 
 from tests.e2e.process_io import read_until, send_line
-from tests.e2e.conftest import ACTION_TIMEOUT, GAME_START_TIMEOUT, SETTING
+from tests.e2e.conftest import ACTION_TIMEOUT, GAME_START_TIMEOUT, SETTING, assert_process_alive
 from tests.e2e.tester_agent import TesterAgent
 
 _SETTING_PROMPT_TIMEOUT = 15
@@ -20,9 +20,13 @@ def test_attack_random_npc(game_process):
     agent = TesterAgent()
 
     with allure.step("Start game"):
-        read_until(game_process.stdout, "Describe your desired setting", timeout=_SETTING_PROMPT_TIMEOUT)
+        banner = read_until(game_process.stdout, "Describe your desired setting", timeout=_SETTING_PROMPT_TIMEOUT)
+        assert_process_alive(game_process)
+        allure.attach(banner, name="banner", attachment_type=allure.attachment_type.TEXT)
+        assert "STORYTELLER" in banner
         send_line(game_process.stdin, SETTING)
         opening = read_until(game_process.stdout, "\n> ", timeout=GAME_START_TIMEOUT)
+        assert_process_alive(game_process)
 
     with allure.step("TesterAgent decides attack"):
         attack_action = agent.decide_action(opening, _ATTACK_GOAL)
@@ -33,6 +37,7 @@ def test_attack_random_npc(game_process):
 
     with allure.step("Wait for combat narration"):
         combat_response = read_until(game_process.stdout, "\n> ", timeout=ACTION_TIMEOUT)
+        assert_process_alive(game_process)
         allure.attach(combat_response, name="combat_narration", attachment_type=allure.attachment_type.TEXT)
         assert len(combat_response) > _MIN_COMBAT_RESPONSE_LEN
 

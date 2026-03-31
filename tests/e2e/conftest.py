@@ -1,15 +1,24 @@
 """E2E test fixtures."""
 
 import os
+import pathlib
 import subprocess
 import sys
 
 import pytest
 
-MAIN_PY = "/Users/max/Code/storyteller/main.py"
+MAIN_PY = str(pathlib.Path(__file__).parents[2] / "main.py")
 GAME_START_TIMEOUT = 120
 ACTION_TIMEOUT = 90
 SETTING = "Ancient Rome, 1st century AD"
+
+
+def assert_process_alive(proc) -> None:
+    """Fail the test with stderr output if the game process has exited."""
+    rc = proc.poll()
+    if rc is not None:
+        stderr_output = proc.stderr.read().decode("utf-8", errors="replace")
+        pytest.fail(f"Game process exited unexpectedly (code {rc}).\nStderr:\n{stderr_output}")
 
 
 @pytest.fixture()
@@ -26,8 +35,11 @@ def game_process():
     )
     yield proc
     if proc.poll() is None:
-        proc.stdin.write(b"quit\n")
-        proc.stdin.flush()
+        try:
+            proc.stdin.write(b"quit\n")
+            proc.stdin.flush()
+        except BrokenPipeError:
+            ...
         try:
             proc.wait(timeout=5)
         except subprocess.TimeoutExpired:

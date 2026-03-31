@@ -3,7 +3,7 @@
 import allure
 
 from tests.e2e.process_io import read_until, send_line
-from tests.e2e.conftest import GAME_START_TIMEOUT, SETTING
+from tests.e2e.conftest import GAME_START_TIMEOUT, SETTING, assert_process_alive
 from tests.e2e.tester_agent import TesterAgent
 
 _SETTING_PROMPT_TIMEOUT = 15
@@ -17,6 +17,7 @@ def test_game_start(game_process):
 
     with allure.step("Wait for setting prompt"):
         banner = read_until(game_process.stdout, "Describe your desired setting", timeout=_SETTING_PROMPT_TIMEOUT)
+        assert_process_alive(game_process)
         allure.attach(banner, name="banner", attachment_type=allure.attachment_type.TEXT)
         assert "STORYTELLER" in banner
 
@@ -25,6 +26,7 @@ def test_game_start(game_process):
 
     with allure.step("Wait for opening narration"):
         opening = read_until(game_process.stdout, "\n> ", timeout=GAME_START_TIMEOUT)
+        assert_process_alive(game_process)
         allure.attach(opening, name="opening_narration", attachment_type=allure.attachment_type.TEXT)
         assert len(opening) > _MIN_NARRATION_LEN
 
