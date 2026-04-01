@@ -43,7 +43,9 @@ class DataMiner(BasePerformer):
         search_terms = await self._extract_search_terms(input_data)
 
         # Step 2: Fetch Wikipedia summaries concurrently
-        summaries = await asyncio.gather(*(self.wikipedia.get_summary(term) for term in search_terms))
+        summaries = await asyncio.gather(
+            *(self.wikipedia.get_summary(term) for term in search_terms),
+        )
         raw_articles: dict[str, dict] = dict(zip(search_terms, summaries))
 
         # Step 3: Synthesise into a Setting via LLM

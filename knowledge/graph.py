@@ -87,7 +87,8 @@ class KnowledgeGraph:
         # Use networkx BFS with depth limit
         for _, target in nx.bfs_edges(self._graph, node_id, depth_limit=depth):
             visited.add(target)
-        return [self._graph.nodes[nid][_NODE_DATA_KEY] for nid in visited if _NODE_DATA_KEY in self._graph.nodes[nid]]
+        nodes = self._graph.nodes
+        return [nodes[nid][_NODE_DATA_KEY] for nid in visited if _NODE_DATA_KEY in nodes[nid]]
 
     def get_edges_from(self, node_id: str) -> list[tuple[str, EdgeType]]:
         """Return (target_id, edge_type) for all outgoing edges."""

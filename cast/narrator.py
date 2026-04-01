@@ -12,6 +12,14 @@ _NARRATION_MAX_TOKENS = 800
 _KEY_COMPLETED_EVENTS = "completed_events"
 
 
+def _format_npc_label(snpc: Any, game_state: Any) -> str:
+    """Format NPC label as 'Name (Occupation)' or fall back to role."""
+    if snpc.uuid and snpc.uuid in game_state.npcs:
+        npc = game_state.npcs[snpc.uuid]
+        return "{0} ({1})".format(npc.name, npc.occupation)
+    return snpc.role
+
+
 class Narrator(BasePerformer):
     """Transforms raw agent outputs into vivid, literary narration."""
 
@@ -104,12 +112,7 @@ class Narrator(BasePerformer):
         if scene.ambient_description:
             raw_parts.append(f"Atmosphere: {scene.ambient_description}")
         if scene.npcs_present:
-            npc_descriptions = [
-                "{0} ({1})".format(game_state.npcs[snpc.uuid].name, game_state.npcs[snpc.uuid].occupation)
-                if snpc.uuid and snpc.uuid in game_state.npcs
-                else snpc.role
-                for snpc in scene.npcs_present
-            ]
+            npc_descriptions = [_format_npc_label(snpc, game_state) for snpc in scene.npcs_present]
             raw_parts.append("People visible: {0}".format(", ".join(npc_descriptions)))
         if scene.points_of_interest:
             raw_parts.append("Notable things: {0}".format(", ".join(scene.points_of_interest)))
