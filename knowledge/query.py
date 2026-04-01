@@ -45,6 +45,55 @@ class KnowledgeFilter:
     npc_id: str | None = None  # Include personal memories for this NPC
 
 
+def _passes_scope(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+    """Return True if the node's scope is within the filter's max scope."""
+    return node.scope <= filt.max_scope
+
+
+def _passes_education(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+    return node.required_education <= filt.max_education_required
+
+
+def _passes_social_status(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+    return node.required_social_status <= filt.max_social_status_required
+
+
+def _passes_location(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+    """Local-scope nodes are only visible when their location matches."""
+    if not filt.location_id or not node.location_id:
+        return True
+    if node.scope == KnowledgeScope.LOCAL:
+        return node.location_id == filt.location_id
+    return True
+
+
+def _passes_tags(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+    if not filt.tags:
+        return True
+    return bool(set(filt.tags) & set(node.tags))
+
+
+def _passes_sources(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+    if not filt.sources:
+        return True
+    return node.source in filt.sources
+
+
+_FILTER_CHECKS = (
+    _passes_scope,
+    _passes_education,
+    _passes_social_status,
+    _passes_location,
+    _passes_tags,
+    _passes_sources,
+)
+
+
+def _node_matches(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+    """Return True if a node passes all filter criteria."""
+    return all(check(node, filt) for check in _FILTER_CHECKS)
+
+
 class KnowledgeQueryEngine:
     """Applies filters to the knowledge graph for NPC-aware retrieval.
 
@@ -58,49 +107,10 @@ class KnowledgeQueryEngine:
 
     def query(self, filt: KnowledgeFilter) -> list[KnowledgeNode]:
         """Return all knowledge nodes matching ``filt``."""
-        matching_nodes: list[KnowledgeNode] = []
+        matching_nodes = [node for node in self._graph.all_nodes() if _node_matches(node, filt)]
 
-        for node in self._graph.all_nodes():
-            # Scope check: node scope must be ≤ filter's max scope
-            if node.scope > filt.max_scope:
-                continue
-
-            # Education gate
-            if node.required_education > filt.max_education_required:
-                continue
-
-            # Social status gate
-            if node.required_social_status > filt.max_social_status_required:
-                continue
-
-            # Location filter (if specified)
-            if filt.location_id and node.location_id:
-                # Local-scope nodes only visible if location matches
-                if node.scope == KnowledgeScope.LOCAL:
-                    if node.location_id != filt.location_id:
-                        continue
-
-            # Tag filter (if specified): at least one tag must match
-            if filt.tags:
-                if not (set(filt.tags) & set(node.tags)):
-                    continue
-
-            # Source filter
-            if filt.sources:
-                if node.source not in filt.sources:
-                    continue
-
-            matching_nodes.append(node)
-
-        # If npc_id is set, also include personal memories linked to that NPC
         if filt.npc_id:
-            for node in self._graph.all_nodes():
-                if node.source == KnowledgeSource.PERSONAL_EXPERIENCE:
-                    # Check if this memory is linked to the NPC via edges
-                    edges = self._graph.get_edges_from(filt.npc_id)
-                    for target_id, _ in edges:
-                        if target_id == node.uuid and node not in matching_nodes:
-                            matching_nodes.append(node)
+            self._add_personal_memories(filt.npc_id, matching_nodes)
 
         return matching_nodes
 
@@ -149,3 +159,12 @@ class KnowledgeQueryEngine:
         nodes.sort(key=lambda node: _SOURCE_PRIORITY.get(node.source, _DEFAULT_SORT_PRIORITY))
         lines = [f"- {_SOURCE_PREFIXES.get(node.source, '')}{node.content}" for node in nodes]
         return "\n".join(lines)
+
+    def _add_personal_memories(self, npc_id: str, matching_nodes: list[KnowledgeNode]) -> None:
+        """Append personal-experience nodes linked to *npc_id* that aren't already included."""
+        linked_ids = {target_id for target_id, _ in self._graph.get_edges_from(npc_id)}
+        existing_ids = {node.uuid for node in matching_nodes}
+        for node in self._graph.all_nodes():
+            if node.source == KnowledgeSource.PERSONAL_EXPERIENCE:
+                if node.uuid in linked_ids and node.uuid not in existing_ids:
+                    matching_nodes.append(node)
