@@ -69,6 +69,8 @@ _DOCK_GUARD = "dock guard"
 _ROLE = "role"
 _MSG_CONTENT = "content"
 _CONVERSATION = "conversation"
+_DELEGATE_NARRATOR = (_NARRATOR,)
+_TARGETS_GUARD = (_GUARD,)
 
 
 # ---------------------------------------------------------------------------
@@ -144,6 +146,21 @@ def _make_director(
         director._send_json = AsyncMock(return_value=route_response)  # type: ignore[method-assign]
 
     return director
+
+
+def _set_actor(director: Director, npc_id: str, actor) -> None:
+    """Register a mock actor for an NPC on the director."""
+    director.actors[npc_id] = actor
+
+
+def _get_actor(director: Director, npc_id: str):
+    """Get the actor for an NPC from the director."""
+    return director.actors[npc_id]
+
+
+def _director_from(gs: GameState, **kwargs) -> Director:
+    """Shorthand: create a Director wired to the given GameState."""
+    return _make_director(game_state=gs, **kwargs)
 
 
 def _make_actor_with_npc(
@@ -319,7 +336,7 @@ async def _assert_action_increments_turn(action_type: str) -> None:
             _ACTION_TYPE: action_type,
             _TARGETS: [],
             _NEEDS_CLARIFICATION: False,
-            _DELEGATE_TO: [_NARRATOR],
+            _DELEGATE_TO: _DELEGATE_NARRATOR,
         },
     )
     await director.act("do something")
@@ -334,7 +351,7 @@ class TestTurnCounting:
                 _ACTION_TYPE: _TALK,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act("talk to someone")
@@ -347,7 +364,7 @@ class TestTurnCounting:
                 _ACTION_TYPE: _INTERACT,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act("open the door")
@@ -360,7 +377,7 @@ class TestTurnCounting:
                 _ACTION_TYPE: _EXAMINE,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act("look at the fountain")
@@ -373,7 +390,7 @@ class TestTurnCounting:
                 _ACTION_TYPE: "OTHER",
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act("wait")
@@ -412,7 +429,7 @@ class TestSceneChanges:
                 _ACTION_TYPE: "MOVE",
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         assert director.game_state.scene_number == 0
@@ -427,7 +444,7 @@ class TestSceneChanges:
                 _ACTION_TYPE: "EXPLORE",
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act("explore the area")
@@ -441,7 +458,7 @@ class TestSceneChanges:
                 _ACTION_TYPE: "SLEEP",
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act("go to sleep")
@@ -455,7 +472,7 @@ class TestSceneChanges:
                 _ACTION_TYPE: _TALK,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act(_HELLO)
@@ -469,7 +486,7 @@ class TestSceneChanges:
                 _ACTION_TYPE: _EXAMINE,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act(_LOOK_AROUND)
@@ -488,7 +505,7 @@ class TestSceneChanges:
                 _ACTION_TYPE: "MOVE",
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             },
         )
         await director.act("go north")
@@ -515,7 +532,7 @@ class TestSceneConversationLog:
                 _ACTION_TYPE: _TALK,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act("hello guard")
@@ -532,7 +549,7 @@ class TestSceneConversationLog:
             _ACTION_TYPE: _TALK,
             _TARGETS: [],
             _NEEDS_CLARIFICATION: False,
-            _DELEGATE_TO: [_NARRATOR],
+            _DELEGATE_TO: _DELEGATE_NARRATOR,
         }
 
         await _make_director(game_state=gs, route_response=route).act(_HELLO)
@@ -551,7 +568,7 @@ class TestSceneConversationLog:
                 _ACTION_TYPE: _TALK,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             },
             narrator_response=long_response,
         )
@@ -585,11 +602,11 @@ class TestBuildSceneHistory:
         assert director._build_scene_history() is None
 
     def test_returns_message_pairs(self):
-        gs = _make_game_state()
-        gs.scene_conversation_log = [
+        game_state = _make_game_state()
+        game_state.scene_conversation_log = [
             {_PLAYER_ACTION: _HELLO, _RESPONSE_SUMMARY: "Hi there", _ACTION_TYPE: _TALK},
         ]
-        director = _make_director(game_state=gs)
+        director = _director_from(game_state)
         history = director._build_scene_history()
         assert history is not None
         assert len(history) == 2
@@ -598,11 +615,11 @@ class TestBuildSceneHistory:
         assert history[1].role == Role.ASSISTANT
 
     def test_assistant_message_is_valid_json(self):
-        gs = _make_game_state()
-        gs.scene_conversation_log = [
+        game_state = _make_game_state()
+        game_state.scene_conversation_log = [
             {_PLAYER_ACTION: _HELLO, _RESPONSE_SUMMARY: "Hi there", _ACTION_TYPE: _TALK},
         ]
-        director = _make_director(game_state=gs)
+        director = _director_from(game_state)
         history = director._build_scene_history()
         parsed = json.loads(history[1].content)
         assert parsed[_ACTION_TYPE] == _TALK
@@ -613,7 +630,7 @@ class TestBuildSceneHistory:
             {_PLAYER_ACTION: f"action-{idx}", _RESPONSE_SUMMARY: f"resp-{idx}", _ACTION_TYPE: _TALK}
             for idx in range(_SCENE_LOG_FEED_SIZE)
         ]
-        director = _make_director(game_state=gs)
+        director = _director_from(gs)
         history = director._build_scene_history()
         assert history is not None
         # 10 entries × 2 messages each = 20 messages
@@ -640,7 +657,7 @@ class TestSyncContextSceneHistory:
             {_PLAYER_ACTION: _LOOK_AROUND, _ACTION_TYPE: "EXAMINE"},
             {_PLAYER_ACTION: "talk to guard", _ACTION_TYPE: _TALK},
         ]
-        director = _make_director(game_state=gs)
+        director = _director_from(gs)
         director._sync_context_from_state()
         summary = director._system_prompt_vars.get("scene_history_summary", "")
         assert "look around" in summary
@@ -651,7 +668,7 @@ class TestSyncContextSceneHistory:
     def test_scene_history_summary_caps_at_five(self):
         gs = _make_game_state()
         gs.scene_conversation_log = [{_PLAYER_ACTION: f"action-{idx}", _ACTION_TYPE: _TALK} for idx in range(10)]
-        director = _make_director(game_state=gs)
+        director = _director_from(gs)
         director._sync_context_from_state()
         summary = director._system_prompt_vars["scene_history_summary"]
         lines = [line for line in summary.split("\n") if line.strip()]
@@ -689,14 +706,14 @@ class TestClarificationPreservesSceneHistory:
                 ),
             },
         ]
-        director = _make_director(game_state=gs)
+        director = _director_from(gs)
         # Mock _send_json to capture the conversation kwarg
         director._send_json = AsyncMock(
             return_value={
                 _ACTION_TYPE: _INTERACT,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
 
@@ -735,13 +752,13 @@ class TestClarificationPreservesSceneHistory:
                 ),
             },
         ]
-        director = _make_director(game_state=gs)
+        director = _director_from(gs)
         director._send_json = AsyncMock(
             return_value={
                 _ACTION_TYPE: _INTERACT,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
 
@@ -770,7 +787,7 @@ class TestClarificationPreservesSceneHistory:
                 _ACTION_TYPE: _INTERACT,
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             },
         )
         await director.act("attack again")
@@ -797,7 +814,7 @@ class TestCallChainDelegation:
                 _ACTION_TYPE: "OTHER",
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_NARRATOR],
+                _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
         await director.act(_LOOK_AROUND)
@@ -952,7 +969,7 @@ class TestCombatDiceIntegration:
         npc.uuid = _NPC_A
         director.game_state.npcs[_NPC_A] = npc
         mock_actor = _make_mock_agent("*cowers*")
-        director.actors[_NPC_A] = mock_actor
+        _set_actor(director, _NPC_A, mock_actor)
 
         await director.act("punch the merchant")
 
@@ -976,7 +993,7 @@ class TestCombatDiceIntegration:
             route_response={
                 _ACTION_TYPE: _INTERACT,
                 _IS_AGGRESSIVE: is_aggressive,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
@@ -986,7 +1003,7 @@ class TestCombatDiceIntegration:
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(return_value="*fights back*")
         mock_actor.execute = AsyncMock(return_value="*fights back*")
-        director.actors[_NPC_A] = mock_actor
+        _set_actor(director, _NPC_A, mock_actor)
 
         return director, mock_actor
 
@@ -1015,13 +1032,13 @@ class TestNPCRetaliation:
             route_response={
                 _ACTION_TYPE: _INTERACT,
                 _IS_AGGRESSIVE: True,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
         )
 
-        director.actors[_NPC_A] = _make_retaliation_actor(npc)
+        _set_actor(director, _NPC_A, _make_retaliation_actor(npc))
 
         # Patch roll_aggression to always trigger
         await _run_with_patched_aggression(
@@ -1030,8 +1047,8 @@ class TestNPCRetaliation:
         )
 
         # Actor should have been called twice: once for attack, once for retaliation
-        assert director.actors[_NPC_A].execute.call_count == 2
-        input_text = _extract_execute_input(director.actors[_NPC_A], call_index=1)
+        assert _get_actor(director, _NPC_A).execute.call_count == 2
+        input_text = _extract_execute_input(_get_actor(director, _NPC_A), call_index=1)
         assert "retaliates" in input_text
         assert "[DICE ROLL:" in input_text
 
@@ -1048,7 +1065,7 @@ class TestNPCRetaliation:
             game_state=gs,
             route_response={
                 _ACTION_TYPE: _TALK,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
@@ -1057,7 +1074,7 @@ class TestNPCRetaliation:
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(return_value="Hello there.")
         mock_actor.execute = AsyncMock(return_value="Hello there.")
-        director.actors[_NPC_A] = mock_actor
+        _set_actor(director, _NPC_A, mock_actor)
 
         await director.act("greet the guard")
 
@@ -1075,16 +1092,17 @@ class TestNPCRetaliation:
             route_response={
                 _ACTION_TYPE: _INTERACT,
                 _IS_AGGRESSIVE: True,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
         )
 
         side_effect = _SimpleMockAct(npc, _HOSTILE)
-        director.actors[_NPC_A] = _make_mock_agent(None)
-        director.actors[_NPC_A].act = AsyncMock(side_effect=side_effect)
-        director.actors[_NPC_A].execute = AsyncMock(side_effect=side_effect)
+        actor_a = _make_mock_agent(None)
+        actor_a.act = AsyncMock(side_effect=side_effect)
+        actor_a.execute = AsyncMock(side_effect=side_effect)
+        _set_actor(director, _NPC_A, actor_a)
 
         await _run_with_patched_aggression(
             _NeverAttacks(),
@@ -1092,7 +1110,7 @@ class TestNPCRetaliation:
         )
 
         # Only one call — no retaliation
-        assert director.actors[_NPC_A].execute.call_count == 1
+        assert _get_actor(director, _NPC_A).execute.call_count == 1
 
     @pytest.mark.asyncio
     async def test_retaliation_deduplication_by_name(self):
@@ -1101,7 +1119,7 @@ class TestNPCRetaliation:
         _setup_npc_in_game_state(gs, _UUID_A, name="Bandit", occupation="bandit")
         _setup_npc_in_game_state(gs, _UUID_B, name="Bandit", occupation="bandit")
 
-        director = _make_director(game_state=gs)
+        director = _director_from(gs)
         director.actors = {_UUID_A: AsyncMock(return_value="I attack!"), _UUID_B: AsyncMock(return_value="Me too!")}
 
         # Both NPCs changed mood from neutral
@@ -1145,19 +1163,19 @@ class TestDuplicateNPCNames:
             game_state=gs,
             route_response={
                 _ACTION_TYPE: _TALK,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
         )
 
-        director.actors[_NPC_A] = _make_mock_agent("Hello.")
+        _set_actor(director, _NPC_A, _make_mock_agent("Hello."))
         director.actors[_NPC_B] = _make_mock_agent("Hi there.")
 
         await director.act("talk to the guard")
 
         # Only ONE actor should be called, not both
-        calls_a = director.actors[_NPC_A].execute.call_count
+        calls_a = _get_actor(director, _NPC_A).execute.call_count
         calls_b = director.actors[_NPC_B].execute.call_count
         assert calls_a + calls_b == 1
 
@@ -1195,15 +1213,15 @@ class TestDuplicateNPCNames:
             route_response={
                 _ACTION_TYPE: _INTERACT,
                 _IS_AGGRESSIVE: True,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
         )
 
         side_effect = _DualMoodMockAct(gs.npcs[_NPC_A], gs.npcs[_NPC_B], [0])
-        director.actors[_NPC_A] = _make_mock_agent(None)
-        director.actors[_NPC_A].execute = AsyncMock(side_effect=side_effect)
+        _set_actor(director, _NPC_A, _make_mock_agent(None))
+        _get_actor(director, _NPC_A).execute = AsyncMock(side_effect=side_effect)
         director.actors[_NPC_B] = _make_mock_agent(None)
         director.actors[_NPC_B].execute = AsyncMock(side_effect=side_effect)
 
@@ -1213,7 +1231,7 @@ class TestDuplicateNPCNames:
         )
 
         # 1 dialogue call + 1 retaliation = 2 total (not 2+2=4)
-        calls_a = director.actors[_NPC_A].execute.call_count
+        calls_a = _get_actor(director, _NPC_A).execute.call_count
         calls_b = director.actors[_NPC_B].execute.call_count
         assert calls_a + calls_b == 2
 
@@ -1282,7 +1300,7 @@ class TestNPCGeneratorDeduplication:
             game_state=gs,
             route_response={
                 _ACTION_TYPE: _TALK,
-                _TARGETS: [_GUARD],
+                _TARGETS: _TARGETS_GUARD,
                 _NEEDS_CLARIFICATION: False,
                 # Routing plan says to use npc_generator — used to cause
                 # duplication because the explicit branch ran on top of
@@ -1293,7 +1311,7 @@ class TestNPCGeneratorDeduplication:
         director.npc_generator = npc_generator_mock
         mock_actor = AsyncMock()
         mock_actor.execute = AsyncMock(return_value="Hello!")
-        director.actors[_NPC_A] = mock_actor
+        _set_actor(director, _NPC_A, mock_actor)
 
         await director.act("talk to the guard")
 
