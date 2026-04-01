@@ -16,7 +16,10 @@ class ReadTimeout(Exception):
     """Raised when sentinel not seen within timeout."""
 
     def __init__(self, sentinel: str, timeout: float, buf: str) -> None:
-        super().__init__(f"Sentinel {sentinel!r} not seen within {timeout}s. Buffer tail: {buf[-_BUF_TAIL_LEN:]!r}")
+        tail = repr(buf[-_BUF_TAIL_LEN:])
+        super().__init__(
+            "Sentinel {0!r} not seen within {1}s. Buffer tail: {2}".format(sentinel, timeout, tail),
+        )
         self.buf = buf
 
 
@@ -24,7 +27,10 @@ class StreamEOF(Exception):
     """Raised when stream closes before sentinel is found."""
 
     def __init__(self, buf: str) -> None:
-        super().__init__(f"Stream closed before sentinel was found. Buffer tail: {buf[-_BUF_TAIL_LEN:]!r}")
+        tail = repr(buf[-_BUF_TAIL_LEN:])
+        super().__init__(
+            "Stream closed before sentinel was found. Buffer tail: {0}".format(tail),
+        )
         self.buf = buf
 
 

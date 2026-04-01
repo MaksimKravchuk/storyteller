@@ -199,7 +199,7 @@ class TestGameState:
     def test_initial_values(self, game_state):
         assert game_state.turn_count == 0
         assert game_state.scene_number == 0
-        assert game_state.game_clock == 0.0  # noqa: WPS459
+        assert game_state.game_clock == float(0)
         assert game_state.game_time == "morning"
         assert game_state.npcs == {}
         assert game_state.locations == {}

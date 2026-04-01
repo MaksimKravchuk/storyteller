@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 from models.base_model import BaseModel
 
+INITIAL_GAME_CLOCK: float = float(0)
+
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
     from models.location import Location
@@ -51,7 +53,7 @@ class GameState(BaseModel):
         self.npcs: dict[str, NPCCard] = {}  # UUID -> NPCCard
         self.turn_count: int = 0
         self.scene_number: int = 0
-        self.game_clock: float = 0.0  # Game time in hours
+        self.game_clock: float = INITIAL_GAME_CLOCK  # Game time in hours
         self.game_time: str = "morning"  # Human-readable time of day
         self.conversation_log: list[dict] = []  # Full session log
         self.scene_conversation_log: list[dict] = []  # Resets on scene change
