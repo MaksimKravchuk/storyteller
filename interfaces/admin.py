@@ -146,8 +146,9 @@ class AdminServer:
     async def _ai_calls(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
         turn = request.query.get("turn")
-        turn_number = int(turn) if turn else None
         async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
-            logs = await repo.get_ai_call_logs(session_id, turn_number=turn_number)
+            logs = await GameRepository(db).get_ai_call_logs(
+                session_id,
+                turn_number=int(turn) if turn else None,
+            )
         return _json_response({"ai_calls": logs})

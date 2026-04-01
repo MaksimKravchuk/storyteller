@@ -16,10 +16,7 @@ _SEPARATOR = "=" * 60
 _QUIT_COMMANDS = frozenset(("quit", "exit", "q"))
 
 
-async def _run_game() -> None:
-    cfg = load_config()
-    engine = create_engine(cfg)
-
+def _print_banner(cfg) -> None:
     click.echo(_SEPARATOR)
     click.echo("  STORYTELLER — AI Text Quest Engine")
     click.echo(_SEPARATOR)
@@ -29,11 +26,15 @@ async def _run_game() -> None:
     click.echo(_SEPARATOR)
     click.echo()
 
-    setting = click.prompt("Describe your desired setting (e.g. 'Rome, 1st century AD')")
 
+async def _run_game() -> None:
+    cfg = load_config()
+    engine = create_engine(cfg)
+    _print_banner(cfg)
+
+    setting = click.prompt("Describe your desired setting (e.g. 'Rome, 1st century AD')")
     click.echo("\nResearching setting and generating opening scene...\n")
-    opening = await engine.start_game(setting)
-    click.echo(opening)
+    click.echo(await engine.start_game(setting))
 
     while True:
         click.echo("\n> ", nl=False)
@@ -43,9 +44,7 @@ async def _run_game() -> None:
         if action.lower() in _QUIT_COMMANDS:
             click.echo("Thanks for playing!")
             break
-
-        response = await engine.process_action(action)
-        click.echo(f"\n{response}")
+        click.echo("\n{0}".format(await engine.process_action(action)))
 
 
 @click.command()

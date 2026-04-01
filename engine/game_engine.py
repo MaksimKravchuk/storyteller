@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from cast.data_miner import DataMiner
-from cast.director import Director
+from cast.director import Director, DirectorCast, DirectorDeps
 from cast.narrator import Narrator
 from cast.npc_generator import NPCGenerator
 from cast.scene_builder import SceneBuilder
@@ -72,67 +72,18 @@ class GameEngine:
 
         Returns the opening narration.
         """
-        # Create LLM clients (pass the right API key per provider)
-        director_llm = create_llm_client(
-            self._director_model,
-            api_key=self._api_keys.get(self._director_model.provider),
-        )
-        agent_llm = create_llm_client(
-            self._agent_model,
-            api_key=self._api_keys.get(self._agent_model.provider),
-        )
-        narrator_llm = create_llm_client(
-            self._narrator_model,
-            api_key=self._api_keys.get(self._narrator_model.provider),
-        )
+        director_llm, agent_llm, narrator_llm = self._create_llm_clients()
 
-        # Research the setting
         data_miner = DataMiner(llm_client=agent_llm)
         setting = await data_miner.execute(setting_description)
 
-        # Initialise knowledge graph
         self._knowledge_graph = KnowledgeGraph()
         self._populate_graph_from_setting(setting)
+        self._game_state = GameState(setting=setting, knowledge_graph=self._knowledge_graph)
+        self._event_manager = EventManager(game_state=self._game_state, knowledge_graph=self._knowledge_graph)
 
-        # Initialise game state
-        self._game_state = GameState(
-            setting=setting,
-            knowledge_graph=self._knowledge_graph,
-        )
-
-        # Memory manager (for summarising interactions / events)
-        memory_manager = MemoryManager(
-            graph=self._knowledge_graph,
-            llm_client=agent_llm,
-        )
-
-        # Event manager
-        self._event_manager = EventManager(
-            game_state=self._game_state,
-            knowledge_graph=self._knowledge_graph,
-        )
-
-        # Create agents
-        scene_builder = SceneBuilder(llm_client=agent_llm)
-        npc_generator = NPCGenerator(llm_client=agent_llm)
-        narrator = Narrator(llm_client=narrator_llm, language=self._language)
-
-        # Create the Director — wires everything together
-        self._director = Director(
-            llm_client=director_llm,
-            game_state=self._game_state,
-            event_manager=self._event_manager,
-            memory_manager=memory_manager,
-            scene_builder=scene_builder,
-            narrator=narrator,
-            npc_generator=npc_generator,
-            data_miner=data_miner,
-            language=self._language,
-        )
-
-        # Generate opening scene
-        opening = await self._director.execute("Look around and describe the starting scene")
-        return opening
+        self._wire_director(director_llm, agent_llm, narrator_llm, data_miner)
+        return await self._director.execute("Look around and describe the starting scene")  # type: ignore[union-attr]
 
     async def process_action(self, player_action: str) -> str:
         """Process a player action and return the narrated response."""
@@ -178,62 +129,51 @@ class GameEngine:
         """
         self._game_state = game_state
         self._knowledge_graph = knowledge_graph
-
-        # Create LLM clients
-        director_llm = create_llm_client(
-            self._director_model,
-            api_key=self._api_keys.get(self._director_model.provider),
-        )
-        agent_llm = create_llm_client(
-            self._agent_model,
-            api_key=self._api_keys.get(self._agent_model.provider),
-        )
-        narrator_llm = create_llm_client(
-            self._narrator_model,
-            api_key=self._api_keys.get(self._narrator_model.provider),
-        )
-
-        # Memory manager
-        memory_manager = MemoryManager(
-            graph=self._knowledge_graph,
-            llm_client=agent_llm,
-        )
-
-        # Event manager (restore events)
-        self._event_manager = EventManager(
-            game_state=self._game_state,
-            knowledge_graph=self._knowledge_graph,
-        )
+        self._event_manager = EventManager(game_state=self._game_state, knowledge_graph=self._knowledge_graph)
         self._event_manager.all_events = events
 
-        # Create agents
-        data_miner = DataMiner(llm_client=agent_llm)
-        scene_builder = SceneBuilder(llm_client=agent_llm)
-        npc_generator = NPCGenerator(llm_client=agent_llm)
-        narrator = Narrator(llm_client=narrator_llm, language=self._language)
-
-        # Create the Director
-        self._director = Director(
-            llm_client=director_llm,
-            game_state=self._game_state,
-            event_manager=self._event_manager,
-            memory_manager=memory_manager,
-            scene_builder=scene_builder,
-            narrator=narrator,
-            npc_generator=npc_generator,
-            data_miner=data_miner,
-            language=self._language,
-        )
-
-        # Restore Actor agents for NPCs that were already initialised in
-        # previous turns.  Without this, self.actors is empty after engine
-        # recreation (e.g. between Telegram messages) and dialogue routing
-        # silently produces no output.
+        director_llm, agent_llm, narrator_llm = self._create_llm_clients()
+        self._wire_director(director_llm, agent_llm, narrator_llm)
         self._restore_actors(agent_llm)
 
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------
+
+    def _create_llm_clients(self) -> tuple[Any, Any, Any]:
+        """Create LLM clients for director, agent, and narrator roles."""
+        return (
+            create_llm_client(self._director_model, api_key=self._api_keys.get(self._director_model.provider)),
+            create_llm_client(self._agent_model, api_key=self._api_keys.get(self._agent_model.provider)),
+            create_llm_client(self._narrator_model, api_key=self._api_keys.get(self._narrator_model.provider)),
+        )
+
+    def _wire_director(
+        self,
+        director_llm: Any,
+        agent_llm: Any,
+        narrator_llm: Any,
+        data_miner: Any | None = None,
+    ) -> None:
+        """Create the Director with all its agent dependencies."""
+        self._director = Director(
+            llm_client=director_llm,
+            deps=DirectorDeps(
+                game_state=self._game_state,  # type: ignore[arg-type]
+                event_manager=self._event_manager,  # type: ignore[arg-type]
+                memory_manager=MemoryManager(
+                    graph=self._knowledge_graph,  # type: ignore[arg-type]
+                    llm_client=agent_llm,
+                ),
+            ),
+            cast=DirectorCast(
+                scene_builder=SceneBuilder(llm_client=agent_llm),
+                narrator=Narrator(llm_client=narrator_llm, language=self._language),
+                npc_generator=NPCGenerator(llm_client=agent_llm),
+                data_miner=data_miner or DataMiner(llm_client=agent_llm),
+            ),
+            language=self._language,
+        )
 
     def _restore_actors(self, llm_client: Any) -> None:
         """Recreate Actor agents for every NPC already present in game state.
@@ -259,82 +199,86 @@ class GameEngine:
 
     def _populate_graph_from_setting(self, setting: Setting) -> None:
         """Convert Setting data into knowledge graph nodes."""
-        graph = self._knowledge_graph
-        if not graph:
+        if not self._knowledge_graph:
             return
 
-        # Setting summary as a world-level fact
-        summary_node = KnowledgeNode(
-            content=setting.summary,
-            scope=KnowledgeScope.WORLD,
-            source=KnowledgeSource.FACT,
-            tags=["setting", "overview"],
-        )
-        graph.add_node(summary_node)
-
-        # Key persons
-        for person in setting.key_persons:
-            node = KnowledgeNode(
-                content=(f"{person.get('name', 'Unknown')}: {person.get('role', '')}. {person.get('description', '')}"),
-                scope=KnowledgeScope.COUNTRY,
+        self._knowledge_graph.add_node(
+            KnowledgeNode(
+                content=setting.summary,
+                scope=KnowledgeScope.WORLD,
                 source=KnowledgeSource.FACT,
-                required_education=3,  # Need some education to know political figures
+                tags=["setting", "overview"],
+            )
+        )
+        self._add_persons_and_events(setting)
+        self._add_locations_and_culture(setting)
+
+    def _add_persons_and_events(self, setting: Setting) -> None:
+        """Add key persons and events from setting to knowledge graph."""
+        for person in setting.key_persons:
+            self._add_setting_node(
+                self._knowledge_graph,
+                f"{person.get('name', 'Unknown')}: {person.get('role', '')}. {person.get('description', '')}",
+                KnowledgeScope.COUNTRY,
+                required_education=3,
                 tags=["person", "politics"],
             )
-            graph.add_node(node)
-
-        # Key events
         for event in setting.key_events:
-            node = KnowledgeNode(
-                content=(
-                    f"{event.get('name', 'Unknown event')} ({event.get('date', '')}): {event.get('description', '')}"
-                ),
-                scope=KnowledgeScope.REGION,
-                source=KnowledgeSource.FACT,
+            self._add_setting_node(
+                self._knowledge_graph,
+                f"{event.get('name', 'Unknown event')} ({event.get('date', '')}): {event.get('description', '')}",
+                KnowledgeScope.REGION,
                 required_education=2,
                 tags=["event", "history"],
             )
-            graph.add_node(node)
 
-        # Locations
+    def _add_locations_and_culture(self, setting: Setting) -> None:
+        """Add locations, traditions, technologies, and social structure."""
         for loc in setting.locations:
-            node = KnowledgeNode(
-                content=(f"{loc.get('name', 'Unknown place')} ({loc.get('type', '')}): {loc.get('description', '')}"),
-                scope=KnowledgeScope.CITY,
-                source=KnowledgeSource.FACT,
+            self._add_setting_node(
+                self._knowledge_graph,
+                f"{loc.get('name', 'Unknown place')} ({loc.get('type', '')}): {loc.get('description', '')}",
+                KnowledgeScope.CITY,
                 tags=["location"],
             )
-            graph.add_node(node)
-
-        # Traditions — common knowledge
         for tradition in setting.traditions:
-            node = KnowledgeNode(
-                content=tradition,
-                scope=KnowledgeScope.REGION,
-                source=KnowledgeSource.FACT,
-                required_education=0,  # Everyone knows local traditions
-                tags=["tradition", "culture"],
+            self._add_setting_node(
+                self._knowledge_graph, tradition, KnowledgeScope.REGION, tags=["tradition", "culture"]
             )
-            graph.add_node(node)
-
-        # Technologies
         for tech in setting.technologies:
-            node = KnowledgeNode(
-                content=tech,
-                scope=KnowledgeScope.REGION,
-                source=KnowledgeSource.FACT,
+            self._add_setting_node(
+                self._knowledge_graph,
+                tech,
+                KnowledgeScope.REGION,
                 required_education=1,
                 tags=["technology"],
             )
-            graph.add_node(node)
-
-        # Social structure
         if setting.social_structure:
-            node = KnowledgeNode(
-                content=setting.social_structure,
-                scope=KnowledgeScope.COUNTRY,
-                source=KnowledgeSource.FACT,
+            self._add_setting_node(
+                self._knowledge_graph,
+                setting.social_structure,
+                KnowledgeScope.COUNTRY,
                 required_education=2,
                 tags=["society", "social_structure"],
             )
-            graph.add_node(node)
+
+    def _add_setting_node(
+        self,
+        graph: KnowledgeGraph | None,
+        node_content: str,
+        scope: KnowledgeScope,
+        required_education: int = 0,
+        tags: list[str] | None = None,
+    ) -> None:
+        """Add a FACT knowledge node to the graph."""
+        if not graph:
+            return
+        graph.add_node(
+            KnowledgeNode(
+                content=node_content,
+                scope=scope,
+                source=KnowledgeSource.FACT,
+                required_education=required_education,
+                tags=tags,
+            )
+        )

@@ -164,17 +164,14 @@ class TestKnowledgeGraph:
         assert matching_nodes[0].uuid == n1.uuid
 
     def test_get_related_bfs(self, empty_graph):
-        n1 = KnowledgeNode(content="Root")
-        n2 = KnowledgeNode(content="Child")
-        n3 = KnowledgeNode(content="Grandchild")
-        for node in (n1, n2, n3):
+        nodes = [KnowledgeNode(content=label) for label in ("Root", "Child", "Grandchild")]
+        for node in nodes:
             empty_graph.add_node(node)
-        empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.RELATED_TO)
-        empty_graph.add_edge(n2.uuid, n3.uuid, EdgeType.RELATED_TO)
-        related = empty_graph.get_related(n1.uuid, depth=2)
-        uuids = {rel_node.uuid for rel_node in related}
-        assert n2.uuid in uuids
-        assert n3.uuid in uuids
+        empty_graph.add_edge(nodes[0].uuid, nodes[1].uuid, EdgeType.RELATED_TO)
+        empty_graph.add_edge(nodes[1].uuid, nodes[2].uuid, EdgeType.RELATED_TO)
+        related_uuids = {rel_node.uuid for rel_node in empty_graph.get_related(nodes[0].uuid, depth=2)}
+        assert nodes[1].uuid in related_uuids
+        assert nodes[2].uuid in related_uuids
 
     def test_get_related_unknown_node_returns_empty(self, empty_graph):
         assert empty_graph.get_related("ghost") == []
@@ -210,11 +207,9 @@ class TestKnowledgeQueryEngine:
         empty_graph.add_node(low_node)
         empty_graph.add_node(high_node)
         engine = KnowledgeQueryEngine(empty_graph)
-        filt = KnowledgeFilter(max_education_required=3)
-        matching_nodes = engine.query(filt)
-        uuids = {node.uuid for node in matching_nodes}
-        assert low_node.uuid in uuids
-        assert high_node.uuid not in uuids
+        matched_uuids = {node.uuid for node in engine.query(KnowledgeFilter(max_education_required=3))}
+        assert low_node.uuid in matched_uuids
+        assert high_node.uuid not in matched_uuids
 
     def test_query_filters_by_source(self, populated_graph):
         engine = KnowledgeQueryEngine(populated_graph)

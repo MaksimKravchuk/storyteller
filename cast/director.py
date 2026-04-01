@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json as _json
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, NamedTuple
 
 from cast.base_performer_class import BasePerformer
 from cast.dice import CombatRoll, roll_aggression, roll_combat
@@ -20,12 +21,43 @@ from timeline.time_costs import resolve_time_cost
 _SCENE_SUMMARY_CHARS = 500
 _KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"
+_DEFAULT_ACTION = "OTHER"
 
 # Actions that increment the turn counter.
 TURN_COUNTING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP"))
 
 # Actions that trigger a scene rebuild (new location, time-of-day shift, etc.).
 SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
+
+
+@dataclass
+class DirectorDeps:
+    """Runtime dependencies the Director needs to orchestrate the game."""
+
+    game_state: GameState
+    event_manager: EventManager
+    memory_manager: MemoryManager
+
+
+@dataclass
+class DirectorCast:
+    """The ensemble of specialist agents the Director delegates to."""
+
+    scene_builder: Any
+    narrator: Any
+    npc_generator: Any
+    data_miner: Any
+    actors: dict[str, Any] = field(default_factory=dict)
+
+
+class RetaliationWork(NamedTuple):
+    """Pre-computed data for a single NPC retaliation."""
+
+    npc: Any
+    actor: Any
+    retaliation_input: str
+    aggression: Any
+    combat_roll: CombatRoll
 
 
 class Director(BasePerformer):
@@ -40,28 +72,22 @@ class Director(BasePerformer):
         self,
         *,
         llm_client: Any,
-        game_state: GameState,
-        event_manager: EventManager,
-        memory_manager: MemoryManager,
-        scene_builder: Any,  # SceneBuilder (forward ref avoids circular import)
-        narrator: Any,  # Narrator
-        npc_generator: Any,  # NPCGenerator
-        data_miner: Any,  # DataMiner
-        actors: dict[str, Any] | None = None,  # NPC UUID -> Actor
+        deps: DirectorDeps,
+        cast: DirectorCast,
         language: str = "English",
     ):
         super().__init__(
             llm_client=llm_client,
             system_prompt_template=DIRECTOR_SYSTEM,
         )
-        self.game_state = game_state
-        self.event_manager = event_manager
-        self.memory_manager = memory_manager
-        self.scene_builder = scene_builder
-        self.narrator = narrator
-        self.npc_generator = npc_generator
-        self.data_miner = data_miner
-        self.actors: dict[str, Any] = actors or {}  # NPC UUID -> Actor
+        self.game_state = deps.game_state
+        self.event_manager = deps.event_manager
+        self.memory_manager = deps.memory_manager
+        self.scene_builder = cast.scene_builder
+        self.narrator = cast.narrator
+        self.npc_generator = cast.npc_generator
+        self.data_miner = cast.data_miner
+        self.actors: dict[str, Any] = dict(cast.actors)
         self._language = language
 
     # ------------------------------------------------------------------
@@ -73,54 +99,23 @@ class Director(BasePerformer):
 
         This is the main game loop entry-point per turn.
         """
-        # 1. Update system prompt from current game state
         self._sync_context_from_state()
 
-        # 2. Route the action — LLM classifies + produces a plan.
-        #    Pass pending clarification context so the model can resolve
-        #    follow-up replies like "да" or "1".
         routing_plan = await self._route_action(input_data)
 
-        # 3. If clarification needed, persist the exchange and return
         if routing_plan.get("needs_clarification"):
-            question = routing_plan.get(
+            self._save_pending_clarification(input_data, routing_plan)
+            return routing_plan.get(
                 "clarification_question",
                 "Could you be more specific about what you want to do?",
             )
-            # Persist exchange in game state (survives engine recreation)
-            self._save_pending_clarification(input_data, routing_plan)
-            return question
 
-        # Successful routing — clear pending clarification
         self.game_state.pending_clarification = None
-
-        # 4. Advance time and resolve events
-        action_type = routing_plan.get(_KEY_ACTION_TYPE, "OTHER")
-        time_override = routing_plan.get("time_cost_override")
-        completed_events = self._advance_and_resolve(action_type, time_override)
-
-        # 5. Execute the plan by delegating to agents
+        action_type = routing_plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
+        completed_events = self._advance_and_resolve(action_type, routing_plan.get("time_cost_override"))
         narrated_response = await self._execute_plan(routing_plan, input_data, completed_events)
 
-        # 6. Update game state bookkeeping
-        if action_type in TURN_COUNTING_ACTIONS:
-            self.game_state.turn_count += 1
-        self.game_state.conversation_log.append(
-            {
-                "turn": self.game_state.turn_count,
-                "player_action": input_data,
-                "response": narrated_response,
-                "game_clock": self.game_state.game_clock,
-            }
-        )
-        self.game_state.scene_conversation_log.append(
-            {
-                "player_action": input_data,
-                "response_summary": narrated_response[:_SCENE_SUMMARY_CHARS],
-                _KEY_ACTION_TYPE: action_type,
-            }
-        )
-
+        self._append_turn_logs(input_data, narrated_response, action_type)
         return narrated_response
 
     def register_actor(self, npc_uuid: str, actor: Any) -> None:
@@ -130,6 +125,30 @@ class Director(BasePerformer):
     def schedule_event(self, event: GameEvent) -> str:
         """Convenience wrapper to schedule an event."""
         return self.event_manager.schedule(event)
+
+    # ------------------------------------------------------------------
+    # Internal: turn bookkeeping
+    # ------------------------------------------------------------------
+
+    def _append_turn_logs(self, player_action: str, narrated_response: str, action_type: str) -> None:
+        """Update game state conversation logs after a turn."""
+        if action_type in TURN_COUNTING_ACTIONS:
+            self.game_state.turn_count += 1
+        self.game_state.conversation_log.append(
+            {
+                "turn": self.game_state.turn_count,
+                "player_action": player_action,
+                "response": narrated_response,
+                "game_clock": self.game_state.game_clock,
+            }
+        )
+        self.game_state.scene_conversation_log.append(
+            {
+                "player_action": player_action,
+                "response_summary": narrated_response[:_SCENE_SUMMARY_CHARS],
+                _KEY_ACTION_TYPE: action_type,
+            }
+        )
 
     # ------------------------------------------------------------------
     # Internal: routing
@@ -201,7 +220,7 @@ class Director(BasePerformer):
                     role=Role.ASSISTANT,
                     content=_json.dumps(
                         {
-                            _KEY_ACTION_TYPE: entry.get(_KEY_ACTION_TYPE, "OTHER"),
+                            _KEY_ACTION_TYPE: entry.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION),
                             "result_summary": entry.get("response_summary", ""),
                         },
                         ensure_ascii=False,
@@ -271,43 +290,18 @@ class Director(BasePerformer):
         completed_events: list[GameEvent],
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
-        action_type = plan.get(_KEY_ACTION_TYPE, "OTHER")
-        delegates = plan.get("delegate_to", [])
         raw_outputs: dict[str, Any] = {}
 
-        # Partition completed events
-        local_events, remote_events = self._partition_events(completed_events)
-        if remote_events:
-            await self._process_remote_events(remote_events)
+        local_events = await self._process_events(completed_events, raw_outputs)
+        await self._prepare_scene(
+            plan.get("delegate_to", []), plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION), player_action, raw_outputs
+        )
+        await self._process_target_npcs(plan, player_action, raw_outputs)
 
-        # --- Scene building + NPC init ---
-        await self._prepare_scene(delegates, action_type, player_action, raw_outputs)
-
-        # --- Ensure targeted NPCs are in the scene ---
-        # Any targets not already present are appended as uninit SceneNPCs, then
-        # _init_scene_npcs generates exactly those — one generator call total.
-        target_names = plan.get("targets", [])
-        if target_names:
-            self._ensure_targets_in_scene(target_names)
-            new_npcs = await self._init_scene_npcs()
-            if new_npcs:
-                raw_outputs["new_npcs"] = [f"{new_npc.name} ({new_npc.occupation})" for new_npc in new_npcs]
-
-        # --- Actor / NPC interaction ---
-        # Deterministic: if any targets resolve to initialised NPCs in the
-        # scene, always invoke their Actors — don't rely on the LLM to
-        # include "actor" in delegate_to.
-        is_aggressive = bool(plan.get("is_aggressive"))
-        has_npc_targets = self._targets_match_scene_npcs(target_names)
-        if has_npc_targets or "actor" in delegates or action_type == "TALK":
-            await self._run_npc_interactions(player_action, target_names, is_aggressive, raw_outputs)
-
-        # --- Add local events to narrator context ---
         if local_events:
             raw_outputs["completed_events"] = [ev.on_complete_description or ev.name for ev in local_events]
 
-        # --- Always pass through Narrator ---
-        narrated = await self.narrator.execute(
+        return await self.narrator.execute(
             input_data=raw_outputs,
             context={
                 "player_action": player_action,
@@ -315,7 +309,36 @@ class Director(BasePerformer):
                 "scene_history": self.game_state.scene_conversation_log[-5:],
             },
         )
-        return narrated
+
+    async def _process_events(
+        self,
+        completed_events: list[GameEvent],
+        raw_outputs: dict[str, Any],
+    ) -> list[GameEvent]:
+        """Partition events, process remote ones, return local events."""
+        local_events, remote_events = self._partition_events(completed_events)
+        if remote_events:
+            await self._process_remote_events(remote_events)
+        return local_events
+
+    async def _process_target_npcs(
+        self,
+        plan: dict,
+        player_action: str,
+        raw_outputs: dict[str, Any],
+    ) -> None:
+        """Ensure targeted NPCs exist in the scene, run interactions if needed."""
+        target_names = plan.get("targets", [])
+        if target_names:
+            self._ensure_targets_in_scene(target_names)
+            new_npcs = await self._init_scene_npcs()
+            if new_npcs:
+                raw_outputs["new_npcs"] = [f"{npc.name} ({npc.occupation})" for npc in new_npcs]
+
+        delegates = plan.get("delegate_to", [])
+        action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
+        if self._targets_match_scene_npcs(target_names) or "actor" in delegates or action_type == "TALK":
+            await self._run_npc_interactions(player_action, target_names, bool(plan.get("is_aggressive")), raw_outputs)
 
     async def _prepare_scene(
         self,
@@ -371,45 +394,8 @@ class Director(BasePerformer):
         for each targeted NPC and the outcome is injected into the
         Actor's input so the LLM must narrate that result.
         """
-        targets_lower = {target.lower() for target in target_names}
+        work_items = self._collect_dialogue_targets(target_names, player_action, is_aggressive)
 
-        # Build a set of NPC UUIDs whose role also matches a target
-        scene = self.game_state.current_scene
-        role_matched_uuids: set[str] = set()
-        if scene:
-            for snpc in scene.npcs_present:
-                if snpc.uuid and snpc.role.lower() in targets_lower:
-                    role_matched_uuids.add(snpc.uuid)
-
-        # Phase 1: synchronously filter matched NPCs and prepare inputs
-        matched_names: set[str] = set()
-        work_items: list[tuple[Any, Any, str, CombatRoll | None]] = []
-        for npc_uuid, actor in self.actors.items():
-            npc = self.game_state.npcs.get(npc_uuid)
-            if not npc:
-                continue
-            name_lower = npc.name.lower()
-            if name_lower in matched_names:
-                continue
-            matched = name_lower in targets_lower or npc_uuid in role_matched_uuids
-            if matched:
-                matched_names.add(name_lower)
-                action_text = player_action
-                combat_roll: CombatRoll | None = None
-
-                if is_aggressive:
-                    combat_skill = npc.get_attribute("combat_skill", 3)
-                    combat_roll = roll_combat(combat_skill)
-                    action_text = (
-                        f"{player_action}\n\n"
-                        f"[DICE ROLL: player {combat_roll.player_roll} vs "
-                        f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus}]\n"
-                        f"OUTCOME: {combat_roll.description}\n"
-                        f"You MUST narrate this outcome. Do NOT override the dice result."
-                    )
-                work_items.append((npc, actor, action_text, combat_roll))
-
-        # Phase 2: execute all NPC dialogues concurrently
         return list(
             await asyncio.gather(
                 *(
@@ -418,6 +404,73 @@ class Director(BasePerformer):
                 )
             )
         )
+
+    def _collect_dialogue_targets(
+        self,
+        target_names: list[str],
+        player_action: str,
+        is_aggressive: bool,
+    ) -> list[tuple[Any, Any, str, CombatRoll | None]]:
+        """Match target names to NPCs and prepare dialogue work items."""
+        matched_uuids = self._resolve_target_uuids(target_names)
+        return [
+            (
+                self.game_state.npcs[uid],
+                self.actors[uid],
+                *self._build_combat_action(
+                    player_action,
+                    self.game_state.npcs[uid],
+                    is_aggressive,
+                ),
+            )
+            for uid in matched_uuids
+            if uid in self.actors
+        ]
+
+    def _resolve_target_uuids(self, target_names: list[str]) -> list[str]:
+        """Resolve target names to a de-duplicated list of NPC UUIDs."""
+        targets_lower = {target.lower() for target in target_names}
+        candidate_uuids = self._role_matched_uuids(targets_lower) | {
+            uid for uid, npc in self.game_state.npcs.items() if npc.name.lower() in targets_lower
+        }
+        return self._deduplicate_by_name(candidate_uuids)
+
+    def _deduplicate_by_name(self, uuids: set[str]) -> list[str]:
+        """De-duplicate NPC UUIDs so each name appears only once."""
+        seen: set[str] = set()
+        unique_uuids: list[str] = []
+        for uid in uuids:
+            npc = self.game_state.npcs.get(uid)
+            if npc and npc.name.lower() not in seen:
+                seen.add(npc.name.lower())
+                unique_uuids.append(uid)
+        return unique_uuids
+
+    def _role_matched_uuids(self, targets_lower: set[str]) -> set[str]:
+        """Return UUIDs of scene NPCs whose role matches a target name."""
+        scene = self.game_state.current_scene
+        if not scene:
+            return set()
+        return {snpc.uuid for snpc in scene.npcs_present if snpc.uuid and snpc.role.lower() in targets_lower}
+
+    def _build_combat_action(
+        self,
+        player_action: str,
+        npc: Any,
+        is_aggressive: bool,
+    ) -> tuple[str, CombatRoll | None]:
+        """Build action text and optional combat roll for an NPC interaction."""
+        if not is_aggressive:
+            return player_action, None
+        combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
+        action_text = (
+            f"{player_action}\n\n"
+            f"[DICE ROLL: player {combat_roll.player_roll} vs "
+            f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus}]\n"
+            f"OUTCOME: {combat_roll.description}\n"
+            f"You MUST narrate this outcome. Do NOT override the dice result."
+        )
+        return action_text, combat_roll
 
     async def _execute_npc_dialogue(
         self,
@@ -466,9 +519,8 @@ class Director(BasePerformer):
         uninit = [snpc for snpc in scene.npcs_present if snpc.need_init]
         if not uninit:
             return []
-        roles = [snpc.role for snpc in uninit]
         new_cards = await self.npc_generator.execute(
-            input_data=roles,
+            input_data=[snpc.role for snpc in uninit],
             context={_KEY_GAME_STATE: self.game_state},
         )
         for scene_npc, card in zip(uninit, new_cards):
@@ -547,79 +599,69 @@ class Director(BasePerformer):
         If the roll passes, the NPC retaliates — a combat dice roll is
         performed and injected into a second Actor call.
         """
-        # Phase 1: synchronously filter retaliating NPCs and prepare inputs
         retaliated_names: set[str] = set()
-        work_items: list[tuple] = []
+        work_items: list[RetaliationWork] = []
         for npc_uuid, actor in self.actors.items():
-            npc = self.game_state.npcs.get(npc_uuid)
-            if not npc:
-                continue
-            name_lower = npc.name.lower()
-            if name_lower in retaliated_names:
-                continue
-            old_mood = mood_snapshot.get(npc_uuid, "neutral")
-            if npc.current_mood == old_mood:
-                continue
+            work = self._build_retaliation_work(npc_uuid, actor, mood_snapshot, retaliated_names)
+            if work is not None:
+                work_items.append(work)
 
-            aggression = roll_aggression(npc.current_mood)
-            if aggression is None or not aggression.will_attack:
-                continue
-            retaliated_names.add(name_lower)
+        return list(await asyncio.gather(*(self._execute_retaliation(wi) for wi in work_items)))
 
-            combat_skill = npc.get_attribute("combat_skill", 3)
-            combat_roll = roll_combat(combat_skill)
-
-            retaliation_input = (
-                f"{npc.name} retaliates against the player!\n\n"
-                f"[DICE ROLL: player {combat_roll.player_roll} vs "
-                f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus}]\n"
-                f"OUTCOME: {combat_roll.description}\n"
-                f"You MUST narrate this outcome. The NPC attacks FIRST — "
-                f"they are the aggressor now. Do NOT override the dice result."
-            )
-            work_items.append((npc, actor, retaliation_input, aggression, combat_roll))
-
-        # Phase 2: execute all retaliations concurrently
-        return list(
-            await asyncio.gather(
-                *(
-                    self._execute_retaliation(wi_npc, wi_actor, wi_input, wi_aggr, wi_roll)
-                    for wi_npc, wi_actor, wi_input, wi_aggr, wi_roll in work_items
-                )
-            )
-        )
-
-    async def _execute_retaliation(
+    def _build_retaliation_work(
         self,
-        npc: Any,
+        npc_uuid: str,
         actor: Any,
-        retaliation_input: str,
-        aggression: Any,
-        combat_roll: CombatRoll,
-    ) -> dict[str, str]:
+        mood_snapshot: dict[str, str],
+        retaliated_names: set[str],
+    ) -> RetaliationWork | None:
+        """Check if an NPC should retaliate and build work item if so."""
+        npc = self.game_state.npcs.get(npc_uuid)
+        if not npc or npc.name.lower() in retaliated_names:
+            return None
+        if npc.current_mood == mood_snapshot.get(npc_uuid, "neutral"):
+            return None
+
+        aggression = roll_aggression(npc.current_mood)
+        if aggression is None or not aggression.will_attack:
+            return None
+        retaliated_names.add(npc.name.lower())
+
+        combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
+        retaliation_input = (
+            f"{npc.name} retaliates against the player!\n\n"
+            f"[DICE ROLL: player {combat_roll.player_roll} vs "
+            f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus}]\n"
+            f"OUTCOME: {combat_roll.description}\n"
+            f"You MUST narrate this outcome. The NPC attacks FIRST — "
+            f"they are the aggressor now. Do NOT override the dice result."
+        )
+        return RetaliationWork(npc, actor, retaliation_input, aggression, combat_roll)
+
+    async def _execute_retaliation(self, work: RetaliationWork) -> dict[str, str]:
         """Execute a single NPC retaliation and return the result entry."""
-        response = await actor.execute(
-            input_data=retaliation_input,
+        response = await work.actor.execute(
+            input_data=work.retaliation_input,
             context={
-                "npc": npc,
+                "npc": work.npc,
                 _KEY_GAME_STATE: self.game_state,
-                "location_name": self._get_location_name(npc.location_id),
+                "location_name": self._get_location_name(work.npc.location_id),
             },
         )
         return {
-            "npc_name": npc.name,
+            "npc_name": work.npc.name,
             "response": response,
             "is_retaliation": "true",
             "aggression_roll": "d20: {0} vs threshold {1} (mood: {2}) → attacks".format(
-                aggression.roll,
-                aggression.threshold,
-                aggression.mood,
+                work.aggression.roll,
+                work.aggression.threshold,
+                work.aggression.mood,
             ),
             "combat_roll": "d20: player {0} vs NPC {1}+{2} → {3}".format(
-                combat_roll.player_roll,
-                combat_roll.npc_roll,
-                combat_roll.npc_bonus,
-                combat_roll.outcome.value,
+                work.combat_roll.player_roll,
+                work.combat_roll.npc_roll,
+                work.combat_roll.npc_bonus,
+                work.combat_roll.outcome.value,
             ),
         }
 
@@ -630,38 +672,50 @@ class Director(BasePerformer):
     def _sync_context_from_state(self) -> None:
         """Update system prompt variables from the current game state."""
         scene = self.game_state.current_scene
-        npcs_present = scene.npcs_present if scene else []
-        npc_names = (
-            ", ".join(
-                self.game_state.npcs[snpc.uuid].name
-                for snpc in npcs_present
-                if snpc.uuid and snpc.uuid in self.game_state.npcs
-            )
-            or "None"
-        )
-        pois = ", ".join(scene.points_of_interest) if scene and scene.points_of_interest else "None"
 
         context_vars = dict(
             setting_name=self.game_state.setting.name,
             time_period=self.game_state.setting.time_period,
             scene_description=(scene.description if scene else "No scene set yet"),
-            npcs_present=npc_names,
-            points_of_interest=pois,
+            npcs_present=self._format_npcs_present(scene),
+            points_of_interest=self._format_pois(scene),
             game_time=self.game_state.game_time,
             game_clock=str(round(self.game_state.game_clock, 1)),
         )
 
-        # Compact summary of recent scene actions for the system prompt.
-        # The section is silently skipped by PromptTemplate when this var
-        # is absent (first turn of a scene).
-        scene_log = self.game_state.scene_conversation_log
-        if scene_log:
-            lines = []
-            for entry in scene_log[-5:]:
-                lines.append(f"- Player: {entry['player_action']} -> {entry.get('action_type', '?')}")
-            context_vars["scene_history_summary"] = "\n".join(lines)
+        history_summary = self._format_scene_history()
+        if history_summary:
+            context_vars["scene_history_summary"] = history_summary
 
         self.set_context(**context_vars)
+
+    def _format_npcs_present(self, scene: Any) -> str:
+        """Format NPC names for the system prompt."""
+        if not scene:
+            return "None"
+        return (
+            ", ".join(
+                self.game_state.npcs[snpc.uuid].name
+                for snpc in scene.npcs_present
+                if snpc.uuid and snpc.uuid in self.game_state.npcs
+            )
+            or "None"
+        )
+
+    def _format_pois(self, scene: Any) -> str:
+        """Format points of interest for the system prompt."""
+        if scene and scene.points_of_interest:
+            return ", ".join(scene.points_of_interest)
+        return "None"
+
+    def _format_scene_history(self) -> str | None:
+        """Format recent scene actions for the system prompt."""
+        scene_log = self.game_state.scene_conversation_log
+        if not scene_log:
+            return None
+        return "\n".join(
+            f"- Player: {entry['player_action']} -> {entry.get('action_type', '?')}" for entry in scene_log[-5:]
+        )
 
     def _get_location_name(self, location_id: str | None) -> str:
         if location_id and location_id in self.game_state.locations:

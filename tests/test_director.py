@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -11,6 +12,8 @@ import pytest
 from cast.actor import Actor, _extract_mood as _actor_extract_mood
 from cast.director import (
     Director,
+    DirectorCast,
+    DirectorDeps,
     SCENE_CHANGING_ACTIONS,
     TURN_COUNTING_ACTIONS,
 )
@@ -94,6 +97,30 @@ def _make_game_state() -> GameState:
     return gs
 
 
+def _make_mock_agent(return_value: object = None) -> AsyncMock:
+    """Create a mock agent with both .act and .execute wired."""
+    mock = AsyncMock()
+    mock.act = AsyncMock(return_value=return_value)
+    mock.execute = AsyncMock(return_value=return_value)
+    return mock
+
+
+def _make_cast(narrator_response: str = "Narrated result.") -> DirectorCast:
+    """Build a DirectorCast with mocked agents."""
+    return DirectorCast(
+        scene_builder=_make_mock_agent(
+            Scene(
+                location_id="new-loc",
+                description="A new place.",
+                npcs_present=[SceneNPC(role=_MERCHANT)],
+            )
+        ),
+        narrator=_make_mock_agent(narrator_response),
+        npc_generator=_make_mock_agent([]),
+        data_miner=AsyncMock(),
+    )
+
+
 def _make_director(
     game_state: GameState | None = None,
     route_response: dict | None = None,
@@ -102,50 +129,36 @@ def _make_director(
     """Create a Director with mocked LLM and agents."""
     gs = game_state or _make_game_state()
 
-    # Mock LLM client — _send_json returns the routing plan
-    llm_client = AsyncMock()
-
-    # Mock agents — wire both .act and .execute so Director can call
-    # .execute() while tests can still inspect call args on either.
-    scene_result = Scene(
-        location_id="new-loc",
-        description="A new place.",
-        npcs_present=[SceneNPC(role=_MERCHANT)],
-    )
-    scene_builder = AsyncMock()
-    scene_builder.act = AsyncMock(return_value=scene_result)
-    scene_builder.execute = AsyncMock(return_value=scene_result)
-
-    narrator = AsyncMock()
-    narrator.act = AsyncMock(return_value=narrator_response)
-    narrator.execute = AsyncMock(return_value=narrator_response)
-
-    npc_generator = AsyncMock()
-    npc_generator.act = AsyncMock(return_value=[])
-    npc_generator.execute = AsyncMock(return_value=[])
-
-    data_miner = AsyncMock()
-
-    event_manager = EventManager(game_state=gs, knowledge_graph=gs.knowledge_graph)
-    memory_manager = MagicMock(spec=MemoryManager)
-
     director = Director(
-        llm_client=llm_client,
-        game_state=gs,
-        event_manager=event_manager,
-        memory_manager=memory_manager,
-        scene_builder=scene_builder,
-        narrator=narrator,
-        npc_generator=npc_generator,
-        data_miner=data_miner,
+        llm_client=AsyncMock(),
+        deps=DirectorDeps(
+            game_state=gs,
+            event_manager=EventManager(game_state=gs, knowledge_graph=gs.knowledge_graph),
+            memory_manager=MagicMock(spec=MemoryManager),
+        ),
+        cast=_make_cast(narrator_response),
         language="English",
     )
 
-    # Patch _send_json to return the desired routing response
     if route_response:
         director._send_json = AsyncMock(return_value=route_response)  # type: ignore[method-assign]
 
     return director
+
+
+def _make_actor_with_npc(
+    npc_name: str = _GUARD_NAME,
+    occupation: str = _CITY_GUARD,
+    **npc_kwargs: Any,
+) -> tuple[Actor, NPCCard]:
+    """Create a mocked Actor + NPCCard pair for tests."""
+    npc = NPCCard(name=npc_name, occupation=occupation, **npc_kwargs)
+    actor = Actor(
+        llm_client=AsyncMock(),
+        npc=npc,
+        knowledge_query=KnowledgeQueryEngine(KnowledgeGraph()),
+    )
+    return actor, npc
 
 
 class _RetaliationMockAct:
@@ -220,6 +233,61 @@ class _FixedCombat:
             player_roll=5,
             npc_bonus=combat_skill,
         )
+
+
+def _make_retaliation_actor(npc: NPCCard) -> AsyncMock:
+    """Create a mock actor wired with _RetaliationMockAct side effect."""
+    call_count = [0]
+    side_effect = _RetaliationMockAct(npc, call_count)
+    mock_actor = AsyncMock()
+    mock_actor.act = AsyncMock(side_effect=side_effect)
+    mock_actor.execute = AsyncMock(side_effect=side_effect)
+    return mock_actor
+
+
+async def _run_with_patched_aggression(
+    replacement: Any,
+    coro: Any,
+    combat_replacement: Any = None,
+) -> Any:
+    """Run a coroutine with roll_aggression (and optionally roll_combat) patched."""
+    from cast import director as director_module
+
+    original_roll = director_module.roll_aggression
+    original_combat = director_module.roll_combat if combat_replacement else None
+    director_module.roll_aggression = replacement  # type: ignore[assignment]
+    if combat_replacement:
+        director_module.roll_combat = combat_replacement  # type: ignore[assignment]
+    try:
+        return await coro
+    except Exception:
+        raise
+    finally:
+        director_module.roll_aggression = original_roll
+        if combat_replacement:
+            director_module.roll_combat = original_combat  # type: ignore[assignment]
+
+
+def _extract_execute_input(mock_actor: AsyncMock, call_index: int = 0) -> str:
+    """Extract the input_data string from a mock actor's execute call."""
+    call = mock_actor.execute.call_args_list[call_index]
+    return call.kwargs.get(_INPUT_DATA) or call.args[0]
+
+
+def _setup_npc_in_game_state(
+    gs: GameState,
+    uuid: str,
+    name: str = _GUARD_NAME,
+    occupation: str = _CITY_GUARD,
+    mood: str = _NEUTRAL,
+    **kwargs: Any,
+) -> NPCCard:
+    """Create an NPC, assign it a uuid and mood, and register it in game state."""
+    npc = NPCCard(name=name, occupation=occupation, **kwargs)
+    npc.uuid = uuid
+    npc.current_mood = mood
+    gs.npcs[uuid] = npc
+    return npc
 
 
 # ---------------------------------------------------------------------------
@@ -795,20 +863,12 @@ class TestExtractMood:
 class TestActorMoodUpdate:
     @pytest.mark.asyncio
     async def test_mood_updated_after_response(self):
-        npc = NPCCard(
-            name=_GUARD_NAME,
-            occupation=_CITY_GUARD,
+        actor, npc = _make_actor_with_npc(
             personality_traits=["aggressive"],
             speech_style="curt, military",
         )
         assert npc.current_mood == _NEUTRAL
 
-        kg = KnowledgeGraph()
-        kq = KnowledgeQueryEngine(kg)
-        llm_client = AsyncMock()
-
-        actor = Actor(llm_client=llm_client, npc=npc, knowledge_query=kq)
-        # Mock _send to return text with mood tag
         actor._send = AsyncMock(return_value=f"*tackles you to the ground*\n[MOOD: {_HOSTILE}]")
 
         actor_response = await actor.act(_ATTACK_GUARD, {"location_name": "forum"})
@@ -817,17 +877,12 @@ class TestActorMoodUpdate:
 
     @pytest.mark.asyncio
     async def test_mood_unchanged_when_no_tag(self):
-        npc = NPCCard(
-            name=_MERCHANT_NAME,
+        actor, npc = _make_actor_with_npc(
+            npc_name=_MERCHANT_NAME,
             occupation=_MERCHANT,
             personality_traits=["friendly"],
             speech_style="cheerful",
         )
-        kg = KnowledgeGraph()
-        kq = KnowledgeQueryEngine(kg)
-        llm_client = AsyncMock()
-
-        actor = Actor(llm_client=llm_client, npc=npc, knowledge_query=kq)
         actor._send = AsyncMock(return_value="Welcome, friend!")
 
         await actor.act(_HELLO, {"location_name": "market"})
@@ -890,31 +945,19 @@ class TestCombatDiceIntegration:
     @pytest.mark.asyncio
     async def test_npc_without_combat_skill_uses_default(self):
         """NPC with no combat_skill attribute defaults to 3."""
-        gs = _make_game_state()
+        director, mock_actor = self._make_director_with_npc(is_aggressive=True, combat_skill=0)
+
+        # Re-register NPC without combat_skill attribute to test default
         npc = NPCCard(name=_MERCHANT_NAME, occupation=_MERCHANT)
         npc.uuid = _NPC_A
-        gs.npcs[_NPC_A] = npc
-
-        director = _make_director(
-            game_state=gs,
-            route_response={
-                _ACTION_TYPE: _INTERACT,
-                _IS_AGGRESSIVE: True,
-                _TARGETS: [_MERCHANT],
-                _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: [_ACTOR, _NARRATOR],
-            },
-        )
-        mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(return_value="*cowers*")
-        mock_actor.execute = AsyncMock(return_value="*cowers*")
+        director.game_state.npcs[_NPC_A] = npc
+        mock_actor = _make_mock_agent("*cowers*")
         director.actors[_NPC_A] = mock_actor
 
         await director.act("punch the merchant")
 
         call_args = mock_actor.execute.call_args
         input_text = call_args.kwargs.get(_INPUT_DATA) or call_args.args[0]
-        # Default combat_skill=3, so bonus should be +3
         assert "+3]" in input_text
 
     def _make_director_with_npc(self, is_aggressive: bool, combat_skill: int = 5) -> tuple[Director, AsyncMock]:
@@ -978,28 +1021,17 @@ class TestNPCRetaliation:
             },
         )
 
-        call_count = [0]
-        side_effect = _RetaliationMockAct(npc, call_count)
-
-        mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(side_effect=side_effect)
-        mock_actor.execute = AsyncMock(side_effect=side_effect)
-        director.actors[_NPC_A] = mock_actor
+        director.actors[_NPC_A] = _make_retaliation_actor(npc)
 
         # Patch roll_aggression to always trigger
-        from cast import director as director_module
-
-        original_roll = director_module.roll_aggression
-        director_module.roll_aggression = _AlwaysAttacks()
-        try:
-            await director.act("attack the guard")
-        finally:
-            director_module.roll_aggression = original_roll
+        await _run_with_patched_aggression(
+            _AlwaysAttacks(),
+            director.act("attack the guard"),
+        )
 
         # Actor should have been called twice: once for attack, once for retaliation
-        assert mock_actor.execute.call_count == 2
-        second_call = mock_actor.execute.call_args_list[1]
-        input_text = second_call.kwargs.get(_INPUT_DATA) or second_call.args[0]
+        assert director.actors[_NPC_A].execute.call_count == 2
+        input_text = _extract_execute_input(director.actors[_NPC_A], call_index=1)
         assert "retaliates" in input_text
         assert "[DICE ROLL:" in input_text
 
@@ -1036,10 +1068,7 @@ class TestNPCRetaliation:
     async def test_no_retaliation_when_dice_fail(self):
         """Mood changes but dice don't pass → no retaliation."""
         gs = _make_game_state()
-        npc = NPCCard(name=_GUARD_NAME, occupation=_GUARD)
-        npc.uuid = _NPC_A
-        npc.current_mood = _NEUTRAL
-        gs.npcs[_NPC_A] = npc
+        npc = _setup_npc_in_game_state(gs, _NPC_A, name=_GUARD_NAME, occupation=_GUARD)
 
         director = _make_director(
             game_state=gs,
@@ -1053,58 +1082,37 @@ class TestNPCRetaliation:
         )
 
         side_effect = _SimpleMockAct(npc, _HOSTILE)
-        mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(side_effect=side_effect)
-        mock_actor.execute = AsyncMock(side_effect=side_effect)
-        director.actors[_NPC_A] = mock_actor
+        director.actors[_NPC_A] = _make_mock_agent(None)
+        director.actors[_NPC_A].act = AsyncMock(side_effect=side_effect)
+        director.actors[_NPC_A].execute = AsyncMock(side_effect=side_effect)
 
-        # Patch roll_aggression to never trigger
-        from cast import director as director_module
-
-        original_roll = director_module.roll_aggression
-        director_module.roll_aggression = _NeverAttacks()
-        try:
-            await director.act("punch the guard")
-        finally:
-            director_module.roll_aggression = original_roll
+        await _run_with_patched_aggression(
+            _NeverAttacks(),
+            director.act("punch the guard"),
+        )
 
         # Only one call — no retaliation
-        assert mock_actor.execute.call_count == 1
+        assert director.actors[_NPC_A].execute.call_count == 1
 
     @pytest.mark.asyncio
     async def test_retaliation_deduplication_by_name(self):
         """Two actor entries for NPCs with the same name produce only one retaliation."""
-        from cast import director as director_module
-
         gs = _make_game_state()
-        npc1 = NPCCard(name="Bandit", occupation="bandit")
-        npc1.uuid = _UUID_A
-        npc1.current_mood = _NEUTRAL
-        npc2 = NPCCard(name="Bandit", occupation="bandit")
-        npc2.uuid = _UUID_B
-        npc2.current_mood = _NEUTRAL
-        gs.npcs[_UUID_A] = npc1
-        gs.npcs[_UUID_B] = npc2
+        _setup_npc_in_game_state(gs, _UUID_A, name="Bandit", occupation="bandit")
+        _setup_npc_in_game_state(gs, _UUID_B, name="Bandit", occupation="bandit")
 
         director = _make_director(game_state=gs)
-        actor1 = AsyncMock(return_value="I attack!")
-        actor2 = AsyncMock(return_value="Me too!")
-        director.actors = {_UUID_A: actor1, _UUID_B: actor2}
+        director.actors = {_UUID_A: AsyncMock(return_value="I attack!"), _UUID_B: AsyncMock(return_value="Me too!")}
 
         # Both NPCs changed mood from neutral
-        mood_snapshot = {_UUID_A: _NEUTRAL, _UUID_B: _NEUTRAL}
-        npc1.current_mood = _HOSTILE
-        npc2.current_mood = _HOSTILE
+        gs.npcs[_UUID_A].current_mood = _HOSTILE
+        gs.npcs[_UUID_B].current_mood = _HOSTILE
 
-        original_roll = director_module.roll_aggression
-        original_combat = director_module.roll_combat
-        director_module.roll_aggression = _AlwaysAttacks()
-        director_module.roll_combat = _FixedCombat()
-        try:
-            entries = await director._check_retaliation(mood_snapshot)
-        finally:
-            director_module.roll_aggression = original_roll
-            director_module.roll_combat = original_combat
+        entries = await _run_with_patched_aggression(
+            _AlwaysAttacks(),
+            director._check_retaliation({_UUID_A: _NEUTRAL, _UUID_B: _NEUTRAL}),
+            combat_replacement=_FixedCombat(),
+        )
 
         assert len(entries) == 1
 
@@ -1121,13 +1129,8 @@ class TestDuplicateNPCNames:
         gs = _make_game_state()
 
         # Two NPCs with the same name but different UUIDs
-        npc1 = NPCCard(name=_GUARD_NAME, occupation=_NIGHT_GUARD)
-        npc1.uuid = _NPC_A
-        gs.npcs[_NPC_A] = npc1
-
-        npc2 = NPCCard(name=_GUARD_NAME, occupation=_DOCK_GUARD)
-        npc2.uuid = _NPC_B
-        gs.npcs[_NPC_B] = npc2
+        _setup_npc_in_game_state(gs, _NPC_A, name=_GUARD_NAME, occupation=_NIGHT_GUARD, mood="")
+        _setup_npc_in_game_state(gs, _NPC_B, name=_GUARD_NAME, occupation=_DOCK_GUARD, mood="")
 
         gs.current_scene = Scene(
             location_id="docks",
@@ -1148,17 +1151,13 @@ class TestDuplicateNPCNames:
             },
         )
 
-        mock_actor1 = AsyncMock()
-        mock_actor1.execute = AsyncMock(return_value="Hello.")
-        mock_actor2 = AsyncMock()
-        mock_actor2.execute = AsyncMock(return_value="Hi there.")
-        director.actors[_NPC_A] = mock_actor1
-        director.actors[_NPC_B] = mock_actor2
+        director.actors[_NPC_A] = _make_mock_agent("Hello.")
+        director.actors[_NPC_B] = _make_mock_agent("Hi there.")
 
         await director.act("talk to the guard")
 
         # Only ONE actor should be called, not both
-        total_calls = mock_actor1.execute.call_count + mock_actor2.execute.call_count
+        total_calls = director.actors[_NPC_A].execute.call_count + director.actors[_NPC_B].execute.call_count
         assert total_calls == 1
 
     @pytest.mark.asyncio
@@ -1166,23 +1165,20 @@ class TestDuplicateNPCNames:
         """When multiple same-name NPCs change mood, only one retaliates."""
         gs = _make_game_state()
 
-        npc1 = NPCCard(
+        _setup_npc_in_game_state(
+            gs,
+            _NPC_A,
             name=_GUARD_NAME,
             occupation=_NIGHT_GUARD,
             attributes={_COMBAT_SKILL: 5},
         )
-        npc1.uuid = _NPC_A
-        npc1.current_mood = _NEUTRAL
-        gs.npcs[_NPC_A] = npc1
-
-        npc2 = NPCCard(
+        _setup_npc_in_game_state(
+            gs,
+            _NPC_B,
             name=_GUARD_NAME,
             occupation=_DOCK_GUARD,
             attributes={_COMBAT_SKILL: 5},
         )
-        npc2.uuid = _NPC_B
-        npc2.current_mood = _NEUTRAL
-        gs.npcs[_NPC_B] = npc2
 
         gs.current_scene = Scene(
             location_id="docks",
@@ -1204,28 +1200,19 @@ class TestDuplicateNPCNames:
             },
         )
 
-        call_count = [0]
+        side_effect = _DualMoodMockAct(gs.npcs[_NPC_A], gs.npcs[_NPC_B], [0])
+        director.actors[_NPC_A] = _make_mock_agent(None)
+        director.actors[_NPC_A].execute = AsyncMock(side_effect=side_effect)
+        director.actors[_NPC_B] = _make_mock_agent(None)
+        director.actors[_NPC_B].execute = AsyncMock(side_effect=side_effect)
 
-        side_effect = _DualMoodMockAct(npc1, npc2, call_count)
-        mock_actor1 = AsyncMock()
-        mock_actor1.execute = AsyncMock(side_effect=side_effect)
-        mock_actor2 = AsyncMock()
-        mock_actor2.execute = AsyncMock(side_effect=side_effect)
-        director.actors[_NPC_A] = mock_actor1
-        director.actors[_NPC_B] = mock_actor2
-
-        # Patch roll_aggression to always trigger
-        from cast import director as director_module
-
-        original_roll = director_module.roll_aggression
-        director_module.roll_aggression = _AlwaysAttacks()
-        try:
-            await director.act("attack the guard")
-        finally:
-            director_module.roll_aggression = original_roll
+        await _run_with_patched_aggression(
+            _AlwaysAttacks(),
+            director.act("attack the guard"),
+        )
 
         # 1 dialogue call + 1 retaliation = 2 total (not 2+2=4)
-        total_calls = mock_actor1.execute.call_count + mock_actor2.execute.call_count
+        total_calls = director.actors[_NPC_A].execute.call_count + director.actors[_NPC_B].execute.call_count
         assert total_calls == 2
 
 
@@ -1323,9 +1310,6 @@ class TestNPCGeneratorDeduplication:
         generated = NPCCard(name=_MERCHANT_NAME, occupation="cloth merchant")
         generated.uuid = "gen-2"
 
-        npc_generator_mock = AsyncMock()
-        npc_generator_mock.execute = AsyncMock(return_value=[generated])
-
         director = _make_director(
             game_state=gs,
             route_response={
@@ -1335,14 +1319,13 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: ["npc_generator", _NARRATOR],
             },
         )
-        director.npc_generator = npc_generator_mock
+        director.npc_generator = _make_mock_agent([generated])
         director.llm_client.send_message = AsyncMock(
             return_value=LLMResponse(content="Fine silks, my friend!", model="test", usage={})
         )
 
         await director.act("talk to the merchant")
 
-        narrator_call = director.narrator.execute.call_args
-        input_data = narrator_call.kwargs.get(_INPUT_DATA) or narrator_call.args[0]
+        input_data = _extract_execute_input(director.narrator)
         assert "new_npcs" in input_data
         assert any("Merchant" in desc for desc in input_data["new_npcs"])

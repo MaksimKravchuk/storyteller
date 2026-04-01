@@ -42,8 +42,7 @@ def test_attack_random_npc(game_process):
         assert len(combat_response) > _MIN_COMBAT_RESPONSE_LEN
 
     with allure.step("Verify combat occurred"):
-        combat_verified = agent.verify(
+        assert agent.verify(
             combat_response,
             "a combat or fight occurred, including attacks, a physical confrontation, or a dice roll outcome",
         )
-        assert combat_verified
