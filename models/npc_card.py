@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 from models.character import Character
 
 
+@dataclass(kw_only=True)
 class NPCCard(Character):
     """Extended character profile created by the NPC Generator.
 
@@ -10,36 +13,8 @@ class NPCCard(Character):
     to serialise the card into a string for prompt injection.
     """
 
-    def __init__(
-        self,
-        *,
-        name: str,
-        biography: str = "",
-        appearance: str = "",
-        occupation: str = "",
-        personality_traits: list[str] | None = None,
-        speech_style: str = "",
-        knowledge_scope: str = "local",
-        attributes: dict[str, int] | None = None,
-        inventory: list[str] | None = None,
-        location_id: str | None = None,
-        relationships: dict[str, str] | None = None,
-    ):
-        super().__init__(
-            name=name,
-            biography=biography,
-            relationships=relationships,
-            attributes=attributes,
-            inventory=inventory,
-            appearance=appearance,
-            personality_traits=personality_traits,
-            occupation=occupation,
-            speech_style=speech_style,
-            knowledge_scope=knowledge_scope,
-            location_id=location_id,
-        )
-        self.conversation_history: list[dict[str, str]] = []
-        self.current_mood: str = "neutral"
+    conversation_history: list[dict[str, str]] = field(default_factory=list)
+    current_mood: str = "neutral"
 
     def to_prompt_context(self) -> str:
         """Serialise this NPC card into text for injection into a system prompt."""

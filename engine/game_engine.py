@@ -279,6 +279,6 @@ class GameEngine:
                 scope=scope,
                 source=KnowledgeSource.FACT,
                 required_education=required_education,
-                tags=tags,
+                tags=tags or [],
             )
         )

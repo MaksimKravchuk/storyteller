@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from enum import Enum
 
 from models.base_model import BaseModel
@@ -55,29 +56,16 @@ class EdgeType(Enum):
     OWNED_BY = "owned_by"
 
 
+@dataclass(kw_only=True)
 class KnowledgeNode(BaseModel):
     """A single fact / memory in the knowledge graph."""
 
-    def __init__(
-        self,
-        *,
-        content: str,  # noqa: WPS110
-        scope: KnowledgeScope = KnowledgeScope.LOCAL,
-        source: KnowledgeSource = KnowledgeSource.FACT,
-        required_education: int = 0,
-        required_social_status: int = 0,
-        tags: list[str] | None = None,
-        location_id: str | None = None,
-        timestamp: float | None = None,
-        confidence: float = 1.0,
-    ):
-        super().__init__()
-        self.content = content  # noqa: WPS110
-        self.scope = scope
-        self.source = source
-        self.required_education = required_education  # 0-10
-        self.required_social_status = required_social_status  # 0-10
-        self.tags: list[str] = tags or []
-        self.location_id = location_id
-        self.timestamp = timestamp  # Game-clock time when learned
-        self.confidence = confidence  # 0.0 – 1.0
+    content: str  # noqa: WPS110
+    scope: KnowledgeScope = KnowledgeScope.LOCAL
+    source: KnowledgeSource = KnowledgeSource.FACT
+    required_education: int = 0  # 0-10
+    required_social_status: int = 0  # 0-10
+    tags: list[str] = field(default_factory=list)
+    location_id: str | None = None
+    timestamp: float | None = None  # Game-clock time when learned
+    confidence: float = 1.0  # 0.0 – 1.0
