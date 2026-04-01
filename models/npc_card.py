@@ -48,14 +48,15 @@ class NPCCard(Character):
             f"Occupation: {self.occupation}",
             f"Appearance: {self.appearance}",
             f"Biography: {self.biography}",
-            f"Personality: {', '.join(self.personality_traits)}",
+            "Personality: {0}".format(", ".join(self.personality_traits)),
             f"Speech style: {self.speech_style}",
             f"Knowledge scope: {self.knowledge_scope}",
             f"Current mood: {self.current_mood}",
         ]
         if self.inventory:
-            lines.append(f"Inventory: {', '.join(self.inventory)}")
+            inventory_list = ", ".join(self.inventory)
+            lines.append("Inventory: {0}".format(inventory_list))
         if self.attributes:
-            attrs = ", ".join(f"{attr_name}={attr_val}" for attr_name, attr_val in self.attributes.items())
+            attrs = ", ".join("{0}={1}".format(attr_name, attr_val) for attr_name, attr_val in self.attributes.items())
             lines.append(f"Attributes: {attrs}")
         return "\n".join(lines)

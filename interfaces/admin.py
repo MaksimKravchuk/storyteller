@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from aiohttp import web
-from aiohttp.typedefs import Handler, Middleware
+from aiohttp.typedefs import Handler
 from loguru import logger
 
 from db.engine import get_db
@@ -36,6 +36,17 @@ def _json_response(payload: Any, status: int = 200) -> web.Response:
     )
 
 
+@web.middleware
+async def _auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
+    """Bearer-token auth middleware for API routes."""
+    token = request.app.get("_auth_token")
+    if token and request.path.startswith("/api/"):
+        auth = request.headers.get("Authorization", "")
+        if auth != "Bearer {0}".format(token):
+            return _json_response({"error": "Unauthorized"}, status=_HTTP_UNAUTHORIZED)
+    return await handler(request)
+
+
 class AdminServer:
     """Lightweight admin dashboard for inspecting Storyteller sessions."""
 
@@ -43,7 +54,8 @@ class AdminServer:
         self._db_factory = db_session_factory
         self._port = port
         self._token = token
-        self._app = web.Application(middlewares=[self._build_auth_middleware()])
+        self._app = web.Application(middlewares=[_auth_middleware])
+        self._app["_auth_token"] = self._token
         self._setup_routes()
         self._runner: web.AppRunner | None = None
 
@@ -68,17 +80,6 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/npcs", self._npcs)
         self._app.router.add_get("/api/sessions/{id}/locations", self._locations)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
-
-    def _build_auth_middleware(self) -> Middleware:
-        @web.middleware
-        async def auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
-            if self._token and request.path.startswith("/api/"):
-                auth = request.headers.get("Authorization", "")
-                if auth != f"Bearer {self._token}":
-                    return _json_response({"error": "Unauthorized"}, status=_HTTP_UNAUTHORIZED)
-            return await handler(request)
-
-        return auth_middleware
 
     # ── Route handlers ────────────────────────────────────
 
