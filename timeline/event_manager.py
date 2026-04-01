@@ -110,91 +110,82 @@ class EventManager:
 
     def _apply_effect(self, effect: EventEffect) -> None:
         """Apply a single EventEffect to the game state."""
-        apply_fn = self._effect_handlers.get(effect.effect_type.upper())
-        if apply_fn:
-            apply_fn(effect)
+        gs = self._game_state
+        etype = effect.effect_type.upper()
+
+        if etype == "MOVE_NPC":
+            npc_id = effect.params.get("npc_id", effect.target_id)
+            to_loc = effect.params.get("to_location_id", "")
+            npc = gs.npcs.get(npc_id)
+            if npc:
+                # Remove from old location
+                if npc.location_id and npc.location_id in gs.locations:
+                    gs.locations[npc.location_id].remove_npc(npc_id)
+                # Move to new location
+                npc.location_id = to_loc
+                loc_obj = gs.locations.get(to_loc)
+                if loc_obj:
+                    loc_obj.add_npc(npc_id)
+                # Update current scene if applicable
+                if gs.current_scene and gs.current_scene.location_id == npc.location_id:
+                    from models.scene import SceneNPC
+
+                    already = any(snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present)
+                    if not already:
+                        gs.current_scene.npcs_present.append(SceneNPC(role=npc.occupation or npc.name, uuid=npc_id))
+
+        elif etype == "ADD_ITEM":
+            npc_id = effect.params.get("npc_id", effect.target_id)
+            inventory_item = effect.params.get("item", "")
+            npc = gs.npcs.get(npc_id)
+            if npc and inventory_item:
+                npc.add_item_to_inventory(inventory_item)
+
+        elif etype == "REMOVE_ITEM":
+            npc_id = effect.params.get("npc_id", effect.target_id)
+            inventory_item = effect.params.get("item", "")
+            npc = gs.npcs.get(npc_id)
+            if npc and inventory_item and inventory_item in npc.inventory:
+                npc.remove_item_from_inventory(inventory_item)
+
+        elif etype == "ADD_KNOWLEDGE":
+            # Dynamically import to avoid circular deps at module level
+            from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
+
+            knowledge_text = effect.params.get("content", "")
+            scope_str = effect.params.get("scope", "local")
+            tags = effect.params.get("tags", [])
+            if knowledge_text:
+                node = KnowledgeNode(
+                    content=knowledge_text,
+                    scope=KnowledgeScope(scope_str),
+                    source=KnowledgeSource.FACT,
+                    tags=tags,
+                    location_id=effect.params.get("location_id"),
+                )
+                self._graph.add_node(node)
+
+        elif etype == "CHANGE_ATTRIBUTE":
+            target = gs.npcs.get(effect.target_id)
+            attr = effect.params.get("attribute", "")
+            attribute_value = effect.params.get("value", 0)
+            if target and attr:
+                target.update_attribute(attr, attribute_value)
+
+        elif etype == "REMOVE_NPC":
+            npc_id = effect.target_id
+            npc = gs.npcs.get(npc_id)
+            if npc:
+                if npc.location_id and npc.location_id in gs.locations:
+                    gs.locations[npc.location_id].remove_npc(npc_id)
+                if gs.current_scene:
+                    gs.current_scene.npcs_present = [
+                        snpc for snpc in gs.current_scene.npcs_present if snpc.uuid != npc_id
+                    ]
+                gs.npcs.pop(npc_id)
+
         # SPAWN_NPC is handled at a higher level by the Director
         # (it needs to call the NPC Generator agent)
-
-    @property
-    def _effect_handlers(self) -> dict:
-        return {
-            "MOVE_NPC": self._apply_move_npc,
-            "ADD_ITEM": self._apply_add_item,
-            "REMOVE_ITEM": self._apply_remove_item,
-            "ADD_KNOWLEDGE": self._apply_add_knowledge,
-            "CHANGE_ATTRIBUTE": self._apply_change_attribute,
-            "REMOVE_NPC": self._apply_remove_npc,
-        }
-
-    def _apply_move_npc(self, effect: EventEffect) -> None:
-        gs = self._game_state
-        npc_id = effect.params.get("npc_id", effect.target_id)
-        to_loc = effect.params.get("to_location_id", "")
-        npc = gs.npcs.get(npc_id)
-        if not npc:
-            return
-        if npc.location_id and npc.location_id in gs.locations:
-            gs.locations[npc.location_id].remove_npc(npc_id)
-        npc.location_id = to_loc
-        loc_obj = gs.locations.get(to_loc)
-        if loc_obj:
-            loc_obj.add_npc(npc_id)
-        if gs.current_scene and gs.current_scene.location_id == npc.location_id:
-            from models.scene import SceneNPC
-
-            already = any(snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present)
-            if not already:
-                gs.current_scene.npcs_present.append(SceneNPC(role=npc.occupation or npc.name, uuid=npc_id))
-
-    def _apply_add_item(self, effect: EventEffect) -> None:
-        npc_id = effect.params.get("npc_id", effect.target_id)
-        inventory_item = effect.params.get("item", "")
-        npc = self._game_state.npcs.get(npc_id)
-        if npc and inventory_item:
-            npc.add_item_to_inventory(inventory_item)
-
-    def _apply_remove_item(self, effect: EventEffect) -> None:
-        npc_id = effect.params.get("npc_id", effect.target_id)
-        inventory_item = effect.params.get("item", "")
-        npc = self._game_state.npcs.get(npc_id)
-        if npc and inventory_item and inventory_item in npc.inventory:
-            npc.remove_item_from_inventory(inventory_item)
-
-    def _apply_add_knowledge(self, effect: EventEffect) -> None:
-        from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
-
-        knowledge_text = effect.params.get("content", "")
-        scope_str = effect.params.get("scope", "local")
-        tags = effect.params.get("tags", [])
-        if knowledge_text:
-            node = KnowledgeNode(
-                content=knowledge_text,
-                scope=KnowledgeScope(scope_str),
-                source=KnowledgeSource.FACT,
-                tags=tags,
-                location_id=effect.params.get("location_id"),
-            )
-            self._graph.add_node(node)
-
-    def _apply_change_attribute(self, effect: EventEffect) -> None:
-        target = self._game_state.npcs.get(effect.target_id)
-        attr = effect.params.get("attribute", "")
-        attribute_value = effect.params.get("value", 0)
-        if target and attr:
-            target.update_attribute(attr, attribute_value)
-
-    def _apply_remove_npc(self, effect: EventEffect) -> None:
-        gs = self._game_state
-        npc_id = effect.target_id
-        npc = gs.npcs.get(npc_id)
-        if not npc:
-            return
-        if npc.location_id and npc.location_id in gs.locations:
-            gs.locations[npc.location_id].remove_npc(npc_id)
-        if gs.current_scene:
-            gs.current_scene.npcs_present = [snpc for snpc in gs.current_scene.npcs_present if snpc.uuid != npc_id]
-        gs.npcs.pop(npc_id)
 
     def _schedule_follow_ups(self, event: GameEvent) -> None:
         """Schedule chained events defined in ``event.follow_up_events``."""

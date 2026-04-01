@@ -21,18 +21,6 @@ from prompts.base_template import PromptTemplate
 _LOG_PREVIEW_CHARS = 200
 
 
-def _try_bracket_extraction(raw: str) -> dict | None:
-    """Attempt to extract JSON by finding outermost braces. Returns dict or None."""
-    start = raw.find("{")
-    end = raw.rfind("}") + 1
-    if start == -1 or end <= start:
-        return None
-    try:
-        return json.loads(raw[start:end])
-    except json.JSONDecodeError:
-        return None
-
-
 def _parent_agent(stack: list[str] | None) -> str | None:
     """Return the parent agent name from the call stack, or None if at root."""
     if stack and len(stack) >= 2:  # noqa: WPS507
@@ -209,21 +197,22 @@ class BasePerformer(ABC):
                     raw[:_LOG_PREVIEW_CHARS],
                 )
                 if attempt == retries:
-                    extracted = _try_bracket_extraction(raw)
-                    if extracted is not None:
-                        return extracted
-                    logger.warning(
-                        "Bracket extraction also failed on attempt {}/{}: raw (first {} chars): {}",
-                        attempt + 1,
-                        retries + 1,
-                        _LOG_PREVIEW_CHARS,
-                        raw[:_LOG_PREVIEW_CHARS],
-                    )
-                    total_attempts = retries + 1
-                    preview = raw[:_LOG_PREVIEW_CHARS]
+                    # Last attempt: try to extract JSON from the response
+                    start = raw.find("{")
+                    end = raw.rfind("}") + 1
+                    if start != -1 and end > start:
+                        try:
+                            return json.loads(raw[start:end])
+                        except json.JSONDecodeError:
+                            logger.warning(
+                                "Bracket extraction also failed on attempt {}/{}: raw (first {} chars): {}",
+                                attempt + 1,
+                                retries + 1,
+                                _LOG_PREVIEW_CHARS,
+                                raw[:_LOG_PREVIEW_CHARS],
+                            )
                     raise ValueError(
-                        "Agent failed to produce valid JSON after {0} attempts. Last response: {1}".format(
-                            total_attempts, preview
-                        ),
+                        f"Agent failed to produce valid JSON after {retries + 1} attempts. "
+                        f"Last response: {raw[:_LOG_PREVIEW_CHARS]}"
                     )
         raise AssertionError("_send_json loop exhausted without returning — this is a bug")

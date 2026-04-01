@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from models.game_state import INITIAL_GAME_CLOCK
-
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import (
     EdgeType,
@@ -39,7 +37,7 @@ class MemoryManager:
         self,
         interaction_log: str,
         npc_id: str,
-        game_time: float = INITIAL_GAME_CLOCK,
+        game_time: float = 0.0,
     ) -> KnowledgeNode:
         """Summarise an interaction into a memory node linked to an NPC.
 
@@ -81,7 +79,7 @@ class MemoryManager:
         witness_ids: list[str],
         scope: KnowledgeScope,
         location_id: str | None = None,
-        game_time: float = INITIAL_GAME_CLOCK,
+        game_time: float = 0.0,
     ) -> list[str]:
         """Create memory nodes for all witnesses of an event.
 

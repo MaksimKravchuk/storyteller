@@ -110,22 +110,6 @@ async def cmd_quit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Game ended. Send /start to play again.")
 
 
-async def _start_new_game(engine, repo, session_id, update, text) -> None:
-    """Run start_game and persist. Extracted to keep try-body short."""
-    opening = await engine.start_game(text)
-    await _persist_engine_state(repo, session_id, engine, turn_number=None)
-    await repo.update_session(session_id, state="playing")
-    await update.message.reply_text(opening)
-
-
-async def _process_player_action(engine, repo, session_id, update, text) -> None:
-    """Run process_action and persist. Extracted to keep try-body short."""
-    response = await engine.process_action(text)
-    turn_number = engine.game_state.turn_count if engine.game_state else None
-    await _persist_engine_state(repo, session_id, engine, turn_number=turn_number)
-    await update.message.reply_text(response)
-
-
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     text = update.message.text.strip()
@@ -151,7 +135,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 reset_buffer()
                 engine = create_engine(cfg, language=language)
                 try:
-                    await _start_new_game(engine, repo, session_id, update, text)
+                    opening = await engine.start_game(text)
+                    await _persist_engine_state(repo, session_id, engine, turn_number=None)
+                    await repo.update_session(session_id, state="playing")
+                    await update.message.reply_text(opening)
                 except Exception:
                     logger.exception("Failed to start game for chat {}", chat_id)
                     await update.message.reply_text("Something went wrong. Try /start again.")
@@ -172,7 +159,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             current_session_id.set(session_id)
             reset_buffer()
             try:
-                await _process_player_action(engine, repo, session_id, update, text)
+                response = await engine.process_action(text)
+                await _persist_engine_state(
+                    repo,
+                    session_id,
+                    engine,
+                    turn_number=engine.game_state.turn_count if engine.game_state else None,
+                )
+                await update.message.reply_text(response)
             except Exception:
                 logger.exception("Error processing action for chat {}", chat_id)
                 await update.message.reply_text("Something went wrong processing your action. Try again.")
