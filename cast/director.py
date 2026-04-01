@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json as _json
 from typing import Any
 
@@ -232,28 +233,32 @@ class Director(BasePerformer):
 
     async def _process_remote_events(self, events: list[GameEvent]) -> None:
         """Feed remote events into the memory system as rumours / knowledge."""
-        for ev in events:
-            scope_map = {
-                "local": KnowledgeScope.LOCAL,
-                "city": KnowledgeScope.CITY,
-                "region": KnowledgeScope.REGION,
-                "country": KnowledgeScope.COUNTRY,
-                "world": KnowledgeScope.WORLD,
-            }
-            scope = scope_map.get(ev.scope, KnowledgeScope.LOCAL)
+        await asyncio.gather(*(self._create_memory_for_event(ev) for ev in events))
 
-            # Find NPCs at the event location to be witnesses
-            witnesses: list[str] = []
-            if ev.location_id and ev.location_id in self.game_state.locations:
-                witnesses = list(self.game_state.locations[ev.location_id].npcs_present)
+    def _build_memory_kwargs(self, ev: GameEvent) -> dict:
+        """Build keyword arguments for create_memory_from_event from a GameEvent."""
+        scope_map = {
+            "local": KnowledgeScope.LOCAL,
+            "city": KnowledgeScope.CITY,
+            "region": KnowledgeScope.REGION,
+            "country": KnowledgeScope.COUNTRY,
+            "world": KnowledgeScope.WORLD,
+        }
+        scope = scope_map.get(ev.scope, KnowledgeScope.LOCAL)
+        witnesses: list[str] = []
+        if ev.location_id and ev.location_id in self.game_state.locations:
+            witnesses = list(self.game_state.locations[ev.location_id].npcs_present)
+        return {
+            "event_description": ev.on_complete_description or ev.name,
+            "witness_ids": witnesses,
+            "scope": scope,
+            "location_id": ev.location_id,
+            "game_time": self.game_state.game_clock,
+        }
 
-            await self.memory_manager.create_memory_from_event(
-                event_description=ev.on_complete_description or ev.name,
-                witness_ids=witnesses,
-                scope=scope,
-                location_id=ev.location_id,
-                game_time=self.game_state.game_clock,
-            )
+    async def _create_memory_for_event(self, ev: GameEvent) -> None:
+        """Create a memory from a single remote event."""
+        await self.memory_manager.create_memory_from_event(**self._build_memory_kwargs(ev))
 
     # ------------------------------------------------------------------
     # Internal: delegation
@@ -275,19 +280,8 @@ class Director(BasePerformer):
         if remote_events:
             await self._process_remote_events(remote_events)
 
-        # --- Scene building ---
-        if "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS:
-            scene = await self.scene_builder.execute(
-                input_data=player_action,
-                context={_KEY_GAME_STATE: self.game_state},
-            )
-            raw_outputs["scene"] = scene
-            self.game_state.current_scene = scene
-            self.game_state.scene_number += 1
-            self.game_state.scene_conversation_log = []
-
-        # --- Always initialise any uninitialized scene NPCs ---
-        await self._init_scene_npcs()
+        # --- Scene building + NPC init ---
+        await self._prepare_scene(delegates, action_type, player_action, raw_outputs)
 
         # --- Ensure targeted NPCs are in the scene ---
         # Any targets not already present are appended as uninit SceneNPCs, then
@@ -306,21 +300,7 @@ class Director(BasePerformer):
         is_aggressive = bool(plan.get("is_aggressive"))
         has_npc_targets = self._targets_match_scene_npcs(target_names)
         if has_npc_targets or "actor" in delegates or action_type == "TALK":
-            # Snapshot NPC moods before dialogue to detect changes
-            mood_snapshot = {uuid: npc.current_mood for uuid, npc in self.game_state.npcs.items()}
-
-            dialogue = await self._handle_dialogue(
-                player_action,
-                target_names,
-                is_aggressive=is_aggressive,
-            )
-            if dialogue:
-                raw_outputs["dialogue"] = dialogue
-
-            # Check for NPC retaliation after mood changes
-            retaliation = await self._check_retaliation(mood_snapshot)
-            if retaliation:
-                raw_outputs.setdefault("dialogue", []).extend(retaliation)
+            await self._run_npc_interactions(player_action, target_names, is_aggressive, raw_outputs)
 
         # --- Add local events to narrator context ---
         if local_events:
@@ -336,6 +316,44 @@ class Director(BasePerformer):
             },
         )
         return narrated
+
+    async def _prepare_scene(
+        self,
+        delegates: list[str],
+        action_type: str,
+        player_action: str,
+        raw_outputs: dict[str, Any],
+    ) -> None:
+        """Build scene if needed and initialise any uninitialized NPCs."""
+        if "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS:
+            scene = await self.scene_builder.execute(
+                input_data=player_action,
+                context={_KEY_GAME_STATE: self.game_state},
+            )
+            raw_outputs["scene"] = scene
+            self.game_state.current_scene = scene
+            self.game_state.scene_number += 1
+            self.game_state.scene_conversation_log = []
+
+        await self._init_scene_npcs()
+
+    async def _run_npc_interactions(
+        self,
+        player_action: str,
+        target_names: list[str],
+        is_aggressive: bool,
+        raw_outputs: dict[str, Any],
+    ) -> None:
+        """Run NPC dialogue and retaliation checks, updating raw_outputs."""
+        mood_snapshot = {uuid: npc.current_mood for uuid, npc in self.game_state.npcs.items()}
+
+        dialogue = await self._handle_dialogue(player_action, target_names, is_aggressive=is_aggressive)
+        if dialogue:
+            raw_outputs["dialogue"] = dialogue
+
+        retaliation = await self._check_retaliation(mood_snapshot)
+        if retaliation:
+            raw_outputs.setdefault("dialogue", []).extend(retaliation)
 
     async def _handle_dialogue(
         self,
@@ -363,8 +381,9 @@ class Director(BasePerformer):
                 if snpc.uuid and snpc.role.lower() in targets_lower:
                     role_matched_uuids.add(snpc.uuid)
 
-        dialogue_entries: list[dict[str, str]] = []
+        # Phase 1: synchronously filter matched NPCs and prepare inputs
         matched_names: set[str] = set()
+        work_items: list[tuple[Any, Any, str, CombatRoll | None]] = []
         for npc_uuid, actor in self.actors.items():
             npc = self.game_state.npcs.get(npc_uuid)
             if not npc:
@@ -388,30 +407,48 @@ class Director(BasePerformer):
                         f"OUTCOME: {combat_roll.description}\n"
                         f"You MUST narrate this outcome. Do NOT override the dice result."
                     )
+                work_items.append((npc, actor, action_text, combat_roll))
 
-                response = await actor.execute(
-                    input_data=action_text,
-                    context={
-                        "npc": npc,
-                        _KEY_GAME_STATE: self.game_state,
-                        "location_name": self._get_location_name(npc.location_id),
-                    },
+        # Phase 2: execute all NPC dialogues concurrently
+        return list(
+            await asyncio.gather(
+                *(
+                    self._execute_npc_dialogue(wi_npc, wi_actor, wi_text, wi_roll)
+                    for wi_npc, wi_actor, wi_text, wi_roll in work_items
                 )
-                result_entry: dict[str, str] = {
-                    "npc_name": npc.name,
-                    "response": response,
-                }
-                if combat_roll:
-                    player = combat_roll.player_roll
-                    npc_total = "{0}+{1}".format(combat_roll.npc_roll, combat_roll.npc_bonus)
-                    outcome = combat_roll.outcome.value
-                    result_entry["combat_roll"] = "d20: player {0} vs NPC {1} → {2}".format(
-                        player,
-                        npc_total,
-                        outcome,
-                    )
-                dialogue_entries.append(result_entry)
-        return dialogue_entries
+            )
+        )
+
+    async def _execute_npc_dialogue(
+        self,
+        npc: Any,
+        actor: Any,
+        action_text: str,
+        combat_roll: CombatRoll | None,
+    ) -> dict[str, str]:
+        """Execute a single NPC dialogue and return the result entry."""
+        response = await actor.execute(
+            input_data=action_text,
+            context={
+                "npc": npc,
+                _KEY_GAME_STATE: self.game_state,
+                "location_name": self._get_location_name(npc.location_id),
+            },
+        )
+        result_entry: dict[str, str] = {
+            "npc_name": npc.name,
+            "response": response,
+        }
+        if combat_roll:
+            player = combat_roll.player_roll
+            npc_total = "{0}+{1}".format(combat_roll.npc_roll, combat_roll.npc_bonus)
+            outcome = combat_roll.outcome.value
+            result_entry["combat_roll"] = "d20: player {0} vs NPC {1} → {2}".format(
+                player,
+                npc_total,
+                outcome,
+            )
+        return result_entry
 
     async def _init_scene_npcs(self) -> list[Any]:
         """Initialise any ``SceneNPC`` objects that haven't been turned into
@@ -510,8 +547,9 @@ class Director(BasePerformer):
         If the roll passes, the NPC retaliates — a combat dice roll is
         performed and injected into a second Actor call.
         """
-        retaliation_entries: list[dict[str, str]] = []
+        # Phase 1: synchronously filter retaliating NPCs and prepare inputs
         retaliated_names: set[str] = set()
+        work_items: list[tuple] = []
         for npc_uuid, actor in self.actors.items():
             npc = self.game_state.npcs.get(npc_uuid)
             if not npc:
@@ -528,7 +566,6 @@ class Director(BasePerformer):
                 continue
             retaliated_names.add(name_lower)
 
-            # NPC retaliates — roll combat from NPC's initiative
             combat_skill = npc.get_attribute("combat_skill", 3)
             combat_roll = roll_combat(combat_skill)
 
@@ -540,33 +577,51 @@ class Director(BasePerformer):
                 f"You MUST narrate this outcome. The NPC attacks FIRST — "
                 f"they are the aggressor now. Do NOT override the dice result."
             )
+            work_items.append((npc, actor, retaliation_input, aggression, combat_roll))
 
-            response = await actor.execute(
-                input_data=retaliation_input,
-                context={
-                    "npc": npc,
-                    _KEY_GAME_STATE: self.game_state,
-                    "location_name": self._get_location_name(npc.location_id),
-                },
+        # Phase 2: execute all retaliations concurrently
+        return list(
+            await asyncio.gather(
+                *(
+                    self._execute_retaliation(wi_npc, wi_actor, wi_input, wi_aggr, wi_roll)
+                    for wi_npc, wi_actor, wi_input, wi_aggr, wi_roll in work_items
+                )
             )
-            result_entry: dict[str, str] = {
-                "npc_name": npc.name,
-                "response": response,
-                "is_retaliation": "true",
-                "aggression_roll": "d20: {0} vs threshold {1} (mood: {2}) → attacks".format(
-                    aggression.roll,
-                    aggression.threshold,
-                    aggression.mood,
-                ),
-                "combat_roll": "d20: player {0} vs NPC {1}+{2} → {3}".format(
-                    combat_roll.player_roll,
-                    combat_roll.npc_roll,
-                    combat_roll.npc_bonus,
-                    combat_roll.outcome.value,
-                ),
-            }
-            retaliation_entries.append(result_entry)
-        return retaliation_entries
+        )
+
+    async def _execute_retaliation(
+        self,
+        npc: Any,
+        actor: Any,
+        retaliation_input: str,
+        aggression: Any,
+        combat_roll: CombatRoll,
+    ) -> dict[str, str]:
+        """Execute a single NPC retaliation and return the result entry."""
+        response = await actor.execute(
+            input_data=retaliation_input,
+            context={
+                "npc": npc,
+                _KEY_GAME_STATE: self.game_state,
+                "location_name": self._get_location_name(npc.location_id),
+            },
+        )
+        return {
+            "npc_name": npc.name,
+            "response": response,
+            "is_retaliation": "true",
+            "aggression_roll": "d20: {0} vs threshold {1} (mood: {2}) → attacks".format(
+                aggression.roll,
+                aggression.threshold,
+                aggression.mood,
+            ),
+            "combat_roll": "d20: player {0} vs NPC {1}+{2} → {3}".format(
+                combat_roll.player_roll,
+                combat_roll.npc_roll,
+                combat_roll.npc_bonus,
+                combat_roll.outcome.value,
+            ),
+        }
 
     # ------------------------------------------------------------------
     # Internal: helpers

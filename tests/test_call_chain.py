@@ -166,6 +166,15 @@ class TestLogging:
         assert "agent=AgentB" in msg
         assert "model=test-model" in msg
         assert "prompt_tokens=10" in msg
+
+    @pytest.mark.asyncio
+    async def test_send_log_has_completion_tokens(self, loguru_sink):
+        """LLM log must include completion_tokens and duration_ms."""
+        reset_buffer()
+        agent = AgentB(llm_client=_mock_llm())
+        await agent.execute(_HI)
+        llm_records = [rec for rec in loguru_sink if rec[_MESSAGE_KEY].startswith("LLM |")]
+        msg = llm_records[0][_MESSAGE_KEY]
         assert "completion_tokens=5" in msg
         assert "duration_ms=" in msg
 

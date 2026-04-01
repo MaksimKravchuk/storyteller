@@ -11,7 +11,7 @@ import types
 
 from loguru import logger
 
-from config import load_config
+from config import Config, load_config
 from db.engine import create_async_engine, create_session_factory
 from interfaces.admin import AdminServer
 from interfaces.telegram_bot import build_bot
@@ -74,6 +74,17 @@ def _run_migrations() -> None:
     logger.info("Migrations complete.")
 
 
+async def _run_telegram_bot(cfg: Config, session_factory) -> None:
+    """Initialize, start, and poll the Telegram bot until shutdown."""
+    bot = build_bot(cfg, session_factory)
+    async with bot:
+        await bot.initialize()
+        await bot.start()
+        await bot.updater.start_polling()
+        logger.info("Telegram bot polling started.")
+        await asyncio.Event().wait()
+
+
 async def main() -> None:
     cfg = load_config()
 
@@ -90,13 +101,7 @@ async def main() -> None:
 
     try:  # noqa: WPS501
         if cfg.telegram_bot_token:
-            bot = build_bot(cfg, session_factory)
-            async with bot:
-                await bot.initialize()
-                await bot.start()
-                await bot.updater.start_polling()
-                logger.info("Telegram bot polling started.")
-                await asyncio.Event().wait()
+            await _run_telegram_bot(cfg, session_factory)
         else:
             logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled, admin only.")
             await asyncio.Event().wait()

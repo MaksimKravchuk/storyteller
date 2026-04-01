@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -41,10 +42,9 @@ class DataMiner(BasePerformer):
         # Step 1: Ask the LLM what to search for
         search_terms = await self._extract_search_terms(input_data)
 
-        # Step 2: Fetch Wikipedia summaries
-        raw_articles: dict[str, dict] = {}
-        for term in search_terms:
-            raw_articles[term] = await self.wikipedia.get_summary(term)
+        # Step 2: Fetch Wikipedia summaries concurrently
+        summaries = await asyncio.gather(*(self.wikipedia.get_summary(term) for term in search_terms))
+        raw_articles: dict[str, dict] = dict(zip(search_terms, summaries))
 
         # Step 3: Synthesise into a Setting via LLM
         research_prompt = DATA_MINER_RESEARCH.render(
