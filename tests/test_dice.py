@@ -196,34 +196,27 @@ class TestAggressionRoll:
 # ---------------------------------------------------------------------------
 
 
-class _FixedRng:
-    """Fake RNG yielding player_roll first, then npc_roll."""
-
-    def __init__(self, player: int, npc: int):
-        self._calls = iter([player, npc])
-
-    def randint(self, low: int, high: int) -> int:
-        return next(self._calls)
-
-
-class _SingleRng:
-    """Fake RNG that always yields the same value."""
-
-    def __init__(self, fixed_roll: int):
-        self._fixed_roll = fixed_roll
-
-    def randint(self, low: int, high: int) -> int:
-        return self._fixed_roll
-
-
 def _fixed_rng(*, npc: int, player: int) -> random.Random:
     """Return a fake RNG that yields player_roll first, then npc_roll.
 
     ``roll_combat`` calls rng.randint twice: first for player, then for NPC.
     """
-    return _FixedRng(player, npc)  # type: ignore[return-value]
+
+    class _FixedRng:
+        def __init__(self):
+            self._calls = iter([player, npc])
+
+        def randint(self, low: int, high: int) -> int:
+            return next(self._calls)
+
+    return _FixedRng()  # type: ignore[return-value]
 
 
 def _single_rng(fixed_roll: int) -> random.Random:
     """Return a fake RNG that always yields *fixed_roll*."""
-    return _SingleRng(fixed_roll)  # type: ignore[return-value]
+
+    class _SingleRng:
+        def randint(self, low: int, high: int) -> int:
+            return fixed_roll
+
+    return _SingleRng()  # type: ignore[return-value]

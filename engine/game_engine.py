@@ -149,7 +149,7 @@ class GameEngine:
     def get_game_time(self) -> float:
         """Return the current game clock in hours."""
         if not self._game_state:
-            return float(0)
+            return 0.0
         return self._game_state.game_clock
 
     @property
