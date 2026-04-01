@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 from models.base_model import BaseModel
 
 
+@dataclass(kw_only=True)
 class Character(BaseModel):
     """Base character model — used for both the player and NPCs.
 
@@ -10,34 +13,18 @@ class Character(BaseModel):
     are optional and filled in by the NPC generator when needed.
     """
 
-    def __init__(
-        self,
-        name: str,
-        biography: str = "",
-        relationships: dict[str, str] | None = None,
-        attributes: dict[str, int] | None = None,
-        inventory: list[str] | None = None,
-        # Extended fields (populated by NPC generator)
-        appearance: str = "",
-        personality_traits: list[str] | None = None,
-        occupation: str = "",
-        speech_style: str = "",
-        knowledge_scope: str = "local",
-        location_id: str | None = None,
-    ):
-        super().__init__()
-        self.name: str = name
-        self.biography: str = biography
-        self.relationships: dict[str, str] = relationships or {}
-        self.attributes: dict[str, int] = attributes or {}
-        self.inventory: list[str] = inventory or []
-        # Extended
-        self.appearance: str = appearance
-        self.personality_traits: list[str] = personality_traits or []
-        self.occupation: str = occupation
-        self.speech_style: str = speech_style
-        self.knowledge_scope: str = knowledge_scope  # "local"/"city"/"region"/"country"/"world"
-        self.location_id: str | None = location_id
+    name: str
+    biography: str = ""
+    relationships: dict[str, str] = field(default_factory=dict)
+    attributes: dict[str, int] = field(default_factory=dict)
+    inventory: list[str] = field(default_factory=list)
+    # Extended fields (populated by NPC generator)
+    appearance: str = ""
+    personality_traits: list[str] = field(default_factory=list)
+    occupation: str = ""
+    speech_style: str = ""
+    knowledge_scope: str = "local"
+    location_id: str | None = None
 
     # --- Relationship helpers ---
 

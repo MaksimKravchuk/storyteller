@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 from models.base_model import BaseModel
 
 
+@dataclass(kw_only=True)
 class Location(BaseModel):
     """A place in the game world.
 
@@ -10,25 +13,14 @@ class Location(BaseModel):
     (building -> district -> city -> region -> country).
     """
 
-    def __init__(
-        self,
-        *,
-        name: str,
-        description: str = "",
-        parent_location_id: str | None = None,
-        location_type: str = "generic",
-        tags: list[str] | None = None,
-        connected_locations: list[str] | None = None,
-    ):
-        super().__init__()
-        self.name = name
-        self.description = description
-        self.parent_location_id = parent_location_id
-        self.location_type = location_type  # "building", "district", "city", "region", "country"
-        self.tags: list[str] = tags or []
-        self.connected_locations: list[str] = connected_locations or []  # UUIDs
-        self.npcs_present: list[str] = []  # NPC UUIDs currently at this location
-        self.points_of_interest: list[str] = []
+    name: str
+    description: str = ""
+    parent_location_id: str | None = None
+    location_type: str = "generic"  # "building", "district", "city", "region", "country"
+    tags: list[str] = field(default_factory=list)
+    connected_locations: list[str] = field(default_factory=list)  # UUIDs
+    npcs_present: list[str] = field(default_factory=list)  # NPC UUIDs currently at this location
+    points_of_interest: list[str] = field(default_factory=list)
 
     def add_npc(self, npc_id: str) -> None:
         if npc_id not in self.npcs_present:

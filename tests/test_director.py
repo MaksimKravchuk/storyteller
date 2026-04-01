@@ -279,10 +279,10 @@ def _setup_npc_in_game_state(
     uuid: str,
     name: str = _GUARD_NAME,
     occupation: str = _CITY_GUARD,
-    mood: str = _NEUTRAL,
     **kwargs: Any,
 ) -> NPCCard:
     """Create an NPC, assign it a uuid and mood, and register it in game state."""
+    mood = kwargs.pop("mood", _NEUTRAL)
     npc = NPCCard(name=name, occupation=occupation, **kwargs)
     npc.uuid = uuid
     npc.current_mood = mood

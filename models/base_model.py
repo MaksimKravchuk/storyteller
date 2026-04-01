@@ -1,9 +1,7 @@
-import uuid
+import uuid as uuid_mod
+from dataclasses import dataclass, field
 
 
+@dataclass(kw_only=True)
 class BaseModel:
-    def __init__(self):
-        self.uuid: str = self._generate_uuid()
-
-    def _generate_uuid(self) -> str:
-        return str(uuid.uuid4())
+    uuid: str = field(default_factory=lambda: str(uuid_mod.uuid4()))

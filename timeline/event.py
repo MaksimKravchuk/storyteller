@@ -33,6 +33,7 @@ class EventEffect:
     params: dict = field(default_factory=dict)  # noqa: WPS110
 
 
+@dataclass(kw_only=True)
 class GameEvent(BaseModel):
     """A scheduled event on the game timeline.
 
@@ -41,28 +42,17 @@ class GameEvent(BaseModel):
     their ``completes_at`` time.
     """
 
-    def __init__(
-        self,
-        *,
-        name: str,
-        scheduled_at: float,
-        duration: float,
-        owner_id: str | None = None,
-        location_id: str | None = None,
-        scope: str = "local",
-        effects: list[EventEffect] | None = None,
-        follow_up_events: list[dict] | None = None,
-        on_complete_description: str = "",
-    ):
-        super().__init__()
-        self.name = name
-        self.scheduled_at = scheduled_at
-        self.duration = duration
-        self.completes_at: float = scheduled_at + duration
-        self.status: EventStatus = EventStatus.PENDING
-        self.owner_id = owner_id  # NPC UUID or None for world events
-        self.location_id = location_id  # Where the event takes place
-        self.scope = scope  # "local"/"city"/"region"/"country"/"world"
-        self.effects: list[EventEffect] = effects or []
-        self.follow_up_events: list[dict] = follow_up_events or []
-        self.on_complete_description = on_complete_description
+    name: str
+    scheduled_at: float
+    duration: float
+    owner_id: str | None = None
+    location_id: str | None = None
+    scope: str = "local"
+    effects: list[EventEffect] = field(default_factory=list)
+    follow_up_events: list[dict] = field(default_factory=list)
+    on_complete_description: str = ""
+    completes_at: float = field(init=False)
+    status: EventStatus = field(default=EventStatus.PENDING)
+
+    def __post_init__(self) -> None:
+        self.completes_at = self.scheduled_at + self.duration
