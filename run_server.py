@@ -39,8 +39,9 @@ class _InterceptHandler(logging.Handler):
         while frame and frame.f_code.co_filename == logging.__file__:
             frame = frame.f_back
             depth += 1
+        log_message = record.getMessage()
         try:
-            logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+            logger.opt(depth=depth, exception=record.exc_info).log(level, log_message)
         except Exception as exc:
             sys.stderr.write(
                 f"_InterceptHandler: loguru failed ({type(exc).__name__}: {exc}). "

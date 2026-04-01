@@ -11,6 +11,10 @@ if TYPE_CHECKING:
     from models.game_state import GameState
 
 
+def _is_completed_after(ev: GameEvent, since_time: float) -> bool:
+    return ev.status == EventStatus.COMPLETED and ev.completes_at > since_time
+
+
 class EventManager:
     """Manages the game timeline.
 
@@ -73,7 +77,8 @@ class EventManager:
         # Gather events that complete within [old_clock, new_clock]
         completed: list[GameEvent] = []
         for ev in self._events:
-            if ev.status == EventStatus.PENDING and ev.completes_at <= new_clock and ev.completes_at > old_clock:
+            is_newly_complete = ev.completes_at <= new_clock and ev.completes_at > old_clock
+            if ev.status == EventStatus.PENDING and is_newly_complete:
                 ev.status = EventStatus.COMPLETED
                 completed.append(ev)
 
@@ -97,7 +102,7 @@ class EventManager:
 
     def get_completed_since(self, since_time: float) -> list[GameEvent]:
         """Return events that completed after ``since_time``."""
-        return [ev for ev in self._events if ev.status == EventStatus.COMPLETED and ev.completes_at > since_time]
+        return [ev for ev in self._events if _is_completed_after(ev, since_time)]
 
     # ------------------------------------------------------------------
     # Internal
@@ -145,11 +150,13 @@ class EventManager:
         scene = self._game_state.current_scene
         if not scene or scene.location_id != npc.location_id:
             return
-        if any(snpc.uuid == npc_id for snpc in scene.npcs_present):
+        already_present = any(snpc.uuid == npc_id for snpc in scene.npcs_present)
+        if already_present:
             return
         from models.scene import SceneNPC
 
-        scene.npcs_present.append(SceneNPC(role=npc.occupation or npc.name, uuid=npc_id))
+        npc_role = npc.occupation or npc.name
+        scene.npcs_present.append(SceneNPC(role=npc_role, uuid=npc_id))
 
     def _apply_add_item(self, effect: EventEffect) -> None:
         npc_id = effect.params.get("npc_id", effect.target_id)

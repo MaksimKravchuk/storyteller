@@ -45,7 +45,8 @@ class NPCGenerator(BasePerformer):
             social_structure=game_state.setting.social_structure[:_SOCIAL_STRUCTURE_MAX],
         )
 
-        npcs = await asyncio.gather(*(self._generate_npc(req, game_state) for req in input_data))
+        tasks = (self._generate_npc(req, game_state) for req in input_data)
+        npcs = await asyncio.gather(*tasks)
         return list(npcs)
 
     async def _generate_npc(self, npc_request: str, game_state: Any) -> NPCCard:

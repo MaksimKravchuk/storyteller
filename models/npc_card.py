@@ -5,6 +5,10 @@ from dataclasses import dataclass, field
 from models.character import Character
 
 
+def _format_attr(attr_name: str, attr_val: object) -> str:
+    return "{0}={1}".format(attr_name, attr_val)
+
+
 @dataclass(kw_only=True)
 class NPCCard(Character):
     """Extended character profile created by the NPC Generator.
@@ -29,9 +33,9 @@ class NPCCard(Character):
             f"Current mood: {self.current_mood}",
         ]
         if self.inventory:
-            inventory_list = ", ".join(self.inventory)
-            lines.append("Inventory: {0}".format(inventory_list))
+            lines.append("Inventory: {0}".format(", ".join(self.inventory)))
         if self.attributes:
-            attrs = ", ".join("{0}={1}".format(attr_name, attr_val) for attr_name, attr_val in self.attributes.items())
+            attr_strs = [_format_attr(attr_name, attr_val) for attr_name, attr_val in self.attributes.items()]
+            attrs = ", ".join(attr_strs)
             lines.append(f"Attributes: {attrs}")
         return "\n".join(lines)

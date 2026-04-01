@@ -180,7 +180,9 @@ class TestAggressionRoll:
 
     def test_hostile_high_attack_rate(self):
         """Hostile (threshold 5): 16/20 = 80% chance to attack."""
-        attacks = sum(1 for seed in range(1000) if roll_aggression(_HOSTILE, _rng=random.Random(seed)).will_attack)
+        rngs = [random.Random(seed) for seed in range(1000)]
+        rolls = [roll_aggression(_HOSTILE, _rng=rng) for rng in rngs]
+        attacks = sum(1 for roll in rolls if roll.will_attack)
         # Should be roughly 80%, allow wide margin
         assert _LOW_ATTACK_RATE < attacks < _HIGH_ATTACK_RATE
 

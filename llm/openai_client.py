@@ -7,6 +7,14 @@ from llm.base_client import BaseLLMClient
 from llm.message import Message, LLMResponse
 
 
+_ALLOWED_CONTROL = frozenset("\t\n\r")
+
+
+def _is_printable(ch: str) -> bool:
+    """Return True if the character is safe for JSON strings."""
+    return (ch >= "\x20" and ch != "\x7f") or ch in _ALLOWED_CONTROL
+
+
 def _sanitize(text: str) -> str:
     """Strip characters that break JSON serialization or OpenAI's HTTP parser.
 
@@ -18,7 +26,7 @@ def _sanitize(text: str) -> str:
     cleaned = text.encode("utf-8", "surrogatepass").decode("utf-8", "replace")
     # Strip null bytes and other control characters illegal in JSON strings
     # Keep \t (0x09), \n (0x0A), \r (0x0D); remove everything else below 0x20 and 0x7F
-    return "".join(ch for ch in cleaned if (ch >= "\x20" and ch != "\x7f") or ch in "\t\n\r")
+    return "".join(ch for ch in cleaned if _is_printable(ch))
 
 
 class OpenAIClient(BaseLLMClient):
@@ -88,10 +96,15 @@ class OpenAIClient(BaseLLMClient):
             if delta.content:
                 yield delta.content
 
-    def _format_messages(self, messages: list[Message], system_prompt: str = "") -> list[dict[str, str]]:
+    def _format_messages(
+        self,
+        messages: list[Message],
+        system_prompt: str = "",
+    ) -> list[dict[str, str]]:
         formatted: list[dict[str, str]] = []
         if system_prompt:
             formatted.append({"role": "system", "content": _sanitize(system_prompt)})
         for msg in messages:
-            formatted.append({"role": msg.role.value, "content": _sanitize(msg.content)})
+            sanitized_content = _sanitize(msg.content)
+            formatted.append({"role": msg.role.value, "content": sanitized_content})
         return formatted

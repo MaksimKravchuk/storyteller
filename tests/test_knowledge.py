@@ -169,7 +169,8 @@ class TestKnowledgeGraph:
             empty_graph.add_node(node)
         empty_graph.add_edge(nodes[0].uuid, nodes[1].uuid, EdgeType.RELATED_TO)
         empty_graph.add_edge(nodes[1].uuid, nodes[2].uuid, EdgeType.RELATED_TO)
-        related_uuids = {rel_node.uuid for rel_node in empty_graph.get_related(nodes[0].uuid, depth=2)}
+        related = empty_graph.get_related(nodes[0].uuid, depth=2)
+        related_uuids = {rel_node.uuid for rel_node in related}
         assert nodes[1].uuid in related_uuids
         assert nodes[2].uuid in related_uuids
 

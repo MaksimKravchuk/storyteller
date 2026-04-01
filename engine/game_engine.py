@@ -20,6 +20,27 @@ from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 
 
+def _format_person_content(person: dict) -> str:
+    name = person.get("name", "Unknown")
+    role = person.get("role", "")
+    description = person.get("description", "")
+    return f"{name}: {role}. {description}"
+
+
+def _format_event_content(event: dict) -> str:
+    name = event.get("name", "Unknown event")
+    date = event.get("date", "")
+    description = event.get("description", "")
+    return f"{name} ({date}): {description}"
+
+
+def _format_location_content(loc: dict) -> str:
+    name = loc.get("name", "Unknown place")
+    loc_type = loc.get("type", "")
+    description = loc.get("description", "")
+    return f"{name} ({loc_type}): {description}"
+
+
 class GameEngine:
     """Top-level API for the Storyteller text quest engine.
 
@@ -218,7 +239,7 @@ class GameEngine:
         for person in setting.key_persons:
             self._add_setting_node(
                 self._knowledge_graph,
-                f"{person.get('name', 'Unknown')}: {person.get('role', '')}. {person.get('description', '')}",
+                _format_person_content(person),
                 KnowledgeScope.COUNTRY,
                 required_education=3,
                 tags=["person", "politics"],
@@ -226,7 +247,7 @@ class GameEngine:
         for event in setting.key_events:
             self._add_setting_node(
                 self._knowledge_graph,
-                f"{event.get('name', 'Unknown event')} ({event.get('date', '')}): {event.get('description', '')}",
+                _format_event_content(event),
                 KnowledgeScope.REGION,
                 required_education=2,
                 tags=["event", "history"],
@@ -237,7 +258,7 @@ class GameEngine:
         for loc in setting.locations:
             self._add_setting_node(
                 self._knowledge_graph,
-                f"{loc.get('name', 'Unknown place')} ({loc.get('type', '')}): {loc.get('description', '')}",
+                _format_location_content(loc),
                 KnowledgeScope.CITY,
                 tags=["location"],
             )

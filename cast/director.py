@@ -19,6 +19,28 @@ from timeline.event_manager import EventManager
 from timeline.time_costs import resolve_time_cost
 
 _SCENE_SUMMARY_CHARS = 500
+
+
+def _role_from_str(role_str: str) -> Role:
+    """Map a serialised role string to a Role enum value."""
+    return Role.USER if role_str == "user" else Role.ASSISTANT
+
+
+_KEY_PLAYER_ACTION = "player_action"
+
+
+def _msg_from_dict(msg: dict) -> Message:
+    """Build a Message from a serialised dict."""
+    return Message(role=_role_from_str(msg["role"]), content=msg["content"])
+
+
+def _format_scene_entry(entry: dict) -> str:
+    """Format a single scene log entry as a bullet point."""
+    action = entry[_KEY_PLAYER_ACTION]
+    action_type = entry.get("action_type", "?")
+    return f"- Player: {action} -> {action_type}"
+
+
 _KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"
 _DEFAULT_ACTION = "OTHER"
@@ -137,14 +159,14 @@ class Director(BasePerformer):
         self.game_state.conversation_log.append(
             {
                 "turn": self.game_state.turn_count,
-                "player_action": player_action,
+                _KEY_PLAYER_ACTION: player_action,
                 "response": narrated_response,
                 "game_clock": self.game_state.game_clock,
             }
         )
         self.game_state.scene_conversation_log.append(
             {
-                "player_action": player_action,
+                _KEY_PLAYER_ACTION: player_action,
                 "response_summary": narrated_response[:_SCENE_SUMMARY_CHARS],
                 _KEY_ACTION_TYPE: action_type,
             }
@@ -193,9 +215,7 @@ class Director(BasePerformer):
         raw = self.game_state.pending_clarification
         if not raw:
             return None
-        return [
-            Message(role=Role.USER if msg["role"] == "user" else Role.ASSISTANT, content=msg["content"]) for msg in raw
-        ]
+        return [_msg_from_dict(msg) for msg in raw]
 
     def _build_scene_history(self) -> list[Message] | None:
         """Build a conversation history from the current scene's log.
@@ -212,7 +232,7 @@ class Director(BasePerformer):
             messages.append(
                 Message(
                     role=Role.USER,
-                    content=f'Player action: "{entry["player_action"]}"',
+                    content=f'Player action: "{entry[_KEY_PLAYER_ACTION]}"',
                 )
             )
             messages.append(
@@ -304,7 +324,7 @@ class Director(BasePerformer):
         return await self.narrator.execute(
             input_data=raw_outputs,
             context={
-                "player_action": player_action,
+                _KEY_PLAYER_ACTION: player_action,
                 _KEY_GAME_STATE: self.game_state,
                 "scene_history": self.game_state.scene_conversation_log[-5:],
             },
@@ -430,9 +450,8 @@ class Director(BasePerformer):
     def _resolve_target_uuids(self, target_names: list[str]) -> list[str]:
         """Resolve target names to a de-duplicated list of NPC UUIDs."""
         targets_lower = {target.lower() for target in target_names}
-        candidate_uuids = self._role_matched_uuids(targets_lower) | {
-            uid for uid, npc in self.game_state.npcs.items() if npc.name.lower() in targets_lower
-        }
+        name_matched = self._name_matched_uuids(targets_lower)
+        candidate_uuids = self._role_matched_uuids(targets_lower) | name_matched
         return self._deduplicate_by_name(candidate_uuids)
 
     def _deduplicate_by_name(self, uuids: set[str]) -> list[str]:
@@ -451,7 +470,19 @@ class Director(BasePerformer):
         scene = self.game_state.current_scene
         if not scene:
             return set()
-        return {snpc.uuid for snpc in scene.npcs_present if snpc.uuid and snpc.role.lower() in targets_lower}
+        matched: set[str] = set()
+        for snpc in scene.npcs_present:
+            if snpc.uuid and snpc.role.lower() in targets_lower:
+                matched.add(snpc.uuid)
+        return matched
+
+    def _name_matched_uuids(self, targets_lower: set[str]) -> set[str]:
+        """Return UUIDs of NPCs whose name matches a target."""
+        matched: set[str] = set()
+        for uid, npc in self.game_state.npcs.items():
+            if npc.name.lower() in targets_lower:
+                matched.add(uid)
+        return matched
 
     def _build_combat_action(
         self,
@@ -554,15 +585,19 @@ class Director(BasePerformer):
         scene = self.game_state.current_scene
         if not scene:
             return
-        existing_roles = {snpc.role.lower() for snpc in scene.npcs_present}
-        # Also check already-initialised NPC names
-        npcs = self.game_state.npcs
-        existing_names = {
-            npcs[snpc.uuid].name.lower() for snpc in scene.npcs_present if snpc.uuid and snpc.uuid in npcs
-        }
+        known = self._known_scene_identifiers(scene)
         for target in target_names:
-            if target.lower() not in existing_roles and target.lower() not in existing_names:
+            if target.lower() not in known:
                 scene.npcs_present.append(SceneNPC(role=target))
+
+    def _known_scene_identifiers(self, scene: Any) -> set[str]:
+        """Return lowercase roles and names of NPCs already in the scene."""
+        npcs = self.game_state.npcs
+        known = {snpc.role.lower() for snpc in scene.npcs_present}
+        for snpc in scene.npcs_present:
+            if snpc.uuid and snpc.uuid in npcs:
+                known.add(npcs[snpc.uuid].name.lower())
+        return known
 
     def _register_new_npc(self, npc: Any) -> None:
         """Register a new NPC in the game state and create an Actor for it."""
@@ -606,7 +641,11 @@ class Director(BasePerformer):
             if work is not None:
                 work_items.append(work)
 
-        return list(await asyncio.gather(*(self._execute_retaliation(wi) for wi in work_items)))
+        return list(
+            await asyncio.gather(
+                *(self._execute_retaliation(wi) for wi in work_items),
+            )
+        )
 
     def _build_retaliation_work(
         self,
@@ -713,9 +752,9 @@ class Director(BasePerformer):
         scene_log = self.game_state.scene_conversation_log
         if not scene_log:
             return None
-        return "\n".join(
-            f"- Player: {entry['player_action']} -> {entry.get('action_type', '?')}" for entry in scene_log[-5:]
-        )
+        recent = scene_log[-5:]
+        lines = [_format_scene_entry(entry) for entry in recent]
+        return "\n".join(lines)
 
     def _get_location_name(self, location_id: str | None) -> str:
         if location_id and location_id in self.game_state.locations:

@@ -1157,8 +1157,9 @@ class TestDuplicateNPCNames:
         await director.act("talk to the guard")
 
         # Only ONE actor should be called, not both
-        total_calls = director.actors[_NPC_A].execute.call_count + director.actors[_NPC_B].execute.call_count
-        assert total_calls == 1
+        calls_a = director.actors[_NPC_A].execute.call_count
+        calls_b = director.actors[_NPC_B].execute.call_count
+        assert calls_a + calls_b == 1
 
     @pytest.mark.asyncio
     async def test_retaliation_skips_duplicate_names(self):
@@ -1212,8 +1213,9 @@ class TestDuplicateNPCNames:
         )
 
         # 1 dialogue call + 1 retaliation = 2 total (not 2+2=4)
-        total_calls = director.actors[_NPC_A].execute.call_count + director.actors[_NPC_B].execute.call_count
-        assert total_calls == 2
+        calls_a = director.actors[_NPC_A].execute.call_count
+        calls_b = director.actors[_NPC_B].execute.call_count
+        assert calls_a + calls_b == 2
 
 
 # ---------------------------------------------------------------------------

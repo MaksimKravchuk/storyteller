@@ -270,7 +270,11 @@ async def test_execute_emits_start_and_done_logs(loguru_sink):
     await _OKPerformer("hello").execute(_INPUT)
     messages = [rec[_MESSAGE_KEY] for rec in loguru_sink]
     assert any("| start" in msg and "_OKPerformer" in msg for msg in messages)
-    assert any("| done" in msg and "_OKPerformer" in msg and "duration_ms=" in msg for msg in messages)
+    assert any(_is_done_log(msg) for msg in messages)
+
+
+def _is_done_log(msg: str) -> bool:
+    return "| done" in msg and "_OKPerformer" in msg and "duration_ms=" in msg
 
 
 @pytest.mark.asyncio

@@ -80,7 +80,8 @@ class BasePerformer(ABC):
         Uses a ContextVar token so the previous stack is restored exactly,
         even if ``act()`` raises.
         """
-        new_stack = list(agent_stack.get(None) or []) + [type(self).__name__]
+        current_stack = agent_stack.get(None) or []
+        new_stack = list(current_stack) + [type(self).__name__]
         token = agent_stack.set(new_stack)
         start = time.monotonic()
         logger.info("agent={} parent={} | start", new_stack[-1], _parent_agent(new_stack))
