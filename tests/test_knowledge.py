@@ -57,6 +57,9 @@ class TestKnowledgeNode:
         assert node.required_education == 0
         assert node.required_social_status == 0
         assert node.tags == []
+
+    def test_default_confidence_and_uuid(self):
+        node = KnowledgeNode(content="Test fact")
         assert node.confidence == 1.0  # noqa: WPS459
         assert isinstance(node.uuid, str)
 

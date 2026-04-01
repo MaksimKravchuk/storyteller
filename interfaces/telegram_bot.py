@@ -126,6 +126,68 @@ async def _process_player_action(engine, repo, session_id, update, text) -> None
     await update.message.reply_text(response)
 
 
+async def _handle_awaiting_setting(
+    update: Update,
+    repo: GameRepository,
+    session_id: str,
+    text: str,
+    cfg: Config,
+    language: str,
+    chat_id: int,
+) -> None:
+    """Handle the 'awaiting_setting' state: research and start a new game."""
+    await update.message.reply_text("Researching setting and generating opening scene... (this may take a minute)")
+    with logger.contextualize(session_id=session_id):
+        current_session_id.set(session_id)
+        reset_buffer()
+        engine = create_engine(cfg, language=language)
+        try:
+            await _start_new_game(engine, repo, session_id, update, text)
+        except Exception:
+            logger.exception("Failed to start game for chat {}", chat_id)
+            await update.message.reply_text("Something went wrong. Try /start again.")
+            await repo.update_session(session_id, state=_STATE_IDLE)
+
+
+async def _handle_playing(
+    update: Update,
+    repo: GameRepository,
+    session_id: str,
+    text: str,
+    cfg: Config,
+    language: str,
+) -> None:
+    """Handle the 'playing' state: load game, process action, persist."""
+    loaded = await _load_game_or_reset(repo, session_id, update)
+    if loaded is None:
+        return
+
+    game_state, kg, events = loaded
+    engine = await create_engine_from_state(cfg, game_state, kg, events, language=language)
+
+    with logger.contextualize(session_id=session_id):
+        current_session_id.set(session_id)
+        reset_buffer()
+        try:
+            await _process_player_action(engine, repo, session_id, update, text)
+        except Exception:
+            logger.exception("Error processing action for session {}", session_id)
+            await update.message.reply_text("Something went wrong processing your action. Try again.")
+
+
+async def _load_game_or_reset(
+    repo: GameRepository,
+    session_id: str,
+    update: Update,
+) -> tuple | None:
+    """Load game state; if missing, notify user and reset session."""
+    loaded = await repo.load_game_state(session_id)
+    if loaded is None:
+        await update.message.reply_text("No game found. Send /start to begin.")
+        await repo.update_session(session_id, state=_STATE_IDLE)
+    return loaded
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     text = update.message.text.strip()
@@ -143,39 +205,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             return
 
         if state == "awaiting_setting":
-            await update.message.reply_text(
-                "Researching setting and generating opening scene... (this may take a minute)"
-            )
-            with logger.contextualize(session_id=session_id):
-                current_session_id.set(session_id)
-                reset_buffer()
-                engine = create_engine(cfg, language=language)
-                try:
-                    await _start_new_game(engine, repo, session_id, update, text)
-                except Exception:
-                    logger.exception("Failed to start game for chat {}", chat_id)
-                    await update.message.reply_text("Something went wrong. Try /start again.")
-                    await repo.update_session(session_id, state=_STATE_IDLE)
+            await _handle_awaiting_setting(update, repo, session_id, text, cfg, language, chat_id)
             return
 
-        # PLAYING state
-        loaded = await repo.load_game_state(session_id)
-        if loaded is None:
-            await update.message.reply_text("No game found. Send /start to begin.")
-            await repo.update_session(session_id, state=_STATE_IDLE)
-            return
-
-        game_state, kg, events = loaded
-        engine = await create_engine_from_state(cfg, game_state, kg, events, language=language)
-
-        with logger.contextualize(session_id=session_id):
-            current_session_id.set(session_id)
-            reset_buffer()
-            try:
-                await _process_player_action(engine, repo, session_id, update, text)
-            except Exception:
-                logger.exception("Error processing action for chat {}", chat_id)
-                await update.message.reply_text("Something went wrong processing your action. Try again.")
+        await _handle_playing(update, repo, session_id, text, cfg, language)
 
 
 def build_bot(cfg: Config, db_session_factory) -> Application:

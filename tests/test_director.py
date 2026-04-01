@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from unittest.mock import AsyncMock, MagicMock
 
@@ -241,6 +242,22 @@ class TestGameStateSceneFields:
 # ---------------------------------------------------------------------------
 
 
+async def _assert_action_increments_turn(action_type: str) -> None:
+    """Helper: verify a single action type increments turn_count."""
+    gs = _make_game_state()
+    director = _make_director(
+        game_state=gs,
+        route_response={
+            _ACTION_TYPE: action_type,
+            _TARGETS: [],
+            _NEEDS_CLARIFICATION: False,
+            _DELEGATE_TO: [_NARRATOR],
+        },
+    )
+    await director.act("do something")
+    assert gs.turn_count == 1, f"{action_type} should increment turn_count"
+
+
 class TestTurnCounting:
     @pytest.mark.asyncio
     async def test_turn_increments_on_talk(self):
@@ -311,19 +328,7 @@ class TestTurnCounting:
     @pytest.mark.asyncio
     async def test_all_counting_actions_increment(self):
         """Verify every action in TURN_COUNTING_ACTIONS increments turn_count."""
-        for action_type in TURN_COUNTING_ACTIONS:
-            gs = _make_game_state()
-            director = _make_director(
-                game_state=gs,
-                route_response={
-                    _ACTION_TYPE: action_type,
-                    _TARGETS: [],
-                    _NEEDS_CLARIFICATION: False,
-                    _DELEGATE_TO: [_NARRATOR],
-                },
-            )
-            await director.act("do something")
-            assert gs.turn_count == 1, f"{action_type} should increment turn_count"
+        await asyncio.gather(*(_assert_action_increments_turn(at) for at in TURN_COUNTING_ACTIONS))
 
 
 # ---------------------------------------------------------------------------
@@ -455,18 +460,16 @@ class TestSceneConversationLog:
     @pytest.mark.asyncio
     async def test_multiple_actions_accumulate(self):
         gs = _make_game_state()
+        route = {
+            _ACTION_TYPE: _TALK,
+            _TARGETS: [],
+            _NEEDS_CLARIFICATION: False,
+            _DELEGATE_TO: [_NARRATOR],
+        }
 
-        for action_text in (_HELLO, "what news?", "examine sword"):
-            director = _make_director(
-                game_state=gs,
-                route_response={
-                    _ACTION_TYPE: _TALK,
-                    _TARGETS: [],
-                    _NEEDS_CLARIFICATION: False,
-                    _DELEGATE_TO: [_NARRATOR],
-                },
-            )
-            await director.act(action_text)
+        await _make_director(game_state=gs, route_response=route).act(_HELLO)
+        await _make_director(game_state=gs, route_response=route).act("what news?")
+        await _make_director(game_state=gs, route_response=route).act("examine sword")
 
         assert len(gs.scene_conversation_log) == 3
         assert gs.scene_conversation_log[0][_PLAYER_ACTION] == _HELLO
@@ -525,7 +528,14 @@ class TestBuildSceneHistory:
         assert history[0].role == Role.USER
         assert _HELLO in history[0].content
         assert history[1].role == Role.ASSISTANT
-        # Assistant message should be valid JSON
+
+    def test_assistant_message_is_valid_json(self):
+        gs = _make_game_state()
+        gs.scene_conversation_log = [
+            {_PLAYER_ACTION: _HELLO, _RESPONSE_SUMMARY: "Hi there", _ACTION_TYPE: _TALK},
+        ]
+        director = _make_director(game_state=gs)
+        history = director._build_scene_history()
         parsed = json.loads(history[1].content)
         assert parsed[_ACTION_TYPE] == _TALK
 

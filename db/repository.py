@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid as _uuid
 from typing import Any
 
@@ -98,24 +99,7 @@ class GameRepository:
         setting = row_to_setting(dict(setting_row))
 
         # Load knowledge graph
-        kg = KnowledgeGraph()
-        nodes_query = await self._session.execute(
-            select(tbl.knowledge_nodes).where(tbl.knowledge_nodes.c.game_state_id == game_state_id)
-        )
-        for row in nodes_query.mappings():
-            node = row_to_knowledge_node(dict(row))
-            kg.add_node(node)
-
-        edges_query = await self._session.execute(
-            select(tbl.knowledge_edges).where(tbl.knowledge_edges.c.game_state_id == game_state_id)
-        )
-        for row in edges_query.mappings():
-            kg.add_edge(
-                row["from_node_id"],
-                row["to_node_id"],
-                EdgeType(row["edge_type"]),
-                row["metadata_"] if row["metadata_"] else None,
-            )
+        kg = await self._load_knowledge_graph(game_state_id)
 
         # Build GameState
         game_state = GameState(setting=setting, knowledge_graph=kg)
@@ -128,44 +112,11 @@ class GameRepository:
         game_state.scene_conversation_log = gs_row.get("scene_conversation_log", [])
         game_state.pending_clarification = gs_row.get("pending_clarification")
 
-        # Load player
-        player_query = await self._session.execute(
-            select(tbl.players).where(tbl.players.c.game_state_id == game_state_id)
-        )
-        player_row = player_query.mappings().first()
-        if player_row:
-            game_state.player = row_to_player(dict(player_row))
+        # Load entities into game_state
+        await self._load_entities(game_state_id, game_state)
 
-        # Load locations
-        locations_query = await self._session.execute(
-            select(tbl.locations).where(tbl.locations.c.game_state_id == game_state_id)
-        )
-        for row in locations_query.mappings():
-            loc = row_to_location(dict(row))
-            game_state.locations[loc.uuid] = loc
-
-        # Load NPCs
-        npcs_query = await self._session.execute(select(tbl.npcs).where(tbl.npcs.c.game_state_id == game_state_id))
-        for row in npcs_query.mappings():
-            npc = row_to_npc(dict(row))
-            game_state.npcs[npc.uuid] = npc
-
-        # Load current scene
-        scene_query = await self._session.execute(
-            select(tbl.scenes).where(
-                tbl.scenes.c.game_state_id == game_state_id,
-                tbl.scenes.c.is_current == True,  # noqa: E712
-            )
-        )
-        scene_row = scene_query.mappings().first()
-        if scene_row:
-            game_state.current_scene = row_to_scene(dict(scene_row))
-
-        # Load events
-        events_query = await self._session.execute(
-            select(tbl.game_events).where(tbl.game_events.c.game_state_id == game_state_id)
-        )
-        events = [row_to_game_event(dict(event_row)) for event_row in events_query.mappings()]
+        # Load scene and events
+        events = await self._load_scene_and_events(game_state_id, game_state)
 
         return game_state, kg, events
 
@@ -211,81 +162,7 @@ class GameRepository:
         game_state_id = upsert_result.scalar_one()
         await self._session.flush()
 
-        # Setting (upsert)
-        setting_row = setting_to_row(game_state.setting, game_state_id)
-        setting_stmt = (
-            pg_insert(tbl.settings)
-            .values(**setting_row)
-            .on_conflict_do_update(
-                index_elements=[_COL_GAME_STATE_ID],
-                set_={key: col_val for key, col_val in setting_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
-            )
-        )
-        await self._session.execute(setting_stmt)
-
-        # Player (upsert)
-        player_row = player_to_row(game_state.player, game_state_id)
-        player_stmt = (
-            pg_insert(tbl.players)
-            .values(**player_row)
-            .on_conflict_do_update(
-                index_elements=[_COL_GAME_STATE_ID],
-                set_={key: col_val for key, col_val in player_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
-            )
-        )
-        await self._session.execute(player_stmt)
-
-        # Locations (delete + insert)
-        await self._session.execute(delete(tbl.locations).where(tbl.locations.c.game_state_id == game_state_id))
-        if game_state.locations:
-            rows = [location_to_row(loc, game_state_id) for loc in game_state.locations.values()]
-            await self._session.execute(tbl.locations.insert(), rows)
-
-        # NPCs (delete + insert)
-        await self._session.execute(delete(tbl.npcs).where(tbl.npcs.c.game_state_id == game_state_id))
-        if game_state.npcs:
-            rows = [npc_to_row(npc, game_state_id) for npc in game_state.npcs.values()]
-            await self._session.execute(tbl.npcs.insert(), rows)
-
-        # Scenes (delete + insert current)
-        await self._session.execute(delete(tbl.scenes).where(tbl.scenes.c.game_state_id == game_state_id))
-        if game_state.current_scene:
-            row = scene_to_row(game_state.current_scene, game_state_id, is_current=True)
-            await self._session.execute(tbl.scenes.insert().values(**row))
-
-        # Knowledge nodes (delete + insert)
-        await self._session.execute(
-            delete(tbl.knowledge_nodes).where(tbl.knowledge_nodes.c.game_state_id == game_state_id)
-        )
-        nodes = knowledge_graph.all_nodes()
-        if nodes:
-            rows = [knowledge_node_to_row(node, game_state_id) for node in nodes]
-            await self._session.execute(tbl.knowledge_nodes.insert(), rows)
-
-        # Knowledge edges (delete + insert)
-        await self._session.execute(
-            delete(tbl.knowledge_edges).where(tbl.knowledge_edges.c.game_state_id == game_state_id)
-        )
-        edge_rows: list[dict] = []
-        for node in nodes:
-            for target_id, edge_type in knowledge_graph.get_edges_from(node.uuid):
-                edge_rows.append(
-                    {
-                        "game_state_id": game_state_id,
-                        "from_node_id": node.uuid,
-                        "to_node_id": target_id,
-                        "edge_type": edge_type.value,
-                        "metadata_": {},
-                    }
-                )
-        if edge_rows:
-            await self._session.execute(tbl.knowledge_edges.insert(), edge_rows)
-
-        # Events (delete + insert)
-        await self._session.execute(delete(tbl.game_events).where(tbl.game_events.c.game_state_id == game_state_id))
-        if events:
-            rows = [game_event_to_row(ev, game_state_id) for ev in events]
-            await self._session.execute(tbl.game_events.insert(), rows)
+        await self._persist_children(game_state_id, game_state, knowledge_graph, events)
 
     # ── Admin queries ─────────────────────────────────────
 
@@ -345,18 +222,24 @@ class GameRepository:
         row = player_query.mappings().first()
         detail["player"] = dict(row) if row else None
 
-        # Counts
+        # Counts — fetch all in parallel
         from sqlalchemy import func
 
-        for table_name, table in (
+        count_tables = (
             ("location_count", tbl.locations),
             ("npc_count", tbl.npcs),
             ("knowledge_node_count", tbl.knowledge_nodes),
             ("event_count", tbl.game_events),
-        ):
-            count_query = await self._session.execute(
-                select(func.count()).select_from(table).where(table.c.game_state_id == game_state_id)
+        )
+        count_results = await asyncio.gather(
+            *(
+                self._session.execute(
+                    select(func.count()).select_from(table).where(table.c.game_state_id == game_state_id)
+                )
+                for _, table in count_tables
             )
+        )
+        for (table_name, _), count_query in zip(count_tables, count_results):
             detail[table_name] = count_query.scalar()
 
         return detail
@@ -462,3 +345,146 @@ class GameRepository:
             stmt = stmt.where(tbl.ai_call_logs.c.turn_number == turn_number)
         ai_logs_query = await self._session.execute(stmt)
         return [dict(row) for row in ai_logs_query.mappings()]
+
+    # ── Private helpers ───────────────────────────────────
+
+    async def _load_knowledge_graph(self, game_state_id: str) -> KnowledgeGraph:
+        """Load knowledge graph nodes and edges from the database."""
+        kg = KnowledgeGraph()
+        nodes_query = await self._session.execute(
+            select(tbl.knowledge_nodes).where(tbl.knowledge_nodes.c.game_state_id == game_state_id)
+        )
+        for row in nodes_query.mappings():
+            node = row_to_knowledge_node(dict(row))
+            kg.add_node(node)
+
+        edges_query = await self._session.execute(
+            select(tbl.knowledge_edges).where(tbl.knowledge_edges.c.game_state_id == game_state_id)
+        )
+        for row in edges_query.mappings():
+            kg.add_edge(
+                row["from_node_id"],
+                row["to_node_id"],
+                EdgeType(row["edge_type"]),
+                row["metadata_"] if row["metadata_"] else None,
+            )
+        return kg
+
+    async def _load_entities(self, game_state_id: str, game_state: GameState) -> None:
+        """Load player, locations, and NPCs into game_state."""
+        player_query = await self._session.execute(
+            select(tbl.players).where(tbl.players.c.game_state_id == game_state_id)
+        )
+        player_row = player_query.mappings().first()
+        if player_row:
+            game_state.player = row_to_player(dict(player_row))
+
+        locations_query = await self._session.execute(
+            select(tbl.locations).where(tbl.locations.c.game_state_id == game_state_id)
+        )
+        for row in locations_query.mappings():
+            loc = row_to_location(dict(row))
+            game_state.locations[loc.uuid] = loc
+
+        npcs_query = await self._session.execute(select(tbl.npcs).where(tbl.npcs.c.game_state_id == game_state_id))
+        for row in npcs_query.mappings():
+            npc = row_to_npc(dict(row))
+            game_state.npcs[npc.uuid] = npc
+
+    async def _load_scene_and_events(
+        self,
+        game_state_id: str,
+        game_state: GameState,
+    ) -> list[GameEvent]:
+        """Load current scene into game_state and return events list."""
+        scene_query = await self._session.execute(
+            select(tbl.scenes).where(
+                tbl.scenes.c.game_state_id == game_state_id,
+                tbl.scenes.c.is_current == True,  # noqa: E712
+            )
+        )
+        scene_row = scene_query.mappings().first()
+        if scene_row:
+            game_state.current_scene = row_to_scene(dict(scene_row))
+
+        events_query = await self._session.execute(
+            select(tbl.game_events).where(tbl.game_events.c.game_state_id == game_state_id)
+        )
+        return [row_to_game_event(dict(event_row)) for event_row in events_query.mappings()]
+
+    async def _persist_children(
+        self,
+        game_state_id: str,
+        game_state: GameState,
+        knowledge_graph: KnowledgeGraph,
+        events: list[GameEvent],
+    ) -> None:
+        """Persist all child tables for a game state."""
+        await self._save_setting_and_player(game_state_id, game_state)
+        await self._save_world_objects(game_state_id, game_state)
+        await self._save_knowledge(game_state_id, knowledge_graph)
+        event_rows = [game_event_to_row(ev, game_state_id) for ev in events] if events else []
+        await self._replace_rows(tbl.game_events, game_state_id, event_rows)
+
+    async def _save_setting_and_player(self, game_state_id: str, game_state: GameState) -> None:
+        """Upsert setting and player rows."""
+        setting_row = setting_to_row(game_state.setting, game_state_id)
+        setting_stmt = (
+            pg_insert(tbl.settings)
+            .values(**setting_row)
+            .on_conflict_do_update(
+                index_elements=[_COL_GAME_STATE_ID],
+                set_={key: col_val for key, col_val in setting_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
+            )
+        )
+        await self._session.execute(setting_stmt)
+
+        player_row = player_to_row(game_state.player, game_state_id)
+        player_stmt = (
+            pg_insert(tbl.players)
+            .values(**player_row)
+            .on_conflict_do_update(
+                index_elements=[_COL_GAME_STATE_ID],
+                set_={key: col_val for key, col_val in player_row.items() if key not in (_COL_ID, _COL_GAME_STATE_ID)},
+            )
+        )
+        await self._session.execute(player_stmt)
+
+    async def _save_world_objects(self, game_state_id: str, game_state: GameState) -> None:
+        """Replace locations, NPCs, and scene rows."""
+        loc_rows = [location_to_row(loc, game_state_id) for loc in game_state.locations.values()]
+        await self._replace_rows(tbl.locations, game_state_id, loc_rows)
+
+        npc_rows = [npc_to_row(npc, game_state_id) for npc in game_state.npcs.values()]
+        await self._replace_rows(tbl.npcs, game_state_id, npc_rows)
+
+        scene_rows = (
+            [scene_to_row(game_state.current_scene, game_state_id, is_current=True)] if game_state.current_scene else []
+        )
+        await self._replace_rows(tbl.scenes, game_state_id, scene_rows)
+
+    async def _save_knowledge(self, game_state_id: str, knowledge_graph: KnowledgeGraph) -> None:
+        """Replace knowledge nodes and edges."""
+        nodes = knowledge_graph.all_nodes()
+        node_rows = [knowledge_node_to_row(node, game_state_id) for node in nodes]
+        await self._replace_rows(tbl.knowledge_nodes, game_state_id, node_rows)
+
+        edge_rows: list[dict] = []
+        for node in nodes:
+            for target_id, edge_type in knowledge_graph.get_edges_from(node.uuid):
+                edge_rows.append(
+                    {
+                        "game_state_id": game_state_id,
+                        "from_node_id": node.uuid,
+                        "to_node_id": target_id,
+                        "edge_type": edge_type.value,
+                        "metadata_": {},
+                    }
+                )
+        await self._replace_rows(tbl.knowledge_edges, game_state_id, edge_rows)
+
+    async def _replace_rows(self, table: Any, game_state_id: str, rows: list) -> None:
+        """Delete all rows for game_state_id, then bulk-insert replacements."""
+        await self._session.execute(delete(table).where(table.c.game_state_id == game_state_id))
+        if rows:
+            await self._session.execute(table.insert(), rows)

@@ -56,6 +56,9 @@ class TestCharacter:
         assert char.relationships == {}
         assert char.attributes == {}
         assert char.inventory == []
+
+    def test_default_personality_and_scope(self):
+        char = Character(name="Livia")
         assert char.personality_traits == []
         assert char.knowledge_scope == "local"
 
@@ -167,6 +170,9 @@ class TestSetting:
         assert setting.key_persons == []
         assert setting.key_events == []
         assert setting.locations == []
+
+    def test_optional_metadata_defaults_empty(self):
+        setting = Setting(name="X", time_period="Y", region="Z", summary="S")
         assert setting.traditions == []
         assert setting.technologies == []
         assert setting.raw_sources == []
@@ -202,6 +208,8 @@ class TestGameState:
         assert game_state.game_clock == float(0)
         assert game_state.game_time == "morning"
         assert game_state.npcs == {}
+
+    def test_initial_collections(self, game_state):
         assert game_state.locations == {}
         assert game_state.scene_conversation_log == []
 

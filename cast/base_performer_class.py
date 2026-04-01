@@ -190,40 +190,44 @@ class BasePerformer(ABC):
         user_message: str,
         conversation: list[Message] | None = None,
         retries: int = 2,
+        _attempt: int = 0,
     ) -> dict:
         """Send a message expecting JSON back, with retry on parse failure."""
-        for attempt in range(retries + 1):
-            raw = await self._send(
-                user_message,
-                conversation=conversation,
-                response_format={"type": "json_object"},
+        total_attempts = retries + 1
+        raw = await self._send(
+            user_message,
+            conversation=conversation,
+            response_format={"type": "json_object"},
+        )
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            logger.warning(
+                "LLM returned malformed JSON on attempt {}/{}: trying bracket extraction. Raw (first 200 chars): {}",
+                _attempt + 1,
+                total_attempts,
+                raw[:_LOG_PREVIEW_CHARS],
             )
-            try:
-                return json.loads(raw)
-            except json.JSONDecodeError:
-                logger.warning(
-                    "LLM returned malformed JSON on attempt {}/{}: trying bracket extraction. "
-                    "Raw (first 200 chars): {}",
-                    attempt + 1,
-                    retries + 1,
-                    raw[:_LOG_PREVIEW_CHARS],
+            if _attempt < retries:
+                return await self._send_json(
+                    user_message,
+                    conversation=conversation,
+                    retries=retries,
+                    _attempt=_attempt + 1,
                 )
-                if attempt == retries:
-                    extracted = _try_bracket_extraction(raw)
-                    if extracted is not None:
-                        return extracted
-                    logger.warning(
-                        "Bracket extraction also failed on attempt {}/{}: raw (first {} chars): {}",
-                        attempt + 1,
-                        retries + 1,
-                        _LOG_PREVIEW_CHARS,
-                        raw[:_LOG_PREVIEW_CHARS],
-                    )
-                    total_attempts = retries + 1
-                    preview = raw[:_LOG_PREVIEW_CHARS]
-                    raise ValueError(
-                        "Agent failed to produce valid JSON after {0} attempts. Last response: {1}".format(
-                            total_attempts, preview
-                        ),
-                    )
-        raise AssertionError("_send_json loop exhausted without returning — this is a bug")
+            extracted = _try_bracket_extraction(raw)
+            if extracted is not None:
+                return extracted
+            logger.warning(
+                "Bracket extraction also failed on attempt {}/{}: raw (first {} chars): {}",
+                _attempt + 1,
+                total_attempts,
+                _LOG_PREVIEW_CHARS,
+                raw[:_LOG_PREVIEW_CHARS],
+            )
+            preview = raw[:_LOG_PREVIEW_CHARS]
+            raise ValueError(
+                "Agent failed to produce valid JSON after {0} attempts. Last response: {1}".format(
+                    total_attempts, preview
+                ),
+            )
