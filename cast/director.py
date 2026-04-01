@@ -565,14 +565,14 @@ class Director(BasePerformer):
         if not scene or not target_names:
             return False
         targets_lower = {target.lower() for target in target_names}
-        for snpc in scene.npcs_present:
-            if not snpc.uuid or snpc.uuid not in self.game_state.npcs:
-                continue
-            npc = self.game_state.npcs[snpc.uuid]
-            # Match by role description or by generated NPC name
-            if snpc.role.lower() in targets_lower or npc.name.lower() in targets_lower:
-                return True
-        return False
+        return any(self._snpc_matches(snpc, targets_lower) for snpc in scene.npcs_present)
+
+    def _snpc_matches(self, snpc, targets_lower: set[str]) -> bool:
+        """Check whether a single SceneNPC matches any of the target names."""
+        if not snpc.uuid or snpc.uuid not in self.game_state.npcs:
+            return False
+        npc = self.game_state.npcs[snpc.uuid]
+        return snpc.role.lower() in targets_lower or npc.name.lower() in targets_lower
 
     def _ensure_targets_in_scene(self, target_names: list[str]) -> None:
         """Make sure that every target the Director identified is represented

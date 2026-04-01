@@ -34,16 +34,21 @@ class StreamEOF(Exception):
         self.buf = buf
 
 
+def _read_chunk(fd: int, buf: str) -> str:
+    """Read available bytes from *fd* and return the updated buffer."""
+    chunk = os.read(fd, _READ_BUF_SIZE)
+    if not chunk:
+        raise StreamEOF(buf)
+    return buf + chunk.decode("utf-8", errors="replace")
+
+
 def read_until(stream, sentinel: str, timeout: float) -> str:
     fd = stream.fileno()
     buf, deadline = "", time.monotonic() + timeout
     while time.monotonic() < deadline:
         ready, _, _ = select.select([fd], [], [], _POLL_INTERVAL)
         if ready:
-            chunk = os.read(fd, _READ_BUF_SIZE)
-            if not chunk:
-                raise StreamEOF(buf)
-            buf += chunk.decode("utf-8", errors="replace")
+            buf = _read_chunk(fd, buf)
             if sentinel in buf:
                 return buf
     raise ReadTimeout(sentinel, timeout, buf)
