@@ -147,6 +147,80 @@ def _make_director(
     return director
 
 
+class _RetaliationMockAct:
+    """Mock act that changes NPC mood on first call."""
+
+    def __init__(self, npc, call_count):
+        self._npc = npc
+        self._call_count = call_count
+
+    def __call__(self, input_data, context):
+        self._call_count[0] += 1
+        if self._call_count[0] == 1:
+            self._npc.current_mood = _HOSTILE
+            return "*blocks the strike*\n[MOOD: {0}]".format(_HOSTILE)
+        return "*retaliates fiercely*\n[MOOD: {0}]".format(_HOSTILE)
+
+
+class _SimpleMockAct:
+    """Mock act that sets NPC mood and returns a fixed string."""
+
+    def __init__(self, npc, mood):
+        self._npc = npc
+        self._mood = mood
+
+    def __call__(self, input_data, context):
+        self._npc.current_mood = self._mood
+        return "*shoves you back*"
+
+
+class _DualMoodMockAct:
+    """Mock act that changes mood on both NPCs."""
+
+    def __init__(self, npc1, npc2, call_count):
+        self._npc1 = npc1
+        self._npc2 = npc2
+        self._call_count = call_count
+
+    def __call__(self, input_data, context):
+        self._call_count[0] += 1
+        self._npc1.current_mood = _HOSTILE
+        self._npc2.current_mood = _HOSTILE
+        return "*blocks*\n[MOOD: {0}]".format(_HOSTILE)
+
+
+class _AlwaysAttacks:
+    """roll_aggression replacement that always triggers attack."""
+
+    def __call__(self, mood, _rng=None):
+        from cast.dice import AggressionRoll
+
+        return AggressionRoll(will_attack=True, roll=_ROLL_FIFTEEN, threshold=5, mood=mood)
+
+
+class _NeverAttacks:
+    """roll_aggression replacement that never triggers attack."""
+
+    def __call__(self, mood, _rng=None):
+        from cast.dice import AggressionRoll
+
+        return AggressionRoll(will_attack=False, roll=2, threshold=5, mood=mood)
+
+
+class _FixedCombat:
+    """roll_combat replacement with fixed outcome."""
+
+    def __call__(self, combat_skill, _rng=None):
+        from cast.dice import CombatOutcome, CombatRoll
+
+        return CombatRoll(
+            outcome=CombatOutcome.NPC_OVERPOWERS,
+            npc_roll=_ROLL_FIFTEEN,
+            player_roll=5,
+            npc_bonus=combat_skill,
+        )
+
+
 # ---------------------------------------------------------------------------
 # GameState new fields
 # ---------------------------------------------------------------------------
@@ -895,33 +969,18 @@ class TestNPCRetaliation:
         )
 
         call_count = [0]
-
-        async def mock_act(input_data, context):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                # First call: player attacks, NPC mood changes
-                npc.current_mood = _HOSTILE
-                return f"*blocks the strike*\n[MOOD: {_HOSTILE}]"
-            else:
-                # Second call: retaliation
-                return "*swings sword at you*"
+        side_effect = _RetaliationMockAct(npc, call_count)
 
         mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(side_effect=mock_act)
-        mock_actor.execute = AsyncMock(side_effect=mock_act)
+        mock_actor.act = AsyncMock(side_effect=side_effect)
+        mock_actor.execute = AsyncMock(side_effect=side_effect)
         director.actors[_NPC_A] = mock_actor
 
         # Patch roll_aggression to always trigger
         from cast import director as director_module
 
         original_roll = director_module.roll_aggression
-
-        def always_attacks(mood, _rng=None):
-            from cast.dice import AggressionRoll
-
-            return AggressionRoll(will_attack=True, roll=_ROLL_FIFTEEN, threshold=5, mood=mood)
-
-        director_module.roll_aggression = always_attacks
+        director_module.roll_aggression = _AlwaysAttacks()
         try:
             await director.act("attack the guard")
         finally:
@@ -983,26 +1042,17 @@ class TestNPCRetaliation:
             },
         )
 
-        async def mock_act(input_data, context):
-            npc.current_mood = _HOSTILE
-            return "*shoves you back*"
-
+        side_effect = _SimpleMockAct(npc, _HOSTILE)
         mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(side_effect=mock_act)
-        mock_actor.execute = AsyncMock(side_effect=mock_act)
+        mock_actor.act = AsyncMock(side_effect=side_effect)
+        mock_actor.execute = AsyncMock(side_effect=side_effect)
         director.actors[_NPC_A] = mock_actor
 
         # Patch roll_aggression to never trigger
         from cast import director as director_module
 
         original_roll = director_module.roll_aggression
-
-        def never_attacks(mood, _rng=None):
-            from cast.dice import AggressionRoll
-
-            return AggressionRoll(will_attack=False, roll=2, threshold=5, mood=mood)
-
-        director_module.roll_aggression = never_attacks
+        director_module.roll_aggression = _NeverAttacks()
         try:
             await director.act("punch the guard")
         finally:
@@ -1015,7 +1065,6 @@ class TestNPCRetaliation:
     async def test_retaliation_deduplication_by_name(self):
         """Two actor entries for NPCs with the same name produce only one retaliation."""
         from cast import director as director_module
-        from cast.dice import AggressionRoll, CombatOutcome, CombatRoll
 
         gs = _make_game_state()
         npc1 = NPCCard(name="Bandit", occupation="bandit")
@@ -1037,21 +1086,10 @@ class TestNPCRetaliation:
         npc1.current_mood = _HOSTILE
         npc2.current_mood = _HOSTILE
 
-        def always_attacks(mood, _rng=None):
-            return AggressionRoll(will_attack=True, roll=_ROLL_FIFTEEN, threshold=5, mood=mood)
-
-        def fixed_combat(combat_skill, _rng=None):
-            return CombatRoll(
-                outcome=CombatOutcome.NPC_OVERPOWERS,
-                npc_roll=_ROLL_FIFTEEN,
-                player_roll=5,
-                npc_bonus=combat_skill,
-            )
-
         original_roll = director_module.roll_aggression
         original_combat = director_module.roll_combat
-        director_module.roll_aggression = always_attacks
-        director_module.roll_combat = fixed_combat
+        director_module.roll_aggression = _AlwaysAttacks()
+        director_module.roll_combat = _FixedCombat()
         try:
             entries = await director._check_retaliation(mood_snapshot)
         finally:
@@ -1158,17 +1196,11 @@ class TestDuplicateNPCNames:
 
         call_count = [0]
 
-        async def mock_act(input_data, context):
-            call_count[0] += 1
-            # Both NPCs become hostile after the attack
-            npc1.current_mood = _HOSTILE
-            npc2.current_mood = _HOSTILE
-            return f"*blocks*\n[MOOD: {_HOSTILE}]"
-
+        side_effect = _DualMoodMockAct(npc1, npc2, call_count)
         mock_actor1 = AsyncMock()
-        mock_actor1.execute = AsyncMock(side_effect=mock_act)
+        mock_actor1.execute = AsyncMock(side_effect=side_effect)
         mock_actor2 = AsyncMock()
-        mock_actor2.execute = AsyncMock(side_effect=mock_act)
+        mock_actor2.execute = AsyncMock(side_effect=side_effect)
         director.actors[_NPC_A] = mock_actor1
         director.actors[_NPC_B] = mock_actor2
 
@@ -1176,13 +1208,7 @@ class TestDuplicateNPCNames:
         from cast import director as director_module
 
         original_roll = director_module.roll_aggression
-
-        def always_attacks(mood, _rng=None):
-            from cast.dice import AggressionRoll
-
-            return AggressionRoll(will_attack=True, roll=_ROLL_FIFTEEN, threshold=5, mood=mood)
-
-        director_module.roll_aggression = always_attacks
+        director_module.roll_aggression = _AlwaysAttacks()
         try:
             await director.act("attack the guard")
         finally:

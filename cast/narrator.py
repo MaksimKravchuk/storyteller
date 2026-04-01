@@ -56,7 +56,10 @@ class Narrator(BasePerformer):
         # knows what happened before (e.g. an ongoing fight).
         if scene_history and not is_new_scene:
             history_lines = [
-                f"- Player: {entry['player_action']} → {entry.get('response_summary', '')[:_HISTORY_PREVIEW_CHARS]}"
+                "- Player: {0} → {1}".format(
+                    entry["player_action"],
+                    entry.get("response_summary", "")[:_HISTORY_PREVIEW_CHARS],
+                )
                 for entry in scene_history
             ]
             history = "\n".join(history_lines)
@@ -76,9 +79,11 @@ class Narrator(BasePerformer):
                             npc_descriptions.append(f"{npc.name} ({npc.occupation})")
                         else:
                             npc_descriptions.append(snpc.role)
-                    raw_parts.append(f"People visible: {', '.join(npc_descriptions)}")
+                    visible = ", ".join(npc_descriptions)
+                    raw_parts.append("People visible: {0}".format(visible))
                 if scene.points_of_interest:
-                    raw_parts.append(f"Notable things: {', '.join(scene.points_of_interest)}")
+                    notable = ", ".join(scene.points_of_interest)
+                    raw_parts.append("Notable things: {0}".format(notable))
             else:
                 raw_parts.append(f"Scene: {scene}")
 
