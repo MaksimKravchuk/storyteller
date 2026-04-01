@@ -63,21 +63,22 @@ class WikipediaClient:
 
         Uses the MediaWiki API ``extracts`` module.
         """
-        query_params = {
-            "action": "query",
-            "titles": title,
-            "prop": "extracts",
-            "explaintext": True,
-            "exlimit": 1,
-            "format": "json",
-        }
         async with aiohttp.ClientSession() as session:
-            async with session.get(self._mw_api, params=query_params) as resp:
+            async with session.get(
+                self._mw_api,
+                params={
+                    "action": "query",
+                    "titles": title,
+                    "prop": "extracts",
+                    "explaintext": True,
+                    "exlimit": 1,
+                    "format": "json",
+                },
+            ) as resp:
                 if resp.status != _HTTP_OK:
                     return ""
-                article_json = await resp.json()
-                pages = article_json.get("query", {}).get("pages", {})
-                for page in pages.values():
-                    text = page.get(_KEY_EXTRACT, "")
-                    return text[:max_chars]
-                return ""
+                pages = (await resp.json()).get("query", {}).get("pages", {})
+                first_page = next(iter(pages.values()), None)
+                if first_page is None:
+                    return ""
+                return first_page.get(_KEY_EXTRACT, "")[:max_chars]

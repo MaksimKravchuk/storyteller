@@ -95,30 +95,30 @@ class MemoryManager:
         created_ids: list[str] = []
 
         if scope == KnowledgeScope.LOCAL:
-            # Personal memories for each witness
             for witness_id in witness_ids:
-                node = KnowledgeNode(
-                    content=event_description,
-                    scope=KnowledgeScope.LOCAL,
-                    source=KnowledgeSource.PERSONAL_EXPERIENCE,
-                    location_id=location_id,
-                    timestamp=game_time,
+                node_id = self._graph.add_node(
+                    KnowledgeNode(
+                        content=event_description,
+                        scope=KnowledgeScope.LOCAL,
+                        source=KnowledgeSource.PERSONAL_EXPERIENCE,
+                        location_id=location_id,
+                        timestamp=game_time,
+                    )
                 )
-                node_id = self._graph.add_node(node)
                 self._graph.add_edge(witness_id, node_id, EdgeType.WITNESSED)
                 created_ids.append(node_id)
         else:
-            # Wider-scope events become rumours or facts
-            source = KnowledgeSource.FACT if scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR
-            node = KnowledgeNode(
-                content=event_description,
-                scope=scope,
-                source=source,
-                location_id=location_id,
-                timestamp=game_time,
+            created_ids.append(
+                self._graph.add_node(
+                    KnowledgeNode(
+                        content=event_description,
+                        scope=scope,
+                        source=KnowledgeSource.FACT if scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR,
+                        location_id=location_id,
+                        timestamp=game_time,
+                    )
+                )
             )
-            node_id = self._graph.add_node(node)
-            created_ids.append(node_id)
 
             # Also give witnesses a personal memory
             for witness_id in witness_ids:

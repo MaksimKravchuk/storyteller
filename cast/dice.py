@@ -96,6 +96,17 @@ def roll_aggression(mood: str, _rng: random.Random | None = None) -> AggressionR
     )
 
 
+def _determine_combat_outcome(diff: int) -> CombatOutcome:
+    """Map the NPC-vs-player roll difference to a combat outcome."""
+    if diff >= 5:
+        return CombatOutcome.NPC_OVERPOWERS
+    if diff >= 0:
+        return CombatOutcome.NPC_DEFENDS
+    if diff >= -5:
+        return CombatOutcome.PLAYER_SUCCEEDS
+    return CombatOutcome.PLAYER_DOMINATES
+
+
 def roll_combat(npc_combat_skill: int, _rng: random.Random | None = None) -> CombatRoll:
     """Roll 1d20 for each side, add NPC combat_skill bonus, determine outcome.
 
@@ -111,21 +122,9 @@ def roll_combat(npc_combat_skill: int, _rng: random.Random | None = None) -> Com
     rng = _rng or random.Random()
     player_roll = rng.randint(1, _D20)
     npc_roll = rng.randint(1, _D20)
-    npc_total = npc_roll + npc_combat_skill
-
-    diff = npc_total - player_roll
-
-    if diff >= 5:
-        outcome = CombatOutcome.NPC_OVERPOWERS
-    elif diff >= 0:
-        outcome = CombatOutcome.NPC_DEFENDS
-    elif diff >= -5:
-        outcome = CombatOutcome.PLAYER_SUCCEEDS
-    else:
-        outcome = CombatOutcome.PLAYER_DOMINATES
 
     return CombatRoll(
-        outcome=outcome,
+        outcome=_determine_combat_outcome(npc_roll + npc_combat_skill - player_roll),
         npc_roll=npc_roll,
         player_roll=player_roll,
         npc_bonus=npc_combat_skill,

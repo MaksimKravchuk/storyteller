@@ -25,6 +25,12 @@ _NPC_NAME = "npc_name"
 _RESPONSE = "response"
 
 
+def _last_user_message(narrator: Narrator) -> str:
+    """Extract the last user message sent to the LLM."""
+    call_kwargs = narrator.llm_client.send_message.call_args.kwargs  # type: ignore[attr-defined]
+    return call_kwargs[_MESSAGES][-1].content
+
+
 def _make_game_state() -> GameState:
     setting = Setting(
         name="Ancient Rome",
@@ -61,17 +67,14 @@ class TestNarratorSceneType:
     async def test_new_scene_passes_scene_type_new(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        scene = gs.current_scene
 
         await narrator.act(
-            input_data={"scene": scene},
+            input_data={"scene": gs.current_scene},
             context={_PLAYER_ACTION: "go to the forum", _GAME_STATE: gs},
         )
 
         # Check that the LLM was called with NEW_SCENE in the prompt
-        call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = _last_user_message(narrator)
         assert "NEW_SCENE" in user_msg
 
     @pytest.mark.asyncio
@@ -84,25 +87,20 @@ class TestNarratorSceneType:
             context={_PLAYER_ACTION: "talk to Marcus", _GAME_STATE: gs},
         )
 
-        call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = _last_user_message(narrator)
         assert "CONTINUATION" in user_msg
 
     @pytest.mark.asyncio
     async def test_new_scene_includes_ambient_description(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        scene = gs.current_scene
 
         await narrator.act(
-            input_data={"scene": scene},
+            input_data={"scene": gs.current_scene},
             context={_PLAYER_ACTION: "explore", _GAME_STATE: gs},
         )
 
-        call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = _last_user_message(narrator)
         assert "Atmosphere:" in user_msg
         assert "roasted nuts" in user_msg
 
@@ -147,22 +145,23 @@ class TestNarratorSceneHistory:
         """On CONTINUATION turns, scene history should appear in the prompt."""
         narrator = _make_narrator()
         gs = _make_game_state()
-        scene_history = [
-            {_PLAYER_ACTION: "punch guard", "response_summary": "Guard blocks your fist.", "action_type": "INTERACT"},
-        ]
 
         await narrator.act(
             input_data={_DIALOGUE: [{_NPC_NAME: "Guard", _RESPONSE: "Stop!"}]},
             context={
                 _PLAYER_ACTION: "punch again",
                 _GAME_STATE: gs,
-                "scene_history": scene_history,
+                "scene_history": [
+                    {
+                        _PLAYER_ACTION: "punch guard",
+                        "response_summary": "Guard blocks your fist.",
+                        "action_type": "INTERACT",
+                    },
+                ],
             },
         )
 
-        call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = _last_user_message(narrator)
         assert "What happened earlier" in user_msg
         assert "punch guard" in user_msg
         assert "Guard blocks" in user_msg
@@ -172,22 +171,19 @@ class TestNarratorSceneHistory:
         """On NEW_SCENE turns, scene history should NOT appear."""
         narrator = _make_narrator()
         gs = _make_game_state()
-        scene_history = [
-            {_PLAYER_ACTION: "old action", "response_summary": "old response", "action_type": "TALK"},
-        ]
 
         await narrator.act(
             input_data={"scene": gs.current_scene},
             context={
                 _PLAYER_ACTION: "go to market",
                 _GAME_STATE: gs,
-                "scene_history": scene_history,
+                "scene_history": [
+                    {_PLAYER_ACTION: "old action", "response_summary": "old response", "action_type": "TALK"},
+                ],
             },
         )
 
-        call_args = narrator.llm_client.send_message.call_args
-        messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = _last_user_message(narrator)
         assert "What happened earlier" not in user_msg
 
     @pytest.mark.asyncio

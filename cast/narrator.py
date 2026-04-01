@@ -35,12 +35,8 @@ class Narrator(BasePerformer):
 
         Returns a single narrated text string.
         """
-        from models.game_state import GameState
-
-        game_state: GameState = context["game_state"]
-        player_action: str = context.get("player_action", "")
-        scene_history: list[dict] = context.get("scene_history", [])
-        is_new_scene: bool = "scene" in input_data
+        game_state = context["game_state"]
+        is_new_scene = "scene" in input_data
 
         self.set_context(
             setting_name=game_state.setting.name,
@@ -49,43 +45,36 @@ class Narrator(BasePerformer):
             language=self._language,
         )
 
-        # Assemble raw material
+        raw_parts = self._build_raw_parts(input_data, game_state, context.get("scene_history", []), is_new_scene)
+
+        narrated = await self._send(
+            NARRATOR_NARRATE.render(
+                **self._build_narration_kwargs(
+                    context.get("player_action", ""),
+                    "\n".join(raw_parts) if raw_parts else "No specific scene data.",
+                    is_new_scene,
+                    input_data,
+                )
+            ),
+            max_tokens=_NARRATION_MAX_TOKENS,
+        )
+        return narrated.strip()
+
+    def _build_raw_parts(
+        self,
+        input_data: dict,
+        game_state: Any,
+        scene_history: list[dict],
+        is_new_scene: bool,
+    ) -> list[str]:
+        """Assemble the raw material parts for narration."""
         raw_parts: list[str] = []
 
-        # On CONTINUATION turns, inject recent scene history so the narrator
-        # knows what happened before (e.g. an ongoing fight).
         if scene_history and not is_new_scene:
-            history_lines = [
-                "- Player: {0} → {1}".format(
-                    entry["player_action"],
-                    entry.get("response_summary", "")[:_HISTORY_PREVIEW_CHARS],
-                )
-                for entry in scene_history
-            ]
-            history = "\n".join(history_lines)
-            raw_parts.append(f"What happened earlier in this scene:\n{history}")
+            self._append_history_parts(raw_parts, scene_history)
 
         if is_new_scene:
-            scene = input_data["scene"]
-            if hasattr(scene, "description"):
-                raw_parts.append(f"Scene: {scene.description}")
-                if scene.ambient_description:
-                    raw_parts.append(f"Atmosphere: {scene.ambient_description}")
-                if scene.npcs_present:
-                    npc_descriptions: list[str] = []
-                    for snpc in scene.npcs_present:
-                        if snpc.uuid and snpc.uuid in game_state.npcs:
-                            npc = game_state.npcs[snpc.uuid]
-                            npc_descriptions.append(f"{npc.name} ({npc.occupation})")
-                        else:
-                            npc_descriptions.append(snpc.role)
-                    visible = ", ".join(npc_descriptions)
-                    raw_parts.append("People visible: {0}".format(visible))
-                if scene.points_of_interest:
-                    notable = ", ".join(scene.points_of_interest)
-                    raw_parts.append("Notable things: {0}".format(notable))
-            else:
-                raw_parts.append(f"Scene: {scene}")
+            self._append_scene_parts(raw_parts, input_data["scene"], game_state)
 
         for dialogue_entry in input_data.get("dialogue", []):
             raw_parts.append(f"{dialogue_entry['npc_name']} says: {dialogue_entry['response']}")
@@ -93,20 +82,51 @@ class Narrator(BasePerformer):
         for npc_desc in input_data.get("new_npcs", []):
             raw_parts.append(f"New person appears: {npc_desc}")
 
-        raw_material = "\n".join(raw_parts) if raw_parts else "No specific scene data."
+        return raw_parts
 
-        # Build the narration prompt
-        scene_type = "NEW_SCENE" if is_new_scene else "CONTINUATION"
+    def _append_history_parts(self, raw_parts: list[str], scene_history: list[dict]) -> None:
+        """Append scene history summary to raw_parts."""
+        lines = [
+            "- Player: {0} → {1}".format(
+                entry["player_action"],
+                entry.get("response_summary", "")[:_HISTORY_PREVIEW_CHARS],
+            )
+            for entry in scene_history
+        ]
+        raw_parts.append("What happened earlier in this scene:\n{0}".format("\n".join(lines)))
+
+    def _append_scene_parts(self, raw_parts: list[str], scene: Any, game_state: Any) -> None:
+        """Append scene description parts to raw_parts."""
+        if not hasattr(scene, "description"):
+            raw_parts.append(f"Scene: {scene}")
+            return
+        raw_parts.append(f"Scene: {scene.description}")
+        if scene.ambient_description:
+            raw_parts.append(f"Atmosphere: {scene.ambient_description}")
+        if scene.npcs_present:
+            npc_descriptions = [
+                "{0} ({1})".format(game_state.npcs[snpc.uuid].name, game_state.npcs[snpc.uuid].occupation)
+                if snpc.uuid and snpc.uuid in game_state.npcs
+                else snpc.role
+                for snpc in scene.npcs_present
+            ]
+            raw_parts.append("People visible: {0}".format(", ".join(npc_descriptions)))
+        if scene.points_of_interest:
+            raw_parts.append("Notable things: {0}".format(", ".join(scene.points_of_interest)))
+
+    def _build_narration_kwargs(
+        self,
+        player_action: str,
+        raw_material: str,
+        is_new_scene: bool,
+        input_data: dict,
+    ) -> dict[str, str]:
+        """Build keyword arguments for the narration prompt template."""
         kwargs: dict[str, str] = {
             "player_action": player_action,
             "raw_material": raw_material,
-            "scene_type": scene_type,
+            "scene_type": "NEW_SCENE" if is_new_scene else "CONTINUATION",
         }
-
-        # Completed events (local ones the player can see)
         if _KEY_COMPLETED_EVENTS in input_data and input_data[_KEY_COMPLETED_EVENTS]:
             kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data[_KEY_COMPLETED_EVENTS])
-
-        prompt = NARRATOR_NARRATE.render(**kwargs)
-        narrated = await self._send(prompt, max_tokens=_NARRATION_MAX_TOKENS)
-        return narrated.strip()
+        return kwargs

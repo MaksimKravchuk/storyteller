@@ -80,27 +80,28 @@ class BasePerformer(ABC):
         Uses a ContextVar token so the previous stack is restored exactly,
         even if ``act()`` raises.
         """
-        agent_name = type(self).__name__
-        new_stack = list(agent_stack.get(None) or []) + [agent_name]
+        new_stack = list(agent_stack.get(None) or []) + [type(self).__name__]
         token = agent_stack.set(new_stack)
-        parent = _parent_agent(new_stack)
         start = time.monotonic()
-        logger.info("agent={} parent={} | start", agent_name, parent)
+        logger.info("agent={} parent={} | start", new_stack[-1], _parent_agent(new_stack))
         try:  # noqa: WPS501
             act_response = await self.act(input_data, context or {})
         except Exception as exc:
-            duration_ms = int((time.monotonic() - start) * 1000)
             logger.exception(
                 "agent={} parent={} | error | exc_type={} | duration_ms={}",
-                agent_name,
-                parent,
+                new_stack[-1],
+                _parent_agent(new_stack),
                 type(exc).__name__,
-                duration_ms,
+                int((time.monotonic() - start) * 1000),
             )
             raise
         else:
-            duration_ms = int((time.monotonic() - start) * 1000)
-            logger.info("agent={} parent={} | done | duration_ms={}", agent_name, parent, duration_ms)
+            logger.info(
+                "agent={} parent={} | done | duration_ms={}",
+                new_stack[-1],
+                _parent_agent(new_stack),
+                int((time.monotonic() - start) * 1000),
+            )
             return act_response
         finally:
             agent_stack.reset(token)
@@ -147,43 +148,53 @@ class BasePerformer(ABC):
         )
         duration_ms = int((time.monotonic() - start) * 1000)
 
-        stack = agent_stack.get(None) or []
-        parent = _parent_agent(stack)
-        model = response.model or self.llm_client.model
+        self._log_llm_call(response, duration_ms)
+        self._capture_call_log(response, system_prompt, messages, duration_ms)
+
+        return response.content
+
+    def _log_llm_call(self, response: LLMResponse, duration_ms: int) -> None:
+        """Log the LLM call details."""
         logger.info(
             "LLM | agent={} model={} parent={} | prompt_tokens={} completion_tokens={} duration_ms={}",
             type(self).__name__,
-            model,
-            parent,
+            response.model or self.llm_client.model,
+            _parent_agent(agent_stack.get(None) or []),
             response.usage.get("prompt_tokens"),
             response.usage.get("completion_tokens"),
             duration_ms,
         )
 
-        # Capture call for admin dashboard
+    def _capture_call_log(
+        self,
+        response: LLMResponse,
+        system_prompt: str,
+        messages: list[Message],
+        duration_ms: int,
+    ) -> None:
+        """Capture LLM call details for the admin dashboard."""
         session_id = current_session_id.get(None)
-        if session_id is not None:
-            seq = call_sequence_counter.get(0)
-            call_sequence_counter.set(seq + 1)
-            buf = call_log_buffer.get(None) or []
-            buf.append(
-                {
-                    "session_id": session_id,
-                    "agent_name": type(self).__name__,
-                    "model": model,
-                    "system_prompt": system_prompt,
-                    "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
-                    "response_content": response.content,
-                    "prompt_tokens": response.usage.get("prompt_tokens"),
-                    "completion_tokens": response.usage.get("completion_tokens"),
-                    "duration_ms": duration_ms,
-                    "parent_agent": parent,
-                    "call_sequence": seq,
-                }
-            )
-            call_log_buffer.set(buf)
-
-        return response.content
+        if session_id is None:
+            return
+        seq = call_sequence_counter.get(0)
+        call_sequence_counter.set(seq + 1)
+        buf = call_log_buffer.get(None) or []
+        buf.append(
+            {
+                "session_id": session_id,
+                "agent_name": type(self).__name__,
+                "model": response.model or self.llm_client.model,
+                "system_prompt": system_prompt,
+                "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
+                "response_content": response.content,
+                "prompt_tokens": response.usage.get("prompt_tokens"),
+                "completion_tokens": response.usage.get("completion_tokens"),
+                "duration_ms": duration_ms,
+                "parent_agent": _parent_agent(agent_stack.get(None) or []),
+                "call_sequence": seq,
+            }
+        )
+        call_log_buffer.set(buf)
 
     async def _send_json(
         self,

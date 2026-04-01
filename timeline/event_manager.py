@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from timeline.event import EventEffect, EventStatus, GameEvent
 
@@ -128,24 +128,28 @@ class EventManager:
         }
 
     def _apply_move_npc(self, effect: EventEffect) -> None:
-        gs = self._game_state
         npc_id = effect.params.get("npc_id", effect.target_id)
-        to_loc = effect.params.get("to_location_id", "")
-        npc = gs.npcs.get(npc_id)
+        npc = self._game_state.npcs.get(npc_id)
         if not npc:
             return
-        if npc.location_id and npc.location_id in gs.locations:
-            gs.locations[npc.location_id].remove_npc(npc_id)
-        npc.location_id = to_loc
-        loc_obj = gs.locations.get(to_loc)
-        if loc_obj:
-            loc_obj.add_npc(npc_id)
-        if gs.current_scene and gs.current_scene.location_id == npc.location_id:
-            from models.scene import SceneNPC
+        if npc.location_id and npc.location_id in self._game_state.locations:
+            self._game_state.locations[npc.location_id].remove_npc(npc_id)
+        npc.location_id = effect.params.get("to_location_id", "")
+        new_loc = self._game_state.locations.get(npc.location_id)
+        if new_loc:
+            new_loc.add_npc(npc_id)
+        self._update_scene_for_moved_npc(npc_id, npc)
 
-            already = any(snpc.uuid == npc_id for snpc in gs.current_scene.npcs_present)
-            if not already:
-                gs.current_scene.npcs_present.append(SceneNPC(role=npc.occupation or npc.name, uuid=npc_id))
+    def _update_scene_for_moved_npc(self, npc_id: str, npc: Any) -> None:
+        """Add a moved NPC to the current scene if they arrived at the scene's location."""
+        scene = self._game_state.current_scene
+        if not scene or scene.location_id != npc.location_id:
+            return
+        if any(snpc.uuid == npc_id for snpc in scene.npcs_present):
+            return
+        from models.scene import SceneNPC
+
+        scene.npcs_present.append(SceneNPC(role=npc.occupation or npc.name, uuid=npc_id))
 
     def _apply_add_item(self, effect: EventEffect) -> None:
         npc_id = effect.params.get("npc_id", effect.target_id)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from loguru import logger
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -23,6 +25,18 @@ from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buff
 
 _SESSION_ID_KEY = "id"
 _STATE_IDLE = "idle"
+
+
+@dataclass
+class MessageContext:
+    """Bundles the common parameters passed through message handlers."""
+
+    update: Update
+    repo: GameRepository
+    session_id: str
+    text: str
+    cfg: Config
+    language: str
 
 
 async def _persist_engine_state(
@@ -67,31 +81,27 @@ def _cfg(context: ContextTypes.DEFAULT_TYPE) -> Config:
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
     async with get_db(_db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(chat_id)
+        session = await repo.get_or_create_session(update.effective_chat.id)
         await repo.update_session(session[_SESSION_ID_KEY], state="awaiting_language")
 
-    keyboard = [
-        [InlineKeyboardButton(label, callback_data=f"lang:{lang_code}")] for label, lang_code in _LANGUAGE_OPTIONS
-    ]
     await update.message.reply_text(
         "Welcome to Storyteller!\n\nChoose your story language:",
-        reply_markup=InlineKeyboardMarkup(keyboard),
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton(label, callback_data=f"lang:{code}")] for label, code in _LANGUAGE_OPTIONS],
+        ),
     )
 
 
 async def handle_language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
     await query.answer()
-
-    chat_id = update.effective_chat.id
     language = query.data.split(":", 1)[1]
 
     async with get_db(_db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(chat_id)
+        session = await repo.get_or_create_session(update.effective_chat.id)
         if session["state"] != "awaiting_language":
             return
         await repo.update_session(session[_SESSION_ID_KEY], state="awaiting_setting", language=language)
@@ -126,53 +136,40 @@ async def _process_player_action(engine, repo, session_id, update, text) -> None
     await update.message.reply_text(response)
 
 
-async def _handle_awaiting_setting(
-    update: Update,
-    repo: GameRepository,
-    session_id: str,
-    text: str,
-    cfg: Config,
-    language: str,
-    chat_id: int,
-) -> None:
+async def _handle_awaiting_setting(ctx: MessageContext, chat_id: int) -> None:
     """Handle the 'awaiting_setting' state: research and start a new game."""
-    await update.message.reply_text("Researching setting and generating opening scene... (this may take a minute)")
-    with logger.contextualize(session_id=session_id):
-        current_session_id.set(session_id)
+    await ctx.update.message.reply_text(
+        "Researching setting and generating opening scene... (this may take a minute)",
+    )
+    with logger.contextualize(session_id=ctx.session_id):
+        current_session_id.set(ctx.session_id)
         reset_buffer()
-        engine = create_engine(cfg, language=language)
+        engine = create_engine(ctx.cfg, language=ctx.language)
         try:
-            await _start_new_game(engine, repo, session_id, update, text)
+            await _start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:
             logger.exception("Failed to start game for chat {}", chat_id)
-            await update.message.reply_text("Something went wrong. Try /start again.")
-            await repo.update_session(session_id, state=_STATE_IDLE)
+            await ctx.update.message.reply_text("Something went wrong. Try /start again.")
+            await ctx.repo.update_session(ctx.session_id, state=_STATE_IDLE)
 
 
-async def _handle_playing(
-    update: Update,
-    repo: GameRepository,
-    session_id: str,
-    text: str,
-    cfg: Config,
-    language: str,
-) -> None:
+async def _handle_playing(ctx: MessageContext) -> None:
     """Handle the 'playing' state: load game, process action, persist."""
-    loaded = await _load_game_or_reset(repo, session_id, update)
+    loaded = await _load_game_or_reset(ctx.repo, ctx.session_id, ctx.update)
     if loaded is None:
         return
 
     game_state, kg, events = loaded
-    engine = await create_engine_from_state(cfg, game_state, kg, events, language=language)
+    engine = await create_engine_from_state(ctx.cfg, game_state, kg, events, language=ctx.language)
 
-    with logger.contextualize(session_id=session_id):
-        current_session_id.set(session_id)
+    with logger.contextualize(session_id=ctx.session_id):
+        current_session_id.set(ctx.session_id)
         reset_buffer()
         try:
-            await _process_player_action(engine, repo, session_id, update, text)
+            await _process_player_action(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:
-            logger.exception("Error processing action for session {}", session_id)
-            await update.message.reply_text("Something went wrong processing your action. Try again.")
+            logger.exception("Error processing action for session {}", ctx.session_id)
+            await ctx.update.message.reply_text("Something went wrong processing your action. Try again.")
 
 
 async def _load_game_or_reset(
@@ -189,26 +186,28 @@ async def _load_game_or_reset(
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.effective_chat.id
-    text = update.message.text.strip()
-    cfg = _cfg(context)
-
     async with get_db(_db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(chat_id)
-        state = session["state"]
-        session_id = session[_SESSION_ID_KEY]
-        language = session["language"]
+        session = await repo.get_or_create_session(update.effective_chat.id)
 
-        if state == _STATE_IDLE:
+        if session["state"] == _STATE_IDLE:
             await update.message.reply_text("Send /start to begin a new game.")
             return
 
-        if state == "awaiting_setting":
-            await _handle_awaiting_setting(update, repo, session_id, text, cfg, language, chat_id)
+        ctx = MessageContext(
+            update=update,
+            repo=repo,
+            session_id=session[_SESSION_ID_KEY],
+            text=update.message.text.strip(),
+            cfg=_cfg(context),
+            language=session["language"],
+        )
+
+        if session["state"] == "awaiting_setting":
+            await _handle_awaiting_setting(ctx, update.effective_chat.id)
             return
 
-        await _handle_playing(update, repo, session_id, text, cfg, language)
+        await _handle_playing(ctx)
 
 
 def build_bot(cfg: Config, db_session_factory) -> Application:

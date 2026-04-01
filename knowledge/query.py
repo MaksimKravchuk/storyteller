@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from knowledge.graph import KnowledgeGraph
@@ -12,6 +13,23 @@ if TYPE_CHECKING:
     from models.character import Character
 
 _DEFAULT_SORT_PRIORITY = 99
+
+_SOURCE_PRIORITY = MappingProxyType(
+    {
+        KnowledgeSource.PERSONAL_EXPERIENCE: 0,
+        KnowledgeSource.FACT: 1,
+        KnowledgeSource.HEARSAY: 2,
+        KnowledgeSource.RUMOR: 3,
+    }
+)
+
+_SOURCE_PREFIXES = MappingProxyType(
+    {
+        KnowledgeSource.RUMOR: "[Rumour] ",
+        KnowledgeSource.HEARSAY: "[Heard from someone] ",
+        KnowledgeSource.PERSONAL_EXPERIENCE: "[Personal experience] ",
+    }
+)
 
 
 @dataclass
@@ -120,32 +138,13 @@ class KnowledgeQueryEngine:
         This string is injected into the Actor's system prompt so the NPC
         only knows what it should know.
         """
-        filt = self.build_npc_filter(npc)
+        npc_filter = self.build_npc_filter(npc)
         if topic_tags:
-            filt.tags = topic_tags
+            npc_filter.tags = topic_tags
 
-        nodes = self.query(filt)
+        nodes = self.query(npc_filter)
         if not nodes:
             return "You don't have any specific knowledge about this topic."
 
-        # Sort: personal experience first, then facts, then rumours
-        source_priority = {
-            KnowledgeSource.PERSONAL_EXPERIENCE: 0,
-            KnowledgeSource.FACT: 1,
-            KnowledgeSource.HEARSAY: 2,
-            KnowledgeSource.RUMOR: 3,
-        }
-        nodes.sort(key=lambda node: source_priority.get(node.source, _DEFAULT_SORT_PRIORITY))
-
-        lines: list[str] = []
-        for node in nodes:
-            prefix = ""
-            if node.source == KnowledgeSource.RUMOR:
-                prefix = "[Rumour] "
-            elif node.source == KnowledgeSource.HEARSAY:
-                prefix = "[Heard from someone] "
-            elif node.source == KnowledgeSource.PERSONAL_EXPERIENCE:
-                prefix = "[Personal experience] "
-            lines.append(f"- {prefix}{node.content}")
-
-        return "\n".join(lines)
+        nodes.sort(key=lambda node: _SOURCE_PRIORITY.get(node.source, _DEFAULT_SORT_PRIORITY))
+        return "\n".join(f"- {_SOURCE_PREFIXES.get(node.source, '')}{node.content}" for node in nodes)
