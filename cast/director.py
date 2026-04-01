@@ -402,10 +402,13 @@ class Director(BasePerformer):
                     "response": response,
                 }
                 if combat_roll:
-                    result_entry["combat_roll"] = (
-                        f"d20: player {combat_roll.player_roll} vs "
-                        f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus} "
-                        f"→ {combat_roll.outcome.value}"
+                    player = combat_roll.player_roll
+                    npc_total = "{0}+{1}".format(combat_roll.npc_roll, combat_roll.npc_bonus)
+                    outcome = combat_roll.outcome.value
+                    result_entry["combat_roll"] = "d20: player {0} vs NPC {1} → {2}".format(
+                        player,
+                        npc_total,
+                        outcome,
                     )
                 dialogue_entries.append(result_entry)
         return dialogue_entries
@@ -550,13 +553,16 @@ class Director(BasePerformer):
                 "npc_name": npc.name,
                 "response": response,
                 "is_retaliation": "true",
-                "aggression_roll": (
-                    f"d20: {aggression.roll} vs threshold {aggression.threshold} (mood: {aggression.mood}) → attacks"
+                "aggression_roll": "d20: {0} vs threshold {1} (mood: {2}) → attacks".format(
+                    aggression.roll,
+                    aggression.threshold,
+                    aggression.mood,
                 ),
-                "combat_roll": (
-                    f"d20: player {combat_roll.player_roll} vs "
-                    f"NPC {combat_roll.npc_roll}+{combat_roll.npc_bonus} "
-                    f"→ {combat_roll.outcome.value}"
+                "combat_roll": "d20: player {0} vs NPC {1}+{2} → {3}".format(
+                    combat_roll.player_roll,
+                    combat_roll.npc_roll,
+                    combat_roll.npc_bonus,
+                    combat_roll.outcome.value,
                 ),
             }
             retaliation_entries.append(result_entry)

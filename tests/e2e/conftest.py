@@ -21,6 +21,12 @@ def assert_process_alive(proc) -> None:
         pytest.fail(f"Game process exited unexpectedly (code {rc}).\nStderr:\n{stderr_output}")
 
 
+def _send_quit(proc) -> None:
+    """Send quit command to the subprocess stdin."""
+    proc.stdin.write(b"quit\n")
+    proc.stdin.flush()
+
+
 @pytest.fixture()
 def game_process():
     env = os.environ.copy()
@@ -36,8 +42,7 @@ def game_process():
     yield proc
     if proc.poll() is None:
         try:
-            proc.stdin.write(b"quit\n")
-            proc.stdin.flush()
+            _send_quit(proc)
         except BrokenPipeError:
             ...
         try:

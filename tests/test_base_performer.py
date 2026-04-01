@@ -53,7 +53,47 @@ class _StackSnapshotPerformer(BasePerformer):
 
     async def act(self, input_data, context):
         _StackSnapshotPerformer.captured = list(agent_stack.get(None) or [])
-        return "captured"
+
+
+class _OuterPerformer(BasePerformer):
+    """Outer performer that delegates to an inner performer."""
+
+    def __init__(self, inner_performer):
+        super().__init__(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+        self._inner = inner_performer
+
+    async def act(self, input_data, context):
+        return await self._inner.execute(input_data)
+
+
+class _InnerRaiser(BasePerformer):
+    async def act(self, input_data, context):
+        raise ValueError("inner boom")
+
+
+class _OuterCatcher(BasePerformer):
+    async def act(self, input_data, context):
+        try:
+            await _InnerRaiser(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute(input_data)
+        except ValueError:
+            return None
+        return "unexpected"
+
+
+class _ContextCapture(BasePerformer):
+    received: dict = {}
+
+    async def act(self, input_data, context):
+        _ContextCapture.received.update(context)
+        return "ok"
+
+
+class _ContextCaptureRaw(BasePerformer):
+    received_ctx: dict = {}
+
+    async def act(self, input_data, context):
+        _ContextCaptureRaw.received_ctx["ctx"] = context
+        return "ok"
 
 
 # ---------------------------------------------------------------------------
@@ -117,12 +157,7 @@ async def test_execute_propagates_exception_unchanged():
 async def test_execute_nested_stack_is_correct():
     """Outer performer should be in the stack when inner performer's act runs."""
     inner = _StackSnapshotPerformer()
-
-    class _OuterPerformer(BasePerformer):
-        async def act(self, input_data, context):
-            return await inner.execute(input_data)
-
-    outer = _OuterPerformer(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+    outer = _OuterPerformer(inner)
     await outer.execute(_INPUT)
 
     stack = _StackSnapshotPerformer.captured
@@ -134,21 +169,6 @@ async def test_execute_nested_stack_is_correct():
 @pytest.mark.asyncio
 async def test_nested_stack_restored_after_inner_raises():
     """Outer execute's finally must fire correctly even if inner execute raises."""
-
-    class _InnerRaiser(BasePerformer):
-        async def act(self, input_data, context):
-            raise ValueError("inner boom")
-
-    class _OuterCatcher(BasePerformer):
-        async def act(self, input_data, context):
-            try:
-                await _InnerRaiser(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute(
-                    input_data
-                )
-            except ValueError:
-                return None  # swallow inner error
-            return "unexpected"
-
     outer = _OuterCatcher(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
     before = list(agent_stack.get(None) or [])
     await outer.execute(_INPUT)
@@ -160,30 +180,18 @@ async def test_nested_stack_restored_after_inner_raises():
 @pytest.mark.asyncio
 async def test_execute_context_passed_to_act():
     """execute() must pass context through to act()."""
-    received = {}
-
-    class _ContextCapture(BasePerformer):
-        async def act(self, input_data, context):
-            received.update(context)
-            return "ok"
-
+    _ContextCapture.received = {}
     performer = _ContextCapture(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
     await performer.execute(_INPUT, context={"key": "value"})
-    assert received == {"key": "value"}
+    assert _ContextCapture.received == {"key": "value"}
 
 
 @pytest.mark.asyncio
 async def test_execute_empty_context_is_empty_dict():
     """None context becomes {} when passed to act()."""
-    received_ctx = {}
-
-    class _ContextCapture(BasePerformer):
-        async def act(self, input_data, context):
-            received_ctx["ctx"] = context
-            return "ok"
-
-    await _ContextCapture(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute("x")
-    assert not received_ctx["ctx"]
+    _ContextCaptureRaw.received_ctx = {}
+    await _ContextCaptureRaw(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute("x")
+    assert not _ContextCaptureRaw.received_ctx["ctx"]
 
 
 # ---------------------------------------------------------------------------
@@ -238,14 +246,14 @@ async def test_send_json_invalid_inner_braces():
             await performer._send_json(_PROMPT, retries=0)
 
 
+async def _bad_send(*args, **kwargs):
+    raise UnicodeDecodeError("utf-8", b"", 0, 1, "reason")
+
+
 @pytest.mark.asyncio
 async def test_send_json_non_json_exception_propagates():
     """Non-JSONDecodeError exceptions must not be swallowed by the bracket-extraction block."""
     performer = _make_json_performer()
-
-    async def _bad_send(*args, **kwargs):
-        raise UnicodeDecodeError("utf-8", b"", 0, 1, "reason")
-
     with patch.object(performer, _SEND_METHOD, new=_bad_send):
         with pytest.raises(UnicodeDecodeError):
             await performer._send_json(_PROMPT, retries=0)
@@ -286,6 +294,7 @@ async def test_send_json_warning_per_attempt(loguru_sink):
         with pytest.raises(ValueError):
             await performer._send_json(_PROMPT, retries=1)
     warnings = [rec for rec in loguru_sink if rec["level"].name == "WARNING"]
-    assert len(warnings) == 2
+    assert len(warnings) == 3
     assert "attempt 1/2" in warnings[0][_MESSAGE_KEY]
     assert "attempt 2/2" in warnings[1][_MESSAGE_KEY]
+    assert "Bracket extraction also failed" in warnings[2][_MESSAGE_KEY]
