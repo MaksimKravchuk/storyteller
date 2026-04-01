@@ -44,6 +44,11 @@ def _updatable_fields(row: dict) -> dict:
     return {key: col_val for key, col_val in row.items() if key not in skip}
 
 
+def _row_dict(row) -> dict:  # type: ignore[no-untyped-def]
+    """Convert a SQLAlchemy mapping row to a plain dict."""
+    return dict(row)
+
+
 class GameRepository:
     """Async repository for loading/saving game state to PostgreSQL."""
 
@@ -62,13 +67,13 @@ class GameRepository:
             )
             .on_conflict_do_nothing(index_elements=["telegram_chat_id"])
         )
-        await self._session.execute(stmt)
+        await self._exec(stmt)
 
         query_result = await self._session.execute(
             select(tbl.sessions).where(tbl.sessions.c.telegram_chat_id == telegram_chat_id)
         )
         row = query_result.mappings().one()
-        return dict(row)
+        return _row_dict(row)
 
     async def update_session(self, session_id: str, *, state: str | None = None, language: str | None = None) -> None:
         update_fields: dict[str, Any] = {}
@@ -79,7 +84,7 @@ class GameRepository:
         if update_fields:
             sessions_filter = tbl.sessions.c.id == session_id
             stmt = update(tbl.sessions).where(sessions_filter).values(**update_fields)
-            await self._session.execute(stmt)
+            await self._exec(stmt)
 
     # ── Full state load ───────────────────────────────────
 
@@ -133,7 +138,7 @@ class GameRepository:
             )
             .returning(tbl.game_states.c.id)
         )
-        upsert_result = await self._session.execute(stmt)
+        upsert_result = await self._exec(stmt)
         game_state_id = upsert_result.scalar_one()
         await self._session.flush()
 
@@ -160,16 +165,16 @@ class GameRepository:
             .limit(limit)
             .offset(offset)
         )
-        sessions_query = await self._session.execute(stmt)
-        return [dict(row) for row in sessions_query.mappings()]
+        sessions_query = await self._exec(stmt)
+        return list(map(_row_dict, sessions_query.mappings()))
 
     async def get_session_detail(self, session_id: str) -> dict | None:
         """Get full session detail for admin view."""
         stmt = select(tbl.sessions).where(tbl.sessions.c.id == session_id)
-        session_row = (await self._session.execute(stmt)).mappings().first()
+        session_row = (await self._exec(stmt)).mappings().first()
         if not session_row:
             return None
-        detail: dict[str, Any] = {"session": dict(session_row)}
+        detail: dict[str, Any] = {"session": _row_dict(session_row)}
 
         gs_stmt = select(tbl.game_states).where(tbl.game_states.c.session_id == session_id)
         gs_mapping = (await self._session.execute(gs_stmt)).mappings().first()
@@ -177,7 +182,7 @@ class GameRepository:
             detail["game_state"] = None
             return detail
 
-        detail["game_state"] = dict(gs_mapping)
+        detail["game_state"] = _row_dict(gs_mapping)
         await self._populate_session_detail(detail, gs_mapping[_COL_ID])
         return detail
 
@@ -196,7 +201,7 @@ class GameRepository:
             .join(tbl.game_states, tbl.game_states.c.id == tbl.npcs.c.game_state_id)
             .where(tbl.game_states.c.session_id == session_id)
         )
-        return [dict(row) for row in npcs_query.mappings()]
+        return list(map(_row_dict, npcs_query.mappings()))
 
     async def get_locations(self, session_id: str) -> list[dict]:
         """Get all locations for a session."""
@@ -205,7 +210,7 @@ class GameRepository:
             .join(tbl.game_states, tbl.game_states.c.id == tbl.locations.c.game_state_id)
             .where(tbl.game_states.c.session_id == session_id)
         )
-        return [dict(row) for row in locations_query.mappings()]
+        return list(map(_row_dict, locations_query.mappings()))
 
     async def get_knowledge_graph(self, session_id: str) -> dict:
         """Get knowledge graph nodes and edges for a session."""
@@ -223,8 +228,8 @@ class GameRepository:
         edges_stmt = select(tbl.knowledge_edges).where(tbl.knowledge_edges.c.game_state_id == game_state_id)
         edges = await self._session.execute(edges_stmt)
         return {
-            "nodes": [dict(row) for row in nodes.mappings()],
-            "edges": [dict(row) for row in edges.mappings()],
+            "nodes": list(map(_row_dict, nodes.mappings())),
+            "edges": list(map(_row_dict, edges.mappings())),
         }
 
     async def get_events(self, session_id: str) -> list[dict]:
@@ -235,7 +240,7 @@ class GameRepository:
             .where(tbl.game_states.c.session_id == session_id)
             .order_by(tbl.game_events.c.scheduled_at)
         )
-        return [dict(row) for row in events_query.mappings()]
+        return list(map(_row_dict, events_query.mappings()))
 
     # ── AI call logs ──────────────────────────────────────
 
@@ -282,10 +287,14 @@ class GameRepository:
         )
         if turn_number is not None:
             stmt = stmt.where(tbl.ai_call_logs.c.turn_number == turn_number)
-        ai_logs_query = await self._session.execute(stmt)
-        return [dict(row) for row in ai_logs_query.mappings()]
+        ai_logs_query = await self._exec(stmt)
+        return list(map(_row_dict, ai_logs_query.mappings()))
 
     # ── Private helpers ───────────────────────────────────
+
+    async def _exec(self, stmt):  # type: ignore[no-untyped-def]
+        """Shorthand for self._session.execute(stmt)."""
+        return await self._session.execute(stmt)
 
     async def _populate_session_detail(self, detail: dict[str, Any], game_state_id: str) -> None:
         """Load setting, player, and entity counts into the detail dict."""
@@ -296,9 +305,9 @@ class GameRepository:
     async def _load_first_row(self, table: Any, game_state_id: str) -> dict | None:
         """Load the first row from a table filtered by game_state_id."""
         stmt = select(table).where(table.c.game_state_id == game_state_id)
-        query = await self._session.execute(stmt)
+        query = await self._exec(stmt)
         row = query.mappings().first()
-        return dict(row) if row else None
+        return _row_dict(row) if row else None
 
     async def _load_entity_counts(self, detail: dict[str, Any], game_state_id: str) -> None:
         """Load entity counts into the detail dict."""
@@ -333,7 +342,7 @@ class GameRepository:
         gs_mapping = gs_query.mappings().first()
         if gs_mapping is None:
             return None
-        gs_row = dict(gs_mapping)
+        gs_row = _row_dict(gs_mapping)
 
         setting_query = await self._session.execute(
             select(tbl.settings).where(tbl.settings.c.game_state_id == gs_row[_COL_ID])
@@ -341,7 +350,7 @@ class GameRepository:
         setting_row = setting_query.mappings().first()
         if setting_row is None:
             return None
-        return gs_row, row_to_setting(dict(setting_row))
+        return gs_row, row_to_setting(_row_dict(setting_row))
 
     def _hydrate_game_state(self, gs_row: dict, setting: Any, kg: KnowledgeGraph) -> GameState:
         """Build a GameState from a DB row, setting, and knowledge graph."""
@@ -363,7 +372,7 @@ class GameRepository:
             select(tbl.knowledge_nodes).where(tbl.knowledge_nodes.c.game_state_id == game_state_id)
         )
         for row in nodes_query.mappings():
-            node = row_to_knowledge_node(dict(row))
+            node = row_to_knowledge_node(_row_dict(row))
             kg.add_node(node)
 
         edges_query = await self._session.execute(
@@ -386,20 +395,20 @@ class GameRepository:
 
     async def _load_player(self, game_state_id: str, game_state: GameState) -> None:
         stmt = select(tbl.players).where(tbl.players.c.game_state_id == game_state_id)
-        row = (await self._session.execute(stmt)).mappings().first()
+        row = (await self._exec(stmt)).mappings().first()
         if row:
-            game_state.player = row_to_player(dict(row))
+            game_state.player = row_to_player(_row_dict(row))
 
     async def _load_locations(self, game_state_id: str, game_state: GameState) -> None:
         stmt = select(tbl.locations).where(tbl.locations.c.game_state_id == game_state_id)
-        for row in (await self._session.execute(stmt)).mappings():
-            loc = row_to_location(dict(row))
+        for row in (await self._exec(stmt)).mappings():
+            loc = row_to_location(_row_dict(row))
             game_state.locations[loc.uuid] = loc
 
     async def _load_npcs(self, game_state_id: str, game_state: GameState) -> None:
         stmt = select(tbl.npcs).where(tbl.npcs.c.game_state_id == game_state_id)
-        for row in (await self._session.execute(stmt)).mappings():
-            npc = row_to_npc(dict(row))
+        for row in (await self._exec(stmt)).mappings():
+            npc = row_to_npc(_row_dict(row))
             game_state.npcs[npc.uuid] = npc
 
     async def _load_scene_and_events(
@@ -416,12 +425,12 @@ class GameRepository:
         )
         scene_row = scene_query.mappings().first()
         if scene_row:
-            game_state.current_scene = row_to_scene(dict(scene_row))
+            game_state.current_scene = row_to_scene(_row_dict(scene_row))
 
         events_query = await self._session.execute(
             select(tbl.game_events).where(tbl.game_events.c.game_state_id == game_state_id)
         )
-        return [row_to_game_event(dict(event_row)) for event_row in events_query.mappings()]
+        return [row_to_game_event(_row_dict(event_row)) for event_row in events_query.mappings()]
 
     async def _persist_children(
         self,
@@ -452,7 +461,7 @@ class GameRepository:
                 set_=_updatable_fields(row),
             )
         )
-        await self._session.execute(stmt)
+        await self._exec(stmt)
 
     async def _save_world_objects(self, game_state_id: str, game_state: GameState) -> None:
         """Replace locations, NPCs, and scene rows."""

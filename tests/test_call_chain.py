@@ -90,6 +90,10 @@ class FailingAgent(BasePerformer):
         raise RuntimeError("boom")
 
 
+def _make_agent_b() -> AgentB:
+    return AgentB(llm_client=_mock_llm())
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -100,7 +104,7 @@ class TestExecuteStackManagement:
     async def test_stack_empty_before_and_after(self):
         reset_buffer()
         current_session_id.set(_SESSION_ID)
-        agent = AgentB(llm_client=_mock_llm())
+        agent = _make_agent_b()
 
         assert agent_stack.get([]) == []
         await agent.execute(_HI)
@@ -123,7 +127,7 @@ class TestParentAgentTracking:
     async def test_root_agent_has_no_parent(self):
         reset_buffer()
         current_session_id.set(_SESSION_ID)
-        agent = AgentB(llm_client=_mock_llm())
+        agent = _make_agent_b()
 
         await agent.execute(_HI)
 
@@ -136,7 +140,7 @@ class TestParentAgentTracking:
     async def test_nested_agent_has_parent(self):
         reset_buffer()
         current_session_id.set(_SESSION_ID)
-        child = AgentB(llm_client=_mock_llm())
+        child = _make_agent_b()
         parent = AgentA(llm_client=_mock_llm(), child=child)
 
         await parent.execute(_HI)
@@ -158,7 +162,7 @@ class TestLogging:
     async def test_send_emits_llm_structured_log(self, loguru_sink):
         """_send() must emit an INFO record with agent, model, tokens, and duration."""
         reset_buffer()
-        agent = AgentB(llm_client=_mock_llm())
+        agent = _make_agent_b()
         await agent.execute(_HI)
         llm_records = [rec for rec in loguru_sink if rec[_MESSAGE_KEY].startswith("LLM |")]
         assert len(llm_records) == 1
@@ -171,7 +175,7 @@ class TestLogging:
     async def test_send_log_has_completion_tokens(self, loguru_sink):
         """LLM log must include completion_tokens and duration_ms."""
         reset_buffer()
-        agent = AgentB(llm_client=_mock_llm())
+        agent = _make_agent_b()
         await agent.execute(_HI)
         llm_records = [rec for rec in loguru_sink if rec[_MESSAGE_KEY].startswith("LLM |")]
         msg = llm_records[0][_MESSAGE_KEY]
@@ -182,7 +186,7 @@ class TestLogging:
     async def test_execute_log_parent_in_nested_call(self, loguru_sink):
         """The child agent's start log must include the parent agent name."""
         reset_buffer()
-        child = AgentB(llm_client=_mock_llm())
+        child = _make_agent_b()
         parent = AgentA(llm_client=_mock_llm(), child=child)
         await parent.execute(_HI)
         start_records = [rec for rec in loguru_sink if "| start" in rec[_MESSAGE_KEY]]
@@ -195,7 +199,7 @@ class TestCallSequence:
     async def test_sequence_increments(self):
         reset_buffer()
         current_session_id.set(_SESSION_ID)
-        child = AgentB(llm_client=_mock_llm())
+        child = _make_agent_b()
         parent = AgentA(llm_client=_mock_llm(), child=child)
 
         await parent.execute(_HI)
@@ -208,7 +212,7 @@ class TestCallSequence:
     async def test_sequence_resets_with_buffer(self):
         reset_buffer()
         current_session_id.set(_SESSION_ID)
-        agent = AgentB(llm_client=_mock_llm())
+        agent = _make_agent_b()
 
         await agent.execute(_HI)
         assert call_log_buffer.get([])[0][_CALL_SEQUENCE] == 0

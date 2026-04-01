@@ -18,6 +18,7 @@ _INPUT = "input"
 _SEND_METHOD = "_send"
 _PROMPT = "prompt"
 _MESSAGE_KEY = "message"
+_EMPTY_PROMPT = PromptTemplate([])
 
 
 # ---------------------------------------------------------------------------
@@ -27,7 +28,7 @@ _MESSAGE_KEY = "message"
 
 class _OKPerformer(BasePerformer):
     def __init__(self, act_output: str = "ok"):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
         self._act_output = act_output
 
     async def act(self, input_data, context):
@@ -36,7 +37,7 @@ class _OKPerformer(BasePerformer):
 
 class _RaisingPerformer(BasePerformer):
     def __init__(self, exc: Exception):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
         self._exc = exc
 
     async def act(self, input_data, context):
@@ -49,7 +50,7 @@ class _StackSnapshotPerformer(BasePerformer):
     captured: list[str] = []
 
     def __init__(self):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
 
     async def act(self, input_data, context):
         _StackSnapshotPerformer.captured = list(agent_stack.get(None) or [])
@@ -59,7 +60,7 @@ class _OuterPerformer(BasePerformer):
     """Outer performer that delegates to an inner performer."""
 
     def __init__(self, inner_performer):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
         self._inner = inner_performer
 
     async def act(self, input_data, context):
@@ -74,7 +75,7 @@ class _InnerRaiser(BasePerformer):
 class _OuterCatcher(BasePerformer):
     async def act(self, input_data, context):
         try:
-            await _InnerRaiser(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute(input_data)
+            await _InnerRaiser(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT).execute(input_data)
         except ValueError:
             return None
         return "unexpected"
@@ -169,7 +170,7 @@ async def test_execute_nested_stack_is_correct():
 @pytest.mark.asyncio
 async def test_nested_stack_restored_after_inner_raises():
     """Outer execute's finally must fire correctly even if inner execute raises."""
-    outer = _OuterCatcher(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+    outer = _OuterCatcher(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
     before = list(agent_stack.get(None) or [])
     await outer.execute(_INPUT)
     after = list(agent_stack.get(None) or [])
@@ -181,7 +182,7 @@ async def test_nested_stack_restored_after_inner_raises():
 async def test_execute_context_passed_to_act():
     """execute() must pass context through to act()."""
     _ContextCapture.received = {}
-    performer = _ContextCapture(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+    performer = _ContextCapture(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
     await performer.execute(_INPUT, context={"key": "value"})
     assert _ContextCapture.received == {"key": "value"}
 
@@ -190,7 +191,7 @@ async def test_execute_context_passed_to_act():
 async def test_execute_empty_context_is_empty_dict():
     """None context becomes {} when passed to act()."""
     _ContextCaptureRaw.received_ctx = {}
-    await _ContextCaptureRaw(llm_client=MagicMock(), system_prompt_template=PromptTemplate([])).execute("x")
+    await _ContextCaptureRaw(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT).execute("x")
     assert not _ContextCaptureRaw.received_ctx["ctx"]
 
 
@@ -205,7 +206,7 @@ class _JsonPerformer(BasePerformer):
 
 
 def _make_json_performer() -> _JsonPerformer:
-    return _JsonPerformer(llm_client=MagicMock(), system_prompt_template=PromptTemplate([]))
+    return _JsonPerformer(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
 
 
 @pytest.mark.asyncio

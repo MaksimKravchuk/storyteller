@@ -21,6 +21,9 @@ from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 
 metadata = MetaData()
 
+# Reusable column type: UUID stored as string (not Python UUID objects)
+_UUID_STR = UUID(as_uuid=False)
+
 # Column name constants
 _COL_ID = "id"
 _COL_GAME_STATE_ID = "game_state_id"
@@ -31,6 +34,12 @@ _COL_CREATED_AT = "created_at"
 _FK_GAME_STATES_ID = "game_states.id"
 _FK_SESSIONS_ID = "sessions.id"
 _ON_DELETE_CASCADE = "CASCADE"
+
+
+def _fk_game_state() -> ForeignKey:
+    """Create a ForeignKey to game_states.id with CASCADE delete."""
+    return ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE)
+
 
 # Server-default literals
 _DEFAULT_ZERO = "0"
@@ -46,7 +55,7 @@ _LEN_LONG = 128
 sessions = Table(
     "sessions",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
+    Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
     Column("telegram_chat_id", Integer, unique=True, nullable=False),
     Column("state", String(_LEN_SHORT), nullable=False, server_default="idle"),
     Column("language", String(_LEN_SHORT), nullable=False, server_default="English"),
@@ -57,10 +66,10 @@ sessions = Table(
 game_states = Table(
     "game_states",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
+    Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
     Column(
         _COL_SESSION_ID,
-        UUID(as_uuid=False),
+        _UUID_STR,
         ForeignKey(_FK_SESSIONS_ID, ondelete=_ON_DELETE_CASCADE),
         unique=True,
         nullable=False,
@@ -78,11 +87,11 @@ game_states = Table(
 settings = Table(
     "settings",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
+    Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         unique=True,
         nullable=False,
     ),
@@ -102,11 +111,11 @@ settings = Table(
 players = Table(
     "players",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
+    Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         unique=True,
         nullable=False,
     ),
@@ -120,11 +129,11 @@ players = Table(
 locations = Table(
     "locations",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True),
+    Column(_COL_ID, _UUID_STR, primary_key=True),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         nullable=False,
     ),
     Column(_COL_NAME, Text, nullable=False),
@@ -141,11 +150,11 @@ locations = Table(
 npcs = Table(
     "npcs",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True),
+    Column(_COL_ID, _UUID_STR, primary_key=True),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         nullable=False,
     ),
     Column(_COL_NAME, Text, nullable=False),
@@ -167,11 +176,11 @@ npcs = Table(
 scenes = Table(
     "scenes",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True),
+    Column(_COL_ID, _UUID_STR, primary_key=True),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         nullable=False,
     ),
     Column("is_current", Boolean, nullable=False, server_default="false"),
@@ -188,11 +197,11 @@ scenes = Table(
 knowledge_nodes = Table(
     "knowledge_nodes",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True),
+    Column(_COL_ID, _UUID_STR, primary_key=True),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         nullable=False,
     ),
     Column("content", Text, nullable=False),
@@ -215,12 +224,12 @@ knowledge_edges = Table(
     Column(_COL_ID, Integer, primary_key=True, autoincrement=True),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         nullable=False,
     ),
-    Column("from_node_id", UUID(as_uuid=False), nullable=False),
-    Column("to_node_id", UUID(as_uuid=False), nullable=False),
+    Column("from_node_id", _UUID_STR, nullable=False),
+    Column("to_node_id", _UUID_STR, nullable=False),
     Column("edge_type", String(_LEN_SHORT), nullable=False, server_default="related_to"),
     Column("metadata_", JSONB, nullable=False, server_default=_DEFAULT_JSON_OBJECT),
     Index("idx_ke_from", _COL_GAME_STATE_ID, "from_node_id"),
@@ -230,10 +239,10 @@ knowledge_edges = Table(
 ai_call_logs = Table(
     "ai_call_logs",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True, server_default=func.gen_random_uuid()),
+    Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
     Column(
         _COL_SESSION_ID,
-        UUID(as_uuid=False),
+        _UUID_STR,
         ForeignKey(_FK_SESSIONS_ID, ondelete=_ON_DELETE_CASCADE),
         nullable=False,
     ),
@@ -257,11 +266,11 @@ ai_call_logs = Table(
 game_events = Table(
     "game_events",
     metadata,
-    Column(_COL_ID, UUID(as_uuid=False), primary_key=True),
+    Column(_COL_ID, _UUID_STR, primary_key=True),
     Column(
         _COL_GAME_STATE_ID,
-        UUID(as_uuid=False),
-        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        _UUID_STR,
+        _fk_game_state(),
         nullable=False,
     ),
     Column(_COL_NAME, Text, nullable=False),

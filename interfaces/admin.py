@@ -11,6 +11,8 @@ from aiohttp import web
 from aiohttp.typedefs import Handler
 from loguru import logger
 
+from contextlib import asynccontextmanager
+
 from db.engine import get_db
 from db.repository import GameRepository
 
@@ -81,6 +83,12 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/locations", self._locations)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", self._ai_calls)
 
+    @asynccontextmanager
+    async def _repo(self):
+        """Yield a GameRepository bound to a fresh DB session."""
+        async with get_db(self._db_factory) as db:
+            yield GameRepository(db)
+
     # ── Route handlers ────────────────────────────────────
 
     async def _dashboard(self, request: web.Request) -> web.Response:
@@ -94,15 +102,13 @@ class AdminServer:
     async def _list_sessions(self, request: web.Request) -> web.Response:
         limit = int(request.query.get("limit", "50"))
         offset = int(request.query.get("offset", "0"))
-        async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
+        async with self._repo() as repo:
             sessions = await repo.list_sessions(limit=limit, offset=offset)
         return _json_response({"sessions": sessions})
 
     async def _session_detail(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
-        async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
+        async with self._repo() as repo:
             detail = await repo.get_session_detail(session_id)
         if not detail:
             return _json_response({"error": "Session not found"}, status=_HTTP_NOT_FOUND)
@@ -110,44 +116,39 @@ class AdminServer:
 
     async def _conversation(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
-        async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
+        async with self._repo() as repo:
             log = await repo.get_conversation_log(session_id)
         return _json_response({"log": log})
 
     async def _knowledge(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
-        async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
+        async with self._repo() as repo:
             graph = await repo.get_knowledge_graph(session_id)
         return _json_response(graph)
 
     async def _events(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
-        async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
+        async with self._repo() as repo:
             events = await repo.get_events(session_id)
         return _json_response({"events": events})
 
     async def _npcs(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
-        async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
+        async with self._repo() as repo:
             npcs = await repo.get_npcs(session_id)
         return _json_response({"npcs": npcs})
 
     async def _locations(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
-        async with get_db(self._db_factory) as db:
-            repo = GameRepository(db)
+        async with self._repo() as repo:
             locations = await repo.get_locations(session_id)
         return _json_response({"locations": locations})
 
     async def _ai_calls(self, request: web.Request) -> web.Response:
         session_id = request.match_info[_SESSION_ID_PARAM]
         turn = request.query.get("turn")
-        async with get_db(self._db_factory) as db:
-            logs = await GameRepository(db).get_ai_call_logs(
+        async with self._repo() as repo:
+            logs = await repo.get_ai_call_logs(
                 session_id,
                 turn_number=int(turn) if turn else None,
             )
