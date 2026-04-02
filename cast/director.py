@@ -41,6 +41,11 @@ def _format_scene_entry(entry: dict) -> str:
     return f"- Player: {action} -> {action_type}"
 
 
+def _snapshot_moods(npcs: dict) -> dict[str, str]:
+    """Capture current mood of every NPC by UUID."""
+    return {uuid: npc.current_mood for uuid, npc in npcs.items()}
+
+
 _KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"
 _DEFAULT_ACTION = "OTHER"
@@ -102,14 +107,9 @@ class Director(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=DIRECTOR_SYSTEM,
         )
-        self.game_state = deps.game_state
-        self.event_manager = deps.event_manager
-        self.memory_manager = deps.memory_manager
-        self.scene_builder = cast.scene_builder
-        self.narrator = cast.narrator
-        self.npc_generator = cast.npc_generator
-        self.data_miner = cast.data_miner
-        self.actors: dict[str, Any] = dict(cast.actors)
+        self._deps = deps
+        self._cast = cast
+        self._actors: dict[str, Any] = dict(cast.actors)
         self._language = language
 
     # ------------------------------------------------------------------
@@ -132,7 +132,7 @@ class Director(BasePerformer):
                 "Could you be more specific about what you want to do?",
             )
 
-        self.game_state.pending_clarification = None
+        self._deps.game_state.pending_clarification = None
         action_type = routing_plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
         completed_events = self._advance_and_resolve(action_type, routing_plan.get("time_cost_override"))
         narrated_response = await self._execute_plan(routing_plan, input_data, completed_events)
@@ -142,11 +142,11 @@ class Director(BasePerformer):
 
     def register_actor(self, npc_uuid: str, actor: Any) -> None:
         """Register an Actor agent for an NPC."""
-        self.actors[npc_uuid] = actor
+        self._actors[npc_uuid] = actor
 
     def schedule_event(self, event: GameEvent) -> str:
         """Convenience wrapper to schedule an event."""
-        return self.event_manager.schedule(event)
+        return self._deps.event_manager.schedule(event)
 
     # ------------------------------------------------------------------
     # Internal: turn bookkeeping
@@ -155,16 +155,16 @@ class Director(BasePerformer):
     def _append_turn_logs(self, player_action: str, narrated_response: str, action_type: str) -> None:
         """Update game state conversation logs after a turn."""
         if action_type in TURN_COUNTING_ACTIONS:
-            self.game_state.turn_count += 1
-        self.game_state.conversation_log.append(
+            self._deps.game_state.turn_count += 1
+        self._deps.game_state.conversation_log.append(
             {
-                "turn": self.game_state.turn_count,
+                "turn": self._deps.game_state.turn_count,
                 _KEY_PLAYER_ACTION: player_action,
                 "response": narrated_response,
-                "game_clock": self.game_state.game_clock,
+                "game_clock": self._deps.game_state.game_clock,
             }
         )
-        self.game_state.scene_conversation_log.append(
+        self._deps.game_state.scene_conversation_log.append(
             {
                 _KEY_PLAYER_ACTION: player_action,
                 "response_summary": narrated_response[:_SCENE_SUMMARY_CHARS],
@@ -205,14 +205,14 @@ class Director(BasePerformer):
     def _save_pending_clarification(self, player_action: str, routing_plan: dict) -> None:
         """Persist a clarification exchange in game state (survives restarts)."""
         prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
-        self.game_state.pending_clarification = [
+        self._deps.game_state.pending_clarification = [
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": _json.dumps(routing_plan, ensure_ascii=False)},
         ]
 
     def _load_pending_clarification(self) -> list[Message] | None:
         """Restore pending clarification from game state as Message objects."""
-        raw = self.game_state.pending_clarification
+        raw = self._deps.game_state.pending_clarification
         if not raw:
             return None
         return [_msg_from_dict(msg) for msg in raw]
@@ -224,7 +224,7 @@ class Director(BasePerformer):
         for the last 10 exchanges so the Director LLM maintains context
         across turns within the same scene.
         """
-        log = self.game_state.scene_conversation_log
+        log = self._deps.game_state.scene_conversation_log
         if not log:
             return None
         messages: list[Message] = []
@@ -256,11 +256,11 @@ class Director(BasePerformer):
     def _advance_and_resolve(self, action_type: str, time_override: float | None) -> list[GameEvent]:
         """Advance the game clock and return completed events."""
         hours = resolve_time_cost(action_type, time_override)
-        return self.event_manager.advance_time(hours)
+        return self._deps.event_manager.advance_time(hours)
 
     def _partition_events(self, events: list[GameEvent]) -> tuple[list[GameEvent], list[GameEvent]]:
         """Split events into local (visible to player) and remote."""
-        player_loc = self.game_state.player.location_id
+        player_loc = self._deps.game_state.player.location_id
         local: list[GameEvent] = []
         remote: list[GameEvent] = []
         for ev in events:
@@ -285,19 +285,20 @@ class Director(BasePerformer):
         }
         scope = scope_map.get(ev.scope, KnowledgeScope.LOCAL)
         witnesses: list[str] = []
-        if ev.location_id and ev.location_id in self.game_state.locations:
-            witnesses = list(self.game_state.locations[ev.location_id].npcs_present)
+        locations = self._deps.game_state.locations
+        if ev.location_id and ev.location_id in locations:
+            witnesses = list(locations[ev.location_id].npcs_present)
         return {
             "event_description": ev.on_complete_description or ev.name,
             "witness_ids": witnesses,
             "scope": scope,
             "location_id": ev.location_id,
-            "game_time": self.game_state.game_clock,
+            "game_time": self._deps.game_state.game_clock,
         }
 
     async def _create_memory_for_event(self, ev: GameEvent) -> None:
         """Create a memory from a single remote event."""
-        await self.memory_manager.create_memory_from_event(**self._build_memory_kwargs(ev))
+        await self._deps.memory_manager.create_memory_from_event(**self._build_memory_kwargs(ev))
 
     # ------------------------------------------------------------------
     # Internal: delegation
@@ -321,12 +322,12 @@ class Director(BasePerformer):
         if local_events:
             raw_outputs["completed_events"] = [ev.on_complete_description or ev.name for ev in local_events]
 
-        return await self.narrator.execute(
+        return await self._cast.narrator.execute(
             input_data=raw_outputs,
             context={
                 _KEY_PLAYER_ACTION: player_action,
-                _KEY_GAME_STATE: self.game_state,
-                "scene_history": self.game_state.scene_conversation_log[-5:],
+                _KEY_GAME_STATE: self._deps.game_state,
+                "scene_history": self._deps.game_state.scene_conversation_log[-5:],
             },
         )
 
@@ -369,14 +370,14 @@ class Director(BasePerformer):
     ) -> None:
         """Build scene if needed and initialise any uninitialized NPCs."""
         if "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS:
-            scene = await self.scene_builder.execute(
+            scene = await self._cast.scene_builder.execute(
                 input_data=player_action,
-                context={_KEY_GAME_STATE: self.game_state},
+                context={_KEY_GAME_STATE: self._deps.game_state},
             )
             raw_outputs["scene"] = scene
-            self.game_state.current_scene = scene
-            self.game_state.scene_number += 1
-            self.game_state.scene_conversation_log = []
+            self._deps.game_state.current_scene = scene
+            self._deps.game_state.scene_number += 1
+            self._deps.game_state.scene_conversation_log = []
 
         await self._init_scene_npcs()
 
@@ -388,7 +389,7 @@ class Director(BasePerformer):
         raw_outputs: dict[str, Any],
     ) -> None:
         """Run NPC dialogue and retaliation checks, updating raw_outputs."""
-        mood_snapshot = {uuid: npc.current_mood for uuid, npc in self.game_state.npcs.items()}
+        mood_snapshot = _snapshot_moods(self._deps.game_state.npcs)
 
         dialogue = await self._handle_dialogue(player_action, target_names, is_aggressive=is_aggressive)
         if dialogue:
@@ -435,16 +436,16 @@ class Director(BasePerformer):
         matched_uuids = self._resolve_target_uuids(target_names)
         return [
             (
-                self.game_state.npcs[uid],
-                self.actors[uid],
+                self._deps.game_state.npcs[uid],
+                self._actors[uid],
                 *self._build_combat_action(
                     player_action,
-                    self.game_state.npcs[uid],
+                    self._deps.game_state.npcs[uid],
                     is_aggressive,
                 ),
             )
             for uid in matched_uuids
-            if uid in self.actors
+            if uid in self._actors
         ]
 
     def _resolve_target_uuids(self, target_names: list[str]) -> list[str]:
@@ -459,7 +460,7 @@ class Director(BasePerformer):
         seen: set[str] = set()
         unique_uuids: list[str] = []
         for uid in uuids:
-            npc = self.game_state.npcs.get(uid)
+            npc = self._deps.game_state.npcs.get(uid)
             if npc and npc.name.lower() not in seen:
                 seen.add(npc.name.lower())
                 unique_uuids.append(uid)
@@ -467,7 +468,7 @@ class Director(BasePerformer):
 
     def _role_matched_uuids(self, targets_lower: set[str]) -> set[str]:
         """Return UUIDs of scene NPCs whose role matches a target name."""
-        scene = self.game_state.current_scene
+        scene = self._deps.game_state.current_scene
         if not scene:
             return set()
         matched: set[str] = set()
@@ -479,7 +480,7 @@ class Director(BasePerformer):
     def _name_matched_uuids(self, targets_lower: set[str]) -> set[str]:
         """Return UUIDs of NPCs whose name matches a target."""
         matched: set[str] = set()
-        for uid, npc in self.game_state.npcs.items():
+        for uid, npc in self._deps.game_state.npcs.items():
             if npc.name.lower() in targets_lower:
                 matched.add(uid)
         return matched
@@ -515,7 +516,7 @@ class Director(BasePerformer):
             input_data=action_text,
             context={
                 "npc": npc,
-                _KEY_GAME_STATE: self.game_state,
+                _KEY_GAME_STATE: self._deps.game_state,
                 "location_name": self._get_location_name(npc.location_id),
             },
         )
@@ -544,15 +545,15 @@ class Director(BasePerformer):
         Returns the list of newly created ``NPCCard`` objects (empty when
         nothing needed initialisation).
         """
-        scene = self.game_state.current_scene
+        scene = self._deps.game_state.current_scene
         if not scene:
             return []
         uninit = [snpc for snpc in scene.npcs_present if snpc.need_init]
         if not uninit:
             return []
-        new_cards = await self.npc_generator.execute(
+        new_cards = await self._cast.npc_generator.execute(
             input_data=[snpc.role for snpc in uninit],
-            context={_KEY_GAME_STATE: self.game_state},
+            context={_KEY_GAME_STATE: self._deps.game_state},
         )
         for scene_npc, card in zip(uninit, new_cards):
             self._register_new_npc(card)
@@ -561,7 +562,7 @@ class Director(BasePerformer):
 
     def _targets_match_scene_npcs(self, target_names: list[str]) -> bool:
         """Return ``True`` if any target name matches an initialised SceneNPC."""
-        scene = self.game_state.current_scene
+        scene = self._deps.game_state.current_scene
         if not scene or not target_names:
             return False
         targets_lower = {target.lower() for target in target_names}
@@ -569,9 +570,9 @@ class Director(BasePerformer):
 
     def _snpc_matches(self, snpc, targets_lower: set[str]) -> bool:
         """Check whether a single SceneNPC matches any of the target names."""
-        if not snpc.uuid or snpc.uuid not in self.game_state.npcs:
+        if not snpc.uuid or snpc.uuid not in self._deps.game_state.npcs:
             return False
-        npc = self.game_state.npcs[snpc.uuid]
+        npc = self._deps.game_state.npcs[snpc.uuid]
         return snpc.role.lower() in targets_lower or npc.name.lower() in targets_lower
 
     def _ensure_targets_in_scene(self, target_names: list[str]) -> None:
@@ -582,7 +583,7 @@ class Director(BasePerformer):
         """
         from models.scene import SceneNPC
 
-        scene = self.game_state.current_scene
+        scene = self._deps.game_state.current_scene
         if not scene:
             return
         known = self._known_scene_identifiers(scene)
@@ -592,7 +593,7 @@ class Director(BasePerformer):
 
     def _known_scene_identifiers(self, scene: Any) -> set[str]:
         """Return lowercase roles and names of NPCs already in the scene."""
-        npcs = self.game_state.npcs
+        npcs = self._deps.game_state.npcs
         known = {snpc.role.lower() for snpc in scene.npcs_present}
         for snpc in scene.npcs_present:
             if snpc.uuid and snpc.uuid in npcs:
@@ -604,17 +605,18 @@ class Director(BasePerformer):
         from cast.actor import Actor
         from knowledge.query import KnowledgeQueryEngine
 
-        self.game_state.npcs[npc.uuid] = npc
+        self._deps.game_state.npcs[npc.uuid] = npc
 
         # Add to location
-        if npc.location_id and npc.location_id in self.game_state.locations:
-            self.game_state.locations[npc.location_id].add_npc(npc.uuid)
+        locations = self._deps.game_state.locations
+        if npc.location_id and npc.location_id in locations:
+            locations[npc.location_id].add_npc(npc.uuid)
 
         # Create an Actor for dialogue
         actor = Actor(
             llm_client=self.llm_client,
             npc=npc,
-            knowledge_query=KnowledgeQueryEngine(self.game_state.knowledge_graph),
+            knowledge_query=KnowledgeQueryEngine(self._deps.game_state.knowledge_graph),
         )
         actor.set_context(language=self._language)
         self.register_actor(npc.uuid, actor)
@@ -636,7 +638,7 @@ class Director(BasePerformer):
         """
         retaliated_names: set[str] = set()
         work_items: list[RetaliationWork] = []
-        for npc_uuid, actor in self.actors.items():
+        for npc_uuid, actor in self._actors.items():
             work = self._build_retaliation_work(npc_uuid, actor, mood_snapshot, retaliated_names)
             if work is not None:
                 work_items.append(work)
@@ -655,7 +657,7 @@ class Director(BasePerformer):
         retaliated_names: set[str],
     ) -> RetaliationWork | None:
         """Check if an NPC should retaliate and build work item if so."""
-        npc = self.game_state.npcs.get(npc_uuid)
+        npc = self._deps.game_state.npcs.get(npc_uuid)
         if not npc or npc.name.lower() in retaliated_names:
             return None
         if npc.current_mood == mood_snapshot.get(npc_uuid, "neutral"):
@@ -683,7 +685,7 @@ class Director(BasePerformer):
             input_data=work.retaliation_input,
             context={
                 "npc": work.npc,
-                _KEY_GAME_STATE: self.game_state,
+                _KEY_GAME_STATE: self._deps.game_state,
                 "location_name": self._get_location_name(work.npc.location_id),
             },
         )
@@ -710,16 +712,16 @@ class Director(BasePerformer):
 
     def _sync_context_from_state(self) -> None:
         """Update system prompt variables from the current game state."""
-        scene = self.game_state.current_scene
+        scene = self._deps.game_state.current_scene
 
         context_vars = dict(
-            setting_name=self.game_state.setting.name,
-            time_period=self.game_state.setting.time_period,
+            setting_name=self._deps.game_state.setting.name,
+            time_period=self._deps.game_state.setting.time_period,
             scene_description=(scene.description if scene else "No scene set yet"),
             npcs_present=self._format_npcs_present(scene),
             points_of_interest=self._format_pois(scene),
-            game_time=self.game_state.game_time,
-            game_clock=str(round(self.game_state.game_clock, 1)),
+            game_time=self._deps.game_state.game_time,
+            game_clock=str(round(self._deps.game_state.game_clock, 1)),
         )
 
         history_summary = self._format_scene_history()
@@ -732,14 +734,10 @@ class Director(BasePerformer):
         """Format NPC names for the system prompt."""
         if not scene:
             return "None"
-        return (
-            ", ".join(
-                self.game_state.npcs[snpc.uuid].name
-                for snpc in scene.npcs_present
-                if snpc.uuid and snpc.uuid in self.game_state.npcs
-            )
-            or "None"
-        )
+        all_npcs = self._deps.game_state.npcs
+        present = [snpc for snpc in scene.npcs_present if snpc.uuid and snpc.uuid in all_npcs]
+        names = [all_npcs[snpc.uuid].name for snpc in present]
+        return ", ".join(names) or "None"
 
     def _format_pois(self, scene: Any) -> str:
         """Format points of interest for the system prompt."""
@@ -749,7 +747,7 @@ class Director(BasePerformer):
 
     def _format_scene_history(self) -> str | None:
         """Format recent scene actions for the system prompt."""
-        scene_log = self.game_state.scene_conversation_log
+        scene_log = self._deps.game_state.scene_conversation_log
         if not scene_log:
             return None
         recent = scene_log[-5:]
@@ -757,6 +755,7 @@ class Director(BasePerformer):
         return "\n".join(lines)
 
     def _get_location_name(self, location_id: str | None) -> str:
-        if location_id and location_id in self.game_state.locations:
-            return self.game_state.locations[location_id].name
+        locations = self._deps.game_state.locations
+        if location_id and location_id in locations:
+            return locations[location_id].name
         return "this place"
