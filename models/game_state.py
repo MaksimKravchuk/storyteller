@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from models.base_model import BaseModel
@@ -19,18 +20,18 @@ _NOON_HOUR = 12
 _EVENING_HOUR = 18
 
 
+@dataclass(kw_only=True)
 class PlayerState(BaseModel):
     """Mutable state for the player character."""
 
-    def __init__(self, *, name: str = "Player"):
-        super().__init__()
-        self.name = name
-        self.location_id: str | None = None
-        self.inventory: list[str] = []
-        self.appearance: str = ""
-        self.interaction_history: list[dict] = []  # {action, response, timestamp}
+    name: str = "Player"
+    location_id: str | None = None
+    inventory: list[str] = field(default_factory=list)
+    appearance: str = ""
+    interaction_history: list[dict] = field(default_factory=list)
 
 
+@dataclass(kw_only=True)
 class GameState(BaseModel):
     """Central mutable state for an active game session.
 
@@ -38,28 +39,19 @@ class GameState(BaseModel):
     can read (and, where appropriate, update) the world.
     """
 
-    def __init__(
-        self,
-        *,
-        setting: Setting,
-        knowledge_graph: KnowledgeGraph,
-    ):
-        super().__init__()
-        self.setting: Setting = setting
-        self.knowledge_graph: KnowledgeGraph = knowledge_graph
-        self.player: PlayerState = PlayerState()
-        self.current_scene: Scene | None = None
-        self.locations: dict[str, Location] = {}  # UUID -> Location
-        self.npcs: dict[str, NPCCard] = {}  # UUID -> NPCCard
-        self.turn_count: int = 0
-        self.scene_number: int = 0
-        self.game_clock: float = INITIAL_GAME_CLOCK  # Game time in hours
-        self.game_time: str = "morning"  # Human-readable time of day
-        self.conversation_log: list[dict] = []  # Full session log
-        self.scene_conversation_log: list[dict] = []  # Resets on scene change
-        # Pending clarification exchange for the Director (persisted so it
-        # survives engine recreation between Telegram messages).
-        self.pending_clarification: list[dict] | None = None
+    setting: Setting
+    knowledge_graph: KnowledgeGraph
+    player: PlayerState = field(default_factory=PlayerState)
+    current_scene: Scene | None = None
+    locations: dict[str, Location] = field(default_factory=dict)
+    npcs: dict[str, NPCCard] = field(default_factory=dict)
+    turn_count: int = 0
+    scene_number: int = 0
+    game_clock: float = INITIAL_GAME_CLOCK
+    game_time: str = "morning"
+    conversation_log: list[dict] = field(default_factory=list)
+    scene_conversation_log: list[dict] = field(default_factory=list)
+    pending_clarification: list[dict] | None = None
 
     def advance_clock(self, hours: float) -> None:
         """Advance the game clock and update time-of-day label."""

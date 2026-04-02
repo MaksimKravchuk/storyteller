@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 
 from models.base_model import BaseModel
 from models.character import Character
-from models.game_state import PlayerState
+from models.game_state import GameState, PlayerState
 from models.scene import SceneNPC
 from models.setting import Setting
 
@@ -190,6 +192,12 @@ class TestSetting:
 
 
 class TestPlayerState:
+    def test_has_own_dataclass_fields(self):
+        field_names = {dc_field.name for dc_field in dataclasses.fields(PlayerState)}
+        assert "name" in field_names
+        assert "location_id" in field_names
+        assert "inventory" in field_names
+
     def test_defaults(self):
         ps = PlayerState()
         assert ps.name == "Player"
@@ -202,6 +210,12 @@ class TestPlayerState:
 
 
 class TestGameState:
+    def test_has_own_dataclass_fields(self):
+        field_names = {dc_field.name for dc_field in dataclasses.fields(GameState)}
+        assert "turn_count" in field_names
+        assert "game_clock" in field_names
+        assert "conversation_log" in field_names
+
     def test_initial_values(self, game_state):
         assert game_state.turn_count == 0
         assert game_state.scene_number == 0

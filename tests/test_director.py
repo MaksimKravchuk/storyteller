@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -150,12 +151,12 @@ def _make_director(
 
 def _set_actor(director: Director, npc_id: str, actor) -> None:
     """Register a mock actor for an NPC on the director."""
-    director.actors[npc_id] = actor
+    director._actors[npc_id] = actor
 
 
 def _get_actor(director: Director, npc_id: str):
     """Get the actor for an NPC from the director."""
-    return director.actors[npc_id]
+    return director._actors[npc_id]
 
 
 def _director_from(gs: GameState, **kwargs) -> Director:
@@ -312,6 +313,26 @@ def _setup_npc_in_game_state(
 # ---------------------------------------------------------------------------
 
 
+class TestDirectorPrivateAttrs:
+    """Director stores deps/cast as private attrs, not public."""
+
+    def test_no_public_game_state(self):
+        director = _make_director()
+        assert not hasattr(director, "game_state")
+        assert director._deps.game_state is not None
+
+    def test_no_public_cast_attrs(self):
+        director = _make_director()
+        cast_fields = [field.name for field in dataclasses.fields(DirectorCast)]
+        for attr in cast_fields:
+            assert not hasattr(director, attr), "Director should not have public attr {0}".format(attr)
+
+    def test_actors_private(self):
+        director = _make_director()
+        assert not hasattr(director, "actors")
+        assert isinstance(director._actors, dict)
+
+
 class TestGameStateSceneFields:
     def test_initial_scene_number(self):
         gs = _make_game_state()
@@ -355,7 +376,7 @@ class TestTurnCounting:
             }
         )
         await director.act("talk to someone")
-        assert director.game_state.turn_count == 1
+        assert director._deps.game_state.turn_count == 1
 
     @pytest.mark.asyncio
     async def test_turn_increments_on_interact(self):
@@ -368,7 +389,7 @@ class TestTurnCounting:
             }
         )
         await director.act("open the door")
-        assert director.game_state.turn_count == 1
+        assert director._deps.game_state.turn_count == 1
 
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_examine(self):
@@ -381,7 +402,7 @@ class TestTurnCounting:
             }
         )
         await director.act("look at the fountain")
-        assert director.game_state.turn_count == 0
+        assert director._deps.game_state.turn_count == 0
 
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_other(self):
@@ -394,7 +415,7 @@ class TestTurnCounting:
             }
         )
         await director.act("wait")
-        assert director.game_state.turn_count == 0
+        assert director._deps.game_state.turn_count == 0
 
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_clarification(self):
@@ -408,7 +429,7 @@ class TestTurnCounting:
             }
         )
         await director.act("open door")
-        assert director.game_state.turn_count == 0
+        assert director._deps.game_state.turn_count == 0
 
     @pytest.mark.asyncio
     async def test_all_counting_actions_increment(self):
@@ -432,10 +453,10 @@ class TestSceneChanges:
                 _DELEGATE_TO: _DELEGATE_NARRATOR,
             }
         )
-        assert director.game_state.scene_number == 0
+        assert director._deps.game_state.scene_number == 0
         await director.act("go to the market")
-        assert director.game_state.scene_number == 1
-        director.scene_builder.execute.assert_called_once()
+        assert director._deps.game_state.scene_number == 1
+        director._cast.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_explore_triggers_scene_change(self):
@@ -448,8 +469,8 @@ class TestSceneChanges:
             }
         )
         await director.act("explore the area")
-        assert director.game_state.scene_number == 1
-        director.scene_builder.execute.assert_called_once()
+        assert director._deps.game_state.scene_number == 1
+        director._cast.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_sleep_triggers_scene_change(self):
@@ -462,8 +483,8 @@ class TestSceneChanges:
             }
         )
         await director.act("go to sleep")
-        assert director.game_state.scene_number == 1
-        director.scene_builder.execute.assert_called_once()
+        assert director._deps.game_state.scene_number == 1
+        director._cast.scene_builder.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_talk_does_not_trigger_scene_change(self):
@@ -476,8 +497,8 @@ class TestSceneChanges:
             }
         )
         await director.act(_HELLO)
-        assert director.game_state.scene_number == 0
-        director.scene_builder.act.assert_not_called()
+        assert director._deps.game_state.scene_number == 0
+        director._cast.scene_builder.act.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_examine_does_not_trigger_scene_change(self):
@@ -490,8 +511,8 @@ class TestSceneChanges:
             }
         )
         await director.act(_LOOK_AROUND)
-        assert director.game_state.scene_number == 0
-        director.scene_builder.act.assert_not_called()
+        assert director._deps.game_state.scene_number == 0
+        director._cast.scene_builder.act.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_scene_change_resets_log(self):
@@ -536,7 +557,7 @@ class TestSceneConversationLog:
             }
         )
         await director.act("hello guard")
-        log = director.game_state.scene_conversation_log
+        log = director._deps.game_state.scene_conversation_log
         assert len(log) == 1
         assert log[0][_PLAYER_ACTION] == "hello guard"
         assert log[0][_ACTION_TYPE] == _TALK
@@ -573,7 +594,8 @@ class TestSceneConversationLog:
             narrator_response=long_response,
         )
         await director.act("say something")
-        summary = director.game_state.scene_conversation_log[0][_RESPONSE_SUMMARY]
+        scene_log = director._deps.game_state.scene_conversation_log
+        summary = scene_log[0][_RESPONSE_SUMMARY]
         assert len(summary) == _SUMMARY_MAX_LEN
 
     @pytest.mark.asyncio
@@ -588,7 +610,7 @@ class TestSceneConversationLog:
             }
         )
         await director.act("take it")
-        assert len(director.game_state.scene_conversation_log) == 0
+        assert len(director._deps.game_state.scene_conversation_log) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -792,7 +814,7 @@ class TestClarificationPreservesSceneHistory:
         )
         await director.act("attack again")
 
-        narrator_call = director.narrator.execute.call_args
+        narrator_call = director._cast.narrator.execute.call_args
         context = narrator_call.kwargs.get("context") or narrator_call.args[1]
         assert "scene_history" in context
         assert len(context["scene_history"]) == 1
@@ -820,7 +842,7 @@ class TestCallChainDelegation:
         await director.act(_LOOK_AROUND)
 
         # Narrator.execute() should have been called (not just .act())
-        director.narrator.execute.assert_called_once()
+        director._cast.narrator.execute.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_scene_builder_called_via_execute(self):
@@ -834,7 +856,7 @@ class TestCallChainDelegation:
         )
         await director.act("explore the ruins")
 
-        director.scene_builder.execute.assert_called_once()
+        director._cast.scene_builder.execute.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
@@ -953,7 +975,7 @@ class TestCombatDiceIntegration:
         await director.act(_ATTACK_GUARD)
 
         # Check that narrator received combat_roll in the dialogue data
-        narrator_call = director.narrator.execute.call_args
+        narrator_call = director._cast.narrator.execute.call_args
         raw_input = narrator_call.kwargs.get(_INPUT_DATA) or narrator_call.args[0]
         dialogue = raw_input.get("dialogue", [])
         assert len(dialogue) == 1
@@ -967,7 +989,7 @@ class TestCombatDiceIntegration:
         # Re-register NPC without combat_skill attribute to test default
         npc = NPCCard(name=_MERCHANT_NAME, occupation=_MERCHANT)
         npc.uuid = _NPC_A
-        director.game_state.npcs[_NPC_A] = npc
+        director._deps.game_state.npcs[_NPC_A] = npc
         mock_actor = _make_mock_agent("*cowers*")
         _set_actor(director, _NPC_A, mock_actor)
 
@@ -1120,7 +1142,7 @@ class TestNPCRetaliation:
         _setup_npc_in_game_state(gs, _UUID_B, name="Bandit", occupation="bandit")
 
         director = _director_from(gs)
-        director.actors = {_UUID_A: AsyncMock(return_value="I attack!"), _UUID_B: AsyncMock(return_value="Me too!")}
+        director._actors = {_UUID_A: AsyncMock(return_value="I attack!"), _UUID_B: AsyncMock(return_value="Me too!")}
 
         # Both NPCs changed mood from neutral
         gs.npcs[_UUID_A].current_mood = _HOSTILE
@@ -1170,13 +1192,13 @@ class TestDuplicateNPCNames:
         )
 
         _set_actor(director, _NPC_A, _make_mock_agent("Hello."))
-        director.actors[_NPC_B] = _make_mock_agent("Hi there.")
+        director._actors[_NPC_B] = _make_mock_agent("Hi there.")
 
         await director.act("talk to the guard")
 
         # Only ONE actor should be called, not both
         calls_a = _get_actor(director, _NPC_A).execute.call_count
-        calls_b = director.actors[_NPC_B].execute.call_count
+        calls_b = director._actors[_NPC_B].execute.call_count
         assert calls_a + calls_b == 1
 
     @pytest.mark.asyncio
@@ -1222,8 +1244,8 @@ class TestDuplicateNPCNames:
         side_effect = _DualMoodMockAct(gs.npcs[_NPC_A], gs.npcs[_NPC_B], [0])
         _set_actor(director, _NPC_A, _make_mock_agent(None))
         _get_actor(director, _NPC_A).execute = AsyncMock(side_effect=side_effect)
-        director.actors[_NPC_B] = _make_mock_agent(None)
-        director.actors[_NPC_B].execute = AsyncMock(side_effect=side_effect)
+        director._actors[_NPC_B] = _make_mock_agent(None)
+        director._actors[_NPC_B].execute = AsyncMock(side_effect=side_effect)
 
         await _run_with_patched_aggression(
             _AlwaysAttacks(),
@@ -1232,7 +1254,7 @@ class TestDuplicateNPCNames:
 
         # 1 dialogue call + 1 retaliation = 2 total (not 2+2=4)
         calls_a = _get_actor(director, _NPC_A).execute.call_count
-        calls_b = director.actors[_NPC_B].execute.call_count
+        calls_b = director._actors[_NPC_B].execute.call_count
         assert calls_a + calls_b == 2
 
 
@@ -1274,7 +1296,7 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: ["npc_generator", _ACTOR, _NARRATOR],
             },
         )
-        director.npc_generator = npc_generator_mock
+        director._cast.npc_generator = npc_generator_mock
         # Make the LLM client return a valid string so the actor created by
         # _register_new_npc can complete its _send() call without crashing.
         director.llm_client.send_message = AsyncMock(
@@ -1308,7 +1330,7 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: ["npc_generator", _ACTOR, _NARRATOR],
             },
         )
-        director.npc_generator = npc_generator_mock
+        director._cast.npc_generator = npc_generator_mock
         mock_actor = AsyncMock()
         mock_actor.execute = AsyncMock(return_value="Hello!")
         _set_actor(director, _NPC_A, mock_actor)
@@ -1339,13 +1361,13 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: ["npc_generator", _NARRATOR],
             },
         )
-        director.npc_generator = _make_mock_agent([generated])
+        director._cast.npc_generator = _make_mock_agent([generated])
         director.llm_client.send_message = AsyncMock(
             return_value=LLMResponse(content="Fine silks, my friend!", model="test", usage={})
         )
 
         await director.act("talk to the merchant")
 
-        input_data = _extract_execute_input(director.narrator)
+        input_data = _extract_execute_input(director._cast.narrator)
         assert "new_npcs" in input_data
         assert any("Merchant" in desc for desc in input_data["new_npcs"])
