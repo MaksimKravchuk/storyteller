@@ -19,7 +19,12 @@ def game_event_to_row(event: GameEvent, game_state_id: str) -> dict:
         COL_LOCATION_ID: event.location_id,
         COL_SCOPE: event.scope,
         "effects": [
-            {"effect_type": eff.effect_type, "target_id": eff.target_id, "params": eff.params} for eff in event.effects
+            {
+                "effect_type": eff.effect_type,
+                "target_id": eff.target_id,
+                "effect_data": eff.effect_data,
+            }
+            for eff in event.effects
         ],
         "follow_up_events": event.follow_up_events,
         "on_complete_description": event.on_complete_description,
@@ -34,7 +39,14 @@ def row_to_game_event(row) -> GameEvent:
         owner_id=row["owner_id"],
         location_id=row[COL_LOCATION_ID],
         scope=row[COL_SCOPE],
-        effects=[EventEffect(**eff) for eff in row["effects"]],
+        effects=[
+            EventEffect(
+                effect_type=eff["effect_type"],
+                target_id=eff["target_id"],
+                effect_data=eff.get("effect_data", eff.get("params", {})),
+            )
+            for eff in row["effects"]
+        ],
         follow_up_events=row["follow_up_events"],
         on_complete_description=row["on_complete_description"],
     )

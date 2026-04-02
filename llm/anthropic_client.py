@@ -49,7 +49,7 @@ class AnthropicClient(BaseLLMClient):
                 response_text += block.text
 
         return LLMResponse(
-            content=response_text,
+            body=response_text,
             raw_response=response,
             usage={
                 "prompt_tokens": response.usage.input_tokens,
@@ -88,5 +88,5 @@ class AnthropicClient(BaseLLMClient):
         for msg in messages:
             # Map our Role enum to Anthropic role strings
             role = "user" if msg.role == Role.USER else "assistant"
-            formatted.append({"role": role, "content": msg.content})
+            formatted.append({"role": role, "content": msg.body})
         return formatted

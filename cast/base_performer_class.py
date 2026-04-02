@@ -35,7 +35,7 @@ def _try_bracket_extraction(raw: str) -> dict | None:
 
 def _parent_agent(stack: list[str] | None) -> str | None:
     """Return the parent agent name from the call stack, or None if at root."""
-    if stack and len(stack) >= 2:  # noqa: WPS507
+    if stack and stack[1:]:
         return stack[-2]
     return None
 
@@ -71,8 +71,8 @@ def _record_llm_call(
             "agent_name": agent_name,
             "model": model,
             "system_prompt": system_prompt,
-            "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
-            "response_content": response.content,
+            "messages": [{"role": msg.role.value, "content": msg.body} for msg in messages],
+            "response_content": response.body,
             "prompt_tokens": response.usage.get("prompt_tokens"),
             "completion_tokens": response.usage.get("completion_tokens"),
             "parent_agent": parent,
@@ -127,7 +127,7 @@ class BasePerformer(ABC):
         token = agent_stack.set(new_stack)
         start = time.monotonic()
         logger.info("agent={} parent={} | start", new_stack[-1], _parent_agent(new_stack))
-        try:  # noqa: WPS501
+        try:
             act_response = await self.act(input_data, context or {})
         except Exception as exc:
             logger.exception(
@@ -178,7 +178,7 @@ class BasePerformer(ABC):
         Returns the content string of the response.
         """
         messages = list(conversation or [])
-        messages.append(Message(role=Role.USER, content=user_message))
+        messages.append(Message(role=Role.USER, body=user_message))
         system_prompt = self._build_system_prompt()
 
         start = time.monotonic()
@@ -194,7 +194,7 @@ class BasePerformer(ABC):
         model = response.model or self.llm_client.model
         _record_llm_call(type(self).__name__, model, response, system_prompt, messages)
 
-        return response.content
+        return response.body
 
     async def _send_json(
         self,

@@ -18,7 +18,7 @@ class Message:
     """A single message in a conversation."""
 
     role: Role
-    content: str  # noqa: WPS110
+    body: str
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -26,7 +26,7 @@ class Message:
 class LLMResponse:
     """Response from an LLM provider."""
 
-    content: str  # noqa: WPS110
+    body: str
     raw_response: Any = None
     usage: dict[str, int] = field(default_factory=dict)
     model: str = ""

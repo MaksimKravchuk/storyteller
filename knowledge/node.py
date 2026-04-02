@@ -60,7 +60,7 @@ class EdgeType(Enum):
 class KnowledgeNode(BaseModel):
     """A single fact / memory in the knowledge graph."""
 
-    content: str  # noqa: WPS110
+    text: str
     scope: KnowledgeScope = KnowledgeScope.LOCAL
     source: KnowledgeSource = KnowledgeSource.FACT
     required_education: int = 0  # 0-10

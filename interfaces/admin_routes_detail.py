@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from aiohttp import web
 
-from interfaces.admin import _SESSION_ID_PARAM, _json_response
+from db.repo_admin import fetch_events
 from interfaces import admin_route_helpers as helpers
+from interfaces.admin_route_helpers import _SESSION_ID_PARAM, _json_response
 
 
 async def knowledge(request: web.Request) -> web.Response:
@@ -18,17 +19,26 @@ async def knowledge(request: web.Request) -> web.Response:
 
 async def events(request: web.Request) -> web.Response:
     """Return events for a session."""
-    return await helpers.session_repo_response(request, helpers.fetch_events_for_session, "events")
+    session_id = request.match_info[_SESSION_ID_PARAM]
+    async with helpers.open_repo(request) as repo:
+        fetched = await fetch_events(repo.admin.session, session_id)
+    return _json_response({"events": fetched})
 
 
 async def npcs(request: web.Request) -> web.Response:
     """Return NPCs for a session."""
-    return await helpers.session_repo_response(request, helpers.fetch_npcs, "npcs")
+    session_id = request.match_info[_SESSION_ID_PARAM]
+    async with helpers.open_repo(request) as repo:
+        fetched = await repo.admin.get_npcs(session_id)
+    return _json_response({"npcs": fetched})
 
 
 async def locations(request: web.Request) -> web.Response:
     """Return locations for a session."""
-    return await helpers.session_repo_response(request, helpers.fetch_locations, "locations")
+    session_id = request.match_info[_SESSION_ID_PARAM]
+    async with helpers.open_repo(request) as repo:
+        fetched = await repo.admin.get_locations(session_id)
+    return _json_response({"locations": fetched})
 
 
 async def ai_calls(request: web.Request) -> web.Response:

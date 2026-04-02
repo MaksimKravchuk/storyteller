@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from aiohttp import web
 
-from interfaces.admin import _DASHBOARD_HTML, _HTTP_NOT_FOUND, _SESSION_ID_PARAM, _json_response
 from interfaces import admin_route_helpers as helpers
+from interfaces.admin_route_helpers import _DASHBOARD_HTML, _HTTP_NOT_FOUND, _SESSION_ID_PARAM, _json_response
 
 _DEFAULT_LIMIT = "50"
 _DEFAULT_OFFSET = "0"
@@ -42,4 +42,7 @@ async def session_detail(request: web.Request) -> web.Response:
 
 async def conversation(request: web.Request) -> web.Response:
     """Return the conversation log for a session."""
-    return await helpers.session_repo_response(request, helpers.fetch_conversation, "log")
+    session_id = request.match_info[_SESSION_ID_PARAM]
+    async with helpers.open_repo(request) as repo:
+        log = await repo.admin.get_conversation_log(session_id)
+    return _json_response({"log": log})

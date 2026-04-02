@@ -48,7 +48,7 @@ class TestActorMoodUpdate:
         actor._send = AsyncMock(return_value=f"*blocks*\n[MOOD: {_HOSTILE}]")
         await actor.act("punch guard", {"location_name": "gate"})
         assert len(actor._conversation) == 2
-        assert "[MOOD:" not in actor._conversation[1].content
+        assert "[MOOD:" not in actor._conversation[1].body
 
 
 def _make_actor_with_npc(

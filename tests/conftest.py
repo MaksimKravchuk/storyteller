@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from tests import _db_stubs  # noqa: F401
+
 import pytest
 from loguru import logger
 
@@ -48,7 +50,7 @@ def populated_graph(simple_setting) -> KnowledgeGraph:
     kg = KnowledgeGraph()
     kg.add_node(
         KnowledgeNode(
-            content="Rome is the capital of the empire.",
+            text="Rome is the capital of the empire.",
             scope=KnowledgeScope.WORLD,
             source=KnowledgeSource.FACT,
             tags=["setting", "overview"],
@@ -56,7 +58,7 @@ def populated_graph(simple_setting) -> KnowledgeGraph:
     )
     kg.add_node(
         KnowledgeNode(
-            content="Whispers of a conspiracy in the Senate.",
+            text="Whispers of a conspiracy in the Senate.",
             scope=KnowledgeScope.CITY,
             source=KnowledgeSource.RUMOR,
             tags=["politics"],
@@ -64,7 +66,7 @@ def populated_graph(simple_setting) -> KnowledgeGraph:
     )
     kg.add_node(
         KnowledgeNode(
-            content="The market on the Via Sacra sells fine silks.",
+            text="The market on the Via Sacra sells fine silks.",
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.FACT,
             tags=["trade"],

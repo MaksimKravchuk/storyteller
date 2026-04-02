@@ -10,7 +10,7 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
     return {
         COL_ID: node.uuid,
         COL_GAME_STATE_ID: game_state_id,
-        "content": node.content,
+        "content": node.text,
         COL_SCOPE: node.scope.value,
         "source": node.source.value,
         "required_education": node.required_education,
@@ -24,7 +24,7 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
 
 def row_to_knowledge_node(row) -> KnowledgeNode:
     node = KnowledgeNode(
-        content=row["content"],
+        text=row["content"],
         scope=KnowledgeScope(row[COL_SCOPE]),
         source=KnowledgeSource(row["source"]),
         required_education=row["required_education"],

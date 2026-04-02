@@ -55,14 +55,14 @@ class MemoryManager:
             f"{interaction_log}"
         )
         response = await self._llm.send_message(
-            messages=[Message(role=Role.USER, content=prompt)],
+            messages=[Message(role=Role.USER, body=prompt)],
             system_prompt="You are a memory summariser for a text adventure game. "
             "Output only the summary, nothing else.",
             max_tokens=_SUMMARY_MAX_TOKENS,
         )
 
         node = KnowledgeNode(
-            content=response.content.strip(),
+            text=response.body.strip(),
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.PERSONAL_EXPERIENCE,
             timestamp=game_time,
@@ -98,7 +98,7 @@ class MemoryManager:
             for witness_id in witness_ids:
                 node_id = self._graph.add_node(
                     KnowledgeNode(
-                        content=event_description,
+                        text=event_description,
                         scope=KnowledgeScope.LOCAL,
                         source=KnowledgeSource.PERSONAL_EXPERIENCE,
                         location_id=location_id,
@@ -111,7 +111,7 @@ class MemoryManager:
             created_ids.append(
                 self._graph.add_node(
                     KnowledgeNode(
-                        content=event_description,
+                        text=event_description,
                         scope=scope,
                         source=KnowledgeSource.FACT if scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR,
                         location_id=location_id,
@@ -123,7 +123,7 @@ class MemoryManager:
             # Also give witnesses a personal memory
             for witness_id in witness_ids:
                 personal = KnowledgeNode(
-                    content=event_description,
+                    text=event_description,
                     scope=KnowledgeScope.LOCAL,
                     source=KnowledgeSource.PERSONAL_EXPERIENCE,
                     location_id=location_id,
