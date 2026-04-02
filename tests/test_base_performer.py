@@ -116,6 +116,12 @@ def clean_stack():
 # ---------------------------------------------------------------------------
 
 
+def test_logging_extracted_from_class():
+    """_log_llm_call and _capture_call_log should not be methods on BasePerformer."""
+    assert not hasattr(BasePerformer, "_log_llm_call")
+    assert not hasattr(BasePerformer, "_capture_call_log")
+
+
 @pytest.mark.asyncio
 async def test_execute_returns_act_result():
     outcome = await _OKPerformer("hello").execute(_INPUT)

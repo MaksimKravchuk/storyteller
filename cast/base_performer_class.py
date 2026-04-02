@@ -40,6 +40,48 @@ def _parent_agent(stack: list[str] | None) -> str | None:
     return None
 
 
+def _record_llm_call(
+    agent_name: str,
+    model: str,
+    response: LLMResponse,
+    system_prompt: str,
+    messages: list[Message],
+) -> None:
+    """Log the LLM call and capture details for the admin dashboard."""
+    parent = _parent_agent(agent_stack.get(None) or [])
+    duration_ms = response.usage.get("duration_ms", 0)
+    logger.info(
+        "LLM | agent={} model={} parent={} | prompt_tokens={} completion_tokens={} duration_ms={}",
+        agent_name,
+        model,
+        parent,
+        response.usage.get("prompt_tokens"),
+        response.usage.get("completion_tokens"),
+        duration_ms,
+    )
+    session_id = current_session_id.get(None)
+    if session_id is None:
+        return
+    seq = call_sequence_counter.get(0)
+    call_sequence_counter.set(seq + 1)
+    buf = call_log_buffer.get(None) or []
+    buf.append(
+        {
+            "session_id": session_id,
+            "agent_name": agent_name,
+            "model": model,
+            "system_prompt": system_prompt,
+            "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
+            "response_content": response.content,
+            "prompt_tokens": response.usage.get("prompt_tokens"),
+            "completion_tokens": response.usage.get("completion_tokens"),
+            "parent_agent": parent,
+            "call_sequence": seq,
+        }
+    )
+    call_log_buffer.set(buf)
+
+
 class BasePerformer(ABC):
     """Abstract base for every agent in the theater.
 
@@ -147,55 +189,12 @@ class BasePerformer(ABC):
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        duration_ms = int((time.monotonic() - start) * 1000)
+        response.usage["duration_ms"] = int((time.monotonic() - start) * 1000)
 
-        self._log_llm_call(response, duration_ms)
-        self._capture_call_log(response, system_prompt, messages, duration_ms)
+        model = response.model or self.llm_client.model
+        _record_llm_call(type(self).__name__, model, response, system_prompt, messages)
 
         return response.content
-
-    def _log_llm_call(self, response: LLMResponse, duration_ms: int) -> None:
-        """Log the LLM call details."""
-        logger.info(
-            "LLM | agent={} model={} parent={} | prompt_tokens={} completion_tokens={} duration_ms={}",
-            type(self).__name__,
-            response.model or self.llm_client.model,
-            _parent_agent(agent_stack.get(None) or []),
-            response.usage.get("prompt_tokens"),
-            response.usage.get("completion_tokens"),
-            duration_ms,
-        )
-
-    def _capture_call_log(
-        self,
-        response: LLMResponse,
-        system_prompt: str,
-        messages: list[Message],
-        duration_ms: int,
-    ) -> None:
-        """Capture LLM call details for the admin dashboard."""
-        session_id = current_session_id.get(None)
-        if session_id is None:
-            return
-        seq = call_sequence_counter.get(0)
-        call_sequence_counter.set(seq + 1)
-        buf = call_log_buffer.get(None) or []
-        buf.append(
-            {
-                "session_id": session_id,
-                "agent_name": type(self).__name__,
-                "model": response.model or self.llm_client.model,
-                "system_prompt": system_prompt,
-                "messages": [{"role": msg.role.value, "content": msg.content} for msg in messages],
-                "response_content": response.content,
-                "prompt_tokens": response.usage.get("prompt_tokens"),
-                "completion_tokens": response.usage.get("completion_tokens"),
-                "duration_ms": duration_ms,
-                "parent_agent": _parent_agent(agent_stack.get(None) or []),
-                "call_sequence": seq,
-            }
-        )
-        call_log_buffer.set(buf)
 
     async def _send_json(
         self,

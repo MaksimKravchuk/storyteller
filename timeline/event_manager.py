@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
+from timeline.effect_applier import EffectApplier
 from timeline.event import EventEffect, EventStatus, GameEvent
 
 if TYPE_CHECKING:
@@ -11,8 +12,44 @@ if TYPE_CHECKING:
     from models.game_state import GameState
 
 
-def _is_completed_after(ev: GameEvent, since_time: float) -> bool:
-    return ev.status == EventStatus.COMPLETED and ev.completes_at > since_time
+def _collect_completed(
+    events: list[GameEvent],
+    clock_before: float,
+    clock_after: float,
+) -> list[GameEvent]:
+    """Mark and return events that completed in [clock_before, clock_after]."""
+    completed: list[GameEvent] = []
+    for ev in events:
+        is_in_window = ev.completes_at <= clock_after and ev.completes_at > clock_before
+        if ev.status == EventStatus.PENDING and is_in_window:
+            ev.status = EventStatus.COMPLETED
+            completed.append(ev)
+    completed.sort(key=lambda event: event.completes_at)
+    return completed
+
+
+def _resolve_completed(completed: list[GameEvent], applier: EffectApplier, schedule_fn) -> None:
+    """Apply effects and schedule follow-ups for each completed event."""
+    for ev in completed:
+        for effect in ev.effects:
+            applier.apply(effect)
+        for follow_up_data in ev.follow_up_events:
+            schedule_fn(_build_follow_up(ev, follow_up_data))
+
+
+def _build_follow_up(event: GameEvent, follow_up_data: dict) -> GameEvent:
+    """Build a follow-up GameEvent from serialised data."""
+    return GameEvent(
+        name=follow_up_data.get("name", "Follow-up event"),
+        scheduled_at=event.completes_at,
+        duration=follow_up_data.get("duration", 1.0),
+        owner_id=follow_up_data.get("owner_id", event.owner_id),
+        location_id=follow_up_data.get("location_id", event.location_id),
+        scope=follow_up_data.get("scope", event.scope),
+        effects=[EventEffect(**eff) for eff in follow_up_data.get("effects", [])],
+        follow_up_events=follow_up_data.get("follow_up_events", []),
+        on_complete_description=follow_up_data.get("on_complete_description", ""),
+    )
 
 
 class EventManager:
@@ -34,7 +71,7 @@ class EventManager:
         knowledge_graph: KnowledgeGraph,
     ):
         self._game_state = game_state
-        self._graph = knowledge_graph
+        self._applier = EffectApplier(game_state, knowledge_graph)
         self._events: list[GameEvent] = []
 
     @property
@@ -70,26 +107,10 @@ class EventManager:
         Returns the list of events that completed during this time step,
         sorted by completion time (earliest first).
         """
-        old_clock = self._game_state.game_clock
+        clock_before = self._game_state.game_clock
         self._game_state.advance_clock(hours)
-        new_clock = self._game_state.game_clock
-
-        # Gather events that complete within [old_clock, new_clock]
-        completed: list[GameEvent] = []
-        for ev in self._events:
-            is_newly_complete = ev.completes_at <= new_clock and ev.completes_at > old_clock
-            if ev.status == EventStatus.PENDING and is_newly_complete:
-                ev.status = EventStatus.COMPLETED
-                completed.append(ev)
-
-        # Sort by completion time so effects apply in chronological order
-        completed.sort(key=lambda event: event.completes_at)
-
-        # Resolve each completed event
-        for ev in completed:
-            self._resolve_event(ev)
-            self._schedule_follow_ups(ev)
-
+        completed = _collect_completed(self._events, clock_before, self._game_state.game_clock)
+        _resolve_completed(completed, self._applier, self.schedule)
         return completed
 
     def get_pending_events(self, owner_id: str | None = None) -> list[GameEvent]:
@@ -99,126 +120,3 @@ class EventManager:
             for ev in self._events
             if ev.status == EventStatus.PENDING and (owner_id is None or ev.owner_id == owner_id)
         ]
-
-    def get_completed_since(self, since_time: float) -> list[GameEvent]:
-        """Return events that completed after ``since_time``."""
-        return [ev for ev in self._events if _is_completed_after(ev, since_time)]
-
-    # ------------------------------------------------------------------
-    # Internal
-    # ------------------------------------------------------------------
-
-    def _resolve_event(self, event: GameEvent) -> None:
-        """Apply an event's effects to the game state."""
-        for effect in event.effects:
-            self._apply_effect(effect)
-
-    def _apply_effect(self, effect: EventEffect) -> None:
-        """Apply a single EventEffect to the game state."""
-        apply_fn = self._effect_handlers.get(effect.effect_type.upper())
-        if apply_fn:
-            apply_fn(effect)
-        # SPAWN_NPC is handled at a higher level by the Director
-        # (it needs to call the NPC Generator agent)
-
-    @property
-    def _effect_handlers(self) -> dict:
-        return {
-            "MOVE_NPC": self._apply_move_npc,
-            "ADD_ITEM": self._apply_add_item,
-            "REMOVE_ITEM": self._apply_remove_item,
-            "ADD_KNOWLEDGE": self._apply_add_knowledge,
-            "CHANGE_ATTRIBUTE": self._apply_change_attribute,
-            "REMOVE_NPC": self._apply_remove_npc,
-        }
-
-    def _apply_move_npc(self, effect: EventEffect) -> None:
-        npc_id = effect.params.get("npc_id", effect.target_id)
-        npc = self._game_state.npcs.get(npc_id)
-        if not npc:
-            return
-        if npc.location_id and npc.location_id in self._game_state.locations:
-            self._game_state.locations[npc.location_id].remove_npc(npc_id)
-        npc.location_id = effect.params.get("to_location_id", "")
-        new_loc = self._game_state.locations.get(npc.location_id)
-        if new_loc:
-            new_loc.add_npc(npc_id)
-        self._update_scene_for_moved_npc(npc_id, npc)
-
-    def _update_scene_for_moved_npc(self, npc_id: str, npc: Any) -> None:
-        """Add a moved NPC to the current scene if they arrived at the scene's location."""
-        scene = self._game_state.current_scene
-        if not scene or scene.location_id != npc.location_id:
-            return
-        already_present = any(snpc.uuid == npc_id for snpc in scene.npcs_present)
-        if already_present:
-            return
-        from models.scene import SceneNPC
-
-        npc_role = npc.occupation or npc.name
-        scene.npcs_present.append(SceneNPC(role=npc_role, uuid=npc_id))
-
-    def _apply_add_item(self, effect: EventEffect) -> None:
-        npc_id = effect.params.get("npc_id", effect.target_id)
-        inventory_item = effect.params.get("item", "")
-        npc = self._game_state.npcs.get(npc_id)
-        if npc and inventory_item:
-            npc.add_item_to_inventory(inventory_item)
-
-    def _apply_remove_item(self, effect: EventEffect) -> None:
-        npc_id = effect.params.get("npc_id", effect.target_id)
-        inventory_item = effect.params.get("item", "")
-        npc = self._game_state.npcs.get(npc_id)
-        if npc and inventory_item and inventory_item in npc.inventory:
-            npc.remove_item_from_inventory(inventory_item)
-
-    def _apply_add_knowledge(self, effect: EventEffect) -> None:
-        from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
-
-        knowledge_text = effect.params.get("content", "")
-        scope_str = effect.params.get("scope", "local")
-        tags = effect.params.get("tags", [])
-        if knowledge_text:
-            node = KnowledgeNode(
-                content=knowledge_text,
-                scope=KnowledgeScope(scope_str),
-                source=KnowledgeSource.FACT,
-                tags=tags,
-                location_id=effect.params.get("location_id"),
-            )
-            self._graph.add_node(node)
-
-    def _apply_change_attribute(self, effect: EventEffect) -> None:
-        target = self._game_state.npcs.get(effect.target_id)
-        attr = effect.params.get("attribute", "")
-        attribute_value = effect.params.get("value", 0)
-        if target and attr:
-            target.update_attribute(attr, attribute_value)
-
-    def _apply_remove_npc(self, effect: EventEffect) -> None:
-        gs = self._game_state
-        npc_id = effect.target_id
-        npc = gs.npcs.get(npc_id)
-        if not npc:
-            return
-        if npc.location_id and npc.location_id in gs.locations:
-            gs.locations[npc.location_id].remove_npc(npc_id)
-        if gs.current_scene:
-            gs.current_scene.npcs_present = [snpc for snpc in gs.current_scene.npcs_present if snpc.uuid != npc_id]
-        gs.npcs.pop(npc_id)
-
-    def _schedule_follow_ups(self, event: GameEvent) -> None:
-        """Schedule chained events defined in ``event.follow_up_events``."""
-        for follow_up_data in event.follow_up_events:
-            follow_up = GameEvent(
-                name=follow_up_data.get("name", "Follow-up event"),
-                scheduled_at=event.completes_at,
-                duration=follow_up_data.get("duration", 1.0),
-                owner_id=follow_up_data.get("owner_id", event.owner_id),
-                location_id=follow_up_data.get("location_id", event.location_id),
-                scope=follow_up_data.get("scope", event.scope),
-                effects=[EventEffect(**eff) for eff in follow_up_data.get("effects", [])],
-                follow_up_events=follow_up_data.get("follow_up_events", []),
-                on_complete_description=follow_up_data.get("on_complete_description", ""),
-            )
-            self.schedule(follow_up)

@@ -4,6 +4,13 @@ from __future__ import annotations
 
 
 from knowledge.graph import KnowledgeGraph
+from knowledge.graph_queries import (
+    get_related,
+    query_by_location,
+    query_by_scope,
+    query_by_tags,
+)
+from knowledge import graph_serialization
 from knowledge.node import EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from knowledge.query import KnowledgeFilter, KnowledgeQueryEngine
 from models.character import Character
@@ -84,7 +91,7 @@ class TestKnowledgeNode:
 # ---------------------------------------------------------------------------
 
 
-class TestKnowledgeGraph:
+class TestKnowledgeGraphNodes:
     def test_add_and_get_node(self, empty_graph):
         node = KnowledgeNode(content="Fact A")
         uid = empty_graph.add_node(node)
@@ -96,17 +103,17 @@ class TestKnowledgeGraph:
         assert empty_graph.get_node("nonexistent") is None
 
     def test_node_count(self, empty_graph):
-        assert empty_graph.node_count == 0
+        assert graph_serialization.node_count(empty_graph) == 0
         empty_graph.add_node(KnowledgeNode(content="A"))
         empty_graph.add_node(KnowledgeNode(content="B"))
-        assert empty_graph.node_count == 2
+        assert graph_serialization.node_count(empty_graph) == 2
 
     def test_remove_node(self, empty_graph):
         node = KnowledgeNode(content="Removable")
         empty_graph.add_node(node)
         empty_graph.remove_node(node.uuid)
         assert empty_graph.get_node(node.uuid) is None
-        assert empty_graph.node_count == 0
+        assert graph_serialization.node_count(empty_graph) == 0
 
     def test_remove_nonexistent_node_is_noop(self, empty_graph):
         empty_graph.remove_node("ghost")  # should not raise
@@ -115,13 +122,15 @@ class TestKnowledgeGraph:
         nodes = populated_graph.all_nodes()
         assert len(nodes) == 3
 
+
+class TestKnowledgeGraphEdges:
     def test_add_edge_and_edge_count(self, empty_graph):
         n1 = KnowledgeNode(content="A")
         n2 = KnowledgeNode(content="B")
         empty_graph.add_node(n1)
         empty_graph.add_node(n2)
         empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.RELATED_TO)
-        assert empty_graph.edge_count == 1
+        assert graph_serialization.edge_count(empty_graph) == 1
 
     def test_get_edges_from(self, empty_graph):
         n1 = KnowledgeNode(content="A")
@@ -138,19 +147,35 @@ class TestKnowledgeGraph:
     def test_get_edges_from_nonexistent_returns_empty(self, empty_graph):
         assert empty_graph.get_edges_from("ghost") == []
 
+    def test_get_related_bfs(self, empty_graph):
+        nodes = [KnowledgeNode(content=label) for label in ("Root", "Child", "Grandchild")]
+        for node in nodes:
+            empty_graph.add_node(node)
+        empty_graph.add_edge(nodes[0].uuid, nodes[1].uuid, EdgeType.RELATED_TO)
+        empty_graph.add_edge(nodes[1].uuid, nodes[2].uuid, EdgeType.RELATED_TO)
+        related = get_related(empty_graph, nodes[0].uuid, depth=2)
+        related_uuids = {rel_node.uuid for rel_node in related}
+        assert nodes[1].uuid in related_uuids
+        assert nodes[2].uuid in related_uuids
+
+    def test_get_related_unknown_node_returns_empty(self, empty_graph):
+        assert get_related(empty_graph, "ghost") == []
+
+
+class TestKnowledgeGraphQueries:
     def test_query_by_scope(self, populated_graph):
         # Only LOCAL and CITY nodes should come back when max_scope is CITY
-        matching_nodes = populated_graph.query_by_scope(KnowledgeScope.CITY)
+        matching_nodes = query_by_scope(populated_graph, KnowledgeScope.CITY)
         scopes = {node.scope for node in matching_nodes}
         assert KnowledgeScope.WORLD not in scopes
 
     def test_query_by_tags_match(self, populated_graph):
-        matching_nodes = populated_graph.query_by_tags(["politics"])
+        matching_nodes = query_by_tags(populated_graph, ["politics"])
         assert len(matching_nodes) == 1
         assert matching_nodes[0].tags == ["politics"]
 
     def test_query_by_tags_no_match(self, populated_graph):
-        matching_nodes = populated_graph.query_by_tags(["nonexistent"])
+        matching_nodes = query_by_tags(populated_graph, ["nonexistent"])
         assert matching_nodes == []
 
     def test_query_by_location(self, empty_graph):
@@ -159,28 +184,14 @@ class TestKnowledgeGraph:
         n2 = KnowledgeNode(content="There", location_id="loc-999")
         empty_graph.add_node(n1)
         empty_graph.add_node(n2)
-        matching_nodes = empty_graph.query_by_location(loc_id)
+        matching_nodes = query_by_location(empty_graph, loc_id)
         assert len(matching_nodes) == 1
         assert matching_nodes[0].uuid == n1.uuid
 
-    def test_get_related_bfs(self, empty_graph):
-        nodes = [KnowledgeNode(content=label) for label in ("Root", "Child", "Grandchild")]
-        for node in nodes:
-            empty_graph.add_node(node)
-        empty_graph.add_edge(nodes[0].uuid, nodes[1].uuid, EdgeType.RELATED_TO)
-        empty_graph.add_edge(nodes[1].uuid, nodes[2].uuid, EdgeType.RELATED_TO)
-        related = empty_graph.get_related(nodes[0].uuid, depth=2)
-        related_uuids = {rel_node.uuid for rel_node in related}
-        assert nodes[1].uuid in related_uuids
-        assert nodes[2].uuid in related_uuids
-
-    def test_get_related_unknown_node_returns_empty(self, empty_graph):
-        assert empty_graph.get_related("ghost") == []
-
     def test_serialise_round_trip(self, populated_graph):
-        graph_dict = populated_graph.to_dict()
-        restored = KnowledgeGraph.from_dict(graph_dict)
-        assert restored.node_count == populated_graph.node_count
+        graph_dict = graph_serialization.to_dict(populated_graph)
+        restored = graph_serialization.from_dict(graph_dict)
+        assert graph_serialization.node_count(restored) == graph_serialization.node_count(populated_graph)
 
 
 # ---------------------------------------------------------------------------
@@ -188,7 +199,7 @@ class TestKnowledgeGraph:
 # ---------------------------------------------------------------------------
 
 
-class TestKnowledgeQueryEngine:
+class TestQueryEngineFilters:
     def test_query_all_world_scope(self, populated_graph):
         engine = KnowledgeQueryEngine(populated_graph)
         filt = KnowledgeFilter(max_scope=KnowledgeScope.WORLD)
@@ -225,6 +236,8 @@ class TestKnowledgeQueryEngine:
         assert len(matching_nodes) == 1
         assert "trade" in matching_nodes[0].tags
 
+
+class TestQueryEngineNpcContext:
     def test_build_npc_filter_maps_scope(self):
         npc = Character(
             name="Scholar",
