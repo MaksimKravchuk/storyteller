@@ -2,310 +2,91 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 
 from cast.base_performer_class import BasePerformer
-from llm.call_logger import agent_stack, reset_buffer
-from prompts.base_template import PromptTemplate
-
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
+from llm.call_logger import reset_buffer
+from tests.base_performer_helpers import (
+    EMPTY_PROMPT,
+    OKPerformer,
+    RaisingPerformer,
+    StackRecorder,
+    get_stack,
+    make_mock,
+)
+from tests.base_performer_nested import ContextCapture, ContextRawCapture, OuterCatcher, OuterDelegator
 
 _INPUT = "input"
-_SEND_METHOD = "_send"
-_PROMPT = "prompt"
-_MESSAGE_KEY = "message"
-_EMPTY_PROMPT = PromptTemplate([])
-
-
-# ---------------------------------------------------------------------------
-# Minimal concrete performer for testing
-# ---------------------------------------------------------------------------
-
-
-class _OKPerformer(BasePerformer):
-    def __init__(self, act_output: str = "ok"):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
-        self._act_output = act_output
-
-    async def act(self, input_data, context):
-        return self._act_output
-
-
-class _RaisingPerformer(BasePerformer):
-    def __init__(self, exc: Exception):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
-        self._exc = exc
-
-    async def act(self, input_data, context):
-        raise self._exc
-
-
-class _StackSnapshotPerformer(BasePerformer):
-    """Captures the agent stack at act() time for inspection."""
-
-    captured: list[str] = []
-
-    def __init__(self):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
-
-    async def act(self, input_data, context):
-        _StackSnapshotPerformer.captured = list(agent_stack.get(None) or [])
-
-
-class _OuterPerformer(BasePerformer):
-    """Outer performer that delegates to an inner performer."""
-
-    def __init__(self, inner_performer):
-        super().__init__(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
-        self._inner = inner_performer
-
-    async def act(self, input_data, context):
-        return await self._inner.execute(input_data)
-
-
-class _InnerRaiser(BasePerformer):
-    async def act(self, input_data, context):
-        raise ValueError("inner boom")
-
-
-class _OuterCatcher(BasePerformer):
-    async def act(self, input_data, context):
-        try:
-            await _InnerRaiser(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT).execute(input_data)
-        except ValueError:
-            return None
-        return "unexpected"
-
-
-class _ContextCapture(BasePerformer):
-    received: dict = {}
-
-    async def act(self, input_data, context):
-        _ContextCapture.received.update(context)
-        return "ok"
-
-
-class _ContextCaptureRaw(BasePerformer):
-    received_ctx: dict = {}
-
-    async def act(self, input_data, context):
-        _ContextCaptureRaw.received_ctx["ctx"] = context
-        return "ok"
-
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
+_captured_stack: list[str] = []
 
 
 @pytest.fixture(autouse=True)
-def clean_stack():
-    """Reset the agent stack before each test."""
-    _StackSnapshotPerformer.captured = []
+def _clean_stack():
+    _captured_stack.clear()
     reset_buffer()
     yield
     reset_buffer()
 
 
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
+class TestBasePerformerExecuteBasic:
+    def test_logging_extracted_from_class(self):
+        assert not hasattr(BasePerformer, "_log_llm_call")
+        assert not hasattr(BasePerformer, "_capture_call_log")
+
+    @pytest.mark.asyncio
+    async def test_returns_act_result(self):
+        outcome = await OKPerformer("hello").execute(_INPUT)
+        assert outcome == "hello"
+
+    @pytest.mark.asyncio
+    async def test_propagates_exception_unchanged(self):
+        with pytest.raises(RuntimeError, match="original error"):
+            await RaisingPerformer(RuntimeError("original error")).execute(_INPUT)
+
+    @pytest.mark.asyncio
+    async def test_pushes_agent_name_during_act(self):
+        performer = StackRecorder(target=_captured_stack)
+        await performer.execute(_INPUT)
+        assert "StackRecorder" in _captured_stack
+
+    @pytest.mark.asyncio
+    async def test_pops_agent_name_after_completion(self):
+        before = list(get_stack())
+        await OKPerformer().execute(_INPUT)
+        assert list(get_stack()) == before
+
+    @pytest.mark.asyncio
+    async def test_pops_agent_name_when_act_raises(self):
+        before = list(get_stack())
+        with pytest.raises(ValueError, match="boom"):
+            await RaisingPerformer(ValueError("boom")).execute(_INPUT)
+        assert list(get_stack()) == before
 
 
-def test_logging_extracted_from_class():
-    """_log_llm_call and _capture_call_log should not be methods on BasePerformer."""
-    assert not hasattr(BasePerformer, "_log_llm_call")
-    assert not hasattr(BasePerformer, "_capture_call_log")
+class TestBasePerformerExecuteNested:
+    @pytest.mark.asyncio
+    async def test_nested_stack_is_correct(self):
+        await OuterDelegator(target=_captured_stack).execute(_INPUT)
+        assert "OuterDelegator" in _captured_stack
+        assert "StackRecorder" in _captured_stack
+        assert _captured_stack.index("OuterDelegator") < _captured_stack.index("StackRecorder")
 
+    @pytest.mark.asyncio
+    async def test_nested_stack_restored_after_inner_raises(self):
+        """Outer execute's finally must fire correctly even if inner execute raises."""
+        before = list(get_stack())
+        await OuterCatcher(llm_client=make_mock(), system_prompt_template=EMPTY_PROMPT).execute(_INPUT)
+        assert list(get_stack()) == before
 
-@pytest.mark.asyncio
-async def test_execute_returns_act_result():
-    outcome = await _OKPerformer("hello").execute(_INPUT)
-    assert outcome == "hello"
+    @pytest.mark.asyncio
+    async def test_context_passed_to_act(self):
+        received = {}
+        performer = ContextCapture(received=received)
+        await performer.execute(_INPUT, context={"key": "value"})
+        assert received == {"key": "value"}
 
-
-@pytest.mark.asyncio
-async def test_execute_pushes_agent_name_during_act():
-    performer = _StackSnapshotPerformer()
-    await performer.execute(_INPUT)
-    assert "_StackSnapshotPerformer" in _StackSnapshotPerformer.captured
-
-
-@pytest.mark.asyncio
-async def test_execute_pops_agent_name_after_completion():
-    before = list(agent_stack.get(None) or [])
-    await _OKPerformer().execute(_INPUT)
-    after = list(agent_stack.get(None) or [])
-    assert after == before
-
-
-@pytest.mark.asyncio
-async def test_execute_pops_agent_name_when_act_raises():
-    """Stack must be restored even if act() raises — no IndexError masking."""
-    before = list(agent_stack.get(None) or [])
-    with pytest.raises(ValueError, match="boom"):
-        await _RaisingPerformer(ValueError("boom")).execute(_INPUT)
-    after = list(agent_stack.get(None) or [])
-    assert after == before
-
-
-@pytest.mark.asyncio
-async def test_execute_propagates_exception_unchanged():
-    exc = RuntimeError("original error")
-    with pytest.raises(RuntimeError, match="original error"):
-        await _RaisingPerformer(exc).execute(_INPUT)
-
-
-@pytest.mark.asyncio
-async def test_execute_nested_stack_is_correct():
-    """Outer performer should be in the stack when inner performer's act runs."""
-    inner = _StackSnapshotPerformer()
-    outer = _OuterPerformer(inner)
-    await outer.execute(_INPUT)
-
-    stack = _StackSnapshotPerformer.captured
-    assert "_OuterPerformer" in stack
-    assert "_StackSnapshotPerformer" in stack
-    assert stack.index("_OuterPerformer") < stack.index("_StackSnapshotPerformer")
-
-
-@pytest.mark.asyncio
-async def test_nested_stack_restored_after_inner_raises():
-    """Outer execute's finally must fire correctly even if inner execute raises."""
-    outer = _OuterCatcher(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
-    before = list(agent_stack.get(None) or [])
-    await outer.execute(_INPUT)
-    after = list(agent_stack.get(None) or [])
-
-    assert after == before
-
-
-@pytest.mark.asyncio
-async def test_execute_context_passed_to_act():
-    """execute() must pass context through to act()."""
-    _ContextCapture.received = {}
-    performer = _ContextCapture(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
-    await performer.execute(_INPUT, context={"key": "value"})
-    assert _ContextCapture.received == {"key": "value"}
-
-
-@pytest.mark.asyncio
-async def test_execute_empty_context_is_empty_dict():
-    """None context becomes {} when passed to act()."""
-    _ContextCaptureRaw.received_ctx = {}
-    await _ContextCaptureRaw(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT).execute("x")
-    assert not _ContextCaptureRaw.received_ctx["ctx"]
-
-
-# ---------------------------------------------------------------------------
-# _send_json tests
-# ---------------------------------------------------------------------------
-
-
-class _JsonPerformer(BasePerformer):
-    async def act(self, input_data, context):
-        return await self._send_json(input_data)
-
-
-def _make_json_performer() -> _JsonPerformer:
-    return _JsonPerformer(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
-
-
-@pytest.mark.asyncio
-async def test_send_json_returns_dict_on_success():
-    """_send_json returns a dict immediately when the first response is valid JSON."""
-    performer = _make_json_performer()
-    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value='{"key": "value"}')):
-        output = await performer._send_json(_PROMPT)
-    assert output == {"key": "value"}
-
-
-@pytest.mark.asyncio
-async def test_send_json_bracket_extraction_fallback():
-    """After exhausting retries, _send_json extracts JSON from surrounding text."""
-    performer = _make_json_performer()
-    # All responses have embedded JSON but surrounded by noise
-    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value='noise {"extracted": true} noise')):
-        extracted = await performer._send_json(_PROMPT, retries=0)
-    assert extracted == {"extracted": True}
-
-
-@pytest.mark.asyncio
-async def test_send_json_raises_when_all_retries_fail():
-    """_send_json raises ValueError when every attempt returns non-JSON."""
-    performer = _make_json_performer()
-    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="not json at all")) as mock_send:
-        with pytest.raises(ValueError, match="failed to produce valid JSON"):
-            await performer._send_json(_PROMPT, retries=2)
-    assert mock_send.call_count == 3
-
-
-@pytest.mark.asyncio
-async def test_send_json_invalid_inner_braces():
-    """Bracket extraction that finds {…} but inner content is invalid JSON raises ValueError."""
-    performer = _make_json_performer()
-    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="prefix {broken json} suffix")):
-        with pytest.raises(ValueError, match="failed to produce valid JSON"):
-            await performer._send_json(_PROMPT, retries=0)
-
-
-async def _bad_send(*args, **kwargs):
-    raise UnicodeDecodeError("utf-8", b"", 0, 1, "reason")
-
-
-@pytest.mark.asyncio
-async def test_send_json_non_json_exception_propagates():
-    """Non-JSONDecodeError exceptions must not be swallowed by the bracket-extraction block."""
-    performer = _make_json_performer()
-    with patch.object(performer, _SEND_METHOD, new=_bad_send):
-        with pytest.raises(UnicodeDecodeError):
-            await performer._send_json(_PROMPT, retries=0)
-
-
-# ---------------------------------------------------------------------------
-# Logging tests
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_execute_emits_start_and_done_logs(loguru_sink):
-    """execute() must emit a start record and a done record with duration_ms."""
-    await _OKPerformer("hello").execute(_INPUT)
-    messages = [rec[_MESSAGE_KEY] for rec in loguru_sink]
-    assert any("| start" in msg and "_OKPerformer" in msg for msg in messages)
-    assert any(_is_done_log(msg) for msg in messages)
-
-
-def _is_done_log(msg: str) -> bool:
-    return "| done" in msg and "_OKPerformer" in msg and "duration_ms=" in msg
-
-
-@pytest.mark.asyncio
-async def test_execute_error_log_has_exc_type(loguru_sink):
-    """execute() must emit an ERROR record with exc_type and attached traceback."""
-    with pytest.raises(ValueError):
-        await _RaisingPerformer(ValueError("boom")).execute(_INPUT)
-    error_records = [rec for rec in loguru_sink if rec["level"].name == "ERROR"]
-    assert len(error_records) == 1
-    assert "| error" in error_records[0][_MESSAGE_KEY]
-    assert "exc_type=ValueError" in error_records[0][_MESSAGE_KEY]
-    assert "duration_ms=" in error_records[0][_MESSAGE_KEY]
-    assert error_records[0]["exception"] is not None
-
-
-@pytest.mark.asyncio
-async def test_send_json_warning_per_attempt(loguru_sink):
-    """_send_json must log one WARNING per failed JSON parse attempt."""
-    performer = _make_json_performer()
-    with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="not json")):
-        with pytest.raises(ValueError):
-            await performer._send_json(_PROMPT, retries=1)
-    warnings = [rec for rec in loguru_sink if rec["level"].name == "WARNING"]
-    assert len(warnings) == 3
-    assert "attempt 1/2" in warnings[0][_MESSAGE_KEY]
-    assert "attempt 2/2" in warnings[1][_MESSAGE_KEY]
-    assert "Bracket extraction also failed" in warnings[2][_MESSAGE_KEY]
+    @pytest.mark.asyncio
+    async def test_empty_context_is_empty_dict(self):
+        ctx_holder = {}
+        await ContextRawCapture(holder=ctx_holder).execute("x")
+        assert not ctx_holder["ctx"]

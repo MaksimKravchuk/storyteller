@@ -2,87 +2,59 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from sqlalchemy import delete
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
-from db.converters import (
-    game_event_to_row,
-    knowledge_node_to_row,
-    location_to_row,
-    npc_to_row,
-    player_to_row,
-    scene_to_row,
-    setting_to_row,
-)
+from db.converters import event as conv_event, knowledge as conv_knowledge
+from db.converters import location as conv_loc, npc as conv_npc
+from db.converters import player as conv_player, scene as conv_scene, setting as conv_setting
+from db import repo_saver_helpers as saver_helpers
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from timeline.event import GameEvent
 
-_COL_ID = "id"
-_COL_GAME_STATE_ID = "game_state_id"
-
-
-def _updatable_fields(row: dict) -> dict:
-    """Return row fields excluding primary/foreign key columns."""
-    skip = {_COL_ID, _COL_GAME_STATE_ID}
-    return {key: col_val for key, col_val in row.items() if key not in skip}
-
-
-async def _replace_rows(session: AsyncSession, table: Any, game_state_id: str, rows: list) -> None:
-    """Delete all rows for game_state_id, then bulk-insert replacements."""
-    del_stmt = delete(table).where(table.c.game_state_id == game_state_id)
-    await session.execute(del_stmt)
-    if rows:
-        await session.execute(table.insert(), rows)
-
-
-async def _upsert_one_to_one(session: AsyncSession, table: Any, row: dict) -> None:
-    """Upsert a single row keyed by game_state_id."""
-    stmt = (
-        pg_insert(table)
-        .values(**row)
-        .on_conflict_do_update(
-            index_elements=[_COL_GAME_STATE_ID],
-            set_=_updatable_fields(row),
-        )
-    )
-    await session.execute(stmt)
-
 
 async def _save_setting_and_player(session: AsyncSession, game_state_id: str, game_state: GameState) -> None:
     """Upsert setting and player rows."""
-    await _upsert_one_to_one(session, tbl.settings, setting_to_row(game_state.setting, game_state_id))
-    await _upsert_one_to_one(session, tbl.players, player_to_row(game_state.player, game_state_id))
+    await saver_helpers.upsert_one_to_one(
+        session,
+        tbl.settings,
+        conv_setting.setting_to_row(game_state.setting, game_state_id),
+    )
+    await saver_helpers.upsert_one_to_one(
+        session,
+        tbl.players,
+        conv_player.player_to_row(game_state.player, game_state_id),
+    )
 
 
 async def _save_world_objects(session: AsyncSession, game_state_id: str, game_state: GameState) -> None:
     """Replace locations, NPCs, and scene rows."""
-    loc_rows = [location_to_row(loc, game_state_id) for loc in game_state.locations.values()]
-    await _replace_rows(session, tbl.locations, game_state_id, loc_rows)
+    loc_rows = [conv_loc.location_to_row(loc, game_state_id) for loc in game_state.locations.values()]
+    await saver_helpers.replace_rows(session, tbl.locations, game_state_id, loc_rows)
 
-    npc_rows = [npc_to_row(npc, game_state_id) for npc in game_state.npcs.values()]
-    await _replace_rows(session, tbl.npcs, game_state_id, npc_rows)
+    npc_rows = [conv_npc.npc_to_row(npc, game_state_id) for npc in game_state.npcs.values()]
+    await saver_helpers.replace_rows(session, tbl.npcs, game_state_id, npc_rows)
 
     scene_rows = (
-        [scene_to_row(game_state.current_scene, game_state_id, is_current=True)] if game_state.current_scene else []
+        [conv_scene.scene_to_row(game_state.current_scene, game_state_id, is_current=True)]
+        if game_state.current_scene
+        else []
     )
-    await _replace_rows(session, tbl.scenes, game_state_id, scene_rows)
+    await saver_helpers.replace_rows(session, tbl.scenes, game_state_id, scene_rows)
 
 
 async def _save_knowledge(session: AsyncSession, game_state_id: str, knowledge_graph: KnowledgeGraph) -> None:
     """Replace knowledge nodes and edges."""
     nodes = knowledge_graph.all_nodes()
-    await _replace_rows(
+    await saver_helpers.replace_rows(
         session,
         tbl.knowledge_nodes,
         game_state_id,
-        [knowledge_node_to_row(node, game_state_id) for node in nodes],
+        [conv_knowledge.knowledge_node_to_row(node, game_state_id) for node in nodes],
     )
-    await _replace_rows(
+    await saver_helpers.replace_rows(
         session,
         tbl.knowledge_edges,
         game_state_id,
@@ -111,8 +83,8 @@ async def _persist_children(
     await _save_setting_and_player(session, game_state_id, game_state)
     await _save_world_objects(session, game_state_id, game_state)
     await _save_knowledge(session, game_state_id, knowledge_graph)
-    event_rows = [game_event_to_row(ev, game_state_id) for ev in events] if events else []
-    await _replace_rows(session, tbl.game_events, game_state_id, event_rows)
+    event_rows = [conv_event.game_event_to_row(ev, game_state_id) for ev in events] if events else []
+    await saver_helpers.replace_rows(session, tbl.game_events, game_state_id, event_rows)
 
 
 class StateSaver:

@@ -1,0 +1,84 @@
+"""Tests for Director combat dice integration."""
+
+from __future__ import annotations
+
+from unittest.mock import AsyncMock
+
+import pytest
+
+from models.npc_card import NPCCard
+from tests.director_helpers import make_director, make_game_state, make_mock_agent
+
+_HOSTILE = "hostile"
+_NPC_A = "npc-1"
+_GUARD_NAME = "Guard"
+_CITY_GUARD = "city guard"
+_COMBAT_SKILL = "combat_skill"
+_INPUT_DATA = "input_data"
+
+
+class TestCombatDiceIntegration:
+    @pytest.mark.asyncio
+    async def test_aggressive_action_injects_dice_roll(self):
+        director, mock_actor = self._build(is_aggressive=True)
+        await director.act("punch the guard")
+        call_args = mock_actor.execute.call_args
+        input_text = call_args.kwargs.get(_INPUT_DATA) or call_args.args[0]
+        assert "[DICE ROLL:" in input_text
+        assert "OUTCOME:" in input_text
+
+    @pytest.mark.asyncio
+    async def test_non_aggressive_action_no_dice_roll(self):
+        director, mock_actor = self._build(is_aggressive=False)
+        await director.act("talk to the guard")
+        call_args = mock_actor.execute.call_args
+        input_text = call_args.kwargs.get(_INPUT_DATA) or call_args.args[0]
+        assert "[DICE ROLL:" not in input_text
+
+    @pytest.mark.asyncio
+    async def test_combat_roll_included_in_dialogue_result(self):
+        director, _ = self._build(is_aggressive=True)
+        await director.act("attack guard")
+        narrator_call = director._cast.narrator.execute.call_args
+        raw_input = narrator_call.kwargs.get(_INPUT_DATA) or narrator_call.args[0]
+        dialogue = raw_input.get("dialogue", [])
+        assert len(dialogue) == 1
+        assert "combat_roll" in dialogue[0]
+
+    @pytest.mark.asyncio
+    async def test_npc_without_combat_skill_uses_default(self):
+        director, _ = self._build(is_aggressive=True, combat_skill=0)
+        npc = NPCCard(name="Merchant", occupation="merchant")
+        npc.uuid = _NPC_A
+        director._deps.game_state.npcs[_NPC_A] = npc
+        mock_actor = make_mock_agent("*cowers*")
+        director._actors[_NPC_A] = mock_actor
+        await director.act("punch the merchant")
+        call_args = mock_actor.execute.call_args
+        input_text = call_args.kwargs.get(_INPUT_DATA) or call_args.args[0]
+        assert "+3]" in input_text
+
+    def _build(self, is_aggressive, combat_skill=5):
+        gs = make_game_state()
+        npc = NPCCard(
+            name=_GUARD_NAME,
+            occupation=_CITY_GUARD,
+            attributes={_COMBAT_SKILL: combat_skill},
+        )
+        npc.uuid = _NPC_A
+        gs.npcs[_NPC_A] = npc
+        director = make_director(
+            game_state=gs,
+            route_response={
+                "action_type": "INTERACT",
+                "is_aggressive": is_aggressive,
+                "targets": ("guard",),
+                "needs_clarification": False,
+                "delegate_to": ["actor", "narrator"],
+            },
+        )
+        mock_actor = AsyncMock()
+        mock_actor.act = AsyncMock(return_value="*fights back*")
+        mock_actor.execute = AsyncMock(return_value="*fights back*")
+        director._actors[_NPC_A] = mock_actor
+        return director, mock_actor

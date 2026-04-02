@@ -2,21 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import dataclasses
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
-from cast.director_context import ContextFormatter
-from cast.director_dialogue import DialogueHandler
-from cast.director_events import EventProcessor
-from cast.director_execution import PlanExecutor, _Agents
-from cast.director_retaliation import RetaliationHandler
-from cast.director_routing import ActionRouter
-from knowledge.memory import MemoryManager
-from models.game_state import GameState
-from prompts.director_prompts import DIRECTOR_SYSTEM
-from timeline.event import GameEvent
-from timeline.event_manager import EventManager
+from cast import director_context, director_dialogue, director_events
+from cast import director_execution, director_retaliation, director_routing
+from knowledge import memory as memory_mod
+from models import game_state as gs_mod
+from prompts import director_prompts
+from timeline import event as event_mod, event_manager as event_manager_mod
 
 _KEY_ACTION_TYPE = "action_type"
 _DEFAULT_ACTION = "OTHER"
@@ -28,16 +23,16 @@ TURN_COUNTING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "INTERACT"
 SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
 
 
-@dataclass
+@dataclasses.dataclass
 class DirectorDeps:
     """Runtime dependencies the Director needs to orchestrate the game."""
 
-    game_state: GameState
-    event_manager: EventManager
-    memory_manager: MemoryManager
+    game_state: gs_mod.GameState
+    event_manager: event_manager_mod.EventManager
+    memory_manager: memory_mod.MemoryManager
 
 
-@dataclass
+@dataclasses.dataclass
 class DirectorCast:
     """The ensemble of specialist agents the Director delegates to."""
 
@@ -45,7 +40,7 @@ class DirectorCast:
     narrator: Any
     npc_generator: Any
     data_miner: Any
-    actors: dict[str, Any] = field(default_factory=dict)
+    actors: dict[str, Any] = dataclasses.field(default_factory=dict)
 
 
 class Director(BasePerformer):
@@ -66,20 +61,24 @@ class Director(BasePerformer):
     ):
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=DIRECTOR_SYSTEM,
+            system_prompt_template=director_prompts.DIRECTOR_SYSTEM,
         )
         self._deps = deps
         self._cast = cast
         self._actors: dict[str, Any] = dict(cast.actors)
         self._language = language
 
-        self._ctx = ContextFormatter(deps.game_state)
-        self._router = ActionRouter(deps.game_state, self._send_json)
-        self._events = EventProcessor(deps.game_state, deps.event_manager, deps.memory_manager)
-        self._dialogue = DialogueHandler(deps.game_state, self._actors)
-        self._retaliation = RetaliationHandler(deps.game_state, self._actors)
-        agents = _Agents(events=self._events, dialogue=self._dialogue, retaliation=self._retaliation)
-        self._executor = PlanExecutor(deps.game_state, agents, cast, self._register_new_npc)
+        self._ctx = director_context.ContextFormatter(deps.game_state)
+        self._router = director_routing.ActionRouter(deps.game_state, self._send_json)
+        self._events = director_events.EventProcessor(deps.game_state, deps.event_manager, deps.memory_manager)
+        self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors)
+        self._retaliation = director_retaliation.RetaliationHandler(deps.game_state, self._actors)
+        agents = director_execution._Agents(
+            events=self._events,
+            dialogue=self._dialogue,
+            retaliation=self._retaliation,
+        )
+        self._executor = director_execution.PlanExecutor(deps.game_state, agents, cast, self._register_new_npc)
 
     # ------------------------------------------------------------------
     # Public API
@@ -110,7 +109,7 @@ class Director(BasePerformer):
         """Register an Actor agent for an NPC."""
         self._actors[npc_uuid] = actor
 
-    def schedule_event(self, event: GameEvent) -> str:
+    def schedule_event(self, event: event_mod.GameEvent) -> str:
         """Convenience wrapper to schedule an event."""
         return self._deps.event_manager.schedule(event)
 

@@ -2,27 +2,23 @@
 
 from __future__ import annotations
 
-from typing import Any, NamedTuple
+import typing
 
-from cast.data_miner import DataMiner
-from cast.director import Director, DirectorCast, DirectorDeps
-from cast.narrator import Narrator
-from cast.npc_generator import NPCGenerator
-from cast.scene_builder import SceneBuilder
+from cast import data_miner as data_miner_mod, director as director_mod
+from cast import narrator as narrator_mod, npc_generator as npc_gen_mod, scene_builder as scene_builder_mod
 from defaults.models import ModelConfig
-from knowledge.graph import KnowledgeGraph
-from knowledge.memory import MemoryManager
+from knowledge import graph as graph_mod, memory as memory_mod
 from llm.factory import create_llm_client
-from models.game_state import GameState
-from timeline.event_manager import EventManager
+from models import game_state as gs_mod
+from timeline import event_manager as event_manager_mod
 
 
-class LLMClients(NamedTuple):
+class LLMClients(typing.NamedTuple):
     """LLM clients for the three engine roles."""
 
-    director: Any
-    agent: Any
-    narrator: Any
+    director: typing.Any
+    agent: typing.Any
+    narrator: typing.Any
 
 
 def create_llm_clients(
@@ -39,46 +35,46 @@ def create_llm_clients(
     )
 
 
-class DirectorContext(NamedTuple):
+class DirectorContext(typing.NamedTuple):
     """Runtime context required to build a Director."""
 
-    game_state: GameState
-    event_manager: EventManager
-    knowledge_graph: KnowledgeGraph
+    game_state: gs_mod.GameState
+    event_manager: event_manager_mod.EventManager
+    knowledge_graph: graph_mod.KnowledgeGraph
 
 
 def wire_director(
     clients: LLMClients,
     ctx: DirectorContext,
     language: str,
-    data_miner: Any | None = None,
-) -> Director:
+    data_miner: typing.Any | None = None,
+) -> director_mod.Director:
     """Create the Director with all its agent dependencies."""
-    return Director(
+    return director_mod.Director(
         llm_client=clients.director,
-        deps=DirectorDeps(
+        deps=director_mod.DirectorDeps(
             game_state=ctx.game_state,
             event_manager=ctx.event_manager,
-            memory_manager=MemoryManager(
+            memory_manager=memory_mod.MemoryManager(
                 graph=ctx.knowledge_graph,
                 llm_client=clients.agent,
             ),
         ),
-        cast=DirectorCast(
-            scene_builder=SceneBuilder(llm_client=clients.agent),
-            narrator=Narrator(llm_client=clients.narrator, language=language),
-            npc_generator=NPCGenerator(llm_client=clients.agent),
-            data_miner=data_miner or DataMiner(llm_client=clients.agent),
+        cast=director_mod.DirectorCast(
+            scene_builder=scene_builder_mod.SceneBuilder(llm_client=clients.agent),
+            narrator=narrator_mod.Narrator(llm_client=clients.narrator, language=language),
+            npc_generator=npc_gen_mod.NPCGenerator(llm_client=clients.agent),
+            data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent),
         ),
         language=language,
     )
 
 
 def restore_actors(
-    director: Director,
-    game_state: GameState,
-    knowledge_graph: KnowledgeGraph,
-    llm_client: Any,
+    director: director_mod.Director,
+    game_state: gs_mod.GameState,
+    knowledge_graph: graph_mod.KnowledgeGraph,
+    llm_client: typing.Any,
     language: str,
 ) -> None:
     """Recreate Actor agents for every NPC already present in game state.
