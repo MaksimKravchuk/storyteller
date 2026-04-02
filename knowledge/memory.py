@@ -70,7 +70,7 @@ class MemoryManager:
         node_id = self._graph.add_node(node)
 
         # Link the memory to the NPC
-        if npc_id in [node_id for node_id in self._graph._graph.nodes]:
+        if npc_id in [node_id for node_id in self._graph.digraph.nodes]:
             self._graph.add_edge(npc_id, node_id, EdgeType.WITNESSED)
 
         return node

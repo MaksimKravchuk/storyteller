@@ -56,10 +56,10 @@ async def test_middleware_no_token_allows_api(app_no_token: web.Application) -> 
     """Without a token configured, all API requests pass through."""
     async with TestClient(TestServer(app_no_token)) as client:
         mock_repo = AsyncMock()
-        mock_repo.list_sessions.return_value = []
+        mock_repo.admin.list_sessions.return_value = []
         with (
-            patch("interfaces.admin.get_db") as mock_get_db,
-            patch("interfaces.admin.GameRepository", return_value=mock_repo),
+            patch("interfaces.admin_routes.get_db") as mock_get_db,
+            patch("interfaces.admin_routes.GameRepository", return_value=mock_repo),
         ):
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
@@ -90,10 +90,10 @@ async def test_token_allows_correct_token(app_with_token: web.Application) -> No
     """Correct Bearer token allows the request through."""
     async with TestClient(TestServer(app_with_token)) as client:
         mock_repo = AsyncMock()
-        mock_repo.list_sessions.return_value = []
+        mock_repo.admin.list_sessions.return_value = []
         with (
-            patch("interfaces.admin.get_db") as mock_get_db,
-            patch("interfaces.admin.GameRepository", return_value=mock_repo),
+            patch("interfaces.admin_routes.get_db") as mock_get_db,
+            patch("interfaces.admin_routes.GameRepository", return_value=mock_repo),
         ):
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)

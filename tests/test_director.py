@@ -144,7 +144,7 @@ def _make_director(
     )
 
     if route_response:
-        director._send_json = AsyncMock(return_value=route_response)  # type: ignore[method-assign]
+        director._router._send_json = AsyncMock(return_value=route_response)  # type: ignore[method-assign]
 
     return director
 
@@ -269,21 +269,25 @@ async def _run_with_patched_aggression(
     combat_replacement: Any = None,
 ) -> Any:
     """Run a coroutine with roll_aggression (and optionally roll_combat) patched."""
-    from cast import director as director_module
+    from cast import director_retaliation as ret_module
+    from cast import director_dialogue as dlg_module
 
-    original_roll = director_module.roll_aggression
-    original_combat = director_module.roll_combat if combat_replacement else None
-    director_module.roll_aggression = replacement  # type: ignore[assignment]
+    original_roll = ret_module.roll_aggression
+    original_combat = ret_module.roll_combat if combat_replacement else None
+    ret_module.roll_aggression = replacement  # type: ignore[assignment]
     if combat_replacement:
-        director_module.roll_combat = combat_replacement  # type: ignore[assignment]
+        ret_module.roll_combat = combat_replacement  # type: ignore[assignment]
+        dlg_module.roll_combat = combat_replacement  # type: ignore[assignment]
+    original_dlg_combat = dlg_module.roll_combat
     try:
         return await coro
     except Exception:
         raise
     finally:
-        director_module.roll_aggression = original_roll
+        ret_module.roll_aggression = original_roll
         if combat_replacement:
-            director_module.roll_combat = original_combat  # type: ignore[assignment]
+            ret_module.roll_combat = original_combat  # type: ignore[assignment]
+            dlg_module.roll_combat = original_dlg_combat  # type: ignore[assignment]
 
 
 def _extract_execute_input(mock_actor: AsyncMock, call_index: int = 0) -> str:
@@ -621,7 +625,7 @@ class TestSceneConversationLog:
 class TestBuildSceneHistory:
     def test_empty_log_returns_none(self):
         director = _make_director()
-        assert director._build_scene_history() is None
+        assert director._router.build_scene_history() is None
 
     def test_returns_message_pairs(self):
         game_state = _make_game_state()
@@ -629,7 +633,7 @@ class TestBuildSceneHistory:
             {_PLAYER_ACTION: _HELLO, _RESPONSE_SUMMARY: "Hi there", _ACTION_TYPE: _TALK},
         ]
         director = _director_from(game_state)
-        history = director._build_scene_history()
+        history = director._router.build_scene_history()
         assert history is not None
         assert len(history) == 2
         assert history[0].role == Role.USER
@@ -642,7 +646,7 @@ class TestBuildSceneHistory:
             {_PLAYER_ACTION: _HELLO, _RESPONSE_SUMMARY: "Hi there", _ACTION_TYPE: _TALK},
         ]
         director = _director_from(game_state)
-        history = director._build_scene_history()
+        history = director._router.build_scene_history()
         parsed = json.loads(history[1].content)
         assert parsed[_ACTION_TYPE] == _TALK
 
@@ -653,7 +657,7 @@ class TestBuildSceneHistory:
             for idx in range(_SCENE_LOG_FEED_SIZE)
         ]
         director = _director_from(gs)
-        history = director._build_scene_history()
+        history = director._router.build_scene_history()
         assert history is not None
         # 10 entries × 2 messages each = 20 messages
         assert len(history) == _SCENE_MSG_COUNT
@@ -669,7 +673,7 @@ class TestBuildSceneHistory:
 class TestSyncContextSceneHistory:
     def test_no_history_no_scene_history_summary(self):
         director = _make_director()
-        director._sync_context_from_state()
+        director._ctx.sync_context(director)
         # scene_history_summary should not be set (section will be skipped)
         assert "scene_history_summary" not in director._system_prompt_vars
 
@@ -680,7 +684,7 @@ class TestSyncContextSceneHistory:
             {_PLAYER_ACTION: "talk to guard", _ACTION_TYPE: _TALK},
         ]
         director = _director_from(gs)
-        director._sync_context_from_state()
+        director._ctx.sync_context(director)
         summary = director._system_prompt_vars.get("scene_history_summary", "")
         assert "look around" in summary
         assert "talk to guard" in summary
@@ -691,7 +695,7 @@ class TestSyncContextSceneHistory:
         gs = _make_game_state()
         gs.scene_conversation_log = [{_PLAYER_ACTION: f"action-{idx}", _ACTION_TYPE: _TALK} for idx in range(10)]
         director = _director_from(gs)
-        director._sync_context_from_state()
+        director._ctx.sync_context(director)
         summary = director._system_prompt_vars["scene_history_summary"]
         lines = [line for line in summary.split("\n") if line.strip()]
         assert len(lines) == 5
@@ -730,7 +734,7 @@ class TestClarificationPreservesSceneHistory:
         ]
         director = _director_from(gs)
         # Mock _send_json to capture the conversation kwarg
-        director._send_json = AsyncMock(
+        director._router._send_json = AsyncMock(
             return_value={
                 _ACTION_TYPE: _INTERACT,
                 _TARGETS: _TARGETS_GUARD,
@@ -739,9 +743,9 @@ class TestClarificationPreservesSceneHistory:
             }
         )
 
-        await director._route_action("the guard")
+        await director._router.route_action("the guard")
 
-        call_kwargs = director._send_json.call_args
+        call_kwargs = director._router._send_json.call_args
         conversation = (
             call_kwargs.kwargs.get(_CONVERSATION) or call_kwargs.args[1]
             if len(call_kwargs.args) > 1
@@ -775,7 +779,7 @@ class TestClarificationPreservesSceneHistory:
             },
         ]
         director = _director_from(gs)
-        director._send_json = AsyncMock(
+        director._router._send_json = AsyncMock(
             return_value={
                 _ACTION_TYPE: _INTERACT,
                 _TARGETS: [],
@@ -784,9 +788,9 @@ class TestClarificationPreservesSceneHistory:
             }
         )
 
-        await director._route_action("the sword")
+        await director._router.route_action("the sword")
 
-        call_kwargs = director._send_json.call_args
+        call_kwargs = director._router._send_json.call_args
         conversation = (
             call_kwargs.kwargs.get(_CONVERSATION) or call_kwargs.args[1]
             if len(call_kwargs.args) > 1
@@ -1142,7 +1146,8 @@ class TestNPCRetaliation:
         _setup_npc_in_game_state(gs, _UUID_B, name="Bandit", occupation="bandit")
 
         director = _director_from(gs)
-        director._actors = {_UUID_A: AsyncMock(return_value="I attack!"), _UUID_B: AsyncMock(return_value="Me too!")}
+        director._actors[_UUID_A] = AsyncMock(return_value="I attack!")
+        director._actors[_UUID_B] = AsyncMock(return_value="Me too!")
 
         # Both NPCs changed mood from neutral
         gs.npcs[_UUID_A].current_mood = _HOSTILE
@@ -1150,7 +1155,7 @@ class TestNPCRetaliation:
 
         entries = await _run_with_patched_aggression(
             _AlwaysAttacks(),
-            director._check_retaliation({_UUID_A: _NEUTRAL, _UUID_B: _NEUTRAL}),
+            director._retaliation.check_retaliation({_UUID_A: _NEUTRAL, _UUID_B: _NEUTRAL}),
             combat_replacement=_FixedCombat(),
         )
 

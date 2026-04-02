@@ -57,6 +57,8 @@ class TestCombatOutcomes:
         # npc_total = 3+0 = 3, diff = 3-15 = -12 → PLAYER_DOMINATES
         assert combat_roll.outcome == CombatOutcome.PLAYER_DOMINATES
 
+
+class TestCombatOutcomeBoundaries:
     def test_exact_boundary_npc_defends(self):
         """diff == 0 → NPC_DEFENDS (tie goes to NPC)."""
         combat_roll = roll_combat(5, _rng=_fixed_rng(npc=10, player=_FIFTEEN))
@@ -131,7 +133,7 @@ class TestZeroCombatSkill:
 # ---------------------------------------------------------------------------
 
 
-class TestAggressionRoll:
+class TestAggressionRollOutcomes:
     def test_hostile_low_threshold(self):
         """Hostile mood: threshold is 5, roll of 5 should attack."""
         aggression_roll = roll_aggression(_HOSTILE, _rng=_single_rng(5))
@@ -174,6 +176,8 @@ class TestAggressionRoll:
         assert aggression_roll is not None
         assert aggression_roll.will_attack is True
 
+
+class TestAggressionRollProperties:
     def test_all_thresholds_have_valid_values(self):
         for mood, threshold in AGGRESSION_THRESHOLDS.items():
             assert 1 <= threshold <= _D20, f"{mood} has invalid threshold {threshold}"

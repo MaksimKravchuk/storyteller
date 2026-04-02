@@ -227,6 +227,8 @@ class TestGameState:
         assert game_state.locations == {}
         assert game_state.scene_conversation_log == []
 
+
+class TestGameStateAdvanceClock:
     def test_advance_clock_morning(self, game_state):
         game_state.advance_clock(_HOURS_MORNING)
         assert game_state.game_clock == _CLOCK_MORNING  # noqa: WPS459
@@ -259,7 +261,7 @@ class TestGameState:
 # ---------------------------------------------------------------------------
 
 
-class TestSceneNPC:
+class TestSceneNPCInit:
     def test_need_init_true_by_default(self):
         snpc = SceneNPC(role=_GUARD)
         assert snpc.need_init is True
@@ -275,6 +277,14 @@ class TestSceneNPC:
         assert snpc.need_init is False
         assert snpc.uuid == "abc-123"
 
+    def test_repr(self):
+        snpc = SceneNPC(role=_GUARD)
+        assert "uninit" in repr(snpc)
+        snpc.uuid = "abc"
+        assert "abc" in repr(snpc)
+
+
+class TestSceneNPCSerialization:
     def test_to_dict(self):
         snpc = SceneNPC(role="beggar", uuid="uuid-42")
         snpc_dict = snpc.to_dict()
@@ -296,9 +306,3 @@ class TestSceneNPC:
         restored = SceneNPC.from_dict({"role": "merchant"})
         assert restored.role == "merchant"
         assert restored.need_init is True
-
-    def test_repr(self):
-        snpc = SceneNPC(role=_GUARD)
-        assert "uninit" in repr(snpc)
-        snpc.uuid = "abc"
-        assert "abc" in repr(snpc)
