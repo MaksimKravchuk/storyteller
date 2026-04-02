@@ -18,7 +18,7 @@ class EventStatus(Enum):
 class EventEffect:
     """A single state-change that is applied when an event completes.
 
-    ``effect_type`` determines how ``params`` is interpreted:
+    ``effect_type`` determines how ``effect_data`` is interpreted:
       - MOVE_NPC:          {"npc_id": str, "to_location_id": str}
       - ADD_ITEM:          {"npc_id": str, "item": str}
       - REMOVE_ITEM:       {"npc_id": str, "item": str}
@@ -30,7 +30,7 @@ class EventEffect:
 
     effect_type: str
     target_id: str
-    params: dict = field(default_factory=dict)  # noqa: WPS110
+    effect_data: dict = field(default_factory=dict)
 
 
 @dataclass(kw_only=True)

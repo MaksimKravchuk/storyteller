@@ -67,7 +67,7 @@ class OpenAIClient(BaseLLMClient):
         choice = response.choices[0]
 
         return LLMResponse(
-            content=choice.message.content or "",
+            body=choice.message.content or "",
             raw_response=response,
             usage={
                 "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
@@ -105,6 +105,6 @@ class OpenAIClient(BaseLLMClient):
         if system_prompt:
             formatted.append({"role": "system", "content": _sanitize(system_prompt)})
         for msg in messages:
-            sanitized_content = _sanitize(msg.content)
-            formatted.append({"role": msg.role.value, "content": sanitized_content})
+            sanitized_body = _sanitize(msg.body)
+            formatted.append({"role": msg.role.value, "content": sanitized_body})
         return formatted

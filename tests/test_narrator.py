@@ -28,7 +28,7 @@ _RESPONSE = "response"
 def _last_user_message(narrator: Narrator) -> str:
     """Extract the last user message sent to the LLM."""
     call_kwargs = narrator.llm_client.send_message.call_args.kwargs  # type: ignore[attr-defined]
-    return call_kwargs[_MESSAGES][-1].content
+    return call_kwargs[_MESSAGES][-1].body
 
 
 def _make_game_state() -> GameState:
@@ -54,7 +54,7 @@ def _make_narrator() -> Narrator:
     llm_client = AsyncMock()
     llm_client.send_message = AsyncMock(
         return_value=AsyncMock(
-            content="Narrated text.",
+            body="Narrated text.",
             model="test-model",
             usage={"prompt_tokens": 10, "completion_tokens": 5},
         )
@@ -116,7 +116,7 @@ class TestNarratorSceneType:
 
         call_args = narrator.llm_client.send_message.call_args
         messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = messages[-1].body
         # No scene/atmosphere data should be in the prompt
         assert "Atmosphere:" not in user_msg
         assert "roasted nuts" not in user_msg
@@ -134,7 +134,7 @@ class TestNarratorSceneType:
 
         call_args = narrator.llm_client.send_message.call_args
         messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = messages[-1].body
         assert "Guard says: Halt!" in user_msg
         assert "Atmosphere:" not in user_msg
 
@@ -202,7 +202,7 @@ class TestNarratorSceneHistory:
 
         call_args = narrator.llm_client.send_message.call_args
         messages = call_args.kwargs[_MESSAGES]
-        user_msg = messages[-1].content
+        user_msg = messages[-1].body
         assert "What happened earlier" not in user_msg
         assert "Guard says: Hello." in user_msg
 

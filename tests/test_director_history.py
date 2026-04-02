@@ -41,7 +41,7 @@ class TestSceneHistory:
         assert history is not None
         assert len(history) == 2
         assert history[0].role == Role.USER
-        assert "hello" in history[0].content
+        assert "hello" in history[0].body
         assert history[1].role == Role.ASSISTANT
 
     def test_assistant_message_is_valid_json(self):
@@ -51,7 +51,7 @@ class TestSceneHistory:
         ]
         director = make_director(game_state=gs)
         history = director._router.build_scene_history()
-        parsed = json.loads(history[1].content)
+        parsed = json.loads(history[1].body)
         assert parsed[_ACTION_TYPE] == _TALK
 
     def test_caps_at_ten_entries(self):
@@ -64,7 +64,7 @@ class TestSceneHistory:
         history = director._router.build_scene_history()
         assert history is not None
         assert len(history) == _EXPECTED_HISTORY_PAIRS
-        assert "action-5" in history[0].content
+        assert "action-5" in history[0].body
 
     def test_no_history_no_scene_history_summary(self):
         director = make_director()
@@ -130,7 +130,7 @@ class TestClarificationPreservesSceneHistory:
         )
         assert len(conversation_val) == 4
         assert conversation_val[0].role == Role.USER
-        assert "punch guard" in conversation_val[0].content
+        assert "punch guard" in conversation_val[0].body
 
     @pytest.mark.asyncio
     async def test_clarification_followup_no_history(self):

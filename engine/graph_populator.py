@@ -38,7 +38,7 @@ def _add_node(
     """Add a FACT knowledge node to the graph."""
     graph.add_node(
         KnowledgeNode(
-            content=node_content,
+            text=node_content,
             scope=scope,
             source=KnowledgeSource.FACT,
             required_education=required_education,
@@ -100,7 +100,7 @@ def populate_graph_from_setting(graph: KnowledgeGraph, setting: Setting) -> None
     """Convert Setting data into knowledge graph nodes."""
     graph.add_node(
         KnowledgeNode(
-            content=setting.summary,
+            text=setting.summary,
             scope=KnowledgeScope.WORLD,
             source=KnowledgeSource.FACT,
             tags=["setting", "overview"],

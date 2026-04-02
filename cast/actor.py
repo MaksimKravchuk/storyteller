@@ -79,8 +79,8 @@ class Actor(BasePerformer):
         response, new_mood = _extract_mood(response)
 
         # Track conversation for multi-turn dialogue
-        self._conversation.append(Message(role=Role.USER, content=input_data))
-        self._conversation.append(Message(role=Role.ASSISTANT, content=response))
+        self._conversation.append(Message(role=Role.USER, body=input_data))
+        self._conversation.append(Message(role=Role.ASSISTANT, body=response))
 
         if new_mood:
             self.npc.current_mood = new_mood

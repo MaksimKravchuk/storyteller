@@ -100,12 +100,15 @@ async def main() -> None:
     )
     await admin.start()
 
-    try:  # noqa: WPS501
+    try:
         if cfg.telegram_bot_token:
             await _run_telegram_bot(cfg, session_factory)
         else:
             logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled, admin only.")
             await asyncio.Event().wait()
+    except Exception:
+        logger.exception("Fatal error in main loop")
+        raise
     finally:
         await admin.stop()
         await engine.dispose()

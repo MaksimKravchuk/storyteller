@@ -122,7 +122,7 @@ class KnowledgeQueryEngine:
             return "You don't have any specific knowledge about this topic."
 
         nodes.sort(key=lambda node: _SOURCE_PRIORITY.get(node.source, _DEFAULT_SORT_PRIORITY))
-        lines = [f"- {_SOURCE_PREFIXES.get(node.source, '')}{node.content}" for node in nodes]
+        lines = [f"- {_SOURCE_PREFIXES.get(node.source, '')}{node.text}" for node in nodes]
         return "\n".join(lines)
 
     def _add_personal_memories(self, npc_id: str, matching_nodes: list[KnowledgeNode]) -> None:

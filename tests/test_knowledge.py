@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 
 from knowledge.graph import KnowledgeGraph
 from knowledge.graph_queries import (
@@ -58,7 +59,7 @@ class TestKnowledgeScopeOrdering:
 
 class TestKnowledgeNode:
     def test_defaults(self):
-        node = KnowledgeNode(content="Test fact")
+        node = KnowledgeNode(text="Test fact")
         assert node.scope == KnowledgeScope.LOCAL
         assert node.source == KnowledgeSource.FACT
         assert node.required_education == 0
@@ -66,13 +67,13 @@ class TestKnowledgeNode:
         assert node.tags == []
 
     def test_default_confidence_and_uuid(self):
-        node = KnowledgeNode(content="Test fact")
-        assert node.confidence == 1.0  # noqa: WPS459
+        node = KnowledgeNode(text="Test fact")
+        assert node.confidence == pytest.approx(1.0)
         assert isinstance(node.uuid, str)
 
     def test_custom_fields(self):
         node = KnowledgeNode(
-            content="Secret",
+            text="Secret",
             scope=KnowledgeScope.COUNTRY,
             source=KnowledgeSource.RUMOR,
             required_education=5,
@@ -83,7 +84,7 @@ class TestKnowledgeNode:
         assert node.source == KnowledgeSource.RUMOR
         assert node.required_education == 5
         assert node.tags == [_POLITICS]
-        assert node.confidence == _CONFIDENCE  # noqa: WPS459
+        assert node.confidence == pytest.approx(_CONFIDENCE)
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +94,7 @@ class TestKnowledgeNode:
 
 class TestKnowledgeGraphNodes:
     def test_add_and_get_node(self, empty_graph):
-        node = KnowledgeNode(content="Fact A")
+        node = KnowledgeNode(text="Fact A")
         uid = empty_graph.add_node(node)
         assert uid == node.uuid
         retrieved = empty_graph.get_node(uid)
@@ -104,12 +105,12 @@ class TestKnowledgeGraphNodes:
 
     def test_node_count(self, empty_graph):
         assert graph_serialization.node_count(empty_graph) == 0
-        empty_graph.add_node(KnowledgeNode(content="A"))
-        empty_graph.add_node(KnowledgeNode(content="B"))
+        empty_graph.add_node(KnowledgeNode(text="A"))
+        empty_graph.add_node(KnowledgeNode(text="B"))
         assert graph_serialization.node_count(empty_graph) == 2
 
     def test_remove_node(self, empty_graph):
-        node = KnowledgeNode(content="Removable")
+        node = KnowledgeNode(text="Removable")
         empty_graph.add_node(node)
         empty_graph.remove_node(node.uuid)
         assert empty_graph.get_node(node.uuid) is None
@@ -125,16 +126,16 @@ class TestKnowledgeGraphNodes:
 
 class TestKnowledgeGraphEdges:
     def test_add_edge_and_edge_count(self, empty_graph):
-        n1 = KnowledgeNode(content="A")
-        n2 = KnowledgeNode(content="B")
+        n1 = KnowledgeNode(text="A")
+        n2 = KnowledgeNode(text="B")
         empty_graph.add_node(n1)
         empty_graph.add_node(n2)
         empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.RELATED_TO)
         assert graph_serialization.edge_count(empty_graph) == 1
 
     def test_get_edges_from(self, empty_graph):
-        n1 = KnowledgeNode(content="A")
-        n2 = KnowledgeNode(content="B")
+        n1 = KnowledgeNode(text="A")
+        n2 = KnowledgeNode(text="B")
         empty_graph.add_node(n1)
         empty_graph.add_node(n2)
         empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.KNOWS_ABOUT)
@@ -148,7 +149,7 @@ class TestKnowledgeGraphEdges:
         assert empty_graph.get_edges_from("ghost") == []
 
     def test_get_related_bfs(self, empty_graph):
-        nodes = [KnowledgeNode(content=label) for label in ("Root", "Child", "Grandchild")]
+        nodes = [KnowledgeNode(text=label) for label in ("Root", "Child", "Grandchild")]
         for node in nodes:
             empty_graph.add_node(node)
         empty_graph.add_edge(nodes[0].uuid, nodes[1].uuid, EdgeType.RELATED_TO)
@@ -180,8 +181,8 @@ class TestKnowledgeGraphQueries:
 
     def test_query_by_location(self, empty_graph):
         loc_id = "loc-123"
-        n1 = KnowledgeNode(content="Here", location_id=loc_id)
-        n2 = KnowledgeNode(content="There", location_id="loc-999")
+        n1 = KnowledgeNode(text="Here", location_id=loc_id)
+        n2 = KnowledgeNode(text="There", location_id="loc-999")
         empty_graph.add_node(n1)
         empty_graph.add_node(n2)
         matching_nodes = query_by_location(empty_graph, loc_id)
@@ -214,8 +215,8 @@ class TestQueryEngineFilters:
         assert all(node.scope == KnowledgeScope.LOCAL for node in matching_nodes)
 
     def test_query_filters_by_education(self, empty_graph):
-        low_node = KnowledgeNode(content="Common knowledge", required_education=0)
-        high_node = KnowledgeNode(content="Scholar knowledge", required_education=8)
+        low_node = KnowledgeNode(text="Common knowledge", required_education=0)
+        high_node = KnowledgeNode(text="Scholar knowledge", required_education=8)
         empty_graph.add_node(low_node)
         empty_graph.add_node(high_node)
         engine = KnowledgeQueryEngine(empty_graph)

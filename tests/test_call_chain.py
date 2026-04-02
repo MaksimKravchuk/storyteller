@@ -23,7 +23,7 @@ def _mock_llm() -> AsyncMock:
     client.model = "test-model"
     client.send_message = AsyncMock(
         return_value=LLMResponse(
-            content="test response",
+            body="test response",
             model="test-model",
             usage={"prompt_tokens": 10, "completion_tokens": 5},
         )

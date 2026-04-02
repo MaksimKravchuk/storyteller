@@ -2,34 +2,17 @@
 
 from __future__ import annotations
 
-import sys
-from types import ModuleType
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
+from interfaces.admin import AdminServer
+
 _API_SESSIONS = "/api/sessions"
 _HTTP_OK = 200
 _HTTP_UNAUTHORIZED = 401
-
-
-def _stub_db_modules() -> None:
-    """Inject stub db modules so AdminServer can be imported without sqlalchemy."""
-    if "db.engine" not in sys.modules:
-        engine_mod = ModuleType("db.engine")
-        engine_mod.get_db = MagicMock()  # type: ignore[attr-defined]
-        sys.modules["db.engine"] = engine_mod
-    if "db.repository" not in sys.modules:
-        repo_mod = ModuleType("db.repository")
-        repo_mod.GameRepository = MagicMock()  # type: ignore[attr-defined]
-        sys.modules["db.repository"] = repo_mod
-
-
-_stub_db_modules()
-
-from interfaces.admin import AdminServer  # noqa: E402
 
 
 def _make_app(token=None) -> web.Application:

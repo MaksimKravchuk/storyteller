@@ -2,35 +2,14 @@
 
 from __future__ import annotations
 
-import json
-from datetime import datetime
-from pathlib import Path
-from typing import Any
-
 from aiohttp import web
 from aiohttp.typedefs import Handler
 from loguru import logger
 
+from interfaces import admin_routes, admin_routes_detail
+from interfaces.admin_route_helpers import _json_response
+
 _HTTP_UNAUTHORIZED = 401
-_HTTP_NOT_FOUND = 404
-_SESSION_ID_PARAM = "id"
-
-_DASHBOARD_HTML = Path(__file__).parent / "admin_dashboard.html"
-
-
-def _json_serial(unknown: Any) -> Any:
-    """JSON serializer for objects not handled by default json."""
-    if isinstance(unknown, datetime):
-        return unknown.isoformat()
-    raise TypeError(f"Type {type(unknown)} not serializable")
-
-
-def _json_response(payload: Any, status: int = 200) -> web.Response:
-    return web.Response(
-        text=json.dumps(payload, default=_json_serial),
-        content_type="application/json",
-        status=status,
-    )
 
 
 @web.middleware
@@ -67,8 +46,6 @@ class AdminServer:
             await self._runner.cleanup()
 
     def _setup_routes(self) -> None:
-        from interfaces import admin_routes, admin_routes_detail  # noqa: WPS433
-
         self._app.router.add_get("/", admin_routes.dashboard)
         self._app.router.add_get("/api/sessions", admin_routes.list_sessions)
         self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)

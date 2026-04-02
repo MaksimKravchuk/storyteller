@@ -21,7 +21,7 @@ def _role_from_str(role_str: str) -> Role:
 
 def _msg_from_dict(msg: dict) -> Message:
     """Build a Message from a serialised dict."""
-    return Message(role=_role_from_str(msg["role"]), content=msg["content"])
+    return Message(role=_role_from_str(msg["role"]), body=msg["content"])
 
 
 class ActionRouter:
@@ -76,13 +76,13 @@ class ActionRouter:
             messages.append(
                 Message(
                     role=Role.USER,
-                    content='Player action: "{0}"'.format(entry[_KEY_PLAYER_ACTION]),
+                    body='Player action: "{0}"'.format(entry[_KEY_PLAYER_ACTION]),
                 )
             )
             messages.append(
                 Message(
                     role=Role.ASSISTANT,
-                    content=_json.dumps(
+                    body=_json.dumps(
                         {
                             _KEY_ACTION_TYPE: entry.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION),
                             "result_summary": entry.get("response_summary", ""),

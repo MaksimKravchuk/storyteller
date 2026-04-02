@@ -48,7 +48,7 @@ async def _load_scene_and_events(
     scene_query = await session.execute(
         select(tbl.scenes).where(
             tbl.scenes.c.game_state_id == game_state_id,
-            tbl.scenes.c.is_current == True,  # noqa: E712
+            tbl.scenes.c.is_current.is_(True),
         ),
     )
     scene_row = scene_query.mappings().first()
