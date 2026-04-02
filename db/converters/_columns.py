@@ -1,0 +1,13 @@
+"""Shared column name constants for DB converters."""
+
+COL_ID = "id"
+COL_GAME_STATE_ID = "game_state_id"
+COL_NAME = "name"
+COL_LOCATION_ID = "location_id"
+COL_INVENTORY = "inventory"
+COL_APPEARANCE = "appearance"
+COL_DESCRIPTION = "description"
+COL_TAGS = "tags"
+COL_NPCS_PRESENT = "npcs_present"
+COL_POINTS_OF_INTEREST = "points_of_interest"
+COL_SCOPE = "scope"

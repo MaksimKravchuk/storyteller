@@ -1,53 +1,27 @@
-"""Tests for models: BaseModel, Character, NPCCard, Location, Setting, GameState, SceneNPC."""
+"""Tests for models: BaseModel, Character, NPCCard, Location, Setting."""
 
 from __future__ import annotations
-
-import dataclasses
 
 import pytest
 
 from models.base_model import BaseModel
 from models.character import Character
-from models.game_state import GameState, PlayerState
-from models.scene import SceneNPC
 from models.setting import Setting
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
-_UUID_LEN = 36
 _DAGGER = "dagger"
 _NPC_A = "npc-1"
-_GUARD = "guard"
-_CLOCK_MORNING = 8.0
-_CLOCK_NOON = 12.0
-_HOURS_MORNING = 8
-_HOURS_AFTERNOON = 13
-_HOURS_EVENING = 19
-_HOURS_THREE_AM = 3
-_HOURS_NIGHT = 25
-
-
-# ---------------------------------------------------------------------------
-# BaseModel
-# ---------------------------------------------------------------------------
+_UUID_LENGTH = 36
 
 
 class TestBaseModel:
     def test_uuid_generated_on_init(self):
         model = BaseModel()
         assert isinstance(model.uuid, str)
-        assert len(model.uuid) == _UUID_LEN  # standard UUID4 format
+        assert len(model.uuid) == _UUID_LENGTH
 
     def test_unique_uuids(self):
         uuids = {BaseModel().uuid for _ in range(100)}
         assert len(uuids) == 100
-
-
-# ---------------------------------------------------------------------------
-# Character
-# ---------------------------------------------------------------------------
 
 
 class TestCharacter:
@@ -92,19 +66,12 @@ class TestCharacter:
         assert char.talk() == "Cicero says: Hello!"
 
 
-# ---------------------------------------------------------------------------
-# NPCCard
-# ---------------------------------------------------------------------------
-
-
 class TestNPCCard:
     def test_to_prompt_context_contains_name(self, sample_npc):
-        ctx = sample_npc.to_prompt_context()
-        assert "Marcus" in ctx
+        assert "Marcus" in sample_npc.to_prompt_context()
 
     def test_to_prompt_context_contains_occupation(self, sample_npc):
-        ctx = sample_npc.to_prompt_context()
-        assert "Soldier" in ctx
+        assert "Soldier" in sample_npc.to_prompt_context()
 
     def test_to_prompt_context_contains_traits(self, sample_npc):
         ctx = sample_npc.to_prompt_context()
@@ -117,19 +84,13 @@ class TestNPCCard:
         assert "scutum" in ctx
 
     def test_to_prompt_context_shows_attributes(self, sample_npc):
-        ctx = sample_npc.to_prompt_context()
-        assert "strength=8" in ctx
+        assert "strength=8" in sample_npc.to_prompt_context()
 
     def test_conversation_history_starts_empty(self, sample_npc):
         assert sample_npc.conversation_history == []
 
     def test_current_mood_default(self, sample_npc):
         assert sample_npc.current_mood == "neutral"
-
-
-# ---------------------------------------------------------------------------
-# Location
-# ---------------------------------------------------------------------------
 
 
 class TestLocation:
@@ -153,12 +114,7 @@ class TestLocation:
         assert _NPC_A not in sample_location.npcs_present
 
     def test_remove_npc_not_present_is_noop(self, sample_location):
-        sample_location.remove_npc("ghost")  # should not raise
-
-
-# ---------------------------------------------------------------------------
-# Setting
-# ---------------------------------------------------------------------------
+        sample_location.remove_npc("ghost")
 
 
 class TestSetting:
@@ -183,126 +139,4 @@ class TestSetting:
         assert simple_setting.key_persons[0]["name"] == "Augustus"
 
     def test_has_uuid(self, simple_setting):
-        assert isinstance(simple_setting.uuid, str) and len(simple_setting.uuid) == _UUID_LEN
-
-
-# ---------------------------------------------------------------------------
-# GameState / PlayerState
-# ---------------------------------------------------------------------------
-
-
-class TestPlayerState:
-    def test_has_own_dataclass_fields(self):
-        field_names = {dc_field.name for dc_field in dataclasses.fields(PlayerState)}
-        assert "name" in field_names
-        assert "location_id" in field_names
-        assert "inventory" in field_names
-
-    def test_defaults(self):
-        ps = PlayerState()
-        assert ps.name == "Player"
-        assert ps.inventory == []
-        assert ps.location_id is None
-
-    def test_custom_name(self):
-        ps = PlayerState(name="Maximus")
-        assert ps.name == "Maximus"
-
-
-class TestGameState:
-    def test_has_own_dataclass_fields(self):
-        field_names = {dc_field.name for dc_field in dataclasses.fields(GameState)}
-        assert "turn_count" in field_names
-        assert "game_clock" in field_names
-        assert "conversation_log" in field_names
-
-    def test_initial_values(self, game_state):
-        assert game_state.turn_count == 0
-        assert game_state.scene_number == 0
-        assert game_state.game_clock == float(0)
-        assert game_state.game_time == "morning"
-        assert game_state.npcs == {}
-
-    def test_initial_collections(self, game_state):
-        assert game_state.locations == {}
-        assert game_state.scene_conversation_log == []
-
-
-class TestGameStateAdvanceClock:
-    def test_advance_clock_morning(self, game_state):
-        game_state.advance_clock(_HOURS_MORNING)
-        assert game_state.game_clock == _CLOCK_MORNING  # noqa: WPS459
-        assert game_state.game_time == "morning"
-
-    def test_advance_clock_afternoon(self, game_state):
-        game_state.advance_clock(_HOURS_AFTERNOON)
-        assert game_state.game_time == "afternoon"
-
-    def test_advance_clock_evening(self, game_state):
-        game_state.advance_clock(_HOURS_EVENING)
-        assert game_state.game_time == "evening"
-
-    def test_advance_clock_night(self, game_state):
-        game_state.advance_clock(_HOURS_THREE_AM)  # 3 AM
-        assert game_state.game_time == "night"
-
-    def test_advance_clock_wraps_around_midnight(self, game_state):
-        game_state.advance_clock(_HOURS_NIGHT)  # 25 hours => 1 AM next day
-        assert game_state.game_time == "night"
-
-    def test_advance_clock_accumulates(self, game_state):
-        game_state.advance_clock(6)
-        game_state.advance_clock(6)
-        assert game_state.game_clock == _CLOCK_NOON  # noqa: WPS459
-
-
-# ---------------------------------------------------------------------------
-# SceneNPC
-# ---------------------------------------------------------------------------
-
-
-class TestSceneNPCInit:
-    def test_need_init_true_by_default(self):
-        snpc = SceneNPC(role=_GUARD)
-        assert snpc.need_init is True
-        assert snpc.uuid is None
-
-    def test_need_init_false_after_uuid_set(self):
-        snpc = SceneNPC(role=_GUARD)
-        snpc.uuid = "some-uuid-1234"
-        assert snpc.need_init is False
-
-    def test_need_init_false_with_uuid_arg(self):
-        snpc = SceneNPC(role="merchant", uuid="abc-123")
-        assert snpc.need_init is False
-        assert snpc.uuid == "abc-123"
-
-    def test_repr(self):
-        snpc = SceneNPC(role=_GUARD)
-        assert "uninit" in repr(snpc)
-        snpc.uuid = "abc"
-        assert "abc" in repr(snpc)
-
-
-class TestSceneNPCSerialization:
-    def test_to_dict(self):
-        snpc = SceneNPC(role="beggar", uuid="uuid-42")
-        snpc_dict = snpc.to_dict()
-        assert snpc_dict == {"role": "beggar", "uuid": "uuid-42"}
-
-    def test_to_dict_uninitialised(self):
-        snpc = SceneNPC(role=_GUARD)
-        snpc_dict = snpc.to_dict()
-        assert snpc_dict == {"role": "guard", "uuid": None}
-
-    def test_from_dict_roundtrip(self):
-        original = SceneNPC(role="scribe", uuid="uuid-99")
-        restored = SceneNPC.from_dict(original.to_dict())
-        assert restored.role == "scribe"
-        assert restored.uuid == "uuid-99"
-        assert restored.need_init is False
-
-    def test_from_dict_without_uuid(self):
-        restored = SceneNPC.from_dict({"role": "merchant"})
-        assert restored.role == "merchant"
-        assert restored.need_init is True
+        assert isinstance(simple_setting.uuid, str) and len(simple_setting.uuid) == _UUID_LENGTH

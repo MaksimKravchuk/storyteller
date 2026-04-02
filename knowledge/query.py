@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge import query_filters
 
 if TYPE_CHECKING:
     from models.character import Character
@@ -45,53 +46,17 @@ class KnowledgeFilter:
     npc_id: str | None = None  # Include personal memories for this NPC
 
 
-def _passes_scope(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
-    """Return True if the node's scope is within the filter's max scope."""
-    return node.scope <= filt.max_scope
-
-
-def _passes_education(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
-    return node.required_education <= filt.max_education_required
-
-
-def _passes_social_status(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
-    return node.required_social_status <= filt.max_social_status_required
-
-
-def _passes_location(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
-    """Local-scope nodes are only visible when their location matches."""
-    if not filt.location_id or not node.location_id:
-        return True
-    if node.scope == KnowledgeScope.LOCAL:
-        return node.location_id == filt.location_id
-    return True
-
-
-def _passes_tags(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
-    if not filt.tags:
-        return True
-    return bool(set(filt.tags) & set(node.tags))
-
-
-def _passes_sources(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
-    if not filt.sources:
-        return True
-    return node.source in filt.sources
-
-
-_FILTER_CHECKS = (
-    _passes_scope,
-    _passes_education,
-    _passes_social_status,
-    _passes_location,
-    _passes_tags,
-    _passes_sources,
-)
-
-
 def _node_matches(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
     """Return True if a node passes all filter criteria."""
-    return all(check(node, filt) for check in _FILTER_CHECKS)
+    checks = (
+        query_filters.passes_scope(node, filt.max_scope),
+        query_filters.passes_education(node, filt.max_education_required),
+        query_filters.passes_social_status(node, filt.max_social_status_required),
+        query_filters.passes_location(node, filt.location_id),
+        query_filters.passes_tags(node, filt.tags),
+        query_filters.passes_sources(node, filt.sources),
+    )
+    return all(checks)
 
 
 class KnowledgeQueryEngine:

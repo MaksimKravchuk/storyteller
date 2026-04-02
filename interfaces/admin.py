@@ -67,14 +67,14 @@ class AdminServer:
             await self._runner.cleanup()
 
     def _setup_routes(self) -> None:
-        from interfaces import admin_routes  # noqa: WPS433
+        from interfaces import admin_routes, admin_routes_detail  # noqa: WPS433
 
         self._app.router.add_get("/", admin_routes.dashboard)
         self._app.router.add_get("/api/sessions", admin_routes.list_sessions)
         self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)
         self._app.router.add_get("/api/sessions/{id}/conversation", admin_routes.conversation)
-        self._app.router.add_get("/api/sessions/{id}/knowledge", admin_routes.knowledge)
-        self._app.router.add_get("/api/sessions/{id}/events", admin_routes.events)
-        self._app.router.add_get("/api/sessions/{id}/npcs", admin_routes.npcs)
-        self._app.router.add_get("/api/sessions/{id}/locations", admin_routes.locations)
-        self._app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes.ai_calls)
+        self._app.router.add_get("/api/sessions/{id}/knowledge", admin_routes_detail.knowledge)
+        self._app.router.add_get("/api/sessions/{id}/events", admin_routes_detail.events)
+        self._app.router.add_get("/api/sessions/{id}/npcs", admin_routes_detail.npcs)
+        self._app.router.add_get("/api/sessions/{id}/locations", admin_routes_detail.locations)
+        self._app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes_detail.ai_calls)

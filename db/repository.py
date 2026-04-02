@@ -5,16 +5,12 @@ from __future__ import annotations
 import uuid as _uuid
 from typing import Any
 
-from sqlalchemy import select, update
+import sqlalchemy
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import tables as tbl
-from db.repo_admin import AdminQueries
-from db.repo_ai_logs import AILogStore
-from db.repo_loader import StateLoader
-from db.repo_saver import StateSaver
-from knowledge.graph import KnowledgeGraph
+from db import tables as tbl, repo_admin, repo_ai_logs, repo_loader, repo_saver
+from knowledge import graph as graph_mod
 from models.game_state import GameState
 from timeline.event import GameEvent
 
@@ -29,10 +25,10 @@ class GameRepository:
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
-        self.admin = AdminQueries(session)
-        self._loader = StateLoader(session)
-        self._saver = StateSaver(session)
-        self._ai_logs = AILogStore(session)
+        self.admin = repo_admin.AdminQueries(session)
+        self._loader = repo_loader.StateLoader(session)
+        self._saver = repo_saver.StateSaver(session)
+        self._ai_logs = repo_ai_logs.AILogStore(session)
 
     async def get_or_create_session(self, telegram_chat_id: int) -> dict:
         """Return session row dict, creating one if it doesn't exist."""
@@ -44,7 +40,7 @@ class GameRepository:
         await self._session.execute(stmt)
 
         query_result = await self._session.execute(
-            select(tbl.sessions).where(tbl.sessions.c.telegram_chat_id == telegram_chat_id),
+            sqlalchemy.select(tbl.sessions).where(tbl.sessions.c.telegram_chat_id == telegram_chat_id),
         )
         row = query_result.mappings().one()
         return _row_dict(row)
@@ -64,10 +60,13 @@ class GameRepository:
             update_fields["language"] = language
         if update_fields:
             sessions_filter = tbl.sessions.c.id == session_id
-            stmt = update(tbl.sessions).where(sessions_filter).values(**update_fields)
+            stmt = sqlalchemy.update(tbl.sessions).where(sessions_filter).values(**update_fields)
             await self._session.execute(stmt)
 
-    async def load_game_state(self, session_id: str) -> tuple[GameState, KnowledgeGraph, list[GameEvent]] | None:
+    async def load_game_state(
+        self,
+        session_id: str,
+    ) -> tuple[GameState, graph_mod.KnowledgeGraph, list[GameEvent]] | None:
         """Load full game state. Returns None if no game exists for this session."""
         return await self._loader.load(session_id)
 
@@ -75,7 +74,7 @@ class GameRepository:
         self,
         session_id: str,
         game_state: GameState,
-        knowledge_graph: KnowledgeGraph,
+        knowledge_graph: graph_mod.KnowledgeGraph,
         events: list[GameEvent],
     ) -> None:
         """Persist full game state to PG."""
