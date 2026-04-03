@@ -17,6 +17,8 @@ _SSL_ENABLED_MODES = frozenset(
     ("prefer", "require", "verify-ca", "verify-full"),
 )
 
+_SSL_DISABLED_MODES = frozenset(("disable", "allow"))
+
 
 def _strip_sslmode(url_string: str) -> Tuple[str, str | None]:
     """Remove ``sslmode`` from a database URL query string."""
@@ -41,6 +43,8 @@ def _adapt_url_for_asyncpg(database_url: str) -> Tuple[str, dict]:
     connect_args: dict = {}
     if sslmode in _SSL_ENABLED_MODES:
         connect_args["ssl"] = _ssl.create_default_context()
+    elif sslmode in _SSL_DISABLED_MODES:
+        connect_args["ssl"] = False
     return clean_url, connect_args
 
 
