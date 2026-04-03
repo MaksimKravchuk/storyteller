@@ -23,6 +23,10 @@ async def _auth_middleware(request: web.Request, handler: Handler) -> web.Stream
     return await handler(request)
 
 
+async def _healthz(_request: web.Request) -> web.Response:
+    return web.json_response({"status": "ok"})
+
+
 class AdminServer:
     """Lightweight admin dashboard for inspecting Storyteller sessions."""
 
@@ -46,10 +50,14 @@ class AdminServer:
             await self._runner.cleanup()
 
     def _setup_routes(self) -> None:
+        self._app.router.add_get("/healthz", _healthz)
         self._app.router.add_get("/", admin_routes.dashboard)
         self._app.router.add_get("/api/sessions", admin_routes.list_sessions)
         self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)
         self._app.router.add_get("/api/sessions/{id}/conversation", admin_routes.conversation)
+        self._setup_detail_routes()
+
+    def _setup_detail_routes(self) -> None:
         self._app.router.add_get("/api/sessions/{id}/knowledge", admin_routes_detail.knowledge)
         self._app.router.add_get("/api/sessions/{id}/events", admin_routes_detail.events)
         self._app.router.add_get("/api/sessions/{id}/npcs", admin_routes_detail.npcs)
