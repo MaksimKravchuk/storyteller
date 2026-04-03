@@ -57,13 +57,10 @@ class AILogStore:
         limit: int = 200,
     ) -> list[dict]:
         """Get AI call logs for a session, optionally filtered by turn."""
-        stmt = (
-            select(tbl.ai_call_logs)
-            .where(tbl.ai_call_logs.c.session_id == session_id)
-            .order_by(tbl.ai_call_logs.c.created_at)
-            .limit(limit)
-        )
+        conditions = [tbl.ai_call_logs.c.session_id == session_id]
         if turn_number is not None:
-            stmt = stmt.where(tbl.ai_call_logs.c.turn_number == turn_number)
+            conditions.append(tbl.ai_call_logs.c.turn_number == turn_number)
+        query = select(tbl.ai_call_logs).where(*conditions)
+        stmt = query.order_by(tbl.ai_call_logs.c.created_at).limit(limit)
         ai_logs_query = await self._session.execute(stmt)
         return list(map(_row_dict, ai_logs_query.mappings()))
