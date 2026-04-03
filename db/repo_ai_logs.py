@@ -53,14 +53,12 @@ class AILogStore:
     async def max_call_sequence(self, session_id: str, turn_number: int | None) -> int | None:
         """Return the highest call_sequence for a session+turn, or None."""
         logs = tbl.ai_call_logs
-        stmt = select(sa_func.max(logs.c.call_sequence)).where(
-            logs.c.session_id == session_id,
-        )
+        conditions = [logs.c.session_id == session_id]
         if turn_number is None:
-            turn_filter = logs.c.turn_number.is_(None)
+            conditions.append(logs.c.turn_number.is_(None))
         else:
-            turn_filter = logs.c.turn_number == turn_number
-        stmt = stmt.where(turn_filter)
+            conditions.append(logs.c.turn_number == turn_number)
+        stmt = select(sa_func.max(logs.c.call_sequence)).where(*conditions)
         query = await self._session.execute(stmt)
         return query.scalar()
 
@@ -71,13 +69,10 @@ class AILogStore:
         limit: int = 200,
     ) -> list[dict]:
         """Get AI call logs for a session, optionally filtered by turn."""
-        stmt = (
-            select(tbl.ai_call_logs)
-            .where(tbl.ai_call_logs.c.session_id == session_id)
-            .order_by(tbl.ai_call_logs.c.created_at)
-            .limit(limit)
-        )
+        conditions = [tbl.ai_call_logs.c.session_id == session_id]
         if turn_number is not None:
-            stmt = stmt.where(tbl.ai_call_logs.c.turn_number == turn_number)
+            conditions.append(tbl.ai_call_logs.c.turn_number == turn_number)
+        query = select(tbl.ai_call_logs).where(*conditions)
+        stmt = query.order_by(tbl.ai_call_logs.c.created_at).limit(limit)
         ai_logs_query = await self._session.execute(stmt)
         return list(map(_row_dict, ai_logs_query.mappings()))
