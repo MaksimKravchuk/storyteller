@@ -197,13 +197,13 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
-function renderSingleCall(c) {
+function renderSingleCall(c, turnNumber) {
   const tokens = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
   const tokenStr = tokens.length ? tokens.join('+') + ' tok' : '';
   const durStr = c.duration_ms != null ? c.duration_ms + 'ms' : '';
   const metaParts = [c.model, tokenStr, durStr].filter(Boolean).join(' | ');
   const uid = 'aic-' + Math.random().toString(36).slice(2, 10);
-  const seqBadge = c.call_sequence != null ? `<span class="call-seq-badge">#${c.call_sequence}</span>` : '';
+  const seqBadge = c.call_sequence != null ? `<span class="call-seq-badge">${turnNumber != null ? turnNumber + '.' + c.call_sequence : '#' + c.call_sequence}</span>` : '';
   return `
     <div class="ai-call-entry">
       <div class="ai-call-header">
@@ -223,7 +223,7 @@ function renderSingleCall(c) {
     </div>`;
 }
 
-function renderAiCallEntries(calls) {
+function renderAiCallEntries(calls, turnNumber) {
   if (!calls || !calls.length) return '';
 
   // Sort by call_sequence (fallback to original order)
@@ -251,10 +251,10 @@ function renderAiCallEntries(calls) {
   }
 
   return roots.map(node => {
-    const rootHtml = renderSingleCall(node.call);
+    const rootHtml = renderSingleCall(node.call, turnNumber);
     if (!node.children.length) return rootHtml;
     const childHtml = node.children
-      .map(c => `<div class="ai-call-tree-child">${renderSingleCall(c)}</div>`)
+      .map(c => `<div class="ai-call-tree-child">${renderSingleCall(c, turnNumber)}</div>`)
       .join('');
     return `
       <div class="ai-call-tree-root">
@@ -316,7 +316,7 @@ async function renderConversation(el) {
         AI Calls (${turnCalls.length})
       </div>
       <div class="ai-calls-container" id="${cid}">
-        ${renderAiCallEntries(turnCalls)}
+        ${renderAiCallEntries(turnCalls, e.turn)}
       </div>` : '';
     return `
       <div class="log-entry">

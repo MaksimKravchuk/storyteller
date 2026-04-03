@@ -28,7 +28,7 @@ class GameRepository:
         self.admin = repo_admin.AdminQueries(session)
         self._loader = repo_loader.StateLoader(session)
         self._saver = repo_saver.StateSaver(session)
-        self._ai_logs = repo_ai_logs.AILogStore(session)
+        self.ai_logs = repo_ai_logs.AILogStore(session)
 
     async def get_or_create_session(self, telegram_chat_id: int) -> dict:
         """Return session row dict, creating one if it doesn't exist."""
@@ -86,7 +86,7 @@ class GameRepository:
         turn_number: int | None = None,
     ) -> None:
         """Batch insert AI call log entries."""
-        await self._ai_logs.save(logs, turn_number=turn_number)
+        await self.ai_logs.save(logs, turn_number=turn_number)
 
     async def get_ai_call_logs(
         self,
@@ -95,4 +95,4 @@ class GameRepository:
         limit: int = 200,
     ) -> list[dict]:
         """Get AI call logs for a session."""
-        return await self._ai_logs.get(session_id, turn_number=turn_number, limit=limit)
+        return await self.ai_logs.get(session_id, turn_number=turn_number, limit=limit)

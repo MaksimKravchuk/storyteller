@@ -19,14 +19,37 @@ call_log_buffer: contextvars.ContextVar[list[_CallLogEntry] | None] = contextvar
 agent_stack: contextvars.ContextVar[list[str] | None] = contextvars.ContextVar("agent_stack", default=None)
 
 # Auto-incrementing counter for ordering LLM calls within a turn.
-call_sequence_counter: contextvars.ContextVar[int] = contextvars.ContextVar("call_sequence_counter", default=0)
+# Stored as a one-element list so asyncio.gather tasks (which copy
+# ContextVar values by reference) share the same mutable counter.
+call_sequence_counter: contextvars.ContextVar[list[int]] = contextvars.ContextVar("call_sequence_counter", default=[0])
+
+
+def next_sequence() -> int:
+    """Atomically read and increment the call sequence counter.
+
+    Because asyncio is single-threaded, mutating the shared list is safe
+    even across tasks created by ``asyncio.gather``.
+    """
+    counter = call_sequence_counter.get([0])
+    seq = counter[0]
+    counter[0] = seq + 1
+    return seq
+
+
+def init_sequence(start: int) -> None:
+    """Set the call sequence counter to *start*.
+
+    Use this to continue numbering from a previous batch of calls
+    within the same turn (e.g. after loading the max sequence from the DB).
+    """
+    call_sequence_counter.set([start])
 
 
 def reset_buffer() -> None:
     """Clear the buffer and call-chain tracking for a new turn."""
     call_log_buffer.set([])
     agent_stack.set([])
-    call_sequence_counter.set(0)
+    call_sequence_counter.set([0])
 
 
 def get_and_clear_buffer() -> list[dict[str, Any]]:
