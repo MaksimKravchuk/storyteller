@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import ssl as _ssl
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import AsyncIterator, Tuple
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -11,10 +13,41 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine as _create_engine,
 )
 
+_SSL_ENABLED_MODES = frozenset(
+    ("prefer", "require", "verify-ca", "verify-full"),
+)
+
+
+def _strip_sslmode(url_string: str) -> Tuple[str, str | None]:
+    """Remove ``sslmode`` from a database URL query string."""
+    parsed = urlparse(url_string)
+    query_params = parse_qs(parsed.query)
+    sslmode = query_params.pop("sslmode", [None])[0]
+    return urlunparse(
+        parsed._replace(
+            query=urlencode({key: entry[0] for key, entry in query_params.items()}),
+        )
+    ), sslmode
+
+
+def _adapt_url_for_asyncpg(database_url: str) -> Tuple[str, dict]:
+    """Strip ``sslmode`` query param and return ``(clean_url, connect_args)``.
+
+    asyncpg does not accept the libpq ``sslmode`` query parameter — it uses
+    the ``ssl`` keyword instead.  This converts URLs produced by managed
+    Postgres providers (Fly, Supabase, etc.) so they work with asyncpg.
+    """
+    clean_url, sslmode = _strip_sslmode(database_url)
+    connect_args: dict = {}
+    if sslmode in _SSL_ENABLED_MODES:
+        connect_args["ssl"] = _ssl.create_default_context()
+    return clean_url, connect_args
+
 
 def create_async_engine(database_url: str):
     """Create an async SQLAlchemy engine."""
-    return _create_engine(database_url, echo=False)
+    url, connect_args = _adapt_url_for_asyncpg(database_url)
+    return _create_engine(url, echo=False, connect_args=connect_args)
 
 
 def create_session_factory(engine) -> async_sessionmaker[AsyncSession]:
