@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid as _uuid
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func as sa_func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
@@ -49,6 +49,20 @@ class AILogStore:
             for entry in logs
         ]
         await self._session.execute(tbl.ai_call_logs.insert(), rows)
+
+    async def max_call_sequence(self, session_id: str, turn_number: int | None) -> int | None:
+        """Return the highest call_sequence for a session+turn, or None."""
+        logs = tbl.ai_call_logs
+        stmt = select(sa_func.max(logs.c.call_sequence)).where(
+            logs.c.session_id == session_id,
+        )
+        if turn_number is None:
+            turn_filter = logs.c.turn_number.is_(None)
+        else:
+            turn_filter = logs.c.turn_number == turn_number
+        stmt = stmt.where(turn_filter)
+        query = await self._session.execute(stmt)
+        return query.scalar()
 
     async def get(
         self,

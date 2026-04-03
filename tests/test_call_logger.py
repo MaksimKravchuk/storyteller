@@ -7,6 +7,7 @@ from llm.call_logger import (
     call_log_buffer,
     call_sequence_counter,
     get_and_clear_buffer,
+    next_sequence,
     reset_buffer,
 )
 
@@ -38,11 +39,11 @@ class TestResetBuffer:
         assert agent_stack.get([]) == []
 
     def test_clears_sequence_counter(self):
-        call_sequence_counter.set(5)
+        call_sequence_counter.set([5])
 
         reset_buffer()
 
-        assert call_sequence_counter.get(0) == 0
+        assert call_sequence_counter.get([0])[0] == 0
 
 
 class TestAgentStack:
@@ -69,13 +70,22 @@ class TestAgentStack:
 class TestCallSequenceCounter:
     def test_default_is_zero(self):
         reset_buffer()
-        assert call_sequence_counter.get(0) == 0
+        assert call_sequence_counter.get([0])[0] == 0
 
-    def test_increment(self):
+    def test_next_sequence_increments(self):
         reset_buffer()
-        current_count = call_sequence_counter.get(0)
-        call_sequence_counter.set(current_count + 1)
-        assert call_sequence_counter.get(0) == 1
+        assert next_sequence() == 0
+        assert next_sequence() == 1
+        assert next_sequence() == 2
+
+    def test_init_sequence_continues_from_offset(self):
+        """After init_sequence(n), next_sequence returns n, n+1, etc."""
+        from llm.call_logger import init_sequence
+
+        reset_buffer()
+        init_sequence(7)
+        assert next_sequence() == 7
+        assert next_sequence() == 8
 
 
 class TestGetAndClearBuffer:

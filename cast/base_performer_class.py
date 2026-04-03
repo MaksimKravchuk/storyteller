@@ -11,8 +11,8 @@ from llm.base_client import BaseLLMClient
 from llm.call_logger import (
     agent_stack,
     call_log_buffer,
-    call_sequence_counter,
     current_session_id,
+    next_sequence,
 )
 from llm.message import LLMResponse, Message, Role
 from loguru import logger
@@ -62,8 +62,7 @@ def _record_llm_call(
     session_id = current_session_id.get(None)
     if session_id is None:
         return
-    seq = call_sequence_counter.get(0)
-    call_sequence_counter.set(seq + 1)
+    seq = next_sequence()
     buf = call_log_buffer.get(None) or []
     buf.append(
         {
