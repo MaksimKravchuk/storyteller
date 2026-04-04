@@ -40,6 +40,7 @@ class DirectorCast:
     narrator: Any
     npc_generator: Any
     data_miner: Any
+    item_generator: Any
     actors: dict[str, Any] = dataclasses.field(default_factory=dict)
 
 

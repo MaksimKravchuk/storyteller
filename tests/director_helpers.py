@@ -59,6 +59,7 @@ def make_cast(narrator_response: str = "Narrated result.") -> DirectorCast:
         narrator=make_mock_agent(narrator_response),
         npc_generator=make_mock_agent([]),
         data_miner=AsyncMock(),
+        item_generator=make_mock_agent([]),
     )
 
 
