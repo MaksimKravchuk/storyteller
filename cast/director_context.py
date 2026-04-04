@@ -90,6 +90,7 @@ class ContextFormatter:
 
         if action_type in TURN_COUNTING_ACTIONS:
             self._gs.turn_count += 1
+            self._gs.round_number += 1
         self._gs.conversation_log.append(
             {
                 "turn": self._gs.turn_count,

@@ -1,4 +1,9 @@
-"""Dice-based combat resolution for NPC interactions."""
+"""Dice-based contest resolution for player and NPC interactions.
+
+Provides a generic contest system (d20 vs d20 + bonuses) for combat,
+persuasion, deception, intimidation, and stealth.  Also provides an
+aggression-check mechanic for NPC mood-based retaliation.
+"""
 
 from __future__ import annotations
 
@@ -27,45 +32,156 @@ AGGRESSION_THRESHOLDS: types.MappingProxyType[str, int] = types.MappingProxyType
     }
 )
 
+# ---------------------------------------------------------------------------
+# Contest system — replaces the old combat-only dice
+# ---------------------------------------------------------------------------
 
-class CombatOutcome(Enum):
-    """Possible outcomes of an NPC vs player combat roll."""
 
-    NPC_OVERPOWERS = "npc_overpowers"
-    NPC_DEFENDS = "npc_defends"
-    PLAYER_SUCCEEDS = "player_succeeds"
-    PLAYER_DOMINATES = "player_dominates"
+class ContestType(Enum):
+    """Categories of contested actions."""
+
+    COMBAT = "combat"
+    PERSUASION = "persuasion"
+    DECEPTION = "deception"
+    INTIMIDATION = "intimidation"
+    STEALTH = "stealth"
+
+
+class ContestOutcome(Enum):
+    """Possible outcomes of a contested roll.
+
+    Determined by ``diff = target_total - actor_total``:
+    - diff >= 5  → TARGET_DOMINATES
+    - 0 <= diff < 5  → TARGET_RESISTS
+    - -5 < diff < 0  → ACTOR_SUCCEEDS
+    - diff <= -5 → ACTOR_DOMINATES
+    """
+
+    ACTOR_DOMINATES = "actor_dominates"
+    ACTOR_SUCCEEDS = "actor_succeeds"
+    TARGET_RESISTS = "target_resists"
+    TARGET_DOMINATES = "target_dominates"
+
+
+# Maps ContestType → NPC attribute name used as bonus.
+# For STEALTH the *target* defends with perception_skill.
+CONTEST_SKILL_MAP: types.MappingProxyType[ContestType, str] = types.MappingProxyType(
+    {
+        ContestType.COMBAT: "combat_skill",
+        ContestType.PERSUASION: "persuasion_skill",
+        ContestType.DECEPTION: "deception_skill",
+        ContestType.INTIMIDATION: "intimidation_skill",
+        ContestType.STEALTH: "perception_skill",
+    }
+)
+
+_COMBAT_DESCRIPTIONS: dict[ContestOutcome, str] = {
+    ContestOutcome.TARGET_DOMINATES: (
+        "The target overpowers the attacker — they counterattack, pin them down, or deliver a decisive blow."
+    ),
+    ContestOutcome.TARGET_RESISTS: (
+        "The target successfully defends — they block the attack, shove the attacker back, or dodge and retaliate."
+    ),
+    ContestOutcome.ACTOR_SUCCEEDS: (
+        "The attacker's strike lands — the target takes a hit, stumbles, loses their weapon, or is knocked back."
+    ),
+    ContestOutcome.ACTOR_DOMINATES: (
+        "The attacker completely overwhelms the target — a devastating "
+        "blow, the target is knocked out, disarmed, or badly hurt."
+    ),
+}
+
+_SOCIAL_DESCRIPTIONS: dict[ContestOutcome, str] = {
+    ContestOutcome.TARGET_DOMINATES: (
+        "The target sees through the attempt completely and turns it against the actor."
+    ),
+    ContestOutcome.TARGET_RESISTS: (
+        "The target resists — they are unconvinced, suspicious, or unmoved."
+    ),
+    ContestOutcome.ACTOR_SUCCEEDS: (
+        "The actor's attempt partially works — the target is swayed, fooled, or shaken, but not fully."
+    ),
+    ContestOutcome.ACTOR_DOMINATES: (
+        "The actor's attempt succeeds completely — the target is fully convinced, deceived, or intimidated."
+    ),
+}
+
+_STEALTH_DESCRIPTIONS: dict[ContestOutcome, str] = {
+    ContestOutcome.TARGET_DOMINATES: (
+        "The target spots the actor immediately and reacts decisively."
+    ),
+    ContestOutcome.TARGET_RESISTS: (
+        "The target notices something suspicious — the actor is partially detected."
+    ),
+    ContestOutcome.ACTOR_SUCCEEDS: (
+        "The actor moves unseen, though not perfectly — they pass unnoticed for now."
+    ),
+    ContestOutcome.ACTOR_DOMINATES: (
+        "The actor is completely invisible to the target — a flawless stealth."
+    ),
+}
+
+
+def _get_descriptions(contest_type: ContestType) -> dict[ContestOutcome, str]:
+    if contest_type == ContestType.COMBAT:
+        return _COMBAT_DESCRIPTIONS
+    if contest_type == ContestType.STEALTH:
+        return _STEALTH_DESCRIPTIONS
+    return _SOCIAL_DESCRIPTIONS
+
+
+@dataclass(frozen=True)
+class ContestRoll:
+    """Result of a contested dice roll."""
+
+    contest_type: ContestType
+    outcome: ContestOutcome
+    actor_roll: int
+    target_roll: int
+    actor_bonus: int
+    target_bonus: int
+
+    @property
+    def description(self) -> str:
+        """Human-readable description of the outcome for prompt injection."""
+        return _get_descriptions(self.contest_type)[self.outcome]
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatible aliases so existing imports keep working during migration
+# ---------------------------------------------------------------------------
+
+CombatOutcome = ContestOutcome
+"""Deprecated alias — use ContestOutcome instead."""
+
+# Outcome aliases mapping old names → new names
+CombatOutcome.NPC_OVERPOWERS = ContestOutcome.TARGET_DOMINATES  # type: ignore[attr-defined]
+CombatOutcome.NPC_DEFENDS = ContestOutcome.TARGET_RESISTS  # type: ignore[attr-defined]
+CombatOutcome.PLAYER_SUCCEEDS = ContestOutcome.ACTOR_SUCCEEDS  # type: ignore[attr-defined]
+CombatOutcome.PLAYER_DOMINATES = ContestOutcome.ACTOR_DOMINATES  # type: ignore[attr-defined]
 
 
 @dataclass(frozen=True)
 class CombatRoll:
-    """Result of a combat dice roll."""
+    """Backward-compatible wrapper around ContestRoll for combat.
 
-    outcome: CombatOutcome
+    Deprecated — use ContestRoll directly.
+    """
+
+    outcome: ContestOutcome
     npc_roll: int
     player_roll: int
     npc_bonus: int
 
     @property
     def description(self) -> str:
-        """Human-readable description of the outcome for prompt injection."""
-        descs = {
-            CombatOutcome.NPC_OVERPOWERS: (
-                "The NPC overpowers the player — they counterattack, pin them down, or deliver a decisive blow."
-            ),
-            CombatOutcome.NPC_DEFENDS: (
-                "The NPC successfully defends — they block the attack, shove the player back, or dodge and retaliate."
-            ),
-            CombatOutcome.PLAYER_SUCCEEDS: (
-                "The player's attack lands — the NPC takes a hit, stumbles, loses their weapon, or is knocked back."
-            ),
-            CombatOutcome.PLAYER_DOMINATES: (
-                "The player completely overwhelms the NPC — a devastating "
-                "blow, the NPC is knocked out, disarmed, or badly hurt."
-            ),
-        }
-        return descs[self.outcome]
+        """Human-readable description of the outcome."""
+        return _COMBAT_DESCRIPTIONS[self.outcome]
 
+
+# ---------------------------------------------------------------------------
+# Aggression
+# ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class AggressionRoll:
@@ -96,36 +212,66 @@ def roll_aggression(mood: str, _rng: random.Random | None = None) -> AggressionR
     )
 
 
-def _determine_combat_outcome(diff: int) -> CombatOutcome:
-    """Map the NPC-vs-player roll difference to a combat outcome."""
+# ---------------------------------------------------------------------------
+# Contest roll
+# ---------------------------------------------------------------------------
+
+def _determine_contest_outcome(diff: int) -> ContestOutcome:
+    """Map the target-vs-actor roll difference to a contest outcome.
+
+    ``diff`` = target_total - actor_total.
+    """
     if diff >= 5:
-        return CombatOutcome.NPC_OVERPOWERS
+        return ContestOutcome.TARGET_DOMINATES
     if diff >= 0:
-        return CombatOutcome.NPC_DEFENDS
+        return ContestOutcome.TARGET_RESISTS
     if diff >= -5:
-        return CombatOutcome.PLAYER_SUCCEEDS
-    return CombatOutcome.PLAYER_DOMINATES
+        return ContestOutcome.ACTOR_SUCCEEDS
+    return ContestOutcome.ACTOR_DOMINATES
+
+
+def roll_contest(
+    contest_type: ContestType,
+    actor_skill: int,
+    target_skill: int,
+    _rng: random.Random | None = None,
+) -> ContestRoll:
+    """Roll 1d20 for each side, add skill bonuses, determine outcome.
+
+    ``actor_skill`` and ``target_skill`` should be 0-10.
+    For player-vs-NPC combat the player is the actor with skill 0.
+
+    Outcome thresholds (target total vs actor total):
+    - target total >= actor total + 5  → TARGET_DOMINATES
+    - target total >= actor total      → TARGET_RESISTS
+    - target total >= actor total - 5  → ACTOR_SUCCEEDS
+    - target total <  actor total - 5  → ACTOR_DOMINATES
+    """
+    rng = _rng or random.Random()
+    actor_roll = rng.randint(1, _D20)
+    target_roll = rng.randint(1, _D20)
+
+    diff = (target_roll + target_skill) - (actor_roll + actor_skill)
+    return ContestRoll(
+        contest_type=contest_type,
+        outcome=_determine_contest_outcome(diff),
+        actor_roll=actor_roll,
+        target_roll=target_roll,
+        actor_bonus=actor_skill,
+        target_bonus=target_skill,
+    )
 
 
 def roll_combat(npc_combat_skill: int, _rng: random.Random | None = None) -> CombatRoll:
     """Roll 1d20 for each side, add NPC combat_skill bonus, determine outcome.
 
-    ``npc_combat_skill`` should be 0-10 (from NPC attributes).
-    A higher skill gives the NPC a bigger bonus on their roll.
-
-    Outcome thresholds (NPC total vs player roll):
-    - NPC total >= player roll + 5  → NPC_OVERPOWERS
-    - NPC total >= player roll      → NPC_DEFENDS
-    - NPC total >= player roll - 5  → PLAYER_SUCCEEDS
-    - NPC total <  player roll - 5  → PLAYER_DOMINATES
+    Deprecated — use ``roll_contest(ContestType.COMBAT, ...)`` instead.
+    Kept for backward compatibility with existing call sites.
     """
-    rng = _rng or random.Random()
-    player_roll = rng.randint(1, _D20)
-    npc_roll = rng.randint(1, _D20)
-
+    contest = roll_contest(ContestType.COMBAT, 0, npc_combat_skill, _rng=_rng)
     return CombatRoll(
-        outcome=_determine_combat_outcome(npc_roll + npc_combat_skill - player_roll),
-        npc_roll=npc_roll,
-        player_roll=player_roll,
+        outcome=contest.outcome,
+        npc_roll=contest.target_roll,
+        player_roll=contest.actor_roll,
         npc_bonus=npc_combat_skill,
     )

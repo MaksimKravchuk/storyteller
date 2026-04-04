@@ -17,6 +17,7 @@ BASE_ACTION_COSTS: types.MappingProxyType[str, float] = types.MappingProxyType(
         "INTERACT": 0.02,  # ~1 minute — grab, push, open
         "SLEEP": 8.0,
         "MOVE": 0.5,  # 30 min local; LLM should override for long distance
+        "WAIT": 0.1,  # ~6 minutes — passing time while idle
         "OTHER": 0.02,  # ~1 minute
     }
 )

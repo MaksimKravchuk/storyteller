@@ -107,6 +107,7 @@ class StateSaver:
                 id=game_state.uuid,
                 session_id=session_id,
                 turn_count=game_state.turn_count,
+                round_number=game_state.round_number,
                 scene_number=game_state.scene_number,
                 game_clock=game_state.game_clock,
                 game_time=game_state.game_time,
@@ -118,6 +119,7 @@ class StateSaver:
                 index_elements=["session_id"],
                 set_={
                     "turn_count": game_state.turn_count,
+                    "round_number": game_state.round_number,
                     "scene_number": game_state.scene_number,
                     "game_clock": game_state.game_clock,
                     "game_time": game_state.game_time,
