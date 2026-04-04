@@ -62,7 +62,8 @@ class TestDuplicateNPCNames:
         await director.act("talk to the guard")
         calls_a = director._actors[_NPC_A].execute.call_count
         calls_b = director._actors[_NPC_B].execute.call_count
-        assert calls_a + calls_b == 1
+        # 1 dialogue call (deduped by name) + 2 NPC turn calls (both NPCs in scene)
+        assert calls_a + calls_b == 3
 
     @pytest.mark.asyncio
     async def test_retaliation_skips_duplicate_names(self):
@@ -105,7 +106,8 @@ class TestDuplicateNPCNames:
         )
         calls_a = director._actors[_NPC_A].execute.call_count
         calls_b = director._actors[_NPC_B].execute.call_count
-        assert calls_a + calls_b == 2
+        # 1 dialogue (deduped) + 1 retaliation + 2 NPC turns = 4
+        assert calls_a + calls_b == 4
 
 
 class TestNPCGeneratorDeduplication:

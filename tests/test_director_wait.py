@@ -24,17 +24,21 @@ def _wait_route():
 
 class TestWaitSkipsDialogue:
     @pytest.mark.asyncio
-    async def test_wait_does_not_call_actor(self):
+    async def test_wait_does_not_call_actor_for_dialogue(self):
         gs = make_game_state()
         npc = setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
         director = make_director(game_state=gs, route_response=_wait_route())
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value="Hello")
+        mock_actor.execute = AsyncMock(return_value='{"action": "watches", "type": "IDLE", "target": null}')
         director._actors[_NPC_A] = mock_actor
 
         await director.act("I wait")
 
-        mock_actor.execute.assert_not_called()
+        # Actor IS called for NPC turn, but NOT for dialogue.
+        # Verify the call was for NPC turn (contains "It is" prompt), not dialogue.
+        assert mock_actor.execute.call_count == 1
+        call_input = mock_actor.execute.call_args.kwargs.get("input_data", "")
+        assert "It is Guard's turn" in call_input
 
     @pytest.mark.asyncio
     async def test_wait_does_not_rebuild_scene(self):
@@ -108,12 +112,16 @@ class TestForcedWaitFromIncapacitation:
         }
         director = make_director(game_state=gs, route_response=route)
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value="Hello")
+        # First call: dialogue, second call: NPC turn
+        mock_actor.execute = AsyncMock(
+            side_effect=["Hello", '{"action": "watches", "type": "IDLE", "target": null}'],
+        )
         director._actors[_NPC_A] = mock_actor
 
         await director.act("talk to the guard")
 
-        mock_actor.execute.assert_called_once()
+        # Actor called twice: dialogue + NPC turn
+        assert mock_actor.execute.call_count == 2
 
 
 class TestWaitKeywordShortCircuit:
