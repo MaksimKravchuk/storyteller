@@ -66,20 +66,27 @@ class PlanExecutor:
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
         raw_outputs: dict[str, Any] = {}
+        action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
 
         local_events = await self._process_events(completed_events)
-        await self._prepare_scene(
-            plan.get("delegate_to", []),
-            plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION),
-            player_action,
-            raw_outputs,
-        )
-        await self._process_target_npcs(plan, player_action, raw_outputs)
 
-        if plan.get(_KEY_ACTION_TYPE) == "EXAMINE":
-            item_desc = await self._examine_items(plan.get("targets", []), player_action)
-            if item_desc:
-                raw_outputs["item_examination"] = item_desc
+        if action_type == "WAIT":
+            raw_outputs["wait"] = True
+            if plan.get("wait_reason"):
+                raw_outputs["wait_reason"] = plan["wait_reason"]
+        else:
+            await self._prepare_scene(
+                plan.get("delegate_to", []),
+                action_type,
+                player_action,
+                raw_outputs,
+            )
+            await self._process_target_npcs(plan, player_action, raw_outputs)
+
+            if action_type == "EXAMINE":
+                item_desc = await self._examine_items(plan.get("targets", []), player_action)
+                if item_desc:
+                    raw_outputs["item_examination"] = item_desc
 
         if local_events:
             raw_outputs["completed_events"] = [ev.on_complete_description or ev.name for ev in local_events]

@@ -8,6 +8,7 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from cast import director_context, director_dialogue, director_events
 from cast import director_execution, director_retaliation, director_routing
+from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
 from models import game_state as gs_mod
 from prompts import director_prompts
@@ -89,7 +90,9 @@ class Director(BasePerformer):
         """Process a player action and return the narrated response."""
         self._ctx.sync_context(self)
 
-        routing_plan = await self._router.route_action(input_data)
+        routing_plan = self._check_forced_wait(input_data)
+        if routing_plan is None:
+            routing_plan = await self._router.route_action(input_data)
 
         if routing_plan.get("needs_clarification"):
             self._router.save_pending_clarification(input_data, routing_plan)
@@ -105,6 +108,15 @@ class Director(BasePerformer):
 
         self._ctx.append_turn_logs(input_data, narrated, action_type)
         return narrated
+
+    def _check_forced_wait(self, input_data: str) -> dict | None:
+        """Short-circuit to WAIT if player is incapacitated or typed a wait keyword."""
+        player_status = self._deps.game_state.player.physical_status
+        if is_incapacitated(player_status):
+            return build_forced_wait_plan(player_status)
+        if detect_wait_intent(input_data, self._language):
+            return build_forced_wait_plan("voluntary")
+        return None
 
     def register_actor(self, npc_uuid: str, actor: Any) -> None:
         """Register an Actor agent for an NPC."""
