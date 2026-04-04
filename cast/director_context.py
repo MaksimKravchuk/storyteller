@@ -94,6 +94,7 @@ class ContextFormatter:
         self._gs.conversation_log.append(
             {
                 "turn": self._gs.turn_count,
+                "scene_number": self._gs.scene_number,
                 _KEY_PLAYER_ACTION: player_action,
                 "response": narrated_response,
                 "game_clock": self._gs.game_clock,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -37,12 +38,33 @@ async def _save_world_objects(session: AsyncSession, game_state_id: str, game_st
     npc_rows = [conv_npc.npc_to_row(npc, game_state_id) for npc in game_state.npcs.values()]
     await saver_helpers.replace_rows(session, tbl.npcs, game_state_id, npc_rows)
 
-    scene_rows = (
-        [conv_scene.scene_to_row(game_state.current_scene, game_state_id, is_current=True)]
-        if game_state.current_scene
-        else []
+    await _save_scenes(session, game_state_id, game_state)
+
+
+async def _save_scenes(session: AsyncSession, game_state_id: str, game_state: GameState) -> None:
+    """Preserve historical scenes and upsert the current one."""
+    await session.execute(
+        update(tbl.scenes)
+        .where(tbl.scenes.c.game_state_id == game_state_id)
+        .where(tbl.scenes.c.is_current.is_(True))
+        .values(is_current=False),
     )
-    await saver_helpers.replace_rows(session, tbl.scenes, game_state_id, scene_rows)
+    if game_state.current_scene:
+        row = conv_scene.scene_to_row(
+            game_state.current_scene,
+            game_state_id,
+            is_current=True,
+            scene_number=game_state.scene_number,
+        )
+        stmt = (
+            pg_insert(tbl.scenes)
+            .values(**row)
+            .on_conflict_do_update(
+                index_elements=["id"],
+                set_=saver_helpers.updatable_fields(row),
+            )
+        )
+        await session.execute(stmt)
 
 
 async def _save_knowledge(session: AsyncSession, game_state_id: str, knowledge_graph: KnowledgeGraph) -> None:

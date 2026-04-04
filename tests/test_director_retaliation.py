@@ -65,7 +65,7 @@ def _fixed_combat(combat_skill_val: int, _rng: Any = None) -> Any:
     from cast.dice import CombatOutcome, CombatRoll
 
     return CombatRoll(
-        outcome=CombatOutcome.NPC_OVERPOWERS,
+        outcome=CombatOutcome.TARGET_DOMINATES,
         npc_roll=_ATTACK_ROLL,
         player_roll=5,
         npc_bonus=combat_skill_val,

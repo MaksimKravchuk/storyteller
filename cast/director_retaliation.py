@@ -65,7 +65,7 @@ def _build_retaliation_work(
 
     combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
     status_hint = ""
-    if combat_roll.outcome in (CombatOutcome.PLAYER_SUCCEEDS, CombatOutcome.PLAYER_DOMINATES):
+    if combat_roll.outcome in (CombatOutcome.ACTOR_SUCCEEDS, CombatOutcome.ACTOR_DOMINATES):
         status_hint = (
             "\nThe NPC is injured. Update their physical status to reflect the injury. "
             "Append [STATUS: <description>] at the end of your response."

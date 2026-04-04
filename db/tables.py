@@ -187,6 +187,7 @@ scenes = Table(
         nullable=False,
     ),
     Column("is_current", Boolean, nullable=False, server_default="false"),
+    Column("scene_number", Integer, nullable=False, server_default=_DEFAULT_ZERO),
     Column(_COL_LOCATION_ID, Text, nullable=False),
     Column("description", Text, nullable=False, server_default=""),
     Column("npcs_present", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),

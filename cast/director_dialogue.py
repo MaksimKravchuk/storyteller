@@ -17,8 +17,8 @@ _KEY_GAME_STATE = "game_state"
 # Recovery duration (game-hours) by combat outcome severity.
 _RECOVERY_HOURS: types.MappingProxyType[CombatOutcome, float] = types.MappingProxyType(
     {
-        CombatOutcome.PLAYER_SUCCEEDS: 1.0,
-        CombatOutcome.PLAYER_DOMINATES: 4.0,
+        CombatOutcome.ACTOR_SUCCEEDS: 1.0,
+        CombatOutcome.ACTOR_DOMINATES: 4.0,
     }
 )
 
