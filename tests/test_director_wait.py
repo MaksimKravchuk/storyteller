@@ -26,7 +26,7 @@ class TestWaitSkipsDialogue:
     @pytest.mark.asyncio
     async def test_wait_does_not_call_actor_for_dialogue(self):
         gs = make_game_state()
-        npc = setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
+        setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
         director = make_director(game_state=gs, route_response=_wait_route())
         mock_actor = AsyncMock()
         mock_actor.execute = AsyncMock(return_value='{"action": "watches", "type": "IDLE", "target": null}')
@@ -103,7 +103,7 @@ class TestForcedWaitFromIncapacitation:
     async def test_healthy_player_routes_normally(self):
         gs = make_game_state()
         gs.player.physical_status = "healthy"
-        npc = setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
+        setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
         route = {
             "action_type": "TALK",
             "targets": [_GUARD],

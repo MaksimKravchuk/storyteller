@@ -96,17 +96,7 @@ class PlanExecutor:
         if local_events:
             raw_outputs["completed_events"] = [ev.on_complete_description or ev.name for ev in local_events]
 
-        if action_type in _TURN_COUNTING_ACTIONS:
-            npc_actions = await self._agents.npc_turns.resolve_npc_turns(player_action)
-            if npc_actions:
-                raw_outputs["npc_turns"] = [
-                    {
-                        "npc_name": npc_act.npc_name,
-                        "action": npc_act.action_description,
-                        "type": npc_act.action_type,
-                    }
-                    for npc_act in npc_actions
-                ]
+        await self._resolve_npc_turns(action_type, player_action, raw_outputs)
 
         return await self._cast.narrator.execute(
             input_data=raw_outputs,
@@ -116,6 +106,22 @@ class PlanExecutor:
                 "scene_history": self._gs.scene_conversation_log[-5:],
             },
         )
+
+    async def _resolve_npc_turns(
+        self,
+        action_type: str,
+        player_action: str,
+        raw_outputs: dict[str, Any],
+    ) -> None:
+        """Resolve NPC autonomous turns for turn-counting actions."""
+        if action_type not in _TURN_COUNTING_ACTIONS:
+            return
+        npc_actions = await self._agents.npc_turns.resolve_npc_turns(player_action)
+        if npc_actions:
+            raw_outputs["npc_turns"] = [
+                {"npc_name": npc_act.npc_name, "action": npc_act.action_description, "type": npc_act.action_type}
+                for npc_act in npc_actions
+            ]
 
     async def _process_events(self, completed_events: list[GameEvent]) -> list[GameEvent]:
         """Partition events, process remote ones, return local events."""

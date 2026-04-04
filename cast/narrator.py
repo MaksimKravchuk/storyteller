@@ -93,6 +93,15 @@ class Narrator(BasePerformer):
         for item_desc in input_data.get("item_examination", []):
             raw_parts.append(f"Item examined: {item_desc}")
 
+        if input_data.get("wait"):
+            if input_data.get("wait_reason", "") in ("", "voluntary"):
+                raw_parts.append("The player waits and observes the surroundings.")
+            else:
+                raw_parts.append("The player cannot act — they are {0}.".format(input_data["wait_reason"]))
+
+        for npc_turn in input_data.get("npc_turns", []):
+            raw_parts.append("Meanwhile, {0}: {1}".format(npc_turn["npc_name"], npc_turn["action"]))
+
         return raw_parts
 
     def _append_history_parts(self, raw_parts: list[str], scene_history: list[dict]) -> None:

@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from models.npc_card import NPCCard
-from models.scene import SceneNPC
 from tests.director_helpers import make_director, make_game_state
 
 _NPC_A = "npc-1"

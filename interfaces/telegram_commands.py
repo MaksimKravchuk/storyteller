@@ -69,3 +69,30 @@ async def cmd_quit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         session = await repo.get_or_create_session(chat_id)
         await repo.update_session(session[_SESSION_ID_KEY], state=_STATE_IDLE)
     await update.message.reply_text("Game ended. Send /start to play again.")
+
+
+async def _handle_wait_action(update: Update, context: ContextTypes.DEFAULT_TYPE, repo: Any, session: dict) -> None:
+    """Process a /wait action through the game engine."""
+    from interfaces.telegram_handlers import handle_playing
+    from interfaces.telegram_bot import MessageContext
+
+    ctx = MessageContext(
+        update=update,
+        repo=repo,
+        session_id=session[_SESSION_ID_KEY],
+        text="/wait",
+        cfg=context.bot_data["cfg"],
+        language=session.get("language", "English"),
+    )
+    await handle_playing(ctx)
+
+
+async def cmd_wait(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /wait command — player skips their turn."""
+    async with get_db(db_factory(context)) as db:
+        repo = GameRepository(db)
+        session = await repo.get_or_create_session(update.effective_chat.id)
+        if session["state"] != "playing":
+            await update.message.reply_text("No active game. Send /start to begin.")
+            return
+        await _handle_wait_action(update, context, repo, session)

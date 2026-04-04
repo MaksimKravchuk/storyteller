@@ -5,8 +5,6 @@ from __future__ import annotations
 import random
 from collections.abc import Iterator
 
-import pytest
-
 from cast.dice import (
     CONTEST_SKILL_MAP,
     ContestOutcome,
@@ -255,7 +253,10 @@ class TestRollContestSocialTypes:
 
     def test_intimidation_contest(self):
         result = roll_contest(
-            ContestType.INTIMIDATION, 0, _SKILL_LOW, _rng=_rng(actor=_ROLL_THIRTEEN, target=_ROLL_EIGHT),
+            ContestType.INTIMIDATION,
+            0,
+            _SKILL_LOW,
+            _rng=_rng(actor=_ROLL_THIRTEEN, target=_ROLL_EIGHT),
         )
         assert result.contest_type == ContestType.INTIMIDATION
         assert result.outcome == ContestOutcome.ACTOR_SUCCEEDS

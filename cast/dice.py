@@ -75,54 +75,50 @@ CONTEST_SKILL_MAP: types.MappingProxyType[ContestType, str] = types.MappingProxy
     }
 )
 
-_COMBAT_DESCRIPTIONS: dict[ContestOutcome, str] = {
-    ContestOutcome.TARGET_DOMINATES: (
-        "The target overpowers the attacker — they counterattack, pin them down, or deliver a decisive blow."
-    ),
-    ContestOutcome.TARGET_RESISTS: (
-        "The target successfully defends — they block the attack, shove the attacker back, or dodge and retaliate."
-    ),
-    ContestOutcome.ACTOR_SUCCEEDS: (
-        "The attacker's strike lands — the target takes a hit, stumbles, loses their weapon, or is knocked back."
-    ),
-    ContestOutcome.ACTOR_DOMINATES: (
-        "The attacker completely overwhelms the target — a devastating "
-        "blow, the target is knocked out, disarmed, or badly hurt."
-    ),
-}
+_COMBAT_DESCRIPTIONS: types.MappingProxyType[ContestOutcome, str] = types.MappingProxyType(
+    {
+        ContestOutcome.TARGET_DOMINATES: (
+            "The target overpowers the attacker — they counterattack, pin them down, or deliver a decisive blow."
+        ),
+        ContestOutcome.TARGET_RESISTS: (
+            "The target successfully defends — they block the attack, shove the attacker back, or dodge and retaliate."
+        ),
+        ContestOutcome.ACTOR_SUCCEEDS: (
+            "The attacker's strike lands — the target takes a hit, stumbles, loses their weapon, or is knocked back."
+        ),
+        ContestOutcome.ACTOR_DOMINATES: (
+            "The attacker completely overwhelms the target — a devastating "
+            "blow, the target is knocked out, disarmed, or badly hurt."
+        ),
+    }
+)
 
-_SOCIAL_DESCRIPTIONS: dict[ContestOutcome, str] = {
-    ContestOutcome.TARGET_DOMINATES: (
-        "The target sees through the attempt completely and turns it against the actor."
-    ),
-    ContestOutcome.TARGET_RESISTS: (
-        "The target resists — they are unconvinced, suspicious, or unmoved."
-    ),
-    ContestOutcome.ACTOR_SUCCEEDS: (
-        "The actor's attempt partially works — the target is swayed, fooled, or shaken, but not fully."
-    ),
-    ContestOutcome.ACTOR_DOMINATES: (
-        "The actor's attempt succeeds completely — the target is fully convinced, deceived, or intimidated."
-    ),
-}
+_SOCIAL_DESCRIPTIONS: types.MappingProxyType[ContestOutcome, str] = types.MappingProxyType(
+    {
+        ContestOutcome.TARGET_DOMINATES: (
+            "The target sees through the attempt completely and turns it against the actor."
+        ),
+        ContestOutcome.TARGET_RESISTS: ("The target resists — they are unconvinced, suspicious, or unmoved."),
+        ContestOutcome.ACTOR_SUCCEEDS: (
+            "The actor's attempt partially works — the target is swayed, fooled, or shaken, but not fully."
+        ),
+        ContestOutcome.ACTOR_DOMINATES: (
+            "The actor's attempt succeeds completely — the target is fully convinced, deceived, or intimidated."
+        ),
+    }
+)
 
-_STEALTH_DESCRIPTIONS: dict[ContestOutcome, str] = {
-    ContestOutcome.TARGET_DOMINATES: (
-        "The target spots the actor immediately and reacts decisively."
-    ),
-    ContestOutcome.TARGET_RESISTS: (
-        "The target notices something suspicious — the actor is partially detected."
-    ),
-    ContestOutcome.ACTOR_SUCCEEDS: (
-        "The actor moves unseen, though not perfectly — they pass unnoticed for now."
-    ),
-    ContestOutcome.ACTOR_DOMINATES: (
-        "The actor is completely invisible to the target — a flawless stealth."
-    ),
-}
+_STEALTH_DESCRIPTIONS: types.MappingProxyType[ContestOutcome, str] = types.MappingProxyType(
+    {
+        ContestOutcome.TARGET_DOMINATES: ("The target spots the actor immediately and reacts decisively."),
+        ContestOutcome.TARGET_RESISTS: ("The target notices something suspicious — the actor is partially detected."),
+        ContestOutcome.ACTOR_SUCCEEDS: ("The actor moves unseen, though not perfectly — they pass unnoticed for now."),
+        ContestOutcome.ACTOR_DOMINATES: ("The actor is completely invisible to the target — a flawless stealth."),
+    }
+)
 
 
-def _get_descriptions(contest_type: ContestType) -> dict[ContestOutcome, str]:
+def _get_descriptions(contest_type: ContestType) -> types.MappingProxyType[ContestOutcome, str]:
     if contest_type == ContestType.COMBAT:
         return _COMBAT_DESCRIPTIONS
     if contest_type == ContestType.STEALTH:
@@ -183,6 +179,7 @@ class CombatRoll:
 # Aggression
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class AggressionRoll:
     """Result of an NPC aggression check after mood change."""
@@ -215,6 +212,7 @@ def roll_aggression(mood: str, _rng: random.Random | None = None) -> AggressionR
 # ---------------------------------------------------------------------------
 # Contest roll
 # ---------------------------------------------------------------------------
+
 
 def _determine_contest_outcome(diff: int) -> ContestOutcome:
     """Map the target-vs-actor roll difference to a contest outcome.

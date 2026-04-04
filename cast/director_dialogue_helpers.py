@@ -106,25 +106,27 @@ def build_contested_action(
     Otherwise, plain text is returned with no roll.
     """
     if is_aggressive:
-        contest_type = ContestType.COMBAT
-        skill_attr = CONTEST_SKILL_MAP[contest_type]
-        target_skill = npc.get_attribute(skill_attr, 3)
-        contest_roll = roll_contest(contest_type, 0, target_skill, _rng=_rng)
-        status_hint = _combat_status_hint(contest_roll.outcome)
-        return _format_contest_text(player_action, contest_roll, status_hint), contest_roll
+        return _roll_and_format(player_action, npc, ContestType.COMBAT, default_skill=3, _rng=_rng)
 
     if contest_info:
-        type_str = contest_info.get("type", "combat")
-        contest_type = ContestType(type_str)
-        skill_attr = CONTEST_SKILL_MAP[contest_type]
-        target_skill = npc.get_attribute(skill_attr, 0)
-        contest_roll = roll_contest(contest_type, 0, target_skill, _rng=_rng)
-        status_hint = ""
-        if contest_type == ContestType.COMBAT:
-            status_hint = _combat_status_hint(contest_roll.outcome)
-        return _format_contest_text(player_action, contest_roll, status_hint), contest_roll
+        ctype = ContestType(contest_info.get("type", "combat"))
+        return _roll_and_format(player_action, npc, ctype, default_skill=0, _rng=_rng)
 
     return player_action, None
+
+
+def _roll_and_format(
+    player_action: str,
+    npc: Any,
+    contest_type: ContestType,
+    default_skill: int = 0,
+    _rng: random.Random | None = None,
+) -> tuple[str, ContestRoll]:
+    """Roll a contest and format the action text with the result."""
+    skill_attr = CONTEST_SKILL_MAP[contest_type]
+    contest_roll = roll_contest(contest_type, 0, npc.get_attribute(skill_attr, default_skill), _rng=_rng)
+    status_hint = _combat_status_hint(contest_roll.outcome) if contest_type == ContestType.COMBAT else ""
+    return _format_contest_text(player_action, contest_roll, status_hint), contest_roll
 
 
 def build_combat_action(

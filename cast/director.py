@@ -112,15 +112,6 @@ class Director(BasePerformer):
         self._ctx.append_turn_logs(input_data, narrated, action_type)
         return narrated
 
-    def _check_forced_wait(self, input_data: str) -> dict | None:
-        """Short-circuit to WAIT if player is incapacitated or typed a wait keyword."""
-        player_status = self._deps.game_state.player.physical_status
-        if is_incapacitated(player_status):
-            return build_forced_wait_plan(player_status)
-        if detect_wait_intent(input_data, self._language):
-            return build_forced_wait_plan("voluntary")
-        return None
-
     def register_actor(self, npc_uuid: str, actor: Any) -> None:
         """Register an Actor agent for an NPC."""
         self._actors[npc_uuid] = actor
@@ -132,6 +123,15 @@ class Director(BasePerformer):
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------
+
+    def _check_forced_wait(self, input_data: str) -> dict | None:
+        """Short-circuit to WAIT if player is incapacitated or typed a wait keyword."""
+        player_status = self._deps.game_state.player.physical_status
+        if is_incapacitated(player_status):
+            return build_forced_wait_plan(player_status)
+        if detect_wait_intent(input_data, self._language):
+            return build_forced_wait_plan("voluntary")
+        return None
 
     def _register_new_npc(self, npc: Any) -> None:
         """Register a new NPC in the game state and create an Actor."""

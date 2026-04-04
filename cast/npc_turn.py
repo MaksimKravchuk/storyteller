@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json as _json
+import types
 from dataclasses import dataclass
 from typing import Any
 
@@ -19,25 +20,31 @@ from cast.wait_detection import INCAPACITATING_STATES
 from models.game_state import GameState
 
 # NPC action types that trigger a contest when targeting another character.
-_CONTESTABLE_ACTIONS: frozenset[str] = frozenset((
-    "ATTACK",
-    "STEALTH",
-    "DECEIVE",
-    "INTIMIDATE",
-    "PERSUADE",
-))
+_CONTESTABLE_ACTIONS: frozenset[str] = frozenset(
+    (
+        "ATTACK",
+        "STEALTH",
+        "DECEIVE",
+        "INTIMIDATE",
+        "PERSUADE",
+    )
+)
 
 # Maps NPC action type → ContestType for dice rolls.
-_ACTION_TO_CONTEST: dict[str, ContestType] = {
-    "ATTACK": ContestType.COMBAT,
-    "STEALTH": ContestType.STEALTH,
-    "DECEIVE": ContestType.DECEPTION,
-    "INTIMIDATE": ContestType.INTIMIDATION,
-    "PERSUADE": ContestType.PERSUASION,
-}
+_ACTION_TO_CONTEST: types.MappingProxyType[str, ContestType] = types.MappingProxyType(
+    {
+        "ATTACK": ContestType.COMBAT,
+        "STEALTH": ContestType.STEALTH,
+        "DECEIVE": ContestType.DECEPTION,
+        "INTIMIDATE": ContestType.INTIMIDATION,
+        "PERSUADE": ContestType.PERSUASION,
+    }
+)
 
 # Statuses that prevent an NPC from acting.
 _NPC_SKIP_STATUSES: frozenset[str] = INCAPACITATING_STATES | frozenset(("dead",))
+
+_MAX_RAW_PREVIEW = 200
 
 
 @dataclass(frozen=True)
@@ -57,8 +64,23 @@ def _parse_npc_response(raw: str) -> dict:
     try:
         return _json.loads(raw)
     except (ValueError, TypeError):
-        logger.warning("NPC turn response was not valid JSON: {}", raw[:200])
+        logger.warning("NPC turn response was not valid JSON: {}", raw[:_MAX_RAW_PREVIEW])
         return {"action": raw, "type": "IDLE", "target": None}
+
+
+def _build_npc_action(npc: Any, raw_response: str, game_state: GameState) -> NPCAction:
+    """Parse raw Actor response and build an NPCAction with optional contest roll."""
+    parsed = _parse_npc_response(raw_response)
+    action_type = parsed.get("type", "IDLE").upper()
+    target = parsed.get("target")
+    return NPCAction(
+        npc_uuid=npc.uuid,
+        npc_name=npc.name,
+        action_description=parsed.get("action", raw_response),
+        action_type=action_type,
+        target=target,
+        contest_roll=_roll_npc_contest(npc, action_type, target, game_state),
+    )
 
 
 def _find_target_npc(target_name: str, game_state: GameState) -> Any | None:
@@ -120,69 +142,51 @@ class NPCTurnResolver:
         eligible = self._eligible_npcs()
         if not eligible:
             return []
-
-        coros = [
-            self._resolve_single_npc(npc, actor, player_action_summary)
-            for _uuid, npc, actor in eligible
-        ]
-        actions = list(await asyncio.gather(*coros))
-
+        actions = await self._gather_actions(eligible, player_action_summary)
         for action in actions:
             _apply_scene_mutation(action.npc_uuid, action.action_type, self._gs)
-
         return actions
+
+    async def _gather_actions(
+        self,
+        eligible: list[tuple[str, Any, Any]],
+        summary: str,
+    ) -> list[NPCAction]:
+        """Concurrently resolve actions for all eligible NPCs."""
+        coros = [self._resolve_single_npc(npc, actor, summary) for _uuid, npc, actor in eligible]
+        return list(await asyncio.gather(*coros))
 
     def _eligible_npcs(self) -> list[tuple[str, Any, Any]]:
         """Return (uuid, npc, actor) for NPCs that can act this turn."""
         scene = self._gs.current_scene
         if not scene:
             return []
-
-        result = []
+        entries: list[tuple[str, Any, Any]] = []
         for snpc in scene.npcs_present:
-            if not snpc.uuid or snpc.uuid not in self._gs.npcs:
-                continue
-            npc = self._gs.npcs[snpc.uuid]
-            if npc.physical_status.lower() in _NPC_SKIP_STATUSES:
-                continue
-            actor = self._actors.get(snpc.uuid)
-            if actor is None:
-                continue
-            result.append((snpc.uuid, npc, actor))
-        return result
+            entry = self._try_npc(snpc)
+            if entry is not None:
+                entries.append(entry)
+        return entries
 
-    async def _resolve_single_npc(
-        self,
-        npc: Any,
-        actor: Any,
-        player_action_summary: str,
-    ) -> NPCAction:
+    def _try_npc(self, snpc: Any) -> tuple[str, Any, Any] | None:
+        """Return (uuid, npc, actor) if the scene-NPC can act, else None."""
+        if not snpc.uuid or snpc.uuid not in self._gs.npcs:
+            return None
+        npc = self._gs.npcs[snpc.uuid]
+        if npc.physical_status.lower() in _NPC_SKIP_STATUSES:
+            return None
+        actor = self._actors.get(snpc.uuid)
+        if actor is None:
+            return None
+        return (snpc.uuid, npc, actor)
+
+    async def _resolve_single_npc(self, npc: Any, actor: Any, player_action_summary: str) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
-        turn_prompt = _build_turn_prompt(npc, player_action_summary, self._gs)
         raw_response = await actor.execute(
-            input_data=turn_prompt,
-            context={
-                "npc": npc,
-                "game_state": self._gs,
-                "is_npc_turn": True,
-            },
+            input_data=_build_turn_prompt(npc, player_action_summary, self._gs),
+            context={"npc": npc, "game_state": self._gs, "is_npc_turn": True},
         )
-
-        parsed = _parse_npc_response(raw_response)
-        action_type = parsed.get("type", "IDLE").upper()
-        target = parsed.get("target")
-        description = parsed.get("action", raw_response)
-
-        contest_roll = _roll_npc_contest(npc, action_type, target, self._gs)
-
-        return NPCAction(
-            npc_uuid=npc.uuid,
-            npc_name=npc.name,
-            action_description=description,
-            action_type=action_type,
-            target=target,
-            contest_roll=contest_roll,
-        )
+        return _build_npc_action(npc, raw_response, self._gs)
 
 
 def _build_turn_prompt(npc: Any, player_action_summary: str, game_state: GameState) -> str:

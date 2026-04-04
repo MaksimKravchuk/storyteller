@@ -9,13 +9,15 @@ import types
 # Incapacitating states — force the player to WAIT
 # ---------------------------------------------------------------------------
 
-INCAPACITATING_STATES: frozenset[str] = frozenset((
-    "unconscious",
-    "stunned",
-    "tied up",
-    "frightened",
-    "frozen",
-))
+INCAPACITATING_STATES: frozenset[str] = frozenset(
+    (
+        "unconscious",
+        "stunned",
+        "tied up",
+        "frightened",
+        "frozen",
+    )
+)
 
 # ---------------------------------------------------------------------------
 # Wait keywords by language (matched at start of message, case-insensitive)

@@ -73,8 +73,10 @@ class TestBuildContestedActionSocial:
         npc = _make_npc(name=_MERCHANT, attributes={_PERSUASION_SKILL: 6})
         contest_info = {"type": "persuasion", "target": _MERCHANT}
         text, roll = build_contested_action(
-            "convince the merchant to lower prices", npc,
-            contest_info=contest_info, _rng=random.Random(_RNG_SEED),
+            "convince the merchant to lower prices",
+            npc,
+            contest_info=contest_info,
+            _rng=random.Random(_RNG_SEED),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.PERSUASION
@@ -86,8 +88,10 @@ class TestBuildContestedActionSocial:
         npc = _make_npc(attributes={_DECEPTION_SKILL: 4})
         contest_info = {"type": "deception", "target": _GUARD}
         text, roll = build_contested_action(
-            "lie about my identity", npc,
-            contest_info=contest_info, _rng=random.Random(42),
+            "lie about my identity",
+            npc,
+            contest_info=contest_info,
+            _rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.DECEPTION
@@ -96,8 +100,10 @@ class TestBuildContestedActionSocial:
         npc = _make_npc(attributes={_INTIMIDATION_SKILL: 3})
         contest_info = {"type": "intimidation", "target": _GUARD}
         text, roll = build_contested_action(
-            "threaten the guard", npc,
-            contest_info=contest_info, _rng=random.Random(42),
+            "threaten the guard",
+            npc,
+            contest_info=contest_info,
+            _rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.INTIMIDATION
@@ -106,8 +112,10 @@ class TestBuildContestedActionSocial:
         npc = _make_npc(attributes={_PERCEPTION_SKILL: 7})
         contest_info = {"type": "stealth", "target": _GUARD}
         text, roll = build_contested_action(
-            "sneak past the guard", npc,
-            contest_info=contest_info, _rng=random.Random(42),
+            "sneak past the guard",
+            npc,
+            contest_info=contest_info,
+            _rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.STEALTH
@@ -124,8 +132,10 @@ class TestBuildContestedActionSocial:
         npc = _make_npc(attributes={_PERSUASION_SKILL: 5})
         contest_info = {"type": "persuasion", "target": _GUARD}
         text, roll = build_contested_action(
-            "convince the guard", npc,
-            is_aggressive=False, contest_info=contest_info,
+            "convince the guard",
+            npc,
+            is_aggressive=False,
+            contest_info=contest_info,
             _rng=random.Random(42),
         )
         assert roll is not None
@@ -136,8 +146,10 @@ class TestBuildContestedActionSocial:
         npc = _make_npc(attributes={_COMBAT_SKILL: 5, _PERSUASION_SKILL: 8})
         contest_info = {"type": "persuasion", "target": _GUARD}
         text, roll = build_contested_action(
-            "attack while talking", npc,
-            is_aggressive=True, contest_info=contest_info,
+            "attack while talking",
+            npc,
+            is_aggressive=True,
+            contest_info=contest_info,
             _rng=random.Random(42),
         )
         assert roll is not None
@@ -151,7 +163,10 @@ class TestBuildContestedActionDefaultSkill:
         npc = _make_npc(attributes={})
         contest_info = {"type": "persuasion", "target": _GUARD}
         _, roll = build_contested_action(
-            "persuade", npc, contest_info=contest_info, _rng=random.Random(42),
+            "persuade",
+            npc,
+            contest_info=contest_info,
+            _rng=random.Random(42),
         )
         assert roll is not None
         assert roll.target_bonus == 0

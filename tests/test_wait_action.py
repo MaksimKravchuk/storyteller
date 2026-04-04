@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from cast.wait_detection import (
     INCAPACITATING_STATES,
     build_forced_wait_plan,
