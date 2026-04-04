@@ -19,13 +19,20 @@ def _format_scene_entry(entry: dict) -> str:
     return f"- Player: {action} -> {action_type}"
 
 
+def _npc_label(npc: Any) -> str:
+    """Format an NPC's name, appending physical status when not healthy."""
+    if npc.physical_status and npc.physical_status != "healthy":
+        return "{0} ({1})".format(npc.name, npc.physical_status)
+    return npc.name
+
+
 def format_npcs_present(scene: Any, game_state: GameState) -> str:
     """Format NPC names for the system prompt."""
     if not scene:
         return "None"
     all_npcs = game_state.npcs
     present = [snpc for snpc in scene.npcs_present if snpc.uuid and snpc.uuid in all_npcs]
-    names = [all_npcs[snpc.uuid].name for snpc in present]
+    names = [_npc_label(all_npcs[snpc.uuid]) for snpc in present]
     return ", ".join(names) or "None"
 
 

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import random
 from typing import Any
 
-from cast.dice import CombatRoll, roll_combat
+from cast.dice import CombatOutcome, CombatRoll, roll_combat
 from models.game_state import GameState
 
 
@@ -52,22 +53,30 @@ def build_combat_action(
     player_action: str,
     npc: Any,
     is_aggressive: bool,
+    _rng: random.Random | None = None,
 ) -> tuple[str, CombatRoll | None]:
     """Build action text and optional combat roll for an NPC interaction."""
     if not is_aggressive:
         return player_action, None
-    combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
+    combat_roll = roll_combat(npc.get_attribute("combat_skill", 3), _rng=_rng)
+    status_hint = ""
+    if combat_roll.outcome in (CombatOutcome.PLAYER_SUCCEEDS, CombatOutcome.PLAYER_DOMINATES):
+        status_hint = (
+            "\nThe NPC is injured. Update their physical status to reflect the injury. "
+            "Append [STATUS: <description>] at the end of your response."
+        )
     action_text = (
         "{0}\n\n"
         "[DICE ROLL: player {1} vs "
         "NPC {2}+{3}]\n"
         "OUTCOME: {4}\n"
-        "You MUST narrate this outcome. Do NOT override the dice result."
+        "You MUST narrate this outcome. Do NOT override the dice result.{5}"
     ).format(
         player_action,
         combat_roll.player_roll,
         combat_roll.npc_roll,
         combat_roll.npc_bonus,
         combat_roll.description,
+        status_hint,
     )
     return action_text, combat_roll

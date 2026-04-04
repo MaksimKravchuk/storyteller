@@ -10,9 +10,11 @@ if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
     from models.game_state import GameState
 
+_KEY_NPC_ID = "npc_id"
+
 
 def _apply_add_item(game_state: GameState, effect: EventEffect) -> None:
-    npc_id = effect.effect_data.get("npc_id", effect.target_id)
+    npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
     inventory_item = effect.effect_data.get("item", "")
     npc = game_state.npcs.get(npc_id)
     if npc and inventory_item:
@@ -20,7 +22,7 @@ def _apply_add_item(game_state: GameState, effect: EventEffect) -> None:
 
 
 def _apply_remove_item(game_state: GameState, effect: EventEffect) -> None:
-    npc_id = effect.effect_data.get("npc_id", effect.target_id)
+    npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
     inventory_item = effect.effect_data.get("item", "")
     npc = game_state.npcs.get(npc_id)
     if npc and inventory_item and inventory_item in npc.inventory:
@@ -52,6 +54,14 @@ def _apply_change_attribute(game_state: GameState, effect: EventEffect) -> None:
         target.update_attribute(attr, attribute_value)
 
 
+def _apply_change_status(game_state: GameState, effect: EventEffect) -> None:
+    npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
+    new_status = effect.effect_data.get("status", "")
+    npc = game_state.npcs.get(npc_id)
+    if npc and new_status:
+        npc.physical_status = new_status
+
+
 class EffectApplier:
     """Applies event effects to the game world.
 
@@ -77,11 +87,12 @@ class EffectApplier:
             "REMOVE_ITEM": lambda eff: _apply_remove_item(self._game_state, eff),
             "ADD_KNOWLEDGE": lambda eff: _apply_add_knowledge(self._graph, eff),
             "CHANGE_ATTRIBUTE": lambda eff: _apply_change_attribute(self._game_state, eff),
+            "CHANGE_STATUS": lambda eff: _apply_change_status(self._game_state, eff),
             "REMOVE_NPC": self._remove_npc,
         }
 
     def _move_npc(self, effect: EventEffect) -> None:
-        npc_id = effect.effect_data.get("npc_id", effect.target_id)
+        npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
         npc = self._game_state.npcs.get(npc_id)
         if not npc:
             return

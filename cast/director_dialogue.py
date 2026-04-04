@@ -3,14 +3,24 @@
 from __future__ import annotations
 
 import asyncio
+import types
 from typing import Any
 
-from cast.dice import CombatRoll
+from cast.dice import CombatOutcome, CombatRoll
 from cast.director_context import get_location_name
 from cast import director_dialogue_helpers as dlg_helpers
 from models.game_state import GameState
+from timeline.event import EventEffect, GameEvent
 
 _KEY_GAME_STATE = "game_state"
+
+# Recovery duration (game-hours) by combat outcome severity.
+_RECOVERY_HOURS: types.MappingProxyType[CombatOutcome, float] = types.MappingProxyType(
+    {
+        CombatOutcome.PLAYER_SUCCEEDS: 1.0,
+        CombatOutcome.PLAYER_DOMINATES: 4.0,
+    }
+)
 
 
 def _snpc_matches(snpc: Any, targets_lower: set[str], game_state: GameState) -> bool:
@@ -61,6 +71,34 @@ async def _execute_npc_dialogue(
             outcome,
         )
     return result_entry
+
+
+def _schedule_recovery(
+    *,
+    npc: Any,
+    combat_outcome: CombatOutcome,
+    game_state: GameState,
+    event_manager: Any,
+) -> GameEvent | None:
+    """Schedule a timed recovery event if the NPC was hurt in combat."""
+    duration = _RECOVERY_HOURS.get(combat_outcome)
+    if duration is None or npc.physical_status == "healthy":
+        return None
+    effect = EventEffect(
+        effect_type="CHANGE_STATUS",
+        target_id=npc.uuid,
+        effect_data={"npc_id": npc.uuid, "status": "healthy"},
+    )
+    event = GameEvent(
+        name="{0} recovers".format(npc.name),
+        scheduled_at=game_state.game_clock,
+        duration=duration,
+        owner_id=npc.uuid,
+        effects=[effect],
+        on_complete_description="{0} has recovered from their injuries.".format(npc.name),
+    )
+    event_manager.schedule(event)
+    return event
 
 
 # ---------------------------------------------------------------------------

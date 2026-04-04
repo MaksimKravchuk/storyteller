@@ -19,6 +19,7 @@ class NPCCard(Character):
 
     conversation_history: list[dict[str, str]] = field(default_factory=list)
     current_mood: str = "neutral"
+    physical_status: str = "healthy"
 
     def to_prompt_context(self) -> str:
         """Serialise this NPC card into text for injection into a system prompt."""
@@ -31,6 +32,7 @@ class NPCCard(Character):
             f"Speech style: {self.speech_style}",
             f"Knowledge scope: {self.knowledge_scope}",
             f"Current mood: {self.current_mood}",
+            f"Physical status: {self.physical_status}",
         ]
         if self.inventory:
             lines.append("Inventory: {0}".format(", ".join(self.inventory)))
