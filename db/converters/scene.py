@@ -13,11 +13,12 @@ from db.converters._columns import (
 from models.scene import Scene, SceneNPC
 
 
-def scene_to_row(scene: Scene, game_state_id: str, is_current: bool = False) -> dict:
+def scene_to_row(scene: Scene, game_state_id: str, is_current: bool = False, scene_number: int = 0) -> dict:
     return {
         COL_ID: scene.uuid,
         COL_GAME_STATE_ID: game_state_id,
         "is_current": is_current,
+        "scene_number": scene_number,
         COL_LOCATION_ID: scene.location_id,
         COL_DESCRIPTION: scene.description,
         COL_NPCS_PRESENT: [snpc.to_dict() for snpc in scene.npcs_present],

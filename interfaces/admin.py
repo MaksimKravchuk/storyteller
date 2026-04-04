@@ -62,4 +62,5 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/events", admin_routes_detail.events)
         self._app.router.add_get("/api/sessions/{id}/npcs", admin_routes_detail.npcs)
         self._app.router.add_get("/api/sessions/{id}/locations", admin_routes_detail.locations)
+        self._app.router.add_get("/api/sessions/{id}/scenes", admin_routes_detail.scenes)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes_detail.ai_calls)
