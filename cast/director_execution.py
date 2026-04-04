@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from typing import Any
 
@@ -16,6 +17,8 @@ _KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"
 _DEFAULT_ACTION = "OTHER"
 
+_SCENE_DESC_PREVIEW = 200
+
 # Actions that trigger a scene rebuild.
 SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
 
@@ -23,6 +26,12 @@ SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
 def _snapshot_moods(npcs: dict) -> dict[str, str]:
     """Capture current mood of every NPC by UUID."""
     return {uuid: npc.current_mood for uuid, npc in npcs.items()}
+
+
+def _filter_item_targets(targets: list[str], npcs: dict) -> list[str]:
+    """Return targets that are NOT NPC names (i.e. likely items/objects)."""
+    npc_names_lower = {npc.name.lower() for npc in npcs.values()}
+    return [target for target in targets if target.lower() not in npc_names_lower]
 
 
 @dataclass
@@ -67,6 +76,11 @@ class PlanExecutor:
         )
         await self._process_target_npcs(plan, player_action, raw_outputs)
 
+        if plan.get(_KEY_ACTION_TYPE) == "EXAMINE":
+            item_desc = await self._examine_items(plan.get("targets", []), player_action)
+            if item_desc:
+                raw_outputs["item_examination"] = item_desc
+
         if local_events:
             raw_outputs["completed_events"] = [ev.on_complete_description or ev.name for ev in local_events]
 
@@ -92,7 +106,11 @@ class PlanExecutor:
         target_names = plan.get("targets", [])
         if target_names:
             dlg.ensure_targets_in_scene(target_names)
-            new_npcs = await dlg.init_scene_npcs(self._cast.npc_generator, self._register_npc)
+            new_npcs = await dlg.init_scene_npcs(
+                self._cast.npc_generator,
+                self._register_npc,
+                self._cast.item_generator,
+            )
             if new_npcs:
                 raw_outputs["new_npcs"] = ["{0} ({1})".format(npc.name, npc.occupation) for npc in new_npcs]
 
@@ -119,7 +137,32 @@ class PlanExecutor:
             self._gs.scene_number += 1
             self._gs.scene_conversation_log = []
 
-        await self._agents.dialogue.init_scene_npcs(self._cast.npc_generator, self._register_npc)
+        await self._agents.dialogue.init_scene_npcs(
+            self._cast.npc_generator,
+            self._register_npc,
+            self._cast.item_generator,
+        )
+
+    async def _examine_items(self, targets: list[str], player_action: str) -> list[str]:
+        """Examine items from scene or NPC inventories via the ItemGenerator."""
+        item_targets = _filter_item_targets(targets, self._gs.npcs)
+        if not item_targets or not self._cast.item_generator:
+            return []
+
+        scene = self._gs.current_scene
+        hint = scene.description[:_SCENE_DESC_PREVIEW] if scene else "unknown location"
+
+        return list(
+            await asyncio.gather(
+                *(
+                    self._cast.item_generator.execute(
+                        input_data=name,
+                        context={"mode": "examine", _KEY_GAME_STATE: self._gs, "context_hint": hint},
+                    )
+                    for name in item_targets
+                )
+            )
+        )
 
     async def _run_interactions(
         self,

@@ -5,6 +5,7 @@ from __future__ import annotations
 import typing
 
 from cast import data_miner as data_miner_mod, director as director_mod
+from cast import item_generator as item_gen_mod
 from cast import narrator as narrator_mod, npc_generator as npc_gen_mod, scene_builder as scene_builder_mod
 from defaults.models import ModelConfig
 from knowledge import graph as graph_mod, memory as memory_mod
@@ -65,6 +66,7 @@ def wire_director(
             narrator=narrator_mod.Narrator(llm_client=clients.narrator, language=language),
             npc_generator=npc_gen_mod.NPCGenerator(llm_client=clients.agent),
             data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent),
+            item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent),
         ),
         language=language,
     )

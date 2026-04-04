@@ -71,7 +71,7 @@ DIRECTOR_ACTION_ROUTING = PromptTemplate(
                 '  "targets": ["list of relevant NPC names or object names"],\n'
                 '  "needs_clarification": true/false,\n'
                 '  "clarification_question": "question if needs_clarification is true, else empty string",\n'
-                '  "delegate_to": ["scene_builder", "narrator", "actor", "npc_generator"],\n'
+                '  "delegate_to": ["scene_builder", "narrator", "actor", "npc_generator", "item_generator"],\n'
                 '  "time_cost_override": null or a float (hours) if the default base cost is wrong for this action\n'
                 "}}"
             ),

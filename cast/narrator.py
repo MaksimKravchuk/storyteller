@@ -90,6 +90,9 @@ class Narrator(BasePerformer):
         for npc_desc in input_data.get("new_npcs", []):
             raw_parts.append(f"New person appears: {npc_desc}")
 
+        for item_desc in input_data.get("item_examination", []):
+            raw_parts.append(f"Item examined: {item_desc}")
+
         return raw_parts
 
     def _append_history_parts(self, raw_parts: list[str], scene_history: list[dict]) -> None:

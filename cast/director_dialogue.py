@@ -101,6 +101,30 @@ def _schedule_recovery(
     return event
 
 
+async def _expand_single_inventory(card: Any, item_generator: Any, game_state: GameState) -> None:
+    """Expand one NPC's bare inventory strings via the ItemGenerator."""
+    if not card.inventory:
+        return
+    owner_ctx = "{0}, {1}".format(card.name, card.occupation)
+    card.inventory = await item_generator.execute(
+        input_data=card.inventory,
+        context={
+            "mode": "batch",
+            _KEY_GAME_STATE: game_state,
+            "owner_context": owner_ctx,
+        },
+    )
+
+
+async def _expand_npc_inventories(
+    new_cards: list[Any],
+    item_generator: Any,
+    game_state: GameState,
+) -> None:
+    """Use the ItemGenerator to upgrade bare inventory strings on new NPCs."""
+    await asyncio.gather(*(_expand_single_inventory(card, item_generator, game_state) for card in new_cards))
+
+
 # ---------------------------------------------------------------------------
 # DialogueHandler class (≤7 methods including __init__)
 # ---------------------------------------------------------------------------
@@ -144,7 +168,12 @@ class DialogueHandler:
             if target.lower() not in known:
                 scene.npcs_present.append(SceneNPC(role=target))
 
-    async def init_scene_npcs(self, npc_generator: Any, register_fn: Any) -> list[Any]:
+    async def init_scene_npcs(
+        self,
+        npc_generator: Any,
+        register_fn: Any,
+        item_generator: Any | None = None,
+    ) -> list[Any]:
         """Initialise any SceneNPC objects that need full NPCCard + Actor."""
         scene = self._gs.current_scene
         if not scene:
@@ -156,6 +185,10 @@ class DialogueHandler:
             input_data=[snpc.role for snpc in uninit],
             context={_KEY_GAME_STATE: self._gs},
         )
+
+        if item_generator:
+            await _expand_npc_inventories(new_cards, item_generator, self._gs)
+
         for scene_npc, card in zip(uninit, new_cards):
             register_fn(card)
             scene_npc.uuid = card.uuid
