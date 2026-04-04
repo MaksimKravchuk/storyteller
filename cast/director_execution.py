@@ -34,6 +34,43 @@ def _filter_item_targets(targets: list[str], npcs: dict) -> list[str]:
     return [target for target in targets if target.lower() not in npc_names_lower]
 
 
+def _filter_known_npc_targets(targets: list[str], game_state: GameState) -> list[str]:
+    """Keep only targets that match an NPC already known in the scene or game state."""
+    scene = game_state.current_scene
+    npcs = game_state.npcs
+
+    known: set[str] = set()
+    for npc in npcs.values():
+        known.add(npc.name.lower())
+        if hasattr(npc, "occupation") and npc.occupation:
+            known.add(npc.occupation.lower())
+    if scene:
+        for snpc in scene.npcs_present:
+            known.add(snpc.role.lower())
+
+    return [target for target in targets if target.lower() in known]
+
+
+def _ensure_npc_targets_in_scene(
+    plan: dict,
+    target_names: list[str],
+    game_state: GameState,
+    dlg: Any,
+) -> None:
+    """Filter targets and ensure NPC ones are represented in the scene.
+
+    Only creates new SceneNPCs for unknown targets when the Director
+    explicitly requested npc_generator.  Otherwise item names like
+    "меч" get mistakenly turned into NPCs.
+    """
+    npc_targets = (
+        target_names
+        if "npc_generator" in plan.get("delegate_to", [])
+        else _filter_known_npc_targets(target_names, game_state)
+    )
+    dlg.ensure_targets_in_scene(npc_targets)
+
+
 @dataclass
 class _Agents:
     """Bundle of sub-agents used by PlanExecutor."""
@@ -71,6 +108,7 @@ class PlanExecutor:
         await self._prepare_scene(
             plan.get("delegate_to", []),
             plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION),
+            plan.get("targets", []),
             player_action,
             raw_outputs,
         )
@@ -105,7 +143,7 @@ class PlanExecutor:
         dlg = self._agents.dialogue
         target_names = plan.get("targets", [])
         if target_names:
-            dlg.ensure_targets_in_scene(target_names)
+            _ensure_npc_targets_in_scene(plan, target_names, self._gs, dlg)
             new_npcs = await dlg.init_scene_npcs(
                 self._cast.npc_generator,
                 self._register_npc,
@@ -114,20 +152,27 @@ class PlanExecutor:
             if new_npcs:
                 raw_outputs["new_npcs"] = ["{0} ({1})".format(npc.name, npc.occupation) for npc in new_npcs]
 
-        action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
         should_talk = dlg.targets_match_scene_npcs(target_names) or "actor" in plan.get("delegate_to", [])
-        if should_talk or action_type == "TALK":
+        if should_talk or plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION) == "TALK":
             await self._run_interactions(player_action, target_names, bool(plan.get("is_aggressive")), raw_outputs)
 
     async def _prepare_scene(
         self,
         delegates: list[str],
         action_type: str,
+        targets: list[str],
         player_action: str,
         raw_outputs: dict[str, Any],
     ) -> None:
         """Build scene if needed and initialise any uninitialised NPCs."""
-        if "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS:
+        needs_rebuild = "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS
+        # Skip rebuild when MOVE targets are all NPCs already in the scene
+        # (e.g. "walk to the guard" — no location change).
+        if needs_rebuild and action_type == "MOVE" and targets:
+            known = _filter_known_npc_targets(targets, self._gs)
+            if len(known) == len(targets):
+                needs_rebuild = False
+        if needs_rebuild:
             scene = await self._cast.scene_builder.execute(
                 input_data=player_action,
                 context={_KEY_GAME_STATE: self._gs},

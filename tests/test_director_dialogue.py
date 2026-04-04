@@ -20,6 +20,7 @@ _NIGHT_GUARD = "night guard"
 _DOCK_GUARD = "dock guard"
 _ACTION_TYPE = "action_type"
 _TALK = "TALK"
+_MOVE = "MOVE"
 _TARGETS = "targets"
 _NEEDS_CLARIFICATION = "needs_clarification"
 _DELEGATE_TO = "delegate_to"
@@ -88,14 +89,17 @@ class TestDuplicateNPCNames:
             },
         )
 
-        director._actors[_NPC_A] = make_mock_agent(None)
-        director._actors[_NPC_A].execute = AsyncMock(
+        mood_exec = AsyncMock(
             side_effect=lambda input_data, context: _mood_side_effect(input_data, context, gs),
         )
-        director._actors[_NPC_B] = make_mock_agent(None)
-        director._actors[_NPC_B].execute = AsyncMock(
+        actor_a = make_mock_agent(None)
+        actor_a.execute = mood_exec
+        director._actors[_NPC_A] = actor_a
+        actor_b = make_mock_agent(None)
+        actor_b.execute = AsyncMock(
             side_effect=lambda input_data, context: _mood_side_effect(input_data, context, gs),
         )
+        director._actors[_NPC_B] = actor_b
 
         from tests.test_director_retaliation import _make_aggression_stub, _run_patched
 
@@ -103,9 +107,7 @@ class TestDuplicateNPCNames:
             _make_aggression_stub(True),
             director.act("attack the guard"),
         )
-        calls_a = director._actors[_NPC_A].execute.call_count
-        calls_b = director._actors[_NPC_B].execute.call_count
-        assert calls_a + calls_b == 2
+        assert actor_a.execute.call_count + actor_b.execute.call_count == 2
 
 
 class TestNPCGeneratorDeduplication:
@@ -162,6 +164,33 @@ class TestNPCGeneratorDeduplication:
         assert npc_gen.execute.call_count == 0
 
     @pytest.mark.asyncio
+    async def test_item_target_no_npc_generation(self):
+        """Item name 'меч' must NOT trigger NPCGenerator."""
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name=_GUARD, occupation="city guard")
+
+        npc_gen = AsyncMock()
+        npc_gen.execute = AsyncMock(return_value=[])
+        director = make_director(
+            game_state=gs,
+            route_response={
+                _ACTION_TYPE: "INTERACT",
+                "is_aggressive": True,
+                _TARGETS: [_GUARD, "меч"],
+                _NEEDS_CLARIFICATION: False,
+                _DELEGATE_TO: [_ACTOR, _NARRATOR],
+            },
+        )
+        director._cast.npc_generator = npc_gen
+        director._actors[_NPC_A] = make_mock_agent("*blocks*")
+
+        await director.act("grab his sword")
+
+        assert npc_gen.execute.call_count == 0
+        scene_roles = [snpc.role for snpc in gs.current_scene.npcs_present]
+        assert "меч" not in scene_roles
+
+    @pytest.mark.asyncio
     async def test_new_npc_announced_to_narrator(self):
         from knowledge.graph import KnowledgeGraph
 
@@ -187,3 +216,35 @@ class TestNPCGeneratorDeduplication:
         input_data = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
         assert "new_npcs" in input_data
         assert any("Merchant" in desc for desc in input_data["new_npcs"])
+
+
+class TestMoveToExistingNPCNoSceneRebuild:
+    """MOVE targeting an NPC already present in the scene must NOT trigger
+    SceneBuilder.  Observed in production: 'иду к Луций Флавий Марцелл'
+    caused a full scene rebuild (3 NPCGenerator + 3 ItemGenerator calls)
+    even though the NPC was already in the current scene."""
+
+    @pytest.mark.asyncio
+    async def test_move_to_scene_npc_skips_scene_builder(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name=_GUARD, occupation="city guard")
+
+        director = make_director(
+            game_state=gs,
+            route_response={
+                _ACTION_TYPE: _MOVE,
+                _TARGETS: [_GUARD],
+                _NEEDS_CLARIFICATION: False,
+                _DELEGATE_TO: [_NARRATOR, _ACTOR],
+            },
+        )
+        mock_actor = AsyncMock()
+        mock_actor.execute = AsyncMock(return_value="Halt!")
+        director._actors[_NPC_A] = mock_actor
+
+        await director.act("walk to the guard")
+
+        # SceneBuilder must NOT be called — the target NPC is already here
+        director._cast.scene_builder.execute.assert_not_called()
+        # NPCGenerator must NOT be called — no new NPCs needed
+        director._cast.npc_generator.execute.assert_not_called()
