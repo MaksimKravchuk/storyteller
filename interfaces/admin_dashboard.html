@@ -173,8 +173,8 @@ async function renderOverview(el) {
 async function renderNPCs(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/npcs`);
   if (!d.npcs.length) { el.innerHTML = '<div class="empty">No NPCs</div>'; return; }
-  el.innerHTML = `<table><tr><th>Name</th><th>Occupation</th><th>Mood</th><th>Location</th><th>Inventory</th></tr>
-    ${d.npcs.map(n => `<tr><td>${n.name}</td><td>${n.occupation}</td><td>${n.current_mood}</td><td>${n.location_id || '-'}</td><td>${(n.inventory||[]).join(', ') || '-'}</td></tr>`).join('')}</table>`;
+  el.innerHTML = `<table><tr><th>Name</th><th>Occupation</th><th>Mood</th><th>Status</th><th>Location</th><th>Inventory</th></tr>
+    ${d.npcs.map(n => `<tr><td>${n.name}</td><td>${n.occupation}</td><td>${n.current_mood}</td><td>${n.physical_status || 'healthy'}</td><td>${n.location_id || '-'}</td><td>${(n.inventory||[]).join(', ') || '-'}</td></tr>`).join('')}</table>`;
 }
 
 async function renderLocations(el) {

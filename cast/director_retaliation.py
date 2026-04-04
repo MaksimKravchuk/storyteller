@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, NamedTuple
 
-from cast.dice import CombatRoll, roll_aggression, roll_combat
+from cast.dice import CombatOutcome, CombatRoll, roll_aggression, roll_combat
 from cast.director_context import get_location_name
 from models.game_state import GameState
 
@@ -64,19 +64,26 @@ def _build_retaliation_work(
     retaliated_names.add(npc.name.lower())
 
     combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
+    status_hint = ""
+    if combat_roll.outcome in (CombatOutcome.PLAYER_SUCCEEDS, CombatOutcome.PLAYER_DOMINATES):
+        status_hint = (
+            "\nThe NPC is injured. Update their physical status to reflect the injury. "
+            "Append [STATUS: <description>] at the end of your response."
+        )
     retaliation_input = (
         "{0} retaliates against the player!\n\n"
         "[DICE ROLL: player {1} vs "
         "NPC {2}+{3}]\n"
         "OUTCOME: {4}\n"
         "You MUST narrate this outcome. The NPC attacks FIRST — "
-        "they are the aggressor now. Do NOT override the dice result."
+        "they are the aggressor now. Do NOT override the dice result.{5}"
     ).format(
         npc.name,
         combat_roll.player_roll,
         combat_roll.npc_roll,
         combat_roll.npc_bonus,
         combat_roll.description,
+        status_hint,
     )
     return RetaliationWork(npc, actor, retaliation_input, aggression, combat_roll)
 

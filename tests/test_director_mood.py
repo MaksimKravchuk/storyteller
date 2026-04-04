@@ -1,4 +1,4 @@
-"""Tests for Actor mood update integration via Director."""
+"""Tests for Actor mood and physical status update integration."""
 
 from __future__ import annotations
 
@@ -6,13 +6,16 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from cast.actor import Actor
+from cast.actor import Actor, _extract_status
 from knowledge.graph import KnowledgeGraph
 from knowledge.query import KnowledgeQueryEngine
 from models.npc_card import NPCCard
 
 _HOSTILE = "hostile"
 _NEUTRAL = "neutral"
+_GATE = "gate"
+_STATUS_TAG = "[STATUS:"
+_LOC_KEY = "location_name"
 
 
 class TestActorMoodUpdate:
@@ -24,7 +27,7 @@ class TestActorMoodUpdate:
         )
         assert npc.current_mood == _NEUTRAL
         actor._send = AsyncMock(return_value=f"*tackles you*\n[MOOD: {_HOSTILE}]")
-        actor_response = await actor.act("attack guard", {"location_name": "forum"})
+        actor_response = await actor.act("attack guard", {_LOC_KEY: "forum"})
         assert npc.current_mood == _HOSTILE
         assert "[MOOD:" not in actor_response
 
@@ -37,7 +40,7 @@ class TestActorMoodUpdate:
             speech_style="cheerful",
         )
         actor._send = AsyncMock(return_value="Welcome, friend!")
-        await actor.act("hello", {"location_name": "market"})
+        await actor.act("hello", {_LOC_KEY: "market"})
         assert npc.current_mood == _NEUTRAL
 
     @pytest.mark.asyncio
@@ -46,9 +49,67 @@ class TestActorMoodUpdate:
         kq = KnowledgeQueryEngine(KnowledgeGraph())
         actor = Actor(llm_client=AsyncMock(), npc=npc, knowledge_query=kq)
         actor._send = AsyncMock(return_value=f"*blocks*\n[MOOD: {_HOSTILE}]")
-        await actor.act("punch guard", {"location_name": "gate"})
+        await actor.act("punch guard", {_LOC_KEY: _GATE})
         assert len(actor._conversation) == 2
         assert "[MOOD:" not in actor._conversation[1].body
+
+
+class TestExtractStatus:
+    def test_extracts_single_word(self):
+        text, status = _extract_status("*stumbles back*\n[STATUS: wounded]")
+        assert status == "wounded"
+        assert _STATUS_TAG not in text
+
+    def test_extracts_multi_word(self):
+        text, status = _extract_status("*grabs arm*\n[STATUS: wounded left arm]")
+        assert status == "wounded left arm"
+        assert _STATUS_TAG not in text
+
+    def test_returns_none_when_no_tag(self):
+        text, status = _extract_status("Hello there!")
+        assert status is None
+        assert text == "Hello there!"
+
+    def test_strips_whitespace(self):
+        _, status = _extract_status("*falls*\n[STATUS:  barely standing  ]")
+        assert status == "barely standing"
+
+
+class TestActorStatusUpdate:
+    @pytest.mark.asyncio
+    async def test_status_updated_after_response(self):
+        actor, npc = _make_actor_with_npc()
+        assert npc.physical_status == "healthy"
+        actor._send = AsyncMock(return_value="*clutches arm*\n[STATUS: wounded left arm]")
+        response = await actor.act("slash guard's arm", {_LOC_KEY: _GATE})
+        assert npc.physical_status == "wounded left arm"
+        assert _STATUS_TAG not in response
+
+    @pytest.mark.asyncio
+    async def test_status_unchanged_when_no_tag(self):
+        actor, npc = _make_actor_with_npc()
+        actor._send = AsyncMock(return_value="*blocks the attack*")
+        await actor.act("attack guard", {_LOC_KEY: _GATE})
+        assert npc.physical_status == "healthy"
+
+    @pytest.mark.asyncio
+    async def test_both_mood_and_status_extracted(self):
+        actor, npc = _make_actor_with_npc()
+        actor._send = AsyncMock(
+            return_value="*falls to knees*\n[MOOD: hostile]\n[STATUS: barely standing]",
+        )
+        response = await actor.act("hit guard hard", {_LOC_KEY: _GATE})
+        assert npc.current_mood == _HOSTILE
+        assert npc.physical_status == "barely standing"
+        assert "[MOOD:" not in response
+        assert _STATUS_TAG not in response
+
+    @pytest.mark.asyncio
+    async def test_conversation_history_excludes_status_tag(self):
+        actor, npc = _make_actor_with_npc()
+        actor._send = AsyncMock(return_value="*winces*\n[STATUS: wounded]")
+        await actor.act("punch guard", {_LOC_KEY: _GATE})
+        assert _STATUS_TAG not in actor._conversation[1].body
 
 
 def _make_actor_with_npc(

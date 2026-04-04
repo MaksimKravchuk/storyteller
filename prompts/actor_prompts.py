@@ -51,15 +51,23 @@ ACTOR_SYSTEM = PromptTemplate(
                 "something you don't know, say so naturally in character.\n"
                 "- Stay in character. Use the speech style described above.\n"
                 "- Your current mood: {current_mood}\n"
+                "- Your physical status: {physical_status}\n"
+                "- Your physical status affects your abilities. If wounded, show pain and "
+                "reduced capability. If unconscious, you cannot speak or act. "
+                "If drunk, slur words and act erratically.\n"
                 "- Keep responses concise — 1-3 sentences typically.\n"
                 "- Output ONLY your spoken dialogue and brief action "
                 "descriptions (e.g. *scratches his beard*).\n"
                 "- If your mood changed as a result of this interaction, "
                 "append on a NEW line: [MOOD: <one word>] "
                 "(e.g. [MOOD: hostile], [MOOD: terrified]). "
-                "Only include this tag if mood changed from {current_mood}."
+                "Only include this tag if mood changed from {current_mood}.\n"
+                "- If your physical condition changed (injured, healed, knocked out, etc.), "
+                "append on a NEW line: [STATUS: <description>] "
+                "(e.g. [STATUS: wounded left arm], [STATUS: barely standing]). "
+                "Only include this tag if status changed from {physical_status}."
             ),
-            required_vars=["current_mood"],
+            required_vars=["current_mood", "physical_status"],
         ),
         PromptSection(
             name="language",

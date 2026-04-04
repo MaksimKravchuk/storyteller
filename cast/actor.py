@@ -12,6 +12,7 @@ from models.npc_card import NPCCard
 from prompts.actor_prompts import ACTOR_SYSTEM
 
 _MOOD_RE = re.compile(r"\n?\[MOOD:\s*(\w+)\]\s*$")
+_STATUS_RE = re.compile(r"\n?\[STATUS:\s*([^\]]+)\]\s*$")
 
 
 def _extract_mood(text: str) -> tuple[str, str | None]:
@@ -23,6 +24,20 @@ def _extract_mood(text: str) -> tuple[str, str | None]:
     mood_match = _MOOD_RE.search(text)
     if mood_match:
         return text[: mood_match.start()], mood_match.group(1).lower()
+    return text, None
+
+
+def _extract_status(text: str) -> tuple[str, str | None]:
+    """Strip a ``[STATUS: <description>]`` tag from the end of *text*.
+
+    Returns ``(cleaned_text, status)`` where *status* is ``None``
+    when no tag was found.  Supports multi-word values like
+    ``wounded left arm``.
+    """
+    status_match = _STATUS_RE.search(text)
+    if status_match:
+        cleaned = status_match.group(1).strip().lower()
+        return text[: status_match.start()], cleaned
     return text, None
 
 
@@ -71,11 +86,13 @@ class Actor(BasePerformer):
             npc_inventory=", ".join(self.npc.inventory) if self.npc.inventory else "nothing special",
             accessible_knowledge=accessible_knowledge,
             current_mood=self.npc.current_mood,
+            physical_status=self.npc.physical_status,
         )
 
         response = await self._send(input_data, conversation=self._conversation)
 
-        # Extract and apply mood update if present
+        # Extract tags — status first, then mood from cleaned text
+        response, new_status = _extract_status(response)
         response, new_mood = _extract_mood(response)
 
         # Track conversation for multi-turn dialogue
@@ -84,6 +101,8 @@ class Actor(BasePerformer):
 
         if new_mood:
             self.npc.current_mood = new_mood
+        if new_status:
+            self.npc.physical_status = new_status
 
         return response.strip()
 

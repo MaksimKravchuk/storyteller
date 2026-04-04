@@ -6,6 +6,7 @@ import pytest
 
 from models.base_model import BaseModel
 from models.character import Character
+from models.npc_card import NPCCard
 from models.setting import Setting
 
 _DAGGER = "dagger"
@@ -91,6 +92,22 @@ class TestNPCCard:
 
     def test_current_mood_default(self, sample_npc):
         assert sample_npc.current_mood == "neutral"
+
+
+class TestNPCCardPhysicalStatus:
+    def test_default_is_healthy(self, sample_npc):
+        assert sample_npc.physical_status == "healthy"
+
+    def test_custom_value(self):
+        npc = NPCCard(name="Brutus", occupation="senator", physical_status="wounded left arm")
+        assert npc.physical_status == "wounded left arm"
+
+    def test_prompt_has_status(self, sample_npc):
+        assert "Physical status: healthy" in sample_npc.to_prompt_context()
+
+    def test_prompt_has_custom_status(self):
+        npc = NPCCard(name="Brutus", occupation="senator", physical_status="barely standing")
+        assert "Physical status: barely standing" in npc.to_prompt_context()
 
 
 class TestLocation:
