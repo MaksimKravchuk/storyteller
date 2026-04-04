@@ -23,6 +23,16 @@ async def fetch_events(session: AsyncSession, session_id: str) -> list[dict]:
     )
 
 
+async def fetch_scenes(session: AsyncSession, session_id: str) -> list[dict]:
+    """Get all scenes (including historical) for a session."""
+    return await helpers.joined_rows(
+        session,
+        tbl.scenes,
+        session_id,
+        tbl.scenes.c.scene_number,
+    )
+
+
 class AdminQueries:
     """Read-only admin queries against the game database."""
 

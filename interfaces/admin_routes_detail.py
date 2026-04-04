@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from aiohttp import web
 
-from db.repo_admin import fetch_events
+from db.repo_admin import fetch_events, fetch_scenes
 from interfaces import admin_route_helpers as helpers
 from interfaces.admin_route_helpers import _SESSION_ID_PARAM, _json_response
 
@@ -39,6 +39,14 @@ async def locations(request: web.Request) -> web.Response:
     async with helpers.open_repo(request) as repo:
         fetched = await repo.admin.get_locations(session_id)
     return _json_response({"locations": fetched})
+
+
+async def scenes(request: web.Request) -> web.Response:
+    """Return all scenes (including historical) for a session."""
+    session_id = request.match_info[_SESSION_ID_PARAM]
+    async with helpers.open_repo(request) as repo:
+        fetched = await fetch_scenes(repo.admin.session, session_id)
+    return _json_response({"scenes": fetched})
 
 
 async def ai_calls(request: web.Request) -> web.Response:

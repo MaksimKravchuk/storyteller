@@ -68,6 +68,28 @@
   .ai-call-tree-child { position: relative; }
   .ai-call-tree-child::before { content: ''; position: absolute; left: -14px; top: 14px; width: 12px; height: 0; border-top: 2px solid #0f3460; }
   .call-seq-badge { display: inline-block; background: #0f3460; color: #7c83ff; font-size: 10px; padding: 1px 5px; border-radius: 8px; margin-right: 4px; }
+
+  /* Scene view */
+  .scene-block { background: #0f1a30; border: 1px solid #0f3460; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+  .scene-header { background: #16213e; padding: 14px 16px; cursor: pointer; user-select: none; border-bottom: 1px solid #0f3460; }
+  .scene-header:hover { background: #1a2848; }
+  .scene-title { font-size: 15px; font-weight: 600; color: #e94560; }
+  .scene-meta { font-size: 12px; color: #999; margin-top: 4px; }
+  .scene-body { padding: 12px 16px; }
+  .scene-body.collapsed { display: none; }
+  .scene-info { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #0f3460; }
+  .scene-info-group { margin-bottom: 8px; }
+  .scene-info-toggle { cursor: pointer; user-select: none; color: #999; font-size: 12px; margin-bottom: 6px; }
+  .scene-info-toggle:hover { color: #ccc; }
+  .scene-info-toggle .count-badge { display: inline-block; background: #0f3460; color: #7c83ff; padding: 1px 6px; border-radius: 8px; font-size: 10px; margin-left: 4px; }
+  .scene-info-table { display: none; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+  .scene-info-table.open { display: table; }
+  .scene-info-table th { text-align: left; padding: 4px 8px; color: #666; border-bottom: 1px solid #0f3460; font-size: 11px; }
+  .scene-info-table td { padding: 4px 8px; border-bottom: 1px solid #0a1025; }
+  .npc-tag { display: inline-block; background: #2d1545; color: #b57cff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px 2px; }
+  .poi-tag { display: inline-block; background: #153525; color: #5bd58a; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px 2px; }
+  .scene-desc { font-size: 12px; color: #888; margin-bottom: 12px; font-style: italic; }
+  .scene-turns { padding-top: 4px; }
 </style>
 </head>
 <body>
@@ -118,7 +140,7 @@ async function renderTab() {
   if (!currentSessionId) return;
   const main = document.getElementById('main');
   const tabs = `<div class="tabs">
-    ${['overview','npcs','locations','events','conversation','knowledge'].map(t =>
+    ${['overview','npcs','locations','events','scenes','knowledge'].map(t =>
       `<div class="tab ${t === currentTab ? 'active' : ''}" onclick="switchTab('${t}')">${t}</div>`
     ).join('')}
   </div><div id="tab-content"></div>`;
@@ -130,7 +152,8 @@ async function renderTab() {
     else if (currentTab === 'npcs') await renderNPCs(content);
     else if (currentTab === 'locations') await renderLocations(content);
     else if (currentTab === 'events') await renderEvents(content);
-    else if (currentTab === 'conversation') await renderConversation(content);
+    else if (currentTab === 'scenes') await renderScenes(content);
+    else if (currentTab === 'conversation') await renderScenes(content);
     else if (currentTab === 'knowledge') await renderKnowledge(content);
   } catch (e) { content.innerHTML = `<div class="empty">Error loading data: ${e.message}</div>`; }
 }
@@ -273,9 +296,15 @@ function toggleDetail(id) {
   if (el) el.classList.toggle('open');
 }
 
-async function renderConversation(el) {
-  const [convData, aiData] = await Promise.all([
+function toggleScene(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('collapsed');
+}
+
+async function renderScenes(el) {
+  const [convData, scenesData, aiData] = await Promise.all([
     fetchJSON(`/api/sessions/${currentSessionId}/conversation`),
+    fetchJSON(`/api/sessions/${currentSessionId}/scenes`),
     fetchJSON(`/api/sessions/${currentSessionId}/ai-calls`),
   ]);
 
@@ -286,9 +315,33 @@ async function renderConversation(el) {
     (callsByTurn[key] = callsByTurn[key] || []).push(call);
   }
 
+  // Index scenes by scene_number
+  const scenesByNum = {};
+  for (const s of (scenesData.scenes || [])) {
+    scenesByNum[s.scene_number] = s;
+  }
+
+  // Group conversation entries by scene_number (fallback 0 for old entries)
+  const turnsByScene = {};
+  for (const entry of (convData.log || [])) {
+    const sn = entry.scene_number != null ? entry.scene_number : 0;
+    (turnsByScene[sn] = turnsByScene[sn] || []).push(entry);
+  }
+
+  // Collect all scene numbers and sort
+  const allSceneNums = [...new Set([
+    ...Object.keys(scenesByNum).map(Number),
+    ...Object.keys(turnsByScene).map(Number),
+  ])].sort((a, b) => a - b);
+
+  if (!allSceneNums.length && !aiCalls.length) {
+    el.innerHTML = '<div class="empty">No scenes yet</div>';
+    return;
+  }
+
   let html = '';
 
-  // Setup calls (turn_number = null)
+  // Setup calls (turn_number = null) — before any scene
   if (callsByTurn['setup'] && callsByTurn['setup'].length) {
     const sid = 'ai-setup-' + Math.random().toString(36).slice(2, 10);
     html += `
@@ -303,29 +356,107 @@ async function renderConversation(el) {
       </div>`;
   }
 
-  if (!convData.log.length && !aiCalls.length) {
-    el.innerHTML = '<div class="empty">No conversation yet</div>';
-    return;
-  }
+  for (const sn of allSceneNums) {
+    const scene = scenesByNum[sn];
+    const turns = turnsByScene[sn] || [];
+    const bodyId = 'scene-body-' + sn;
+    const isCurrent = scene && scene.is_current;
+    const turnCount = turns.length;
 
-  html += convData.log.map(e => {
-    const turnCalls = callsByTurn[e.turn] || [];
-    const cid = 'ai-turn-' + e.turn + '-' + Math.random().toString(36).slice(2, 10);
-    const aiSection = turnCalls.length ? `
-      <div class="ai-calls-toggle" onclick="toggleAiCalls('${cid}')">
-        AI Calls (${turnCalls.length})
-      </div>
-      <div class="ai-calls-container" id="${cid}">
-        ${renderAiCallEntries(turnCalls, e.turn)}
-      </div>` : '';
-    return `
-      <div class="log-entry">
-        <div class="turn-info">Turn ${e.turn} | ${e.game_clock?.toFixed(1) ?? '?'}h</div>
-        <div class="action">&gt; ${escapeHtml(e.player_action)}</div>
-        <div class="response">${escapeHtml(e.response)}</div>
-        ${aiSection}
+    // Scene header info
+    let locDesc = 'Unknown location';
+    let timeOfDay = '';
+    if (scene) {
+      locDesc = scene.description ? scene.description.substring(0, 120) : (scene.location_id || 'Unknown');
+      if (scene.description && scene.description.length > 120) locDesc += '...';
+      timeOfDay = scene.time_of_day || '';
+    }
+
+    // NPC table
+    const npcs = (scene && scene.npcs_present) || [];
+    const pois = (scene && scene.points_of_interest) || [];
+
+    let infoHtml = '';
+    if (npcs.length || pois.length) {
+      infoHtml = '<div class="scene-info">';
+
+      if (npcs.length) {
+        const npcTableId = 'npc-tbl-' + sn;
+        const npcRows = npcs.map((npc, i) => {
+          const role = typeof npc === 'object' ? (npc.role || '-') : npc;
+          const uuid = typeof npc === 'object' ? (npc.uuid || '-') : '-';
+          return `<tr><td>${i + 1}</td><td>${escapeHtml(role)}</td><td style="color:#666">${escapeHtml(uuid)}</td></tr>`;
+        }).join('');
+        infoHtml += `<div class="scene-info-group">
+          <div class="scene-info-toggle" onclick="document.getElementById('${npcTableId}').classList.toggle('open')">
+            NPCs <span class="count-badge">${npcs.length}</span>
+          </div>
+          <table class="scene-info-table" id="${npcTableId}">
+            <tr><th>#</th><th>Role</th><th>UUID</th></tr>
+            ${npcRows}
+          </table>
+        </div>`;
+      }
+
+      if (pois.length) {
+        const poiTableId = 'poi-tbl-' + sn;
+        const poiRows = pois.map((p, i) =>
+          `<tr><td>${i + 1}</td><td>${escapeHtml(p)}</td></tr>`
+        ).join('');
+        infoHtml += `<div class="scene-info-group">
+          <div class="scene-info-toggle" onclick="document.getElementById('${poiTableId}').classList.toggle('open')">
+            Points of Interest <span class="count-badge">${pois.length}</span>
+          </div>
+          <table class="scene-info-table" id="${poiTableId}">
+            <tr><th>#</th><th>Name</th></tr>
+            ${poiRows}
+          </table>
+        </div>`;
+      }
+
+      infoHtml += '</div>';
+    }
+
+    // Scene description
+    let descHtml = '';
+    if (scene && scene.description) {
+      descHtml = `<div class="scene-desc">${escapeHtml(scene.description)}</div>`;
+    }
+
+    // Turns
+    const turnsHtml = turns.map(e => {
+      const turnCalls = callsByTurn[e.turn] || [];
+      const cid = 'ai-turn-' + e.turn + '-' + Math.random().toString(36).slice(2, 10);
+      const aiSection = turnCalls.length ? `
+        <div class="ai-calls-toggle" onclick="toggleAiCalls('${cid}')">
+          AI Calls (${turnCalls.length})
+        </div>
+        <div class="ai-calls-container" id="${cid}">
+          ${renderAiCallEntries(turnCalls, e.turn)}
+        </div>` : '';
+      return `
+        <div class="log-entry">
+          <div class="turn-info">Turn ${e.turn} | ${e.game_clock?.toFixed(1) ?? '?'}h</div>
+          <div class="action">&gt; ${escapeHtml(e.player_action)}</div>
+          <div class="response">${escapeHtml(e.response)}</div>
+          ${aiSection}
+        </div>`;
+    }).join('');
+
+    html += `
+      <div class="scene-block">
+        <div class="scene-header" onclick="toggleScene('${bodyId}')">
+          <div class="scene-title">Scene ${sn}${isCurrent ? ' (current)' : ''}</div>
+          <div class="scene-meta">${escapeHtml(locDesc)}${timeOfDay ? ' | ' + timeOfDay : ''} | ${turnCount} turn${turnCount !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="scene-body" id="${bodyId}">
+          ${!scene ? '<div class="empty">Scene metadata unavailable (pre-migration)</div>' : ''}
+          ${infoHtml}
+          ${descHtml}
+          <div class="scene-turns">${turnsHtml || '<div class="empty">No turns in this scene</div>'}</div>
+        </div>
       </div>`;
-  }).join('');
+  }
 
   el.innerHTML = html;
 }
