@@ -34,7 +34,7 @@ async def persist_engine_state(
     )
     ai_logs = get_and_clear_buffer()
     if ai_logs:
-        await repo.save_ai_call_logs(ai_logs, turn_number=turn_number)
+        await repo.ai_logs.save(ai_logs, turn_number=turn_number)
 
 
 async def start_new_game(engine: Any, repo: Any, session_id: str, update: Any, text: str) -> None:
@@ -66,6 +66,7 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
             await start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:
             logger.exception("Failed to start game for chat {}", chat_id)
+            await ctx.repo.rollback()
             await ctx.update.message.reply_text("Something went wrong. Try /start again.")
             await ctx.repo.update_session(ctx.session_id, state=_STATE_IDLE)
 

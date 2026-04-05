@@ -26,6 +26,7 @@ def hydrate_game_state(gs_row: dict, setting: Any, kg: KnowledgeGraph) -> GameSt
     game_state = GameState(setting=setting, knowledge_graph=kg)
     game_state.uuid = gs_row[_COL_ID]
     game_state.turn_count = gs_row["turn_count"]
+    game_state.round_number = gs_row.get("round_number", 0)
     game_state.scene_number = gs_row.get("scene_number", 0)
     game_state.game_clock = gs_row["game_clock"]
     game_state.game_time = gs_row["game_time"]

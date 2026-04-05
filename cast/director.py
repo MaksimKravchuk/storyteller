@@ -8,6 +8,8 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from cast import director_context, director_dialogue, director_events
 from cast import director_execution, director_retaliation, director_routing
+from cast.npc_turn import NPCTurnResolver
+from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
 from models import game_state as gs_mod
 from prompts import director_prompts
@@ -15,12 +17,6 @@ from timeline import event as event_mod, event_manager as event_manager_mod
 
 _KEY_ACTION_TYPE = "action_type"
 _DEFAULT_ACTION = "OTHER"
-
-# Actions that increment the turn counter.
-TURN_COUNTING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP"))
-
-# Actions that trigger a scene rebuild (new location, time-of-day shift, etc.).
-SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
 
 
 @dataclasses.dataclass
@@ -74,10 +70,12 @@ class Director(BasePerformer):
         self._events = director_events.EventProcessor(deps.game_state, deps.event_manager, deps.memory_manager)
         self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors)
         self._retaliation = director_retaliation.RetaliationHandler(deps.game_state, self._actors)
+        self._npc_turns = NPCTurnResolver(deps.game_state, self._actors)
         agents = director_execution._Agents(
             events=self._events,
             dialogue=self._dialogue,
             retaliation=self._retaliation,
+            npc_turns=self._npc_turns,
         )
         self._executor = director_execution.PlanExecutor(deps.game_state, agents, cast, self._register_new_npc)
 
@@ -89,7 +87,9 @@ class Director(BasePerformer):
         """Process a player action and return the narrated response."""
         self._ctx.sync_context(self)
 
-        routing_plan = await self._router.route_action(input_data)
+        routing_plan = self._check_forced_wait(input_data)
+        if routing_plan is None:
+            routing_plan = await self._router.route_action(input_data)
 
         if routing_plan.get("needs_clarification"):
             self._router.save_pending_clarification(input_data, routing_plan)
@@ -117,6 +117,15 @@ class Director(BasePerformer):
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------
+
+    def _check_forced_wait(self, input_data: str) -> dict | None:
+        """Short-circuit to WAIT if player is incapacitated or typed a wait keyword."""
+        player_status = self._deps.game_state.player.physical_status
+        if is_incapacitated(player_status):
+            return build_forced_wait_plan(player_status)
+        if detect_wait_intent(input_data, self._language):
+            return build_forced_wait_plan("voluntary")
+        return None
 
     def _register_new_npc(self, npc: Any) -> None:
         """Register a new NPC in the game state and create an Actor."""

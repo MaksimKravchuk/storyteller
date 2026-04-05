@@ -30,6 +30,10 @@ class GameRepository:
         self._saver = repo_saver.StateSaver(session)
         self.ai_logs = repo_ai_logs.AILogStore(session)
 
+    async def rollback(self) -> None:
+        """Roll back the current transaction (use after a failed op to reuse the session)."""
+        await self._session.rollback()
+
     async def get_or_create_session(self, telegram_chat_id: int) -> dict:
         """Return session row dict, creating one if it doesn't exist."""
         stmt = (
@@ -79,20 +83,3 @@ class GameRepository:
     ) -> None:
         """Persist full game state to PG."""
         await self._saver.save(session_id, game_state, knowledge_graph, events)
-
-    async def save_ai_call_logs(
-        self,
-        logs: list[dict[str, Any]],
-        turn_number: int | None = None,
-    ) -> None:
-        """Batch insert AI call log entries."""
-        await self.ai_logs.save(logs, turn_number=turn_number)
-
-    async def get_ai_call_logs(
-        self,
-        session_id: str,
-        turn_number: int | None = None,
-        limit: int = 200,
-    ) -> list[dict]:
-        """Get AI call logs for a session."""
-        return await self.ai_logs.get(session_id, turn_number=turn_number, limit=limit)

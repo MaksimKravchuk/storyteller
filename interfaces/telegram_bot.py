@@ -67,6 +67,7 @@ def build_bot(cfg: Config, db_session_factory) -> Application:
 
     app.add_handler(CommandHandler("start", cmds.cmd_start))
     app.add_handler(CommandHandler("quit", cmds.cmd_quit))
+    app.add_handler(CommandHandler("wait", cmds.cmd_wait))
     app.add_handler(CallbackQueryHandler(cmds.handle_language_callback, pattern=r"^lang:"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 

@@ -29,6 +29,7 @@ class PlayerState(BaseModel):
     inventory: list[str] = field(default_factory=list)
     appearance: str = ""
     interaction_history: list[dict] = field(default_factory=list)
+    physical_status: str = "healthy"
 
 
 @dataclass(kw_only=True)
@@ -46,6 +47,7 @@ class GameState(BaseModel):
     locations: dict[str, Location] = field(default_factory=dict)
     npcs: dict[str, NPCCard] = field(default_factory=dict)
     turn_count: int = 0
+    round_number: int = 0
     scene_number: int = 0
     game_clock: float = INITIAL_GAME_CLOCK
     game_time: str = "morning"

@@ -75,6 +75,7 @@ game_states = Table(
         nullable=False,
     ),
     Column("turn_count", Integer, nullable=False, server_default=_DEFAULT_ZERO),
+    Column("round_number", Integer, nullable=False, server_default=_DEFAULT_ZERO),
     Column("scene_number", Integer, nullable=False, server_default=_DEFAULT_ZERO),
     Column("game_clock", Float, nullable=False, server_default="0.0"),
     Column("game_time", String(_LEN_TINY), nullable=False, server_default="morning"),
@@ -124,6 +125,7 @@ players = Table(
     Column("inventory", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("appearance", Text, nullable=False, server_default=""),
     Column("interaction_history", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
+    Column("physical_status", String(_LEN_LONG), nullable=False, server_default="healthy"),
 )
 
 locations = Table(

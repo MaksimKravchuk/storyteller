@@ -65,7 +65,7 @@ def _fixed_combat(combat_skill_val: int, _rng: Any = None) -> Any:
     from cast.dice import CombatOutcome, CombatRoll
 
     return CombatRoll(
-        outcome=CombatOutcome.NPC_OVERPOWERS,
+        outcome=CombatOutcome.TARGET_DOMINATES,
         npc_roll=_ATTACK_ROLL,
         player_roll=5,
         npc_bonus=combat_skill_val,
@@ -121,7 +121,8 @@ class TestNPCRetaliation:
         await _run_patched(_make_aggression_stub(True), director.act("attack the guard"))
 
         actor_ref = director._actors[_NPC_A]
-        assert actor_ref.execute.call_count == 2
+        # 3 calls: dialogue + retaliation + NPC turn
+        assert actor_ref.execute.call_count == 3
         second = actor_ref.execute.call_args_list[1]
         assert "retaliates" in (second.kwargs.get("input_data") or second.args[0])
         assert "[DICE ROLL:" in (second.kwargs.get("input_data") or second.args[0])
@@ -145,11 +146,15 @@ class TestNPCRetaliation:
         )
         mock_actor = AsyncMock()
         mock_actor.act = AsyncMock(return_value="Hello there.")
-        mock_actor.execute = AsyncMock(return_value="Hello there.")
+        # 1st call: dialogue, 2nd call: NPC turn
+        mock_actor.execute = AsyncMock(
+            side_effect=["Hello there.", '{"action": "nods", "type": "IDLE", "target": null}'],
+        )
         director._actors[_NPC_A] = mock_actor
 
         await director.act("greet the guard")
-        assert mock_actor.execute.call_count == 1
+        # 2 calls: dialogue + NPC turn (no retaliation since mood unchanged)
+        assert mock_actor.execute.call_count == 2
 
     @pytest.mark.asyncio
     async def test_no_retaliation_when_dice_fail(self):
@@ -164,7 +169,8 @@ class TestNPCRetaliation:
         director._actors[_NPC_A] = actor_a
 
         await _run_patched(_make_aggression_stub(False), director.act("punch the guard"))
-        assert director._actors[_NPC_A].execute.call_count == 1
+        # 2 calls: dialogue + NPC turn (no retaliation since dice failed)
+        assert director._actors[_NPC_A].execute.call_count == 2
 
     @pytest.mark.asyncio
     async def test_retaliation_deduplication_by_name(self):

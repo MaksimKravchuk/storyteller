@@ -22,7 +22,8 @@ class TestCombatDiceIntegration:
     async def test_aggressive_action_injects_dice_roll(self):
         director, mock_actor = self._build(is_aggressive=True)
         await director.act("punch the guard")
-        call_args = mock_actor.execute.call_args
+        # First call is dialogue, second is NPC turn
+        call_args = mock_actor.execute.call_args_list[0]
         input_text = call_args.kwargs.get(_INPUT_DATA) or call_args.args[0]
         assert "[DICE ROLL:" in input_text
         assert "OUTCOME:" in input_text
@@ -43,7 +44,7 @@ class TestCombatDiceIntegration:
         raw_input = narrator_call.kwargs.get(_INPUT_DATA) or narrator_call.args[0]
         dialogue = raw_input.get("dialogue", [])
         assert len(dialogue) == 1
-        assert "combat_roll" in dialogue[0]
+        assert "contest_roll" in dialogue[0]
 
     @pytest.mark.asyncio
     async def test_npc_without_combat_skill_uses_default(self):
@@ -54,7 +55,8 @@ class TestCombatDiceIntegration:
         mock_actor = make_mock_agent("*cowers*")
         director._actors[_NPC_A] = mock_actor
         await director.act("punch the merchant")
-        call_args = mock_actor.execute.call_args
+        # First call is dialogue
+        call_args = mock_actor.execute.call_args_list[0]
         input_text = call_args.kwargs.get(_INPUT_DATA) or call_args.args[0]
         assert "+3]" in input_text
 

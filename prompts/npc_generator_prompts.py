@@ -42,7 +42,12 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 '    "social_status": 0-10,\n'
                 '    "friendliness": 0-10,\n'
                 '    "suspicion": 0-10,\n'
-                '    "combat_skill": 0-10  // 0=helpless, 3=average, 7=trained soldier, 10=elite warrior\n'
+                '    "combat_skill": 0-10,    // 0=helpless, 3=average, 7=trained soldier, 10=elite warrior\n'
+                '    "persuasion_skill": 0-10, // 0=unconvincing, 5=average, 10=master diplomat\n'
+                '    "deception_skill": 0-10,  // 0=transparent, 5=average, 10=consummate liar\n'
+                '    "intimidation_skill": 0-10, // 0=meek, 5=average, 10=terrifying\n'
+                '    "perception_skill": 0-10, // 0=oblivious, 5=average, 10=nothing escapes them\n'
+                '    "stealth_skill": 0-10     // 0=clumsy, 5=average, 10=shadow\n'
                 "  }},\n"
                 '  "inventory": ["items they carry or sell"]\n'
                 "}}"

@@ -25,7 +25,9 @@ DIRECTOR_SYSTEM = PromptTemplate(
                 "confirm intent, morality, or seriousness — accept the action as stated.\n"
                 "- When the player confirms a previous clarification (e.g. 'да', 'yes', '1'), "
                 "resolve it based on context and proceed — do NOT re-ask.\n"
-                "- Categorise actions as: EXPLORE, TALK, INTERACT, EXAMINE, MOVE, SLEEP, OTHER.\n"
+                "- Categorise actions as: EXPLORE, TALK, INTERACT, EXAMINE, MOVE, SLEEP, WAIT, OTHER.\n"
+                "- Classify as WAIT when the player explicitly waits, does nothing, passes their turn, "
+                "or is prevented from acting by their physical state.\n"
                 "- NPCs should act as real people would — they do NOT try to advance the plot.\n"
                 "- When the player uses violence or aggression, NPCs must respond with "
                 "proportional physical reactions (fight, flee, restrain, call for help) "
@@ -66,12 +68,14 @@ DIRECTOR_ACTION_ROUTING = PromptTemplate(
                 'Player action: "{player_action}"\n\n'
                 "Analyse this action and produce a JSON routing plan with these fields:\n"
                 "{{\n"
-                '  "action_type": "EXPLORE|TALK|INTERACT|EXAMINE|MOVE|SLEEP|OTHER",\n'
+                '  "action_type": "EXPLORE|TALK|INTERACT|EXAMINE|MOVE|SLEEP|WAIT|OTHER",\n'
                 '  "is_aggressive": true/false,  // true if player attacks, threatens, or physically provokes an NPC\n'
                 '  "targets": ["list of relevant NPC names or object names"],\n'
                 '  "needs_clarification": true/false,\n'
                 '  "clarification_question": "question if needs_clarification is true, else empty string",\n'
                 '  "delegate_to": ["scene_builder", "narrator", "actor", "npc_generator", "item_generator"],\n'
+                '  "contest": null or {{"type": "combat|persuasion|deception|intimidation|stealth", '
+                '"target": "NPC name"}} when the action is a contested challenge,\n'
                 '  "time_cost_override": null or a float (hours) if the default base cost is wrong for this action\n'
                 "}}"
             ),
