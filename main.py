@@ -11,6 +11,8 @@ import click
 
 from config import load_config
 from engine.factory import create_engine
+from formatting.markdown_render import render
+from formatting.platform import ClientPlatform
 
 _SEPARATOR = "=" * 60
 _QUIT_COMMANDS = frozenset(("quit", "exit", "q"))
@@ -34,7 +36,7 @@ async def _run_game() -> None:
 
     setting = click.prompt("Describe your desired setting (e.g. 'Rome, 1st century AD')")
     click.echo("\nResearching setting and generating opening scene...\n")
-    click.echo(await engine.start_game(setting))
+    click.echo(render(await engine.start_game(setting), ClientPlatform.PLAIN))
 
     while True:
         click.echo("\n> ", nl=False)
@@ -44,7 +46,8 @@ async def _run_game() -> None:
         if action.lower() in _QUIT_COMMANDS:
             click.echo("Thanks for playing!")
             break
-        click.echo("\n{0}".format(await engine.process_action(action)))
+        response = await engine.process_action(action)
+        click.echo("\n{0}".format(render(response, ClientPlatform.PLAIN)))
 
 
 @click.command()

@@ -9,9 +9,12 @@ from loguru import logger
 from db.repository import GameRepository
 from engine.factory import create_engine, create_engine_from_state
 from engine.game_engine import GameEngine
+from formatting.markdown_render import render
+from formatting.platform import ClientPlatform
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
 
 _STATE_IDLE = "idle"
+_TELEGRAM_PARSE_MODE = "HTML"
 
 
 async def persist_engine_state(
@@ -42,7 +45,10 @@ async def start_new_game(engine: Any, repo: Any, session_id: str, update: Any, t
     opening = await engine.start_game(text)
     await persist_engine_state(repo, session_id, engine, turn_number=None)
     await repo.update_session(session_id, state="playing")
-    await update.message.reply_text(opening)
+    await update.message.reply_text(
+        render(opening, ClientPlatform.TELEGRAM_HTML),
+        parse_mode=_TELEGRAM_PARSE_MODE,
+    )
 
 
 async def process_player_action(engine: Any, repo: Any, session_id: str, update: Any, text: str) -> None:
@@ -50,7 +56,10 @@ async def process_player_action(engine: Any, repo: Any, session_id: str, update:
     response = await engine.process_action(text)
     turn_number = engine.game_state.turn_count if engine.game_state else None
     await persist_engine_state(repo, session_id, engine, turn_number=turn_number)
-    await update.message.reply_text(response)
+    await update.message.reply_text(
+        render(response, ClientPlatform.TELEGRAM_HTML),
+        parse_mode=_TELEGRAM_PARSE_MODE,
+    )
 
 
 async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:

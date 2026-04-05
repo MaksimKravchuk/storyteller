@@ -38,6 +38,18 @@ NARRATOR_SYSTEM = PromptTemplate(
             template="Write all your output in {language}.",
             required_vars=["language"],
         ),
+        PromptSection(
+            name="formatting",
+            template=(
+                "Format your output using this small Markdown subset:\n"
+                "- **bold** for NPC names, critical events, and notable objects on first mention\n"
+                "- *italic* for atmosphere, sounds, smells, and inner thoughts\n"
+                "- `code` for short written text the player reads (signs, letters, inscriptions)\n"
+                "- Separate paragraphs with a blank line\n"
+                "Do NOT use headings, lists, links, HTML tags, or any other Markdown feature."
+            ),
+            required_vars=[],
+        ),
     ]
 )
 
