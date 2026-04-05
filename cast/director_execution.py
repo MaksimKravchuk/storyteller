@@ -113,7 +113,6 @@ class PlanExecutor:
                 raw_outputs["wait_reason"] = plan["wait_reason"]
         else:
             await self._prepare_scene(
-                plan.get("delegate_to", []),
                 action_type,
                 plan.get("targets", []),
                 player_action,
@@ -190,14 +189,13 @@ class PlanExecutor:
 
     async def _prepare_scene(
         self,
-        delegates: list[str],
         action_type: str,
         targets: list[str],
         player_action: str,
         raw_outputs: dict[str, Any],
     ) -> None:
         """Build scene if needed and initialise any uninitialised NPCs."""
-        needs_rebuild = "scene_builder" in delegates or action_type in SCENE_CHANGING_ACTIONS
+        needs_rebuild = action_type in SCENE_CHANGING_ACTIONS
         # Skip rebuild when MOVE targets are all NPCs already in the scene
         # (e.g. "walk to the guard" — no location change).
         if needs_rebuild and action_type == "MOVE" and targets:
