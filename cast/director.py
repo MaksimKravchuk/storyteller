@@ -18,12 +18,6 @@ from timeline import event as event_mod, event_manager as event_manager_mod
 _KEY_ACTION_TYPE = "action_type"
 _DEFAULT_ACTION = "OTHER"
 
-# Actions that increment the turn counter.
-TURN_COUNTING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP", "WAIT"))
-
-# Actions that trigger a scene rebuild (new location, time-of-day shift, etc.).
-SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
-
 
 @dataclasses.dataclass
 class DirectorDeps:

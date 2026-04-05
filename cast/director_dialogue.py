@@ -6,7 +6,7 @@ import asyncio
 import types
 from typing import Any
 
-from cast.dice import CombatOutcome, CombatRoll
+from cast.dice import CombatOutcome, ContestRoll
 from cast.director_context import get_location_name
 from cast import director_dialogue_helpers as dlg_helpers
 from models.game_state import GameState
@@ -45,7 +45,7 @@ async def _execute_npc_dialogue(
     npc: Any,
     actor: Any,
     action_text: str,
-    combat_roll: CombatRoll | None,
+    contest_roll: ContestRoll | None,
     game_state: GameState,
 ) -> dict[str, str]:
     """Execute a single NPC dialogue and return the result entry."""
@@ -61,13 +61,13 @@ async def _execute_npc_dialogue(
         "npc_name": npc.name,
         "response": response,
     }
-    if combat_roll:
-        player = combat_roll.player_roll
-        npc_total = "{0}+{1}".format(combat_roll.npc_roll, combat_roll.npc_bonus)
-        outcome = combat_roll.outcome.value
-        result_entry["combat_roll"] = "d20: player {0} vs NPC {1} → {2}".format(
-            player,
-            npc_total,
+    if contest_roll:
+        actor_total = "{0}+{1}".format(contest_roll.actor_roll, contest_roll.actor_bonus)
+        target_total = "{0}+{1}".format(contest_roll.target_roll, contest_roll.target_bonus)
+        outcome = contest_roll.outcome.value
+        result_entry["contest_roll"] = "d20: actor {0} vs target {1} → {2}".format(
+            actor_total,
+            target_total,
             outcome,
         )
     return result_entry
@@ -142,9 +142,10 @@ class DialogueHandler:
         player_action: str,
         target_names: list[str],
         is_aggressive: bool = False,
+        contest_info: dict | None = None,
     ) -> list[dict[str, str]]:
         """Route dialogue to the correct Actor agents."""
-        work_items = self._collect_targets(target_names, player_action, is_aggressive)
+        work_items = self._collect_targets(target_names, player_action, is_aggressive, contest_info)
         coros = [_execute_npc_dialogue(*wi, self._gs) for wi in work_items]
         return list(await asyncio.gather(*coros))
 
@@ -199,14 +200,20 @@ class DialogueHandler:
         target_names: list[str],
         player_action: str,
         is_aggressive: bool,
-    ) -> list[tuple[Any, Any, str, CombatRoll | None]]:
+        contest_info: dict | None = None,
+    ) -> list[tuple[Any, Any, str, ContestRoll | None]]:
         """Match target names to NPCs and prepare dialogue work items."""
         matched_uuids = dlg_helpers.resolve_target_uuids(target_names, self._gs)
         return [
             (
                 self._gs.npcs[uid],
                 self._actors[uid],
-                *dlg_helpers.build_combat_action(player_action, self._gs.npcs[uid], is_aggressive),
+                *dlg_helpers.build_contested_action(
+                    player_action,
+                    self._gs.npcs[uid],
+                    is_aggressive,
+                    contest_info,
+                ),
             )
             for uid in matched_uuids
             if uid in self._actors

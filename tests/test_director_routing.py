@@ -6,7 +6,7 @@ import asyncio
 
 import pytest
 
-from cast.director import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
+from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from tests.director_helpers import make_director, make_game_state
 
 _TALK = "TALK"

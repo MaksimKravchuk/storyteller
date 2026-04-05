@@ -131,7 +131,7 @@ class TestWaitInActionTypes:
     """WAIT is properly registered in the action system."""
 
     def test_wait_in_turn_counting_actions(self):
-        from cast.director import TURN_COUNTING_ACTIONS
+        from cast.constants import TURN_COUNTING_ACTIONS
 
         assert "WAIT" in TURN_COUNTING_ACTIONS
 

@@ -6,6 +6,7 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
+from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from cast.director_dialogue import DialogueHandler
 from cast.director_events import EventProcessor
 from cast.director_retaliation import RetaliationHandler
@@ -13,18 +14,12 @@ from cast.npc_turn import NPCTurnResolver
 from models.game_state import GameState
 from timeline.event import GameEvent
 
-# Actions that trigger NPC autonomous turns (mirrored from director to avoid circular import).
-_TURN_COUNTING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "INTERACT", "TALK", "SLEEP", "WAIT"))
-
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"
 _DEFAULT_ACTION = "OTHER"
 
 _SCENE_DESC_PREVIEW = 200
-
-# Actions that trigger a scene rebuild.
-SCENE_CHANGING_ACTIONS: frozenset[str] = frozenset(("EXPLORE", "MOVE", "SLEEP"))
 
 
 def _snapshot_moods(npcs: dict) -> dict[str, str]:
@@ -152,7 +147,7 @@ class PlanExecutor:
         raw_outputs: dict[str, Any],
     ) -> None:
         """Resolve NPC autonomous turns for turn-counting actions."""
-        if action_type not in _TURN_COUNTING_ACTIONS:
+        if action_type not in TURN_COUNTING_ACTIONS:
             return
         npc_actions = await self._agents.npc_turns.resolve_npc_turns(player_action)
         if npc_actions:
@@ -184,7 +179,14 @@ class PlanExecutor:
 
         should_talk = dlg.targets_match_scene_npcs(target_names) or "actor" in plan.get("delegate_to", [])
         if should_talk or plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION) == "TALK":
-            await self._run_interactions(player_action, target_names, bool(plan.get("is_aggressive")), raw_outputs)
+            contest_info = plan.get("contest")
+            await self._run_interactions(
+                player_action,
+                target_names,
+                bool(plan.get("is_aggressive")),
+                raw_outputs,
+                contest_info,
+            )
 
     async def _prepare_scene(
         self,
@@ -245,12 +247,18 @@ class PlanExecutor:
         target_names: list[str],
         is_aggressive: bool,
         raw_outputs: dict[str, Any],
+        contest_info: dict | None = None,
     ) -> None:
         """Run NPC dialogue and retaliation checks."""
         mood_snapshot = _snapshot_moods(self._gs.npcs)
 
         dlg = self._agents.dialogue
-        dialogue_entries = await dlg.handle_dialogue(player_action, target_names, is_aggressive=is_aggressive)
+        dialogue_entries = await dlg.handle_dialogue(
+            player_action,
+            target_names,
+            is_aggressive=is_aggressive,
+            contest_info=contest_info,
+        )
         if dialogue_entries:
             raw_outputs["dialogue"] = dialogue_entries
 

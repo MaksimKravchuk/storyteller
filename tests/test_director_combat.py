@@ -44,7 +44,7 @@ class TestCombatDiceIntegration:
         raw_input = narrator_call.kwargs.get(_INPUT_DATA) or narrator_call.args[0]
         dialogue = raw_input.get("dialogue", [])
         assert len(dialogue) == 1
-        assert "combat_roll" in dialogue[0]
+        assert "contest_roll" in dialogue[0]
 
     @pytest.mark.asyncio
     async def test_npc_without_combat_skill_uses_default(self):

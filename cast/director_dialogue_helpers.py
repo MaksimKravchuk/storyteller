@@ -5,6 +5,8 @@ from __future__ import annotations
 import random
 from typing import Any
 
+from loguru import logger
+
 from cast.dice import (
     CONTEST_SKILL_MAP,
     CombatOutcome,
@@ -109,7 +111,11 @@ def build_contested_action(
         return _roll_and_format(player_action, npc, ContestType.COMBAT, default_skill=3, _rng=_rng)
 
     if contest_info:
-        ctype = ContestType(contest_info.get("type", "combat"))
+        try:
+            ctype = ContestType(contest_info.get("type", "combat"))
+        except ValueError:
+            logger.warning("Unknown contest type {!r}, falling back to COMBAT", contest_info.get("type"))
+            ctype = ContestType.COMBAT
         return _roll_and_format(player_action, npc, ctype, default_skill=0, _rng=_rng)
 
     return player_action, None
@@ -123,8 +129,8 @@ def _roll_and_format(
     _rng: random.Random | None = None,
 ) -> tuple[str, ContestRoll]:
     """Roll a contest and format the action text with the result."""
-    skill_attr = CONTEST_SKILL_MAP[contest_type]
-    contest_roll = roll_contest(contest_type, 0, npc.get_attribute(skill_attr, default_skill), _rng=_rng)
+    _actor_attr, target_attr = CONTEST_SKILL_MAP[contest_type]
+    contest_roll = roll_contest(contest_type, 0, npc.get_attribute(target_attr, default_skill), _rng=_rng)
     status_hint = _combat_status_hint(contest_roll.outcome) if contest_type == ContestType.COMBAT else ""
     return _format_contest_text(player_action, contest_roll, status_hint), contest_roll
 

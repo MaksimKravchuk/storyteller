@@ -1,6 +1,6 @@
 """Dice-based contest resolution for player and NPC interactions.
 
-Provides a generic contest system (d20 vs d20 + bonuses) for combat,
+Provides a generic contest system (d20 + bonus vs d20 + bonus) for combat,
 persuasion, deception, intimidation, and stealth.  Also provides an
 aggression-check mechanic for NPC mood-based retaliation.
 """
@@ -51,10 +51,10 @@ class ContestOutcome(Enum):
     """Possible outcomes of a contested roll.
 
     Determined by ``diff = target_total - actor_total``:
-    - diff >= 5  → TARGET_DOMINATES
-    - 0 <= diff < 5  → TARGET_RESISTS
-    - -5 < diff < 0  → ACTOR_SUCCEEDS
-    - diff <= -5 → ACTOR_DOMINATES
+    - diff >= 5   → TARGET_DOMINATES
+    - 0 <= diff < 5   → TARGET_RESISTS
+    - -5 <= diff < 0  → ACTOR_SUCCEEDS
+    - diff < -5   → ACTOR_DOMINATES
     """
 
     ACTOR_DOMINATES = "actor_dominates"
@@ -63,15 +63,16 @@ class ContestOutcome(Enum):
     TARGET_DOMINATES = "target_dominates"
 
 
-# Maps ContestType → NPC attribute name used as bonus.
-# For STEALTH the *target* defends with perception_skill.
-CONTEST_SKILL_MAP: types.MappingProxyType[ContestType, str] = types.MappingProxyType(
+# Maps ContestType → (actor_skill_attr, target_skill_attr).
+# For most types both sides use the same skill; for STEALTH the actor
+# uses stealth_skill while the target defends with perception_skill.
+CONTEST_SKILL_MAP: types.MappingProxyType[ContestType, tuple[str, str]] = types.MappingProxyType(
     {
-        ContestType.COMBAT: "combat_skill",
-        ContestType.PERSUASION: "persuasion_skill",
-        ContestType.DECEPTION: "deception_skill",
-        ContestType.INTIMIDATION: "intimidation_skill",
-        ContestType.STEALTH: "perception_skill",
+        ContestType.COMBAT: ("combat_skill", "combat_skill"),
+        ContestType.PERSUASION: ("persuasion_skill", "persuasion_skill"),
+        ContestType.DECEPTION: ("deception_skill", "deception_skill"),
+        ContestType.INTIMIDATION: ("intimidation_skill", "intimidation_skill"),
+        ContestType.STEALTH: ("stealth_skill", "perception_skill"),
     }
 )
 

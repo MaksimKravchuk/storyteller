@@ -86,7 +86,7 @@ class ContextFormatter:
 
     def append_turn_logs(self, player_action: str, narrated_response: str, action_type: str) -> None:
         """Update game state conversation logs after a turn."""
-        from cast.director import TURN_COUNTING_ACTIONS
+        from cast.constants import TURN_COUNTING_ACTIONS
 
         if action_type in TURN_COUNTING_ACTIONS:
             self._gs.turn_count += 1

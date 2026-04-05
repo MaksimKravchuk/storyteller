@@ -69,7 +69,7 @@ def detect_wait_intent(text: str, language: str = "English") -> bool:
 
 def is_incapacitated(physical_status: str) -> bool:
     """Return True if *physical_status* prevents the player from acting."""
-    return physical_status.lower() in INCAPACITATING_STATES
+    return (physical_status or "").lower() in INCAPACITATING_STATES
 
 
 def build_forced_wait_plan(reason: str) -> dict:

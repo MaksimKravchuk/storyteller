@@ -242,6 +242,31 @@ class TestNPCTurnSceneMutation:
         assert _NPC_UUID_A not in scene_uuids
 
 
+class TestNPCTurnResolverErrorHandling:
+    @pytest.mark.asyncio
+    async def test_one_npc_failure_does_not_kill_others(self):
+        gs = _make_gs()
+        guard = _make_npc(_NPC_UUID_A, _GUARD)
+        merchant = _make_npc(_NPC_UUID_B, _MERCHANT)
+        gs.npcs[_NPC_UUID_A] = guard
+        gs.npcs[_NPC_UUID_B] = merchant
+        gs.current_scene = _make_scene(_NPC_UUID_A, _NPC_UUID_B)
+
+        failing_actor = AsyncMock()
+        failing_actor.execute = AsyncMock(side_effect=RuntimeError("LLM timeout"))
+        ok_actor = _make_actor(_idle_response(_MERCHANT))
+
+        resolver = NPCTurnResolver(
+            game_state=gs,
+            actors={_NPC_UUID_A: failing_actor, _NPC_UUID_B: ok_actor},
+        )
+
+        actions = await resolver.resolve_npc_turns("Player waited.")
+
+        assert len(actions) == 1
+        assert actions[0].npc_name == _MERCHANT
+
+
 class TestNPCActionDataclass:
     def test_npc_action_fields(self):
         action = NPCAction(

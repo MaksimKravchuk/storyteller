@@ -113,26 +113,26 @@ class TestContestOutcomeEnum:
 
 
 class TestContestSkillMap:
-    """CONTEST_SKILL_MAP maps every ContestType to an attribute name."""
+    """CONTEST_SKILL_MAP maps every ContestType to (actor_attr, target_attr)."""
 
     def test_has_all_types(self):
         for ct in ContestType:
             assert ct in CONTEST_SKILL_MAP, f"Missing map entry for {ct}"
 
     def test_combat_maps_to_combat_skill(self):
-        assert CONTEST_SKILL_MAP[ContestType.COMBAT] == "combat_skill"
+        assert CONTEST_SKILL_MAP[ContestType.COMBAT] == ("combat_skill", "combat_skill")
 
     def test_persuasion_maps_to_persuasion_skill(self):
-        assert CONTEST_SKILL_MAP[ContestType.PERSUASION] == "persuasion_skill"
+        assert CONTEST_SKILL_MAP[ContestType.PERSUASION] == ("persuasion_skill", "persuasion_skill")
 
     def test_deception_maps_to_deception_skill(self):
-        assert CONTEST_SKILL_MAP[ContestType.DECEPTION] == "deception_skill"
+        assert CONTEST_SKILL_MAP[ContestType.DECEPTION] == ("deception_skill", "deception_skill")
 
     def test_intimidation_maps_to_intimidation_skill(self):
-        assert CONTEST_SKILL_MAP[ContestType.INTIMIDATION] == "intimidation_skill"
+        assert CONTEST_SKILL_MAP[ContestType.INTIMIDATION] == ("intimidation_skill", "intimidation_skill")
 
-    def test_stealth_maps_to_perception_skill(self):
-        assert CONTEST_SKILL_MAP[ContestType.STEALTH] == "perception_skill"
+    def test_stealth_actor_uses_stealth_target_uses_perception(self):
+        assert CONTEST_SKILL_MAP[ContestType.STEALTH] == ("stealth_skill", "perception_skill")
 
 
 class TestRollContestOutcomes:

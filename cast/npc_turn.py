@@ -103,17 +103,17 @@ def _roll_npc_contest(
         return None
 
     contest_type = _ACTION_TO_CONTEST[action_type]
-    skill_attr = CONTEST_SKILL_MAP[contest_type]
-    actor_skill = npc.get_attribute(skill_attr, 0)
+    skill_pair = CONTEST_SKILL_MAP[contest_type]
+    actor_skill = npc.get_attribute(skill_pair[0], 0)
 
     if target_name.lower() == "player":
         return roll_contest(contest_type, actor_skill, 0)
 
     target_npc = _find_target_npc(target_name, game_state)
     if target_npc is None:
+        logger.warning("NPC {} attempted {} against unknown target {!r}", npc.name, action_type, target_name)
         return None
-    target_skill = target_npc.get_attribute(skill_attr, 0)
-    return roll_contest(contest_type, actor_skill, target_skill)
+    return roll_contest(contest_type, actor_skill, target_npc.get_attribute(skill_pair[1], 0))
 
 
 def _apply_scene_mutation(
@@ -128,6 +128,21 @@ def _apply_scene_mutation(
     if not scene:
         return
     scene.npcs_present = [snpc for snpc in scene.npcs_present if snpc.uuid != npc_uuid]
+
+
+def _filter_successful(
+    gathered: list[NPCAction | BaseException],
+    eligible: list[tuple[str, Any, Any]],
+) -> list[NPCAction]:
+    """Keep successful NPC actions and log failures."""
+    actions: list[NPCAction] = []
+    for idx, outcome in enumerate(gathered):
+        if isinstance(outcome, BaseException):
+            npc_uuid, npc, _ = eligible[idx]
+            logger.error("NPC turn failed for {} ({}): {}", npc.name, npc_uuid, outcome)
+        else:
+            actions.append(outcome)
+    return actions
 
 
 class NPCTurnResolver:
@@ -153,8 +168,9 @@ class NPCTurnResolver:
         summary: str,
     ) -> list[NPCAction]:
         """Concurrently resolve actions for all eligible NPCs."""
-        coros = [self._resolve_single_npc(npc, actor, summary) for _uuid, npc, actor in eligible]
-        return list(await asyncio.gather(*coros))
+        coros = [self._resolve_single_npc(npc, actor, summary) for _, npc, actor in eligible]
+        gathered = await asyncio.gather(*coros, return_exceptions=True)
+        return _filter_successful(gathered, eligible)
 
     def _eligible_npcs(self) -> list[tuple[str, Any, Any]]:
         """Return (uuid, npc, actor) for NPCs that can act this turn."""
@@ -173,7 +189,7 @@ class NPCTurnResolver:
         if not snpc.uuid or snpc.uuid not in self._gs.npcs:
             return None
         npc = self._gs.npcs[snpc.uuid]
-        if npc.physical_status.lower() in _NPC_SKIP_STATUSES:
+        if (npc.physical_status or "").lower() in _NPC_SKIP_STATUSES:
             return None
         actor = self._actors.get(snpc.uuid)
         if actor is None:
@@ -182,10 +198,14 @@ class NPCTurnResolver:
 
     async def _resolve_single_npc(self, npc: Any, actor: Any, player_action_summary: str) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
-        raw_response = await actor.execute(
-            input_data=_build_turn_prompt(npc, player_action_summary, self._gs),
-            context={"npc": npc, "game_state": self._gs, "is_npc_turn": True},
-        )
+        try:
+            raw_response = await actor.execute(
+                input_data=_build_turn_prompt(npc, player_action_summary, self._gs),
+                context={"npc": npc, "game_state": self._gs, "is_npc_turn": True},
+            )
+        except Exception:
+            logger.exception("LLM call failed for NPC {}", npc.name)
+            raise
         return _build_npc_action(npc, raw_response, self._gs)
 
 
