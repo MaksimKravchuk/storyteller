@@ -54,7 +54,7 @@ async def ai_calls(request: web.Request) -> web.Response:
     session_id = request.match_info[_SESSION_ID_PARAM]
     turn = request.query.get("turn")
     async with helpers.open_repo(request) as repo:
-        logs = await repo.get_ai_call_logs(
+        logs = await repo.ai_logs.get(
             session_id,
             turn_number=int(turn) if turn else None,
         )
