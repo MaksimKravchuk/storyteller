@@ -122,6 +122,24 @@ class TestSceneChanges:
     async def test_scene_changing_actions_constant(self):
         assert SCENE_CHANGING_ACTIONS == {"EXPLORE", "MOVE", "SLEEP"}
 
+    @pytest.mark.asyncio
+    async def test_examine_with_scene_builder_delegate_does_not_replace_scene(self):
+        """Regression: LLM sometimes routes EXAMINE with scene_builder in delegate_to.
+
+        Director must not replace the current scene in that case — only MOVE/EXPLORE/SLEEP
+        may build a new scene. Otherwise NPCs get regenerated mid-encounter.
+        """
+        gs = make_game_state()
+        original_scene = gs.current_scene
+        director = make_director(
+            game_state=gs,
+            route_response=_route("EXAMINE", delegate=["scene_builder", "narrator"]),
+        )
+        await director.act("does the guard have a weapon?")
+        assert gs.scene_number == 0, "scene_number must not increment on EXAMINE"
+        assert gs.current_scene is original_scene, "current_scene must not be replaced"
+        director._cast.scene_builder.execute.assert_not_called()
+
 
 class TestSceneConversationLog:
     @pytest.mark.asyncio
