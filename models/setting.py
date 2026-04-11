@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
-from models.base_model import BaseModel
+from models.base_model import StorytellerBase
 
 
-@dataclass(kw_only=True)
-class Setting(BaseModel):
+class Setting(StorytellerBase):
     """Structured historical / geographical context produced by the Data Miner.
 
     Represents the researched backdrop of the game world.
@@ -16,10 +13,10 @@ class Setting(BaseModel):
     time_period: str
     region: str
     summary: str
-    key_persons: list[dict[str, str]] = field(default_factory=list)
-    key_events: list[dict[str, str]] = field(default_factory=list)
-    locations: list[dict[str, str]] = field(default_factory=list)
-    traditions: list[str] = field(default_factory=list)
-    technologies: list[str] = field(default_factory=list)
+    key_persons: list[dict[str, str]] = []
+    key_events: list[dict[str, str]] = []
+    locations: list[dict[str, str]] = []
+    traditions: list[str] = []
+    technologies: list[str] = []
     social_structure: str = ""
-    raw_sources: list[str] = field(default_factory=list)
+    raw_sources: list[str] = []

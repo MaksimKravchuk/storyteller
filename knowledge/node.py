@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from enum import Enum
 
-from models.base_model import BaseModel
+from models.base_model import StorytellerBase
 
 
 class KnowledgeScope(Enum):
@@ -56,8 +55,7 @@ class EdgeType(Enum):
     OWNED_BY = "owned_by"
 
 
-@dataclass(kw_only=True)
-class KnowledgeNode(BaseModel):
+class KnowledgeNode(StorytellerBase):
     """A single fact / memory in the knowledge graph."""
 
     text: str
@@ -65,7 +63,7 @@ class KnowledgeNode(BaseModel):
     source: KnowledgeSource = KnowledgeSource.FACT
     required_education: int = 0  # 0-10
     required_social_status: int = 0  # 0-10
-    tags: list[str] = field(default_factory=list)
+    tags: list[str] = []
     location_id: str | None = None
     timestamp: float | None = None  # Game-clock time when learned
     confidence: float = 1.0  # 0.0 – 1.0

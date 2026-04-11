@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
-from models.base_model import BaseModel
+from models.base_model import StorytellerBase
 
 
-@dataclass(kw_only=True)
-class Location(BaseModel):
+class Location(StorytellerBase):
     """A place in the game world.
 
     Locations form a hierarchy via ``parent_location_id``
@@ -17,10 +14,10 @@ class Location(BaseModel):
     description: str = ""
     parent_location_id: str | None = None
     location_type: str = "generic"  # "building", "district", "city", "region", "country"
-    tags: list[str] = field(default_factory=list)
-    connected_locations: list[str] = field(default_factory=list)  # UUIDs
-    npcs_present: list[str] = field(default_factory=list)  # NPC UUIDs currently at this location
-    points_of_interest: list[str] = field(default_factory=list)
+    tags: list[str] = []
+    connected_locations: list[str] = []  # UUIDs
+    npcs_present: list[str] = []  # NPC UUIDs currently at this location
+    points_of_interest: list[str] = []
 
     def add_npc(self, npc_id: str) -> None:
         if npc_id not in self.npcs_present:

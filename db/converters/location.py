@@ -30,15 +30,14 @@ def location_to_row(loc: Location, game_state_id: str) -> dict:
 
 
 def row_to_location(row) -> Location:
-    loc = Location(
+    return Location(
+        uuid=row[COL_ID],
         name=row[COL_NAME],
         description=row[COL_DESCRIPTION],
         parent_location_id=row["parent_location_id"],
         location_type=row["location_type"],
         tags=row[COL_TAGS],
         connected_locations=row["connected_locations"],
+        npcs_present=row[COL_NPCS_PRESENT],
+        points_of_interest=row[COL_POINTS_OF_INTEREST],
     )
-    loc.uuid = row[COL_ID]
-    loc.npcs_present = row[COL_NPCS_PRESENT]
-    loc.points_of_interest = row[COL_POINTS_OF_INTEREST]
-    return loc

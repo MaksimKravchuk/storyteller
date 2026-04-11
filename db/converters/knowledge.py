@@ -23,7 +23,8 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
 
 
 def row_to_knowledge_node(row) -> KnowledgeNode:
-    node = KnowledgeNode(
+    return KnowledgeNode(
+        uuid=row[COL_ID],
         text=row["content"],
         scope=KnowledgeScope(row[COL_SCOPE]),
         source=KnowledgeSource(row["source"]),
@@ -34,5 +35,3 @@ def row_to_knowledge_node(row) -> KnowledgeNode:
         timestamp=row["timestamp"],
         confidence=row["confidence"],
     )
-    node.uuid = row[COL_ID]
-    return node

@@ -35,7 +35,8 @@ def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
 
 
 def row_to_npc(row) -> NPCCard:
-    npc = NPCCard(
+    return NPCCard(
+        uuid=row[COL_ID],
         name=row[COL_NAME],
         biography=row["biography"],
         appearance=row[COL_APPEARANCE],
@@ -47,9 +48,7 @@ def row_to_npc(row) -> NPCCard:
         inventory=row[COL_INVENTORY],
         location_id=row[COL_LOCATION_ID],
         relationships=row["relationships"],
+        conversation_history=row["conversation_history"],
+        current_mood=row["current_mood"],
+        physical_status=row.get("physical_status", "healthy"),
     )
-    npc.uuid = row[COL_ID]
-    npc.conversation_history = row["conversation_history"]
-    npc.current_mood = row["current_mood"]
-    npc.physical_status = row.get("physical_status", "healthy")
-    return npc

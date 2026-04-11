@@ -5,7 +5,7 @@ from __future__ import annotations
 import allure
 import pytest
 
-from models.base_model import BaseModel
+from models.base_model import StorytellerBase
 from models.character import Character
 from models.npc_card import NPCCard
 from models.setting import Setting
@@ -19,16 +19,16 @@ _UUID_LENGTH = 36
 @allure.feature("Domain models")
 class TestBaseModel:
     @allure.story("BaseModel UUID")
-    @allure.title("BaseModel assigns a 36-character string UUID on construction")
+    @allure.title("StorytellerBase assigns a 36-character string UUID on construction")
     def test_uuid_generated_on_init(self):
-        model = BaseModel()
+        model = StorytellerBase()
         assert isinstance(model.uuid, str)
         assert len(model.uuid) == _UUID_LENGTH
 
     @allure.story("BaseModel UUID")
-    @allure.title("100 BaseModel instances produce 100 unique UUIDs")
+    @allure.title("100 StorytellerBase instances produce 100 unique UUIDs")
     def test_unique_uuids(self):
-        uuids = {BaseModel().uuid for _ in range(100)}
+        uuids = {StorytellerBase().uuid for _ in range(100)}
         assert len(uuids) == 100
 
 

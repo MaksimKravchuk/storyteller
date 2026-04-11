@@ -32,7 +32,8 @@ def game_event_to_row(event: GameEvent, game_state_id: str) -> dict:
 
 
 def row_to_game_event(row) -> GameEvent:
-    event = GameEvent(
+    return GameEvent(
+        uuid=row[COL_ID],
         name=row[COL_NAME],
         scheduled_at=row["scheduled_at"],
         duration=row["duration"],
@@ -49,8 +50,6 @@ def row_to_game_event(row) -> GameEvent:
         ],
         follow_up_events=row["follow_up_events"],
         on_complete_description=row["on_complete_description"],
+        completes_at=row["completes_at"],
+        status=EventStatus(row["status"]),
     )
-    event.uuid = row[COL_ID]
-    event.status = EventStatus(row["status"])
-    event.completes_at = row["completes_at"]
-    return event

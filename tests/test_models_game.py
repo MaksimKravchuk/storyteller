@@ -146,10 +146,11 @@ class TestSceneNPCInit:
         assert snpc.uuid == "abc-123"
 
     @allure.story("SceneNPC init")
-    @allure.title("SceneNPC repr says 'uninit' before a UUID is assigned and shows the UUID afterwards")
+    @allure.title("SceneNPC repr exposes role and uuid=None before init and the UUID afterwards")
     def test_repr(self):
         snpc = SceneNPC(role=_GUARD)
-        assert "uninit" in repr(snpc)
+        assert _GUARD in repr(snpc)
+        assert "None" in repr(snpc)
         snpc.uuid = "abc"
         assert "abc" in repr(snpc)
 
@@ -157,32 +158,32 @@ class TestSceneNPCInit:
 @allure.epic("Memory & Persistence")
 @allure.feature("GameState model")
 class TestSceneNPCSerialization:
-    """Tests for SceneNPC to_dict/from_dict round-tripping."""
+    """Tests for SceneNPC pydantic serialization round-tripping."""
 
     @allure.story("SceneNPC serialization")
-    @allure.title("SceneNPC.to_dict serializes role and UUID into a plain dict")
-    def test_to_dict(self):
+    @allure.title("SceneNPC.model_dump serializes role and UUID into a plain dict")
+    def test_model_dump(self):
         snpc = SceneNPC(role="beggar", uuid="uuid-42")
-        assert snpc.to_dict() == {"role": "beggar", "uuid": "uuid-42"}
+        assert snpc.model_dump() == {"role": "beggar", "uuid": "uuid-42"}
 
     @allure.story("SceneNPC serialization")
     @allure.title("An uninitialized SceneNPC serializes with uuid=None")
-    def test_to_dict_uninitialised(self):
+    def test_model_dump_uninitialised(self):
         snpc = SceneNPC(role=_GUARD)
-        assert snpc.to_dict() == {"role": "guard", "uuid": None}
+        assert snpc.model_dump() == {"role": "guard", "uuid": None}
 
     @allure.story("SceneNPC serialization")
-    @allure.title("SceneNPC.to_dict/from_dict round-trips role and UUID and preserves the initialized state")
-    def test_from_dict_roundtrip(self):
+    @allure.title("SceneNPC model_dump/model_validate round-trips role and UUID and preserves the initialized state")
+    def test_model_validate_roundtrip(self):
         original = SceneNPC(role="scribe", uuid="uuid-99")
-        restored = SceneNPC.from_dict(original.to_dict())
+        restored = SceneNPC.model_validate(original.model_dump())
         assert restored.role == "scribe"
         assert restored.uuid == "uuid-99"
         assert restored.need_init is False
 
     @allure.story("SceneNPC serialization")
-    @allure.title("SceneNPC.from_dict without a UUID produces a fresh uninitialized SceneNPC")
-    def test_from_dict_without_uuid(self):
-        restored = SceneNPC.from_dict({"role": "merchant"})
+    @allure.title("SceneNPC.model_validate without a UUID produces a fresh uninitialized SceneNPC")
+    def test_model_validate_without_uuid(self):
+        restored = SceneNPC.model_validate({"role": "merchant"})
         assert restored.role == "merchant"
         assert restored.need_init is True

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
 from models.character import Character
 
 
@@ -9,7 +7,6 @@ def _format_attr(attr_name: str, attr_val: object) -> str:
     return "{0}={1}".format(attr_name, attr_val)
 
 
-@dataclass(kw_only=True)
 class NPCCard(Character):
     """Extended character profile created by the NPC Generator.
 
@@ -17,7 +14,7 @@ class NPCCard(Character):
     to serialise the card into a string for prompt injection.
     """
 
-    conversation_history: list[dict[str, str]] = field(default_factory=list)
+    conversation_history: list[dict[str, str]] = []
     current_mood: str = "neutral"
     physical_status: str = "healthy"
 

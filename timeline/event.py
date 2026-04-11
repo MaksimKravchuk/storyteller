@@ -5,7 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
-from models.base_model import BaseModel
+from typing import Any
+
+from pydantic import model_validator
+
+from models.base_model import StorytellerBase
 
 
 class EventStatus(Enum):
@@ -34,8 +38,7 @@ class EventEffect:
     effect_data: dict = field(default_factory=dict)
 
 
-@dataclass(kw_only=True)
-class GameEvent(BaseModel):
+class GameEvent(StorytellerBase):
     """A scheduled event on the game timeline.
 
     Events are created by the Director / NPC Generator / Scene Builder
@@ -49,11 +52,24 @@ class GameEvent(BaseModel):
     owner_id: str | None = None
     location_id: str | None = None
     scope: str = "local"
-    effects: list[EventEffect] = field(default_factory=list)
-    follow_up_events: list[dict] = field(default_factory=list)
+    effects: list[EventEffect] = []
+    follow_up_events: list[dict] = []
     on_complete_description: str = ""
-    completes_at: float = field(init=False)
-    status: EventStatus = field(default=EventStatus.PENDING)
+    completes_at: float = float(0)
+    status: EventStatus = EventStatus.PENDING
 
-    def __post_init__(self) -> None:
-        self.completes_at = self.scheduled_at + self.duration
+    @model_validator(mode="before")
+    @classmethod
+    def _derive_completes_at(cls, raw_values: Any) -> Any:
+        """Populate ``completes_at`` from ``scheduled_at + duration`` when unset.
+
+        Callers (Director, NPC generator, ...) don't pass ``completes_at``;
+        converters rehydrating from a DB row pass it explicitly, so only
+        compute it when the key is missing.
+        """
+        if isinstance(raw_values, dict) and "completes_at" not in raw_values:
+            scheduled_at = raw_values.get("scheduled_at")
+            duration = raw_values.get("duration")
+            if scheduled_at is not None and duration is not None:
+                raw_values["completes_at"] = scheduled_at + duration
+        return raw_values
