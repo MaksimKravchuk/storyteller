@@ -10,3 +10,6 @@ dist/
 build/
 allure-results/
 .vscode/
+.coverage
+coverage.json
+coverage.xml

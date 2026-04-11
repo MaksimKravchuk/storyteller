@@ -12,6 +12,7 @@ import ssl
 import sys
 
 import allure
+import pytest
 
 # Force the real db.engine into sys.modules before _db_stubs can stub it.
 _stashed_stub = sys.modules.pop("db.engine", None)
@@ -99,6 +100,62 @@ class TestAdaptUrlForAsyncpg:
         url = "postgresql://u:p@host/db?sslmode=allow"
         _, args = _real_engine._adapt_url_for_asyncpg(url)
         assert args[_SSL_KEY] is False
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Database engine")
+class TestEngineAndGetDb:
+    @allure.story("Engine creation")
+    @allure.title("create_async_engine returns a SQLAlchemy AsyncEngine for a plain postgres URL")
+    def test_create_async_engine_returns_engine(self):
+        engine = _real_engine.create_async_engine("postgresql+asyncpg://u:p@host/db")
+        from sqlalchemy.ext.asyncio import AsyncEngine
+
+        assert isinstance(engine, AsyncEngine)
+
+    @allure.story("Engine creation")
+    @allure.title("create_session_factory returns a callable async_sessionmaker bound to the engine")
+    def test_create_session_factory_returns_sessionmaker(self):
+        from sqlalchemy.ext.asyncio import async_sessionmaker
+
+        engine = _real_engine.create_async_engine("postgresql+asyncpg://u:p@host/db")
+        factory = _real_engine.create_session_factory(engine)
+        assert isinstance(factory, async_sessionmaker)
+
+    @allure.story("Session lifecycle")
+    @allure.title("get_db commits on successful exit from the async context manager")
+    @pytest.mark.asyncio
+    async def test_get_db_commits_on_success(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        session = AsyncMock()
+        factory = MagicMock()
+        factory.return_value.__aenter__ = AsyncMock(return_value=session)
+        factory.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        async with _real_engine.get_db(factory) as yielded:
+            assert yielded is session
+
+        session.commit.assert_awaited_once()
+        session.rollback.assert_not_awaited()
+
+    @allure.story("Session lifecycle")
+    @allure.title("get_db rolls back and re-raises when the caller raises inside the context")
+    @pytest.mark.asyncio
+    async def test_get_db_rolls_back_on_exception(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        session = AsyncMock()
+        factory = MagicMock()
+        factory.return_value.__aenter__ = AsyncMock(return_value=session)
+        factory.return_value.__aexit__ = AsyncMock(return_value=False)
+
+        with pytest.raises(RuntimeError, match="boom"):
+            async with _real_engine.get_db(factory):
+                raise RuntimeError("boom")
+
+        session.rollback.assert_awaited_once()
+        session.commit.assert_not_awaited()
 
 
 @allure.epic("Memory & Persistence")
