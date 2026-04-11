@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from pydantic import ConfigDict, Field
 
-from models.base_model import BaseModel
+from knowledge.graph import KnowledgeGraph
+from models.base_model import StorytellerBase
+from models.location import Location
+from models.npc_card import NPCCard
+from models.scene import Scene
+from models.setting import Setting
 
 INITIAL_GAME_CLOCK: float = float(0)
-
-if TYPE_CHECKING:
-    from knowledge.graph import KnowledgeGraph
-    from models.location import Location
-    from models.npc_card import NPCCard
-    from models.scene import Scene
-    from models.setting import Setting
 
 
 _DAWN_HOUR = 6
@@ -20,39 +17,39 @@ _NOON_HOUR = 12
 _EVENING_HOUR = 18
 
 
-@dataclass(kw_only=True)
-class PlayerState(BaseModel):
+class PlayerState(StorytellerBase):
     """Mutable state for the player character."""
 
     name: str = "Player"
     location_id: str | None = None
-    inventory: list[str] = field(default_factory=list)
+    inventory: list[str] = []
     appearance: str = ""
-    interaction_history: list[dict] = field(default_factory=list)
+    interaction_history: list[dict] = []
     physical_status: str = "healthy"
 
 
-@dataclass(kw_only=True)
-class GameState(BaseModel):
+class GameState(StorytellerBase):
     """Central mutable state for an active game session.
 
     Every agent receives a reference to the same ``GameState`` so they
     can read (and, where appropriate, update) the world.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     setting: Setting
     knowledge_graph: KnowledgeGraph
-    player: PlayerState = field(default_factory=PlayerState)
+    player: PlayerState = Field(default_factory=PlayerState)
     current_scene: Scene | None = None
-    locations: dict[str, Location] = field(default_factory=dict)
-    npcs: dict[str, NPCCard] = field(default_factory=dict)
+    locations: dict[str, Location] = {}
+    npcs: dict[str, NPCCard] = {}
     turn_count: int = 0
     round_number: int = 0
     scene_number: int = 0
     game_clock: float = INITIAL_GAME_CLOCK
     game_time: str = "morning"
-    conversation_log: list[dict] = field(default_factory=list)
-    scene_conversation_log: list[dict] = field(default_factory=list)
+    conversation_log: list[dict] = []
+    scene_conversation_log: list[dict] = []
     pending_clarification: list[dict] | None = None
 
     def advance_clock(self, hours: float) -> None:

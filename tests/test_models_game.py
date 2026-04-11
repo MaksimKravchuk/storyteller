@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
-
 import allure
 
 from models.game_state import GameState, PlayerState
@@ -23,12 +21,12 @@ _NIGHT_HOURS = 3
 @allure.epic("Memory & Persistence")
 @allure.feature("GameState model")
 class TestGameStateFields:
-    """Tests for GameState dataclass fields and initial values."""
+    """Tests for GameState pydantic fields and initial values."""
 
-    @allure.story("Dataclass fields")
-    @allure.title("GameState declares its own dataclass fields for turn_count, game_clock, and conversation_log")
-    def test_has_own_dataclass_fields(self):
-        field_names = {dc_field.name for dc_field in dataclasses.fields(GameState)}
+    @allure.story("Pydantic fields")
+    @allure.title("GameState declares its own pydantic fields for turn_count, game_clock, and conversation_log")
+    def test_has_own_pydantic_fields(self):
+        field_names = set(GameState.model_fields.keys())
         assert "turn_count" in field_names
         assert "game_clock" in field_names
         assert "conversation_log" in field_names
@@ -97,9 +95,9 @@ class TestGameStateClockAdvance:
 @allure.feature("GameState model")
 class TestPlayerState:
     @allure.story("PlayerState")
-    @allure.title("PlayerState declares its own dataclass fields for name, location_id, and inventory")
-    def test_has_own_dataclass_fields(self):
-        field_names = {dc_field.name for dc_field in dataclasses.fields(PlayerState)}
+    @allure.title("PlayerState declares its own pydantic fields for name, location_id, and inventory")
+    def test_has_own_pydantic_fields(self):
+        field_names = set(PlayerState.model_fields.keys())
         assert "name" in field_names
         assert "location_id" in field_names
         assert "inventory" in field_names
