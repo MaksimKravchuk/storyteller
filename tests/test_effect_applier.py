@@ -1,12 +1,15 @@
-"""Tests for EffectApplier — CHANGE_STATUS effect type."""
+"""Tests for EffectApplier across every supported effect type."""
 
 from __future__ import annotations
 
 import allure
 
 from knowledge.graph import KnowledgeGraph
+from knowledge.node import KnowledgeScope, KnowledgeSource
 from models.game_state import GameState
+from models.location import Location
 from models.npc_card import NPCCard
+from models.scene import Scene, SceneNPC
 from models.setting import Setting
 from timeline.effect_applier import EffectApplier
 from timeline.event import EventEffect
@@ -19,6 +22,13 @@ def _make_game_state_with_npc(npc: NPCCard) -> GameState:
     )
     gs.npcs[npc.uuid] = npc
     return gs
+
+
+def _empty_game_state() -> GameState:
+    return GameState(
+        setting=Setting(name="Rome", time_period="1 AD", region="Italy", summary=""),
+        knowledge_graph=KnowledgeGraph(),
+    )
 
 
 @allure.epic("Game Timeline")
@@ -69,3 +79,284 @@ class TestChangeStatusEffect:
         )
         applier.apply(effect)
         assert npc.physical_status == "wounded left arm"
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestMoveNpcEffect:
+    @allure.story("Move NPC")
+    @allure.title("MOVE_NPC removes the NPC from the old location and adds them to the new one")
+    def test_moves_between_locations(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        gs = _make_game_state_with_npc(npc)
+        gs.locations["loc-1"] = Location(name="Gate")
+        gs.locations["loc-1"].npcs_present.append(npc.uuid)
+        gs.locations["loc-2"] = Location(name="Forum")
+
+        effect = EventEffect(
+            effect_type="MOVE_NPC",
+            target_id=npc.uuid,
+            effect_data={"npc_id": npc.uuid, "to_location_id": "loc-2"},
+        )
+        EffectApplier(gs, KnowledgeGraph()).apply(effect)
+
+        assert npc.location_id == "loc-2"
+        assert npc.uuid not in gs.locations["loc-1"].npcs_present
+        assert npc.uuid in gs.locations["loc-2"].npcs_present
+
+    @allure.story("Move NPC")
+    @allure.title("MOVE_NPC into the current scene's location adds the NPC to scene.npcs_present")
+    def test_adds_npc_to_current_scene_on_arrival(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        gs = _make_game_state_with_npc(npc)
+        gs.locations["loc-1"] = Location(name="Gate")
+        gs.locations["loc-2"] = Location(name="Forum")
+        gs.current_scene = Scene(location_id="loc-2")
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="MOVE_NPC",
+                target_id=npc.uuid,
+                effect_data={"npc_id": npc.uuid, "to_location_id": "loc-2"},
+            )
+        )
+
+        assert any(snpc.uuid == npc.uuid for snpc in gs.current_scene.npcs_present)
+
+    @allure.story("Move NPC")
+    @allure.title("MOVE_NPC does not duplicate a scene NPC entry when the NPC is already present")
+    def test_does_not_duplicate_scene_npc(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        gs = _make_game_state_with_npc(npc)
+        gs.locations["loc-1"] = Location(name="Gate")
+        gs.locations["loc-2"] = Location(name="Forum")
+        gs.current_scene = Scene(
+            location_id="loc-2",
+            npcs_present=[SceneNPC(role="guard", uuid=npc.uuid)],
+        )
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="MOVE_NPC",
+                target_id=npc.uuid,
+                effect_data={"npc_id": npc.uuid, "to_location_id": "loc-2"},
+            )
+        )
+
+        assert sum(1 for snpc in gs.current_scene.npcs_present if snpc.uuid == npc.uuid) == 1
+
+    @allure.story("Move NPC")
+    @allure.title("MOVE_NPC is silently ignored when the target NPC does not exist")
+    def test_noop_on_missing_npc(self):
+        gs = _empty_game_state()
+
+        # Should not raise even though the NPC is not in game_state.
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="MOVE_NPC",
+                target_id="ghost",
+                effect_data={"npc_id": "ghost", "to_location_id": "loc-2"},
+            )
+        )
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestItemEffects:
+    @allure.story("Add item")
+    @allure.title("ADD_ITEM appends the item to the target NPC's inventory")
+    def test_add_item(self):
+        npc = NPCCard(name="Marcus", occupation="guard")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="ADD_ITEM",
+                target_id=npc.uuid,
+                effect_data={"npc_id": npc.uuid, "item": "sword"},
+            )
+        )
+        assert "sword" in npc.inventory
+
+    @allure.story("Add item")
+    @allure.title("ADD_ITEM is a no-op when the item string is empty")
+    def test_add_item_empty_item_is_noop(self):
+        npc = NPCCard(name="Marcus", occupation="guard")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="ADD_ITEM",
+                target_id=npc.uuid,
+                effect_data={"npc_id": npc.uuid, "item": ""},
+            )
+        )
+        assert npc.inventory == []
+
+    @allure.story("Remove item")
+    @allure.title("REMOVE_ITEM drops an existing item from the NPC's inventory")
+    def test_remove_item(self):
+        npc = NPCCard(name="Marcus", occupation="guard", inventory=["sword"])
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="REMOVE_ITEM",
+                target_id=npc.uuid,
+                effect_data={"npc_id": npc.uuid, "item": "sword"},
+            )
+        )
+        assert "sword" not in npc.inventory
+
+    @allure.story("Remove item")
+    @allure.title("REMOVE_ITEM silently ignores items the NPC does not currently hold")
+    def test_remove_item_absent_is_noop(self):
+        npc = NPCCard(name="Marcus", occupation="guard", inventory=["shield"])
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="REMOVE_ITEM",
+                target_id=npc.uuid,
+                effect_data={"npc_id": npc.uuid, "item": "sword"},
+            )
+        )
+        assert npc.inventory == ["shield"]
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestAddKnowledgeEffect:
+    @allure.story("Add knowledge")
+    @allure.title("ADD_KNOWLEDGE inserts a FACT KnowledgeNode into the graph with scope/tags/location")
+    def test_adds_node_with_scope_and_tags(self):
+        gs = _empty_game_state()
+        graph = KnowledgeGraph()
+
+        EffectApplier(gs, graph).apply(
+            EventEffect(
+                effect_type="ADD_KNOWLEDGE",
+                target_id="",
+                effect_data={
+                    "content": "The bridge has collapsed",
+                    "scope": "city",
+                    "tags": ["news"],
+                    "location_id": "loc-1",
+                },
+            )
+        )
+
+        nodes = graph.all_nodes()
+        assert len(nodes) == 1
+        assert nodes[0].text == "The bridge has collapsed"
+        assert nodes[0].scope == KnowledgeScope.CITY
+        assert nodes[0].source == KnowledgeSource.FACT
+        assert nodes[0].tags == ["news"]
+        assert nodes[0].location_id == "loc-1"
+
+    @allure.story("Add knowledge")
+    @allure.title("ADD_KNOWLEDGE defaults to LOCAL scope when 'scope' is omitted")
+    def test_defaults_to_local_scope(self):
+        graph = KnowledgeGraph()
+        EffectApplier(_empty_game_state(), graph).apply(
+            EventEffect(
+                effect_type="ADD_KNOWLEDGE",
+                target_id="",
+                effect_data={"content": "A rumor"},
+            )
+        )
+        assert graph.all_nodes()[0].scope == KnowledgeScope.LOCAL
+
+    @allure.story("Add knowledge")
+    @allure.title("ADD_KNOWLEDGE is a no-op when content is empty")
+    def test_empty_content_is_noop(self):
+        graph = KnowledgeGraph()
+        EffectApplier(_empty_game_state(), graph).apply(
+            EventEffect(
+                effect_type="ADD_KNOWLEDGE",
+                target_id="",
+                effect_data={"content": ""},
+            )
+        )
+        assert graph.all_nodes() == []
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestChangeAttributeEffect:
+    @allure.story("Change attribute")
+    @allure.title("CHANGE_ATTRIBUTE updates an NPC's attribute dict in place")
+    def test_updates_attribute(self):
+        npc = NPCCard(name="Marcus", occupation="guard", attributes={"strength": 5})
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="CHANGE_ATTRIBUTE",
+                target_id=npc.uuid,
+                effect_data={"attribute": "strength", "value": 8},
+            )
+        )
+        assert npc.attributes["strength"] == 8
+
+    @allure.story("Change attribute")
+    @allure.title("CHANGE_ATTRIBUTE is a no-op when attribute name is empty")
+    def test_empty_attribute_is_noop(self):
+        npc = NPCCard(name="Marcus", occupation="guard", attributes={"strength": 5})
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="CHANGE_ATTRIBUTE",
+                target_id=npc.uuid,
+                effect_data={"attribute": "", "value": 99},
+            )
+        )
+        assert npc.attributes == {"strength": 5}
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestRemoveNpcEffect:
+    @allure.story("Remove NPC")
+    @allure.title("REMOVE_NPC drops the NPC from game_state, its location, and the current scene")
+    def test_removes_npc_fully(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        gs = _make_game_state_with_npc(npc)
+        gs.locations["loc-1"] = Location(name="Gate")
+        gs.locations["loc-1"].npcs_present.append(npc.uuid)
+        gs.current_scene = Scene(
+            location_id="loc-1",
+            npcs_present=[SceneNPC(role="guard", uuid=npc.uuid)],
+        )
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="REMOVE_NPC", target_id=npc.uuid, effect_data={}),
+        )
+
+        assert npc.uuid not in gs.npcs
+        assert npc.uuid not in gs.locations["loc-1"].npcs_present
+        assert all(snpc.uuid != npc.uuid for snpc in gs.current_scene.npcs_present)
+
+    @allure.story("Remove NPC")
+    @allure.title("REMOVE_NPC targeting an unknown NPC is a silent no-op")
+    def test_noop_on_missing_npc(self):
+        gs = _empty_game_state()
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="REMOVE_NPC", target_id="ghost", effect_data={}),
+        )
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestUnknownEffect:
+    @allure.story("Unknown effect type")
+    @allure.title("Unknown effect types like SPAWN_NPC are silently skipped by the applier")
+    def test_unknown_effect_is_skipped(self):
+        gs = _empty_game_state()
+
+        # SPAWN_NPC is handled by Director, not EffectApplier — it must not raise.
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="SPAWN_NPC", target_id="", effect_data={"npc_request": "merchant"}),
+        )
