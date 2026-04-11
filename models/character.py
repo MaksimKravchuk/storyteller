@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-
-from models.base_model import BaseModel
+from models.base_model import StorytellerBase
 
 
-@dataclass(kw_only=True)
-class Character(BaseModel):
+class Character(StorytellerBase):
     """Base character model — used for both the player and NPCs.
 
     Core identity fields are required; appearance / personality fields
@@ -15,12 +12,12 @@ class Character(BaseModel):
 
     name: str
     biography: str = ""
-    relationships: dict[str, str] = field(default_factory=dict)
-    attributes: dict[str, int] = field(default_factory=dict)
-    inventory: list[str] = field(default_factory=list)
+    relationships: dict[str, str] = {}
+    attributes: dict[str, int] = {}
+    inventory: list[str] = []
     # Extended fields (populated by NPC generator)
     appearance: str = ""
-    personality_traits: list[str] = field(default_factory=list)
+    personality_traits: list[str] = []
     occupation: str = ""
     speech_style: str = ""
     knowledge_scope: str = "local"

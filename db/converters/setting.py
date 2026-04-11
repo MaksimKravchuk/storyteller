@@ -25,7 +25,8 @@ def setting_to_row(setting: Setting, game_state_id: str) -> dict:
 
 
 def row_to_setting(row) -> Setting:
-    setting = Setting(
+    return Setting(
+        uuid=row[COL_ID],
         name=row[COL_NAME],
         time_period=row["time_period"],
         region=row["region"],
@@ -38,5 +39,3 @@ def row_to_setting(row) -> Setting:
         social_structure=row["social_structure"],
         raw_sources=row["raw_sources"],
     )
-    setting.uuid = row[COL_ID]
-    return setting
