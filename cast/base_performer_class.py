@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import time
 from abc import ABC, abstractmethod
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, TypeVar, overload
 
 from llm.base_client import BaseLLMClient
 from llm.call_logger import (
@@ -17,8 +18,40 @@ from llm.call_logger import (
 from llm.message import LLMResponse, Message, Role
 from loguru import logger
 from prompts.base_template import PromptTemplate
+from pydantic import BaseModel, ValidationError
 
 _LOG_PREVIEW_CHARS = 200
+_VALIDATION_ERROR_PREVIEW_CHARS = 400
+_VALIDATION_FEEDBACK_TEMPLATE = (
+    "Your JSON was structurally valid but failed schema validation:\n"
+    "{0}\n"
+    "Return the same response corrected to match the schema, as JSON only."
+)
+
+BaseModelT = TypeVar("BaseModelT", bound=BaseModel)
+
+
+@dataclass(frozen=True)
+class _RetryContext:
+    """Parameters shared between attempts of a ``_send_json`` retry loop.
+
+    Bundles the recursion state so the retry helpers don't need to take
+    eight positional arguments each.
+    """
+
+    user_message: str
+    conversation: list[Message] | None
+    retries: int
+    attempt: int
+    response_model: type[BaseModel] | None
+
+    @property
+    def total_attempts(self) -> int:
+        return self.retries + 1
+
+    @property
+    def can_retry(self) -> bool:
+        return self.attempt < self.retries
 
 
 def _try_bracket_extraction(raw: str) -> dict | None:
@@ -79,6 +112,91 @@ def _record_llm_call(
         }
     )
     call_log_buffer.set(buf)
+
+
+async def _retry_after_decode_failure(
+    performer: BasePerformer,
+    ctx: _RetryContext,
+    raw: str,
+) -> Any:
+    """Retry or raise after ``json.loads`` fails on an LLM response."""
+    logger.warning(
+        "LLM returned malformed JSON on attempt {}/{}: trying bracket extraction. Raw (first 200 chars): {}",
+        ctx.attempt + 1,
+        ctx.total_attempts,
+        raw[:_LOG_PREVIEW_CHARS],
+    )
+    if ctx.can_retry:
+        return await performer._send_json(
+            ctx.user_message,
+            conversation=ctx.conversation,
+            retries=ctx.retries,
+            _attempt=ctx.attempt + 1,
+            response_model=ctx.response_model,
+        )
+    extracted = _try_bracket_extraction(raw)
+    if extracted is not None:
+        if ctx.response_model is None:
+            return extracted
+        try:
+            return ctx.response_model.model_validate(extracted)
+        except ValidationError as exc:
+            logger.warning(
+                "Bracket-extracted JSON failed schema validation: {}",
+                str(exc)[:_VALIDATION_ERROR_PREVIEW_CHARS],
+            )
+    logger.warning(
+        "Bracket extraction also failed on attempt {}/{}: raw (first {} chars): {}",
+        ctx.attempt + 1,
+        ctx.total_attempts,
+        _LOG_PREVIEW_CHARS,
+        raw[:_LOG_PREVIEW_CHARS],
+    )
+    preview = raw[:_LOG_PREVIEW_CHARS]
+    raise ValueError(
+        "Agent failed to produce valid JSON after {0} attempts. Last response: {1}".format(
+            ctx.total_attempts,
+            preview,
+        ),
+    )
+
+
+async def _retry_after_validation_failure(
+    performer: BasePerformer,
+    ctx: _RetryContext,
+    raw: str,
+    exc: ValidationError,
+) -> Any:
+    """Retry with validation feedback or raise after exhausting attempts."""
+    errors_preview = str(exc.errors())[:_VALIDATION_ERROR_PREVIEW_CHARS]
+    logger.warning(
+        "LLM JSON failed schema validation on attempt {}/{}: {}",
+        ctx.attempt + 1,
+        ctx.total_attempts,
+        errors_preview,
+    )
+    if not ctx.can_retry:
+        raise ValueError(
+            "Agent failed schema validation after {0} attempts. Errors: {1}".format(
+                ctx.total_attempts,
+                errors_preview,
+            ),
+        )
+    retry_conversation = list(ctx.conversation or [])
+    retry_conversation.append(Message(role=Role.ASSISTANT, body=raw))
+    retry_conversation.append(
+        Message(
+            role=Role.USER,
+            body=_VALIDATION_FEEDBACK_TEMPLATE.format(exc.errors()),
+        ),
+    )
+    return await performer._send_json(
+        ctx.user_message,
+        conversation=retry_conversation,
+        retries=ctx.retries,
+        _attempt=ctx.attempt + 1,
+        response_model=ctx.response_model,
+    )
 
 
 class BasePerformer(ABC):
@@ -195,49 +313,79 @@ class BasePerformer(ABC):
 
         return response.body
 
+    @overload
+    async def _send_json(
+        self,
+        user_message: str,
+        conversation: list[Message] | None = ...,
+        retries: int = ...,
+        _attempt: int = ...,
+        *,
+        response_model: type[BaseModelT],
+    ) -> BaseModelT: ...
+
+    @overload
+    async def _send_json(
+        self,
+        user_message: str,
+        conversation: list[Message] | None = ...,
+        retries: int = ...,
+        _attempt: int = ...,
+        response_model: None = ...,
+    ) -> dict: ...
+
     async def _send_json(
         self,
         user_message: str,
         conversation: list[Message] | None = None,
         retries: int = 2,
         _attempt: int = 0,
-    ) -> dict:
-        """Send a message expecting JSON back, with retry on parse failure."""
-        total_attempts = retries + 1
+        response_model: type[BaseModelT] | None = None,
+    ) -> dict | BaseModelT:
+        """Send a message expecting JSON back, with self-correcting retries.
+
+        The ``retries`` budget is shared between two failure modes:
+
+        1. ``json.JSONDecodeError`` — the LLM returned text that does
+           not parse as JSON. The prompt is re-sent unchanged. If the
+           final attempt still fails, an outermost-braces extraction
+           fallback is tried before raising.
+        2. ``pydantic.ValidationError`` (only when ``response_model``
+           is provided) — the JSON parsed cleanly but did not match the
+           schema. A copy of the conversation is made (the caller's
+           list is never mutated) and appended with the assistant's
+           bad response and a user message containing the validation
+           errors, asking the LLM to correct it.
+
+        A single call therefore gets at most ``retries + 1`` attempts
+        in total, regardless of which failure mode each attempt hits.
+
+        When ``response_model`` is ``None``, this method returns the
+        parsed dict — preserving the pre-refactor behaviour. When a
+        schema is supplied, it returns a validated instance of that
+        schema.
+        """
+        ctx = _RetryContext(
+            user_message=user_message,
+            conversation=conversation,
+            retries=retries,
+            attempt=_attempt,
+            response_model=response_model,
+        )
         raw = await self._send(
             user_message,
             conversation=conversation,
             response_format={"type": "json_object"},
         )
         try:
-            return json.loads(raw)
+            parsed = json.loads(raw)
         except json.JSONDecodeError:
-            logger.warning(
-                "LLM returned malformed JSON on attempt {}/{}: trying bracket extraction. Raw (first 200 chars): {}",
-                _attempt + 1,
-                total_attempts,
-                raw[:_LOG_PREVIEW_CHARS],
-            )
-            if _attempt < retries:
-                return await self._send_json(
-                    user_message,
-                    conversation=conversation,
-                    retries=retries,
-                    _attempt=_attempt + 1,
-                )
-            extracted = _try_bracket_extraction(raw)
-            if extracted is not None:
-                return extracted
-            logger.warning(
-                "Bracket extraction also failed on attempt {}/{}: raw (first {} chars): {}",
-                _attempt + 1,
-                total_attempts,
-                _LOG_PREVIEW_CHARS,
-                raw[:_LOG_PREVIEW_CHARS],
-            )
-            preview = raw[:_LOG_PREVIEW_CHARS]
-            raise ValueError(
-                "Agent failed to produce valid JSON after {0} attempts. Last response: {1}".format(
-                    total_attempts, preview
-                ),
-            )
+            return await _retry_after_decode_failure(self, ctx, raw)
+
+        if response_model is None:
+            return parsed
+
+        try:
+            return response_model.model_validate(parsed)
+        except ValidationError as exc:
+            return await _retry_after_validation_failure(self, ctx, raw, exc)

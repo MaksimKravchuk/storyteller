@@ -8,21 +8,22 @@ import allure
 import pytest
 
 from cast.scene_builder import SceneBuilder
+from cast.schemas.scene_response import SceneResponse
 from models.scene import Scene, SceneNPC
 
 _SEND_JSON = "_send_json"
 _EXPECTED_SUMMARY_CAP = 500
 
 
-def _full_scene_payload() -> dict:
-    return {
-        "location_id": "forum",
-        "description": "A crowded plaza.",
-        "npcs_present": ["senator", "merchant"],
-        "points_of_interest": ["statue"],
-        "ambient_description": "murmuring crowd",
-        "time_of_day": "morning",
-    }
+def _full_scene_payload() -> SceneResponse:
+    return SceneResponse(
+        location_id="forum",
+        description="A crowded plaza.",
+        npcs_present=["senator", "merchant"],
+        points_of_interest=["statue"],
+        ambient_description="murmuring crowd",
+        time_of_day="morning",
+    )
 
 
 @allure.epic("Scene & Exploration")
@@ -50,7 +51,7 @@ class TestSceneBuilder:
     @pytest.mark.asyncio
     async def test_empty_response_defaults(self, game_state) -> None:
         builder = SceneBuilder(llm_client=MagicMock())
-        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value={})):
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             scene = await builder.act("look", {"game_state": game_state})
         assert scene.location_id == "unknown"
         assert scene.description == ""
@@ -65,7 +66,7 @@ class TestSceneBuilder:
     async def test_setting_summary_truncation(self, game_state) -> None:
         game_state.setting.summary = "x" * 1200
         builder = SceneBuilder(llm_client=MagicMock())
-        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value={})):
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look", {"game_state": game_state})
         injected = builder._system_prompt_vars["setting_summary"]
         assert len(injected) == _EXPECTED_SUMMARY_CAP
@@ -76,7 +77,7 @@ class TestSceneBuilder:
     async def test_starting_area_fallback(self, game_state) -> None:
         game_state.current_scene = None
         builder = SceneBuilder(llm_client=MagicMock())
-        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value={})):
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look", {"game_state": game_state})
         assert builder._system_prompt_vars["current_location"] == "Starting area"
 
@@ -86,7 +87,7 @@ class TestSceneBuilder:
     async def test_uses_current_scene_description(self, game_state) -> None:
         game_state.current_scene = Scene(location_id="home", description="A warm hearth.")
         builder = SceneBuilder(llm_client=MagicMock())
-        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value={})):
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look", {"game_state": game_state})
         assert builder._system_prompt_vars["current_location"] == "A warm hearth."
 
@@ -95,7 +96,7 @@ class TestSceneBuilder:
     @pytest.mark.asyncio
     async def test_npcs_present_uuid_none(self, game_state) -> None:
         builder = SceneBuilder(llm_client=MagicMock())
-        payload = {"npcs_present": ["guard"]}
+        payload = SceneResponse(npcs_present=["guard"])
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=payload)):
             scene = await builder.act("look", {"game_state": game_state})
         assert scene.npcs_present[0].uuid is None

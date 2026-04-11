@@ -6,6 +6,7 @@ import asyncio
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
+from cast.schemas.npc_response import NPCResponse
 from models.npc_card import NPCCard
 from prompts.npc_generator_prompts import NPC_GENERATOR_CREATE, NPC_GENERATOR_SYSTEM
 
@@ -52,17 +53,17 @@ class NPCGenerator(BasePerformer):
     async def _generate_npc(self, npc_request: str, game_state: Any) -> NPCCard:
         """Generate a single NPC card from a role description."""
         prompt = NPC_GENERATOR_CREATE.render(npc_request=npc_request)
-        npc_data = await self._send_json(prompt)
+        npc_data = await self._send_json(prompt, response_model=NPCResponse)
 
         return NPCCard(
-            name=npc_data.get("name", "Unknown"),
-            biography=npc_data.get("biography", ""),
-            appearance=npc_data.get("appearance", ""),
-            occupation=npc_data.get("occupation", npc_request),
-            personality_traits=npc_data.get("personality_traits", []),
-            speech_style=npc_data.get("speech_style", "neutral"),
-            knowledge_scope=npc_data.get("knowledge_scope", "local"),
-            attributes=npc_data.get("attributes", {}),
-            inventory=npc_data.get("inventory", []),
+            name=npc_data.name or "Unknown",
+            biography=npc_data.biography,
+            appearance=npc_data.appearance,
+            occupation=npc_data.occupation or npc_request,
+            personality_traits=npc_data.personality_traits,
+            speech_style=npc_data.speech_style or "neutral",
+            knowledge_scope=npc_data.knowledge_scope or "local",
+            attributes=npc_data.attributes,
+            inventory=npc_data.inventory,
             location_id=(game_state.current_scene.location_id if game_state.current_scene else None),
         )

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
+from cast.schemas.item_response import ItemExamineResponse, ItemListResponse
 from prompts.item_generator_prompts import (
     ITEM_GENERATOR_BATCH,
     ITEM_GENERATOR_EXAMINE,
@@ -65,9 +66,9 @@ class ItemGenerator(BasePerformer):
 
         formatted_list = "\n".join("- {0}".format(entry) for entry in inventory)
         prompt = ITEM_GENERATOR_BATCH.render(owner_context=owner_context, item_list=formatted_list)
-        response = await self._send_json(prompt)
+        response = await self._send_json(prompt, response_model=ItemListResponse)
 
-        expanded = response.get("items", [])
+        expanded = response.expanded
         if len(expanded) != len(inventory):
             return inventory
         return expanded
@@ -82,5 +83,5 @@ class ItemGenerator(BasePerformer):
         self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
 
         prompt = ITEM_GENERATOR_EXAMINE.render(item_name=item_name, context_hint=context_hint)
-        response = await self._send_json(prompt)
-        return response.get("description", item_name)
+        response = await self._send_json(prompt, response_model=ItemExamineResponse)
+        return response.description or item_name

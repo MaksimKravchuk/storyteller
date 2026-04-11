@@ -7,6 +7,7 @@ import json
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
+from cast.schemas.setting_response import SearchTermsResponse, SettingResponse
 from models.setting import Setting
 from prompts.data_miner_prompts import (
     DATA_MINER_RESEARCH,
@@ -53,25 +54,25 @@ class DataMiner(BasePerformer):
             setting_request=input_data,
             raw_research=json.dumps(raw_articles, indent=2, ensure_ascii=False),
         )
-        setting_data = await self._send_json(research_prompt)
+        setting_data = await self._send_json(research_prompt, response_model=SettingResponse)
 
         # Build the Setting model
         return Setting(
-            name=setting_data.get("name", "Unknown"),
-            time_period=setting_data.get("time_period", ""),
-            region=setting_data.get("region", ""),
-            summary=setting_data.get("summary", ""),
-            key_persons=setting_data.get("key_persons") or [],
-            key_events=setting_data.get("key_events") or [],
-            locations=setting_data.get("locations") or [],
-            traditions=setting_data.get("traditions") or [],
-            technologies=setting_data.get("technologies") or [],
-            social_structure=setting_data.get("social_structure", ""),
+            name=setting_data.name or "Unknown",
+            time_period=setting_data.time_period,
+            region=setting_data.region,
+            summary=setting_data.summary,
+            key_persons=setting_data.key_persons,
+            key_events=setting_data.key_events,
+            locations=setting_data.locations,
+            traditions=setting_data.traditions,
+            technologies=setting_data.technologies,
+            social_structure=setting_data.social_structure,
             raw_sources=list(raw_articles.keys()),
         )
 
     async def _extract_search_terms(self, description: str) -> list[str]:
         """Ask the LLM to generate Wikipedia search terms."""
         prompt = DATA_MINER_SEARCH_TERMS.render(setting_request=description)
-        search_json = await self._send_json(prompt)
-        return search_json.get("search_terms", [description])
+        search_json = await self._send_json(prompt, response_model=SearchTermsResponse)
+        return search_json.search_terms or [description]

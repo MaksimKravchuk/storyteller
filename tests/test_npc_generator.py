@@ -8,6 +8,7 @@ import allure
 import pytest
 
 from cast.npc_generator import NPCGenerator
+from cast.schemas.npc_response import NPCResponse
 from models.npc_card import NPCCard
 from models.scene import Scene
 
@@ -17,18 +18,18 @@ _SCENE_CAP = 200
 _SOCIAL_CAP = 300
 
 
-def _full_npc_payload(name: str) -> dict:
-    return {
-        "name": name,
-        "biography": "{0} bio".format(name),
-        "appearance": "tall",
-        "occupation": "guard",
-        "personality_traits": ["stern"],
-        "speech_style": "gruff",
-        "knowledge_scope": "city",
-        "attributes": {"strength": 7},
-        "inventory": ["sword"],
-    }
+def _full_npc_payload(name: str) -> NPCResponse:
+    return NPCResponse(
+        name=name,
+        biography="{0} bio".format(name),
+        appearance="tall",
+        occupation="guard",
+        personality_traits=["stern"],
+        speech_style="gruff",
+        knowledge_scope="city",
+        attributes={"strength": 7},
+        inventory=["sword"],
+    )
 
 
 @allure.epic("NPC Interaction")
@@ -53,7 +54,7 @@ class TestNPCGenerator:
     @pytest.mark.asyncio
     async def test_missing_fields_defaulted(self, game_state) -> None:
         gen = NPCGenerator(llm_client=MagicMock())
-        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[{}])):
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[NPCResponse()])):
             cards = await gen.act(["tavern keeper"], {"game_state": game_state})
         card = cards[0]
         assert card.name == "Unknown"

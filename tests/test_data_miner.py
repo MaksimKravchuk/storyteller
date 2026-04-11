@@ -8,6 +8,7 @@ import allure
 import pytest
 
 from cast.data_miner import DataMiner
+from cast.schemas.setting_response import SearchTermsResponse, SettingResponse
 from models.setting import Setting
 from research.wikipedia_client import WikipediaClient
 
@@ -25,19 +26,19 @@ def _fake_wiki(summaries: list[dict] | None = None) -> MagicMock:
     return wiki
 
 
-def _full_setting_payload() -> dict:
-    return {
-        "name": "Florence",
-        "time_period": "1480s",
-        "region": "Tuscany",
-        "summary": "The cradle of the Renaissance.",
-        "key_persons": [{"name": "Lorenzo", "role": "ruler"}],
-        "key_events": [{"name": "Pazzi conspiracy"}],
-        "locations": [{"name": "Palazzo"}],
-        "traditions": ["patronage"],
-        "technologies": ["movable type"],
-        "social_structure": "merchant republic",
-    }
+def _full_setting_payload() -> SettingResponse:
+    return SettingResponse(
+        name="Florence",
+        time_period="1480s",
+        region="Tuscany",
+        summary="The cradle of the Renaissance.",
+        key_persons=[{"name": "Lorenzo", "role": "ruler"}],
+        key_events=[{"name": "Pazzi conspiracy"}],
+        locations=[{"name": "Palazzo"}],
+        traditions=["patronage"],
+        technologies=["movable type"],
+        social_structure="merchant republic",
+    )
 
 
 @allure.epic("World Setup")
@@ -61,7 +62,10 @@ class TestDataMiner:
     @pytest.mark.asyncio
     async def test_happy_path(self) -> None:
         miner = DataMiner(llm_client=MagicMock(), wikipedia_client=_fake_wiki())
-        responses = [{"search_terms": ["Florence", "Medici"]}, _full_setting_payload()]
+        responses = [
+            SearchTermsResponse(search_terms=["Florence", "Medici"]),
+            _full_setting_payload(),
+        ]
         with patch.object(miner, _SEND_JSON, new=AsyncMock(side_effect=responses)) as send_mock:
             result = await miner.act("Renaissance Florence", {})
         assert isinstance(result, Setting)
@@ -77,7 +81,7 @@ class TestDataMiner:
     @pytest.mark.asyncio
     async def test_defaults_when_fields_missing(self) -> None:
         miner = DataMiner(llm_client=MagicMock(), wikipedia_client=_fake_wiki([_default_summary()]))
-        responses = [{"search_terms": ["Rome"]}, {}]
+        responses = [SearchTermsResponse(search_terms=["Rome"]), SettingResponse()]
         with patch.object(miner, _SEND_JSON, new=AsyncMock(side_effect=responses)):
             result = await miner.act("Rome", {})
         assert result.name == "Unknown"
@@ -94,18 +98,20 @@ class TestDataMiner:
     async def test_none_list_fields_become_empty(self) -> None:
         miner = DataMiner(llm_client=MagicMock(), wikipedia_client=_fake_wiki([_default_summary()]))
         responses = [
-            {"search_terms": ["Rome"]},
-            {
-                "name": "Rome",
-                "time_period": "1 AD",
-                "region": "Italy",
-                "summary": "x",
-                "key_persons": None,
-                "key_events": None,
-                "locations": None,
-                "traditions": None,
-                "technologies": None,
-            },
+            SearchTermsResponse(search_terms=["Rome"]),
+            SettingResponse.model_validate(
+                {
+                    "name": "Rome",
+                    "time_period": "1 AD",
+                    "region": "Italy",
+                    "summary": "x",
+                    "key_persons": None,
+                    "key_events": None,
+                    "locations": None,
+                    "traditions": None,
+                    "technologies": None,
+                },
+            ),
         ]
         with patch.object(miner, _SEND_JSON, new=AsyncMock(side_effect=responses)):
             result = await miner.act("Rome", {})
@@ -121,7 +127,7 @@ class TestDataMiner:
     async def test_search_terms_fallback(self) -> None:
         stub = _fake_wiki([_default_summary()])
         miner = DataMiner(llm_client=MagicMock(), wikipedia_client=stub)
-        responses = [{}, _full_setting_payload()]
+        responses = [SearchTermsResponse(), _full_setting_payload()]
         with patch.object(miner, _SEND_JSON, new=AsyncMock(side_effect=responses)):
             await miner.act("Ancient Carthage", {})
         stub.get_summary.assert_awaited_once_with("Ancient Carthage")
@@ -132,7 +138,10 @@ class TestDataMiner:
     async def test_concurrent_fetch_count(self) -> None:
         stub = _fake_wiki([_default_summary(), _default_summary(), _default_summary()])
         miner = DataMiner(llm_client=MagicMock(), wikipedia_client=stub)
-        responses = [{"search_terms": ["a", "b", "c"]}, _full_setting_payload()]
+        responses = [
+            SearchTermsResponse(search_terms=["a", "b", "c"]),
+            _full_setting_payload(),
+        ]
         with patch.object(miner, _SEND_JSON, new=AsyncMock(side_effect=responses)):
             result = await miner.act("multi", {})
         assert stub.get_summary.await_count == 3
