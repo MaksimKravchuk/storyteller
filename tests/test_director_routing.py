@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
+import allure
 import pytest
 
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
@@ -34,31 +35,43 @@ async def _run_action_check(action_type):
     assert gs.turn_count == 1, f"{action_type} should increment turn_count"
 
 
+@allure.epic("Game Timeline")
+@allure.feature("Action routing")
 class TestTurnCounting:
+    @allure.story("Turn counting")
+    @allure.title("TALK actions increment the player's turn count")
     @pytest.mark.asyncio
     async def test_turn_increments_on_talk(self):
         director = make_director(route_response=_route(_TALK))
         await director.act("talk to someone")
         assert director._deps.game_state.turn_count == 1
 
+    @allure.story("Turn counting")
+    @allure.title("INTERACT actions increment the player's turn count")
     @pytest.mark.asyncio
     async def test_turn_increments_on_interact(self):
         director = make_director(route_response=_route("INTERACT"))
         await director.act("open the door")
         assert director._deps.game_state.turn_count == 1
 
+    @allure.story("Turn counting")
+    @allure.title("EXAMINE actions are free and do not advance the turn count")
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_examine(self):
         director = make_director(route_response=_route("EXAMINE"))
         await director.act("look at the fountain")
         assert director._deps.game_state.turn_count == 0
 
+    @allure.story("Turn counting")
+    @allure.title("OTHER free-form actions do not advance the turn count")
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_other(self):
         director = make_director(route_response=_route("OTHER"))
         await director.act("hum a tune")
         assert director._deps.game_state.turn_count == 0
 
+    @allure.story("Clarification flow")
+    @allure.title("A turn that only asks the player for clarification does not consume game time")
     @pytest.mark.asyncio
     async def test_turn_does_not_increment_on_clarification(self):
         director = make_director(
@@ -67,12 +80,18 @@ class TestTurnCounting:
         await director.act("open door")
         assert director._deps.game_state.turn_count == 0
 
+    @allure.story("Turn counting")
+    @allure.title("Every action type in TURN_COUNTING_ACTIONS advances the turn count by one")
     @pytest.mark.asyncio
     async def test_all_counting_actions_increment(self):
         await asyncio.gather(*(_run_action_check(at) for at in TURN_COUNTING_ACTIONS))
 
 
+@allure.epic("Game Timeline")
+@allure.feature("Action routing")
 class TestSceneChanges:
+    @allure.story("Scene transitions")
+    @allure.title("MOVE actions increment the scene number and invoke the SceneBuilder to produce a new scene")
     @pytest.mark.asyncio
     async def test_move_triggers_scene_change(self):
         director = make_director(route_response=_route("MOVE"))
@@ -81,18 +100,24 @@ class TestSceneChanges:
         assert director._deps.game_state.scene_number == 1
         director._cast.scene_builder.execute.assert_called_once()
 
+    @allure.story("Scene transitions")
+    @allure.title("EXPLORE actions increment the scene number to reflect the player entering a new area")
     @pytest.mark.asyncio
     async def test_explore_triggers_scene_change(self):
         director = make_director(route_response=_route("EXPLORE"))
         await director.act("explore the area")
         assert director._deps.game_state.scene_number == 1
 
+    @allure.story("Scene transitions")
+    @allure.title("SLEEP actions trigger a scene change because the player wakes in a new narrative beat")
     @pytest.mark.asyncio
     async def test_sleep_triggers_scene_change(self):
         director = make_director(route_response=_route("SLEEP"))
         await director.act("go to sleep")
         assert director._deps.game_state.scene_number == 1
 
+    @allure.story("Scene transitions")
+    @allure.title("TALK actions stay within the current scene and do not re-invoke the SceneBuilder")
     @pytest.mark.asyncio
     async def test_talk_does_not_trigger_scene_change(self):
         director = make_director(route_response=_route(_TALK))
@@ -100,6 +125,10 @@ class TestSceneChanges:
         assert director._deps.game_state.scene_number == 0
         director._cast.scene_builder.act.assert_not_called()
 
+    @allure.story("Scene transitions")
+    @allure.title(
+        "A scene change clears the previous scene's conversation log and starts a fresh one for the new scene"
+    )
     @pytest.mark.asyncio
     async def test_scene_change_resets_log(self):
         gs = make_game_state()
@@ -111,6 +140,8 @@ class TestSceneChanges:
         assert len(gs.scene_conversation_log) == 1
         assert gs.scene_conversation_log[0]["player_action"] == "go north"
 
+    @allure.story("Scene transitions")
+    @allure.title("EXAMINE actions do not increment the scene number nor invoke the SceneBuilder")
     @pytest.mark.asyncio
     async def test_examine_does_not_trigger_scene_change(self):
         director = make_director(route_response=_route("EXAMINE"))
@@ -118,10 +149,16 @@ class TestSceneChanges:
         assert director._deps.game_state.scene_number == 0
         director._cast.scene_builder.act.assert_not_called()
 
+    @allure.story("Scene transitions")
+    @allure.title("The SCENE_CHANGING_ACTIONS constant contains exactly EXPLORE, MOVE, and SLEEP")
     @pytest.mark.asyncio
     async def test_scene_changing_actions_constant(self):
         assert SCENE_CHANGING_ACTIONS == {"EXPLORE", "MOVE", "SLEEP"}
 
+    @allure.story("Scene transitions")
+    @allure.title(
+        "EXAMINE actions never replace the current scene even when the LLM erroneously delegates to scene_builder"
+    )
     @pytest.mark.asyncio
     async def test_examine_with_scene_builder_delegate_does_not_replace_scene(self):
         """Regression: LLM sometimes routes EXAMINE with scene_builder in delegate_to.
@@ -141,7 +178,13 @@ class TestSceneChanges:
         director._cast.scene_builder.execute.assert_not_called()
 
 
+@allure.epic("Game Timeline")
+@allure.feature("Action routing")
 class TestSceneConversationLog:
+    @allure.story("Scene conversation log")
+    @allure.title(
+        "Each resolved action is appended to the scene conversation log with player action, type, and summary"
+    )
     @pytest.mark.asyncio
     async def test_action_appended_to_scene_log(self):
         director = make_director(route_response=_route(_TALK))
@@ -152,6 +195,8 @@ class TestSceneConversationLog:
         assert log[0]["action_type"] == _TALK
         assert "response_summary" in log[0]
 
+    @allure.story("Scene conversation log")
+    @allure.title("Multiple actions in the same scene accumulate as separate entries in the conversation log")
     @pytest.mark.asyncio
     async def test_multiple_actions_accumulate(self):
         gs = make_game_state()
@@ -161,6 +206,8 @@ class TestSceneConversationLog:
         await make_director(game_state=gs, route_response=route).act("examine sword")
         assert len(gs.scene_conversation_log) == 3
 
+    @allure.story("Scene conversation log")
+    @allure.title("Long narrator responses are truncated to 500 characters when stored in the scene conversation log")
     @pytest.mark.asyncio
     async def test_response_summary_truncated(self):
         director = make_director(route_response=_route(_TALK), narrator_response="x" * 1000)
@@ -169,6 +216,8 @@ class TestSceneConversationLog:
         summary = log_entry["response_summary"]
         assert len(summary) == _SUMMARY_MAX_LENGTH
 
+    @allure.story("Clarification flow")
+    @allure.title("Clarification-only turns do not append anything to the scene conversation log")
     @pytest.mark.asyncio
     async def test_clarification_no_scene_log_append(self):
         director = make_director(

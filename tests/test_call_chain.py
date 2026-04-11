@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 
 import asyncio
 
+import allure
 import pytest
 
 from cast.base_performer_class import BasePerformer
@@ -84,7 +85,11 @@ def _init_test_context() -> None:
     current_session_id.set(_SESSION_ID)
 
 
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Call chain tracking")
 class TestExecuteAndParent:
+    @allure.story("Execute wrapper")
+    @allure.title("The agent stack is empty both before and after a single top-level execute() call")
     @pytest.mark.asyncio
     async def test_stack_empty_before_and_after(self):
         _init_test_context()
@@ -93,6 +98,8 @@ class TestExecuteAndParent:
         await agent.execute(_HI)
         assert agent_stack.get([]) == []
 
+    @allure.story("Execute wrapper")
+    @allure.title("The agent stack is cleaned up after execute() even when the inner act() raises")
     @pytest.mark.asyncio
     async def test_stack_cleaned_on_exception(self):
         _init_test_context()
@@ -102,6 +109,8 @@ class TestExecuteAndParent:
             await agent.execute(_HI)
         assert agent_stack.get([]) == []
 
+    @allure.story("Parent/sequence capture")
+    @allure.title("A top-level agent's LLM call is logged with parent_agent set to None")
     @pytest.mark.asyncio
     async def test_root_agent_has_no_parent(self):
         _init_test_context()
@@ -111,6 +120,8 @@ class TestExecuteAndParent:
         assert buf[0]["agent_name"] == "_AgentB"
         assert buf[0]["parent_agent"] is None
 
+    @allure.story("Parent/sequence capture")
+    @allure.title("A delegated child agent records its parent agent's name in its call log entry")
     @pytest.mark.asyncio
     async def test_nested_agent_has_parent(self):
         _init_test_context()
@@ -125,6 +136,8 @@ class TestExecuteAndParent:
         assert buf[1]["agent_name"] == "_AgentB"
         assert buf[1]["parent_agent"] == "_AgentAWithChild"
 
+    @allure.story("Parent/sequence capture")
+    @allure.title("Consecutive LLM calls within one turn get monotonically increasing call_sequence numbers")
     @pytest.mark.asyncio
     async def test_sequence_increments(self):
         _init_test_context()
@@ -136,6 +149,8 @@ class TestExecuteAndParent:
         assert buf[0][_CALL_SEQUENCE] == 0
         assert buf[1][_CALL_SEQUENCE] == 1
 
+    @allure.story("Parent/sequence capture")
+    @allure.title("LLM calls dispatched concurrently via asyncio.gather each receive a unique call_sequence")
     @pytest.mark.asyncio
     async def test_parallel_calls_get_unique_sequences(self):
         """asyncio.gather'd LLM calls must each get a unique call_sequence."""
@@ -148,6 +163,8 @@ class TestExecuteAndParent:
         sequences = [entry[_CALL_SEQUENCE] for entry in buf]
         assert len(set(sequences)) == 6, "Expected 6 unique sequences, got {0}".format(sequences)
 
+    @allure.story("Parent/sequence capture")
+    @allure.title("call_sequence restarts at zero for each new turn after reset_buffer is called")
     @pytest.mark.asyncio
     async def test_consecutive_turns_each_start_at_zero(self):
         """Regression: sequence must restart at 0 for each new turn (reset_buffer)."""

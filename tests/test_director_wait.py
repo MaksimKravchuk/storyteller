@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from tests.director_helpers import make_director, make_game_state, setup_npc
@@ -22,7 +23,11 @@ def _wait_route():
     }
 
 
+@allure.epic("Game Timeline")
+@allure.feature("Wait action")
 class TestWaitSkipsDialogue:
+    @allure.story("Skips dialogue")
+    @allure.title("WAIT action invokes the Actor only for the NPC's turn and never for dialogue generation")
     @pytest.mark.asyncio
     async def test_wait_does_not_call_actor_for_dialogue(self):
         gs = make_game_state()
@@ -40,6 +45,8 @@ class TestWaitSkipsDialogue:
         call_input = mock_actor.execute.call_args.kwargs.get("input_data", "")
         assert "It is Guard's turn" in call_input
 
+    @allure.story("Skips dialogue")
+    @allure.title("WAIT action preserves the current scene and never triggers the SceneBuilder")
     @pytest.mark.asyncio
     async def test_wait_does_not_rebuild_scene(self):
         gs = make_game_state()
@@ -52,7 +59,11 @@ class TestWaitSkipsDialogue:
         assert gs.current_scene is scene_before
 
 
+@allure.epic("Game Timeline")
+@allure.feature("Wait action")
 class TestWaitAdvancesTime:
+    @allure.story("Advances clock")
+    @allure.title("WAIT action advances the game clock to reflect time passing while the player holds still")
     @pytest.mark.asyncio
     async def test_wait_advances_game_clock(self):
         gs = make_game_state()
@@ -63,6 +74,8 @@ class TestWaitAdvancesTime:
 
         assert gs.game_clock > clock_before
 
+    @allure.story("Advances clock")
+    @allure.title("WAIT action counts as a real turn and increments the player's turn count")
     @pytest.mark.asyncio
     async def test_wait_increments_turn_count(self):
         gs = make_game_state()
@@ -74,7 +87,13 @@ class TestWaitAdvancesTime:
         assert gs.turn_count == turns_before + 1
 
 
+@allure.epic("Game Timeline")
+@allure.feature("Wait action")
 class TestForcedWaitFromIncapacitation:
+    @allure.story("Forced wait")
+    @allure.title(
+        "An unconscious player is forced into a wait regardless of the input action, short-circuiting the LLM router"
+    )
     @pytest.mark.asyncio
     async def test_unconscious_player_is_forced_to_wait(self):
         gs = make_game_state()
@@ -88,6 +107,8 @@ class TestForcedWaitFromIncapacitation:
         narrator_call = director._cast.narrator.execute.call_args
         assert narrator_call is not None
 
+    @allure.story("Forced wait")
+    @allure.title("A stunned player is forced into a wait and the Narrator still produces output")
     @pytest.mark.asyncio
     async def test_stunned_player_is_forced_to_wait(self):
         gs = make_game_state()
@@ -99,6 +120,8 @@ class TestForcedWaitFromIncapacitation:
         narrator_call = director._cast.narrator.execute.call_args
         assert narrator_call is not None
 
+    @allure.story("Forced wait")
+    @allure.title("A healthy player is routed normally and can trigger dialogue plus the NPC's reactive turn")
     @pytest.mark.asyncio
     async def test_healthy_player_routes_normally(self):
         gs = make_game_state()
@@ -124,7 +147,11 @@ class TestForcedWaitFromIncapacitation:
         assert mock_actor.execute.call_count == 2
 
 
+@allure.epic("Game Timeline")
+@allure.feature("Wait action")
 class TestWaitKeywordShortCircuit:
+    @allure.story("Keyword short-circuit")
+    @allure.title("The '/wait' slash command routes to a wait turn without calling the LLM router")
     @pytest.mark.asyncio
     async def test_slash_wait_routes_without_llm(self):
         gs = make_game_state()

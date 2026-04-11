@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import random
 
+import allure
 import pytest
 
 from cast.dice import CombatOutcome
@@ -34,7 +35,11 @@ def _make_guard(**kwargs) -> NPCCard:
     return NPCCard(name=_GUARD_NAME, occupation=_GUARD_OCC, **kwargs)
 
 
+@allure.epic("Combat & Action Resolution")
+@allure.feature("Combat status & recovery")
 class TestBuildCombatActionStatusHint:
+    @allure.story("Status hint")
+    @allure.title("A winning player attack injects a [STATUS:] hint telling the actor to record NPC damage")
     def test_player_succeeds_includes_status_hint(self):
         npc = _make_guard(attributes={_COMBAT_SKILL: 0})
         rng = random.Random(_RNG_SEED)
@@ -45,12 +50,16 @@ class TestBuildCombatActionStatusHint:
         ):
             assert _STATUS_TAG in action_text
 
+    @allure.story("Status hint")
+    @allure.title("A non-aggressive action produces neither a combat roll nor a status hint")
     def test_non_aggressive_no_status_hint(self):
         npc = _make_guard()
         action_text, combat_roll = build_combat_action("hello guard", npc, False)
         assert _STATUS_TAG not in action_text
         assert combat_roll is None
 
+    @allure.story("Status hint")
+    @allure.title("When the NPC wins the combat roll, no status hint is injected into the action text")
     def test_npc_wins_no_status_hint(self):
         npc = _make_guard(attributes={_COMBAT_SKILL: 10})
         for seed in range(100):
@@ -65,7 +74,11 @@ class TestBuildCombatActionStatusHint:
         pytest.skip("Could not find a seed where NPC wins")
 
 
+@allure.epic("Combat & Action Resolution")
+@allure.feature("Combat status & recovery")
 class TestScheduleRecovery:
+    @allure.story("Recovery scheduling")
+    @allure.title("A wounded NPC after a player win gets a CHANGE_STATUS recovery event back to healthy")
     def test_schedules_recovery_for_wounded_npc(self):
         gs = _make_game_state()
         npc = _make_guard(physical_status="wounded")
@@ -82,6 +95,8 @@ class TestScheduleRecovery:
         assert event.effects[0].effect_type == "CHANGE_STATUS"
         assert event.effects[0].effect_data["status"] == "healthy"
 
+    @allure.story("Recovery scheduling")
+    @allure.title("A PLAYER_DOMINATES outcome schedules a longer recovery duration than PLAYER_SUCCEEDS")
     def test_dominates_has_longer_recovery(self):
         gs = _make_game_state()
         npc = _make_guard(physical_status="badly hurt")
@@ -102,6 +117,8 @@ class TestScheduleRecovery:
         )
         assert event_dominate.duration > event_succeed.duration
 
+    @allure.story("Recovery scheduling")
+    @allure.title("When the NPC wins the combat, no recovery event is scheduled at all")
     def test_no_recovery_when_npc_wins(self):
         gs = _make_game_state()
         npc = _make_guard()
@@ -116,6 +133,8 @@ class TestScheduleRecovery:
         )
         assert event is None
 
+    @allure.story("Recovery scheduling")
+    @allure.title("A healthy NPC that wins a fight does not get a redundant recovery event scheduled")
     def test_no_recovery_when_status_is_healthy(self):
         gs = _make_game_state()
         npc = _make_guard(physical_status="healthy")

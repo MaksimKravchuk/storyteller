@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import allure
 import pytest
 
 from models.base_model import BaseModel
@@ -14,18 +15,28 @@ _NPC_A = "npc-1"
 _UUID_LENGTH = 36
 
 
+@allure.epic("Memory & Persistence")
+@allure.feature("Domain models")
 class TestBaseModel:
+    @allure.story("BaseModel UUID")
+    @allure.title("BaseModel assigns a 36-character string UUID on construction")
     def test_uuid_generated_on_init(self):
         model = BaseModel()
         assert isinstance(model.uuid, str)
         assert len(model.uuid) == _UUID_LENGTH
 
+    @allure.story("BaseModel UUID")
+    @allure.title("100 BaseModel instances produce 100 unique UUIDs")
     def test_unique_uuids(self):
         uuids = {BaseModel().uuid for _ in range(100)}
         assert len(uuids) == 100
 
 
+@allure.epic("Memory & Persistence")
+@allure.feature("Domain models")
 class TestCharacter:
+    @allure.story("Character defaults")
+    @allure.title("A Character with only a name has empty biography, relationships, attributes, and inventory")
     def test_defaults(self):
         char = Character(name="Livia")
         assert char.name == "Livia"
@@ -34,22 +45,30 @@ class TestCharacter:
         assert char.attributes == {}
         assert char.inventory == []
 
+    @allure.story("Character defaults")
+    @allure.title("A new Character has empty personality traits and defaults to 'local' knowledge scope")
     def test_default_personality_and_scope(self):
         char = Character(name="Livia")
         assert char.personality_traits == []
         assert char.knowledge_scope == "local"
 
+    @allure.story("Character relationships")
+    @allure.title("Character.add_relationship stores the target UUID and relationship type in the relationships dict")
     def test_add_relationship(self):
         char = Character(name="Brutus")
         char.add_relationship("caesar-uuid", "enemy")
         assert char.relationships["caesar-uuid"] == "enemy"
 
+    @allure.story("Character attributes")
+    @allure.title("Character.update_attribute and get_attribute round-trip values and honor default fallbacks")
     def test_update_and_get_attribute(self):
         char = Character(name="Cato")
         char.update_attribute("strength", 7)
         assert char.get_attribute("strength") == 7
         assert char.get_attribute("wisdom", default=5) == 5
 
+    @allure.story("Character inventory")
+    @allure.title("Character inventory supports adding and removing items")
     def test_inventory_add_and_remove(self):
         char = Character(name="Cassius")
         char.add_item_to_inventory(_DAGGER)
@@ -57,103 +76,157 @@ class TestCharacter:
         char.remove_item_from_inventory(_DAGGER)
         assert _DAGGER not in char.inventory
 
+    @allure.story("Character inventory")
+    @allure.title("Removing an item not present in inventory raises ValueError naming the missing item")
     def test_remove_item_not_in_inventory_raises(self):
         char = Character(name="Cassius")
         with pytest.raises(ValueError, match=_DAGGER):
             char.remove_item_from_inventory("dagger")
 
+    @allure.story("Character defaults")
+    @allure.title("Character.talk() returns a greeting prefixed with the character's name")
     def test_talk(self):
         char = Character(name="Cicero")
         assert char.talk() == "Cicero says: Hello!"
 
 
+@allure.epic("Memory & Persistence")
+@allure.feature("Domain models")
 class TestNPCCard:
+    @allure.story("NPCCard fields")
+    @allure.title("NPCCard.to_prompt_context embeds the NPC's name into the prompt string")
     def test_to_prompt_context_contains_name(self, sample_npc):
         assert "Marcus" in sample_npc.to_prompt_context()
 
+    @allure.story("NPCCard fields")
+    @allure.title("NPCCard.to_prompt_context embeds the NPC's occupation into the prompt string")
     def test_to_prompt_context_contains_occupation(self, sample_npc):
         assert "Soldier" in sample_npc.to_prompt_context()
 
+    @allure.story("NPCCard fields")
+    @allure.title("NPCCard.to_prompt_context lists each personality trait in the prompt string")
     def test_to_prompt_context_contains_traits(self, sample_npc):
         ctx = sample_npc.to_prompt_context()
         assert "brave" in ctx
         assert "loyal" in ctx
 
+    @allure.story("NPCCard fields")
+    @allure.title("NPCCard.to_prompt_context enumerates inventory items in the prompt string")
     def test_to_prompt_context_shows_inventory(self, sample_npc):
         ctx = sample_npc.to_prompt_context()
         assert "gladius" in ctx
         assert "scutum" in ctx
 
+    @allure.story("NPCCard fields")
+    @allure.title("NPCCard.to_prompt_context renders attributes as 'key=value' pairs in the prompt string")
     def test_to_prompt_context_shows_attributes(self, sample_npc):
         assert "strength=8" in sample_npc.to_prompt_context()
 
+    @allure.story("NPCCard fields")
+    @allure.title("A new NPCCard starts with an empty conversation history list")
     def test_conversation_history_starts_empty(self, sample_npc):
         assert sample_npc.conversation_history == []
 
+    @allure.story("NPCCard fields")
+    @allure.title("A new NPCCard defaults to a 'neutral' current mood")
     def test_current_mood_default(self, sample_npc):
         assert sample_npc.current_mood == "neutral"
 
 
+@allure.epic("Memory & Persistence")
+@allure.feature("Domain models")
 class TestNPCCardPhysicalStatus:
+    @allure.story("NPCCard physical status")
+    @allure.title("A new NPCCard defaults to a 'healthy' physical status")
     def test_default_is_healthy(self, sample_npc):
         assert sample_npc.physical_status == "healthy"
 
+    @allure.story("NPCCard physical status")
+    @allure.title("NPCCard accepts a free-form multi-word physical status like 'wounded left arm'")
     def test_custom_value(self):
         npc = NPCCard(name="Brutus", occupation="senator", physical_status="wounded left arm")
         assert npc.physical_status == "wounded left arm"
 
+    @allure.story("NPCCard physical status")
+    @allure.title("NPCCard prompt context exposes the default physical status line")
     def test_prompt_has_status(self, sample_npc):
         assert "Physical status: healthy" in sample_npc.to_prompt_context()
 
+    @allure.story("NPCCard physical status")
+    @allure.title("NPCCard prompt context reflects a custom physical status verbatim")
     def test_prompt_has_custom_status(self):
         npc = NPCCard(name="Brutus", occupation="senator", physical_status="barely standing")
         assert "Physical status: barely standing" in npc.to_prompt_context()
 
 
+@allure.epic("Memory & Persistence")
+@allure.feature("Domain models")
 class TestLocation:
+    @allure.story("Location defaults")
+    @allure.title("A new Location has its name set and empty npcs_present and points_of_interest lists")
     def test_defaults(self, sample_location):
         assert sample_location.name == "Forum Romanum"
         assert sample_location.npcs_present == []
         assert sample_location.points_of_interest == []
 
+    @allure.story("Location NPC membership")
+    @allure.title("Location.add_npc places the NPC UUID into the npcs_present list")
     def test_add_npc(self, sample_location):
         sample_location.add_npc(_NPC_A)
         assert _NPC_A in sample_location.npcs_present
 
+    @allure.story("Location NPC membership")
+    @allure.title("Adding the same NPC twice to a Location is idempotent and keeps a single entry")
     def test_add_npc_idempotent(self, sample_location):
         sample_location.add_npc(_NPC_A)
         sample_location.add_npc(_NPC_A)
         assert sample_location.npcs_present.count(_NPC_A) == 1
 
+    @allure.story("Location NPC membership")
+    @allure.title("Location.remove_npc drops the NPC UUID from the npcs_present list")
     def test_remove_npc(self, sample_location):
         sample_location.add_npc(_NPC_A)
         sample_location.remove_npc(_NPC_A)
         assert _NPC_A not in sample_location.npcs_present
 
+    @allure.story("Location NPC membership")
+    @allure.title("Removing an NPC not currently in the Location is a silent no-op")
     def test_remove_npc_not_present_is_noop(self, sample_location):
         sample_location.remove_npc("ghost")
 
 
+@allure.epic("Memory & Persistence")
+@allure.feature("Domain models")
 class TestSetting:
+    @allure.story("Setting fields")
+    @allure.title("A Setting stores its required name, time_period, and region fields")
     def test_required_fields(self, simple_setting):
         assert simple_setting.name == "Ancient Rome"
         assert simple_setting.time_period == "1st century AD"
         assert simple_setting.region == "Italy"
 
+    @allure.story("Setting fields")
+    @allure.title("A new Setting has empty key_persons, key_events, and locations lists by default")
     def test_optional_lists_default_empty(self):
         setting = Setting(name="X", time_period="Y", region="Z", summary="S")
         assert setting.key_persons == []
         assert setting.key_events == []
         assert setting.locations == []
 
+    @allure.story("Setting fields")
+    @allure.title("A new Setting has empty traditions, technologies, and raw_sources metadata lists")
     def test_optional_metadata_defaults_empty(self):
         setting = Setting(name="X", time_period="Y", region="Z", summary="S")
         assert setting.traditions == []
         assert setting.technologies == []
         assert setting.raw_sources == []
 
+    @allure.story("Setting fields")
+    @allure.title("A Setting preserves key_persons entries as supplied dictionaries")
     def test_key_persons_stored(self, simple_setting):
         assert simple_setting.key_persons[0]["name"] == "Augustus"
 
+    @allure.story("Setting fields")
+    @allure.title("A Setting inherits a 36-character UUID from BaseModel")
     def test_has_uuid(self, simple_setting):
         assert isinstance(simple_setting.uuid, str) and len(simple_setting.uuid) == _UUID_LENGTH

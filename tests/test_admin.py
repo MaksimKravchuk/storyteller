@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import allure
 import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
@@ -14,11 +15,18 @@ _API_SESSIONS = "/api/sessions"
 _HTTP_OK = 200
 _HTTP_UNAUTHORIZED = 401
 
+pytestmark = [
+    allure.epic("Player Interfaces"),
+    allure.feature("Admin dashboard"),
+]
+
 
 def _make_app(token=None) -> web.Application:
     return AdminServer(MagicMock(), port=0, token=token)._app
 
 
+@allure.story("No-auth mode")
+@allure.title("Admin API requests pass through the auth middleware when no token is configured")
 @pytest.mark.asyncio
 async def test_middleware_no_token_allows_api() -> None:
     """Without a token configured, all API requests pass through."""
@@ -35,6 +43,8 @@ async def test_middleware_no_token_allows_api() -> None:
             assert resp.status == _HTTP_OK
 
 
+@allure.story("No-auth mode")
+@allure.title("Non-API dashboard routes bypass the token check even when a token is configured")
 @pytest.mark.asyncio
 async def test_middleware_does_not_block_dashboard() -> None:
     """Non-/api/ routes are not subject to token check."""

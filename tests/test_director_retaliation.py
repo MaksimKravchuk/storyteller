@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from models.npc_card import NPCCard
@@ -111,7 +112,11 @@ class _SideEffect:
         return "*retaliates fiercely*\n[MOOD: {0}]".format(_HOSTILE)
 
 
+@allure.epic("Combat & Action Resolution")
+@allure.feature("NPC retaliation")
 class TestNPCRetaliation:
+    @allure.story("Retaliation on mood change")
+    @allure.title("An NPC whose mood flips to hostile retaliates with an extra actor call carrying a dice roll")
     @pytest.mark.asyncio
     async def test_retaliation_on_mood_change_to_hostile(self):
         gs = make_game_state()
@@ -127,6 +132,8 @@ class TestNPCRetaliation:
         assert "retaliates" in (second.kwargs.get("input_data") or second.args[0])
         assert "[DICE ROLL:" in (second.kwargs.get("input_data") or second.args[0])
 
+    @allure.story("Retaliation on mood change")
+    @allure.title("An NPC that stays neutral through a friendly greet receives no retaliation call")
     @pytest.mark.asyncio
     async def test_no_retaliation_when_mood_unchanged(self):
         gs = make_game_state()
@@ -156,6 +163,8 @@ class TestNPCRetaliation:
         # 2 calls: dialogue + NPC turn (no retaliation since mood unchanged)
         assert mock_actor.execute.call_count == 2
 
+    @allure.story("Aggression roll integration")
+    @allure.title("A newly hostile NPC whose aggression roll fails does not retaliate this turn")
     @pytest.mark.asyncio
     async def test_no_retaliation_when_dice_fail(self):
         gs = make_game_state()
@@ -172,6 +181,8 @@ class TestNPCRetaliation:
         # 2 calls: dialogue + NPC turn (no retaliation since dice failed)
         assert director._actors[_NPC_A].execute.call_count == 2
 
+    @allure.story("Retaliation on mood change")
+    @allure.title("Two NPCs sharing the same display name collapse into a single retaliation entry")
     @pytest.mark.asyncio
     async def test_retaliation_deduplication_by_name(self):
         gs = make_game_state()

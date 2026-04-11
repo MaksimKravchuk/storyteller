@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import allure
 import pytest
 
 from llm.openai_client import _sanitize
 
+pytestmark = [allure.epic("Engine & LLM Infrastructure"), allure.feature("OpenAI client sanitization")]
 
+
+@allure.story("Control character stripping")
+@allure.title(
+    "_sanitize strips null bytes, C0 control characters, and DEL while preserving text, tabs, newlines, and Unicode"
+)
 @pytest.mark.parametrize(
     "input_text, expected",
     [
@@ -26,11 +33,17 @@ from llm.openai_client import _sanitize
         ("abc\x7fdef", "abcdef"),
         # Unicode non-ASCII preserved
         ("Привет мир 🌍", "Привет мир 🌍"),
-        # Mixed: null byte stripped, lone surrogate becomes 3 replacement chars
-        ("test\x00\ud800end", "test\ufffd\ufffd\ufffdend"),
         # Empty string
         ("", ""),
     ],
 )
 def test_sanitize(input_text: str, expected: str) -> None:
     assert _sanitize(input_text) == expected
+
+
+# Split out from the parametrize table because allure-pytest's JSON writer
+# cannot serialize parametrize values containing lone UTF-16 surrogates.
+@allure.story("Control character stripping")
+@allure.title("_sanitize replaces a lone UTF-16 surrogate with three U+FFFD replacement characters")
+def test_sanitize_lone_surrogate() -> None:
+    assert _sanitize("test\x00\ud800end") == "test\ufffd\ufffd\ufffdend"

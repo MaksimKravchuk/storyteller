@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from cast.dice import ContestType
@@ -68,14 +69,22 @@ def _talk_response(target: str = "player") -> dict:
     return {"action": "The merchant calls out to you.", "type": "TALK", "target": target}
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnResolverInit:
+    @allure.story("Resolver construction")
+    @allure.title("NPCTurnResolver can be constructed with an empty actors dict and any game state")
     def test_creates_with_game_state_and_actors(self):
         gs = _make_gs()
         resolver = NPCTurnResolver(game_state=gs, actors={})
         assert resolver is not None
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnResolverEmptyScene:
+    @allure.story("Empty scene")
+    @allure.title("With no current_scene at all, NPC turn resolution returns an empty action list")
     @pytest.mark.asyncio
     async def test_no_scene_returns_empty(self):
         gs = _make_gs()
@@ -84,6 +93,8 @@ class TestNPCTurnResolverEmptyScene:
         actions = await resolver.resolve_npc_turns("Player looked around.")
         assert actions == []
 
+    @allure.story("Empty scene")
+    @allure.title("A scene with no NPCs present yields no NPC turn actions")
     @pytest.mark.asyncio
     async def test_no_npcs_returns_empty(self):
         gs = _make_gs()
@@ -93,7 +104,11 @@ class TestNPCTurnResolverEmptyScene:
         assert actions == []
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnResolverSingleNPC:
+    @allure.story("Action parsing")
+    @allure.title("A single NPC returning an IDLE JSON turn yields one action with no contest roll")
     @pytest.mark.asyncio
     async def test_single_npc_idle_action(self):
         gs = _make_gs()
@@ -112,6 +127,8 @@ class TestNPCTurnResolverSingleNPC:
         assert actions[0].action_type == "IDLE"
         assert actions[0].contest_roll is None
 
+    @allure.story("Action parsing")
+    @allure.title("Every resolved NPC turn populates a non-empty action_description string")
     @pytest.mark.asyncio
     async def test_npc_action_has_description(self):
         gs = _make_gs()
@@ -126,7 +143,11 @@ class TestNPCTurnResolverSingleNPC:
         assert len(actions[0].action_description) > 0
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnResolverSkipsIncapacitated:
+    @allure.story("Incapacitation")
+    @allure.title("An unconscious NPC is skipped entirely and its actor is never called")
     @pytest.mark.asyncio
     async def test_unconscious_npc_skipped(self):
         gs = _make_gs()
@@ -141,6 +162,8 @@ class TestNPCTurnResolverSkipsIncapacitated:
         assert actions == []
         actor.execute.assert_not_called()
 
+    @allure.story("Incapacitation")
+    @allure.title("An NPC with physical_status 'dead' produces no turn action")
     @pytest.mark.asyncio
     async def test_dead_npc_skipped(self):
         gs = _make_gs()
@@ -155,7 +178,11 @@ class TestNPCTurnResolverSkipsIncapacitated:
         assert actions == []
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnResolverMultipleNPCs:
+    @allure.story("Concurrent resolution")
+    @allure.title("Multiple NPCs in a scene all resolve their turns in parallel and all appear in the result")
     @pytest.mark.asyncio
     async def test_multiple_npcs_resolve_simultaneously(self):
         gs = _make_gs()
@@ -180,7 +207,11 @@ class TestNPCTurnResolverMultipleNPCs:
         assert _MERCHANT in names
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnContestAgainstPlayer:
+    @allure.story("Target selection")
+    @allure.title("An NPC ATTACK turn targeting the player generates a COMBAT contest roll on that action")
     @pytest.mark.asyncio
     async def test_attack_player_generates_contest(self):
         gs = _make_gs()
@@ -198,7 +229,11 @@ class TestNPCTurnContestAgainstPlayer:
         assert actions[0].contest_roll.contest_type == ContestType.COMBAT
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnContestNPCvsNPC:
+    @allure.story("Target selection")
+    @allure.title("An NPC attacking another NPC generates a COMBAT contest roll between the two NPCs")
     @pytest.mark.asyncio
     async def test_npc_attacks_other_npc_generates_contest(self):
         gs = _make_gs()
@@ -222,7 +257,11 @@ class TestNPCTurnContestNPCvsNPC:
         assert guard_action.contest_roll.contest_type == ContestType.COMBAT
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnSceneMutation:
+    @allure.story("Scene mutation")
+    @allure.title("An NPC MOVE turn removes the NPC from the current scene's npcs_present list")
     @pytest.mark.asyncio
     async def test_move_action_removes_npc_from_scene(self):
         gs = _make_gs()
@@ -242,7 +281,11 @@ class TestNPCTurnSceneMutation:
         assert _NPC_UUID_A not in scene_uuids
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCTurnResolverErrorHandling:
+    @allure.story("Error handling")
+    @allure.title("An LLM failure for one NPC does not prevent other NPCs from completing their turns")
     @pytest.mark.asyncio
     async def test_one_npc_failure_does_not_kill_others(self):
         gs = _make_gs()
@@ -267,7 +310,11 @@ class TestNPCTurnResolverErrorHandling:
         assert actions[0].npc_name == _MERCHANT
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
 class TestNPCActionDataclass:
+    @allure.story("NPCAction dataclass")
+    @allure.title("NPCAction dataclass stores uuid, name, description, type, target, and optional contest roll")
     def test_npc_action_fields(self):
         action = NPCAction(
             npc_uuid="u1",
