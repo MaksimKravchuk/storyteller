@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import os
-from dataclasses import dataclass
-
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from defaults.models import ModelConfig
 
@@ -14,9 +11,15 @@ _GPT35_TURBO = "gpt-3.5-turbo"
 _PROVIDER_OPENAI = "openai"
 
 
-@dataclass
-class Config:
+class Config(BaseSettings):
     """All runtime configuration for the Storyteller engine."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        case_sensitive=False,
+    )
 
     # API keys (None means the SDK will try its own env-var fallback)
     openai_api_key: str | None = None
@@ -41,19 +44,9 @@ def load_config(env_path: str | None = None) -> Config:
 
     Precedence: explicit env vars > ``.env`` file > defaults.
     """
-    load_dotenv(dotenv_path=env_path, override=False)
-
-    return Config(
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
-        director_model=os.getenv("DIRECTOR_MODEL", _GPT4),
-        agent_model=os.getenv("AGENT_MODEL", _GPT35_TURBO),
-        narrator_model=os.getenv("NARRATOR_MODEL", _GPT4),
-        default_provider=os.getenv("DEFAULT_PROVIDER", _PROVIDER_OPENAI),
-        temperature=float(os.getenv("TEMPERATURE", "0.7")),
-        max_tokens=int(os.getenv("MAX_TOKENS", "2048")),
-        telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
-    )
+    if env_path is not None:
+        return Config(_env_file=env_path)  # type: ignore[call-arg]
+    return Config()
 
 
 def _detect_provider(model_id: str, fallback: str) -> str:
