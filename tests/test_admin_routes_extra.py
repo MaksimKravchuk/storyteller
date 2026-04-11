@@ -85,7 +85,7 @@ async def test_session_detail_returns_404_when_not_found() -> None:
 
 
 @allure.story("Conversation log")
-@allure.title("conversation route wraps the repository log list in a {'log': [...]} envelope")
+@allure.title("conversation route wraps the repository log list in a log envelope")
 @pytest.mark.asyncio
 async def test_conversation_returns_log_envelope() -> None:
     """conversation returns {'log': <list>} from repo.admin.get_conversation_log."""

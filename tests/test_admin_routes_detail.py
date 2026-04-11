@@ -55,7 +55,7 @@ async def test_knowledge_route_returns_graph_payload() -> None:
 
 
 @allure.story("Events")
-@allure.title("/events detail route wraps fetch_events output in an {'events': [...]} envelope")
+@allure.title("/events detail route wraps fetch_events output in an events envelope")
 @pytest.mark.asyncio
 async def test_events_route_wraps_fetch_events() -> None:
     """events returns {'events': <list>} from fetch_events."""
@@ -82,7 +82,7 @@ async def test_events_route_wraps_fetch_events() -> None:
 
 
 @allure.story("NPCs")
-@allure.title("/npcs detail route wraps repo.admin.get_npcs output in an {'npcs': [...]} envelope")
+@allure.title("/npcs detail route wraps repo.admin.get_npcs output in an npcs envelope")
 @pytest.mark.asyncio
 async def test_npcs_route_returns_npc_list() -> None:
     """npcs returns the list produced by repo.admin.get_npcs."""
@@ -98,7 +98,7 @@ async def test_npcs_route_returns_npc_list() -> None:
 
 
 @allure.story("Locations")
-@allure.title("/locations detail route wraps repo.admin.get_locations in a {'locations': [...]} envelope")
+@allure.title("/locations detail route wraps repo.admin.get_locations in a locations envelope")
 @pytest.mark.asyncio
 async def test_locations_route_returns_location_list() -> None:
     """locations returns the list produced by repo.admin.get_locations."""
@@ -114,7 +114,7 @@ async def test_locations_route_returns_location_list() -> None:
 
 
 @allure.story("Scenes")
-@allure.title("/scenes detail route wraps fetch_scenes output in a {'scenes': [...]} envelope")
+@allure.title("/scenes detail route wraps fetch_scenes output in a scenes envelope")
 @pytest.mark.asyncio
 async def test_scenes_route_wraps_fetch_scenes() -> None:
     """scenes returns {'scenes': <list>} from fetch_scenes."""
