@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import allure
 import pytest
 
 from cast.base_performer_class import BasePerformer
@@ -36,7 +37,13 @@ def _clean_logging():
     reset_buffer()
 
 
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("BasePerformer logging")
 class TestExecuteLogging:
+    @allure.story("Start/done records")
+    @allure.title(
+        "BasePerformer.execute emits a 'start' log record and a 'done' record with duration_ms on the happy path"
+    )
     @pytest.mark.asyncio
     async def test_emits_start_and_done_logs(self, loguru_sink):
         await _OKLogging(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT).execute("input")
@@ -47,6 +54,8 @@ class TestExecuteLogging:
         assert has_start
         assert has_done
 
+    @allure.story("Error records")
+    @allure.title("BasePerformer.execute emits an ERROR log that captures the exception type, duration, and traceback")
     @pytest.mark.asyncio
     async def test_error_log_has_exc_type(self, loguru_sink):
         with pytest.raises(ValueError):
@@ -59,6 +68,10 @@ class TestExecuteLogging:
         assert "duration_ms=" in error_message
         assert error_records[0]["exception"] is not None
 
+    @allure.story("JSON warnings")
+    @allure.title(
+        "BasePerformer._send_json emits a WARNING per failed attempt plus a final bracket-extraction failure warning"
+    )
     @pytest.mark.asyncio
     async def test_send_json_warning_per_attempt(self, loguru_sink):
         performer = _JsonLogging(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)

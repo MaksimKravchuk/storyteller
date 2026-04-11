@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import random
 
+import allure
 import pytest
 
 from cast.dice import ContestOutcome, ContestType
@@ -28,9 +29,13 @@ def _make_npc(name: str = _GUARD, **kwargs) -> NPCCard:
     return NPCCard(name=name, occupation="guard", **kwargs)
 
 
+@allure.epic("Combat & Action Resolution")
+@allure.feature("Contested actions")
 class TestBuildContestedActionCombat:
     """Aggressive actions produce combat contest rolls (backward-compat)."""
 
+    @allure.story("Combat contest")
+    @allure.title("Aggressive action against a guard injects a combat dice roll into the actor's input")
     def test_aggressive_produces_combat_roll(self):
         npc = _make_npc(attributes={_COMBAT_SKILL: 5})
         text, roll = build_contested_action("slash the guard", npc, is_aggressive=True, _rng=random.Random(_RNG_SEED))
@@ -39,12 +44,16 @@ class TestBuildContestedActionCombat:
         assert _DICE_MARKER in text
         assert _OUTCOME_MARKER in text
 
+    @allure.story("Combat contest")
+    @allure.title("Non-aggressive action leaves the input text untouched and skips the dice roll")
     def test_non_aggressive_no_roll(self):
         npc = _make_npc()
         text, roll = build_contested_action("hello guard", npc, is_aggressive=False)
         assert roll is None
         assert text == "hello guard"
 
+    @allure.story("Combat contest")
+    @allure.title("When the player wins a combat contest, the input includes a [STATUS:] hint for the NPC")
     def test_player_succeeds_includes_status_hint(self):
         npc = _make_npc(attributes={_COMBAT_SKILL: 0})
         for seed in range(200):
@@ -55,6 +64,8 @@ class TestBuildContestedActionCombat:
                 return
         pytest.skip("No seed produced ACTOR_SUCCEEDS")
 
+    @allure.story("Combat contest")
+    @allure.title("When the target resists or dominates the attack, no status hint is injected")
     def test_target_resists_no_status_hint(self):
         npc = _make_npc(attributes={_COMBAT_SKILL: 10})
         for seed in range(200):
@@ -66,9 +77,13 @@ class TestBuildContestedActionCombat:
         pytest.skip("No seed produced target winning")
 
 
+@allure.epic("Combat & Action Resolution")
+@allure.feature("Contested actions")
 class TestBuildContestedActionSocial:
     """Contest info from routing plan produces social contest rolls."""
 
+    @allure.story("Social contest")
+    @allure.title("A persuasion contest uses the NPC's persuasion_skill as the target bonus in the roll")
     def test_persuasion_contest(self):
         npc = _make_npc(name=_MERCHANT, attributes={_PERSUASION_SKILL: 6})
         contest_info = {"type": "persuasion", "target": _MERCHANT}
@@ -84,6 +99,8 @@ class TestBuildContestedActionSocial:
         assert roll.actor_bonus == 0
         assert _DICE_MARKER in text
 
+    @allure.story("Social contest")
+    @allure.title("A deception contest produces a DECEPTION contest roll classification")
     def test_deception_contest(self):
         npc = _make_npc(attributes={_DECEPTION_SKILL: 4})
         contest_info = {"type": "deception", "target": _GUARD}
@@ -96,6 +113,8 @@ class TestBuildContestedActionSocial:
         assert roll is not None
         assert roll.contest_type == ContestType.DECEPTION
 
+    @allure.story("Social contest")
+    @allure.title("An intimidation contest produces an INTIMIDATION contest roll classification")
     def test_intimidation_contest(self):
         npc = _make_npc(attributes={_INTIMIDATION_SKILL: 3})
         contest_info = {"type": "intimidation", "target": _GUARD}
@@ -108,6 +127,8 @@ class TestBuildContestedActionSocial:
         assert roll is not None
         assert roll.contest_type == ContestType.INTIMIDATION
 
+    @allure.story("Social contest")
+    @allure.title("A stealth contest uses the NPC's perception_skill as the opposing bonus")
     def test_stealth_contest(self):
         npc = _make_npc(attributes={_PERCEPTION_SKILL: 7})
         contest_info = {"type": "stealth", "target": _GUARD}
@@ -121,12 +142,16 @@ class TestBuildContestedActionSocial:
         assert roll.contest_type == ContestType.STEALTH
         assert roll.target_bonus == 7
 
+    @allure.story("Social contest")
+    @allure.title("No contest info and no aggression means the input text passes through untouched")
     def test_no_contest_info_no_roll(self):
         npc = _make_npc()
         text, roll = build_contested_action("talk to guard", npc, contest_info=None)
         assert roll is None
         assert text == "talk to guard"
 
+    @allure.story("Social contest")
+    @allure.title("Contest info from the routing plan triggers a roll even when is_aggressive is False")
     def test_contest_info_overrides_non_aggressive(self):
         """Contest info triggers a roll even when is_aggressive is False."""
         npc = _make_npc(attributes={_PERSUASION_SKILL: 5})
@@ -141,6 +166,8 @@ class TestBuildContestedActionSocial:
         assert roll is not None
         assert roll.contest_type == ContestType.PERSUASION
 
+    @allure.story("Social contest")
+    @allure.title("When both aggression and persuasion info are set, combat takes priority over the social contest")
     def test_aggressive_takes_priority_over_contest_info(self):
         """When both is_aggressive and contest_info set, combat wins."""
         npc = _make_npc(attributes={_COMBAT_SKILL: 5, _PERSUASION_SKILL: 8})
@@ -156,9 +183,13 @@ class TestBuildContestedActionSocial:
         assert roll.contest_type == ContestType.COMBAT
 
 
+@allure.epic("Combat & Action Resolution")
+@allure.feature("Contested actions")
 class TestBuildContestedActionDefaultSkill:
     """NPCs without explicit skill attributes default to 0."""
 
+    @allure.story("Default skill fallback")
+    @allure.title("An NPC missing the relevant skill attribute falls back to a target bonus of zero")
     def test_missing_skill_defaults_to_zero(self):
         npc = _make_npc(attributes={})
         contest_info = {"type": "persuasion", "target": _GUARD}

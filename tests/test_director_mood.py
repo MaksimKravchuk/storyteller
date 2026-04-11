@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from cast.actor import Actor, _extract_status
@@ -18,7 +19,11 @@ _STATUS_TAG = "[STATUS:"
 _LOC_KEY = "location_name"
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("Mood & status tracking")
 class TestActorMoodUpdate:
+    @allure.story("Mood extraction")
+    @allure.title("An actor response with a [MOOD: hostile] tag updates the NPC's current_mood to hostile")
     @pytest.mark.asyncio
     async def test_mood_updated_after_response(self):
         actor, npc = _make_actor_with_npc(
@@ -31,6 +36,8 @@ class TestActorMoodUpdate:
         assert npc.current_mood == _HOSTILE
         assert "[MOOD:" not in actor_response
 
+    @allure.story("Mood extraction")
+    @allure.title("An actor response without a [MOOD:] tag leaves the NPC's current_mood untouched")
     @pytest.mark.asyncio
     async def test_mood_unchanged_when_no_tag(self):
         actor, npc = _make_actor_with_npc(
@@ -43,6 +50,8 @@ class TestActorMoodUpdate:
         await actor.act("hello", {_LOC_KEY: "market"})
         assert npc.current_mood == _NEUTRAL
 
+    @allure.story("Mood extraction")
+    @allure.title("The [MOOD:] tag is stripped from the stored actor conversation history")
     @pytest.mark.asyncio
     async def test_conversation_history_excludes_mood_tag(self):
         npc = NPCCard(name="Guard", occupation="guard")
@@ -54,28 +63,42 @@ class TestActorMoodUpdate:
         assert "[MOOD:" not in actor._conversation[1].body
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("Mood & status tracking")
 class TestExtractStatus:
+    @allure.story("Status extraction")
+    @allure.title("A single-word [STATUS: wounded] tag is extracted and removed from the response body")
     def test_extracts_single_word(self):
         text, status = _extract_status("*stumbles back*\n[STATUS: wounded]")
         assert status == "wounded"
         assert _STATUS_TAG not in text
 
+    @allure.story("Status extraction")
+    @allure.title("A multi-word [STATUS: wounded left arm] tag is captured in full and stripped from the text")
     def test_extracts_multi_word(self):
         text, status = _extract_status("*grabs arm*\n[STATUS: wounded left arm]")
         assert status == "wounded left arm"
         assert _STATUS_TAG not in text
 
+    @allure.story("Status extraction")
+    @allure.title("A response with no [STATUS:] tag returns None for the status and the text unchanged")
     def test_returns_none_when_no_tag(self):
         text, status = _extract_status("Hello there!")
         assert status is None
         assert text == "Hello there!"
 
+    @allure.story("Status extraction")
+    @allure.title("Leading and trailing whitespace inside a [STATUS:] tag is stripped before storing")
     def test_strips_whitespace(self):
         _, status = _extract_status("*falls*\n[STATUS:  barely standing  ]")
         assert status == "barely standing"
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("Mood & status tracking")
 class TestActorStatusUpdate:
+    @allure.story("Status updates")
+    @allure.title("An actor response with a [STATUS:] tag writes the new physical_status onto the NPC card")
     @pytest.mark.asyncio
     async def test_status_updated_after_response(self):
         actor, npc = _make_actor_with_npc()
@@ -85,6 +108,8 @@ class TestActorStatusUpdate:
         assert npc.physical_status == "wounded left arm"
         assert _STATUS_TAG not in response
 
+    @allure.story("Status updates")
+    @allure.title("An actor response without a [STATUS:] tag leaves the NPC's physical_status as healthy")
     @pytest.mark.asyncio
     async def test_status_unchanged_when_no_tag(self):
         actor, npc = _make_actor_with_npc()
@@ -92,6 +117,8 @@ class TestActorStatusUpdate:
         await actor.act("attack guard", {_LOC_KEY: _GATE})
         assert npc.physical_status == "healthy"
 
+    @allure.story("Status updates")
+    @allure.title("A response containing both [MOOD:] and [STATUS:] tags updates the NPC and strips both markers")
     @pytest.mark.asyncio
     async def test_both_mood_and_status_extracted(self):
         actor, npc = _make_actor_with_npc()
@@ -104,6 +131,8 @@ class TestActorStatusUpdate:
         assert "[MOOD:" not in response
         assert _STATUS_TAG not in response
 
+    @allure.story("Status updates")
+    @allure.title("The [STATUS:] tag is removed from the stored actor conversation history")
     @pytest.mark.asyncio
     async def test_conversation_history_excludes_status_tag(self):
         actor, npc = _make_actor_with_npc()

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from models.npc_card import NPCCard
@@ -57,7 +58,11 @@ def _idle_json():
     return json.dumps({"action": "The guard watches the crowd.", "type": "IDLE", "target": None})
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn integration")
 class TestDirectorCallsNPCTurns:
+    @allure.story("NPC turn after talk")
+    @allure.title("After a TALK action the actor is invoked twice: once for dialogue and once for the NPC turn")
     @pytest.mark.asyncio
     async def test_npc_turns_called_after_talk(self):
         gs = make_game_state()
@@ -74,6 +79,8 @@ class TestDirectorCallsNPCTurns:
         # Actor should be called twice: once for dialogue, once for NPC turn
         assert mock_actor.execute.call_count == 2
 
+    @allure.story("NPC turn after wait")
+    @allure.title("A /wait action runs a single NPC turn per scene actor with no dialogue call")
     @pytest.mark.asyncio
     async def test_npc_turns_called_after_wait(self):
         gs = make_game_state()
@@ -89,6 +96,8 @@ class TestDirectorCallsNPCTurns:
         # Actor called once for NPC turn (no dialogue on WAIT)
         assert mock_actor.execute.call_count == 1
 
+    @allure.story("NPC turn after examine")
+    @allure.title("An EXAMINE action is not a turn-counting action and does not trigger any NPC turns")
     @pytest.mark.asyncio
     async def test_npc_turns_not_called_on_examine(self):
         gs = make_game_state()
@@ -105,7 +114,11 @@ class TestDirectorCallsNPCTurns:
         mock_actor.execute.assert_not_called()
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn integration")
 class TestNPCTurnsPassedToNarrator:
+    @allure.story("NPC turns in narrator input")
+    @allure.title("Resolved NPC turns are passed to the narrator under the 'npc_turns' field with NPC names")
     @pytest.mark.asyncio
     async def test_npc_turns_in_narrator_input(self):
         gs = make_game_state()

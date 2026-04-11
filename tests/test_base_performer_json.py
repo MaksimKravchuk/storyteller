@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import allure
 import pytest
 
 from cast.base_performer_class import BasePerformer
@@ -23,7 +24,11 @@ async def _bad_send(*args, **kwargs):
     raise UnicodeDecodeError("utf-8", b"", 0, 1, "reason")
 
 
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("BasePerformer JSON send")
 class TestSendJson:
+    @allure.story("Successful parse")
+    @allure.title("BasePerformer._send_json parses a clean JSON response from the LLM into a dict")
     @pytest.mark.asyncio
     async def test_returns_dict_on_success(self):
         performer = self._make()
@@ -31,6 +36,10 @@ class TestSendJson:
             output = await performer._send_json(_PROMPT)
         assert output == {"key": "value"}
 
+    @allure.story("Bracket extraction")
+    @allure.title(
+        "BasePerformer._send_json recovers a JSON object embedded in surrounding prose via bracket extraction"
+    )
     @pytest.mark.asyncio
     async def test_bracket_extraction_fallback(self):
         performer = self._make()
@@ -38,6 +47,10 @@ class TestSendJson:
             extracted = await performer._send_json(_PROMPT, retries=0)
         assert extracted == {"extracted": True}
 
+    @allure.story("Retry on bad JSON")
+    @allure.title(
+        "BasePerformer._send_json retries the requested number of times then raises when every attempt is invalid"
+    )
     @pytest.mark.asyncio
     async def test_raises_when_all_retries_fail(self):
         performer = self._make()
@@ -46,6 +59,10 @@ class TestSendJson:
                 await performer._send_json(_PROMPT, retries=2)
         assert mock_send.call_count == 3
 
+    @allure.story("Bracket extraction")
+    @allure.title(
+        "BasePerformer._send_json raises a ValueError when the extracted brace region still contains broken JSON"
+    )
     @pytest.mark.asyncio
     async def test_invalid_inner_braces(self):
         performer = self._make()
@@ -53,6 +70,10 @@ class TestSendJson:
             with pytest.raises(ValueError, match="failed to produce valid JSON"):
                 await performer._send_json(_PROMPT, retries=0)
 
+    @allure.story("Error handling")
+    @allure.title(
+        "Non-JSON exceptions raised by _send propagate out of _send_json instead of being swallowed as parse errors"
+    )
     @pytest.mark.asyncio
     async def test_non_json_exception_propagates(self):
         performer = self._make()

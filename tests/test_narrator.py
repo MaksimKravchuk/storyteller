@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from cast.narrator import Narrator
@@ -62,7 +63,11 @@ def _make_narrator() -> Narrator:
     return Narrator(llm_client=llm_client, language="English")
 
 
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
 class TestNarratorSceneType:
+    @allure.story("Scene type selection")
+    @allure.title("Narrator receives NEW_SCENE marker when the turn introduces a fresh location")
     @pytest.mark.asyncio
     async def test_new_scene_passes_scene_type_new(self):
         narrator = _make_narrator()
@@ -77,6 +82,8 @@ class TestNarratorSceneType:
         user_msg = _last_user_message(narrator)
         assert "NEW_SCENE" in user_msg
 
+    @allure.story("Scene type selection")
+    @allure.title("Narrator receives CONTINUATION marker when the turn extends the current scene")
     @pytest.mark.asyncio
     async def test_continuation_passes_scene_type(self):
         narrator = _make_narrator()
@@ -90,6 +97,8 @@ class TestNarratorSceneType:
         user_msg = _last_user_message(narrator)
         assert "CONTINUATION" in user_msg
 
+    @allure.story("Scene type selection")
+    @allure.title("New-scene prompt includes the scene's ambient atmosphere description")
     @pytest.mark.asyncio
     async def test_new_scene_includes_ambient_description(self):
         narrator = _make_narrator()
@@ -104,6 +113,8 @@ class TestNarratorSceneType:
         assert "Atmosphere:" in user_msg
         assert "roasted nuts" in user_msg
 
+    @allure.story("Scene type selection")
+    @allure.title("Continuation prompt omits scene description and atmosphere to avoid re-describing the setting")
     @pytest.mark.asyncio
     async def test_continuation_excludes_scene_description(self):
         narrator = _make_narrator()
@@ -122,6 +133,8 @@ class TestNarratorSceneType:
         assert "roasted nuts" not in user_msg
         assert "bustling Roman Forum" not in user_msg
 
+    @allure.story("Dialogue rendering")
+    @allure.title("Continuation prompt surfaces NPC dialogue lines in 'Name says: text' format")
     @pytest.mark.asyncio
     async def test_continuation_with_dialogue_only(self):
         narrator = _make_narrator()
@@ -139,7 +152,11 @@ class TestNarratorSceneType:
         assert "Atmosphere:" not in user_msg
 
 
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
 class TestNarratorSceneHistory:
+    @allure.story("Scene history")
+    @allure.title("Continuation prompt injects prior in-scene actions under a 'What happened earlier' heading")
     @pytest.mark.asyncio
     async def test_continuation_includes_scene_history(self):
         """On CONTINUATION turns, scene history should appear in the prompt."""
@@ -166,6 +183,8 @@ class TestNarratorSceneHistory:
         assert "punch guard" in user_msg
         assert "Guard blocks" in user_msg
 
+    @allure.story("Scene history")
+    @allure.title("New-scene prompt ignores scene history because the prior scene is no longer relevant")
     @pytest.mark.asyncio
     async def test_new_scene_ignores_scene_history(self):
         """On NEW_SCENE turns, scene history should NOT appear."""
@@ -186,6 +205,8 @@ class TestNarratorSceneHistory:
         user_msg = _last_user_message(narrator)
         assert "What happened earlier" not in user_msg
 
+    @allure.story("Scene history")
+    @allure.title("Continuation still renders dialogue even when there is no scene history to attach")
     @pytest.mark.asyncio
     async def test_continuation_without_scene_history(self):
         """CONTINUATION with no scene_history should still work."""
@@ -207,7 +228,11 @@ class TestNarratorSceneHistory:
         assert "Guard says: Hello." in user_msg
 
 
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
 class TestNarratorSystemPrompt:
+    @allure.story("System prompt")
+    @allure.title("Narrator system prompt documents both NEW SCENE and CONTINUATION narration modes")
     def test_system_prompt_has_scene_modes(self):
         """Verify the system prompt contains guidance for both modes."""
         rendered = NARRATOR_SYSTEM.render(

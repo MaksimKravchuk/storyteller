@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from cast.base_performer_class import BasePerformer
@@ -52,7 +53,13 @@ class _AgentAWithChild(BasePerformer):
         return "done A"
 
 
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Call chain logging")
 class TestCallChainLogging:
+    @allure.story("Structured LLM log")
+    @allure.title(
+        "BasePerformer._send emits a 'LLM |' structured log line tagged with agent, model, and prompt token count"
+    )
     @pytest.mark.asyncio
     async def test_send_emits_llm_structured_log(self, loguru_sink):
         reset_buffer()
@@ -65,6 +72,8 @@ class TestCallChainLogging:
         assert "model=test-model" in msg
         assert "prompt_tokens=10" in msg
 
+    @allure.story("Structured LLM log")
+    @allure.title("BasePerformer._send's LLM log line includes completion_tokens and a duration_ms measurement")
     @pytest.mark.asyncio
     async def test_send_log_has_completion_tokens(self, loguru_sink):
         reset_buffer()
@@ -75,6 +84,8 @@ class TestCallChainLogging:
         assert "completion_tokens=5" in msg
         assert "duration_ms=" in msg
 
+    @allure.story("Parent agent in nested calls")
+    @allure.title("A child agent's 'start' log record names the parent agent it was delegated from")
     @pytest.mark.asyncio
     async def test_execute_log_parent_in_nested_call(self, loguru_sink):
         reset_buffer()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock
 
+import allure
 import pytest
 
 from llm.message import LLMResponse
@@ -35,7 +36,11 @@ def _mood_side_effect(input_data, context, gs):
     return "*blocks*\n[MOOD: {0}]".format(_HOSTILE)
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("Dialogue routing")
 class TestDuplicateNPCNames:
+    @allure.story("Duplicate NPC names")
+    @allure.title("Talking to 'the guard' when two guards share that name triggers dialogue for only one of them")
     @pytest.mark.asyncio
     async def test_duplicate_names_one_actor_called(self):
         gs = make_game_state()
@@ -66,6 +71,8 @@ class TestDuplicateNPCNames:
         # 1 dialogue call (deduped by name) + 2 NPC turn calls (both NPCs in scene)
         assert calls_a + calls_b == 3
 
+    @allure.story("Duplicate NPC names")
+    @allure.title("Attacking 'the guard' when two guards exist runs dialogue once and retaliation once, not twice each")
     @pytest.mark.asyncio
     async def test_retaliation_skips_duplicate_names(self):
         gs = make_game_state()
@@ -114,7 +121,11 @@ class TestDuplicateNPCNames:
         assert calls_a + calls_b == 4
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("Dialogue routing")
 class TestNPCGeneratorDeduplication:
+    @allure.story("NPC generator integration")
+    @allure.title("Talking to a brand new target NPC calls the NPCGenerator exactly once")
     @pytest.mark.asyncio
     async def test_new_target_npc_generates_exactly_once(self):
         from knowledge.graph import KnowledgeGraph
@@ -142,6 +153,8 @@ class TestNPCGeneratorDeduplication:
         await director.act("talk to the blacksmith")
         assert npc_gen.execute.call_count == 1
 
+    @allure.story("NPC generator integration")
+    @allure.title("Talking to an NPC already in game state does not call the NPCGenerator at all")
     @pytest.mark.asyncio
     async def test_existing_npc_no_generator_call(self):
         gs = make_game_state()
@@ -167,6 +180,8 @@ class TestNPCGeneratorDeduplication:
         await director.act("talk to the guard")
         assert npc_gen.execute.call_count == 0
 
+    @allure.story("NPC generator integration")
+    @allure.title("An item name in the targets list (e.g. 'меч') never triggers NPC generation or scene insertion")
     @pytest.mark.asyncio
     async def test_item_target_no_npc_generation(self):
         """Item name 'меч' must NOT trigger NPCGenerator."""
@@ -194,6 +209,8 @@ class TestNPCGeneratorDeduplication:
         scene_roles = [snpc.role for snpc in gs.current_scene.npcs_present]
         assert "меч" not in scene_roles
 
+    @allure.story("NPC generator integration")
+    @allure.title("Newly generated NPCs are announced to the narrator via the new_npcs input field")
     @pytest.mark.asyncio
     async def test_new_npc_announced_to_narrator(self):
         from knowledge.graph import KnowledgeGraph
@@ -222,12 +239,16 @@ class TestNPCGeneratorDeduplication:
         assert any("Merchant" in desc for desc in input_data["new_npcs"])
 
 
+@allure.epic("NPC Interaction")
+@allure.feature("Dialogue routing")
 class TestMoveToExistingNPCNoSceneRebuild:
     """MOVE targeting an NPC already present in the scene must NOT trigger
     SceneBuilder.  Observed in production: 'иду к Луций Флавий Марцелл'
     caused a full scene rebuild (3 NPCGenerator + 3 ItemGenerator calls)
     even though the NPC was already in the current scene."""
 
+    @allure.story("Move-to-NPC routing")
+    @allure.title("Moving toward an NPC already in the current scene skips both SceneBuilder and NPCGenerator")
     @pytest.mark.asyncio
     async def test_move_to_scene_npc_skips_scene_builder(self):
         gs = make_game_state()
