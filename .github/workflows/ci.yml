@@ -85,6 +85,34 @@ jobs:
       - name: Run type checking
         run: uv run mypy .
 
+  test-db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev
+
+      - name: Run DB-backed tests
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+        run: uv run pytest tests/db/ -m db -v --cov --cov-report=xml
+
+      - name: Upload DB coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-db
+          path: coverage.xml
+
   e2e:
     runs-on: ubuntu-latest
     steps:
@@ -120,7 +148,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: [lint, test]
+    needs: [lint, test, test-db]
     concurrency:
       group: deploy-production
       cancel-in-progress: false
