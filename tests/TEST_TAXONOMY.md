@@ -106,6 +106,7 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 | `test_admin.py` | Admin dashboard | "No-auth mode", "Session listing" |
 | `test_admin_auth.py` | Admin authentication | "Token required", "Token accepted" |
 | `test_telegram_wait.py` | Telegram bot | "Wait command registration" |
+| `test_web_api.py` | Web UI | "Transcript building", "Current game lookup", "Start game", "Submit action", "Cookie bootstrap", "Ownership enforcement" |
 
 ### Engine & LLM Infrastructure
 

@@ -15,6 +15,9 @@ uv sync --group dev --extra openai --extra anthropic
 # Run locally
 uv run python main.py
 
+# Run the player web UI (FastAPI + vanilla HTML)
+uv run uvicorn interfaces.web.app:app --reload --host 127.0.0.1 --port 8000
+
 # Lint
 uv run ruff check .
 uv run ruff format --check .
@@ -54,7 +57,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - **`llm/`** — Provider-agnostic LLM layer; OpenAI and Anthropic clients with factory auto-detection from model name (`gpt-*`→OpenAI, `claude-*`→Anthropic)
 - **`prompts/`** — Composable `PromptTemplate` with `PromptSection`s and variable interpolation; sections with missing vars are skipped
 - **`db/`** — Async SQLAlchemy + asyncpg with Alembic migrations; `GameRepository` is the single persistence access point; domain↔ORM conversion in `converters.py`
-- **`interfaces/`** — Telegram bot and admin dashboard
+- **`interfaces/`** — Telegram bot, admin dashboard, and FastAPI web UI (`interfaces/web/`)
 - **`research/`** — Async Wikipedia client
 
 ### Configuration

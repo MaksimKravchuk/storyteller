@@ -18,6 +18,11 @@ _TEMPERATURE_MIN = float(0)
 _TEMPERATURE_MAX = 2.0
 _DEFAULT_MAX_TOKENS = 2048
 
+_DEFAULT_WEB_HOST = "127.0.0.1"
+_DEFAULT_WEB_PORT = 8000
+_WEB_PORT_MIN = 1
+_WEB_PORT_MAX = 65535
+
 # Anchor the default ``.env`` to the project root (this file's directory)
 # rather than CWD, so that ``load_config()`` works regardless of where the
 # process was launched from. python-dotenv's ``find_dotenv()`` used to
@@ -52,6 +57,10 @@ class Config(BaseSettings):
     default_provider: str = _PROVIDER_OPENAI
     temperature: float = Field(default=_DEFAULT_TEMPERATURE, ge=_TEMPERATURE_MIN, le=_TEMPERATURE_MAX)
     max_tokens: int = Field(default=_DEFAULT_MAX_TOKENS, gt=0)
+
+    # Web UI server
+    web_host: str = _DEFAULT_WEB_HOST
+    web_port: int = Field(default=_DEFAULT_WEB_PORT, ge=_WEB_PORT_MIN, le=_WEB_PORT_MAX)
 
 
 def load_config(env_path: str | None = None) -> Config:
