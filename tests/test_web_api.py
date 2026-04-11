@@ -122,6 +122,16 @@ def test_get_index_serves_html(client: TestClient) -> None:
     assert "Storyteller" in response.text
 
 
+@allure.story("Static shell")
+@allure.title("GET /healthz returns 200 with a status:ok body and does not touch the repo")
+def test_healthz_returns_ok(client: TestClient, mock_repo) -> None:
+    response = client.get("/healthz")
+    assert response.status_code == _HTTP_OK
+    assert response.json() == {"status": "ok"}
+    # Liveness probe must not consult the DB.
+    mock_repo.get_or_create_web_session.assert_not_called()
+
+
 # ---------------------------------------------------------------------------
 # GET /api/games/current
 # ---------------------------------------------------------------------------

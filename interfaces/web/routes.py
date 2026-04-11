@@ -39,6 +39,12 @@ async def index() -> FileResponse:
     return FileResponse(_INDEX_HTML)
 
 
+@router.get("/healthz", include_in_schema=False)
+async def healthz() -> dict[str, str]:
+    """Liveness probe — does not touch the database or any agent."""
+    return {"status": "ok"}
+
+
 @router.get("/api/games/current", response_model=GameSnapshot)
 async def get_current_game(
     player_id: PlayerIdDep,
