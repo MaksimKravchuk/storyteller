@@ -27,11 +27,12 @@ def player_to_row(player: PlayerState, game_state_id: str) -> dict:
 
 
 def row_to_player(row) -> PlayerState:
-    player = PlayerState(name=row[COL_NAME])
-    player.uuid = row[COL_ID]
-    player.location_id = row[COL_LOCATION_ID]
-    player.inventory = row[COL_INVENTORY]
-    player.appearance = row[COL_APPEARANCE]
-    player.interaction_history = row["interaction_history"]
-    player.physical_status = row.get("physical_status", "healthy")
-    return player
+    return PlayerState(
+        uuid=row[COL_ID],
+        name=row[COL_NAME],
+        location_id=row[COL_LOCATION_ID],
+        inventory=row[COL_INVENTORY],
+        appearance=row[COL_APPEARANCE],
+        interaction_history=row["interaction_history"],
+        physical_status=row.get("physical_status", "healthy"),
+    )
