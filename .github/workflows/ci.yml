@@ -34,6 +34,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -48,8 +51,27 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --extra dev
 
-      - name: Run unit tests
-        run: uv run pytest tests/ --ignore=tests/e2e -v
+      - name: Run unit tests with coverage
+        run: |
+          set -o pipefail
+          uv run pytest tests/ --ignore=tests/e2e -v --cov --cov-report=xml --cov-report=term-missing | tee pytest-coverage.txt
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Post coverage comment on PR
+        if: always() && github.event_name == 'pull_request'
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          title: "Test Coverage Report"
+          badge-title: "Coverage"
+          hide-comment: false
+          create-new-comment: false
 
       - name: Run type checking
         run: uv run mypy .
