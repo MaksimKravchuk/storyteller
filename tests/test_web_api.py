@@ -21,7 +21,11 @@ from interfaces.web.schemas import (
     ActionResponse,
     GameSnapshot,
     TurnEntry,
+)
+from interfaces.web.transcript import (
     build_transcript,
+    render_narrator_html,
+    render_player_html,
 )
 
 _HTTP_OK = 200
@@ -62,10 +66,17 @@ def client(mock_repo, mock_cfg) -> Iterator[TestClient]:
 
 
 def _sample_snapshot(game_id: str = "game-abc", turn_count: int = 0) -> GameSnapshot:
+    narrator_text = "The forum stretches before you."
     return GameSnapshot(
         game_id=game_id,
         setting="Rome, 1st century AD",
-        transcript=[TurnEntry(role="narrator", text="The forum stretches before you.")],
+        transcript=[
+            TurnEntry(
+                role="narrator",
+                text=narrator_text,
+                html=render_narrator_html(narrator_text),
+            ),
+        ],
         turn_count=turn_count,
     )
 
@@ -106,6 +117,32 @@ def test_build_transcript_skips_missing_fields() -> None:
     assert [entry.role for entry in transcript] == ["player", "narrator"]
     assert transcript[0].text == "look"
     assert transcript[1].text == "Silence falls."
+
+
+@allure.story("Transcript building")
+@allure.title("build_transcript renders narrator markdown to HTML and HTML-escapes player input")
+def test_build_transcript_renders_html_fields() -> None:
+    log = [
+        {
+            "player_action": "look at <Pieter>",
+            "response": "**Pieter** stands by the *lantern*.",
+        },
+    ]
+    transcript = build_transcript(log)
+
+    player_entry, narrator_entry = transcript
+    # Player text is HTML-escaped (no markdown processing).
+    assert player_entry.html == "look at &lt;Pieter&gt;"
+    # Narrator markdown is wrapped in <p> with <strong>/<em>.
+    assert narrator_entry.html == "<p><strong>Pieter</strong> stands by the <em>lantern</em>.</p>"
+
+
+@allure.story("Transcript building")
+@allure.title("render_player_html escapes ampersands and angle brackets without applying markdown")
+def test_render_player_html_escapes_special_chars() -> None:
+    raw = "look at <thing> & say **hi**"
+    rendered = render_player_html(raw)
+    assert rendered == "look at &lt;thing&gt; &amp; say **hi**"
 
 
 # ---------------------------------------------------------------------------
@@ -156,7 +193,10 @@ def test_current_game_returns_snapshot(client: TestClient) -> None:
     body = response.json()
     assert body["game_id"] == snapshot.game_id
     assert body["setting"] == snapshot.setting
-    assert body["transcript"][0]["role"] == "narrator"
+    first_entry = body["transcript"][0]
+    assert first_entry["role"] == "narrator"
+    assert first_entry["text"] == "The forum stretches before you."
+    assert first_entry["html"] == "<p>The forum stretches before you.</p>"
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +210,7 @@ def test_start_game_happy_path(client: TestClient) -> None:
     snapshot = _sample_snapshot()
     start_mock = AsyncMock(return_value=snapshot)
     with patch.object(service, "start_game_for_player", new=start_mock):
-        response = client.post("/api/games", json={"setting": "Rome"})
+        response = client.post("/api/games", json={"setting": "Rome", "language": "Russian"})
     assert response.status_code == _HTTP_CREATED
     assert response.json()["game_id"] == snapshot.game_id
     start_mock.assert_awaited_once()
@@ -178,6 +218,21 @@ def test_start_game_happy_path(client: TestClient) -> None:
     await_args = start_mock.await_args
     assert await_args is not None
     assert _FIXED_PLAYER_ID in await_args.args
+    # The chosen language flowed through to the service call.
+    assert "Russian" in await_args.args
+
+
+@allure.story("Start game")
+@allure.title("POST /api/games defaults the language to English when the body omits it")
+def test_start_game_defaults_language_to_english(client: TestClient) -> None:
+    snapshot = _sample_snapshot()
+    start_mock = AsyncMock(return_value=snapshot)
+    with patch.object(service, "start_game_for_player", new=start_mock):
+        response = client.post("/api/games", json={"setting": "Rome"})
+    assert response.status_code == _HTTP_CREATED
+    await_args = start_mock.await_args
+    assert await_args is not None
+    assert "English" in await_args.args
 
 
 @allure.story("Start game")
@@ -200,15 +255,20 @@ def test_start_game_rejects_oversize_setting(client: TestClient) -> None:
 
 
 @allure.story("Submit action")
-@allure.title("POST /api/games/{id}/actions returns narration and turn_count on success")
+@allure.title("POST /api/games/{id}/actions returns narration, narration_html, and turn_count on success")
 def test_post_action_happy_path(client: TestClient) -> None:
-    action_response = ActionResponse(narration="You look around.", turn_count=3)
+    action_response = ActionResponse(
+        narration="**Pieter** waves.",
+        narration_html=render_narrator_html("**Pieter** waves."),
+        turn_count=3,
+    )
     process_mock = AsyncMock(return_value=action_response)
     with patch.object(service, "process_turn_for_player", new=process_mock):
         response = client.post("/api/games/game-abc/actions", json={"action": "look"})
     assert response.status_code == _HTTP_OK
     body = response.json()
-    assert body["narration"] == "You look around."
+    assert body["narration"] == "**Pieter** waves."
+    assert body["narration_html"] == "<p><strong>Pieter</strong> waves.</p>"
     assert body["turn_count"] == 3
 
 

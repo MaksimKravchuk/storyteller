@@ -48,7 +48,8 @@ h2 {
 }
 
 textarea,
-input[type="text"] {
+input[type="text"],
+select {
   width: 100%;
   padding: 0.75rem;
   background: #2a2a2a;
@@ -60,9 +61,18 @@ input[type="text"] {
 }
 
 textarea:focus,
-input[type="text"]:focus {
+input[type="text"]:focus,
+select:focus {
   outline: none;
   border-color: #a88;
+}
+
+label {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #c8c0a8;
+  letter-spacing: 0.03em;
 }
 
 button[type="submit"] {
@@ -98,7 +108,29 @@ button[type="submit"]:disabled {
 
 .turn.player::before { content: "> "; }
 
-.turn.narrator { white-space: pre-wrap; }
+.turn.narrator p {
+  margin: 0 0 0.6rem;
+}
+
+.turn.narrator p:last-child {
+  margin-bottom: 0;
+}
+
+.turn.narrator strong {
+  color: #f0e6c8;
+}
+
+.turn.narrator em {
+  color: #c8c0a8;
+}
+
+.turn.narrator code {
+  font-family: "Menlo", "Consolas", monospace;
+  background: #2a2a2a;
+  padding: 0.05rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
 
 #action-form {
   display: flex;

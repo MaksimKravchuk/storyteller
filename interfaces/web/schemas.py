@@ -1,7 +1,8 @@
 """Pydantic request/response models for the web API.
 
 This is the contract that any client (web, PWA, native mobile) consumes,
-so keep it small, stable, and free of implementation details.
+so keep it small, stable, and free of implementation details. Helpers that
+build/serialize values live in ``transcript.py``.
 """
 
 from __future__ import annotations
@@ -29,10 +30,19 @@ class ActionRequest(BaseModel):
 
 
 class TurnEntry(BaseModel):
-    """One line in the transcript — either player input or narrator prose."""
+    """One line in the transcript — either player input or narrator prose.
+
+    ``text`` is the raw value as the engine produced it (player input verbatim,
+    narrator output as the LLM emitted it, including the ``**bold**`` /
+    ``*italic*`` / ```` `code` ```` markdown subset). ``html`` is the same
+    content already rendered to safe HTML so a browser client can drop it
+    into ``innerHTML`` directly: player text is escaped, narrator text is
+    rendered through ``formatting.markdown_render.to_html``.
+    """
 
     role: Literal["player", "narrator"]
     text: str
+    html: str
 
 
 class GameSnapshot(BaseModel):
@@ -48,25 +58,12 @@ class GameSnapshot(BaseModel):
 
 
 class ActionResponse(BaseModel):
-    """Response body for ``POST /api/games/{game_id}/actions``."""
+    """Response body for ``POST /api/games/{game_id}/actions``.
+
+    ``narration`` is the raw markdown text the engine produced;
+    ``narration_html`` is the same value pre-rendered for browser clients.
+    """
 
     narration: str
+    narration_html: str
     turn_count: int
-
-
-def build_transcript(conversation_log: list[dict]) -> list[TurnEntry]:
-    """Convert ``GameState.conversation_log`` entries into flat TurnEntry pairs.
-
-    Each log entry has shape ``{player_action, response, turn, ...}``; we emit
-    a player line followed by a narrator line so the client can render a chat
-    log without knowing the internal schema.
-    """
-    transcript: list[TurnEntry] = []
-    for entry in conversation_log:
-        player_text = entry.get("player_action")
-        if player_text:
-            transcript.append(TurnEntry(role="player", text=str(player_text)))
-        narrator_text = entry.get("response")
-        if narrator_text:
-            transcript.append(TurnEntry(role="narrator", text=str(narrator_text)))
-    return transcript

@@ -11,6 +11,7 @@
     settingPanel: $("setting-panel"),
     settingForm: $("setting-form"),
     settingInput: $("setting-input"),
+    languageSelect: $("language-select"),
     settingStatus: $("setting-status"),
     gamePanel: $("game-panel"),
     log: $("log"),
@@ -31,10 +32,12 @@
     el.className = "status" + (kind ? " " + kind : "");
   }
 
-  function appendTurn(role, text) {
+  function appendTurnHTML(role, html) {
     const div = document.createElement("div");
     div.className = "turn " + role;
-    div.textContent = text;
+    // The server pre-renders both player input (escaped) and narrator output
+    // (markdown subset → safe HTML), so innerHTML is safe here.
+    div.innerHTML = html;
     els.log.appendChild(div);
     els.log.scrollTop = els.log.scrollHeight;
   }
@@ -43,7 +46,7 @@
     currentGameId = snapshot.game_id;
     els.log.innerHTML = "";
     for (const entry of snapshot.transcript) {
-      appendTurn(entry.role, entry.text);
+      appendTurnHTML(entry.role, entry.html);
     }
     hide(els.settingPanel);
     show(els.gamePanel);
@@ -91,6 +94,7 @@
     event.preventDefault();
     const setting = els.settingInput.value.trim();
     if (!setting) return;
+    const language = els.languageSelect ? els.languageSelect.value : "English";
     setStatus(els.settingStatus, "Researching setting and generating opening scene… (may take a minute)", "info");
     const button = els.settingForm.querySelector("button[type=submit]");
     button.disabled = true;
@@ -98,7 +102,7 @@
       const response = await fetch("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ setting }),
+        body: JSON.stringify({ setting, language }),
       });
       if (!response.ok) {
         throw new Error(await parseError(response));
@@ -112,11 +116,18 @@
     }
   }
 
+  function escapeHTML(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   async function onSubmitAction(event) {
     event.preventDefault();
     const action = els.actionInput.value.trim();
     if (!action || !currentGameId) return;
-    appendTurn("player", action);
+    // Echo the player line immediately while the engine works.
+    appendTurnHTML("player", escapeHTML(action));
     els.actionInput.value = "";
     els.actionInput.disabled = true;
     els.actionSubmit.disabled = true;
@@ -134,7 +145,7 @@
         throw new Error(await parseError(response));
       }
       const data = await response.json();
-      appendTurn("narrator", data.narration);
+      appendTurnHTML("narrator", data.narration_html);
       setStatus(els.actionStatus, "");
     } catch (err) {
       setStatus(els.actionStatus, "Error: " + err.message);

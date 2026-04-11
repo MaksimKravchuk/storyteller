@@ -14,6 +14,7 @@ from db.repository import GameRepository
 from engine.factory import create_engine
 from engine.game_engine import GameEngine
 from interfaces.web.schemas import ActionResponse, GameSnapshot
+from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
     persist_engine,
     restore_engine,
@@ -90,7 +91,11 @@ async def _act_and_persist(
     narration = await engine.process_action(action)
     turn_number = engine.game_state.turn_count if engine.game_state else None
     await persist_engine(repo, session_id, engine, turn_number=turn_number)
-    return ActionResponse(narration=narration, turn_count=turn_number or 0)
+    return ActionResponse(
+        narration=narration,
+        narration_html=render_narrator_html(narration),
+        turn_count=turn_number or 0,
+    )
 
 
 async def process_turn_for_player(

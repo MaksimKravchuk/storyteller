@@ -10,7 +10,8 @@ from config import Config
 from db.repository import GameRepository
 from engine.factory import create_engine_from_state
 from engine.game_engine import GameEngine
-from interfaces.web.schemas import GameSnapshot, build_transcript
+from interfaces.web.schemas import GameSnapshot
+from interfaces.web.transcript import build_transcript
 from llm.call_logger import get_and_clear_buffer
 
 _DEFAULT_LANGUAGE = "English"
