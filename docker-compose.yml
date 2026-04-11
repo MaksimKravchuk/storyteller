@@ -37,9 +37,9 @@ services:
       - >-
         uv run alembic upgrade head &&
         exec uv run uvicorn interfaces.web.app:app
-        --host 0.0.0.0 --port 8000
+        --host 0.0.0.0 --port 8070
     ports:
-      - "8000:8000"
+      - "8070:8070"
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,7 +48,7 @@ services:
         - CMD
         - python
         - -c
-        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz').read()"
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8070/healthz').read()"
       interval: 10s
       timeout: 5s
       retries: 5
