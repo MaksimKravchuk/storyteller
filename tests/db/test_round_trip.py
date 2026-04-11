@@ -1,0 +1,83 @@
+"""Cross-module integration tests: save → load → mutate → save → load."""
+
+from __future__ import annotations
+
+import allure
+import pytest
+
+from tests.db.conftest import GameRepository
+
+pytestmark = pytest.mark.db
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Round trip")
+class TestSaveLoadRoundTrip:
+    @allure.story("Save and load")
+    @allure.title("Full save then load reconstructs deep GameState equality on key fields")
+    @pytest.mark.asyncio
+    async def test_full_round_trip(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, kg, events = populated_game_state
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        loaded_state, loaded_kg, loaded_events = loaded
+
+        assert loaded_state.turn_count == game_state.turn_count
+        assert loaded_state.round_number == game_state.round_number
+        assert loaded_state.scene_number == game_state.scene_number
+        assert loaded_state.game_time == game_state.game_time
+        assert loaded_state.game_clock == pytest.approx(game_state.game_clock)
+        assert loaded_state.conversation_log == game_state.conversation_log
+        assert loaded_state.scene_conversation_log == game_state.scene_conversation_log
+
+        assert loaded_state.setting.name == game_state.setting.name
+        assert loaded_state.setting.time_period == game_state.setting.time_period
+
+        assert set(loaded_state.locations.keys()) == set(game_state.locations.keys())
+        assert set(loaded_state.npcs.keys()) == set(game_state.npcs.keys())
+
+        assert loaded_state.current_scene is not None
+        assert loaded_state.current_scene.uuid == game_state.current_scene.uuid
+        assert loaded_state.current_scene.location_id == game_state.current_scene.location_id
+
+        assert {ev.name for ev in loaded_events} == {ev.name for ev in events}
+        assert len(loaded_kg.all_nodes()) == len(kg.all_nodes())
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Round trip")
+class TestMutationIdempotence:
+    @allure.story("Idempotent mutation")
+    @allure.title("Save → mutate → save → load persists the mutation without leaving stale rows")
+    @pytest.mark.asyncio
+    async def test_mutation_idempotence(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, kg, events = populated_game_state
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        game_state.turn_count = 99
+        game_state.game_time = "night"
+        original_npc_count = len(game_state.npcs)
+        drop_uuid = next(iter(game_state.npcs))
+        game_state.npcs.pop(drop_uuid)
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        loaded_state, _loaded_kg, _loaded_events = loaded
+        assert loaded_state.turn_count == 99
+        assert loaded_state.game_time == "night"
+        assert len(loaded_state.npcs) == original_npc_count - 1
+        assert drop_uuid not in loaded_state.npcs
