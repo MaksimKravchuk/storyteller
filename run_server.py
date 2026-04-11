@@ -81,6 +81,7 @@ async def _run_telegram_bot(cfg: Config, session_factory) -> None:
     async with bot:
         await bot.initialize()
         await bot.start()
+        assert bot.updater is not None  # noqa: S101
         await bot.updater.start_polling()
         logger.info("Telegram bot polling started.")
         await asyncio.Event().wait()

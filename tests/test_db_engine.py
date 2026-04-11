@@ -12,12 +12,22 @@ import ssl
 import sys
 
 import allure
+import pytest
 
 # Force the real db.engine into sys.modules before _db_stubs can stub it.
 _stashed_stub = sys.modules.pop("db.engine", None)
 sys.modules.pop("db", None)
 
 from db import engine as _real_engine  # noqa: E402, WPS433
+
+# Guard: we must be exercising the real module, not a MagicMock left over
+# from tests/_db_stubs.py. If this assertion fails, conftest collection order
+# has changed and the stub is winning.
+assert hasattr(_real_engine, "_strip_sslmode"), (
+    "test_db_engine.py must import the real db.engine module; "
+    "got a stub instead — check conftest.py / _db_stubs.py ordering"
+)
+assert callable(_real_engine._strip_sslmode)
 
 # Restore stub so other test modules are not affected.
 if _stashed_stub is not None:
@@ -99,6 +109,74 @@ class TestAdaptUrlForAsyncpg:
         url = "postgresql://u:p@host/db?sslmode=allow"
         _, args = _real_engine._adapt_url_for_asyncpg(url)
         assert args[_SSL_KEY] is False
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Database engine")
+class TestEngineAndGetDb:
+    @allure.story("Engine creation")
+    @allure.title("create_async_engine returns a SQLAlchemy AsyncEngine for a plain postgres URL")
+    def test_create_async_engine_returns_engine(self):
+        engine = _real_engine.create_async_engine("postgresql+asyncpg://u:p@host/db")
+        from sqlalchemy.ext.asyncio import AsyncEngine
+
+        assert isinstance(engine, AsyncEngine)
+
+    @allure.story("Engine creation")
+    @allure.title("create_session_factory returns a callable async_sessionmaker bound to the engine")
+    def test_create_session_factory_returns_sessionmaker(self):
+        from sqlalchemy.ext.asyncio import async_sessionmaker
+
+        engine = _real_engine.create_async_engine("postgresql+asyncpg://u:p@host/db")
+        factory = _real_engine.create_session_factory(engine)
+        assert isinstance(factory, async_sessionmaker)
+
+    @allure.story("Session lifecycle")
+    @allure.title("get_db commits on successful exit, and commit happens before __aexit__")
+    @pytest.mark.asyncio
+    async def test_get_db_commits_before_aexit(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        call_order: list[str] = []
+        session = AsyncMock()
+        session.commit = AsyncMock(side_effect=lambda: call_order.append("commit"))
+        session.rollback = AsyncMock(side_effect=lambda: call_order.append("rollback"))
+        aexit = AsyncMock(side_effect=lambda *_args, **_kwargs: call_order.append("aexit") or False)
+
+        factory = MagicMock()
+        factory.return_value.__aenter__ = AsyncMock(return_value=session)
+        factory.return_value.__aexit__ = aexit
+
+        async with _real_engine.get_db(factory) as yielded:
+            assert yielded is session
+
+        # commit must happen inside get_db, BEFORE __aexit__ — a refactor that
+        # moved commit into __aexit__ would show call_order == ["aexit"].
+        assert call_order == ["commit", "aexit"]
+        session.rollback.assert_not_awaited()
+
+    @allure.story("Session lifecycle")
+    @allure.title("get_db rolls back before __aexit__ when the caller raises inside the context")
+    @pytest.mark.asyncio
+    async def test_get_db_rolls_back_before_aexit(self):
+        from unittest.mock import AsyncMock, MagicMock
+
+        call_order: list[str] = []
+        session = AsyncMock()
+        session.commit = AsyncMock(side_effect=lambda: call_order.append("commit"))
+        session.rollback = AsyncMock(side_effect=lambda: call_order.append("rollback"))
+        aexit = AsyncMock(side_effect=lambda *_args, **_kwargs: call_order.append("aexit") or False)
+
+        factory = MagicMock()
+        factory.return_value.__aenter__ = AsyncMock(return_value=session)
+        factory.return_value.__aexit__ = aexit
+
+        with pytest.raises(RuntimeError, match="boom"):
+            async with _real_engine.get_db(factory):
+                raise RuntimeError("boom")
+
+        assert call_order == ["rollback", "aexit"]
+        session.commit.assert_not_awaited()
 
 
 @allure.epic("Memory & Persistence")
