@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from defaults.models import ModelConfig
@@ -10,12 +13,24 @@ _GPT4 = "gpt-4"
 _GPT35_TURBO = "gpt-3.5-turbo"
 _PROVIDER_OPENAI = "openai"
 
+_DEFAULT_TEMPERATURE = 0.7
+_TEMPERATURE_MIN = float(0)
+_TEMPERATURE_MAX = 2.0
+_DEFAULT_MAX_TOKENS = 2048
+
+# Anchor the default ``.env`` to the project root (this file's directory)
+# rather than CWD, so that ``load_config()`` works regardless of where the
+# process was launched from. python-dotenv's ``find_dotenv()`` used to
+# achieve this via frame-walking; pydantic-settings does not, so we resolve
+# the path explicitly.
+_DEFAULT_ENV_FILE = Path(__file__).parent / ".env"
+
 
 class Config(BaseSettings):
     """All runtime configuration for the Storyteller engine."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_DEFAULT_ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
@@ -35,16 +50,24 @@ class Config(BaseSettings):
 
     # Defaults
     default_provider: str = _PROVIDER_OPENAI
-    temperature: float = 0.7
-    max_tokens: int = 2048
+    temperature: float = Field(default=_DEFAULT_TEMPERATURE, ge=_TEMPERATURE_MIN, le=_TEMPERATURE_MAX)
+    max_tokens: int = Field(default=_DEFAULT_MAX_TOKENS, gt=0)
 
 
 def load_config(env_path: str | None = None) -> Config:
     """Load configuration from a ``.env`` file and/or environment variables.
 
     Precedence: explicit env vars > ``.env`` file > defaults.
+
+    Raises:
+        FileNotFoundError: if ``env_path`` is provided but does not exist.
     """
     if env_path is not None:
+        if not Path(env_path).is_file():
+            raise FileNotFoundError(
+                "Config env file not found: {0}. Pass an existing path or omit env_path.".format(env_path),
+            )
+        # ``_env_file`` is injected at runtime by pydantic-settings; mypy can't see it.
         return Config(_env_file=env_path)  # type: ignore[call-arg]
     return Config()
 
