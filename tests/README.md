@@ -8,7 +8,7 @@ Storyteller is AI-developed, so we rely on automated tests — both for regressi
 ## Running tests
 
 ```bash
-# Unit tests (fast; enforces 90% coverage floor)
+# Unit tests (fast; does not measure coverage)
 uv run pytest tests/ --ignore=tests/e2e -v
 
 # Unit tests with coverage report in the terminal
@@ -19,14 +19,13 @@ uv run pytest tests/test_dice.py -v
 uv run pytest tests/test_dice.py::TestCombatOutcomeCategories::test_npc_overpowers -v
 
 # E2E tests (slow; real LLM calls)
-uv run pytest tests/e2e/ -v
+uv run pytest tests/e2e/ --alluredir=allure-results -v
 ```
 
 ## Coverage standard
 
-- Floor is **90%** line coverage, enforced by `fail_under = 90` in `pyproject.toml:[tool.coverage.report]`.
-- CI measures coverage on every PR and posts per-module numbers as a comment.
-- Packages under the floor have dedicated follow-up work — see the "Coverage gaps" section in `.claude/plans/structured-mixing-toast.md` for the backlog.
+- The long-term target is **90%** line coverage (`fail_under = 90` in `pyproject.toml:[tool.coverage.report]`).
+- CI measures coverage on every PR with `--cov` and posts a summary as a PR comment. It does **not** currently pass `--cov-fail-under`, so the 90% floor is aspirational; the current baseline is ~67% and is ratcheted up in follow-up PRs that add tests for the under-covered packages.
 
 ## Allure: reading tests as spec
 

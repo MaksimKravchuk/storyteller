@@ -19,7 +19,7 @@ _E2E_DIR_PART = "e2e"
 _TAXONOMY_DOC = "tests/TEST_TAXONOMY.md"
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Fail collection if any non-e2e test is missing required Allure labels.
 
     Every unit test must carry ``@allure.epic``, ``@allure.feature``,
@@ -60,11 +60,11 @@ def pytest_collection_modifyitems(config, items):
         )
 
 
-def _is_e2e_item(item) -> bool:
+def _is_e2e_item(item: pytest.Item) -> bool:
     return _E2E_DIR_PART in item.path.parts
 
 
-def _collect_allure_label_types(item) -> set[str]:
+def _collect_allure_label_types(item: pytest.Item) -> set[str]:
     """Return the set of allure label types attached to a pytest item.
 
     ``allure.epic("X")`` becomes ``pytest.mark.allure_label("X", label_type="epic")``,
@@ -79,7 +79,7 @@ def _collect_allure_label_types(item) -> set[str]:
     return label_types
 
 
-def _has_allure_title(item) -> bool:
+def _has_allure_title(item: pytest.Item) -> bool:
     """``allure.title`` sets ``__allure_display_name__`` on the underlying function."""
     func = getattr(item, "function", None)
     return bool(getattr(func, "__allure_display_name__", None))
