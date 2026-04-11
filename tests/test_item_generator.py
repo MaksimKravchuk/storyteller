@@ -8,13 +8,14 @@ import allure
 import pytest
 
 from cast.item_generator import ItemGenerator
+from cast.schemas.item_response import ItemExamineResponse, ItemListResponse
 
 _SEND_JSON = "_send_json"
 _SETTING_CAP = 500
 
 
-def _expanded_two() -> dict:
-    return {"items": ["an iron sword with a leather grip", "a round wooden shield"]}
+def _expanded_two() -> ItemListResponse:
+    return ItemListResponse(items=["an iron sword with a leather grip", "a round wooden shield"])
 
 
 @allure.epic("NPC Interaction")
@@ -30,7 +31,7 @@ class TestItemGenerator:
                 ["sword", "shield"],
                 {"game_state": game_state, "mode": "batch", "owner_context": "a grizzled veteran"},
             )
-        assert expanded == _expanded_two()["items"]
+        assert expanded == _expanded_two().expanded
 
     @allure.story("Batch mode")
     @allure.title("ItemGenerator defaults to batch mode when the context does not include a mode key")
@@ -42,7 +43,7 @@ class TestItemGenerator:
                 ["sword", "shield"],
                 {"game_state": game_state, "owner_context": "ctx"},
             )
-        assert expanded == _expanded_two()["items"]
+        assert expanded == _expanded_two().expanded
 
     @allure.story("Batch mode")
     @allure.title("ItemGenerator batch mode skips the LLM call entirely when the inventory is empty")
@@ -60,7 +61,7 @@ class TestItemGenerator:
     @pytest.mark.asyncio
     async def test_count_mismatch_fallback(self, game_state) -> None:
         gen = ItemGenerator(llm_client=MagicMock())
-        payload = {"items": ["only one"]}
+        payload = ItemListResponse(items=["only one"])
         with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value=payload)):
             expanded = await gen.act(
                 ["sword", "shield"],
@@ -73,7 +74,7 @@ class TestItemGenerator:
     @pytest.mark.asyncio
     async def test_missing_items_key_fallback(self, game_state) -> None:
         gen = ItemGenerator(llm_client=MagicMock())
-        with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value={})):
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value=ItemListResponse())):
             expanded = await gen.act(
                 ["sword", "shield"],
                 {"game_state": game_state, "mode": "batch"},
@@ -85,7 +86,7 @@ class TestItemGenerator:
     @pytest.mark.asyncio
     async def test_examine_returns_description(self, game_state) -> None:
         gen = ItemGenerator(llm_client=MagicMock())
-        payload = {"description": "a heavy iron key, rusted at the bow"}
+        payload = ItemExamineResponse(description="a heavy iron key, rusted at the bow")
         with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value=payload)):
             description = await gen.act(
                 "key",
@@ -98,7 +99,7 @@ class TestItemGenerator:
     @pytest.mark.asyncio
     async def test_examine_missing_description_fallback(self, game_state) -> None:
         gen = ItemGenerator(llm_client=MagicMock())
-        with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value={})):
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value=ItemExamineResponse())):
             description = await gen.act(
                 "torch",
                 {"game_state": game_state, "mode": "examine"},
