@@ -20,6 +20,15 @@ sys.modules.pop("db", None)
 
 from db import engine as _real_engine  # noqa: E402, WPS433
 
+# Guard: we must be exercising the real module, not a MagicMock left over
+# from tests/_db_stubs.py. If this assertion fails, conftest collection order
+# has changed and the stub is winning.
+assert hasattr(_real_engine, "_strip_sslmode"), (
+    "test_db_engine.py must import the real db.engine module; "
+    "got a stub instead — check conftest.py / _db_stubs.py ordering"
+)
+assert callable(_real_engine._strip_sslmode)
+
 # Restore stub so other test modules are not affected.
 if _stashed_stub is not None:
     sys.modules["db.engine"] = _stashed_stub
@@ -123,38 +132,50 @@ class TestEngineAndGetDb:
         assert isinstance(factory, async_sessionmaker)
 
     @allure.story("Session lifecycle")
-    @allure.title("get_db commits on successful exit from the async context manager")
+    @allure.title("get_db commits on successful exit, and commit happens before __aexit__")
     @pytest.mark.asyncio
-    async def test_get_db_commits_on_success(self):
+    async def test_get_db_commits_before_aexit(self):
         from unittest.mock import AsyncMock, MagicMock
 
+        call_order: list[str] = []
         session = AsyncMock()
+        session.commit = AsyncMock(side_effect=lambda: call_order.append("commit"))
+        session.rollback = AsyncMock(side_effect=lambda: call_order.append("rollback"))
+        aexit = AsyncMock(side_effect=lambda *_args, **_kwargs: call_order.append("aexit") or False)
+
         factory = MagicMock()
         factory.return_value.__aenter__ = AsyncMock(return_value=session)
-        factory.return_value.__aexit__ = AsyncMock(return_value=False)
+        factory.return_value.__aexit__ = aexit
 
         async with _real_engine.get_db(factory) as yielded:
             assert yielded is session
 
-        session.commit.assert_awaited_once()
+        # commit must happen inside get_db, BEFORE __aexit__ — a refactor that
+        # moved commit into __aexit__ would show call_order == ["aexit"].
+        assert call_order == ["commit", "aexit"]
         session.rollback.assert_not_awaited()
 
     @allure.story("Session lifecycle")
-    @allure.title("get_db rolls back and re-raises when the caller raises inside the context")
+    @allure.title("get_db rolls back before __aexit__ when the caller raises inside the context")
     @pytest.mark.asyncio
-    async def test_get_db_rolls_back_on_exception(self):
+    async def test_get_db_rolls_back_before_aexit(self):
         from unittest.mock import AsyncMock, MagicMock
 
+        call_order: list[str] = []
         session = AsyncMock()
+        session.commit = AsyncMock(side_effect=lambda: call_order.append("commit"))
+        session.rollback = AsyncMock(side_effect=lambda: call_order.append("rollback"))
+        aexit = AsyncMock(side_effect=lambda *_args, **_kwargs: call_order.append("aexit") or False)
+
         factory = MagicMock()
         factory.return_value.__aenter__ = AsyncMock(return_value=session)
-        factory.return_value.__aexit__ = AsyncMock(return_value=False)
+        factory.return_value.__aexit__ = aexit
 
         with pytest.raises(RuntimeError, match="boom"):
             async with _real_engine.get_db(factory):
                 raise RuntimeError("boom")
 
-        session.rollback.assert_awaited_once()
+        assert call_order == ["rollback", "aexit"]
         session.commit.assert_not_awaited()
 
 

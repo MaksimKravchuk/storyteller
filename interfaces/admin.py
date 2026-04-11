@@ -49,6 +49,17 @@ class AdminServer:
         if self._runner:
             await self._runner.cleanup()
 
+    @property
+    def bound_address(self) -> tuple[str, int] | None:
+        """Return (host, port) the server is bound to, or None if not started."""
+        if self._runner is None:
+            return None
+        sockets = self._runner.addresses
+        if not sockets:
+            return None
+        host, port = sockets[0][:2]
+        return host, port
+
     def _setup_routes(self) -> None:
         self._app.router.add_get("/healthz", _healthz)
         self._app.router.add_get("/", admin_routes.dashboard)

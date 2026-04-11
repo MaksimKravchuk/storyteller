@@ -27,7 +27,7 @@ def _make_state() -> GameState:
     return gs
 
 
-def _make_processor(gs: GameState, memory_mgr=None) -> EventProcessor:
+def _make_processor(gs: GameState, memory_mgr: AsyncMock | None = None) -> EventProcessor:
     event_mgr = EventManager(gs, gs.knowledge_graph)
     if memory_mgr is None:
         memory_mgr = AsyncMock()
@@ -156,6 +156,21 @@ class TestProcessRemoteEvents:
         await processor.process_remote_events(events)
 
         assert memory_mgr.create_memory_from_event.await_count == 2
+        # Pin the kwargs flow — a no-op build_memory_kwargs must NOT pass.
+        memory_mgr.create_memory_from_event.assert_any_await(
+            event_description="A",
+            scope=KnowledgeScope.REGION,
+            location_id="tavern",
+            witness_ids=["npc-1", "npc-2"],
+            game_time=gs.game_clock,
+        )
+        memory_mgr.create_memory_from_event.assert_any_await(
+            event_description="B",
+            scope=KnowledgeScope.WORLD,
+            location_id="market",
+            witness_ids=[],  # "market" not in gs.locations → no witnesses
+            game_time=gs.game_clock,
+        )
 
 
 @allure.epic("Game Timeline")

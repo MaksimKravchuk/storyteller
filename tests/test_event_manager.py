@@ -198,3 +198,32 @@ class TestAdvanceTime:
         mgr = EventManager(gs, gs.knowledge_graph)
 
         assert mgr.advance_time(5.0) == []
+
+    @allure.story("Scheduled effects")
+    @allure.title("advance_time() fires an event whose completes_at equals the post-advance clock")
+    def test_advance_time_inclusive_upper_bound(self):
+        # Pins the <= clock_after half of _collect_completed's window.
+        gs = _make_state()
+        mgr = EventManager(gs, gs.knowledge_graph)
+        event = GameEvent(name="Bell", scheduled_at=0, duration=2)
+        mgr.schedule(event)
+
+        completed = mgr.advance_time(2.0)
+
+        assert completed == [event]
+        assert event.status == EventStatus.COMPLETED
+
+    @allure.story("Scheduled effects")
+    @allure.title("advance_time() does not re-fire an event whose completes_at equals clock_before")
+    def test_advance_time_exclusive_lower_bound(self):
+        # Pins the > clock_before half of _collect_completed's window.
+        gs = _make_state()
+        mgr = EventManager(gs, gs.knowledge_graph)
+        event = GameEvent(name="Bell", scheduled_at=0, duration=2)
+        mgr.schedule(event)
+        mgr.advance_time(2.0)  # fires it, clock is now 2.0
+
+        # completes_at (2.0) now equals clock_before (2.0) — must NOT refire.
+        completed = mgr.advance_time(1.0)
+
+        assert completed == []

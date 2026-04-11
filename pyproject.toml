@@ -33,7 +33,7 @@ module = ["llm.*", "research.*"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["interfaces.telegram_bot", "interfaces.telegram_commands", "run_server"]
+module = ["interfaces.telegram_bot"]
 disable_error_code = ["union-attr"]
 
 [tool.hatch.build.targets.wheel]

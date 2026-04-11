@@ -30,6 +30,8 @@ def db_factory(context: ContextTypes.DEFAULT_TYPE) -> Any:
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /start command."""
+    assert update.effective_chat is not None  # noqa: S101
+    assert update.message is not None  # noqa: S101
     async with get_db(db_factory(context)) as db:
         repo = GameRepository(db)
         session = await repo.get_or_create_session(update.effective_chat.id)
@@ -46,6 +48,9 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def handle_language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle language selection callback."""
     query = update.callback_query
+    assert query is not None  # noqa: S101
+    assert query.data is not None  # noqa: S101
+    assert update.effective_chat is not None  # noqa: S101
     await query.answer()
     language = query.data.split(":", 1)[1]
 
@@ -63,6 +68,8 @@ async def handle_language_callback(update: Update, context: ContextTypes.DEFAULT
 
 async def cmd_quit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /quit command."""
+    assert update.effective_chat is not None  # noqa: S101
+    assert update.message is not None  # noqa: S101
     chat_id = update.effective_chat.id
     async with get_db(db_factory(context)) as db:
         repo = GameRepository(db)
@@ -89,6 +96,8 @@ async def _handle_wait_action(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def cmd_wait(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /wait command — player skips their turn."""
+    assert update.effective_chat is not None  # noqa: S101
+    assert update.message is not None  # noqa: S101
     async with get_db(db_factory(context)) as db:
         repo = GameRepository(db)
         session = await repo.get_or_create_session(update.effective_chat.id)
