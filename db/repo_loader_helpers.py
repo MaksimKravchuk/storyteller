@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
 from db.converters import knowledge as conv_knowledge, setting as conv_setting
+from db.converters import story_arc as conv_story_arc
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import EdgeType
 from models.game_state import GameState
@@ -33,6 +34,7 @@ def hydrate_game_state(gs_row: dict, setting: Any, kg: KnowledgeGraph) -> GameSt
     game_state.conversation_log = gs_row["conversation_log"]
     game_state.scene_conversation_log = gs_row.get("scene_conversation_log", [])
     game_state.pending_clarification = gs_row.get("pending_clarification")
+    game_state.story_arc = conv_story_arc.dict_to_story_arc(gs_row.get("story_arc"))
     return game_state
 
 
