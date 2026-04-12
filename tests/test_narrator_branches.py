@@ -8,6 +8,7 @@ import allure
 import pytest
 
 from cast.narrator import Narrator
+from cast.schemas.turn_outputs import NPCTurnEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.npc_card import NPCCard
@@ -49,7 +50,7 @@ class TestNarratorInputBranches:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"item_examination": ["A bronze amulet engraved with runes."]},
+            input_data=TurnOutputs(item_examination=["A bronze amulet engraved with runes."]),
             context={"player_action": "inspect amulet", "game_state": gs},
         )
 
@@ -64,7 +65,7 @@ class TestNarratorInputBranches:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"wait": True},
+            input_data=TurnOutputs(wait=True),
             context={"player_action": "wait", "game_state": gs},
         )
 
@@ -79,7 +80,7 @@ class TestNarratorInputBranches:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"wait": True, "wait_reason": "voluntary"},
+            input_data=TurnOutputs(wait=True, wait_reason="voluntary"),
             context={"player_action": "wait", "game_state": gs},
         )
 
@@ -94,7 +95,7 @@ class TestNarratorInputBranches:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"wait": True, "wait_reason": "unconscious"},
+            input_data=TurnOutputs(wait=True, wait_reason="unconscious"),
             context={"player_action": "attack", "game_state": gs},
         )
 
@@ -110,12 +111,12 @@ class TestNarratorInputBranches:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={
-                "npc_turns": [
-                    {"npc_name": "Guard", "action": "draws his sword"},
-                    {"npc_name": "Merchant", "action": "ducks behind a barrel"},
+            input_data=TurnOutputs(
+                npc_turns=[
+                    NPCTurnEntry(npc_name="Guard", action="draws his sword", action_type="COMBAT"),
+                    NPCTurnEntry(npc_name="Merchant", action="ducks behind a barrel", action_type="IDLE"),
                 ],
-            },
+            ),
             context={"player_action": "shout", "game_state": gs},
         )
 
@@ -131,7 +132,7 @@ class TestNarratorInputBranches:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"completed_events": ["The storm passes.", "A messenger arrives."]},
+            input_data=TurnOutputs(completed_events=["The storm passes.", "A messenger arrives."]),
             context={"player_action": "wait for news", "game_state": gs},
         )
 
@@ -144,14 +145,15 @@ class TestNarratorInputBranches:
 @allure.feature("Narrator")
 class TestNarratorSceneFallback:
     @allure.story("Scene rendering")
-    @allure.title("Narrator falls back to stringifying the scene when it lacks a description attribute")
+    @allure.title("Narrator renders the scene description verbatim under a 'Scene:' heading")
     @pytest.mark.asyncio
-    async def test_scene_without_description_attribute(self):
+    async def test_scene_description_rendered(self):
         narrator = _make_narrator()
         gs = _make_game_state()
+        scene = Scene(location_id="anywhere", description="A plain string scene descriptor.")
 
         await narrator.act(
-            input_data={"scene": "A plain string scene descriptor."},
+            input_data=TurnOutputs(scene=scene),
             context={"player_action": "look", "game_state": gs},
         )
 
@@ -178,7 +180,7 @@ class TestFormatNpcLabel:
         )
 
         await narrator.act(
-            input_data={"scene": scene},
+            input_data=TurnOutputs(scene=scene),
             context={"player_action": "enter", "game_state": gs},
         )
 

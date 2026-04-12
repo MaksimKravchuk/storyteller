@@ -51,9 +51,9 @@ class TestCombatDiceIntegration:
         await director.act("attack guard")
         narrator_call = director._cast.narrator.execute.call_args
         raw_input = narrator_call.kwargs.get(_INPUT_DATA) or narrator_call.args[0]
-        dialogue = raw_input.get("dialogue", [])
+        dialogue = raw_input.dialogue
         assert len(dialogue) == 1
-        assert "contest_roll" in dialogue[0]
+        assert dialogue[0].contest_roll is not None
 
     @allure.story("Skill bonus defaults")
     @allure.title("An NPC without a combat_skill attribute still receives a default +3 bonus in the combat roll")

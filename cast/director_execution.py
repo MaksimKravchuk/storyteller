@@ -11,6 +11,7 @@ from cast.director_dialogue import DialogueHandler
 from cast.director_events import EventProcessor
 from cast.director_retaliation import RetaliationHandler
 from cast.npc_turn import NPCTurnResolver
+from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry, TurnOutputs
 from models.game_state import GameState
 from timeline.event import GameEvent
 
@@ -102,15 +103,15 @@ class PlanExecutor:
         completed_events: list[GameEvent],
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
-        raw_outputs: dict[str, Any] = {}
+        raw_outputs = TurnOutputs()
         action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
 
         local_events = await self._process_events(completed_events)
 
         if action_type == "WAIT":
-            raw_outputs["wait"] = True
+            raw_outputs.wait = True
             if plan.get("wait_reason"):
-                raw_outputs["wait_reason"] = plan["wait_reason"]
+                raw_outputs.wait_reason = plan["wait_reason"]
         else:
             await self._prepare_scene(
                 action_type,
@@ -123,10 +124,10 @@ class PlanExecutor:
             if action_type == "EXAMINE":
                 item_desc = await self._examine_items(plan.get("targets", []), player_action)
                 if item_desc:
-                    raw_outputs["item_examination"] = item_desc
+                    raw_outputs.item_examination = item_desc
 
         if local_events:
-            raw_outputs["completed_events"] = [ev.on_complete_description or ev.name for ev in local_events]
+            raw_outputs.completed_events = [ev.on_complete_description or ev.name for ev in local_events]
 
         await self._resolve_npc_turns(action_type, player_action, raw_outputs)
 
@@ -143,15 +144,19 @@ class PlanExecutor:
         self,
         action_type: str,
         player_action: str,
-        raw_outputs: dict[str, Any],
+        raw_outputs: TurnOutputs,
     ) -> None:
         """Resolve NPC autonomous turns for turn-counting actions."""
         if action_type not in TURN_COUNTING_ACTIONS:
             return
         npc_actions = await self._agents.npc_turns.resolve_npc_turns(player_action)
         if npc_actions:
-            raw_outputs["npc_turns"] = [
-                {"npc_name": npc_act.npc_name, "action": npc_act.action_description, "type": npc_act.action_type}
+            raw_outputs.npc_turns = [
+                NPCTurnEntry(
+                    npc_name=npc_act.npc_name,
+                    action=npc_act.action_description,
+                    action_type=npc_act.action_type,
+                )
                 for npc_act in npc_actions
             ]
 
@@ -162,7 +167,7 @@ class PlanExecutor:
             await self._agents.events.process_remote_events(remote)
         return local
 
-    async def _process_target_npcs(self, plan: dict, player_action: str, raw_outputs: dict[str, Any]) -> None:
+    async def _process_target_npcs(self, plan: dict, player_action: str, raw_outputs: TurnOutputs) -> None:
         """Ensure targeted NPCs exist in the scene, run interactions."""
         dlg = self._agents.dialogue
         target_names = plan.get("targets", [])
@@ -174,7 +179,7 @@ class PlanExecutor:
                 self._cast.item_generator,
             )
             if new_npcs:
-                raw_outputs["new_npcs"] = ["{0} ({1})".format(npc.name, npc.occupation) for npc in new_npcs]
+                raw_outputs.new_npcs = ["{0} ({1})".format(npc.name, npc.occupation) for npc in new_npcs]
 
         should_talk = dlg.targets_match_scene_npcs(target_names) or "actor" in plan.get("delegate_to", [])
         if should_talk or plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION) == "TALK":
@@ -192,7 +197,7 @@ class PlanExecutor:
         action_type: str,
         targets: list[str],
         player_action: str,
-        raw_outputs: dict[str, Any],
+        raw_outputs: TurnOutputs,
     ) -> None:
         """Build scene if needed and initialise any uninitialised NPCs."""
         needs_rebuild = action_type in SCENE_CHANGING_ACTIONS
@@ -207,7 +212,7 @@ class PlanExecutor:
                 input_data=player_action,
                 context={_KEY_GAME_STATE: self._gs},
             )
-            raw_outputs["scene"] = scene
+            raw_outputs.scene = scene
             self._gs.current_scene = scene
             self._gs.scene_number += 1
             self._gs.scene_conversation_log = []
@@ -244,7 +249,7 @@ class PlanExecutor:
         player_action: str,
         target_names: list[str],
         is_aggressive: bool,
-        raw_outputs: dict[str, Any],
+        raw_outputs: TurnOutputs,
         contest_info: dict | None = None,
     ) -> None:
         """Run NPC dialogue and retaliation checks."""
@@ -258,8 +263,8 @@ class PlanExecutor:
             contest_info=contest_info,
         )
         if dialogue_entries:
-            raw_outputs["dialogue"] = dialogue_entries
+            raw_outputs.dialogue = [DialogueEntry(**entry) for entry in dialogue_entries]
 
         retaliation_entries = await self._agents.retaliation.check_retaliation(mood_snapshot)
         if retaliation_entries:
-            raw_outputs.setdefault("dialogue", []).extend(retaliation_entries)
+            raw_outputs.dialogue.extend(DialogueEntry(**entry) for entry in retaliation_entries)

@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
+from cast.schemas.turn_outputs import TurnOutputs
+from models.scene import Scene
 from prompts.narrator_prompts import NARRATOR_NARRATE, NARRATOR_SYSTEM
 
 _HISTORY_PREVIEW_CHARS = 200
@@ -30,21 +32,18 @@ class Narrator(BasePerformer):
         )
         self._language = language
 
-    async def act(self, input_data: dict, context: dict) -> str:
-        """Transform raw data into literary narration.
+    async def act(self, input_data: TurnOutputs, context: dict) -> str:
+        """Transform raw turn outputs into literary narration.
 
-        ``input_data``: Dict with optional keys:
-            - "scene": Scene description text
-            - "dialogue": list of {"npc_name": str, "response": str}
-            - "new_npcs": list of NPC descriptions
-            - "completed_events": list of event descriptions
+        ``input_data``: A :class:`TurnOutputs` instance produced by
+        :class:`cast.director_execution.PlanExecutor`.
 
         ``context``: Must contain ``player_action`` and ``game_state``.
 
         Returns a single narrated text string.
         """
         game_state = context["game_state"]
-        is_new_scene = "scene" in input_data
+        is_new_scene = input_data.scene is not None
 
         self.set_context(
             setting_name=game_state.setting.name,
@@ -70,7 +69,7 @@ class Narrator(BasePerformer):
 
     def _build_raw_parts(
         self,
-        input_data: dict,
+        input_data: TurnOutputs,
         game_state: Any,
         scene_history: list[dict],
         is_new_scene: bool,
@@ -81,26 +80,26 @@ class Narrator(BasePerformer):
         if scene_history and not is_new_scene:
             self._append_history_parts(raw_parts, scene_history)
 
-        if is_new_scene:
-            self._append_scene_parts(raw_parts, input_data["scene"], game_state)
+        if input_data.scene is not None:
+            self._append_scene_parts(raw_parts, input_data.scene, game_state)
 
-        for dialogue_entry in input_data.get("dialogue", []):
-            raw_parts.append(f"{dialogue_entry['npc_name']} says: {dialogue_entry['response']}")
+        for dialogue_entry in input_data.dialogue:
+            raw_parts.append(f"{dialogue_entry.npc_name} says: {dialogue_entry.response}")
 
-        for npc_desc in input_data.get("new_npcs", []):
+        for npc_desc in input_data.new_npcs:
             raw_parts.append(f"New person appears: {npc_desc}")
 
-        for item_desc in input_data.get("item_examination", []):
+        for item_desc in input_data.item_examination:
             raw_parts.append(f"Item examined: {item_desc}")
 
-        if input_data.get("wait"):
-            if input_data.get("wait_reason", "") in ("", "voluntary"):
+        if input_data.wait:
+            if (input_data.wait_reason or "") in ("", "voluntary"):
                 raw_parts.append("The player waits and observes the surroundings.")
             else:
-                raw_parts.append("The player cannot act — they are {0}.".format(input_data["wait_reason"]))
+                raw_parts.append("The player cannot act — they are {0}.".format(input_data.wait_reason))
 
-        for npc_turn in input_data.get("npc_turns", []):
-            raw_parts.append("Meanwhile, {0}: {1}".format(npc_turn["npc_name"], npc_turn["action"]))
+        for npc_turn in input_data.npc_turns:
+            raw_parts.append("Meanwhile, {0}: {1}".format(npc_turn.npc_name, npc_turn.action))
 
         return raw_parts
 
@@ -115,11 +114,8 @@ class Narrator(BasePerformer):
         ]
         raw_parts.append("What happened earlier in this scene:\n{0}".format("\n".join(lines)))
 
-    def _append_scene_parts(self, raw_parts: list[str], scene: Any, game_state: Any) -> None:
+    def _append_scene_parts(self, raw_parts: list[str], scene: Scene, game_state: Any) -> None:
         """Append scene description parts to raw_parts."""
-        if not hasattr(scene, "description"):
-            raw_parts.append(f"Scene: {scene}")
-            return
         raw_parts.append(f"Scene: {scene.description}")
         if scene.ambient_description:
             raw_parts.append(f"Atmosphere: {scene.ambient_description}")
@@ -134,7 +130,7 @@ class Narrator(BasePerformer):
         player_action: str,
         raw_material: str,
         is_new_scene: bool,
-        input_data: dict,
+        input_data: TurnOutputs,
     ) -> dict[str, str]:
         """Build keyword arguments for the narration prompt template."""
         kwargs: dict[str, str] = {
@@ -142,6 +138,6 @@ class Narrator(BasePerformer):
             "raw_material": raw_material,
             "scene_type": "NEW_SCENE" if is_new_scene else "CONTINUATION",
         }
-        if _KEY_COMPLETED_EVENTS in input_data and input_data[_KEY_COMPLETED_EVENTS]:
-            kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data[_KEY_COMPLETED_EVENTS])
+        if input_data.completed_events:
+            kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data.completed_events)
         return kwargs
