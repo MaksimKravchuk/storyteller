@@ -18,9 +18,10 @@ uv run python main.py
 # Run the player web UI (FastAPI + vanilla HTML)
 uv run uvicorn interfaces.web.app:app --reload --host 127.0.0.1 --port 8070
 
-# Run the full stack with Docker Compose (postgres + telegram/admin + web UI)
-docker compose up -d            # all services
-docker compose up -d postgres web  # web UI only (no telegram)
+# Run the full stack with Docker Compose (postgres + storyteller)
+# The `storyteller` container runs run_server.py, which boots
+# uvicorn (web UI), aiohttp (admin), and the telegram bot in one process.
+docker compose up -d            # postgres + storyteller (web + admin + bot)
 # Web UI:    http://localhost:8070
 # Admin:     http://localhost:8080
 # Stop:      docker compose down

@@ -20,26 +20,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://storyteller:storyteller@postgres:5432/storyteller
     ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  web:
-    build: .
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: postgresql+asyncpg://storyteller:storyteller@postgres:5432/storyteller
-    command:
-      - sh
-      - -c
-      - >-
-        uv run alembic upgrade head &&
-        exec uv run uvicorn interfaces.web.app:app
-        --host 0.0.0.0 --port 8070
-    ports:
-      - "8070:8070"
+      - "8080:8080"  # admin dashboard
+      - "8070:8070"  # player web UI
     depends_on:
       postgres:
         condition: service_healthy
