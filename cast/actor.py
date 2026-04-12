@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
+from knowledge.node import KnowledgeNode
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
 from models.npc_card import NPCCard
@@ -13,6 +14,20 @@ from prompts.actor_prompts import ACTOR_SYSTEM
 
 _MOOD_RE = re.compile(r"\n?\[MOOD:\s*(\w+)\]\s*$")
 _STATUS_RE = re.compile(r"\n?\[STATUS:\s*([^\]]+)\]\s*$")
+
+_MEMORY_LIMIT = 5
+_MEMORY_TEXT_MAX_CHARS = 200
+
+
+def _format_past_memories(memories: list[KnowledgeNode]) -> str:
+    """Render a newline-joined bullet list of memory texts, truncated for prompt safety."""
+    lines: list[str] = []
+    for memory in memories:
+        text = memory.text
+        if len(text) > _MEMORY_TEXT_MAX_CHARS:
+            text = "{0}...".format(text[: _MEMORY_TEXT_MAX_CHARS - 3])
+        lines.append("- {0}".format(text))
+    return "\n".join(lines)
 
 
 def _extract_mood(text: str) -> tuple[str, str | None]:
@@ -88,6 +103,14 @@ class Actor(BasePerformer):
             current_mood=self.npc.current_mood,
             physical_status=self.npc.physical_status,
         )
+
+        # Inject recent long-term memories about the player, when any exist.
+        # We deliberately avoid calling set_context(past_memories="") when there
+        # are none — the PromptTemplate skips optional sections only when their
+        # required vars are MISSING from kwargs, not when they are empty strings.
+        past_memories = self.knowledge_query.get_memories_about(self.npc.uuid, limit=_MEMORY_LIMIT)
+        if past_memories:
+            self.set_context(past_memories=_format_past_memories(past_memories))
 
         response = await self._send(input_data, conversation=self._conversation)
 

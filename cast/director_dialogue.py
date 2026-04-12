@@ -9,6 +9,7 @@ from typing import Any
 from cast.dice import CombatOutcome, ContestRoll
 from cast.director_context import get_location_name
 from cast import director_dialogue_helpers as dlg_helpers
+from knowledge.memory import MemoryManager
 from models.game_state import GameState
 from timeline.event import EventEffect, GameEvent
 
@@ -133,9 +134,15 @@ async def _expand_npc_inventories(
 class DialogueHandler:
     """Routes dialogue to Actor agents and manages scene NPCs."""
 
-    def __init__(self, game_state: GameState, actors: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        game_state: GameState,
+        actors: dict[str, Any],
+        memory_manager: MemoryManager,
+    ) -> None:
         self._gs = game_state
         self._actors = actors
+        self._memory_manager = memory_manager
 
     async def handle_dialogue(
         self,
@@ -144,10 +151,18 @@ class DialogueHandler:
         is_aggressive: bool = False,
         contest_info: dict | None = None,
     ) -> list[dict[str, str]]:
-        """Route dialogue to the correct Actor agents."""
+        """Route dialogue to the correct Actor agents.
+
+        After the dialogue turn resolves, each participating NPC gets a
+        long-term memory node summarising the exchange.  Summarisation is
+        awaited before returning so the memories are in the graph before
+        the next Actor call reads them back via ``get_memories_about``.
+        """
         work_items = self._collect_targets(target_names, player_action, is_aggressive, contest_info)
         coros = [_execute_npc_dialogue(*wi, self._gs) for wi in work_items]
-        return list(await asyncio.gather(*coros))
+        dialogue_entries = list(await asyncio.gather(*coros))
+        await self._summarize_interactions(work_items, dialogue_entries, player_action)
+        return dialogue_entries
 
     def targets_match_scene_npcs(self, target_names: list[str]) -> bool:
         """Return True if any target name matches an initialised SceneNPC."""
@@ -218,3 +233,32 @@ class DialogueHandler:
             for uid in matched_uuids
             if uid in self._actors
         ]
+
+    async def _summarize_interactions(
+        self,
+        work_items: list[tuple[Any, Any, str, ContestRoll | None]],
+        dialogue_entries: list[dict[str, str]],
+        player_action: str,
+    ) -> None:
+        """Persist a long-term memory node for each NPC that took part.
+
+        Summaries are awaited before ``handle_dialogue`` returns so that
+        subsequent Actor turns can retrieve them via ``get_memories_about``.
+        The LLM calls run concurrently via ``asyncio.gather`` to keep
+        per-turn latency bounded.
+        """
+        game_time = self._gs.game_clock
+        summary_coros = [
+            self._memory_manager.summarize_interaction(
+                interaction_log="Player: {0}\n{1}: {2}".format(
+                    player_action,
+                    work_item[0].name,
+                    entry.get("response", ""),
+                ),
+                npc_id=work_item[0].uuid,
+                game_time=game_time,
+            )
+            for work_item, entry in zip(work_items, dialogue_entries)
+        ]
+        if summary_coros:
+            await asyncio.gather(*summary_coros)

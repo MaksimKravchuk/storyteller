@@ -68,7 +68,7 @@ class Director(BasePerformer):
         self._ctx = director_context.ContextFormatter(deps.game_state)
         self._router = director_routing.ActionRouter(deps.game_state, self._send_json)
         self._events = director_events.EventProcessor(deps.game_state, deps.event_manager, deps.memory_manager)
-        self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors)
+        self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors, deps.memory_manager)
         self._retaliation = director_retaliation.RetaliationHandler(deps.game_state, self._actors)
         self._npc_turns = NPCTurnResolver(deps.game_state, self._actors)
         agents = director_execution._Agents(
@@ -137,6 +137,13 @@ class Director(BasePerformer):
         locations = self._deps.game_state.locations
         if npc.location_id and npc.location_id in locations:
             locations[npc.location_id].add_npc(npc.uuid)
+
+        # Register the NPC as a graph node so MemoryManager.summarize_interaction
+        # can attach WITNESSED edges from the NPC to personal-memory nodes.
+        self._deps.game_state.knowledge_graph.register_actor_node(
+            npc.uuid,
+            label="{0} ({1})".format(npc.name, npc.occupation),
+        )
 
         actor = Actor(
             llm_client=self.llm_client,

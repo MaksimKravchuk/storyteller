@@ -370,3 +370,66 @@ class TestQueryEngineNpcContext:
         ctx = engine.get_context_for_npc(npc, topic_tags=["trade"])
         assert "silks" in ctx
         assert "conspiracy" not in ctx.lower()
+
+
+def _attach_memory(
+    graph: KnowledgeGraph,
+    npc_id: str,
+    text: str,
+    timestamp: float,
+) -> KnowledgeNode:
+    """Helper: add a PERSONAL_EXPERIENCE node and link it to an NPC via WITNESSED."""
+    memory = KnowledgeNode(
+        text=text,
+        scope=KnowledgeScope.LOCAL,
+        source=KnowledgeSource.PERSONAL_EXPERIENCE,
+        timestamp=timestamp,
+    )
+    memory_id = graph.add_node(memory)
+    graph.add_edge(npc_id, memory_id, EdgeType.WITNESSED)
+    return memory
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Memory query")
+class TestQueryEngineGetMemoriesAbout:
+    @allure.story("get_memories_about")
+    @allure.title("get_memories_about returns an empty list for a graph with no memory edges")
+    def test_empty_graph_returns_empty(self, empty_graph):
+        empty_graph.register_actor_node("npc-1", label="Guard")
+        engine = KnowledgeQueryEngine(empty_graph)
+        assert engine.get_memories_about("npc-1") == []
+
+    @allure.story("get_memories_about")
+    @allure.title("get_memories_about returns a single PERSONAL_EXPERIENCE node linked to the NPC via WITNESSED")
+    def test_single_memory_returned(self, empty_graph):
+        empty_graph.register_actor_node("npc-1", label="Guard")
+        memory = _attach_memory(empty_graph, "npc-1", "Met a kind traveller", timestamp=1.0)
+
+        engine = KnowledgeQueryEngine(empty_graph)
+        memories = engine.get_memories_about("npc-1")
+
+        assert len(memories) == 1
+        assert memories[0].uuid == memory.uuid
+
+    @allure.story("get_memories_about")
+    @allure.title("get_memories_about caps the result at the requested limit")
+    def test_limit_respected(self, empty_graph):
+        empty_graph.register_actor_node("npc-1", label="Guard")
+        for idx in range(5):
+            _attach_memory(empty_graph, "npc-1", f"memory-{idx}", timestamp=float(idx))
+
+        engine = KnowledgeQueryEngine(empty_graph)
+        assert len(engine.get_memories_about("npc-1", limit=2)) == 2
+
+    @allure.story("get_memories_about")
+    @allure.title("get_memories_about orders memories by timestamp descending (newest first)")
+    def test_orders_by_timestamp_descending(self, empty_graph):
+        empty_graph.register_actor_node("npc-1", label="Guard")
+        _attach_memory(empty_graph, "npc-1", "oldest", timestamp=1.0)
+        _attach_memory(empty_graph, "npc-1", "newest", timestamp=3.0)
+        _attach_memory(empty_graph, "npc-1", "middle", timestamp=2.0)
+
+        engine = KnowledgeQueryEngine(empty_graph)
+        ordered_texts = [mem.text for mem in engine.get_memories_about("npc-1")]
+        assert ordered_texts == ["newest", "middle", "oldest"]
