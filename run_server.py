@@ -1,6 +1,4 @@
-"""Production entry point — runs the Telegram bot + admin dashboard."""
-
-from __future__ import annotations
+"""Production entry point — runs the Telegram bot, admin dashboard, and web UI."""
 
 import asyncio
 import logging
@@ -11,10 +9,11 @@ import types
 
 from loguru import logger
 
-from config import Config, load_config
-from db.engine import create_async_engine, create_session_factory
+from config import load_config
+from db import engine as db_engine
 from interfaces.admin import AdminServer
 from interfaces.telegram_bot import build_bot
+from interfaces.web.runner import build_web_server
 
 _ADMIN_PORT = 8080
 _LOG_FORMAT = (
@@ -75,7 +74,7 @@ def _run_migrations() -> None:
     logger.info("Migrations complete.")
 
 
-async def _run_telegram_bot(cfg: Config, session_factory) -> None:
+async def _run_telegram_bot(cfg, session_factory) -> None:
     """Initialize, start, and poll the Telegram bot until shutdown."""
     bot = build_bot(cfg, session_factory)
     async with bot:
@@ -87,12 +86,40 @@ async def _run_telegram_bot(cfg: Config, session_factory) -> None:
         await asyncio.Event().wait()
 
 
+async def _run_until_first_completes(tasks: list[asyncio.Task]) -> None:
+    """Await tasks in parallel; when one finishes (or fails), cancel the rest.
+
+    Used so a clean uvicorn shutdown (SIGTERM → server.serve() returns) also
+    stops the telegram bot's infinite polling loop, instead of waiting for
+    Fly's SIGKILL.
+    """
+    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+    for pending_task in pending:
+        pending_task.cancel()
+    if pending:
+        await asyncio.gather(*pending, return_exceptions=True)
+    # Re-raise the first non-cancelled exception, if any, so the parent logs it.
+    for finished in done:
+        if not finished.cancelled() and finished.exception() is not None:
+            raise finished.exception()  # type: ignore[misc]
+
+
+async def _run_servers(cfg, session_factory) -> None:
+    """Run the web UI and (optionally) the telegram bot until one finishes."""
+    web_server = build_web_server(cfg.web_port)
+    tasks = [asyncio.create_task(web_server.serve(), name="web")]
+    if cfg.telegram_bot_token:
+        tasks.append(asyncio.create_task(_run_telegram_bot(cfg, session_factory), name="telegram"))
+        logger.info("Booting web UI on :{} and Telegram bot polling.", cfg.web_port)
+    else:
+        logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled, admin + web only.")
+    await _run_until_first_completes(tasks)
+
+
 async def main() -> None:
     cfg = load_config()
-
-    database_url = os.environ["DATABASE_URL"]
-    engine = create_async_engine(database_url)
-    session_factory = create_session_factory(engine)
+    engine = db_engine.create_async_engine(os.environ["DATABASE_URL"])
+    session_factory = db_engine.create_session_factory(engine)
 
     admin = AdminServer(
         session_factory,
@@ -102,11 +129,7 @@ async def main() -> None:
     await admin.start()
 
     try:
-        if cfg.telegram_bot_token:
-            await _run_telegram_bot(cfg, session_factory)
-        else:
-            logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled, admin only.")
-            await asyncio.Event().wait()
+        await _run_servers(cfg, session_factory)
     except Exception:
         logger.exception("Fatal error in main loop")
         raise

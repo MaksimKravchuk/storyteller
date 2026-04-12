@@ -1,0 +1,157 @@
+* { box-sizing: border-box; }
+
+body {
+  font-family: Georgia, "Times New Roman", serif;
+  margin: 0;
+  padding: 0;
+  background: #1a1a1a;
+  color: #e8e4d8;
+  line-height: 1.6;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #444;
+  background: #222;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: normal;
+  letter-spacing: 0.05em;
+}
+
+header button {
+  background: transparent;
+  color: #e8e4d8;
+  border: 1px solid #666;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+header button:hover { border-color: #e8e4d8; }
+
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+h2 {
+  font-weight: normal;
+  letter-spacing: 0.03em;
+}
+
+textarea,
+input[type="text"],
+select {
+  width: 100%;
+  padding: 0.75rem;
+  background: #2a2a2a;
+  color: #e8e4d8;
+  border: 1px solid #555;
+  font-family: inherit;
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+textarea:focus,
+input[type="text"]:focus,
+select:focus {
+  outline: none;
+  border-color: #a88;
+}
+
+label {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+  color: #c8c0a8;
+  letter-spacing: 0.03em;
+}
+
+button[type="submit"] {
+  padding: 0.6rem 1.2rem;
+  background: #a88;
+  color: #1a1a1a;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+#log {
+  margin-bottom: 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.turn { margin: 1rem 0; }
+
+.turn.player {
+  color: #c8a;
+  font-style: italic;
+  padding-left: 1rem;
+  border-left: 2px solid #c8a;
+}
+
+.turn.player::before { content: "> "; }
+
+.turn.narrator p {
+  margin: 0 0 0.6rem;
+}
+
+.turn.narrator p:last-child {
+  margin-bottom: 0;
+}
+
+/* Narrator markdown gets distinct colors so the player can see at a glance
+ * which spans are names/items (bold), atmosphere/thoughts (italic), or
+ * short written text the player reads (code). */
+.turn.narrator strong {
+  color: #f5c878;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(245, 200, 120, 0.2);
+}
+
+.turn.narrator em {
+  color: #9bb8d8;
+  font-style: italic;
+}
+
+.turn.narrator code {
+  font-family: "Menlo", "Consolas", monospace;
+  color: #e0c898;
+  background: #2a2418;
+  border: 1px solid #5a4a28;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.92em;
+}
+
+#action-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+#action-form input { flex: 1; margin: 0; }
+
+.status {
+  min-height: 1.2em;
+  font-size: 0.9rem;
+  color: #c88;
+}
+
+.status.info { color: #8c8; }

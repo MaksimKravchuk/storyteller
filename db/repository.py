@@ -49,6 +49,21 @@ class GameRepository:
         row = query_result.mappings().one()
         return _row_dict(row)
 
+    async def get_or_create_web_session(self, web_player_id: str) -> dict:
+        """Return session row dict for a web player, creating one if missing."""
+        stmt = (
+            pg_insert(tbl.sessions)
+            .values(id=str(_uuid.uuid4()), web_player_id=web_player_id)
+            .on_conflict_do_nothing(index_elements=["web_player_id"])
+        )
+        await self._session.execute(stmt)
+
+        query_result = await self._session.execute(
+            sqlalchemy.select(tbl.sessions).where(tbl.sessions.c.web_player_id == web_player_id),
+        )
+        row = query_result.mappings().one()
+        return _row_dict(row)
+
     async def update_session(
         self,
         session_id: str,

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Storyteller</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <h1>Storyteller</h1>
+    <button id="new-game-btn" type="button" hidden>New game</button>
+  </header>
+
+  <main id="app">
+    <p id="loading">Loading…</p>
+
+    <section id="setting-panel" hidden>
+      <h2>Start a new quest</h2>
+      <form id="setting-form">
+        <label for="language-select">Story language:</label>
+        <select id="language-select" name="language">
+          <option value="English" selected>English</option>
+          <option value="Russian">Русский</option>
+          <option value="Spanish">Español</option>
+          <option value="French">Français</option>
+          <option value="German">Deutsch</option>
+          <option value="Japanese">日本語</option>
+        </select>
+
+        <label for="setting-input">Describe the setting (place, era, mood):</label>
+        <textarea
+          id="setting-input"
+          name="setting"
+          rows="4"
+          maxlength="500"
+          required
+          placeholder="e.g. Rome, 1st century AD, during the reign of Augustus"
+        ></textarea>
+        <button type="submit">Start</button>
+      </form>
+      <p id="setting-status" class="status"></p>
+    </section>
+
+    <section id="game-panel" hidden>
+      <div id="log" aria-live="polite"></div>
+      <form id="action-form">
+        <input
+          id="action-input"
+          name="action"
+          type="text"
+          maxlength="2000"
+          required
+          autocomplete="off"
+          placeholder="What do you do?"
+        />
+        <button type="submit" id="action-submit">Act</button>
+      </form>
+      <p id="action-status" class="status"></p>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -20,10 +20,21 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://storyteller:storyteller@postgres:5432/storyteller
     ports:
-      - "8080:8080"
+      - "8080:8080"  # admin dashboard
+      - "8070:8070"  # player web UI
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8070/healthz').read()"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:

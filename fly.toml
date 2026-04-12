@@ -4,8 +4,10 @@ primary_region = "ams"
 [build]
   dockerfile = "Dockerfile"
 
+# Primary HTTP service: the player web UI (FastAPI / uvicorn).
+# Reachable at https://storyteller-quest.fly.dev
 [http_service]
-  internal_port = 8080
+  internal_port = 8070
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
@@ -22,6 +24,25 @@ primary_region = "ams"
   method = "GET"
   path = "/healthz"
   timeout = "5s"
+
+# Secondary HTTP service: the admin dashboard (aiohttp).
+# Reachable at https://storyteller-quest.fly.dev:8080
+# Same machine as the web UI — both are spawned by run_server.py.
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 8080
+    handlers = ["tls", "http"]
+    force_https = true
+
+  [[services.http_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "get"
+    path = "/healthz"
+    timeout = "5s"
 
 [[vm]]
   size = "shared-cpu-1x"
