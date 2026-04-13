@@ -252,9 +252,11 @@ class NPCTicker:
     ) -> tuple[list[Any], list[str]]:
         """Split scene NPCs into (kept, departure_lines).
 
-        Any NPC whose ``uuid`` appears in ``skip_uuids`` is kept
-        unconditionally — used to shield same-turn-generated NPCs
-        from immediate eviction.
+        Any NPC whose ``uuid`` appears in ``skip_uuids`` is kept,
+        bypassing the schedule check — used to shield
+        same-turn-generated NPCs from immediate eviction. NPCs with
+        ``uuid=None`` (uninitialised shells) are also kept, but via
+        :meth:`_classify`'s own short-circuit, not via this path.
         """
         remaining: list[Any] = []
         departures: list[str] = []
