@@ -6,12 +6,10 @@ import asyncio
 from dataclasses import dataclass
 from typing import Any
 
+from cast import director_dialogue, director_events, director_retaliation, npc_turn
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
-from cast.director_dialogue import DialogueHandler
-from cast.director_events import EventProcessor
-from cast.director_retaliation import RetaliationHandler
-from cast.npc_turn import NPCTurnResolver
-from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry, TurnOutputs
+from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
+from models import world_state as world_state_mod
 from models.game_state import GameState
 from timeline.event import GameEvent
 
@@ -51,6 +49,29 @@ def _filter_known_npc_targets(targets: list[str], game_state: GameState) -> list
     return [target for target in targets if target.lower() in known]
 
 
+def _apply_thread_updates(
+    state: world_state_mod.WorldState,
+    updates: list[chronicler_schema.WorldThreadUpdate],
+    current_scene: int,
+) -> None:
+    """Apply chronicler thread updates in place.
+
+    Matches by ``thread_uuid``; unknown UUIDs are silently ignored so
+    a hallucinating Chronicler cannot corrupt the existing threads.
+    When ``update.status`` is ``None`` we still bump
+    ``last_advanced_scene`` because the Chronicler chose to touch the
+    thread this scene.
+    """
+    by_uuid = {thread.uuid: thread for thread in state.threads}
+    for update in updates:
+        thread = by_uuid.get(update.thread_uuid)
+        if thread is None:
+            continue
+        if update.status is not None:
+            thread.status = update.status
+        thread.last_advanced_scene = current_scene
+
+
 def _ensure_npc_targets_in_scene(
     plan: dict,
     target_names: list[str],
@@ -75,10 +96,10 @@ def _ensure_npc_targets_in_scene(
 class _Agents:
     """Bundle of sub-agents used by PlanExecutor."""
 
-    events: EventProcessor
-    dialogue: DialogueHandler
-    retaliation: RetaliationHandler
-    npc_turns: NPCTurnResolver
+    events: director_events.EventProcessor
+    dialogue: director_dialogue.DialogueHandler
+    retaliation: director_retaliation.RetaliationHandler
+    npc_turns: npc_turn.NPCTurnResolver
 
 
 class PlanExecutor:
@@ -103,7 +124,7 @@ class PlanExecutor:
         completed_events: list[GameEvent],
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
-        raw_outputs = TurnOutputs()
+        raw_outputs = turn_outputs.TurnOutputs()
         action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
 
         local_events = await self._process_events(completed_events)
@@ -131,6 +152,9 @@ class PlanExecutor:
 
         await self._resolve_npc_turns(action_type, player_action, raw_outputs)
 
+        if raw_outputs.scene is not None and self._cast.world_chronicler is not None:
+            await self._advance_world_state(raw_outputs, player_action)
+
         return await self._cast.narrator.execute(
             input_data=raw_outputs,
             context={
@@ -140,11 +164,53 @@ class PlanExecutor:
             },
         )
 
+    async def _advance_world_state(
+        self,
+        raw_outputs: turn_outputs.TurnOutputs,
+        player_action: str,
+    ) -> None:
+        """Ask the World Chronicler to update world threads and mood.
+
+        Only called when a new scene was built this turn and a
+        ``world_chronicler`` is wired on the cast. Applies the response
+        in place on ``game_state.world_state`` and schedules any
+        chronicler-produced offscreen events through
+        :meth:`EventProcessor.schedule_drafts` so the timeline boundary
+        stays inside :mod:`cast.director_events`.
+        """
+        response: chronicler_schema.ChroniclerResponse = await self._cast.world_chronicler.execute(
+            input_data=raw_outputs,
+            context={_KEY_PLAYER_ACTION: player_action, _KEY_GAME_STATE: self._gs},
+        )
+        state = self._gs.world_state
+        scene_number = self._gs.scene_number
+        for draft in response.new_threads:
+            state.threads.append(
+                world_state_mod.WorldThread(
+                    description=draft.description,
+                    category=draft.category,
+                    introduced_scene=scene_number,
+                    involved_locations=list(draft.involved_locations),
+                    involved_npcs=list(draft.involved_npcs),
+                    last_advanced_scene=scene_number,
+                ),
+            )
+        _apply_thread_updates(state, response.thread_updates, scene_number)
+        if response.world_mood is not None:
+            state.world_mood = response.world_mood
+        state.last_chronicled_scene = scene_number
+
+        if response.scheduled_events:
+            self._agents.events.schedule_drafts(
+                response.scheduled_events,
+                now=self._gs.game_clock,
+            )
+
     async def _resolve_npc_turns(
         self,
         action_type: str,
         player_action: str,
-        raw_outputs: TurnOutputs,
+        raw_outputs: turn_outputs.TurnOutputs,
     ) -> None:
         """Resolve NPC autonomous turns for turn-counting actions."""
         if action_type not in TURN_COUNTING_ACTIONS:
@@ -152,7 +218,7 @@ class PlanExecutor:
         npc_actions = await self._agents.npc_turns.resolve_npc_turns(player_action)
         if npc_actions:
             raw_outputs.npc_turns = [
-                NPCTurnEntry(
+                turn_outputs.NPCTurnEntry(
                     npc_name=npc_act.npc_name,
                     action=npc_act.action_description,
                     action_type=npc_act.action_type,
@@ -167,7 +233,12 @@ class PlanExecutor:
             await self._agents.events.process_remote_events(remote)
         return local
 
-    async def _process_target_npcs(self, plan: dict, player_action: str, raw_outputs: TurnOutputs) -> None:
+    async def _process_target_npcs(
+        self,
+        plan: dict,
+        player_action: str,
+        raw_outputs: turn_outputs.TurnOutputs,
+    ) -> None:
         """Ensure targeted NPCs exist in the scene, run interactions."""
         dlg = self._agents.dialogue
         target_names = plan.get("targets", [])
@@ -197,7 +268,7 @@ class PlanExecutor:
         action_type: str,
         targets: list[str],
         player_action: str,
-        raw_outputs: TurnOutputs,
+        raw_outputs: turn_outputs.TurnOutputs,
     ) -> None:
         """Build scene if needed and initialise any uninitialised NPCs."""
         needs_rebuild = action_type in SCENE_CHANGING_ACTIONS
@@ -249,7 +320,7 @@ class PlanExecutor:
         player_action: str,
         target_names: list[str],
         is_aggressive: bool,
-        raw_outputs: TurnOutputs,
+        raw_outputs: turn_outputs.TurnOutputs,
         contest_info: dict | None = None,
     ) -> None:
         """Run NPC dialogue and retaliation checks."""
@@ -263,8 +334,8 @@ class PlanExecutor:
             contest_info=contest_info,
         )
         if dialogue_entries:
-            raw_outputs.dialogue = [DialogueEntry(**entry) for entry in dialogue_entries]
+            raw_outputs.dialogue = [turn_outputs.DialogueEntry(**entry) for entry in dialogue_entries]
 
         retaliation_entries = await self._agents.retaliation.check_retaliation(mood_snapshot)
         if retaliation_entries:
-            raw_outputs.dialogue.extend(DialogueEntry(**entry) for entry in retaliation_entries)
+            raw_outputs.dialogue.extend(turn_outputs.DialogueEntry(**entry) for entry in retaliation_entries)
