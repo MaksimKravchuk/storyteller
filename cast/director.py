@@ -8,6 +8,7 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from cast import director_context, director_dialogue, director_events
 from cast import director_execution, director_retaliation, director_routing
+from cast.npc_ticker import NPCTicker
 from cast.npc_turn import NPCTurnResolver
 from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
@@ -72,11 +73,13 @@ class Director(BasePerformer):
         self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors, deps.memory_manager)
         self._retaliation = director_retaliation.RetaliationHandler(deps.game_state, self._actors)
         self._npc_turns = NPCTurnResolver(deps.game_state, self._actors)
+        self._npc_ticker = NPCTicker(deps.game_state)
         agents = director_execution._Agents(
             events=self._events,
             dialogue=self._dialogue,
             retaliation=self._retaliation,
             npc_turns=self._npc_turns,
+            npc_ticker=self._npc_ticker,
         )
         self._executor = director_execution.PlanExecutor(deps.game_state, agents, cast, self._register_new_npc)
 

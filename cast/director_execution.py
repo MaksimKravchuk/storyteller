@@ -8,6 +8,7 @@ from typing import Any
 
 from cast import director_dialogue, director_events, director_retaliation, npc_turn
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
+from cast.npc_ticker import NPCTicker
 from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
 from models import world_state as world_state_mod
 from models.game_state import GameState
@@ -100,6 +101,7 @@ class _Agents:
     dialogue: director_dialogue.DialogueHandler
     retaliation: director_retaliation.RetaliationHandler
     npc_turns: npc_turn.NPCTurnResolver
+    npc_ticker: NPCTicker
 
 
 class PlanExecutor:
@@ -151,6 +153,7 @@ class PlanExecutor:
             raw_outputs.completed_events = [ev.on_complete_description or ev.name for ev in local_events]
 
         await self._resolve_npc_turns(action_type, player_action, raw_outputs)
+        self._agents.npc_ticker.tick(raw_outputs)
 
         if raw_outputs.scene is not None and self._cast.world_chronicler is not None:
             await self._advance_world_state(raw_outputs, player_action)
