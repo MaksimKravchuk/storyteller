@@ -83,7 +83,7 @@ game_states = Table(
     Column("conversation_log", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("scene_conversation_log", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("pending_clarification", JSONB, nullable=True),
-    Column("story_arc", JSONB, nullable=True),
+    Column("world_state", JSONB, nullable=True),
     Column(_COL_CREATED_AT, TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
 )
 
