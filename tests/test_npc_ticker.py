@@ -1,0 +1,257 @@
+"""Tests for :mod:`cast.npc_ticker` — schedule-driven NPC departures."""
+
+from __future__ import annotations
+
+import allure
+import pytest
+
+from cast.npc_ticker import (
+    NPCScheduleSlot,
+    NPCTicker,
+    _ALWAYS_PRESENT,
+    _DAY_SHIFT_SCHEDULE,
+    _TAVERN_SCHEDULE,
+    get_schedule_for,
+)
+from cast.schemas.turn_outputs import TurnOutputs
+from knowledge.graph import KnowledgeGraph
+from models.game_state import GameState
+from models.npc_card import NPCCard
+from models.scene import Scene, SceneNPC
+from models.setting import Setting
+
+_BARTENDER_UUID = "npc-bartender"
+_GUARD_UUID = "npc-guard"
+_BAKER_UUID = "npc-baker"
+_UNKNOWN_UUID = "npc-unknown"
+
+
+def _make_game_state(game_time: str = "morning") -> GameState:
+    gs = GameState(
+        setting=Setting(name="Rome", time_period="1 AD", region="Italy", summary=""),
+        knowledge_graph=KnowledgeGraph(),
+    )
+    gs.game_time = game_time
+    return gs
+
+
+def _add_npc(gs: GameState, uuid: str, name: str, occupation: str) -> NPCCard:
+    npc = NPCCard(name=name, occupation=occupation)
+    npc.uuid = uuid
+    gs.npcs[uuid] = npc
+    return npc
+
+
+def _set_scene(gs: GameState, *npc_uuids: str) -> Scene:
+    scene = Scene(
+        location_id="tavern",
+        description="The Rusty Anchor tavern.",
+        npcs_present=[SceneNPC(role="npc", uuid=uid) for uid in npc_uuids],
+    )
+    gs.current_scene = scene
+    return scene
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC schedule ticker")
+class TestGetScheduleFor:
+    @allure.story("Occupation lookup")
+    @allure.title("Unknown occupation falls back to the always-present schedule")
+    def test_unknown_occupation_falls_back_to_always_present(self):
+        assert get_schedule_for("wizard") is _ALWAYS_PRESENT
+
+    @allure.story("Occupation lookup")
+    @allure.title("Empty and None occupations fall back to the always-present schedule")
+    def test_empty_occupation_falls_back(self):
+        assert get_schedule_for("") is _ALWAYS_PRESENT
+        assert get_schedule_for(None) is _ALWAYS_PRESENT
+
+    @allure.story("Occupation lookup")
+    @allure.title("Known occupations are matched case-insensitively after stripping")
+    def test_matching_is_case_insensitive(self):
+        assert get_schedule_for("Bartender") is _TAVERN_SCHEDULE
+        assert get_schedule_for("  GUARD  ") is _DAY_SHIFT_SCHEDULE
+
+    @allure.story("Occupation lookup")
+    @allure.title("Multiple aliases (bartender / innkeeper / tavern keeper) share the tavern schedule")
+    def test_tavern_aliases_share_schedule(self):
+        assert get_schedule_for("innkeeper") is _TAVERN_SCHEDULE
+        assert get_schedule_for("tavern keeper") is _TAVERN_SCHEDULE
+        assert get_schedule_for("barmaid") is _TAVERN_SCHEDULE
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC schedule ticker")
+class TestNPCTickerNoOp:
+    @allure.story("No-op paths")
+    @allure.title("tick() is a no-op when there is no current scene")
+    def test_no_scene_is_no_op(self):
+        gs = _make_game_state()
+        ticker = NPCTicker(gs)
+        outputs = TurnOutputs()
+        ticker.tick(outputs)
+        assert outputs.npc_departures == []
+
+    @allure.story("No-op paths")
+    @allure.title("tick() is a no-op when the scene has no NPCs")
+    def test_empty_scene_is_no_op(self):
+        gs = _make_game_state()
+        _set_scene(gs)  # no NPCs
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+        assert outputs.npc_departures == []
+
+    @allure.story("No-op paths")
+    @allure.title("tick() leaves every always-present NPC in place regardless of time of day")
+    def test_always_present_npcs_are_kept(self):
+        gs = _make_game_state(game_time="night")
+        _add_npc(gs, "npc-priest", "Paolo", "priest")
+        _add_npc(gs, "npc-beggar", "Benno", "beggar")
+        scene = _set_scene(gs, "npc-priest", "npc-beggar")
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert outputs.npc_departures == []
+        assert [snpc.uuid for snpc in scene.npcs_present] == ["npc-priest", "npc-beggar"]
+
+    @allure.story("No-op paths")
+    @allure.title("tick() silently keeps SceneNPCs whose UUID is missing from game_state.npcs")
+    def test_missing_npc_record_is_kept(self):
+        gs = _make_game_state(game_time="night")
+        scene = _set_scene(gs, _UNKNOWN_UUID)  # no matching NPCCard registered
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert outputs.npc_departures == []
+        assert [snpc.uuid for snpc in scene.npcs_present] == [_UNKNOWN_UUID]
+
+    @allure.story("No-op paths")
+    @allure.title("tick() silently keeps SceneNPCs whose uuid is None (uninitialised)")
+    def test_uninitialised_scene_npc_is_kept(self):
+        gs = _make_game_state(game_time="night")
+        scene = Scene(
+            location_id="tavern",
+            description="x",
+            npcs_present=[SceneNPC(role="stranger", uuid=None)],
+        )
+        gs.current_scene = scene
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert outputs.npc_departures == []
+        assert len(scene.npcs_present) == 1
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC schedule ticker")
+class TestNPCTickerEvictions:
+    @allure.story("Eviction")
+    @allure.title("A bartender in the tavern in the morning is evicted with an activity line")
+    def test_bartender_evicted_in_morning(self):
+        gs = _make_game_state(game_time="morning")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        scene = _set_scene(gs, _BARTENDER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert scene.npcs_present == []
+        assert len(outputs.npc_departures) == 1
+        line = outputs.npc_departures[0]
+        assert line.startswith("Marco (bartender)")
+        assert "asleep" in line
+
+    @allure.story("Eviction")
+    @allure.title("A guard is evicted at night with the night-watch activity line")
+    def test_guard_evicted_at_night(self):
+        gs = _make_game_state(game_time="night")
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        scene = _set_scene(gs, _GUARD_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert scene.npcs_present == []
+        assert outputs.npc_departures == ["Lucia (guard) heads off to the barracks for the night watch"]
+
+    @allure.story("Eviction")
+    @allure.title("A guard in the morning stays in the scene (day shift is present)")
+    def test_guard_present_in_morning(self):
+        gs = _make_game_state(game_time="morning")
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        scene = _set_scene(gs, _GUARD_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert outputs.npc_departures == []
+        assert [snpc.uuid for snpc in scene.npcs_present] == [_GUARD_UUID]
+
+    @allure.story("Eviction")
+    @allure.title("Mixed scene: only the schedule-absent NPCs are evicted; present ones stay")
+    def test_mixed_scene_partial_eviction(self):
+        gs = _make_game_state(game_time="night")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")  # present at night → stays
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")  # absent at night → evicted
+        _add_npc(gs, _BAKER_UUID, "Bruno", "baker")  # absent at night → evicted
+        scene = _set_scene(gs, _BARTENDER_UUID, _GUARD_UUID, _BAKER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert [snpc.uuid for snpc in scene.npcs_present] == [_BARTENDER_UUID]
+        assert len(outputs.npc_departures) == 2
+        assert any("Lucia" in line for line in outputs.npc_departures)
+        assert any("Bruno" in line for line in outputs.npc_departures)
+
+    @allure.story("Eviction")
+    @allure.title("tick() extends an existing npc_departures list without replacing it")
+    def test_extends_existing_departures(self):
+        gs = _make_game_state(game_time="night")
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        _set_scene(gs, _GUARD_UUID)
+
+        outputs = TurnOutputs(npc_departures=["A stranger slips out the back door"])
+        NPCTicker(gs).tick(outputs)
+
+        assert len(outputs.npc_departures) == 2
+        assert outputs.npc_departures[0] == "A stranger slips out the back door"
+        assert "Lucia" in outputs.npc_departures[1]
+
+    @allure.story("Eviction")
+    @allure.title("A second tick() on the same scene is idempotent once departures already ran")
+    def test_second_tick_is_idempotent(self):
+        gs = _make_game_state(game_time="night")
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        _set_scene(gs, _GUARD_UUID)
+
+        ticker = NPCTicker(gs)
+        outputs_a = TurnOutputs()
+        ticker.tick(outputs_a)
+        outputs_b = TurnOutputs()
+        ticker.tick(outputs_b)
+
+        assert len(outputs_a.npc_departures) == 1
+        assert outputs_b.npc_departures == []
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC schedule ticker")
+class TestNPCScheduleSlot:
+    @allure.story("Data model")
+    @allure.title("NPCScheduleSlot defaults activity to an empty string and is hashable (frozen)")
+    def test_slot_defaults(self):
+        slot = NPCScheduleSlot(present=True)
+        assert slot.activity == ""
+        # Frozen dataclasses are hashable
+        assert hash(slot) == hash(NPCScheduleSlot(present=True))
+
+    @allure.story("Data model")
+    @allure.title("NPCScheduleSlot rejects mutation — frozen dataclass")
+    def test_slot_is_frozen(self):
+        slot = NPCScheduleSlot(present=True, activity="x")
+        with pytest.raises(Exception):
+            slot.present = False  # type: ignore[misc]

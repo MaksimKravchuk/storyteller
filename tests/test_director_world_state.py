@@ -15,7 +15,7 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_turn
+from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
 from cast.director import DirectorCast
 from cast.schemas import chronicler_response as chronicler_schema
 from knowledge import graph as graph_mod, memory as memory_mod
@@ -33,7 +33,14 @@ def _make_plan_executor_pieces(*, with_chronicler: bool):
     dialogue = director_dialogue.DialogueHandler(gs, actors, mem_mgr)
     retaliation = director_retaliation.RetaliationHandler(gs, actors)
     npc_turns = npc_turn.NPCTurnResolver(gs, actors)
-    agents = director_execution._Agents(events=events, dialogue=dialogue, retaliation=retaliation, npc_turns=npc_turns)
+    ticker = npc_ticker.NPCTicker(gs)
+    agents = director_execution._Agents(
+        events=events,
+        dialogue=dialogue,
+        retaliation=retaliation,
+        npc_turns=npc_turns,
+        npc_ticker=ticker,
+    )
 
     narrator = AsyncMock()
     narrator.execute = AsyncMock(return_value="Narrated.")
