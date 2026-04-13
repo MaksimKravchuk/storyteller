@@ -9,6 +9,7 @@ repos:
     rev: 7.3.0
     hooks:
       - id: flake8
+        exclude: ^alembic/
         additional_dependencies: [wemake-python-styleguide==1.6.1]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
