@@ -29,19 +29,56 @@ class RetaliationHandler:
         self._gs = game_state
         self._actors = actors
 
-    async def check_retaliation(self, mood_snapshot: dict[str, str]) -> list[dict[str, str]]:
-        """Check if any NPC whose mood changed wants to attack."""
-        retaliated_names: set[str] = set()
-        work_items: list[RetaliationWork] = []
-        for npc_uuid, actor in self._actors.items():
-            work = _build_retaliation_work(npc_uuid, actor, mood_snapshot, retaliated_names, self._gs)
-            if work is not None:
-                work_items.append(work)
+    async def check_retaliation(
+        self,
+        mood_snapshot: dict[str, str],
+        skip_uuids: set[str] | None = None,
+    ) -> list[dict[str, str]]:
+        """Check if any NPC whose mood changed wants to attack.
+
+        ``skip_uuids`` lists NPCs whose dialogue call already resolved a
+        combat contest this turn — their mood flip is a direct consequence
+        of the combat the Actor already narrated, so a second retaliation
+        prompt would be redundant. Typically populated from
+        :meth:`DialogueHandler.handle_dialogue`'s combat-engaged set.
+        """
+        skip = skip_uuids or set()
+        retaliated_names = self._seed_retaliated_names(skip)
+        work_items = self._collect_work(skip, retaliated_names, mood_snapshot)
         return list(
             await asyncio.gather(
                 *(_execute_retaliation(wi, self._gs) for wi in work_items),
             )
         )
+
+    def _seed_retaliated_names(self, skip: set[str]) -> set[str]:
+        """Pre-populate the dedup set with skipped NPCs' display names.
+
+        Guarantees that duplicate-name twins (e.g. two "guards") also skip
+        the retaliation phase when one of them was already combat-engaged.
+        """
+        retaliated_names: set[str] = set()
+        for skipped_uuid in skip:
+            skipped_npc = self._gs.npcs.get(skipped_uuid)
+            if skipped_npc:
+                retaliated_names.add(skipped_npc.name.lower())
+        return retaliated_names
+
+    def _collect_work(
+        self,
+        skip: set[str],
+        retaliated_names: set[str],
+        mood_snapshot: dict[str, str],
+    ) -> list[RetaliationWork]:
+        """Build retaliation work items for every NPC that still qualifies."""
+        work_items: list[RetaliationWork] = []
+        for npc_uuid, actor in self._actors.items():
+            if npc_uuid in skip:
+                continue
+            work = _build_retaliation_work(npc_uuid, actor, mood_snapshot, retaliated_names, self._gs)
+            if work is not None:
+                work_items.append(work)
+        return work_items
 
 
 def _build_retaliation_work(

@@ -8,6 +8,7 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
+from cast.director_retaliation import RetaliationHandler
 from models.npc_card import NPCCard
 from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
 
@@ -59,6 +60,11 @@ def _make_aggression_stub(will_attack: bool) -> Any:
     """Create a roll_aggression replacement with a fixed will_attack outcome."""
     roll_value = _ATTACK_ROLL if will_attack else 2
     return _DiceCallable(will_attack=will_attack, roll_value=roll_value)
+
+
+def _call_input(call: Any) -> str:
+    """Extract the ``input_data`` argument from an AsyncMock call record."""
+    return call.kwargs.get("input_data") or call.args[0]
 
 
 def _fixed_combat(combat_skill_val: int, _rng: Any = None) -> Any:
@@ -116,9 +122,14 @@ class _SideEffect:
 @allure.feature("NPC retaliation")
 class TestNPCRetaliation:
     @allure.story("Retaliation on mood change")
-    @allure.title("An NPC whose mood flips to hostile retaliates with an extra actor call carrying a dice roll")
+    @allure.title("An NPC directly attacked by the player resolves combat in a single actor call, not two")
     @pytest.mark.asyncio
-    async def test_retaliation_on_mood_change_to_hostile(self):
+    async def test_aggressive_target_not_retaliated_twice(self):
+        """Regression: when the player attacks an NPC, the dialogue call already
+        rolls combat dice and lets the Actor physically retaliate in its response.
+        A second ``actor.execute`` call from the retaliation phase is redundant
+        and corrupts narration. See plan: vectorized-squishing-curry.md.
+        """
         gs = make_game_state()
         npc, director = self._setup_aggressive_npc(gs)
         director._actors[_NPC_A] = self._mock_actor_with(_SideEffect(npc, tracking=True))
@@ -126,11 +137,62 @@ class TestNPCRetaliation:
         await _run_patched(_make_aggression_stub(True), director.act("attack the guard"))
 
         actor_ref = director._actors[_NPC_A]
-        # 3 calls: dialogue + retaliation + NPC turn
-        assert actor_ref.execute.call_count == 3
-        second = actor_ref.execute.call_args_list[1]
-        assert "retaliates" in (second.kwargs.get("input_data") or second.args[0])
-        assert "[DICE ROLL:" in (second.kwargs.get("input_data") or second.args[0])
+        # 2 calls: dialogue (combat dice resolves the aggression) + NPC turn.
+        # No separate retaliation call — the dialogue response already handled it.
+        assert actor_ref.execute.call_count == 2
+        call_list = actor_ref.execute.call_args_list
+        first_input = _call_input(call_list[0])
+        assert "[DICE ROLL: actor" in first_input
+        for call in call_list:
+            assert "retaliates against the player" not in _call_input(call)
+
+    @allure.story("Retaliation on mood change")
+    @allure.title(
+        "A bystander NPC whose mood flips in a neighbour's retaliation check still gets its own retaliation call"
+    )
+    @pytest.mark.asyncio
+    async def test_bystander_not_targeted_still_retaliates(self):
+        """Retaliation is still fired for NPCs that were NOT in the player's
+        target list but whose mood flipped through some other channel. The
+        fix must only suppress combat-engaged direct targets.
+        """
+        gs = make_game_state()
+        bystander = setup_npc(gs, _NPC_A, name="Bystander", occupation="onlooker")
+        bystander.current_mood = _HOSTILE
+        bystander_actor = make_mock_agent("*lunges at the player*")
+        handler = RetaliationHandler(gs, {_NPC_A: bystander_actor})
+
+        entries = await _run_patched(
+            _make_aggression_stub(True),
+            handler.check_retaliation({_NPC_A: _NEUTRAL}, skip_uuids={"other-uuid"}),
+            combat_replacement=_fixed_combat,
+        )
+
+        assert len(entries) == 1
+        assert bystander_actor.execute.call_count == 1
+
+    @allure.story("Retaliation on mood change")
+    @allure.title("An NPC whose dialogue combat was already rolled is filtered out of the retaliation phase")
+    @pytest.mark.asyncio
+    async def test_check_retaliation_honours_skip_uuids(self):
+        """Direct unit test for the skip_uuids parameter. Feeds a hostile NPC
+        into the retaliation handler and verifies that listing it in
+        ``skip_uuids`` suppresses the call entirely.
+        """
+        gs = make_game_state()
+        target = setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
+        target.current_mood = _HOSTILE
+        actor = make_mock_agent("*should not be called*")
+        handler = RetaliationHandler(gs, {_NPC_A: actor})
+
+        entries = await _run_patched(
+            _make_aggression_stub(True),
+            handler.check_retaliation({_NPC_A: _NEUTRAL}, skip_uuids={_NPC_A}),
+            combat_replacement=_fixed_combat,
+        )
+
+        assert entries == []
+        assert actor.execute.call_count == 0
 
     @allure.story("Retaliation on mood change")
     @allure.title("An NPC that stays neutral through a friendly greet receives no retaliation call")

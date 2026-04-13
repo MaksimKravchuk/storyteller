@@ -61,9 +61,10 @@ class TestDialogueHandlerLongTermMemory:
         memory_manager = AsyncMock(spec=MemoryManager)
         handler = DialogueHandler(gs, {}, memory_manager)
 
-        dialogue_entries = await handler.handle_dialogue("look around", ["stranger"])
+        dialogue_entries, combat_engaged = await handler.handle_dialogue("look around", ["stranger"])
 
         assert dialogue_entries == []
+        assert combat_engaged == set()
         memory_manager.summarize_interaction.assert_not_called()
 
 
