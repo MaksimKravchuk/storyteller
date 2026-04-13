@@ -9,8 +9,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from defaults.models import ModelConfig
 
-_GPT4 = "gpt-4"
-_GPT35_TURBO = "gpt-3.5-turbo"
+_GPT5_4_MINI = "gpt-5.4-mini"
+_GPT5_4_NANO = "gpt-5.4-nano"
 _PROVIDER_OPENAI = "openai"
 
 _DEFAULT_TEMPERATURE = 0.7
@@ -46,9 +46,9 @@ class Config(BaseSettings):
     anthropic_api_key: str | None = None
 
     # Model selection per agent role
-    director_model: str = _GPT4
-    agent_model: str = _GPT35_TURBO
-    narrator_model: str = _GPT4
+    director_model: str = _GPT5_4_MINI
+    agent_model: str = _GPT5_4_NANO
+    narrator_model: str = _GPT5_4_MINI
 
     # Telegram
     telegram_bot_token: str | None = None

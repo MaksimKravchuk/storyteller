@@ -70,7 +70,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ### Configuration
 
-`config.py` loads from env vars / `.env` file. Key vars: `DIRECTOR_MODEL` (default gpt-4), `AGENT_MODEL` (default gpt-3.5-turbo), `NARRATOR_MODEL` (default gpt-4), `DEFAULT_PROVIDER` (default openai).
+`config.py` loads from env vars / `.env` file. Key vars: `DIRECTOR_MODEL` (default gpt-5.4-mini), `AGENT_MODEL` (default gpt-5.4-nano), `NARRATOR_MODEL` (default gpt-5.4-mini), `DEFAULT_PROVIDER` (default openai).
 
 ## Code Conventions
 
