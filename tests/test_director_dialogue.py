@@ -235,8 +235,8 @@ class TestNPCGeneratorDeduplication:
         await director.act("talk to the merchant")
         narrator_call = director._cast.narrator.execute.call_args
         input_data = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
-        assert "new_npcs" in input_data
-        assert any("Merchant" in desc for desc in input_data["new_npcs"])
+        assert input_data.new_npcs
+        assert any("Merchant" in desc for desc in input_data.new_npcs)
 
 
 @allure.epic("NPC Interaction")

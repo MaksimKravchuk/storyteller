@@ -8,6 +8,7 @@ import allure
 import pytest
 
 from cast.narrator import Narrator
+from cast.schemas.turn_outputs import DialogueEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.scene import Scene, SceneNPC
@@ -21,9 +22,6 @@ from prompts.narrator_prompts import NARRATOR_SYSTEM
 _PLAYER_ACTION = "player_action"
 _GAME_STATE = "game_state"
 _MESSAGES = "messages"
-_DIALOGUE = "dialogue"
-_NPC_NAME = "npc_name"
-_RESPONSE = "response"
 
 
 def _last_user_message(narrator: Narrator) -> str:
@@ -74,7 +72,7 @@ class TestNarratorSceneType:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"scene": gs.current_scene},
+            input_data=TurnOutputs(scene=gs.current_scene),
             context={_PLAYER_ACTION: "go to the forum", _GAME_STATE: gs},
         )
 
@@ -90,7 +88,7 @@ class TestNarratorSceneType:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={_DIALOGUE: [{_NPC_NAME: "Marcus", _RESPONSE: "Hello."}]},
+            input_data=TurnOutputs(dialogue=[DialogueEntry(npc_name="Marcus", response="Hello.")]),
             context={_PLAYER_ACTION: "talk to Marcus", _GAME_STATE: gs},
         )
 
@@ -105,7 +103,7 @@ class TestNarratorSceneType:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"scene": gs.current_scene},
+            input_data=TurnOutputs(scene=gs.current_scene),
             context={_PLAYER_ACTION: "explore", _GAME_STATE: gs},
         )
 
@@ -121,7 +119,7 @@ class TestNarratorSceneType:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={},
+            input_data=TurnOutputs(),
             context={_PLAYER_ACTION: "look around", _GAME_STATE: gs},
         )
 
@@ -141,7 +139,7 @@ class TestNarratorSceneType:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={_DIALOGUE: [{_NPC_NAME: "Guard", _RESPONSE: "Halt!"}]},
+            input_data=TurnOutputs(dialogue=[DialogueEntry(npc_name="Guard", response="Halt!")]),
             context={_PLAYER_ACTION: "approach guard", _GAME_STATE: gs},
         )
 
@@ -164,7 +162,7 @@ class TestNarratorSceneHistory:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={_DIALOGUE: [{_NPC_NAME: "Guard", _RESPONSE: "Stop!"}]},
+            input_data=TurnOutputs(dialogue=[DialogueEntry(npc_name="Guard", response="Stop!")]),
             context={
                 _PLAYER_ACTION: "punch again",
                 _GAME_STATE: gs,
@@ -192,7 +190,7 @@ class TestNarratorSceneHistory:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={"scene": gs.current_scene},
+            input_data=TurnOutputs(scene=gs.current_scene),
             context={
                 _PLAYER_ACTION: "go to market",
                 _GAME_STATE: gs,
@@ -214,7 +212,7 @@ class TestNarratorSceneHistory:
         gs = _make_game_state()
 
         await narrator.act(
-            input_data={_DIALOGUE: [{_NPC_NAME: "Guard", _RESPONSE: "Hello."}]},
+            input_data=TurnOutputs(dialogue=[DialogueEntry(npc_name="Guard", response="Hello.")]),
             context={
                 _PLAYER_ACTION: "greet guard",
                 _GAME_STATE: gs,
