@@ -7,9 +7,16 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
-from db.converters import event as conv_event, knowledge as conv_knowledge
-from db.converters import location as conv_loc, npc as conv_npc
-from db.converters import player as conv_player, scene as conv_scene, setting as conv_setting
+from db.converters import (
+    event as conv_event,
+    knowledge as conv_knowledge,
+    location as conv_loc,
+    npc as conv_npc,
+    player as conv_player,
+    scene as conv_scene,
+    setting as conv_setting,
+    story_arc as conv_story_arc,
+)
 from db import repo_saver_helpers as saver_helpers
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
@@ -123,6 +130,7 @@ class StateSaver:
         events: list[GameEvent],
     ) -> None:
         """Persist full game state to PG (upsert game_states, delete+insert children)."""
+        story_arc_payload = conv_story_arc.story_arc_to_dict(game_state.story_arc)
         stmt = (
             pg_insert(tbl.game_states)
             .values(
@@ -136,6 +144,7 @@ class StateSaver:
                 conversation_log=game_state.conversation_log,
                 scene_conversation_log=game_state.scene_conversation_log,
                 pending_clarification=game_state.pending_clarification,
+                story_arc=story_arc_payload,
             )
             .on_conflict_do_update(
                 index_elements=["session_id"],
@@ -148,6 +157,7 @@ class StateSaver:
                     "conversation_log": game_state.conversation_log,
                     "scene_conversation_log": game_state.scene_conversation_log,
                     "pending_clarification": game_state.pending_clarification,
+                    "story_arc": story_arc_payload,
                 },
             )
             .returning(tbl.game_states.c.id)
