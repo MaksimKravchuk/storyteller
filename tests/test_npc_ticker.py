@@ -240,6 +240,64 @@ class TestNPCTickerEvictions:
 
 @allure.epic("NPC Interaction")
 @allure.feature("NPC schedule ticker")
+class TestNPCTickerSkipUuids:
+    @allure.story("Skip uuids")
+    @allure.title("skip_uuids shields a would-be-evicted NPC from removal")
+    def test_skip_uuids_prevents_eviction(self):
+        gs = _make_game_state(game_time="morning")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        scene = _set_scene(gs, _BARTENDER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs, skip_uuids={_BARTENDER_UUID})
+
+        assert [snpc.uuid for snpc in scene.npcs_present] == [_BARTENDER_UUID]
+        assert outputs.npc_departures == []
+
+    @allure.story("Skip uuids")
+    @allure.title("skip_uuids default of None preserves the original eviction behaviour")
+    def test_skip_uuids_default_none_preserves_eviction(self):
+        gs = _make_game_state(game_time="morning")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        scene = _set_scene(gs, _BARTENDER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)  # no skip_uuids
+
+        assert scene.npcs_present == []
+        assert len(outputs.npc_departures) == 1
+
+    @allure.story("Skip uuids")
+    @allure.title("skip_uuids shields only the listed NPCs; others are still evicted")
+    def test_skip_uuids_partial_shield(self):
+        gs = _make_game_state(game_time="night")
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")  # absent at night → would be evicted
+        _add_npc(gs, _BAKER_UUID, "Bruno", "baker")  # absent at night → would be evicted
+        scene = _set_scene(gs, _GUARD_UUID, _BAKER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs, skip_uuids={_GUARD_UUID})
+
+        assert [snpc.uuid for snpc in scene.npcs_present] == [_GUARD_UUID]
+        assert len(outputs.npc_departures) == 1
+        assert "Bruno" in outputs.npc_departures[0]
+
+    @allure.story("Skip uuids")
+    @allure.title("An empty skip_uuids set behaves identically to the default (None)")
+    def test_empty_skip_uuids_is_noop_on_skip(self):
+        gs = _make_game_state(game_time="morning")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        scene = _set_scene(gs, _BARTENDER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs, skip_uuids=set())
+
+        assert scene.npcs_present == []
+        assert len(outputs.npc_departures) == 1
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC schedule ticker")
 class TestNPCScheduleSlot:
     @allure.story("Data model")
     @allure.title("NPCScheduleSlot defaults activity to an empty string and is hashable (frozen)")

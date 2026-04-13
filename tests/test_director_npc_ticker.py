@@ -1,7 +1,7 @@
 """PlanExecutor ↔ NPCTicker integration tests.
 
-These exercise the new deterministic NPC departure step added in
-PR B (NPC Autonomy). The ticker runs *after*
+These exercise the deterministic NPC departure step added in the
+NPC Autonomy feature. The ticker runs *after*
 :meth:`PlanExecutor._resolve_npc_turns` and *before*
 :meth:`PlanExecutor._advance_world_state`, so a populated
 ``raw_outputs.npc_departures`` list reaches both the World Chronicler
@@ -10,6 +10,7 @@ PR B (NPC Autonomy). The ticker runs *after*
 
 from __future__ import annotations
 
+from functools import partial
 from unittest.mock import AsyncMock
 
 import allure
@@ -17,8 +18,7 @@ import pytest
 
 from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
 from cast.director import DirectorCast
-from cast.schemas import chronicler_response as chronicler_schema
-from cast.schemas.turn_outputs import TurnOutputs
+from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
 from knowledge import graph as graph_mod, memory as memory_mod
 from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod
 from models.npc_card import NPCCard
@@ -33,6 +33,17 @@ def _register_npc(gs: gs_mod.GameState, uuid: str, name: str, occupation: str) -
     npc.uuid = uuid
     gs.npcs[uuid] = npc
     return npc
+
+
+def _register_into(gs: gs_mod.GameState, card: NPCCard) -> None:
+    """Module-level registrar used as PlanExecutor.register_npc_fn.
+
+    The old fixture passed ``lambda npc: None``, which silently hid
+    every freshly-generated NPCCard from ``gs.npcs`` — which in turn
+    made ``NPCTicker._classify`` short-circuit on every same-turn
+    generation path and rendered the skip_uuids feature untestable.
+    """
+    gs.npcs[card.uuid] = card
 
 
 def _build_executor(*, game_time: str, with_chronicler: bool = False):
@@ -75,7 +86,12 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
         item_generator=None,
         world_chronicler=chronicler,
     )
-    executor = director_execution.PlanExecutor(gs, agents, cast_obj, register_npc_fn=lambda npc: None)
+    executor = director_execution.PlanExecutor(
+        gs,
+        agents,
+        cast_obj,
+        register_npc_fn=partial(_register_into, gs),
+    )
     return executor, gs, narrator, chronicler
 
 
@@ -108,7 +124,7 @@ class TestPlanExecutorTickerGate:
 
         assert scene.npcs_present == []
         narrator.execute.assert_awaited_once()
-        outputs_sent: TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
+        outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
         assert len(outputs_sent.npc_departures) == 1
         assert outputs_sent.npc_departures[0].startswith("Marco (bartender)")
 
@@ -127,7 +143,7 @@ class TestPlanExecutorTickerGate:
             completed_events=[],
         )
 
-        outputs_sent: TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
+        outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
         assert outputs_sent.npc_departures == []
 
     @allure.story("Ticker gate")
@@ -145,7 +161,7 @@ class TestPlanExecutorTickerGate:
         )
 
         assert [snpc.uuid for snpc in scene.npcs_present] == [_GUARD_UUID]
-        outputs_sent: TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
+        outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
         assert outputs_sent.npc_departures == []
 
     @allure.story("Ticker gate")
@@ -171,6 +187,147 @@ class TestPlanExecutorTickerGate:
 
         assert chronicler is not None
         chronicler.execute.assert_awaited_once()
-        outputs_sent: TurnOutputs = chronicler.execute.call_args.kwargs["input_data"]
+        outputs_sent: turn_outputs.TurnOutputs = chronicler.execute.call_args.kwargs["input_data"]
         assert len(outputs_sent.npc_departures) == 1
         assert "Lucia" in outputs_sent.npc_departures[0]
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC autonomy wiring")
+class TestPlanExecutorSameTurnEvictionSkip:
+    """Verify the ticker does not evict NPCs generated this very turn."""
+
+    @allure.story("Same-turn generation skip")
+    @allure.title("A bartender generated this turn is NOT evicted by a morning-tavern rebuild")
+    @pytest.mark.asyncio
+    async def test_same_turn_generated_npc_not_evicted(self):
+        executor, gs, narrator, _chronicler = _build_executor(game_time="morning")
+
+        # Scene builder returns a scene with a shell SceneNPC (no uuid).
+        # init_scene_npcs will back it with the NPCCard the generator
+        # returns, matching the real runtime flow.
+        scene = scene_mod.Scene(
+            location_id="tavern",
+            description="The Rusty Anchor, mid-morning.",
+            npcs_present=[scene_mod.SceneNPC(role="bartender")],
+        )
+        executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
+        marco = NPCCard(name="Marco", occupation="bartender")
+        executor._cast.npc_generator.execute = AsyncMock(return_value=[marco])
+
+        await executor.execute_plan(
+            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"], "targets": []},
+            player_action="step into the tavern",
+            completed_events=[],
+        )
+
+        # Marco must survive — he was generated *this* turn.
+        assert len(scene.npcs_present) == 1
+        assert scene.npcs_present[0].uuid == marco.uuid
+        outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
+        assert outputs_sent.npc_departures == []
+        # Sanity: the NPCCard also made it into the game state via the
+        # real registrar — if this fails the fixture is broken, not the
+        # feature under test.
+        assert gs.npcs[marco.uuid] is marco
+
+    @allure.story("Same-turn generation skip")
+    @allure.title("A pre-existing absent NPC is still evicted during a scene rebuild")
+    @pytest.mark.asyncio
+    async def test_scene_rebuild_still_evicts_pre_existing_absent_npc(self):
+        # This is the regression partner to the test above: `skip_uuids`
+        # must shield *only* the NPCs generated this turn, not every NPC
+        # in the scene. An already-registered guard standing in a night
+        # tavern should still get evicted by the schedule.
+        executor, gs, narrator, _chronicler = _build_executor(game_time="night")
+        lucia = _register_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        assert lucia.occupation == "guard"
+
+        # Scene rebuilds to include the existing guard (pre-initialised
+        # SceneNPC, carries her uuid) plus a fresh bartender shell.
+        scene = scene_mod.Scene(
+            location_id="tavern",
+            description="The Rusty Anchor after dark.",
+            npcs_present=[
+                scene_mod.SceneNPC(role="guard", uuid=_GUARD_UUID),
+                scene_mod.SceneNPC(role="bartender"),
+            ],
+        )
+        executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
+        marco = NPCCard(name="Marco", occupation="bartender")
+        executor._cast.npc_generator.execute = AsyncMock(return_value=[marco])
+
+        await executor.execute_plan(
+            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"], "targets": []},
+            player_action="walk into the tavern",
+            completed_events=[],
+        )
+
+        # Marco (new this turn) stays; Lucia (pre-existing) gets evicted.
+        remaining_uuids = [snpc.uuid for snpc in scene.npcs_present]
+        assert marco.uuid in remaining_uuids
+        assert _GUARD_UUID not in remaining_uuids
+        outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
+        assert len(outputs_sent.npc_departures) == 1
+        assert "Lucia" in outputs_sent.npc_departures[0]
+
+    @allure.story("Same-turn generation skip")
+    @allure.title("skip_uuids unions new NPCs from both _prepare_scene and _process_target_npcs")
+    @pytest.mark.asyncio
+    async def test_union_of_new_uuids_across_both_helpers(self):
+        # Regression guard for the ``|=`` union in ``execute_plan``:
+        # both ``_prepare_scene`` (via SceneBuilder shells) and
+        # ``_process_target_npcs`` (via ``_ensure_npc_targets_in_scene``
+        # shells) can generate NPCs on the same turn. If a future
+        # refactor silently replaced ``|=`` with ``=``, or reordered so
+        # the second source clobbered the first, the other two
+        # integration tests would still pass because they use empty
+        # ``targets`` — only this test puts both sources on the same
+        # turn, so one of the two schedule-absent NPCs would slip past
+        # the skip set and be evicted.
+        executor, gs, narrator, _chronicler = _build_executor(game_time="night")
+
+        # SceneBuilder produces one shell (guard). Guards are absent at
+        # night, so without the skip this NPC would be evicted.
+        scene = scene_mod.Scene(
+            location_id="tavern",
+            description="The Rusty Anchor at night.",
+            npcs_present=[scene_mod.SceneNPC(role="guard")],
+        )
+        executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
+
+        # npc_generator is called twice this turn: once by
+        # _prepare_scene's init pass (for the SceneBuilder shell →
+        # returns [lucia]) and once by _process_target_npcs's init pass
+        # (for the shell that ensure_targets_in_scene appends →
+        # returns [bruno]). Both occupations are absent at night, so
+        # both MUST land in skip_uuids to survive.
+        lucia = NPCCard(name="Lucia", occupation="guard")
+        bruno = NPCCard(name="Bruno", occupation="baker")
+        executor._cast.npc_generator.execute = AsyncMock(side_effect=[[lucia], [bruno]])
+
+        # Silence the dialogue/retaliation path — targets_match_scene_npcs
+        # will be True once Bruno's shell is initialised, so
+        # _run_interactions fires; the test only cares about who the
+        # ticker keeps.
+        executor._agents.dialogue.handle_dialogue = AsyncMock(return_value=[])
+        executor._agents.retaliation.check_retaliation = AsyncMock(return_value=[])
+
+        await executor.execute_plan(
+            plan={
+                "action_type": "EXPLORE",
+                "delegate_to": ["scene_builder", "npc_generator"],
+                "targets": ["Bruno the baker"],
+            },
+            player_action="walk into the tavern and find the baker",
+            completed_events=[],
+        )
+
+        # Both must survive — Lucia from _prepare_scene's union
+        # contribution, Bruno from _process_target_npcs's union
+        # contribution. A broken union would drop one of them.
+        remaining_uuids = {snpc.uuid for snpc in scene.npcs_present}
+        assert lucia.uuid in remaining_uuids
+        assert bruno.uuid in remaining_uuids
+        outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
+        assert outputs_sent.npc_departures == []
