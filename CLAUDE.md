@@ -81,3 +81,27 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - All agents use the `BasePerformer` pattern: `__init__` takes `llm_client` + system prompt template, `act()` is the async entry point
 - Domain models are separate from ORM; `db/converters.py` bridges them
 - Tests use pytest-asyncio; fixtures in `tests/conftest.py`
+
+## Git Workflow
+
+- NEVER push directly to `main`. For every code change, create a feature branch (`feat/<topic>` or `fix/<topic>`), commit there, and open a PR with `gh pr create`. The only exception is when I explicitly say "push to main".
+- Before every commit, run the full gauntlet and only commit if everything passes:
+  ```bash
+  uv run ruff check . && uv run ruff format --check . && uv run flake8 . && uv run mypy . && uv run pytest tests/ --ignore=tests/e2e
+  ```
+- If lint or type checks fail, REFACTOR the code — do not commit with failures and do not bypass hooks with `--no-verify`.
+
+## Linting Rules
+
+- NEVER suppress WPS / flake8 / mypy violations by:
+  - raising limits in `setup.cfg`
+  - adding entries to `per-file-ignores`
+  - inserting `# noqa`, `# type: ignore`, or `# pragma: no cover` comments
+- Always refactor properly: extract helper functions, split modules, use package re-exports, introduce dataclasses, etc. The `fix-wps` skill in `.claude/skills/fix-wps/` has the playbook.
+- If a rule genuinely feels wrong for the codebase, present 2–3 refactor options and ask before modifying project config. Suppressions require explicit approval.
+
+## Testing
+
+- For bug fixes, write a failing regression test first (TDD), then fix the root cause. Don't patch around symptoms.
+- Maintain 90%+ unit test coverage. When adding new modules, add tests in the same PR.
+- E2E tests under `tests/e2e/` must carry Allure annotations following the project taxonomy.
