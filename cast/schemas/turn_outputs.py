@@ -9,7 +9,10 @@ The model is intentionally permissive (every field optional with a sensible
 default) so partial turns — a pure wait, a pure scene rebuild, a dialogue-only
 continuation — can be constructed without spelling out the empty branches.
 
-Future agents (Playwright, Critic) will consume the same typed contract.
+Future agents (``WorldChronicler``, ``Critic``) consume the same typed
+contract. The ``npc_departures`` field is part of that forward wiring:
+the World Chronicler PR introduces it so the upcoming NPC Autonomy PR
+only has to populate it from the ``NPCTicker`` output.
 """
 
 from __future__ import annotations
@@ -46,7 +49,15 @@ class NPCTurnEntry(BaseModel):
 
 
 class TurnOutputs(BaseModel):
-    """Typed view of everything produced during a Director turn."""
+    """Typed view of everything produced during a Director turn.
+
+    ``npc_departures`` holds human-readable lines describing NPCs that
+    walked out of the current scene between turns (for example
+    ``"Marco (bartender) heads off to his quarters for the night"``).
+    The World Chronicler PR ships the field dormant — it is populated
+    by the upcoming ``NPCTicker`` (PR B, NPC Autonomy), and the Narrator
+    already renders each entry so no further plumbing is needed then.
+    """
 
     wait: bool = False
     wait_reason: str | None = None
@@ -55,4 +66,5 @@ class TurnOutputs(BaseModel):
     dialogue: list[DialogueEntry] = Field(default_factory=list)
     item_examination: list[str] = Field(default_factory=list)
     npc_turns: list[NPCTurnEntry] = Field(default_factory=list)
+    npc_departures: list[str] = Field(default_factory=list)
     completed_events: list[str] = Field(default_factory=list)

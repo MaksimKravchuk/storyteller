@@ -22,6 +22,32 @@ def _format_npc_label(snpc: Any, game_state: Any) -> str:
     return snpc.role
 
 
+def _format_wait_line(wait_reason: str | None) -> str:
+    """Render a single raw-parts line describing the player's wait state."""
+    if (wait_reason or "") in ("", "voluntary"):
+        return "The player waits and observes the surroundings."
+    return "The player cannot act — they are {0}.".format(wait_reason)
+
+
+def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, str]:
+    """Build kwargs for ``Narrator.set_context``.
+
+    Only includes ``world_mood`` when the persistent mood set by the
+    World Chronicler is non-empty, so the optional PromptSection in
+    ``NARRATOR_SYSTEM`` renders on hit and skips on miss.
+    """
+    ctx_kwargs: dict[str, str] = {
+        "setting_name": game_state.setting.name,
+        "time_period": game_state.setting.time_period,
+        "time_of_day": game_state.game_time,
+        "language": language,
+    }
+    mood = game_state.world_state.world_mood
+    if mood:
+        ctx_kwargs["world_mood"] = mood
+    return ctx_kwargs
+
+
 class Narrator(BasePerformer):
     """Transforms raw agent outputs into vivid, literary narration."""
 
@@ -45,12 +71,7 @@ class Narrator(BasePerformer):
         game_state = context["game_state"]
         is_new_scene = input_data.scene is not None
 
-        self.set_context(
-            setting_name=game_state.setting.name,
-            time_period=game_state.setting.time_period,
-            time_of_day=game_state.game_time,
-            language=self._language,
-        )
+        self.set_context(**_build_narrator_context_kwargs(game_state, self._language))
 
         raw_parts = self._build_raw_parts(input_data, game_state, context.get("scene_history", []), is_new_scene)
 
@@ -83,25 +104,21 @@ class Narrator(BasePerformer):
         if input_data.scene is not None:
             self._append_scene_parts(raw_parts, input_data.scene, game_state)
 
-        for dialogue_entry in input_data.dialogue:
-            raw_parts.append(f"{dialogue_entry.npc_name} says: {dialogue_entry.response}")
+        self._append_turn_lines(raw_parts, input_data)
+        return raw_parts
 
-        for npc_desc in input_data.new_npcs:
-            raw_parts.append(f"New person appears: {npc_desc}")
-
-        for item_desc in input_data.item_examination:
-            raw_parts.append(f"Item examined: {item_desc}")
+    def _append_turn_lines(self, raw_parts: list[str], input_data: TurnOutputs) -> None:
+        """Append dialogue, new NPCs, items, wait, NPC turns and departures."""
+        raw_parts.extend(f"{entry.npc_name} says: {entry.response}" for entry in input_data.dialogue)
+        raw_parts.extend(f"New person appears: {desc}" for desc in input_data.new_npcs)
+        raw_parts.extend(f"Item examined: {desc}" for desc in input_data.item_examination)
 
         if input_data.wait:
-            if (input_data.wait_reason or "") in ("", "voluntary"):
-                raw_parts.append("The player waits and observes the surroundings.")
-            else:
-                raw_parts.append("The player cannot act — they are {0}.".format(input_data.wait_reason))
+            raw_parts.append(_format_wait_line(input_data.wait_reason))
 
         for npc_turn in input_data.npc_turns:
-            raw_parts.append("Meanwhile, {0}: {1}".format(npc_turn.npc_name, npc_turn.action))
-
-        return raw_parts
+            raw_parts.append(f"Meanwhile, {npc_turn.npc_name}: {npc_turn.action}")
+        raw_parts.extend(f"Someone departs: {line}" for line in input_data.npc_departures)
 
     def _append_history_parts(self, raw_parts: list[str], scene_history: list[dict]) -> None:
         """Append scene history summary to raw_parts."""

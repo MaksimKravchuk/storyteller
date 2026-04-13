@@ -15,7 +15,7 @@ from db.converters import (
     player as conv_player,
     scene as conv_scene,
     setting as conv_setting,
-    story_arc as conv_story_arc,
+    world_state as conv_world_state,
 )
 from db import repo_saver_helpers as saver_helpers
 from knowledge.graph import KnowledgeGraph
@@ -130,7 +130,7 @@ class StateSaver:
         events: list[GameEvent],
     ) -> None:
         """Persist full game state to PG (upsert game_states, delete+insert children)."""
-        story_arc_payload = conv_story_arc.story_arc_to_dict(game_state.story_arc)
+        world_state_payload = conv_world_state.world_state_to_dict(game_state.world_state)
         stmt = (
             pg_insert(tbl.game_states)
             .values(
@@ -144,7 +144,7 @@ class StateSaver:
                 conversation_log=game_state.conversation_log,
                 scene_conversation_log=game_state.scene_conversation_log,
                 pending_clarification=game_state.pending_clarification,
-                story_arc=story_arc_payload,
+                world_state=world_state_payload,
             )
             .on_conflict_do_update(
                 index_elements=["session_id"],
@@ -157,7 +157,7 @@ class StateSaver:
                     "conversation_log": game_state.conversation_log,
                     "scene_conversation_log": game_state.scene_conversation_log,
                     "pending_clarification": game_state.pending_clarification,
-                    "story_arc": story_arc_payload,
+                    "world_state": world_state_payload,
                 },
             )
             .returning(tbl.game_states.c.id)

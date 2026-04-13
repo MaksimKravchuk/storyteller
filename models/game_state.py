@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from models.base_model import BaseModel
-from models.story_arc import StoryArc
+from models.world_state import WorldState
 
 INITIAL_GAME_CLOCK: float = float(0)
 
@@ -55,7 +55,7 @@ class GameState(BaseModel):
     conversation_log: list[dict] = field(default_factory=list)
     scene_conversation_log: list[dict] = field(default_factory=list)
     pending_clarification: list[dict] | None = None
-    story_arc: StoryArc = field(default_factory=StoryArc)
+    world_state: WorldState = field(default_factory=WorldState)
 
     def advance_clock(self, hours: float) -> None:
         """Advance the game clock and update time-of-day label."""

@@ -14,6 +14,7 @@ from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
+from models.world_state import WorldState
 
 
 def _make_narrator() -> Narrator:
@@ -159,6 +160,84 @@ class TestNarratorSceneFallback:
 
         body = _last_user_body(narrator)
         assert "Scene: A plain string scene descriptor." in body
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
+class TestNarratorNpcDepartures:
+    @allure.story("NPC departures")
+    @allure.title("Narrator silently skips npc_departures when the list is empty (dormant path)")
+    @pytest.mark.asyncio
+    async def test_empty_departures_is_no_op(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+
+        await narrator.act(
+            input_data=TurnOutputs(),
+            context={"player_action": "look", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Someone departs" not in body
+
+    @allure.story("NPC departures")
+    @allure.title("Narrator renders npc_departures lines under a 'Someone departs:' prefix")
+    @pytest.mark.asyncio
+    async def test_populated_departures_rendered(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                npc_departures=[
+                    "Marco (bartender) heads off to his quarters for the night",
+                    "Lia (baker) leaves for the market",
+                ],
+            ),
+            context={"player_action": "wait", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Someone departs: Marco (bartender) heads off to his quarters for the night" in body
+        assert "Someone departs: Lia (baker) leaves for the market" in body
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
+class TestNarratorWorldMood:
+    @allure.story("World mood")
+    @allure.title("Narrator system prompt omits the world_mood section when world_state.world_mood is None")
+    @pytest.mark.asyncio
+    async def test_world_mood_unset_skips_section(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        assert gs.world_state.world_mood is None
+
+        await narrator.act(
+            input_data=TurnOutputs(),
+            context={"player_action": "look", "game_state": gs},
+        )
+
+        call_args = narrator.llm_client.send_message.call_args
+        system_prompt = call_args.kwargs["system_prompt"]
+        assert "Current world mood" not in system_prompt
+
+    @allure.story("World mood")
+    @allure.title("Narrator system prompt includes the world_mood hint when world_state.world_mood is set")
+    @pytest.mark.asyncio
+    async def test_world_mood_set_rendered(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        gs.world_state = WorldState(world_mood="tense and restless")
+
+        await narrator.act(
+            input_data=TurnOutputs(),
+            context={"player_action": "look", "game_state": gs},
+        )
+
+        call_args = narrator.llm_client.send_message.call_args
+        system_prompt = call_args.kwargs["system_prompt"]
+        assert "Current world mood: tense and restless" in system_prompt
 
 
 @allure.epic("Narrative Delivery")

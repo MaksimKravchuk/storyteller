@@ -37,6 +37,7 @@ class DirectorCast:
     npc_generator: Any
     data_miner: Any
     item_generator: Any
+    world_chronicler: Any | None = None
     actors: dict[str, Any] = dataclasses.field(default_factory=dict)
 
 

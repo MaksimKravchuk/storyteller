@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from cast.schemas.chronicler_response import ScheduledEventDraft
 from knowledge.memory import MemoryManager
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
@@ -28,6 +29,29 @@ class EventProcessor:
         """Advance the game clock and return completed events."""
         hours = resolve_time_cost(action_type, time_override)
         return self._event_mgr.advance_time(hours)
+
+    def schedule_drafts(self, drafts: list[ScheduledEventDraft], now: float) -> list[str]:
+        """Turn Chronicler-produced drafts into real :class:`GameEvent`s.
+
+        Each draft becomes a :class:`GameEvent` scheduled ``draft.hours_from_now``
+        hours after ``now`` (taken from the caller's current game clock).
+        ``GameEvent`` derives its ``completes_at`` from ``scheduled_at +
+        duration`` via a pydantic model validator, so we only set
+        ``scheduled_at`` and ``duration`` explicitly. Returns the list
+        of newly scheduled event UUIDs for logging.
+        """
+        scheduled_uuids: list[str] = []
+        for draft in drafts:
+            event = GameEvent(
+                name=draft.name,
+                scheduled_at=now,
+                duration=draft.hours_from_now,
+                location_id=draft.location_id,
+                scope=draft.scope,
+                on_complete_description=draft.on_complete_description,
+            )
+            scheduled_uuids.append(self._event_mgr.schedule(event))
+        return scheduled_uuids
 
     def partition_events(self, events: list[GameEvent]) -> tuple[list[GameEvent], list[GameEvent]]:
         """Split events into local (visible to player) and remote."""

@@ -95,7 +95,7 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 |---|---|---|
 | `test_models.py` | Domain models | "BaseModel UUID", "Character defaults", "NPCCard fields" |
 | `test_models_game.py` | GameState model | "Initial values", "Dataclass fields", "PlayerState" |
-| `test_story_arc.py` | StoryArc model | "Defaults", "GameState plumbing", "Round-trip", "Backwards compatibility" |
+| `test_world_state.py` | WorldState model | "Defaults", "GameState plumbing", "Round-trip", "Backwards compatibility" |
 | `test_director_history.py` | Scene history & delegation | "Message pair building", "Call chain delegation" |
 | `test_db_engine.py` | Database engine | "URL sslmode strip", "Engine creation" |
 
