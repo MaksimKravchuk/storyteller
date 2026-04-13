@@ -11,12 +11,20 @@ says they are *not* present at the current ``game_state.game_time``.
 Evicted NPCs show up in :attr:`TurnOutputs.npc_departures`, which the
 :class:`cast.narrator.Narrator` renders as ``Someone departs: ...``
 lines in the final prose. The field was shipped dormant in PR #61
-(World Chronicler) specifically so that this PR only has to populate
+(World Chronicler) specifically so that PR #63 only had to populate
 it.
+
+Callers can pass ``skip_uuids`` to :meth:`NPCTicker.tick` to shield a
+set of NPCs from eviction for a single turn. :class:`PlanExecutor`
+uses this to exclude NPCs that were *generated* this very turn —
+without it, a bartender placed in a morning tavern by the Scene
+Builder would be evicted before the Narrator ever describes them as
+present, producing ``Someone departs: Marco is still asleep...`` for
+a character the player has never met.
 
 No LLM calls, no schema, no persistence: every decision is a pure
 function of ``game_state.game_time`` + each NPC's ``occupation``, so
-the ticker works for NPCs that existed before this PR as well as new
+the ticker works for NPCs that existed before PR #63 as well as new
 ones, without any migration. Follow-up PRs can attach per-NPC
 overrides or route schedule generation through the NPC Generator; the
 surface area here is deliberately small.
@@ -26,6 +34,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from typing import Any
 
@@ -190,8 +199,18 @@ class NPCTicker:
     def __init__(self, game_state: GameState) -> None:
         self._gs = game_state
 
-    def tick(self, raw_outputs: turn_outputs.TurnOutputs) -> None:
+    def tick(
+        self,
+        raw_outputs: turn_outputs.TurnOutputs,
+        skip_uuids: set[str] | None = None,
+    ) -> None:
         """Evict schedule-absent NPCs from the current scene.
+
+        ``skip_uuids`` is an optional set of NPC UUIDs to shield from
+        eviction for this tick only. :class:`PlanExecutor` populates
+        it with NPCs that were *generated this very turn* so that a
+        freshly-placed bartender in a morning tavern is not evicted
+        before the Narrator ever describes them as present.
 
         Mutations (all in place):
 
@@ -214,8 +233,11 @@ class NPCTicker:
         if scene is None or not scene.npcs_present:
             return
 
-        time_of_day = self._gs.game_time
-        remaining, departures = self._partition(scene.npcs_present, time_of_day)
+        remaining, departures = self._partition(
+            scene.npcs_present,
+            self._gs.game_time,
+            skip_uuids or frozenset(),
+        )
         if not departures:
             return
 
@@ -226,11 +248,20 @@ class NPCTicker:
         self,
         scene_npcs: list[Any],
         time_of_day: str,
+        skip_uuids: AbstractSet[str],
     ) -> tuple[list[Any], list[str]]:
-        """Split scene NPCs into (kept, departure_lines)."""
+        """Split scene NPCs into (kept, departure_lines).
+
+        Any NPC whose ``uuid`` appears in ``skip_uuids`` is kept
+        unconditionally — used to shield same-turn-generated NPCs
+        from immediate eviction.
+        """
         remaining: list[Any] = []
         departures: list[str] = []
         for snpc in scene_npcs:
+            if snpc.uuid is not None and snpc.uuid in skip_uuids:
+                remaining.append(snpc)
+                continue
             line = self._classify(snpc, time_of_day)
             if line is None:
                 remaining.append(snpc)
