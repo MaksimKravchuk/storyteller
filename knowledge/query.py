@@ -59,6 +59,13 @@ def _node_matches(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
     return all(checks)
 
 
+def _memory_sort_key(node: KnowledgeNode) -> float:
+    """Return the timestamp of a memory node for sorting, treating missing as oldest."""
+    if node.timestamp is None:
+        return float("-inf")
+    return node.timestamp
+
+
 class KnowledgeQueryEngine:
     """Applies filters to the knowledge graph for NPC-aware retrieval.
 
@@ -125,11 +132,26 @@ class KnowledgeQueryEngine:
         lines = [f"- {_SOURCE_PREFIXES.get(node.source, '')}{node.text}" for node in nodes]
         return "\n".join(lines)
 
+    def get_memories_about(self, npc_id: str, limit: int = 5) -> list[KnowledgeNode]:
+        """Return the NPC's most recent PERSONAL_EXPERIENCE memories, newest first."""
+        memories = self._personal_memories_for(npc_id)
+        memories.sort(key=_memory_sort_key, reverse=True)
+        return memories[:limit]
+
+    def _personal_memories_for(self, npc_id: str) -> list[KnowledgeNode]:
+        """Return every PERSONAL_EXPERIENCE node linked from *npc_id*."""
+        linked_ids = {target_id for target_id, _ in self._graph.get_edges_from(npc_id)}
+        if not linked_ids:
+            return []
+        return [
+            node
+            for node in self._graph.all_nodes()
+            if node.source == KnowledgeSource.PERSONAL_EXPERIENCE and node.uuid in linked_ids
+        ]
+
     def _add_personal_memories(self, npc_id: str, matching_nodes: list[KnowledgeNode]) -> None:
         """Append personal-experience nodes linked to *npc_id* that aren't already included."""
-        linked_ids = {target_id for target_id, _ in self._graph.get_edges_from(npc_id)}
         existing_ids = {node.uuid for node in matching_nodes}
-        for node in self._graph.all_nodes():
-            if node.source == KnowledgeSource.PERSONAL_EXPERIENCE:
-                if node.uuid in linked_ids and node.uuid not in existing_ids:
-                    matching_nodes.append(node)
+        for memory in self._personal_memories_for(npc_id):
+            if memory.uuid not in existing_ids:
+                matching_nodes.append(memory)

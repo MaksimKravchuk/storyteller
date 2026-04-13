@@ -15,6 +15,7 @@ from knowledge.node import (
     KnowledgeScope,
     KnowledgeSource,
 )
+from knowledge.query import KnowledgeQueryEngine
 from llm.message import LLMResponse
 
 pytestmark = [
@@ -82,6 +83,32 @@ async def test_summarize_interaction_no_edge_when_npc_missing() -> None:
     )
     assert graph.get_node(node.uuid) is not None
     assert graph.get_edges_from("unknown-npc-uuid") == []
+
+
+@allure.story("summarize_interaction")
+@allure.title("summarize_interaction creates a WITNESSED edge that is queryable via get_memories_about")
+@pytest.mark.asyncio
+async def test_summarize_interaction_creates_witnessed_edge_and_is_queryable() -> None:
+    """Register an NPC via register_actor_node, summarise an interaction, then query it back."""
+    manager, graph, _ = _make_manager()
+    npc_id = "npc-marcus"
+    graph.register_actor_node(npc_id, label="Marcus (legionary)")
+
+    node = await manager.summarize_interaction(
+        interaction_log="Player: greetings\nMarcus: hail",
+        npc_id=npc_id,
+        game_time=3.0,
+    )
+
+    edges = graph.get_edges_from(npc_id)
+    assert len(edges) == 1
+    assert edges[0] == (node.uuid, EdgeType.WITNESSED)
+
+    engine = KnowledgeQueryEngine(graph)
+    memories = engine.get_memories_about(npc_id)
+    assert len(memories) == 1
+    assert memories[0].uuid == node.uuid
+    assert memories[0].text == _SUMMARY_TEXT
 
 
 @allure.story("create_memory_from_event")

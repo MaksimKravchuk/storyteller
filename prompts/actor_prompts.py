@@ -34,6 +34,11 @@ ACTOR_SYSTEM = PromptTemplate(
             required_vars=["accessible_knowledge"],
         ),
         PromptSection(
+            name="memory",
+            template=("What you remember about your past interactions with this person:\n{past_memories}"),
+            required_vars=["past_memories"],
+        ),
+        PromptSection(
             name="constraints",
             template=(
                 "Rules:\n"

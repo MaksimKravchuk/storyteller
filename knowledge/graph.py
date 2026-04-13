@@ -34,6 +34,17 @@ class KnowledgeGraph:
         self.digraph.add_node(node.uuid, data=node)
         return node.uuid
 
+    def register_actor_node(self, actor_id: str, label: str = "") -> None:
+        """Register an NPC/actor as a graph node so memory edges can link to it.
+
+        The node is added **without** a ``data`` payload so it stays invisible
+        to ``all_nodes()`` and any ``KnowledgeQueryEngine`` queries — it exists
+        purely as an endpoint for ``WITNESSED`` edges emitted by the memory
+        manager. The ``label`` is stored as a networkx attribute for debugging
+        and is never returned from knowledge queries.
+        """
+        self.digraph.add_node(actor_id, label=label)
+
     def get_node(self, node_id: str) -> KnowledgeNode | None:
         if node_id in self.digraph:
             return self.digraph.nodes[node_id].get(_NODE_DATA_KEY)

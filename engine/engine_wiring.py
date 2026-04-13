@@ -83,12 +83,19 @@ def restore_actors(
 
     Called during ``restore_session`` so that NPCs initialised in prior
     turns get working Actor agents even though the engine was rebuilt
-    from scratch.
+    from scratch.  Each NPC is also (re-)registered as a graph node so
+    memory edges created by the MemoryManager have a valid endpoint,
+    even on a freshly rehydrated graph where the NPC node would
+    otherwise be missing.
     """
     from cast.actor import Actor
     from knowledge.query import KnowledgeQueryEngine
 
     for npc_uuid, npc in game_state.npcs.items():
+        knowledge_graph.register_actor_node(
+            npc_uuid,
+            label="{0} ({1})".format(npc.name, npc.occupation),
+        )
         actor = Actor(
             llm_client=llm_client,
             npc=npc,
