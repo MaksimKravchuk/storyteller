@@ -20,18 +20,18 @@ pytestmark = [
 
 def _make_config() -> MagicMock:
     cfg = MagicMock()
-    cfg.director_model = "gpt-4"
-    cfg.agent_model = "gpt-3.5-turbo"
-    cfg.narrator_model = "gpt-4"
+    cfg.director_model = "gpt-5.4-mini"
+    cfg.agent_model = "gpt-5.4-nano"
+    cfg.narrator_model = "gpt-5.4-mini"
     cfg.openai_api_key = "openai-key"
     cfg.anthropic_api_key = "anthropic-key"
     return cfg
 
 
 def _resolver_side_effect(model_id: str, _cfg) -> ModelConfig:
-    if model_id == "gpt-3.5-turbo":
-        return AI_MODELS.gpt35_turbo
-    return AI_MODELS.gpt4
+    if model_id == "gpt-5.4-nano":
+        return AI_MODELS.gpt5_4_nano
+    return AI_MODELS.gpt5_4_mini
 
 
 @allure.story("create_engine")
@@ -46,9 +46,9 @@ def test_create_engine_returns_game_engine_with_defaults() -> None:
     # Private attrs are part of this test's contract since factory is a narrow wrapper.
     assert engine._language == "English"
     assert engine._api_keys == {"openai": "openai-key", "anthropic": "anthropic-key"}
-    assert engine._director_model is AI_MODELS.gpt4
-    assert engine._agent_model is AI_MODELS.gpt35_turbo
-    assert engine._narrator_model is AI_MODELS.gpt4
+    assert engine._director_model is AI_MODELS.gpt5_4_mini
+    assert engine._agent_model is AI_MODELS.gpt5_4_nano
+    assert engine._narrator_model is AI_MODELS.gpt5_4_mini
 
 
 @allure.story("create_engine")
@@ -73,7 +73,7 @@ def test_create_engine_resolves_three_model_ids() -> None:
         create_engine(cfg)
         assert resolver.call_count == 3
         called_ids = [call.args[0] for call in resolver.call_args_list]
-        assert called_ids == ["gpt-4", "gpt-3.5-turbo", "gpt-4"]
+        assert called_ids == ["gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.4-mini"]
 
 
 @allure.story("create_engine_from_state")

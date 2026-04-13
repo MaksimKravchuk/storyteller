@@ -163,3 +163,55 @@ class TestOpenAIClient:
             )
         assert formatted[0] == {"role": "system", "content": "sys"}
         assert formatted[1] == {"role": "user", "content": "hello"}
+
+    @allure.story("send_message")
+    @allure.title("OpenAIClient.send_message logs the API error body and re-raises on a 400 Bad Request")
+    @pytest.mark.asyncio
+    async def test_send_message_api_error_is_logged_and_reraised(self) -> None:
+        """A 400 Bad Request must be logged with the OpenAI error body, then re-raised.
+
+        Regression test for the debuggability gap where an ``httpx.HTTPStatusError``
+        was bubbling up to the caller without the OpenAI error message in the logs.
+        """
+        import httpx
+        from loguru import logger
+        from openai import BadRequestError
+
+        error_body = {
+            "error": {
+                "message": "response_format of type 'json_object' is not supported with this model",
+                "type": "invalid_request_error",
+            },
+        }
+        fake_response = httpx.Response(
+            status_code=400,
+            request=httpx.Request("POST", "https://api.openai.com/v1/chat/completions"),
+        )
+        bad_request = BadRequestError(
+            message="400 Bad Request",
+            response=fake_response,
+            body=error_body,
+        )
+
+        sdk_class = MagicMock()
+        sdk_instance = MagicMock()
+        sdk_instance.chat.completions.create = AsyncMock(side_effect=bad_request)
+        sdk_class.return_value = sdk_instance
+
+        captured: list[str] = []
+        sink_id = logger.add(lambda record: captured.append(str(record)), level="ERROR")
+        try:
+            with patch(_OPENAI_CTOR, sdk_class):
+                client = OpenAIClient(model=_MODEL, api_key="k")
+                with pytest.raises(BadRequestError):
+                    await client.send_message(
+                        messages=[_user_msg("trigger 400")],
+                        system_prompt="director system prompt",
+                        response_format={"type": _JSON_MODE_TYPE},
+                    )
+        finally:
+            logger.remove(sink_id)
+
+        assert any("OpenAI API error" in entry for entry in captured)
+        assert any(_MODEL in entry for entry in captured)
+        assert any("json_object" in entry for entry in captured)

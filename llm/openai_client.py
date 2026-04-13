@@ -1,18 +1,38 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+from loguru import logger
 
 from llm.base_client import BaseLLMClient
 from llm.message import Message, LLMResponse
 
+if TYPE_CHECKING:
+    from openai import APIStatusError
+
 
 _ALLOWED_CONTROL = frozenset("\t\n\r")
+_SYSTEM_PROMPT_LOG_CHARS = 200
 
 
 def _is_printable(ch: str) -> bool:
     """Return True if the character is safe for JSON strings."""
     return (ch >= "\x20" and ch != "\x7f") or ch in _ALLOWED_CONTROL
+
+
+def _extract_error_body(exc: Any) -> Any:
+    """Return the richest available payload from an OpenAI ``APIStatusError``.
+
+    Prefers the structured ``exc.body`` dict, falls back to the raw HTTP
+    response text, and finally ``str(exc)``.
+    """
+    body = getattr(exc, "body", None)
+    if body is not None:
+        return body
+    response = getattr(exc, "response", None)
+    text = getattr(response, "text", None)
+    return text or str(exc)
 
 
 def _sanitize(text: str) -> str:
@@ -30,19 +50,22 @@ def _sanitize(text: str) -> str:
 
 
 class OpenAIClient(BaseLLMClient):
-    """OpenAI API provider (GPT-4, GPT-3.5-turbo, etc.)."""
+    """OpenAI API provider (GPT-5.4 family, GPT-4o, etc.)."""
 
     def __init__(
         self,
-        model: str = "gpt-4",
+        model: str = "gpt-5.4-mini",
         api_key: str | None = None,
         **kwargs: Any,
     ):
         super().__init__(model=model, api_key=api_key, **kwargs)
         # Lazy import so openai is not required when using another provider
-        from openai import AsyncOpenAI
+        from openai import APIStatusError, AsyncOpenAI
 
         self._client = AsyncOpenAI(api_key=self.api_key)
+        # Stored as an instance attribute so ``except self._api_status_error``
+        # works without a top-level import of ``openai``.
+        self._api_status_error: type[APIStatusError] = APIStatusError
 
     async def send_message(
         self,
@@ -63,7 +86,11 @@ class OpenAIClient(BaseLLMClient):
         if response_format:
             kwargs["response_format"] = response_format
 
-        response = await self._client.chat.completions.create(**kwargs)
+        try:
+            response = await self._client.chat.completions.create(**kwargs)
+        except self._api_status_error as exc:
+            self._log_api_error(exc, kwargs, system_prompt)
+            raise
         choice = response.choices[0]
 
         return LLMResponse(
@@ -108,3 +135,41 @@ class OpenAIClient(BaseLLMClient):
             sanitized_body = _sanitize(msg.body)
             formatted.append({"role": msg.role.value, "content": sanitized_body})
         return formatted
+
+    def _log_api_error(
+        self,
+        exc: "APIStatusError",
+        kwargs: dict[str, Any],
+        system_prompt: str,
+    ) -> None:
+        """Log the OpenAI error body so the caller can see what the API rejected.
+
+        The whole emit is guarded so that a logging failure can never mask
+        the original API error.
+        """
+        try:
+            self._emit_api_error_log(exc, kwargs, system_prompt)
+        except Exception:  # noqa: BLE001 - logging must never mask the real error
+            logger.exception("Failed to serialize OpenAI API error for logging")
+
+    def _emit_api_error_log(
+        self,
+        exc: "APIStatusError",
+        kwargs: dict[str, Any],
+        system_prompt: str,
+    ) -> None:
+        """Emit the structured error log entry for an OpenAI API failure."""
+        logger.error(
+            "OpenAI API error | model={} status={} "
+            "has_response_format={} num_messages={} temperature={} "
+            "max_completion_tokens={} system_prompt[:{}]={!r} body={!r}",
+            self.model,
+            getattr(exc, "status_code", None),
+            "response_format" in kwargs,
+            len(kwargs.get("messages", [])),
+            kwargs.get("temperature"),
+            kwargs.get("max_completion_tokens"),
+            _SYSTEM_PROMPT_LOG_CHARS,
+            system_prompt[:_SYSTEM_PROMPT_LOG_CHARS],
+            _extract_error_body(exc),
+        )

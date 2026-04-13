@@ -7,8 +7,8 @@ import allure
 from defaults.models import AI_MODELS, ModelConfig
 
 _OPENAI = "openai"
-_GPT4 = "gpt-4"
-_GPT35_TURBO = "gpt-3.5-turbo"
+_GPT5_4_MINI = "gpt-5.4-mini"
+_GPT5_4_NANO = "gpt-5.4-nano"
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -27,21 +27,21 @@ class TestDefaultsExports:
     @allure.story("ModelConfig dataclass")
     @allure.title("ModelConfig constructs with explicit provider and model_id and exposes them as attributes")
     def test_modelconfig_is_dataclass(self):
-        cfg = ModelConfig(provider=_OPENAI, model_id=_GPT4)
+        cfg = ModelConfig(provider=_OPENAI, model_id=_GPT5_4_MINI)
         assert cfg.provider == _OPENAI
-        assert cfg.model_id == _GPT4
+        assert cfg.model_id == _GPT5_4_MINI
 
     @allure.story("AI_MODELS registry")
-    @allure.title("AI_MODELS.gpt4 is preconfigured as the OpenAI gpt-4 model")
-    def test_ai_models_gpt4(self):
-        assert AI_MODELS.gpt4.provider == _OPENAI
-        assert AI_MODELS.gpt4.model_id == _GPT4
+    @allure.title("AI_MODELS.gpt5_4_mini is preconfigured as the OpenAI gpt-5.4-mini model")
+    def test_ai_models_gpt5_4_mini(self):
+        assert AI_MODELS.gpt5_4_mini.provider == _OPENAI
+        assert AI_MODELS.gpt5_4_mini.model_id == _GPT5_4_MINI
 
     @allure.story("AI_MODELS registry")
-    @allure.title("AI_MODELS.gpt35_turbo is preconfigured as the OpenAI gpt-3.5-turbo model")
-    def test_ai_models_gpt35_turbo(self):
-        assert AI_MODELS.gpt35_turbo.provider == _OPENAI
-        assert AI_MODELS.gpt35_turbo.model_id == _GPT35_TURBO
+    @allure.title("AI_MODELS.gpt5_4_nano is preconfigured as the OpenAI gpt-5.4-nano model")
+    def test_ai_models_gpt5_4_nano(self):
+        assert AI_MODELS.gpt5_4_nano.provider == _OPENAI
+        assert AI_MODELS.gpt5_4_nano.model_id == _GPT5_4_NANO
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -52,9 +52,9 @@ class TestResolveModelConfig:
     def test_gpt_model_resolves_to_openai(self):
         from config import Config, resolve_model_config
 
-        cfg = resolve_model_config(_GPT4, Config())
+        cfg = resolve_model_config(_GPT5_4_MINI, Config())
         assert cfg.provider == _OPENAI
-        assert cfg.model_id == _GPT4
+        assert cfg.model_id == _GPT5_4_MINI
 
     @allure.story("Provider auto-detection")
     @allure.title("resolve_model_config routes any claude-* model id to the anthropic provider")
