@@ -13,7 +13,7 @@ from knowledge.graph_queries import (
     query_by_tags,
 )
 from knowledge import graph_serialization
-from knowledge.node import EdgeType, KnowledgeCanon, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from knowledge.query import KnowledgeFilter, KnowledgeQueryEngine
 from models.character import Character
 
@@ -104,18 +104,6 @@ class TestKnowledgeNode:
         assert node.required_education == 5
         assert node.tags == [_POLITICS]
         assert node.confidence == pytest.approx(_CONFIDENCE)
-
-    @allure.story("Node defaults")
-    @allure.title("A KnowledgeNode defaults to HISTORICAL canon provenance")
-    def test_default_canon_is_historical(self):
-        node = KnowledgeNode(text="Ancient Rome was founded in 753 BC")
-        assert node.canon == KnowledgeCanon.HISTORICAL
-
-    @allure.story("Node defaults")
-    @allure.title("A KnowledgeNode accepts an explicit SESSION canon on init")
-    def test_explicit_session_canon(self):
-        node = KnowledgeNode(text="Player killed Lorenzo", canon=KnowledgeCanon.SESSION)
-        assert node.canon == KnowledgeCanon.SESSION
 
 
 # ---------------------------------------------------------------------------
@@ -263,20 +251,6 @@ class TestKnowledgeGraphQueries:
         restored = graph_serialization.from_dict(graph_dict)
         assert graph_serialization.node_count(restored) == graph_serialization.node_count(populated_graph)
 
-    @allure.story("Serialization")
-    @allure.title("Serialization round-trip preserves the canon provenance on every node")
-    def test_serialise_round_trip_preserves_canon(self, empty_graph):
-        historical = KnowledgeNode(text="Lorenzo died in 1492", canon=KnowledgeCanon.HISTORICAL)
-        session = KnowledgeNode(text="Player killed Lorenzo in 1481", canon=KnowledgeCanon.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-
-        restored = graph_serialization.from_dict(graph_serialization.to_dict(empty_graph))
-
-        by_uuid = {node.uuid: node.canon for node in restored.all_nodes()}
-        assert by_uuid[historical.uuid] == KnowledgeCanon.HISTORICAL
-        assert by_uuid[session.uuid] == KnowledgeCanon.SESSION
-
 
 # ---------------------------------------------------------------------------
 # KnowledgeQueryEngine
@@ -331,51 +305,6 @@ class TestQueryEngineFilters:
         matching_nodes = engine.query(filt)
         assert len(matching_nodes) == 1
         assert "trade" in matching_nodes[0].tags
-
-    @allure.story("Query engine filters")
-    @allure.title("A KnowledgeFilter with canon=HISTORICAL returns only historical nodes, not session nodes")
-    def test_query_filters_by_historical_canon(self, empty_graph):
-        historical = KnowledgeNode(text="Lorenzo died in 1492", canon=KnowledgeCanon.HISTORICAL)
-        session = KnowledgeNode(text="Player killed Lorenzo in 1481", canon=KnowledgeCanon.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-
-        engine = KnowledgeQueryEngine(empty_graph)
-        matching = engine.query(KnowledgeFilter(canon=KnowledgeCanon.HISTORICAL))
-
-        matched_uuids = {node.uuid for node in matching}
-        assert historical.uuid in matched_uuids
-        assert session.uuid not in matched_uuids
-
-    @allure.story("Query engine filters")
-    @allure.title("A KnowledgeFilter with canon=SESSION returns only session nodes, not historical nodes")
-    def test_query_filters_by_session_canon(self, empty_graph):
-        historical = KnowledgeNode(text="Lorenzo died in 1492", canon=KnowledgeCanon.HISTORICAL)
-        session = KnowledgeNode(text="Player killed Lorenzo in 1481", canon=KnowledgeCanon.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-
-        engine = KnowledgeQueryEngine(empty_graph)
-        matching = engine.query(KnowledgeFilter(canon=KnowledgeCanon.SESSION))
-
-        matched_uuids = {node.uuid for node in matching}
-        assert session.uuid in matched_uuids
-        assert historical.uuid not in matched_uuids
-
-    @allure.story("Query engine filters")
-    @allure.title("A KnowledgeFilter with canon=None returns both historical and session nodes")
-    def test_query_filters_canon_none_returns_both(self, empty_graph):
-        historical = KnowledgeNode(text="Lorenzo died in 1492", canon=KnowledgeCanon.HISTORICAL)
-        session = KnowledgeNode(text="Player killed Lorenzo in 1481", canon=KnowledgeCanon.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-
-        engine = KnowledgeQueryEngine(empty_graph)
-        matching = engine.query(KnowledgeFilter(canon=None))
-
-        matched_uuids = {node.uuid for node in matching}
-        assert historical.uuid in matched_uuids
-        assert session.uuid in matched_uuids
 
 
 @allure.epic("Scene & Exploration")

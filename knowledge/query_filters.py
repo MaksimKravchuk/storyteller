@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from knowledge.node import KnowledgeCanon, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 
 
 def passes_scope(node: KnowledgeNode, max_scope: KnowledgeScope) -> bool:
@@ -44,10 +44,3 @@ def passes_sources(node: KnowledgeNode, sources: list[KnowledgeSource] | None) -
     if not sources:
         return True
     return node.source in sources
-
-
-def passes_canon(node: KnowledgeNode, canon: KnowledgeCanon | None) -> bool:
-    """Return True if the node's canon matches the requested one (or no canon filter)."""
-    if canon is None:
-        return True
-    return node.canon == canon
