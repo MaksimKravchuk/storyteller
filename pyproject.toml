@@ -41,7 +41,7 @@ module = ["interfaces.telegram_bot"]
 disable_error_code = ["union-attr"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "models", "prompts", "research", "timeline"]
+packages = ["cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "log_scrubbing.py", "models", "prompts", "research", "timeline"]
 
 [dependency-groups]
 dev = [

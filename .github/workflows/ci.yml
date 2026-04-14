@@ -148,6 +148,14 @@ jobs:
           name: allure-results
           path: allure-results/
 
+      - name: Upload narrative quality logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: narrative-quality-logs
+          path: allure-results/logs/
+          if-no-files-found: warn
+
       - name: Post narrative quality report on PR
         if: always() && github.event_name == 'pull_request' && hashFiles('allure-results/narrative-report.md') != ''
         uses: marocchino/sticky-pull-request-comment@v2

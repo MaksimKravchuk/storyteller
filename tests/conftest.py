@@ -8,6 +8,7 @@ import pytest
 from loguru import logger
 
 from knowledge.graph import KnowledgeGraph
+from log_scrubbing import install_scrubber
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.game_state import GameState
 from models.location import Location
@@ -83,6 +84,18 @@ def _has_allure_title(item: pytest.Item) -> bool:
     """``allure.title`` sets ``__allure_display_name__`` on the underlying function."""
     func = getattr(item, "function", None)
     return bool(getattr(func, "__allure_display_name__", None))
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _install_log_scrubber():
+    """Patch loguru with the secret scrubber for the whole test session.
+
+    Unit tests frequently exercise logging code; installing the scrubber
+    once at session scope guarantees no test can leak a key from the
+    current process environment into a captured log record.
+    """
+    install_scrubber()
+    yield
 
 
 @pytest.fixture
