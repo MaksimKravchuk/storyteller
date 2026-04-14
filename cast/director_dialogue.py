@@ -170,9 +170,13 @@ class DialogueHandler:
         dialogue call already resolved the aggression.
         """
         work_items = self._collect_targets(target_names, player_action, is_aggressive, contest_info)
-        coros = [_execute_npc_dialogue(*wi, self._gs) for wi in work_items]
-        dialogue_entries = list(await asyncio.gather(*coros))
-        await self._summarize_interactions(work_items, dialogue_entries, player_action)
+        dialogue_entries = list(
+            await asyncio.gather(*(_execute_npc_dialogue(*wi, self._gs) for wi in work_items)),
+        )
+        await self._memory_manager.summarize_interactions_batch(
+            dlg_helpers.format_dialogue_summary_pairs(work_items, dialogue_entries, player_action),
+            self._gs.game_clock,
+        )
         combat_engaged_uuids = {
             work_item[0].uuid
             for work_item in work_items
@@ -226,6 +230,39 @@ class DialogueHandler:
             scene_npc.uuid = card.uuid
         return list(new_cards)
 
+    async def summarize_retaliations(
+        self,
+        retaliation_entries: list[dict[str, str]],
+        player_action: str,
+    ) -> None:
+        """Persist a WITNESSED memory node for each retaliating NPC.
+
+        ``RetaliationHandler`` produces one entry per NPC whose mood
+        flipped into an attack this turn. Each entry carries an
+        ``npc_uuid`` key (silently dropped by ``DialogueEntry``'s
+        extras handling) that pins the resulting memory to the
+        retaliator — without this, a subsequent
+        ``get_memories_about(retaliator)`` would return nothing about
+        the fight.
+
+        The interaction log is prefixed with ``[retaliation]`` so the
+        summariser — and any downstream prompt that inspects the raw
+        log — can distinguish provoked combat from targeted combat.
+        """
+        pairs = [
+            (
+                entry["npc_uuid"],
+                "[retaliation] Player: {0}\n{1}: {2}".format(
+                    player_action,
+                    entry.get("npc_name", ""),
+                    entry.get("response", ""),
+                ),
+            )
+            for entry in retaliation_entries
+            if entry.get("npc_uuid")
+        ]
+        await self._memory_manager.summarize_interactions_batch(pairs, self._gs.game_clock)
+
     def _collect_targets(
         self,
         target_names: list[str],
@@ -249,32 +286,3 @@ class DialogueHandler:
             for uid in matched_uuids
             if uid in self._actors
         ]
-
-    async def _summarize_interactions(
-        self,
-        work_items: list[tuple[Any, Any, str, ContestRoll | None]],
-        dialogue_entries: list[dict[str, str]],
-        player_action: str,
-    ) -> None:
-        """Persist a long-term memory node for each NPC that took part.
-
-        Summaries are awaited before ``handle_dialogue`` returns so that
-        subsequent Actor turns can retrieve them via ``get_memories_about``.
-        The LLM calls run concurrently via ``asyncio.gather`` to keep
-        per-turn latency bounded.
-        """
-        game_time = self._gs.game_clock
-        summary_coros = [
-            self._memory_manager.summarize_interaction(
-                interaction_log="Player: {0}\n{1}: {2}".format(
-                    player_action,
-                    work_item[0].name,
-                    entry.get("response", ""),
-                ),
-                npc_id=work_item[0].uuid,
-                game_time=game_time,
-            )
-            for work_item, entry in zip(work_items, dialogue_entries)
-        ]
-        if summary_coros:
-            await asyncio.gather(*summary_coros)

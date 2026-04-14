@@ -126,7 +126,13 @@ def _build_retaliation_work(
 
 
 async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> dict[str, str]:
-    """Execute a single NPC retaliation and return the result entry."""
+    """Execute a single NPC retaliation and return the result entry.
+
+    The returned dict carries an ``npc_uuid`` key alongside the
+    player-facing fields. ``turn_outputs.DialogueEntry`` silently
+    drops the extra, while :meth:`DialogueHandler.summarize_retaliations`
+    reads it to pin the WITNESSED memory node to the retaliating NPC.
+    """
     response = await work.actor.execute(
         input_data=work.retaliation_input,
         context={
@@ -136,6 +142,7 @@ async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> 
         },
     )
     return {
+        "npc_uuid": work.npc.uuid,
         "npc_name": work.npc.name,
         "response": response,
         "is_retaliation": "true",
