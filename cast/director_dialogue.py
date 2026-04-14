@@ -9,6 +9,7 @@ from typing import Any
 from cast.dice import CombatOutcome, ContestRoll, ContestType
 from cast.director_context import get_location_name
 from cast import director_dialogue_helpers as dlg_helpers
+from cast.director_dialogue_witness import broadcast_cowitness_memories
 from knowledge.memory import MemoryManager
 from models.game_state import GameState
 from timeline.event import EventEffect, GameEvent
@@ -157,10 +158,19 @@ class DialogueHandler:
     ) -> DialogueResult:
         """Route dialogue to the correct Actor agents.
 
-        After the dialogue turn resolves, each participating NPC gets a
-        long-term memory node summarising the exchange.  Summarisation is
-        awaited before returning so the memories are in the graph before
-        the next Actor call reads them back via ``get_memories_about``.
+        After the dialogue turn resolves, each *targeted* NPC gets a
+        long-term memory node summarising the exchange, produced via the
+        LLM summariser. Every other initialised NPC in the current scene
+        (the co-witnesses — NPCs who were standing right there and
+        would logically overhear the conversation) is then given a
+        zero-LLM-cost ``PERSONAL_EXPERIENCE`` memory containing the raw
+        overheard transcript (KER-11). Summarisation is awaited before
+        returning so every memory is in the graph before the next
+        Actor call reads them back via ``get_memories_about``.
+
+        LLM call budget per TALK turn: ``N_targeted`` summariser calls
+        (unchanged from before KER-11) — co-witness broadcast is
+        deterministic and does not touch the LLM.
 
         Returns a tuple ``(entries, combat_engaged_uuids)`` where
         ``combat_engaged_uuids`` is the set of NPC UUIDs whose dialogue call
@@ -176,6 +186,13 @@ class DialogueHandler:
         await self._memory_manager.summarize_interactions_batch(
             dlg_helpers.format_dialogue_summary_pairs(work_items, dialogue_entries, player_action),
             self._gs.game_clock,
+        )
+        await broadcast_cowitness_memories(
+            work_items,
+            dialogue_entries,
+            player_action,
+            self._gs,
+            self._memory_manager,
         )
         combat_engaged_uuids = {
             work_item[0].uuid
