@@ -16,8 +16,10 @@ from models.scene import Scene, SceneNPC
 from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
 
 _NPC_A = "npc-1"
+_NPC_B = "npc-2"
 _MEMORY_SUMMARY = "Marcus finds the player curious and welcoming."
 _RETALIATION_SUMMARY = "Marcus recalls the player shouting insults and striking back."
+_DAMNING_STATEMENT = "I killed the duke's son last winter"
 
 
 @allure.epic("Memory & Persistence")
@@ -52,6 +54,146 @@ class TestDialogueHandlerLongTermMemory:
         memories = engine.get_memories_about(_NPC_A)
         assert len(memories) == 1
         assert memories[0].text == _MEMORY_SUMMARY
+        memory_llm.send_message.assert_awaited_once()
+
+    @allure.story("Co-witness memory broadcast")
+    @allure.title(
+        "handle_dialogue gives every non-targeted scene NPC an overheard memory referencing the player's statement "
+        "(KER-11)",
+    )
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_broadcasts_cowitness_memory(self):
+        """Regression for KER-11.
+
+        Before the co-witness broadcast, a player who confessed a crime
+        to NPC A while NPC B was standing right next to them would find
+        NPC B later had *no memory* of the confession — only NPC A was
+        in the dialogue work items, and ``_summarize_interactions`` only
+        iterated those. This test wires a two-NPC scene, runs a single
+        TALK turn aimed at NPC A, and checks that NPC B's personal
+        memories come back carrying the player's incriminating text
+        without the summariser having been called a second time for
+        the bystander.
+        """
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        setup_npc(gs, _NPC_B, name="Cassia", occupation="innkeeper")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.knowledge_graph.register_actor_node(_NPC_B, label="Cassia (innkeeper)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[
+                SceneNPC(role="legionary", uuid=_NPC_A),
+                SceneNPC(role="innkeeper", uuid=_NPC_B),
+            ],
+        )
+
+        actor_a = make_mock_agent("I will report this to the prefect.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor_a}, memory_manager)
+
+        await handler.handle_dialogue(_DAMNING_STATEMENT, ["Marcus"])
+
+        engine = KnowledgeQueryEngine(gs.knowledge_graph)
+
+        # Target NPC got the LLM summary, exactly as before.
+        target_memories = engine.get_memories_about(_NPC_A)
+        assert len(target_memories) == 1
+        assert target_memories[0].text == _MEMORY_SUMMARY
+
+        # Co-witness NPC got a queryable memory whose text references the statement,
+        # created without touching the LLM summariser.
+        cowitness_memories = engine.get_memories_about(_NPC_B)
+        assert len(cowitness_memories) == 1
+        assert _DAMNING_STATEMENT in cowitness_memories[0].text
+        assert "Marcus" in cowitness_memories[0].text
+
+        # LLM is called exactly once — only for the targeted NPC. Co-witness
+        # memories are rendered from the raw transcript and do not issue
+        # any extra LLM calls.
+        memory_llm.send_message.assert_awaited_once()
+
+    @allure.story("Co-witness memory broadcast")
+    @allure.title(
+        "handle_dialogue with only a targeted NPC creates no extra co-witness nodes (KER-11 regression baseline)",
+    )
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_single_target_no_extra_cowitness_nodes(self):
+        """Regression baseline for KER-11.
+
+        With the co-witness broadcast in place, a single-NPC scene must
+        not gain any stray nodes or edges just because the new pass
+        runs — the pre-KER-11 behaviour is preserved exactly.
+        """
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
+        )
+
+        actor = make_mock_agent("Hail, traveller.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor}, memory_manager)
+
+        nodes_before = len(gs.knowledge_graph.digraph.nodes)
+
+        await handler.handle_dialogue("greetings", ["Marcus"])
+
+        # Exactly one new node was added: the targeted NPC's LLM summary.
+        nodes_after = len(gs.knowledge_graph.digraph.nodes)
+        assert nodes_after - nodes_before == 1
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_A)
+        assert len(memories) == 1
+        assert memories[0].text == _MEMORY_SUMMARY
+
+    @allure.story("Co-witness memory broadcast")
+    @allure.title("handle_dialogue skips uninitialised scene NPC stubs when broadcasting co-witness memories (KER-11)")
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_skips_uninitialised_scene_stubs(self):
+        """A freshly-minted ``SceneNPC`` stub with no ``uuid`` yet has no
+        graph node, so it must not receive a co-witness memory — there
+        is no endpoint for the ``WITNESSED`` edge. Only initialised NPCs
+        with a registered card are eligible witnesses.
+        """
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[
+                SceneNPC(role="legionary", uuid=_NPC_A),
+                SceneNPC(role="beggar"),  # Uninitialised — must be skipped.
+            ],
+        )
+
+        actor = make_mock_agent("Hail, traveller.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor}, memory_manager)
+
+        nodes_before = len(gs.knowledge_graph.digraph.nodes)
+        await handler.handle_dialogue("greetings", ["Marcus"])
+        nodes_after = len(gs.knowledge_graph.digraph.nodes)
+
+        # Only the targeted summary node was added — the uninitialised stub
+        # is not a witness endpoint.
+        assert nodes_after - nodes_before == 1
         memory_llm.send_message.assert_awaited_once()
 
     @allure.story("Memory summarisation hook")
