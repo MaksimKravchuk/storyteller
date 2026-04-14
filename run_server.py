@@ -5,7 +5,6 @@ import logging
 import os
 import subprocess
 import sys
-import types
 
 from loguru import logger
 
@@ -14,6 +13,7 @@ from db import engine as db_engine
 from interfaces.admin import AdminServer
 from interfaces.telegram_bot import build_bot
 from interfaces.web.runner import build_web_server
+from log_scrubbing import scrub_log_record
 
 _ADMIN_PORT = 8080
 _LOG_FORMAT = (
@@ -33,10 +33,13 @@ class _InterceptHandler(logging.Handler):
             level: str | int = logger.level(record.levelname).name
         except ValueError:
             level = record.levelno
-        frame: types.FrameType | None = sys._getframe(6)  # noqa: WPS437
+        frame = sys._getframe(6)  # noqa: WPS437
         depth = 6
-        while frame and frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
+        while frame.f_code.co_filename == logging.__file__:
+            next_frame = frame.f_back
+            if next_frame is None:
+                break
+            frame = next_frame
             depth += 1
         log_message = record.getMessage()
         try:
@@ -51,6 +54,7 @@ class _InterceptHandler(logging.Handler):
 logger.configure(
     handlers=[{"sink": sys.stdout, "format": _LOG_FORMAT, "level": "DEBUG", "colorize": True}],
     extra={"session_id": "-"},
+    patcher=scrub_log_record,
 )
 logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
 
