@@ -64,6 +64,7 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
         retaliation=retaliation,
         npc_turns=npc_turns,
         npc_ticker=ticker,
+        memory_manager=mem_mgr,
     )
 
     narrator = AsyncMock()

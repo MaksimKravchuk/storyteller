@@ -81,6 +81,7 @@ class Director(BasePerformer):
             retaliation=self._retaliation,
             npc_turns=self._npc_turns,
             npc_ticker=self._npc_ticker,
+            memory_manager=deps.memory_manager,
         )
         self._executor = director_execution.PlanExecutor(deps.game_state, agents, cast, self._register_new_npc)
 

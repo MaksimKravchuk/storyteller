@@ -8,7 +8,11 @@ import allure
 import pytest
 
 from cast.item_generator import ItemGenerator
-from cast.schemas.item_response import ItemExamineResponse, ItemListResponse
+from cast.schemas.item_response import (
+    ItemExamineResponse,
+    ItemListResponse,
+    ObjectInteractionResponse,
+)
 
 _SEND_JSON = "_send_json"
 _SETTING_CAP = 500
@@ -132,3 +136,48 @@ class TestItemGenerator:
             )
         rendered_prompt = stub.call_args.args[0]
         assert "- sword\n- shield" in rendered_prompt
+
+    @allure.story("Interact mode")
+    @allure.title("ItemGenerator interact mode returns a structured response carrying narration and delta")
+    @pytest.mark.asyncio
+    async def test_interact_returns_narration_and_delta(self, game_state) -> None:
+        gen = ItemGenerator(llm_client=MagicMock())
+        payload = ObjectInteractionResponse(
+            narration="The glass shatters inward with a sharp crack.",
+            delta="The front window is broken.",
+        )
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value=payload)):
+            result = await gen.act(
+                "window",
+                {
+                    "game_state": game_state,
+                    "mode": "interact",
+                    "player_action": "break the window",
+                    "context_hint": "a dimly lit tavern",
+                },
+            )
+        assert isinstance(result, ObjectInteractionResponse)
+        assert result.narration == "The glass shatters inward with a sharp crack."
+        assert result.delta == "The front window is broken."
+
+    @allure.story("Interact mode")
+    @allure.title("ItemGenerator interact prompt embeds the player action, object name, and scene hint")
+    @pytest.mark.asyncio
+    async def test_interact_prompt_contains_player_action_and_object(self, game_state) -> None:
+        gen = ItemGenerator(llm_client=MagicMock())
+        payload = ObjectInteractionResponse(narration="n", delta="d")
+        stub = AsyncMock(return_value=payload)
+        with patch.object(gen, _SEND_JSON, new=stub):
+            await gen.act(
+                "torch",
+                {
+                    "game_state": game_state,
+                    "mode": "interact",
+                    "player_action": "light the torch",
+                    "context_hint": "dark cellar",
+                },
+            )
+        rendered_prompt = stub.call_args.args[0]
+        assert "light the torch" in rendered_prompt
+        assert "torch" in rendered_prompt
+        assert "dark cellar" in rendered_prompt

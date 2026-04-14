@@ -101,3 +101,38 @@ class TestSceneBuilder:
             scene = await builder.act("look", {"game_state": game_state})
         assert scene.npcs_present[0].uuid is None
         assert scene.npcs_present[0].role == "guard"
+
+    @allure.story("Persistent world changes")
+    @allure.title("SceneBuilder omits the persistent_world_changes section when no scene_state deltas exist")
+    @pytest.mark.asyncio
+    async def test_no_deltas_section_omitted(self, game_state) -> None:
+        builder = SceneBuilder(llm_client=MagicMock())
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
+            await builder.act("look", {"game_state": game_state})
+        rendered_system = builder._build_system_prompt()
+        assert "Persistent world changes" not in rendered_system
+
+    @allure.story("Persistent world changes")
+    @allure.title("SceneBuilder injects scene_state deltas grouped by location_id into the system prompt")
+    @pytest.mark.asyncio
+    async def test_deltas_injected_into_system_prompt(self, game_state) -> None:
+        from knowledge.scene_state import record_scene_delta
+
+        record_scene_delta(
+            game_state.knowledge_graph,
+            location_id="tavern",
+            delta_text="The front window is broken.",
+        )
+        record_scene_delta(
+            game_state.knowledge_graph,
+            location_id="forum",
+            delta_text="The statue of Jupiter is toppled.",
+        )
+        builder = SceneBuilder(llm_client=MagicMock())
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
+            await builder.act("look", {"game_state": game_state})
+
+        rendered_system = builder._build_system_prompt()
+        assert "Persistent world changes" in rendered_system
+        assert "tavern: The front window is broken." in rendered_system
+        assert "forum: The statue of Jupiter is toppled." in rendered_system

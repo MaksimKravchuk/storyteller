@@ -29,3 +29,21 @@ class ItemExamineResponse(BaseModel):
     """
 
     description: str = ""
+
+
+class ObjectInteractionResponse(BaseModel):
+    """Typed view of the object-interaction response (KER-13).
+
+    ``narration`` is the short physical description of what the player
+    did to the object — handed to the Narrator as part of the turn
+    raw material. ``delta`` is the persistent state change that lives
+    on as a ``scene_state``-tagged :class:`knowledge.node.KnowledgeNode`
+    so future visits to the same location reflect the change.
+
+    Both fields default to the empty string; the caller treats an
+    empty ``delta`` as "no persistent change" and skips the graph
+    write in that case.
+    """
+
+    narration: str = ""
+    delta: str = ""

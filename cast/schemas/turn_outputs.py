@@ -65,6 +65,7 @@ class TurnOutputs(BaseModel):
     new_npcs: list[str] = Field(default_factory=list)
     dialogue: list[DialogueEntry] = Field(default_factory=list)
     item_examination: list[str] = Field(default_factory=list)
+    object_interactions: list[str] = Field(default_factory=list)
     npc_turns: list[NPCTurnEntry] = Field(default_factory=list)
     npc_departures: list[str] = Field(default_factory=list)
     completed_events: list[str] = Field(default_factory=list)

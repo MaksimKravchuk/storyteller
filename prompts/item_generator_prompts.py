@@ -71,3 +71,30 @@ ITEM_GENERATOR_EXAMINE = PromptTemplate(
         ),
     ]
 )
+
+
+ITEM_GENERATOR_INTERACT = PromptTemplate(
+    [
+        PromptSection(
+            name="task",
+            template=(
+                "The player physically interacts with an object in the current scene. "
+                "Describe what happens to the object, and produce the persistent state change.\n"
+                'Player action: "{player_action}"\n'
+                "Object: {object_name}\n"
+                "Scene context: {context_hint}\n\n"
+                "Output ONLY valid JSON:\n"
+                "{{\n"
+                '  "narration": "Short factual description of what physically happens '
+                '(2-3 sentences, no literary flourishes).",\n'
+                '  "delta": "One factual sentence describing the persistent state change '
+                "(e.g. 'The window is broken.', 'The torch is lit.'). "
+                "Empty string if the interaction leaves no lasting change (e.g. bumping "
+                'into a wall)."\n'
+                "}}\n\n"
+                "Be strictly physical — describe changes a later observer could detect."
+            ),
+            required_vars=["player_action", "object_name", "context_hint"],
+        ),
+    ]
+)
