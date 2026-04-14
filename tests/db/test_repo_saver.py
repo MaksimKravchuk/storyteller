@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+
 import allure
 import pytest
 import sqlalchemy
@@ -59,6 +61,40 @@ class TestFreshSave:
         assert counts["npcs"] == len(game_state.npcs)
         assert counts["events"] == len(events)
         assert counts["nodes"] == len(kg.all_nodes())
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("State saver")
+class TestGameReplacement:
+    @allure.story("Replace game")
+    @allure.title("Saving a fresh GameState for a session that already has one aligns uuid with the kept DB id")
+    @pytest.mark.asyncio
+    async def test_replacement_aligns_uuid_with_db(
+        self,
+        repo: GameRepository,
+        async_session,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        first_state, kg, events = populated_game_state
+        await repo.save_game_state(test_session_id, first_state, kg, events)
+        original_id = first_state.uuid
+
+        gs_mod = importlib.import_module("models.game_state")
+        replacement = gs_mod.GameState(setting=first_state.setting, knowledge_graph=kg)
+        replacement_initial_uuid = replacement.uuid
+        assert replacement_initial_uuid != original_id
+
+        await repo.save_game_state(test_session_id, replacement, kg, events)
+
+        assert replacement.uuid == original_id
+
+        gs_rows = await async_session.execute(
+            sqlalchemy.select(tbl.game_states).where(tbl.game_states.c.session_id == test_session_id),
+        )
+        persisted = gs_rows.mappings().all()
+        assert len(persisted) == 1
+        assert persisted[0]["id"] == original_id
 
 
 @allure.epic("Memory & Persistence")

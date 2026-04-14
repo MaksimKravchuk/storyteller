@@ -164,6 +164,11 @@ class StateSaver:
         )
         upsert_result = await self._session.execute(stmt)
         game_state_id = upsert_result.scalar_one()
+        # ON CONFLICT (session_id) keeps the existing row's id, so a fresh
+        # game started for a session that already had one reuses the old id
+        # in the DB. Mirror that onto the in-memory state so snapshots and
+        # subsequent ownership checks agree with what load_game_state reads.
+        game_state.uuid = game_state_id
         await self._session.flush()
 
         await _persist_children(self._session, game_state_id, game_state, knowledge_graph, events)
