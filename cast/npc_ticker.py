@@ -39,6 +39,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from cast.schemas import turn_outputs
+from knowledge.memory_preservation import preserve_departing_npc_memories
 from models.game_state import GameState
 
 _MORNING = "morning"
@@ -233,13 +234,25 @@ class NPCTicker:
         if scene is None or not scene.npcs_present:
             return
 
-        remaining, departures = self._partition(
+        remaining, departures, departing_uuids = self._partition(
             scene.npcs_present,
             self._gs.game_time,
             skip_uuids or frozenset(),
         )
         if not departures:
             return
+
+        # Preserve each departing NPC's session memories as hearsay for
+        # the rest of the city BEFORE mutating the scene. Skipping this
+        # would silently garbage-collect player-caused events (KER-9)
+        # every time an NPC's schedule swings out of the tavern.
+        for uuid in departing_uuids:
+            preserve_departing_npc_memories(
+                self._gs.knowledge_graph,
+                self._gs,
+                uuid,
+                scene.location_id,
+            )
 
         scene.npcs_present = remaining
         raw_outputs.npc_departures.extend(departures)
@@ -249,27 +262,51 @@ class NPCTicker:
         scene_npcs: list[Any],
         time_of_day: str,
         skip_uuids: AbstractSet[str],
-    ) -> tuple[list[Any], list[str]]:
-        """Split scene NPCs into (kept, departure_lines).
+    ) -> tuple[list[Any], list[str], list[str]]:
+        """Split scene NPCs into (kept, departure_lines, departing_uuids).
 
         Any NPC whose ``uuid`` appears in ``skip_uuids`` is kept,
         bypassing the schedule check — used to shield
         same-turn-generated NPCs from immediate eviction. NPCs with
         ``uuid=None`` (uninitialised shells) are also kept, but via
         :meth:`_classify`'s own short-circuit, not via this path.
+
+        ``departing_uuids`` carries the UUIDs of evicted NPCs so
+        :meth:`tick` can hand them to
+        :func:`knowledge.memory_preservation.preserve_departing_npc_memories`
+        before the scene mutation.
         """
         remaining: list[Any] = []
         departures: list[str] = []
+        departing_uuids: list[str] = []
         for snpc in scene_npcs:
-            if snpc.uuid is not None and snpc.uuid in skip_uuids:
+            departure = self._decide_departure(snpc, time_of_day, skip_uuids)
+            if departure is None:
                 remaining.append(snpc)
                 continue
-            line = self._classify(snpc, time_of_day)
-            if line is None:
-                remaining.append(snpc)
-            else:
-                departures.append(line)
-        return remaining, departures
+            departures.append(departure[0])
+            departing_uuids.append(departure[1])
+        return remaining, departures, departing_uuids
+
+    def _decide_departure(
+        self,
+        snpc: Any,
+        time_of_day: str,
+        skip_uuids: AbstractSet[str],
+    ) -> tuple[str, str] | None:
+        """Return ``(departure_line, uuid)`` if the NPC leaves, ``None`` to keep them.
+
+        By the time this method returns a non-``None`` tuple, ``uuid``
+        is guaranteed to be a concrete string — ``_classify`` short-
+        circuits on ``snpc.uuid is None``, so we can hand the value to
+        the caller without a second defensive check.
+        """
+        if snpc.uuid is None or snpc.uuid in skip_uuids:
+            return None
+        line = self._classify(snpc, time_of_day)
+        if line is None:
+            return None
+        return line, snpc.uuid
 
     def _classify(self, snpc: Any, time_of_day: str) -> str | None:
         """Return a departure line if this scene-NPC should leave, else None."""
