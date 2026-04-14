@@ -19,13 +19,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from knowledge.node import (
-    CanonSource,
-    EdgeType,
-    KnowledgeNode,
-    KnowledgeScope,
-    KnowledgeSource,
-)
+from knowledge.hearsay import HearsayDraft, write_hearsay_node
 from knowledge.rumor_scope import non_witness_city_npcs, witnesses_at
 
 if TYPE_CHECKING:
@@ -72,11 +66,26 @@ def propagate_rumors(
     created_ids: list[str] = []
     for event in events:
         rumor = _rumor_from_event(game_state, event)
-        if rumor is None:
-            continue
-        for npc_id, npc_location in rumor.recipients:
-            created_ids.append(_write_hearsay_node(graph, rumor, npc_id, npc_location))
+        if rumor is not None:
+            created_ids.extend(_write_rumor_hearsay(graph, rumor))
     return created_ids
+
+
+def _write_rumor_hearsay(graph: KnowledgeGraph, rumor: _Rumor) -> list[str]:
+    """Write one HEARSAY node per recipient for a single ``_Rumor`` payload."""
+    return [
+        write_hearsay_node(
+            graph,
+            HearsayDraft(
+                text=rumor.text,
+                told_by=rumor.told_by,
+                game_time=rumor.game_time,
+                recipient_id=npc_id,
+                recipient_location=npc_location,
+            ),
+        )
+        for npc_id, npc_location in rumor.recipients
+    ]
 
 
 def _rumor_from_event(game_state: GameState, event: GameEvent) -> _Rumor | None:
@@ -95,37 +104,3 @@ def _rumor_from_event(game_state: GameState, event: GameEvent) -> _Rumor | None:
         game_time=game_state.game_clock,
         recipients=recipients,
     )
-
-
-def _write_hearsay_node(
-    graph: KnowledgeGraph,
-    rumor: _Rumor,
-    npc_id: str,
-    npc_location: str,
-) -> str:
-    """Create one LOCAL HEARSAY node for ``npc_id`` and return its UUID.
-
-    The recipient NPC does not get a direct edge to the node — the
-    LOCAL scope + ``location_id`` is enough for
-    ``KnowledgeQueryEngine`` to surface it in that NPC's context. The
-    only edge written is the ``TOLD_BY`` provenance link back to the
-    originating witness so the chain of transmission stays auditable.
-    The recipient UUID is stored on that edge so tests and callers can
-    trace "who heard this" without overloading ``WITNESSED``.
-    """
-    hearsay = KnowledgeNode(
-        text=rumor.text,
-        scope=KnowledgeScope.LOCAL,
-        source=KnowledgeSource.HEARSAY,
-        canon=CanonSource.SESSION,
-        location_id=npc_location,
-        timestamp=rumor.game_time,
-    )
-    hearsay_id = graph.add_node(hearsay)
-    graph.add_edge(
-        hearsay_id,
-        rumor.told_by,
-        EdgeType.TOLD_BY,
-        metadata={"recipient_id": npc_id},
-    )
-    return hearsay_id
