@@ -126,3 +126,22 @@ class TestPlanExecutorDramaturgeGate:
         assert dramaturge is not None
         dramaturge.execute.assert_not_awaited()
         assert result == "Raw narration."
+
+    @allure.story("Dramaturge gate")
+    @allure.title("PlanExecutor returns raw narration when Dramaturge.execute raises unexpectedly")
+    @pytest.mark.asyncio
+    async def test_dramaturge_exception_falls_back_to_narrator_output(self):
+        """Belt-and-braces: even if Dramaturge.act leaks an exception, the player sees the raw narration."""
+        executor, _gs, narrator, dramaturge = _make_plan_executor_pieces(with_dramaturge=True)
+        assert dramaturge is not None
+        dramaturge.execute = AsyncMock(side_effect=RuntimeError("kaboom"))
+
+        result = await executor.execute_plan(
+            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"]},
+            player_action="explore the forum",
+            completed_events=[],
+        )
+
+        narrator.execute.assert_awaited_once()
+        dramaturge.execute.assert_awaited_once()
+        assert result == "Raw narration."

@@ -19,12 +19,15 @@ from timeline.event_manager import EventManager
 class EngineModels:
     """Bundle of per-role LLM model configs for a :class:`GameEngine`.
 
-    Bundled because the engine needs four distinct role models (director,
-    agent, narrator, dramaturge) and passing each as its own keyword
-    argument would push :meth:`GameEngine.__init__` past the
-    too-many-arguments budget. ``dramaturge`` defaults to ``None`` — the
-    consistency-oracle feature flag is off by default, so we do not
-    resolve a model for it unless explicitly requested.
+    The four roles (director, agent, narrator, dramaturge) always
+    travel together: every engine needs all four resolved from the
+    same :class:`Config` and threaded through the same
+    :func:`create_llm_clients` call. Bundling them here makes that
+    grouping explicit and keeps :meth:`GameEngine.__init__` within
+    its argument budget as a side benefit. ``dramaturge`` defaults
+    to ``None`` because the consistency-oracle feature flag is off
+    by default, so we do not resolve a model for it unless the
+    caller explicitly requests it.
     """
 
     director: ModelConfig = AI_MODELS.gpt5_4_mini

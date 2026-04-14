@@ -8,15 +8,23 @@ from pydantic import BaseModel, Field
 class DramaturgeResponse(BaseModel):
     """Typed view of the Dramaturge review response.
 
-    ``corrected_narration`` holds the full Narrator passage after the
-    Dramaturge has rewritten any sentences that contradict historical
-    canon or prior in-scene dialogue. When nothing was wrong the LLM
-    is instructed to copy the narration through verbatim, so the field
-    always carries a complete narration string and never an empty diff.
+    The prompt asks the LLM to copy ``corrected_narration`` through
+    verbatim when nothing contradicts — so in the happy path the field
+    carries a full narration string. ``Dramaturge.act`` treats an empty
+    string as a bug signal and falls back to the raw narration, logging
+    a warning.
 
-    ``contradictions`` carries short descriptions of each fix applied,
-    strictly for logging and tests — the player never sees this list.
+    ``contradictions`` carries short human-readable descriptions of each
+    fix applied, strictly for logging and tests. The player never sees
+    this list.
+
+    ``unknown_entities`` carries bare Wikipedia titles for any person,
+    place, or item the LLM flagged as missing from the historical canon.
+    They are fed to ``DataMiner.ensure_fact`` so future turns have the
+    fact on hand. Escalation is best-effort — failures never break the
+    current turn.
     """
 
     corrected_narration: str = ""
     contradictions: list[str] = Field(default_factory=list)
+    unknown_entities: list[str] = Field(default_factory=list)

@@ -72,11 +72,19 @@ DRAMATURGE_REVIEW = PromptTemplate(
                 "rewrite ONLY that sentence so the contradiction is gone. "
                 "Preserve every other sentence byte-for-byte. If nothing is "
                 "wrong, copy the narration across verbatim.\n\n"
+                "Use `unknown_entities` only for bare proper nouns — names of "
+                'real-world people, places, or items (e.g. "Pantheon", '
+                '"Julius Caesar"). These strings are looked up on Wikipedia, '
+                "so do NOT put sentences, descriptions, or fix summaries there.\n\n"
                 "Output ONLY valid JSON with this schema:\n"
                 "{{\n"
                 '  "corrected_narration": "the full passage, with any contradicting sentences rewritten",\n'
                 '  "contradictions": [\n'
                 '    "short description of each contradiction you fixed (empty list if none)"\n'
+                "  ],\n"
+                '  "unknown_entities": [\n'
+                '    "bare title of any real-world person/place/item you mentioned '
+                'that is NOT in the historical canon provided (empty list if none)"\n'
                 "  ]\n"
                 "}}"
             ),

@@ -109,6 +109,7 @@ class TestDramaturgeRewrites:
                     "Theatre of Pompey, where in 44 BC the senators will fall upon him."
                 ),
                 contradictions=["Caesar was shown with a pistol in the original passage"],
+                unknown_entities=[],
             ),
         )
 
@@ -139,6 +140,7 @@ class TestDramaturgeRewrites:
             DramaturgeResponse(
                 corrected_narration="The guard, **Marcus**, nods silently at your approach.",
                 contradictions=["Guard was called Julius after introducing himself as Marcus"],
+                unknown_entities=[],
             ),
         )
 
@@ -157,7 +159,7 @@ class TestDramaturgeRewrites:
         gs = _make_game_state()
         clean = "The forum bustles with merchants and senators, the air thick with incense."
         dram = _make_dramaturge(
-            DramaturgeResponse(corrected_narration=clean, contradictions=[]),
+            DramaturgeResponse(corrected_narration=clean, contradictions=[], unknown_entities=[]),
         )
 
         result = await dram.act(
@@ -180,7 +182,7 @@ class TestDramaturgePromptAssembly:
         _add_session_fact(gs, "The player has bribed the Praetorian guard this session.")
 
         dram = _make_dramaturge(
-            DramaturgeResponse(corrected_narration="x", contradictions=[]),
+            DramaturgeResponse(corrected_narration="x", contradictions=[], unknown_entities=[]),
         )
 
         await dram.act(
@@ -205,7 +207,7 @@ class TestDramaturgePromptAssembly:
             },
         ]
         dram = _make_dramaturge(
-            DramaturgeResponse(corrected_narration="x", contradictions=[]),
+            DramaturgeResponse(corrected_narration="x", contradictions=[], unknown_entities=[]),
         )
 
         await dram.act(
@@ -222,7 +224,7 @@ class TestDramaturgePromptAssembly:
     async def test_empty_narration_short_circuits(self):
         gs = _make_game_state()
         dram = _make_dramaturge(
-            DramaturgeResponse(corrected_narration="", contradictions=[]),
+            DramaturgeResponse(corrected_narration="", contradictions=[], unknown_entities=[]),
         )
 
         result = await dram.act(
@@ -233,12 +235,36 @@ class TestDramaturgePromptAssembly:
         assert result == ""
         dram._send_json.assert_not_called()  # type: ignore[attr-defined]
 
+    @allure.story("Empty correction")
+    @allure.title("Dramaturge falls back and skips escalation when corrected_narration is empty")
+    @pytest.mark.asyncio
+    async def test_empty_corrected_narration_falls_back_and_skips_escalation(self):
+        gs = _make_game_state()
+        data_miner = AsyncMock()
+        data_miner.ensure_fact = AsyncMock()
+        dram = _make_dramaturge(
+            DramaturgeResponse(
+                corrected_narration="   ",
+                contradictions=[],
+                unknown_entities=["Pantheon"],
+            ),
+        )
+        original = "The sun glints off marble."
+
+        result = await dram.act(
+            input_data=original,
+            context={_GAME_STATE: gs, _PLAYER_ACTION: "look", _DATA_MINER: data_miner},
+        )
+
+        assert result == original
+        data_miner.ensure_fact.assert_not_awaited()
+
 
 @allure.epic("Narrative Delivery")
 @allure.feature("Dramaturge")
 class TestDramaturgeEscalation:
     @allure.story("ensure_fact escalation")
-    @allure.title("Dramaturge calls DataMiner.ensure_fact once per contradiction hint")
+    @allure.title("Dramaturge calls DataMiner.ensure_fact once per unknown_entities hint")
     @pytest.mark.asyncio
     async def test_escalates_unknowns_to_data_miner(self):
         gs = _make_game_state()
@@ -248,7 +274,8 @@ class TestDramaturgeEscalation:
         dram = _make_dramaturge(
             DramaturgeResponse(
                 corrected_narration="You see the Pantheon on your right.",
-                contradictions=["Pantheon", "Colosseum"],
+                contradictions=[],
+                unknown_entities=["Pantheon", "Colosseum"],
             ),
         )
 
@@ -266,7 +293,81 @@ class TestDramaturgeEscalation:
         assert called_names == {"Pantheon", "Colosseum"}
 
     @allure.story("ensure_fact escalation")
-    @allure.title("Dramaturge still returns corrected narration when ensure_fact raises")
+    @allure.title("ensure_fact receives the game_state's own KnowledgeGraph instance")
+    @pytest.mark.asyncio
+    async def test_ensure_fact_called_with_game_state_graph(self):
+        gs = _make_game_state()
+        data_miner = AsyncMock()
+        data_miner.ensure_fact = AsyncMock(return_value=None)
+        dram = _make_dramaturge(
+            DramaturgeResponse(
+                corrected_narration="x",
+                contradictions=[],
+                unknown_entities=["Pantheon"],
+            ),
+        )
+
+        await dram.act(
+            input_data="x",
+            context={_GAME_STATE: gs, _PLAYER_ACTION: "look", _DATA_MINER: data_miner},
+        )
+
+        call = data_miner.ensure_fact.await_args_list[0]
+        assert call.kwargs["graph"] is gs.knowledge_graph
+
+    @allure.story("ensure_fact escalation")
+    @allure.title("Empty and whitespace-only entries are filtered before ensure_fact is called")
+    @pytest.mark.asyncio
+    async def test_clean_entity_hints_filters_whitespace(self):
+        gs = _make_game_state()
+        data_miner = AsyncMock()
+        data_miner.ensure_fact = AsyncMock(return_value=None)
+        dram = _make_dramaturge(
+            DramaturgeResponse(
+                corrected_narration="x",
+                contradictions=[],
+                unknown_entities=["Pantheon", "", "  ", "Colosseum"],
+            ),
+        )
+
+        await dram.act(
+            input_data="x",
+            context={_GAME_STATE: gs, _PLAYER_ACTION: "look", _DATA_MINER: data_miner},
+        )
+
+        assert data_miner.ensure_fact.await_count == 2
+        called = {call.args[0] for call in data_miner.ensure_fact.await_args_list}
+        assert called == {"Pantheon", "Colosseum"}
+
+    @allure.story("ensure_fact escalation")
+    @allure.title("A failing ensure_fact lookup does not prevent other lookups from running")
+    @pytest.mark.asyncio
+    async def test_partial_failure_does_not_break_other_lookups(self):
+        gs = _make_game_state()
+        data_miner = AsyncMock()
+        data_miner.ensure_fact = AsyncMock(
+            side_effect=[RuntimeError("wiki 404"), None, RuntimeError("network down")],
+        )
+        dram = _make_dramaturge(
+            DramaturgeResponse(
+                corrected_narration="You see three landmarks.",
+                contradictions=[],
+                unknown_entities=["Pantheon", "Colosseum", "Forum"],
+            ),
+        )
+
+        result = await dram.act(
+            input_data="You see three landmarks.",
+            context={_GAME_STATE: gs, _PLAYER_ACTION: "look", _DATA_MINER: data_miner},
+        )
+
+        assert result == "You see three landmarks."
+        assert data_miner.ensure_fact.await_count == 3
+        called = {call.args[0] for call in data_miner.ensure_fact.await_args_list}
+        assert called == {"Pantheon", "Colosseum", "Forum"}
+
+    @allure.story("ensure_fact escalation")
+    @allure.title("Dramaturge still returns corrected narration when every ensure_fact call raises")
     @pytest.mark.asyncio
     async def test_escalation_failure_does_not_break_rewrite(self):
         gs = _make_game_state()
@@ -276,7 +377,8 @@ class TestDramaturgeEscalation:
         dram = _make_dramaturge(
             DramaturgeResponse(
                 corrected_narration="The forum is quiet.",
-                contradictions=["Unknown landmark"],
+                contradictions=[],
+                unknown_entities=["Unknown landmark"],
             ),
         )
 
@@ -292,12 +394,21 @@ class TestDramaturgeEscalation:
         assert result == "The forum is quiet."
 
     @allure.story("Failure fallback")
-    @allure.title("Dramaturge returns the original narration when the LLM review raises")
+    @allure.title("Dramaturge returns the original narration for any exception type the review raises")
+    @pytest.mark.parametrize(
+        "exc",
+        [
+            ValueError("bad json"),
+            RuntimeError("boom"),
+            KeyError("missing"),
+            TypeError("nope"),
+        ],
+    )
     @pytest.mark.asyncio
-    async def test_llm_failure_falls_back_to_original(self):
+    async def test_any_exception_type_falls_back_to_original(self, exc):
         gs = _make_game_state()
         original = "The sun glints off the marble columns."
-        dram = _make_dramaturge(ValueError("Agent failed to produce valid JSON"))
+        dram = _make_dramaturge(exc)
 
         result = await dram.act(
             input_data=original,
@@ -338,6 +449,24 @@ class TestDramaturgeHelpers:
         assert "753 BC" in rendered
 
     @allure.story("Prompt helpers")
+    @allure.title("_format_historical_facts caps output at _MAX_HISTORICAL_FACTS to bound prompt size")
+    def test_format_historical_facts_caps_at_twenty(self):
+        graph = KnowledgeGraph()
+        for idx in range(25):
+            graph.add_node(
+                KnowledgeNode(
+                    text="Fact number {0}.".format(idx),
+                    canon=CanonSource.HISTORICAL,
+                    source=KnowledgeSource.FACT,
+                ),
+            )
+        rendered = _format_historical_facts(graph)
+        # 20 bullets separated by 19 newlines
+        assert rendered.count("\n") == 19
+        assert "Fact number 0." in rendered
+        assert "Fact number 24." not in rendered
+
+    @allure.story("Prompt helpers")
     @allure.title("_format_scene_history returns a placeholder on an empty log")
     def test_format_scene_history_empty(self):
         assert _format_scene_history([]) == _EMPTY_HISTORY_PLACEHOLDER
@@ -355,3 +484,19 @@ class TestDramaturgeHelpers:
         rendered = _format_scene_history(entries)
         assert "greet guard" in rendered
         assert "The guard nods." in rendered
+
+    @allure.story("Prompt helpers")
+    @allure.title("_format_scene_history caps at _MAX_SCENE_HISTORY most recent entries")
+    def test_format_scene_history_caps_at_eight(self):
+        entries = [
+            {_PLAYER_ACTION: "act {0}".format(idx), "response_summary": "result {0}".format(idx)} for idx in range(12)
+        ]
+        rendered = _format_scene_history(entries)
+        # 8 bullets separated by 7 newlines
+        assert rendered.count("\n") == 7
+        # Newest four retained
+        assert "act 11" in rendered
+        assert "act 4" in rendered
+        # Oldest four dropped
+        assert "act 3" not in rendered
+        assert "act 0" not in rendered

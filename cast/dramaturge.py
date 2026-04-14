@@ -96,19 +96,39 @@ class Dramaturge(BasePerformer):
         ``input_data``: The raw narration string produced by the Narrator.
 
         ``context``: Must contain ``game_state``. Optionally accepts
-        ``data_miner`` — when provided, the Dramaturge calls its
-        ``ensure_fact`` method as a side channel for any contradiction
-        the LLM surfaces that looks like an unknown-entity escalation,
-        so future turns have the fact on hand.
+        ``data_miner`` — when provided, the Dramaturge asks it to
+        ``ensure_fact`` any entities the LLM flagged as unknown so
+        future turns have them on hand.
 
-        Returns the corrected narration string. On any Dramaturge error
-        we log and fall back to the original narration — the player
-        must never see a half-rewritten passage.
+        Returns the corrected narration string. The "player must never
+        see a half-rewritten passage" invariant is enforced by a single
+        broad catch around the entire review path: any exception (LLM
+        error, network failure, missing context key, bad game state)
+        is logged with its traceback and the original narration is
+        returned unchanged. ``asyncio.CancelledError`` is re-raised so
+        task cancellation still propagates.
         """
         narration = (input_data or "").strip()
         if not narration:
             return narration
+        try:
+            verdict = await self._review_narration(narration, context)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Dramaturge review failed; falling back to original narration")
+            return narration
+        return await self._resolve_verdict(verdict, narration, context)
 
+    async def _review_narration(self, narration: str, context: dict) -> DramaturgeResponse:
+        """Assemble context and ask the LLM for a consistency verdict.
+
+        Extracted so ``act()`` can wrap the whole path in a single
+        broad catch. Context assembly (``game_state`` lookup, prompt
+        formatters, template rendering) and the LLM call itself all
+        live here, so a ``KeyError`` / ``AttributeError`` /
+        ``APIStatusError`` all land in the same fallback branch.
+        """
         game_state: GameState = context["game_state"]
         self.set_context(
             setting_name=game_state.setting.name,
@@ -117,25 +137,36 @@ class Dramaturge(BasePerformer):
             scene_history=_format_scene_history(game_state.scene_conversation_log),
             language=self._language,
         )
+        return await self._send_json(
+            DRAMATURGE_REVIEW.render(narration=narration),
+            response_model=DramaturgeResponse,
+        )
 
-        try:
-            verdict = await self._send_json(
-                DRAMATURGE_REVIEW.render(narration=narration),
-                response_model=DramaturgeResponse,
-            )
-        except (ValueError, RuntimeError) as exc:
-            logger.warning(
-                "Dramaturge review failed ({0}); falling back to original narration",
-                type(exc).__name__,
-            )
-            return narration
+    async def _resolve_verdict(
+        self,
+        verdict: DramaturgeResponse,
+        narration: str,
+        context: dict,
+    ) -> str:
+        """Decide what to return based on the LLM verdict.
 
+        Empty ``corrected_narration`` is treated as a bug signal rather
+        than a silent passthrough — we log a warning and fall back so
+        that prompt regressions or model misbehavior are debuggable
+        after the fact. On a real correction we fan out entity
+        escalation and log the contradiction descriptions for the
+        admin dashboard.
+        """
         corrected = (verdict.corrected_narration or "").strip()
         if not corrected:
+            logger.warning(
+                "Dramaturge returned empty corrected_narration "
+                "(contradictions={0}, unknown_entities={1}); falling back",
+                verdict.contradictions,
+                verdict.unknown_entities,
+            )
             return narration
-
         await self._escalate_unknowns(verdict, context)
-
         if verdict.contradictions:
             logger.info(
                 "Dramaturge rewrote {0} contradiction(s): {1}",
@@ -151,20 +182,29 @@ class Dramaturge(BasePerformer):
     ) -> None:
         """Ask DataMiner to fill in any entities the verdict names.
 
-        The Dramaturge itself is strictly read-only on the knowledge
-        graph. When a contradiction hint mentions an unknown entity,
-        we delegate the Wikipedia lookup to ``DataMiner.ensure_fact``
-        so the fact becomes available on subsequent turns. Failures
-        here are never fatal — the narration is already corrected.
+        Reads ``verdict.unknown_entities`` (bare Wikipedia titles), not
+        ``verdict.contradictions`` (which carries sentence-shaped fix
+        descriptions and would never resolve as a lookup key).
+
+        Preconditions (data_miner wired, non-empty cleaned entity
+        list) are checked up-front so the defensive try-block around
+        the actual escalation stays short and focused. The narration
+        has already been corrected by the time we get here, so any
+        exception inside escalation is strictly bookkeeping-for-next-
+        turn and must never fail the current turn.
+        ``CancelledError`` is re-raised so cooperative cancellation
+        still works.
         """
         data_miner = context.get("data_miner")
-        if data_miner is None or not verdict.contradictions:
+        entities = _clean_entity_hints(verdict.unknown_entities)
+        if data_miner is None or not entities:
             return
-        entities = _clean_entity_hints(verdict.contradictions)
-        if not entities:
-            return
-        graph: KnowledgeGraph = context["game_state"].knowledge_graph
-        await self._run_escalations(data_miner, entities, graph)
+        try:
+            await self._run_escalations(data_miner, entities, context["game_state"].knowledge_graph)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Dramaturge: entity escalation failed — narration already corrected")
 
     async def _run_escalations(
         self,
@@ -172,21 +212,30 @@ class Dramaturge(BasePerformer):
         entities: list[str],
         graph: KnowledgeGraph,
     ) -> None:
-        """Fan out concurrent ``ensure_fact`` calls and log individual failures.
+        """Fan out ``ensure_fact`` lookups concurrently.
 
-        Lookups run concurrently because they are independent Wikipedia
-        round-trips. ``return_exceptions=True`` keeps one broken entity
-        from suppressing the others — we walk the results and log any
-        exception at warning level, never bubbling.
+        Each coroutine is wrapped in :meth:`_safe_ensure_fact` so a
+        failure on one entity neither suppresses the others nor
+        escapes to the caller. Per-coroutine try/except (rather than
+        ``gather(return_exceptions=True)`` plus an isinstance walk)
+        means ``logger.exception`` runs inside a real except block
+        and preserves the traceback, and ``asyncio.CancelledError``
+        propagates normally instead of being silently swallowed.
         """
-        outcomes = await asyncio.gather(
-            *(data_miner.ensure_fact(entity, graph=graph) for entity in entities),
-            return_exceptions=True,
+        await asyncio.gather(
+            *(self._safe_ensure_fact(data_miner, entity, graph) for entity in entities),
         )
-        for entity, outcome in zip(entities, outcomes):
-            if isinstance(outcome, Exception):
-                logger.warning(
-                    "Dramaturge: ensure_fact escalation failed for {0!r}: {1}",
-                    entity,
-                    outcome,
-                )
+
+    async def _safe_ensure_fact(
+        self,
+        data_miner: Any,
+        entity: str,
+        graph: KnowledgeGraph,
+    ) -> None:
+        """Call ``ensure_fact`` for one entity, log-and-swallow on failure."""
+        try:
+            await data_miner.ensure_fact(entity, graph=graph)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Dramaturge: ensure_fact escalation failed for {0!r}", entity)
