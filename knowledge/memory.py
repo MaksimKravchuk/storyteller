@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 from models.game_state import INITIAL_GAME_CLOCK
@@ -76,6 +77,31 @@ class MemoryManager:
             self._graph.add_edge(npc_id, node_id, EdgeType.WITNESSED)
 
         return node
+
+    async def summarize_interactions_batch(
+        self,
+        pairs: list[tuple[str, str]],
+        game_time: float = INITIAL_GAME_CLOCK,
+    ) -> None:
+        """Summarise many interactions concurrently into memory nodes.
+
+        Each ``pair`` is ``(npc_id, interaction_log)``. Both the
+        targeted-dialogue path and the retaliation path feed this
+        helper so a single turn issues one concurrent gather for all
+        NPC memories.
+        """
+        if not pairs:
+            return
+        await asyncio.gather(
+            *(
+                self.summarize_interaction(
+                    interaction_log=log,
+                    npc_id=npc_id,
+                    game_time=game_time,
+                )
+                for npc_id, log in pairs
+            ),
+        )
 
     async def create_memory_from_event(
         self,

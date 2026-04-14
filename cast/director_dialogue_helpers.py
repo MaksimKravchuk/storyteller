@@ -135,6 +135,30 @@ def _roll_and_format(
     return _format_contest_text(player_action, contest_roll, status_hint), contest_roll
 
 
+def format_dialogue_summary_pairs(
+    work_items: list[tuple[Any, Any, str, ContestRoll | None]],
+    dialogue_entries: list[dict[str, str]],
+    player_action: str,
+) -> list[tuple[str, str]]:
+    """Build ``(npc_uuid, interaction_log)`` pairs for the memory summariser.
+
+    Extracted so :meth:`DialogueHandler.handle_dialogue` stays under the
+    WPS210 local-variable limit — the comprehension previously lived in
+    the handler body.
+    """
+    return [
+        (
+            work_item[0].uuid,
+            "Player: {0}\n{1}: {2}".format(
+                player_action,
+                work_item[0].name,
+                entry.get("response", ""),
+            ),
+        )
+        for work_item, entry in zip(work_items, dialogue_entries)
+    ]
+
+
 def build_combat_action(
     player_action: str,
     npc: Any,

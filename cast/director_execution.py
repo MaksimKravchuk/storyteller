@@ -406,4 +406,5 @@ class PlanExecutor:
             skip_uuids=combat_engaged,
         )
         if retaliation_entries:
+            await self._agents.dialogue.summarize_retaliations(retaliation_entries, player_action)
             raw_outputs.dialogue.extend(turn_outputs.DialogueEntry(**entry) for entry in retaliation_entries)
