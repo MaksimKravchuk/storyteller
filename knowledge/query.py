@@ -7,7 +7,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import KnowledgeCanon, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from knowledge import query_filters
 
 if TYPE_CHECKING:
@@ -43,6 +43,7 @@ class KnowledgeFilter:
     location_id: str | None = None
     tags: list[str] | None = None
     sources: list[KnowledgeSource] | None = None
+    canon: KnowledgeCanon | None = None  # None = any canon provenance
     npc_id: str | None = None  # Include personal memories for this NPC
 
 
@@ -55,6 +56,7 @@ def _node_matches(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
         query_filters.passes_location(node, filt.location_id),
         query_filters.passes_tags(node, filt.tags),
         query_filters.passes_sources(node, filt.sources),
+        query_filters.passes_canon(node, filt.canon),
     )
     return all(checks)
 

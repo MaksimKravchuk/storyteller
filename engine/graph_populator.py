@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import KnowledgeCanon, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.setting import Setting
 
 
@@ -35,12 +35,13 @@ def _add_node(
     required_education: int = 0,
     tags: list[str] | None = None,
 ) -> None:
-    """Add a FACT knowledge node to the graph."""
+    """Add a HISTORICAL FACT knowledge node to the graph."""
     graph.add_node(
         KnowledgeNode(
             text=node_content,
             scope=scope,
             source=KnowledgeSource.FACT,
+            canon=KnowledgeCanon.HISTORICAL,
             required_education=required_education,
             tags=tags or [],
         )
@@ -97,12 +98,13 @@ def _add_locations_and_culture(graph: KnowledgeGraph, setting: Setting) -> None:
 
 
 def populate_graph_from_setting(graph: KnowledgeGraph, setting: Setting) -> None:
-    """Convert Setting data into knowledge graph nodes."""
+    """Convert Setting data into historical knowledge graph nodes."""
     graph.add_node(
         KnowledgeNode(
             text=setting.summary,
             scope=KnowledgeScope.WORLD,
             source=KnowledgeSource.FACT,
+            canon=KnowledgeCanon.HISTORICAL,
             tags=["setting", "overview"],
         )
     )
