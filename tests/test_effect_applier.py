@@ -5,7 +5,7 @@ from __future__ import annotations
 import allure
 
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import KnowledgeScope, KnowledgeSource
+from knowledge.node import CanonSource, KnowledgeScope, KnowledgeSource
 from models.game_state import GameState
 from models.location import Location
 from models.npc_card import NPCCard
@@ -251,6 +251,7 @@ class TestAddKnowledgeEffect:
         assert nodes[0].text == "The bridge has collapsed"
         assert nodes[0].scope == KnowledgeScope.CITY
         assert nodes[0].source == KnowledgeSource.FACT
+        assert nodes[0].canon == CanonSource.SESSION
         assert nodes[0].tags == ["news"]
         assert nodes[0].location_id == "loc-1"
 

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import networkx as nx
 
-from knowledge.node import KnowledgeNode, KnowledgeScope
+from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope
 
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
@@ -28,6 +28,11 @@ def query_by_tags(graph: KnowledgeGraph, tags: list[str]) -> list[KnowledgeNode]
 def query_by_location(graph: KnowledgeGraph, location_id: str) -> list[KnowledgeNode]:
     """Return nodes associated with a specific location."""
     return [node for node in graph.all_nodes() if node.location_id == location_id]
+
+
+def query_by_canon(graph: KnowledgeGraph, canon: CanonSource) -> list[KnowledgeNode]:
+    """Return all nodes whose canon matches ``canon``."""
+    return [node for node in graph.all_nodes() if node.canon == canon]
 
 
 def get_related(graph: KnowledgeGraph, node_id: str, depth: int = 2) -> list[KnowledgeNode]:

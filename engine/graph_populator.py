@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.setting import Setting
 
 
@@ -41,6 +41,7 @@ def _add_node(
             text=node_content,
             scope=scope,
             source=KnowledgeSource.FACT,
+            canon=CanonSource.HISTORICAL,
             required_education=required_education,
             tags=tags or [],
         )
@@ -103,6 +104,7 @@ def populate_graph_from_setting(graph: KnowledgeGraph, setting: Setting) -> None
             text=setting.summary,
             scope=KnowledgeScope.WORLD,
             source=KnowledgeSource.FACT,
+            canon=CanonSource.HISTORICAL,
             tags=["setting", "overview"],
         )
     )
