@@ -159,12 +159,35 @@ class PlanExecutor:
         if raw_outputs.scene is not None and self._cast.world_chronicler is not None:
             await self._advance_world_state(raw_outputs, player_action)
 
-        return await self._cast.narrator.execute(
+        return await self._narrate_and_review(raw_outputs, player_action)
+
+    async def _narrate_and_review(
+        self,
+        raw_outputs: turn_outputs.TurnOutputs,
+        player_action: str,
+    ) -> str:
+        """Narrate the turn and run the Dramaturge consistency pass.
+
+        Extracted from :meth:`execute_plan` so the assembly method
+        stays beneath the local-variable budget: the intermediate
+        narration string lives here, one scope down.
+        """
+        narration = await self._cast.narrator.execute(
             input_data=raw_outputs,
             context={
                 _KEY_PLAYER_ACTION: player_action,
                 _KEY_GAME_STATE: self._gs,
                 "scene_history": self._gs.scene_conversation_log[-5:],
+            },
+        )
+        if self._cast.dramaturge is None or raw_outputs.scene is None:
+            return narration
+        return await self._cast.dramaturge.execute(
+            input_data=narration,
+            context={
+                _KEY_PLAYER_ACTION: player_action,
+                _KEY_GAME_STATE: self._gs,
+                "data_miner": self._cast.data_miner,
             },
         )
 

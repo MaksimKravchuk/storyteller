@@ -23,6 +23,8 @@ def _make_config() -> MagicMock:
     cfg.director_model = "gpt-5.4-mini"
     cfg.agent_model = "gpt-5.4-nano"
     cfg.narrator_model = "gpt-5.4-mini"
+    cfg.dramaturge_model = "gpt-5.4-nano"
+    cfg.dramaturge_enabled = False
     cfg.openai_api_key = "openai-key"
     cfg.anthropic_api_key = "anthropic-key"
     return cfg
@@ -46,9 +48,11 @@ def test_create_engine_returns_game_engine_with_defaults() -> None:
     # Private attrs are part of this test's contract since factory is a narrow wrapper.
     assert engine._language == "English"
     assert engine._api_keys == {"openai": "openai-key", "anthropic": "anthropic-key"}
-    assert engine._director_model is AI_MODELS.gpt5_4_mini
-    assert engine._agent_model is AI_MODELS.gpt5_4_nano
-    assert engine._narrator_model is AI_MODELS.gpt5_4_mini
+    assert engine._models.director is AI_MODELS.gpt5_4_mini
+    assert engine._models.agent is AI_MODELS.gpt5_4_nano
+    assert engine._models.narrator is AI_MODELS.gpt5_4_mini
+    # Dramaturge is off by default — no model should be resolved for it.
+    assert engine._models.dramaturge is None
 
 
 @allure.story("create_engine")
@@ -64,7 +68,7 @@ def test_create_engine_propagates_language() -> None:
 @allure.story("create_engine")
 @allure.title("create_engine calls resolve_model_config three times for director, agent, and narrator models")
 def test_create_engine_resolves_three_model_ids() -> None:
-    """resolve_model_config must be invoked once per role."""
+    """resolve_model_config must be invoked once per role when the dramaturge flag is off."""
     cfg = _make_config()
     with patch(
         "engine.factory.resolve_model_config",
@@ -74,6 +78,23 @@ def test_create_engine_resolves_three_model_ids() -> None:
         assert resolver.call_count == 3
         called_ids = [call.args[0] for call in resolver.call_args_list]
         assert called_ids == ["gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.4-mini"]
+
+
+@allure.story("create_engine")
+@allure.title("create_engine resolves a dramaturge model when dramaturge_enabled is true")
+def test_create_engine_resolves_dramaturge_model_when_enabled() -> None:
+    """When the feature flag is on, the dramaturge model is resolved alongside the core three."""
+    cfg = _make_config()
+    cfg.dramaturge_enabled = True
+    with patch(
+        "engine.factory.resolve_model_config",
+        side_effect=_resolver_side_effect,
+    ) as resolver:
+        engine = create_engine(cfg)
+        assert resolver.call_count == 4
+        called_ids = [call.args[0] for call in resolver.call_args_list]
+        assert called_ids == ["gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.4-mini", "gpt-5.4-nano"]
+    assert engine._models.dramaturge is AI_MODELS.gpt5_4_nano
 
 
 @allure.story("create_engine_from_state")

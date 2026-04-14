@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typing
 
-from cast import data_miner as data_miner_mod, director as director_mod
+from cast import data_miner as data_miner_mod, director as director_mod, dramaturge as dramaturge_mod
 from cast import item_generator as item_gen_mod, world_chronicler as world_chronicler_mod
 from cast import narrator as narrator_mod, npc_generator as npc_gen_mod, scene_builder as scene_builder_mod
 from defaults.models import ModelConfig
@@ -15,11 +15,17 @@ from timeline import event_manager as event_manager_mod
 
 
 class LLMClients(typing.NamedTuple):
-    """LLM clients for the three engine roles."""
+    """LLM clients for the engine roles.
+
+    ``dramaturge`` is optional — callers pass ``None`` when the
+    consistency-oracle feature flag is off so we never pay to build a
+    client we will not use.
+    """
 
     director: typing.Any
     agent: typing.Any
     narrator: typing.Any
+    dramaturge: typing.Any | None = None
 
 
 def create_llm_clients(
@@ -27,12 +33,20 @@ def create_llm_clients(
     agent_model: ModelConfig,
     narrator_model: ModelConfig,
     api_keys: dict[str, str | None],
+    dramaturge_model: ModelConfig | None = None,
 ) -> LLMClients:
-    """Create LLM clients for director, agent, and narrator roles."""
+    """Create LLM clients for director, agent, narrator, and dramaturge roles."""
+    dramaturge_client = None
+    if dramaturge_model is not None:
+        dramaturge_client = create_llm_client(
+            dramaturge_model,
+            api_key=api_keys.get(dramaturge_model.provider),
+        )
     return LLMClients(
         director=create_llm_client(director_model, api_key=api_keys.get(director_model.provider)),
         agent=create_llm_client(agent_model, api_key=api_keys.get(agent_model.provider)),
         narrator=create_llm_client(narrator_model, api_key=api_keys.get(narrator_model.provider)),
+        dramaturge=dramaturge_client,
     )
 
 
@@ -50,7 +64,15 @@ def wire_director(
     language: str,
     data_miner: typing.Any | None = None,
 ) -> director_mod.Director:
-    """Create the Director with all its agent dependencies."""
+    """Create the Director with all its agent dependencies.
+
+    When ``clients.dramaturge`` is set, a :class:`Dramaturge` consistency
+    oracle is added to the cast; otherwise the cast field stays ``None``
+    and the PlanExecutor skips the post-Narrator review pass entirely.
+    """
+    dramaturge: typing.Any | None = None
+    if clients.dramaturge is not None:
+        dramaturge = dramaturge_mod.Dramaturge(llm_client=clients.dramaturge, language=language)
     return director_mod.Director(
         llm_client=clients.director,
         deps=director_mod.DirectorDeps(
@@ -68,6 +90,7 @@ def wire_director(
             data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent),
             item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent),
             world_chronicler=world_chronicler_mod.WorldChronicler(llm_client=clients.agent),
+            dramaturge=dramaturge,
         ),
         language=language,
     )

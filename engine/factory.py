@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from config import Config, resolve_model_config
-from engine.game_engine import GameEngine
+from engine.game_engine import EngineModels, GameEngine
 
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
@@ -32,19 +32,14 @@ async def create_engine_from_state(
 
 
 def _build_engine(cfg: Config, language: str) -> GameEngine:
-    director_model = resolve_model_config(cfg.director_model, cfg)
-    agent_model = resolve_model_config(cfg.agent_model, cfg)
-    narrator_model = resolve_model_config(cfg.narrator_model, cfg)
-
+    models = EngineModels(
+        director=resolve_model_config(cfg.director_model, cfg),
+        agent=resolve_model_config(cfg.agent_model, cfg),
+        narrator=resolve_model_config(cfg.narrator_model, cfg),
+        dramaturge=resolve_model_config(cfg.dramaturge_model, cfg) if cfg.dramaturge_enabled else None,
+    )
     api_keys = {
         "openai": cfg.openai_api_key,
         "anthropic": cfg.anthropic_api_key,
     }
-
-    return GameEngine(
-        director_model=director_model,
-        agent_model=agent_model,
-        narrator_model=narrator_model,
-        api_keys=api_keys,
-        language=language,
-    )
+    return GameEngine(models=models, api_keys=api_keys, language=language)
