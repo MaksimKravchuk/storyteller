@@ -344,11 +344,18 @@ class PlanExecutor:
         raw_outputs: turn_outputs.TurnOutputs,
         contest_info: dict | None = None,
     ) -> None:
-        """Run NPC dialogue and retaliation checks."""
+        """Run NPC dialogue and retaliation checks.
+
+        When a dialogue call already carries a combat contest roll (player
+        attacks NPC directly), the Actor physically retaliates inside that
+        response. We pass those NPC UUIDs to ``check_retaliation`` as
+        ``skip_uuids`` so the retaliation phase does not fire a second,
+        redundant Actor call against the same NPC.
+        """
         mood_snapshot = _snapshot_moods(self._gs.npcs)
 
         dlg = self._agents.dialogue
-        dialogue_entries = await dlg.handle_dialogue(
+        dialogue_entries, combat_engaged = await dlg.handle_dialogue(
             player_action,
             target_names,
             is_aggressive=is_aggressive,
@@ -357,6 +364,9 @@ class PlanExecutor:
         if dialogue_entries:
             raw_outputs.dialogue = [turn_outputs.DialogueEntry(**entry) for entry in dialogue_entries]
 
-        retaliation_entries = await self._agents.retaliation.check_retaliation(mood_snapshot)
+        retaliation_entries = await self._agents.retaliation.check_retaliation(
+            mood_snapshot,
+            skip_uuids=combat_engaged,
+        )
         if retaliation_entries:
             raw_outputs.dialogue.extend(turn_outputs.DialogueEntry(**entry) for entry in retaliation_entries)

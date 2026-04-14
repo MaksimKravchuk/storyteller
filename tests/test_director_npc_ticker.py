@@ -310,7 +310,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
         # will be True once Bruno's shell is initialised, so
         # _run_interactions fires; the test only cares about who the
         # ticker keeps.
-        executor._agents.dialogue.handle_dialogue = AsyncMock(return_value=[])
+        executor._agents.dialogue.handle_dialogue = AsyncMock(return_value=([], set()))
         executor._agents.retaliation.check_retaliation = AsyncMock(return_value=[])
 
         await executor.execute_plan(

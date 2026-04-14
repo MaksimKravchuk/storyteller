@@ -6,7 +6,7 @@ import asyncio
 import types
 from typing import Any
 
-from cast.dice import CombatOutcome, ContestRoll
+from cast.dice import CombatOutcome, ContestRoll, ContestType
 from cast.director_context import get_location_name
 from cast import director_dialogue_helpers as dlg_helpers
 from knowledge.memory import MemoryManager
@@ -14,6 +14,10 @@ from models.game_state import GameState
 from timeline.event import EventEffect, GameEvent
 
 _KEY_GAME_STATE = "game_state"
+
+# Convenience alias for dialogue result entries to keep annotations shallow.
+DialogueEntry = dict[str, str]
+DialogueResult = tuple[list[DialogueEntry], set[str]]
 
 # Recovery duration (game-hours) by combat outcome severity.
 _RECOVERY_HOURS: types.MappingProxyType[CombatOutcome, float] = types.MappingProxyType(
@@ -150,19 +154,31 @@ class DialogueHandler:
         target_names: list[str],
         is_aggressive: bool = False,
         contest_info: dict | None = None,
-    ) -> list[dict[str, str]]:
+    ) -> DialogueResult:
         """Route dialogue to the correct Actor agents.
 
         After the dialogue turn resolves, each participating NPC gets a
         long-term memory node summarising the exchange.  Summarisation is
         awaited before returning so the memories are in the graph before
         the next Actor call reads them back via ``get_memories_about``.
+
+        Returns a tuple ``(entries, combat_engaged_uuids)`` where
+        ``combat_engaged_uuids`` is the set of NPC UUIDs whose dialogue call
+        carried a *combat* contest roll this turn. Callers pass this set to
+        :meth:`RetaliationHandler.check_retaliation` so the same NPC is not
+        sent a redundant retaliation prompt — the combat dice in the
+        dialogue call already resolved the aggression.
         """
         work_items = self._collect_targets(target_names, player_action, is_aggressive, contest_info)
         coros = [_execute_npc_dialogue(*wi, self._gs) for wi in work_items]
         dialogue_entries = list(await asyncio.gather(*coros))
         await self._summarize_interactions(work_items, dialogue_entries, player_action)
-        return dialogue_entries
+        combat_engaged_uuids = {
+            work_item[0].uuid
+            for work_item in work_items
+            if work_item[3] is not None and work_item[3].contest_type == ContestType.COMBAT
+        }
+        return dialogue_entries, combat_engaged_uuids
 
     def targets_match_scene_npcs(self, target_names: list[str]) -> bool:
         """Return True if any target name matches an initialised SceneNPC."""
