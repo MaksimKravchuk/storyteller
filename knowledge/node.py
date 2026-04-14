@@ -42,6 +42,18 @@ class KnowledgeSource(Enum):
     HEARSAY = "hearsay"  # Heard from someone else
 
 
+class KnowledgeCanon(Enum):
+    """Provenance of a knowledge node.
+
+    Distinguishes Wikipedia-sourced background lore (immutable ground truth
+    for the Dramaturge) from facts created in-session by player actions or
+    in-game events.
+    """
+
+    HISTORICAL = "historical"  # Wikipedia / DataMiner-sourced background lore
+    SESSION = "session"  # Created from player actions or in-game events
+
+
 class EdgeType(Enum):
     """Types of relationships between knowledge nodes."""
 
@@ -61,6 +73,7 @@ class KnowledgeNode(StorytellerBase):
     text: str
     scope: KnowledgeScope = KnowledgeScope.LOCAL
     source: KnowledgeSource = KnowledgeSource.FACT
+    canon: KnowledgeCanon = KnowledgeCanon.HISTORICAL
     required_education: int = 0  # 0-10
     required_social_status: int = 0  # 0-10
     tags: list[str] = []
