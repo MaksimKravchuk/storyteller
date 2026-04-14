@@ -10,6 +10,7 @@ from cast import director_dialogue, director_events, director_retaliation, npc_t
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from cast.npc_ticker import NPCTicker
 from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
+from loguru import logger
 from models import world_state as world_state_mod
 from models.game_state import GameState
 from timeline.event import GameEvent
@@ -159,7 +160,27 @@ class PlanExecutor:
         if raw_outputs.scene is not None and self._cast.world_chronicler is not None:
             await self._advance_world_state(raw_outputs, player_action)
 
-        return await self._cast.narrator.execute(
+        return await self._narrate_and_review(raw_outputs, player_action)
+
+    async def _narrate_and_review(
+        self,
+        raw_outputs: turn_outputs.TurnOutputs,
+        player_action: str,
+    ) -> str:
+        """Narrate the turn and optionally run the Dramaturge consistency pass.
+
+        The Dramaturge only runs on new-scene turns (the KER-5
+        "sync-on-new-scene" gate that bounds per-turn latency) and
+        only when one is wired on the cast. Continuation turns pass
+        the Narrator output through unchanged.
+
+        On any unexpected exception from the review, we log and
+        return the raw Narrator output — the player must never see a
+        half-rewritten passage. The Dramaturge has its own internal
+        fallback, so this wrap is belt-and-braces against future
+        changes that might let an exception escape ``act()``.
+        """
+        narration = await self._cast.narrator.execute(
             input_data=raw_outputs,
             context={
                 _KEY_PLAYER_ACTION: player_action,
@@ -167,6 +188,22 @@ class PlanExecutor:
                 "scene_history": self._gs.scene_conversation_log[-5:],
             },
         )
+        if self._cast.dramaturge is None or raw_outputs.scene is None:
+            return narration
+        try:
+            return await self._cast.dramaturge.execute(
+                input_data=narration,
+                context={
+                    _KEY_PLAYER_ACTION: player_action,
+                    _KEY_GAME_STATE: self._gs,
+                    "data_miner": self._cast.data_miner,
+                },
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Dramaturge execute() raised unexpectedly; returning raw Narrator output")
+            return narration
 
     async def _advance_world_state(
         self,

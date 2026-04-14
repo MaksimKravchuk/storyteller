@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from cast.data_miner import DataMiner
 from cast.director import Director
 from defaults.models import AI_MODELS, ModelConfig
@@ -11,6 +13,30 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
+
+
+@dataclass(frozen=True)
+class EngineModels:
+    """Bundle of per-role LLM model configs for a :class:`GameEngine`.
+
+    The four roles (director, agent, narrator, dramaturge) always
+    travel together: every engine needs all four resolved from the
+    same :class:`Config` and threaded through the same
+    :func:`create_llm_clients` call. Bundling them here makes that
+    grouping explicit and keeps :meth:`GameEngine.__init__` within
+    its argument budget as a side benefit. ``dramaturge`` defaults
+    to ``None`` because the consistency-oracle feature flag is off
+    by default, so we do not resolve a model for it unless the
+    caller explicitly requests it.
+    """
+
+    director: ModelConfig = AI_MODELS.gpt5_4_mini
+    agent: ModelConfig = AI_MODELS.gpt5_4_nano
+    narrator: ModelConfig = AI_MODELS.gpt5_4_mini
+    dramaturge: ModelConfig | None = None
+
+
+_DEFAULT_MODELS = EngineModels()
 
 
 class GameEngine:
@@ -33,15 +59,11 @@ class GameEngine:
     def __init__(
         self,
         *,
-        director_model: ModelConfig = AI_MODELS.gpt5_4_mini,
-        agent_model: ModelConfig = AI_MODELS.gpt5_4_nano,
-        narrator_model: ModelConfig = AI_MODELS.gpt5_4_mini,
+        models: EngineModels = _DEFAULT_MODELS,
         api_keys: dict[str, str | None] | None = None,
         language: str = "English",
     ):
-        self._director_model = director_model
-        self._agent_model = agent_model
-        self._narrator_model = narrator_model
+        self._models = models
         self._api_keys: dict[str, str | None] = api_keys or {}
         self._language = language
 
@@ -66,10 +88,11 @@ class GameEngine:
         Returns the opening narration.
         """
         clients = create_llm_clients(
-            self._director_model,
-            self._agent_model,
-            self._narrator_model,
+            self._models.director,
+            self._models.agent,
+            self._models.narrator,
             self._api_keys,
+            dramaturge_model=self._models.dramaturge,
         )
 
         data_miner = DataMiner(llm_client=clients.agent)
@@ -120,10 +143,11 @@ class GameEngine:
         self._event_manager.all_events = events
 
         clients = create_llm_clients(
-            self._director_model,
-            self._agent_model,
-            self._narrator_model,
+            self._models.director,
+            self._models.agent,
+            self._models.narrator,
             self._api_keys,
+            dramaturge_model=self._models.dramaturge,
         )
         ctx = DirectorContext(self._game_state, self._event_manager, self._knowledge_graph)
         self._director = wire_director(clients, ctx, self._language)

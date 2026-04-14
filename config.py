@@ -49,6 +49,13 @@ class Config(BaseSettings):
     director_model: str = _GPT5_4_MINI
     agent_model: str = _GPT5_4_NANO
     narrator_model: str = _GPT5_4_MINI
+    dramaturge_model: str = _GPT5_4_NANO
+
+    # Dramaturge (consistency oracle) is off by default — enable via env
+    # var ``DRAMATURGE_ENABLED=true``. When enabled, a validation pass runs
+    # after the Narrator on new-scene turns and rewrites sentences that
+    # contradict historical canon or prior in-scene dialogue.
+    dramaturge_enabled: bool = False
 
     # Telegram
     telegram_bot_token: str | None = None
