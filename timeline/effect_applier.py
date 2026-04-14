@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from timeline.effect_memory import capture_pre_state, emit_memory
 from timeline.event import EventEffect
 
 if TYPE_CHECKING:
@@ -75,10 +76,18 @@ class EffectApplier:
         self._graph = graph
 
     def apply(self, effect: EventEffect) -> None:
-        """Apply a single EventEffect to the game state."""
+        """Apply a single EventEffect to the game state.
+
+        Pre-state is captured before the handler runs so MOVE_NPC and
+        REMOVE_NPC can still reference the original location and name
+        when emitting witness memories afterwards.
+        """
         apply_fn = self._handlers.get(effect.effect_type.upper())
-        if apply_fn:
-            apply_fn(effect)
+        if not apply_fn:
+            return
+        pre = capture_pre_state(self._game_state, effect)
+        apply_fn(effect)
+        emit_memory(self._game_state, self._graph, effect, pre)
 
     @property
     def _handlers(self) -> dict:
