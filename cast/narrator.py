@@ -112,6 +112,7 @@ class Narrator(BasePerformer):
         raw_parts.extend(f"{entry.npc_name} says: {entry.response}" for entry in input_data.dialogue)
         raw_parts.extend(f"New person appears: {desc}" for desc in input_data.new_npcs)
         raw_parts.extend(f"Item examined: {desc}" for desc in input_data.item_examination)
+        raw_parts.extend(f"Object interaction: {desc}" for desc in input_data.object_interactions)
 
         if input_data.wait:
             raw_parts.append(_format_wait_line(input_data.wait_reason))

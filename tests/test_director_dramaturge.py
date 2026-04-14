@@ -42,6 +42,7 @@ def _make_plan_executor_pieces(*, with_dramaturge: bool):
         retaliation=retaliation,
         npc_turns=npc_turns_resolver,
         npc_ticker=ticker,
+        memory_manager=mem_mgr,
     )
 
     narrator = AsyncMock()

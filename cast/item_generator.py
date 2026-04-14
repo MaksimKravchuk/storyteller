@@ -5,10 +5,15 @@ from __future__ import annotations
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
-from cast.schemas.item_response import ItemExamineResponse, ItemListResponse
+from cast.schemas.item_response import (
+    ItemExamineResponse,
+    ItemListResponse,
+    ObjectInteractionResponse,
+)
 from prompts.item_generator_prompts import (
     ITEM_GENERATOR_BATCH,
     ITEM_GENERATOR_EXAMINE,
+    ITEM_GENERATOR_INTERACT,
     ITEM_GENERATOR_SYSTEM,
 )
 
@@ -34,6 +39,11 @@ class ItemGenerator(BasePerformer):
             - ``"examine"``: detailed single-item examination.
               ``input_data``: item name string.
               ``context``: must contain ``game_state`` and ``context_hint``.
+            - ``"interact"``: resolve a physical INTERACT action on an object.
+              ``input_data``: object name string.
+              ``context``: must contain ``game_state``, ``player_action`` and
+              ``context_hint``. Returns an :class:`ObjectInteractionResponse`
+              carrying both narration and the persistent delta.
         """
         mode = context.get("mode", "batch")
         from models.game_state import GameState
@@ -43,6 +53,13 @@ class ItemGenerator(BasePerformer):
         if mode == "examine":
             return await self._examine_item(
                 item_name=input_data,
+                context_hint=context.get("context_hint", ""),
+                game_state=game_state,
+            )
+        if mode == "interact":
+            return await self._interact_with_object(
+                object_name=input_data,
+                player_action=context.get("player_action", ""),
                 context_hint=context.get("context_hint", ""),
                 game_state=game_state,
             )
@@ -85,3 +102,27 @@ class ItemGenerator(BasePerformer):
         prompt = ITEM_GENERATOR_EXAMINE.render(item_name=item_name, context_hint=context_hint)
         response = await self._send_json(prompt, response_model=ItemExamineResponse)
         return response.description or item_name
+
+    async def _interact_with_object(
+        self,
+        object_name: str,
+        player_action: str,
+        context_hint: str,
+        game_state: Any,
+    ) -> ObjectInteractionResponse:
+        """Resolve a physical INTERACT action against a scene object.
+
+        Produces both the short narration the Narrator will inline and
+        the persistent ``delta`` string that the caller writes to the
+        knowledge graph as a ``scene_state`` node. An empty ``delta``
+        means "no lasting change" and signals the caller to skip the
+        graph write.
+        """
+        self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
+
+        prompt = ITEM_GENERATOR_INTERACT.render(
+            player_action=player_action,
+            object_name=object_name,
+            context_hint=context_hint,
+        )
+        return await self._send_json(prompt, response_model=ObjectInteractionResponse)

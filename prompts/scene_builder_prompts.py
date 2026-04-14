@@ -18,6 +18,17 @@ SCENE_BUILDER_SYSTEM = PromptTemplate(
             template=("Setting: {setting_summary}\nCurrent location: {current_location}\nTime of day: {time_of_day}"),
             required_vars=["setting_summary", "current_location", "time_of_day"],
         ),
+        PromptSection(
+            name="persistent_world_changes",
+            template=(
+                "Persistent world changes — these are durable deltas caused by the player "
+                "in previous turns. If the scene you generate has a location_id matching one "
+                "of the entries below, you MUST incorporate every listed change into the "
+                "description and points_of_interest. Never regenerate an unchanged version.\n"
+                "{persistent_world_changes}"
+            ),
+            required_vars=["persistent_world_changes"],
+        ),
     ]
 )
 
