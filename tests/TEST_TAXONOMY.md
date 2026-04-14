@@ -78,6 +78,8 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 |---|---|---|
 | `test_narrator.py` | Narrator | "Scene type selection", "Dialogue rendering" |
 | `test_markdown_render.py` | Markdown rendering | "Telegram HTML", "Plain text", "HTML output" |
+| `test_world_chronicler.py` | World Chronicler | "Happy path", "Empty output", "Prompt helpers" |
+| `test_narrative_test_agent.py` | Narrative Test Agent | "Happy path", "Prompt assembly", "Schema validation" |
 
 ### Game Timeline
 

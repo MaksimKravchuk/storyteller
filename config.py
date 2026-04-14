@@ -11,6 +11,7 @@ from defaults.models import ModelConfig
 
 _GPT5_4_MINI = "gpt-5.4-mini"
 _GPT5_4_NANO = "gpt-5.4-nano"
+_CLAUDE_SONNET_REVIEWER = "claude-sonnet-4-20250514"
 _PROVIDER_OPENAI = "openai"
 
 _DEFAULT_TEMPERATURE = 0.7
@@ -49,6 +50,11 @@ class Config(BaseSettings):
     director_model: str = _GPT5_4_MINI
     agent_model: str = _GPT5_4_NANO
     narrator_model: str = _GPT5_4_MINI
+    # Narrative Test Agent runs out-of-band and audits the game's narrative
+    # across six dimensions (story, turns, scenes, confrontation, memory,
+    # autonomy). It needs a higher-tier model than the per-turn agents,
+    # so the default points at Claude Sonnet rather than gpt-5.4-mini.
+    narrative_test_model: str = _CLAUDE_SONNET_REVIEWER
 
     # Telegram
     telegram_bot_token: str | None = None
