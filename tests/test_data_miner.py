@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
@@ -9,6 +10,8 @@ import pytest
 
 from cast.data_miner import DataMiner
 from cast.schemas.setting_response import SearchTermsResponse, SettingResponse
+from knowledge.graph import KnowledgeGraph
+from knowledge.node import KnowledgeScope, KnowledgeSource
 from models.setting import Setting
 from research.wikipedia_client import WikipediaClient
 
@@ -17,6 +20,12 @@ _SEND_JSON = "_send_json"
 
 def _default_summary() -> dict:
     return {"title": "T", "extract": "E", "description": "D"}
+
+
+def _single_summary_wiki(extract: str = "Test extract.") -> MagicMock:
+    wiki = MagicMock(spec=WikipediaClient)
+    wiki.get_summary = AsyncMock(return_value={"title": "T", "extract": extract, "description": "D"})
+    return wiki
 
 
 def _fake_wiki(summaries: list[dict] | None = None) -> MagicMock:
@@ -146,3 +155,64 @@ class TestDataMiner:
             result = await miner.act("multi", {})
         assert stub.get_summary.await_count == 3
         assert result.raw_sources == ["a", "b", "c"]
+
+
+@allure.epic("World Setup")
+@allure.feature("Data Miner")
+class TestEnsureFact:
+    @allure.story("ensure_fact")
+    @allure.title("ensure_fact returns cached node on second call without fetching Wikipedia again")
+    @pytest.mark.asyncio
+    async def test_cache_hit(self) -> None:
+        wiki = _single_summary_wiki()
+        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        graph = KnowledgeGraph()
+        first = await miner.ensure_fact("Rome", graph=graph)
+        second = await miner.ensure_fact("Rome", graph=graph)
+        assert first is not None
+        assert second is first
+        wiki.get_summary.assert_awaited_once()
+
+    @allure.story("ensure_fact")
+    @allure.title("ensure_fact fetches Wikipedia on first call and stores a WORLD/FACT node with correct tags")
+    @pytest.mark.asyncio
+    async def test_cache_miss(self) -> None:
+        wiki = _single_summary_wiki("The eternal city.")
+        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        graph = KnowledgeGraph()
+        node = await miner.ensure_fact("Rome", kind="city", graph=graph)
+        assert node is not None
+        assert node.text == "The eternal city."
+        assert node.scope == KnowledgeScope.WORLD
+        assert node.source == KnowledgeSource.FACT
+        assert "historical_fact" in node.tags
+        assert "city" in node.tags
+        assert len(graph.all_nodes()) == 1
+        wiki.get_summary.assert_awaited_once_with("Rome")
+
+    @allure.story("ensure_fact")
+    @allure.title("concurrent ensure_fact calls for the same name issue exactly one Wikipedia fetch")
+    @pytest.mark.asyncio
+    async def test_concurrent_calls_deduplicate(self) -> None:
+        wiki = _single_summary_wiki()
+        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        graph = KnowledgeGraph()
+        results = await asyncio.gather(
+            miner.ensure_fact("Rome", graph=graph),
+            miner.ensure_fact("Rome", graph=graph),
+        )
+        assert all(r is not None for r in results)
+        assert results[0] is results[1]
+        wiki.get_summary.assert_awaited_once()
+
+    @allure.story("ensure_fact")
+    @allure.title("ensure_fact returns None and writes nothing to graph when Wikipedia raises an exception")
+    @pytest.mark.asyncio
+    async def test_failure_returns_none(self) -> None:
+        wiki = MagicMock(spec=WikipediaClient)
+        wiki.get_summary = AsyncMock(side_effect=RuntimeError("network error"))
+        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        graph = KnowledgeGraph()
+        result = await miner.ensure_fact("Rome", graph=graph)
+        assert result is None
+        assert graph.all_nodes() == []
