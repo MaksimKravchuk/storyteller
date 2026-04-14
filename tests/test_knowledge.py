@@ -8,12 +8,19 @@ import pytest
 from knowledge.graph import KnowledgeGraph
 from knowledge.graph_queries import (
     get_related,
+    query_by_canon,
     query_by_location,
     query_by_scope,
     query_by_tags,
 )
 from knowledge import graph_serialization
-from knowledge.node import EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import (
+    CanonSource,
+    EdgeType,
+    KnowledgeNode,
+    KnowledgeScope,
+    KnowledgeSource,
+)
 from knowledge.query import KnowledgeFilter, KnowledgeQueryEngine
 from models.character import Character
 
@@ -104,6 +111,18 @@ class TestKnowledgeNode:
         assert node.required_education == 5
         assert node.tags == [_POLITICS]
         assert node.confidence == pytest.approx(_CONFIDENCE)
+
+    @allure.story("Canon source")
+    @allure.title("A KnowledgeNode defaults its canon to HISTORICAL")
+    def test_default_canon_is_historical(self):
+        node = KnowledgeNode(text="Caesar crossed the Rubicon")
+        assert node.canon == CanonSource.HISTORICAL
+
+    @allure.story("Canon source")
+    @allure.title("A KnowledgeNode accepts an explicit SESSION canon on init")
+    def test_custom_canon_session(self):
+        node = KnowledgeNode(text="Player slew the duke", canon=CanonSource.SESSION)
+        assert node.canon == CanonSource.SESSION
 
 
 # ---------------------------------------------------------------------------
@@ -251,6 +270,35 @@ class TestKnowledgeGraphQueries:
         restored = graph_serialization.from_dict(graph_dict)
         assert graph_serialization.node_count(restored) == graph_serialization.node_count(populated_graph)
 
+    @allure.story("Query filtering")
+    @allure.title("query_by_canon returns only nodes matching the requested canon source")
+    def test_query_by_canon(self, empty_graph):
+        historical = KnowledgeNode(text="Lorenzo died in 1492", canon=CanonSource.HISTORICAL)
+        session = KnowledgeNode(text="Lorenzo was slain in 1481", canon=CanonSource.SESSION)
+        empty_graph.add_node(historical)
+        empty_graph.add_node(session)
+
+        session_nodes = query_by_canon(empty_graph, CanonSource.SESSION)
+        assert len(session_nodes) == 1
+        assert session_nodes[0].uuid == session.uuid
+
+        historical_nodes = query_by_canon(empty_graph, CanonSource.HISTORICAL)
+        assert len(historical_nodes) == 1
+        assert historical_nodes[0].uuid == historical.uuid
+
+    @allure.story("Serialization")
+    @allure.title("Round-tripping a graph through to_dict/from_dict preserves the canon on each node")
+    def test_serialise_round_trip_preserves_canon(self, empty_graph):
+        historical = KnowledgeNode(text="Wikipedia fact", canon=CanonSource.HISTORICAL)
+        session = KnowledgeNode(text="Player action", canon=CanonSource.SESSION)
+        empty_graph.add_node(historical)
+        empty_graph.add_node(session)
+
+        restored = graph_serialization.from_dict(graph_serialization.to_dict(empty_graph))
+        canons_by_uuid = {node.uuid: node.canon for node in restored.all_nodes()}
+        assert canons_by_uuid[historical.uuid] == CanonSource.HISTORICAL
+        assert canons_by_uuid[session.uuid] == CanonSource.SESSION
+
 
 # ---------------------------------------------------------------------------
 # KnowledgeQueryEngine
@@ -305,6 +353,48 @@ class TestQueryEngineFilters:
         matching_nodes = engine.query(filt)
         assert len(matching_nodes) == 1
         assert "trade" in matching_nodes[0].tags
+
+    @allure.story("Query engine filters")
+    @allure.title("KnowledgeFilter(canons=[HISTORICAL]) excludes session-canon nodes from the result set")
+    def test_query_filters_by_canon_historical(self, empty_graph):
+        historical = KnowledgeNode(text="Wikipedia fact", canon=CanonSource.HISTORICAL)
+        session = KnowledgeNode(text="Player action", canon=CanonSource.SESSION)
+        empty_graph.add_node(historical)
+        empty_graph.add_node(session)
+        engine = KnowledgeQueryEngine(empty_graph)
+
+        matched = engine.query(KnowledgeFilter(canons=[CanonSource.HISTORICAL]))
+        matched_uuids = {node.uuid for node in matched}
+        assert historical.uuid in matched_uuids
+        assert session.uuid not in matched_uuids
+
+    @allure.story("Query engine filters")
+    @allure.title("KnowledgeFilter(canons=[SESSION]) excludes historical-canon nodes from the result set")
+    def test_query_filters_by_canon_session(self, empty_graph):
+        historical = KnowledgeNode(text="Wikipedia fact", canon=CanonSource.HISTORICAL)
+        session = KnowledgeNode(text="Player action", canon=CanonSource.SESSION)
+        empty_graph.add_node(historical)
+        empty_graph.add_node(session)
+        engine = KnowledgeQueryEngine(empty_graph)
+
+        matched = engine.query(KnowledgeFilter(canons=[CanonSource.SESSION]))
+        matched_uuids = {node.uuid for node in matched}
+        assert session.uuid in matched_uuids
+        assert historical.uuid not in matched_uuids
+
+    @allure.story("Query engine filters")
+    @allure.title("KnowledgeFilter with canons=None returns both historical and session nodes")
+    def test_query_filters_canons_none_returns_both(self, empty_graph):
+        historical = KnowledgeNode(text="Wikipedia fact", canon=CanonSource.HISTORICAL)
+        session = KnowledgeNode(text="Player action", canon=CanonSource.SESSION)
+        empty_graph.add_node(historical)
+        empty_graph.add_node(session)
+        engine = KnowledgeQueryEngine(empty_graph)
+
+        matched = engine.query(KnowledgeFilter())
+        matched_uuids = {node.uuid for node in matched}
+        assert historical.uuid in matched_uuids
+        assert session.uuid in matched_uuids
 
 
 @allure.epic("Scene & Exploration")

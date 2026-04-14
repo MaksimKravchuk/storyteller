@@ -10,7 +10,7 @@ import allure
 
 from engine.graph_populator import populate_graph_from_setting
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import KnowledgeScope, KnowledgeSource
+from knowledge.node import CanonSource, KnowledgeScope, KnowledgeSource
 from models.setting import Setting
 
 
@@ -254,3 +254,25 @@ class TestPopulateGraphFromSetting:
 
         # 1 summary + 2 persons + 1 event + 2 locations + 1 tradition + 1 tech + 1 social = 9
         assert len(graph.all_nodes()) == 9
+
+    @allure.story("Canon source")
+    @allure.title("Every node produced by populate_graph_from_setting is marked as HISTORICAL canon")
+    def test_all_populated_nodes_are_historical_canon(self):
+        graph = KnowledgeGraph()
+        setting = Setting(
+            name="Rome",
+            time_period="1 AD",
+            region="Italy",
+            summary="Eternal city",
+            key_persons=[{"name": "Caesar"}],
+            key_events=[{"name": "Rubicon"}],
+            locations=[{"name": "Forum"}],
+            traditions=["toga"],
+            technologies=["aqueducts"],
+            social_structure="republic",
+        )
+
+        populate_graph_from_setting(graph, setting)
+
+        for node in graph.all_nodes():
+            assert node.canon == CanonSource.HISTORICAL

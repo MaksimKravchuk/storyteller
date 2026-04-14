@@ -10,6 +10,7 @@ import pytest
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
 from knowledge.node import (
+    CanonSource,
     EdgeType,
     KnowledgeNode,
     KnowledgeScope,
@@ -62,6 +63,7 @@ async def test_summarize_interaction_links_to_existing_npc() -> None:
     assert node.text == _SUMMARY_TEXT
     assert node.scope == KnowledgeScope.LOCAL
     assert node.source == KnowledgeSource.PERSONAL_EXPERIENCE
+    assert node.canon == CanonSource.SESSION
     # Edge from npc to new memory exists and is WITNESSED
     edges = graph.get_edges_from(npc_id)
     assert len(edges) == 1
@@ -132,6 +134,7 @@ async def test_create_memory_local_scope_personal_per_witness() -> None:
         assert node is not None
         assert node.source == KnowledgeSource.PERSONAL_EXPERIENCE
         assert node.scope == KnowledgeScope.LOCAL
+        assert node.canon == CanonSource.SESSION
         assert node.location_id == _LOCATION_ID
         edges = graph.get_edges_from(witness_id)
         # The witness wasn't seeded in graph, but edge should still exist with WITNESSED type
@@ -159,6 +162,7 @@ async def test_create_memory_city_scope_produces_rumor_plus_personal() -> None:
     assert rumor_node is not None
     assert rumor_node.scope == KnowledgeScope.CITY
     assert rumor_node.source == KnowledgeSource.RUMOR
+    assert rumor_node.canon == CanonSource.SESSION
     assert rumor_node.location_id == _LOCATION_ID
     # The remaining two are personal per-witness
     for witness_id, personal_id in zip(witness_ids, created[1:]):
@@ -166,6 +170,7 @@ async def test_create_memory_city_scope_produces_rumor_plus_personal() -> None:
         assert personal is not None
         assert personal.source == KnowledgeSource.PERSONAL_EXPERIENCE
         assert personal.scope == KnowledgeScope.LOCAL
+        assert personal.canon == CanonSource.SESSION
         target_ids = [tgt for tgt, _ in graph.get_edges_from(witness_id)]
         assert personal_id in target_ids
 
@@ -186,6 +191,7 @@ async def test_create_memory_world_scope_uses_fact_source() -> None:
     assert fact_node is not None
     assert fact_node.scope == KnowledgeScope.WORLD
     assert fact_node.source == KnowledgeSource.FACT
+    assert fact_node.canon == CanonSource.SESSION
 
 
 @allure.story("create_memory_from_event")

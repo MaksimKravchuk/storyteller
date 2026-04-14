@@ -42,6 +42,13 @@ class KnowledgeSource(Enum):
     HEARSAY = "hearsay"  # Heard from someone else
 
 
+class CanonSource(Enum):
+    """Whether a node reflects researched history or in-session player actions."""
+
+    HISTORICAL = "historical"  # Wikipedia / DataMiner-sourced "what history says"
+    SESSION = "session"  # Player-caused "what happened in this session"
+
+
 class EdgeType(Enum):
     """Types of relationships between knowledge nodes."""
 
@@ -61,6 +68,7 @@ class KnowledgeNode(StorytellerBase):
     text: str
     scope: KnowledgeScope = KnowledgeScope.LOCAL
     source: KnowledgeSource = KnowledgeSource.FACT
+    canon: CanonSource = CanonSource.HISTORICAL
     required_education: int = 0  # 0-10
     required_social_status: int = 0  # 0-10
     tags: list[str] = []

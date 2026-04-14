@@ -8,6 +8,7 @@ from models.game_state import INITIAL_GAME_CLOCK
 
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import (
+    CanonSource,
     EdgeType,
     KnowledgeNode,
     KnowledgeScope,
@@ -65,6 +66,7 @@ class MemoryManager:
             text=response.body.strip(),
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            canon=CanonSource.SESSION,
             timestamp=game_time,
         )
         node_id = self._graph.add_node(node)
@@ -101,6 +103,7 @@ class MemoryManager:
                         text=event_description,
                         scope=KnowledgeScope.LOCAL,
                         source=KnowledgeSource.PERSONAL_EXPERIENCE,
+                        canon=CanonSource.SESSION,
                         location_id=location_id,
                         timestamp=game_time,
                     )
@@ -114,6 +117,7 @@ class MemoryManager:
                         text=event_description,
                         scope=scope,
                         source=KnowledgeSource.FACT if scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR,
+                        canon=CanonSource.SESSION,
                         location_id=location_id,
                         timestamp=game_time,
                     )
@@ -126,6 +130,7 @@ class MemoryManager:
                     text=event_description,
                     scope=KnowledgeScope.LOCAL,
                     source=KnowledgeSource.PERSONAL_EXPERIENCE,
+                    canon=CanonSource.SESSION,
                     location_id=location_id,
                     timestamp=game_time,
                 )
