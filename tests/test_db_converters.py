@@ -19,7 +19,7 @@ from db.converters import (
     scene as sc_conv,
     setting as st_conv,
 )
-from knowledge.node import KnowledgeCanon, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models import game_state, location, npc_card, scene, setting
 from timeline import event as timeline_event
 
@@ -242,7 +242,6 @@ class TestKnowledgeConverter:
             text="The king was poisoned",
             scope=KnowledgeScope.COUNTRY,
             source=KnowledgeSource.RUMOR,
-            canon=KnowledgeCanon.SESSION,
             required_education=5,
             required_social_status=3,
             tags=["politics", "scandal"],
@@ -252,32 +251,18 @@ class TestKnowledgeConverter:
         )
         row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
-        assert row["canon"] == "session"
 
         restored = kn_conv.row_to_knowledge_node(row)
         assert restored.uuid == node.uuid
         assert restored.text == "The king was poisoned"
         assert restored.scope == KnowledgeScope.COUNTRY
         assert restored.source == KnowledgeSource.RUMOR
-        assert restored.canon == KnowledgeCanon.SESSION
         assert restored.required_education == 5
         assert restored.required_social_status == 3
         assert restored.tags == ["politics", "scandal"]
         assert restored.location_id == "loc-court"
         assert restored.timestamp == pytest.approx(12.5)
         assert restored.confidence == pytest.approx(0.6)
-
-    @allure.story("Round-trip")
-    @allure.title("A KnowledgeNode defaulting to HISTORICAL canon round-trips correctly")
-    def test_round_trip_historical_default(self):
-        node = KnowledgeNode(text="Lorenzo died in 1492")
-        assert node.canon == KnowledgeCanon.HISTORICAL
-
-        row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
-        assert row["canon"] == "historical"
-
-        restored = kn_conv.row_to_knowledge_node(row)
-        assert restored.canon == KnowledgeCanon.HISTORICAL
 
 
 @allure.epic("Persistence")

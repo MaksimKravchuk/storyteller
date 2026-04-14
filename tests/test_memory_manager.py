@@ -11,7 +11,6 @@ from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
 from knowledge.node import (
     EdgeType,
-    KnowledgeCanon,
     KnowledgeNode,
     KnowledgeScope,
     KnowledgeSource,
@@ -63,7 +62,6 @@ async def test_summarize_interaction_links_to_existing_npc() -> None:
     assert node.text == _SUMMARY_TEXT
     assert node.scope == KnowledgeScope.LOCAL
     assert node.source == KnowledgeSource.PERSONAL_EXPERIENCE
-    assert node.canon == KnowledgeCanon.SESSION
     # Edge from npc to new memory exists and is WITNESSED
     edges = graph.get_edges_from(npc_id)
     assert len(edges) == 1
@@ -133,7 +131,6 @@ async def test_create_memory_local_scope_personal_per_witness() -> None:
         node = graph.get_node(node_id)
         assert node is not None
         assert node.source == KnowledgeSource.PERSONAL_EXPERIENCE
-        assert node.canon == KnowledgeCanon.SESSION
         assert node.scope == KnowledgeScope.LOCAL
         assert node.location_id == _LOCATION_ID
         edges = graph.get_edges_from(witness_id)
@@ -162,14 +159,12 @@ async def test_create_memory_city_scope_produces_rumor_plus_personal() -> None:
     assert rumor_node is not None
     assert rumor_node.scope == KnowledgeScope.CITY
     assert rumor_node.source == KnowledgeSource.RUMOR
-    assert rumor_node.canon == KnowledgeCanon.SESSION
     assert rumor_node.location_id == _LOCATION_ID
     # The remaining two are personal per-witness
     for witness_id, personal_id in zip(witness_ids, created[1:]):
         personal = graph.get_node(personal_id)
         assert personal is not None
         assert personal.source == KnowledgeSource.PERSONAL_EXPERIENCE
-        assert personal.canon == KnowledgeCanon.SESSION
         assert personal.scope == KnowledgeScope.LOCAL
         target_ids = [tgt for tgt, _ in graph.get_edges_from(witness_id)]
         assert personal_id in target_ids
@@ -191,9 +186,6 @@ async def test_create_memory_world_scope_uses_fact_source() -> None:
     assert fact_node is not None
     assert fact_node.scope == KnowledgeScope.WORLD
     assert fact_node.source == KnowledgeSource.FACT
-    # Even when the source is FACT, the provenance is still SESSION because the
-    # event happened in-game, not in the Wikipedia-sourced setting.
-    assert fact_node.canon == KnowledgeCanon.SESSION
 
 
 @allure.story("create_memory_from_event")

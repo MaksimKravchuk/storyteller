@@ -52,10 +52,6 @@ _LEN_SHORT = 32
 _LEN_MEDIUM = 64
 _LEN_LONG = 128
 
-# Shared reusable type instances — SQLAlchemy string types are stateless
-# beyond the declared length and can safely be shared between Column definitions.
-_STR_TINY = String(_LEN_TINY)
-
 sessions = Table(
     "sessions",
     metadata,
@@ -83,7 +79,7 @@ game_states = Table(
     Column("round_number", Integer, nullable=False, server_default=_DEFAULT_ZERO),
     Column("scene_number", Integer, nullable=False, server_default=_DEFAULT_ZERO),
     Column("game_clock", Float, nullable=False, server_default="0.0"),
-    Column("game_time", _STR_TINY, nullable=False, server_default="morning"),
+    Column("game_time", String(_LEN_TINY), nullable=False, server_default="morning"),
     Column("conversation_log", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("scene_conversation_log", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("pending_clarification", JSONB, nullable=True),
@@ -171,7 +167,7 @@ npcs = Table(
     Column("occupation", Text, nullable=False, server_default=""),
     Column("personality_traits", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("speech_style", Text, nullable=False, server_default=""),
-    Column("knowledge_scope", _STR_TINY, nullable=False, server_default="local"),
+    Column("knowledge_scope", String(_LEN_TINY), nullable=False, server_default="local"),
     Column("attributes", JSONB, nullable=False, server_default=_DEFAULT_JSON_OBJECT),
     Column("inventory", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column(_COL_LOCATION_ID, Text, nullable=True),
@@ -199,7 +195,7 @@ scenes = Table(
     Column("npcs_present", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("points_of_interest", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("ambient_description", Text, nullable=False, server_default=""),
-    Column("time_of_day", _STR_TINY, nullable=False, server_default="day"),
+    Column("time_of_day", String(_LEN_TINY), nullable=False, server_default="day"),
     Column("narrated_text", Text, nullable=False, server_default=""),
     Index("idx_scenes_game_state", _COL_GAME_STATE_ID),
 )
@@ -215,9 +211,8 @@ knowledge_nodes = Table(
         nullable=False,
     ),
     Column("content", Text, nullable=False),
-    Column("scope", _STR_TINY, nullable=False, server_default="local"),
-    Column("source", _STR_TINY, nullable=False, server_default="fact"),
-    Column("canon", _STR_TINY, nullable=False, server_default="historical"),
+    Column("scope", String(_LEN_TINY), nullable=False, server_default="local"),
+    Column("source", String(_LEN_TINY), nullable=False, server_default="fact"),
     Column("required_education", Integer, nullable=False, server_default=_DEFAULT_ZERO),
     Column("required_social_status", Integer, nullable=False, server_default=_DEFAULT_ZERO),
     Column("tags", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
@@ -288,10 +283,10 @@ game_events = Table(
     Column("scheduled_at", Float, nullable=False),
     Column("duration", Float, nullable=False),
     Column("completes_at", Float, nullable=False),
-    Column("status", _STR_TINY, nullable=False, server_default="pending"),
+    Column("status", String(_LEN_TINY), nullable=False, server_default="pending"),
     Column("owner_id", Text, nullable=True),
     Column(_COL_LOCATION_ID, Text, nullable=True),
-    Column("scope", _STR_TINY, nullable=False, server_default="local"),
+    Column("scope", String(_LEN_TINY), nullable=False, server_default="local"),
     Column("effects", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("follow_up_events", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("on_complete_description", Text, nullable=False, server_default=""),

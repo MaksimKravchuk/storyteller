@@ -30,7 +30,7 @@ def _apply_remove_item(game_state: GameState, effect: EventEffect) -> None:
 
 
 def _apply_add_knowledge(graph: KnowledgeGraph, effect: EventEffect) -> None:
-    from knowledge.node import KnowledgeCanon, KnowledgeNode, KnowledgeScope, KnowledgeSource
+    from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 
     knowledge_text = effect.effect_data.get("content", "")
     scope_str = effect.effect_data.get("scope", "local")
@@ -40,7 +40,6 @@ def _apply_add_knowledge(graph: KnowledgeGraph, effect: EventEffect) -> None:
             text=knowledge_text,
             scope=KnowledgeScope(scope_str),
             source=KnowledgeSource.FACT,
-            canon=KnowledgeCanon.SESSION,
             tags=tags,
             location_id=effect.effect_data.get("location_id"),
         )
