@@ -157,10 +157,25 @@ class PlanExecutor:
         await self._resolve_npc_turns(action_type, player_action, raw_outputs)
         self._agents.npc_ticker.tick(raw_outputs, skip_uuids=new_uuids)
 
-        if raw_outputs.scene is not None and self._cast.world_chronicler is not None:
-            await self._advance_world_state(raw_outputs, player_action)
+        if raw_outputs.scene is not None:
+            await self._handle_scene_change(raw_outputs, player_action, completed_events)
 
         return await self._narrate_and_review(raw_outputs, player_action)
+
+    async def _handle_scene_change(
+        self,
+        raw_outputs: turn_outputs.TurnOutputs,
+        player_action: str,
+        completed_events: list[GameEvent],
+    ) -> None:
+        """Run the scene-change side effects: rumour propagation + world chronicler.
+
+        Both side effects share a single scene-change boundary check
+        with the narration path inside ``execute_plan``.
+        """
+        self._agents.events.propagate_rumors_for_turn(completed_events)
+        if self._cast.world_chronicler is not None:
+            await self._advance_world_state(raw_outputs, player_action)
 
     async def _narrate_and_review(
         self,

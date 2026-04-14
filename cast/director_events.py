@@ -6,6 +6,7 @@ import asyncio
 from cast.schemas.chronicler_response import ScheduledEventDraft
 from knowledge.memory import MemoryManager
 from knowledge.node import KnowledgeScope
+from knowledge.rumor import propagate_rumors
 from models.game_state import GameState
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
@@ -67,7 +68,13 @@ class EventProcessor:
 
     async def process_remote_events(self, events: list[GameEvent]) -> None:
         """Feed remote events into the memory system as rumours."""
-        await asyncio.gather(*(self._create_memory_for_event(ev) for ev in events))
+        await asyncio.gather(
+            *(self._memory_mgr.create_memory_from_event(**self.build_memory_kwargs(ev)) for ev in events),
+        )
+
+    def propagate_rumors_for_turn(self, events: list[GameEvent]) -> list[str]:
+        """Fan completed CITY+ events out to non-witness NPCs in the same city."""
+        return propagate_rumors(self._gs.knowledge_graph, self._gs, events)
 
     def build_memory_kwargs(self, ev: GameEvent) -> dict:
         """Build keyword arguments for create_memory_from_event."""
@@ -83,10 +90,6 @@ class EventProcessor:
             "location_id": ev.location_id,
             "game_time": self._gs.game_clock,
         }
-
-    async def _create_memory_for_event(self, ev: GameEvent) -> None:
-        """Create a memory from a single remote event."""
-        await self._memory_mgr.create_memory_from_event(**self.build_memory_kwargs(ev))
 
 
 def _scope_from_string(scope_str: str) -> KnowledgeScope:
