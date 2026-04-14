@@ -115,6 +115,9 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -144,6 +147,13 @@ jobs:
         with:
           name: allure-results
           path: allure-results/
+
+      - name: Post narrative quality report on PR
+        if: always() && github.event_name == 'pull_request' && hashFiles('allure-results/narrative-report.md') != ''
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: narrative-quality-report
+          path: allure-results/narrative-report.md
 
   deploy:
     runs-on: ubuntu-latest

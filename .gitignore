@@ -9,6 +9,7 @@ __pycache__/
 dist/
 build/
 allure-results/
+tests/e2e/.last-narrative-report.md
 .vscode/
 .coverage
 coverage.json
