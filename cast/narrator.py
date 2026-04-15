@@ -29,6 +29,42 @@ def _format_wait_line(wait_reason: str | None) -> str:
     return "The player cannot act — they are {0}.".format(wait_reason)
 
 
+def _resolve_current_location_id(game_state: Any) -> str | None:
+    """Return the active location_id via player, then current scene."""
+    player = getattr(game_state, "player", None)
+    if player and player.location_id:
+        return player.location_id
+    scene = getattr(game_state, "current_scene", None)
+    return getattr(scene, "location_id", None) if scene else None
+
+
+def _resolve_current_location(game_state: Any) -> Any:
+    """Return the player's current ``Location`` or ``None``."""
+    location_id = _resolve_current_location_id(game_state)
+    if not location_id:
+        return None
+    return game_state.locations.get(location_id)
+
+
+def _append_prior_damage_parts(raw_parts: list[str], game_state: Any) -> None:
+    """Surface tracked object damage on CONTINUATION turns.
+
+    New-scene turns already carry the damage via SceneBuilder's
+    merged points_of_interest, so this helper only fires when
+    ``input_data.scene`` is ``None``. It looks up the player's
+    current location and emits a ``Prior damage:`` line listing
+    every entry in ``object_states`` so the Narrator never relies
+    on the lossy scene_history summary for persistent state.
+    """
+    location = _resolve_current_location(game_state)
+    if location is None or not location.object_states:
+        return
+    damage_lines = [
+        "- {0}: {1}".format(object_key, state) for object_key, state in sorted(location.object_states.items())
+    ]
+    raw_parts.append("Prior damage:\n{0}".format("\n".join(damage_lines)))
+
+
 def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, str]:
     """Build kwargs for ``Narrator.set_context``.
 
@@ -101,7 +137,9 @@ class Narrator(BasePerformer):
         if scene_history and not is_new_scene:
             self._append_history_parts(raw_parts, scene_history)
 
-        if input_data.scene is not None:
+        if input_data.scene is None:
+            _append_prior_damage_parts(raw_parts, game_state)
+        else:
             self._append_scene_parts(raw_parts, input_data.scene, game_state)
 
         self._append_turn_lines(raw_parts, input_data)

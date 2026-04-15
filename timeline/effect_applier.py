@@ -64,6 +64,15 @@ def _apply_change_status(game_state: GameState, effect: EventEffect) -> None:
         npc.physical_status = new_status
 
 
+def _apply_object_damage(game_state: GameState, effect: EventEffect) -> None:
+    location_id = effect.effect_data.get("location_id", effect.target_id)
+    object_key = effect.effect_data.get("object_key", "")
+    state_description = effect.effect_data.get("state_description", "")
+    location = game_state.locations.get(location_id)
+    if location and object_key and state_description:
+        location.object_states[object_key] = state_description
+
+
 class EffectApplier:
     """Applies event effects to the game world.
 
@@ -98,6 +107,7 @@ class EffectApplier:
             "ADD_KNOWLEDGE": lambda eff: _apply_add_knowledge(self._graph, eff),
             "CHANGE_ATTRIBUTE": lambda eff: _apply_change_attribute(self._game_state, eff),
             "CHANGE_STATUS": lambda eff: _apply_change_status(self._game_state, eff),
+            "APPLY_OBJECT_DAMAGE": lambda eff: _apply_object_damage(self._game_state, eff),
             "REMOVE_NPC": self._remove_npc,
         }
 

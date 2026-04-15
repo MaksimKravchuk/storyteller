@@ -85,9 +85,21 @@ async def _run_single_interaction(
 
 def _persist_delta(
     game_state: GameState,
+    object_key: str,
     delta_text: str,
 ) -> None:
-    """Write a non-empty delta to the knowledge graph at the current location."""
+    """Persist a non-empty delta for ``object_key`` at the current location.
+
+    Writes to two sinks:
+
+    * ``knowledge.scene_state.record_scene_delta`` keeps the existing
+      ``scene_state``-tagged knowledge-graph node (KER-13 behaviour).
+    * ``Location.object_states[object_key] = delta_text`` is the new
+      typed channel introduced by KER-16 — ``SceneBuilder`` reads it
+      on every rebuild and the Narrator surfaces it as a
+      ``Prior damage:`` line on CONTINUATION turns, so damaged
+      objects never get silently reset to pristine.
+    """
     scene = game_state.current_scene
     if not delta_text or scene is None or not scene.location_id:
         return
@@ -97,10 +109,13 @@ def _persist_delta(
         delta_text=delta_text,
         game_time=game_state.game_clock,
     )
+    location = game_state.locations.get(scene.location_id)
+    if location is not None and object_key:
+        location.object_states[object_key] = delta_text
 
 
-def _persist_all_deltas(game_state: GameState, deltas: list[str]) -> None:
-    """Write every non-empty delta to the graph.
+def _persist_all_deltas(game_state: GameState, target_deltas: list[tuple[str, str]]) -> None:
+    """Write every non-empty delta to both persistence sinks.
 
     Extracted into its own function so the loop variable does not
     leak into the enclosing scope — the enclosing coroutine later
@@ -108,8 +123,8 @@ def _persist_all_deltas(game_state: GameState, deltas: list[str]) -> None:
     ``delta`` name, which tripped WPS441 when both lived in the same
     function body.
     """
-    for delta in deltas:
-        _persist_delta(game_state, delta)
+    for object_key, delta in target_deltas:
+        _persist_delta(game_state, object_key, delta)
 
 
 async def _emit_witness_memories(
@@ -162,7 +177,7 @@ async def apply_object_interactions(
         ),
     )
     deltas = [resp.delta for resp in responses]
-    _persist_all_deltas(game_state, deltas)
+    _persist_all_deltas(game_state, list(zip(object_targets, deltas)))
     await asyncio.gather(
         *(_emit_witness_memories(memory_manager, game_state, delta) for delta in deltas),
     )

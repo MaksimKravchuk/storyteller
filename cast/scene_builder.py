@@ -31,6 +31,60 @@ def _format_persistent_world_changes(deltas: dict[str, list[str]]) -> str:
     return "\n".join(lines)
 
 
+def _format_known_object_states(object_states: dict[str, str]) -> str:
+    """Render the ``known_object_states`` prompt section.
+
+    Returns the empty string when the location has no tracked object
+    state yet; SceneBuilder then skips the ``set_context`` call so the
+    PromptTemplate drops the whole section on the first turn.
+    """
+    if not object_states:
+        return ""
+    lines: list[str] = []
+    for object_key in sorted(object_states):
+        lines.append("- {0}: {1}".format(object_key, object_states[object_key]))
+    return "\n".join(lines)
+
+
+def _merge_known_object_states(scene: Scene, object_states: dict[str, str]) -> None:
+    """Append any tracked object state the LLM silently dropped from the scene.
+
+    The system prompt instructs the LLM to preserve every listed state,
+    but LLMs occasionally elide entries. This safety net walks the
+    authoritative ``Location.object_states`` and, for any entry whose
+    key is not already substring-mentioned in ``points_of_interest`` or
+    the scene description, appends a synthesized point of interest so
+    the Narrator still surfaces the damage downstream.
+    """
+    for object_key, state_description in object_states.items():
+        key_lower = object_key.lower()
+        mentioned = key_lower in scene.description.lower() or any(
+            key_lower in poi.lower() for poi in scene.points_of_interest
+        )
+        if not mentioned:
+            scene.points_of_interest.append(
+                "{0} ({1})".format(object_key, state_description),
+            )
+
+
+def _current_object_states(game_state: Any) -> dict[str, str]:
+    """Return the ``object_states`` dict for the player's current location.
+
+    Resolves the location via the player's ``location_id``; falls back
+    to the current scene's ``location_id`` when the player has not yet
+    been placed. Returns an empty dict when no location is resolvable.
+    """
+    player = getattr(game_state, "player", None)
+    location_id = player.location_id if player and player.location_id else None
+    if not location_id:
+        scene = getattr(game_state, "current_scene", None)
+        location_id = getattr(scene, "location_id", None) if scene else None
+    if not location_id:
+        return {}
+    location = game_state.locations.get(location_id)
+    return dict(location.object_states) if location else {}
+
+
 def _scene_from_response(scene_data: SceneResponse, fallback_time_of_day: str) -> Scene:
     """Convert a raw LLM ``SceneResponse`` payload into a typed ``Scene``."""
     npcs = [SceneNPC(role=role_str) for role_str in scene_data.npcs_present]
@@ -71,16 +125,19 @@ class SceneBuilder(BasePerformer):
             time_of_day=game_state.game_time,
         )
         scene_data = await self._send_json(prompt, response_model=SceneResponse)
-        return _scene_from_response(scene_data, game_state.game_time)
+        scene = _scene_from_response(scene_data, game_state.game_time)
+        _merge_known_object_states(scene, _current_object_states(game_state))
+        return scene
 
     def _prime_context(self, game_state: Any) -> None:
         """Prepare the system-prompt context for one scene build.
 
         Sets the always-present context variables (setting summary,
         current location, time of day) and additionally threads in the
-        ``persistent_world_changes`` block when any scene-state deltas
-        have been recorded. Split out of ``act`` to keep the main
-        method within the WPS210 local-variable budget.
+        ``persistent_world_changes`` and ``known_object_states`` blocks
+        when any deltas or tracked object states exist. Split out of
+        ``act`` to keep the main method within the WPS210
+        local-variable budget.
         """
         current_loc = game_state.current_scene.description if game_state.current_scene else "Starting area"
         self.set_context(
@@ -91,3 +148,6 @@ class SceneBuilder(BasePerformer):
         deltas_block = _format_persistent_world_changes(all_scene_deltas(game_state.knowledge_graph))
         if deltas_block:
             self.set_context(persistent_world_changes=deltas_block)
+        object_states_block = _format_known_object_states(_current_object_states(game_state))
+        if object_states_block:
+            self.set_context(known_object_states=object_states_block)
