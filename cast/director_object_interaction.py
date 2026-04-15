@@ -31,7 +31,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from cast.schemas.item_response import ObjectInteractionResponse
+from cast.schemas.item_response import ObjectInteractionResponse, ObjectInteractionResult
 from knowledge.node import KnowledgeScope
 from knowledge.scene_state import record_scene_delta
 
@@ -50,13 +50,17 @@ def _scene_hint(game_state: GameState) -> str:
     return scene.description[:_SCENE_DESC_PREVIEW]
 
 
-def _initialised_scene_witnesses(game_state: GameState) -> list[str]:
+def initialised_scene_witnesses(game_state: GameState) -> list[str]:
     """Return UUIDs of every initialised NPC in the current scene.
 
     Uninitialised ``SceneNPC`` stubs are skipped for the same reason as
     KER-11: they have no graph node yet, so a ``WITNESSED`` edge would
     dangle. A scene NPC counts as initialised when its ``uuid`` is set
     *and* the matching ``NPCCard`` is already registered.
+
+    Exported (no leading underscore) so the KER-18 witness-broadcast
+    path in :mod:`cast.director_execution` can reuse the same filter
+    instead of duplicating the six-line scan.
     """
     scene = game_state.current_scene
     if scene is None:
@@ -123,7 +127,7 @@ async def _emit_witness_memories(
     empty delta) so a silent "bumping into a wall" INTERACT does not
     spam the graph with ghost memory nodes.
     """
-    witnesses = _initialised_scene_witnesses(game_state)
+    witnesses = initialised_scene_witnesses(game_state)
     if not witnesses or not delta_text:
         return
     scene = game_state.current_scene
@@ -142,20 +146,22 @@ async def apply_object_interactions(
     player_action: str,
     game_state: GameState,
     memory_manager: MemoryManager,
-) -> list[str]:
+) -> ObjectInteractionResult:
     """Resolve every object target in the INTERACT plan.
 
     Runs the ``ItemGenerator`` interact mode concurrently for each
     target, writes every non-empty delta to the knowledge graph, and
     broadcasts a witness memory to all initialised scene NPCs. Returns
-    the list of narration strings so the caller can populate
-    ``TurnOutputs.object_interactions``.
+    a :class:`ObjectInteractionResult` bundling the narration strings
+    (for ``TurnOutputs.object_interactions``) and the parallel delta
+    list (for the KER-18 witness-broadcast path in
+    :class:`cast.director_execution.PlanExecutor`).
 
     Silently skips when there is no ``ItemGenerator`` wired or when
     the target list is empty.
     """
     if not object_targets or item_generator is None:
-        return []
+        return ObjectInteractionResult(narrations=[], deltas=[])
     responses: list[ObjectInteractionResponse] = list(
         await asyncio.gather(
             *(_run_single_interaction(item_generator, target, player_action, game_state) for target in object_targets),
@@ -166,4 +172,5 @@ async def apply_object_interactions(
     await asyncio.gather(
         *(_emit_witness_memories(memory_manager, game_state, delta) for delta in deltas),
     )
-    return [resp.narration for resp in responses if resp.narration]
+    narrations = [resp.narration for resp in responses if resp.narration]
+    return ObjectInteractionResult(narrations=narrations, deltas=deltas)

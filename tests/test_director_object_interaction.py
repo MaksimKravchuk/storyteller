@@ -64,7 +64,7 @@ class TestApplyObjectInteractions:
         )
         memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
 
-        narrations = await doi_mod.apply_object_interactions(
+        result = await doi_mod.apply_object_interactions(
             item_gen,
             ["window"],
             "break the window",
@@ -72,7 +72,8 @@ class TestApplyObjectInteractions:
             memory_manager,
         )
 
-        assert narrations == ["Glass shatters with a sharp crack."]
+        assert result.narrations == ["Glass shatters with a sharp crack."]
+        assert result.deltas == ["The front window is broken."]
         deltas = query_scene_deltas(gs.knowledge_graph, "tavern")
         assert len(deltas) == 1
         assert deltas[0].text == "The front window is broken."
@@ -130,7 +131,7 @@ class TestApplyObjectInteractions:
         )
         memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
 
-        narrations = await doi_mod.apply_object_interactions(
+        result = await doi_mod.apply_object_interactions(
             item_gen,
             ["wall"],
             "shove the wall",
@@ -138,7 +139,8 @@ class TestApplyObjectInteractions:
             memory_manager,
         )
 
-        assert narrations == ["You bump into the wall; nothing gives."]
+        assert result.narrations == ["You bump into the wall; nothing gives."]
+        assert result.deltas == [""]
         assert query_scene_deltas(gs.knowledge_graph, "tavern") == []
         # No delta → no witness memory either. The bystander's graph node
         # exists but has no PERSONAL_EXPERIENCE edges.
@@ -151,7 +153,8 @@ class TestApplyObjectInteractions:
         gs = make_game_state()
         memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         result = await doi_mod.apply_object_interactions(None, ["window"], "break the window", gs, memory_manager)
-        assert result == []
+        assert result.narrations == []
+        assert result.deltas == []
 
     @allure.story("Empty target list")
     @allure.title("apply_object_interactions returns early when the target list is empty")
@@ -161,7 +164,8 @@ class TestApplyObjectInteractions:
         item_gen = _stub_item_generator(item_resp.ObjectInteractionResponse())
         memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         result = await doi_mod.apply_object_interactions(item_gen, [], "break everything", gs, memory_manager)
-        assert result == []
+        assert result.narrations == []
+        assert result.deltas == []
         item_gen._send_json.assert_not_awaited()  # type: ignore[attr-defined]
 
     @allure.story("Uninitialised scene stubs")

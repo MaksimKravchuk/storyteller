@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -47,3 +49,23 @@ class ObjectInteractionResponse(BaseModel):
 
     narration: str = ""
     delta: str = ""
+
+
+class ObjectInteractionResult(NamedTuple):
+    """Bundled outputs of :func:`cast.director_object_interaction.apply_object_interactions`.
+
+    ``narrations`` are the short physical descriptions routed into
+    ``TurnOutputs.object_interactions`` so the Narrator inlines them
+    with the scene. ``deltas`` are the parallel list of persistent
+    state-change strings the ItemGenerator produced; they are already
+    written to the knowledge graph, but the caller keeps them in memory
+    so the KER-18 witness broadcast can quote the delta in its prompt
+    description without re-running the LLM.
+
+    Both lists are aligned with ``object_targets`` — entry *i* is the
+    result for target *i* — so the caller can ``zip`` them with the
+    original target names.
+    """
+
+    narrations: list[str]
+    deltas: list[str]

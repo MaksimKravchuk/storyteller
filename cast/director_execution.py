@@ -10,7 +10,9 @@ from cast import (
     constants,
     director_dialogue,
     director_events,
+    director_object_interaction as doi_mod,
     director_retaliation,
+    director_witness,
     npc_ticker as npc_ticker_mod,
     npc_turn,
 )
@@ -24,6 +26,7 @@ _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"
 _KEY_TARGETS = "targets"
+_KEY_IS_AGGRESSIVE = "is_aggressive"
 _DEFAULT_ACTION = "OTHER"
 
 _SCENE_DESC_PREVIEW = 200
@@ -179,9 +182,10 @@ class PlanExecutor:
                 raw_outputs.wait_reason = plan["wait_reason"]
             return set()
         targets = plan.get(_KEY_TARGETS, [])
+        is_aggressive = bool(plan.get(_KEY_IS_AGGRESSIVE))
         new_uuids = await self._prepare_scene(action_type, targets, player_action, raw_outputs)
         new_uuids |= await self._process_target_npcs(plan, player_action, raw_outputs)
-        await self._run_action_handler(action_type, targets, player_action, raw_outputs)
+        await self._run_action_handler(action_type, targets, player_action, is_aggressive, raw_outputs)
         return new_uuids
 
     async def _run_action_handler(
@@ -189,19 +193,23 @@ class PlanExecutor:
         action_type: str,
         targets: list[str],
         player_action: str,
+        is_aggressive: bool,
         raw_outputs: turn_outputs.TurnOutputs,
     ) -> None:
         """Dispatch EXAMINE / INTERACT to the matching object handler.
 
         Both branches are best-effort: silently skip when the action
-        is not one of these or when the target list is empty.
+        is not one of these or when the target list is empty. The
+        ``is_aggressive`` flag only affects the INTERACT branch — it
+        feeds the KER-18 proximity-witness broadcast so guards react
+        when the player smashes an inanimate target.
         """
         if action_type == "EXAMINE":
             item_desc = await self._examine_items(targets, player_action)
             if item_desc:
                 raw_outputs.item_examination = item_desc
         elif action_type == "INTERACT":
-            await self._interact_with_objects(targets, player_action, raw_outputs)
+            await self._interact_with_objects(targets, player_action, is_aggressive, raw_outputs)
 
     async def _handle_scene_change(
         self,
@@ -309,10 +317,19 @@ class PlanExecutor:
         player_action: str,
         raw_outputs: turn_outputs.TurnOutputs,
     ) -> None:
-        """Resolve NPC autonomous turns for turn-counting actions."""
+        """Resolve NPC autonomous turns for turn-counting actions.
+
+        Passes ``raw_outputs.witnessed_events`` through to the resolver
+        so guard NPCs see the KER-18 incident clause on the same turn
+        the vandalism is committed — the witness broadcast step ran
+        earlier inside :meth:`_interact_with_objects`.
+        """
         if action_type not in constants.TURN_COUNTING_ACTIONS:
             return
-        npc_actions = await self._agents.npc_turns.resolve_npc_turns(player_action)
+        npc_actions = await self._agents.npc_turns.resolve_npc_turns(
+            player_action,
+            witnessed_events=raw_outputs.witnessed_events,
+        )
         if npc_actions:
             raw_outputs.npc_turns = [
                 turn_outputs.NPCTurnEntry(
@@ -433,6 +450,7 @@ class PlanExecutor:
         self,
         targets: list[str],
         player_action: str,
+        is_aggressive: bool,
         raw_outputs: turn_outputs.TurnOutputs,
     ) -> None:
         """Resolve INTERACT actions whose targets are pure scene objects.
@@ -445,25 +463,72 @@ class PlanExecutor:
         does not fall through into the object-interaction handler when
         dialogue has already processed the guard.
 
-        Narrations collected from :func:`apply_object_interactions` are
-        hung off the turn outputs so the Narrator can inline them with
-        the scene description. The handler is imported inside the
-        method so this module stays under the WPS201 import budget.
+        Narrations collected from
+        :func:`cast.director_object_interaction.apply_object_interactions`
+        are hung off the turn outputs so the Narrator can inline them
+        with the scene description. When ``is_aggressive`` is true the
+        KER-18 proximity-witness broadcast fires so guard NPCs standing
+        in the scene get both a ``WitnessedAggression`` record on
+        ``raw_outputs`` and a ``threatened`` mood flip.
         """
         object_targets = self._pure_object_targets(targets)
         if not object_targets:
             return
-        from cast.director_object_interaction import apply_object_interactions
-
-        narrations = await apply_object_interactions(
+        interaction = await doi_mod.apply_object_interactions(
             self._cast.item_generator,
             object_targets,
             player_action,
             self._gs,
             self._agents.memory_manager,
         )
-        if narrations:
-            raw_outputs.object_interactions = narrations
+        if interaction.narrations:
+            raw_outputs.object_interactions = interaction.narrations
+        if is_aggressive and any(interaction.deltas):
+            self._publish_object_witness(object_targets, interaction.deltas, player_action, raw_outputs)
+
+    def _publish_object_witness(
+        self,
+        object_targets: list[str],
+        deltas: list[str],
+        player_action: str,
+        raw_outputs: turn_outputs.TurnOutputs,
+    ) -> None:
+        """Broadcast a :class:`WitnessedAggression` + bump guard moods (KER-18).
+
+        Builds one witness record per non-empty ``(target, delta)``
+        pair and appends it to ``raw_outputs.witnessed_events``. Then
+        flips neutral-mood guard witnesses to ``"threatened"`` so the
+        existing retaliation pipeline wakes up on subsequent aggressive
+        turns, and the same-turn NPC autonomous prompt sees the
+        elevated mood plus an incident clause in
+        :func:`cast.npc_turn._build_turn_prompt`.
+        """
+        scene = self._gs.current_scene
+        if scene is None:
+            return
+        for target, delta in zip(object_targets, deltas):
+            if not delta:
+                continue
+            raw_outputs.witnessed_events.append(
+                director_witness.build_object_smash_witness(
+                    target=target,
+                    delta_text=delta,
+                    player_action=player_action,
+                    location_id=scene.location_id,
+                ),
+            )
+        if not raw_outputs.witnessed_events:
+            return
+        guard_uuids = self._guard_witness_uuids()
+        director_witness.bump_guard_moods(self._gs, guard_uuids)
+
+    def _guard_witness_uuids(self) -> list[str]:
+        """Return UUIDs of guard-occupation witnesses in the current scene."""
+        return [
+            uuid
+            for uuid in doi_mod.initialised_scene_witnesses(self._gs)
+            if director_witness.is_guard_occupation(self._gs.npcs[uuid].occupation)
+        ]
 
     def _pure_object_targets(self, targets: list[str]) -> list[str]:
         """Return targets that match neither an NPC name nor a scene role.
