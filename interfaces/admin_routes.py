@@ -11,6 +11,17 @@ _DEFAULT_LIMIT = "50"
 _DEFAULT_OFFSET = "0"
 
 
+def _session_list_filters(request: web.Request) -> dict:
+    """Parse optional ``list_sessions`` filter/pagination params from the query string."""
+    telegram_chat_id_raw = request.query.get("telegram_chat_id")
+    return {
+        "limit": int(request.query.get("limit", _DEFAULT_LIMIT)),
+        "offset": int(request.query.get("offset", _DEFAULT_OFFSET)),
+        "web_player_id": request.query.get("web_player_id") or None,
+        "telegram_chat_id": int(telegram_chat_id_raw) if telegram_chat_id_raw else None,
+    }
+
+
 async def dashboard(request: web.Request) -> web.Response:
     """Serve the dashboard HTML page."""
     if _DASHBOARD_HTML.exists():
@@ -22,11 +33,9 @@ async def dashboard(request: web.Request) -> web.Response:
 
 
 async def list_sessions(request: web.Request) -> web.Response:
-    """Return a paginated list of game sessions."""
-    limit = int(request.query.get("limit", _DEFAULT_LIMIT))
-    offset = int(request.query.get("offset", _DEFAULT_OFFSET))
+    """Return a paginated list of game sessions, optionally filtered by player."""
     async with helpers.open_repo(request) as repo:
-        sessions = await repo.admin.list_sessions(limit=limit, offset=offset)
+        sessions = await repo.admin.list_sessions(**_session_list_filters(request))
     return _json_response({"sessions": sessions})
 
 

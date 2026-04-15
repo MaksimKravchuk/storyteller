@@ -148,7 +148,7 @@ async def repo(async_session):
 async def test_session_id(repo) -> str:
     """Create a fresh sessions row and return its id."""
     chat_id = _random_chat_id()
-    row = await repo.get_or_create_session(chat_id)
+    row = await repo.sessions.create_telegram(chat_id)
     return row["id"]
 
 

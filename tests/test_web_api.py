@@ -166,7 +166,7 @@ def test_healthz_returns_ok(client: TestClient, mock_repo) -> None:
     assert response.status_code == _HTTP_OK
     assert response.json() == {"status": "ok"}
     # Liveness probe must not consult the DB.
-    mock_repo.get_or_create_web_session.assert_not_called()
+    mock_repo.sessions.get_latest_web.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -369,7 +369,8 @@ def _hit_two_clients_once() -> None:
 @allure.title("process_turn_for_player raises GameOwnershipError when game_id does not match the loaded game")
 async def test_process_turn_enforces_ownership() -> None:
     repo = AsyncMock()
-    repo.get_or_create_web_session.return_value = {"id": "sess-1", "language": "English"}
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
 
     loaded_state = MagicMock()
     loaded_state.uuid = "real-game-id"
@@ -390,7 +391,8 @@ async def test_process_turn_enforces_ownership() -> None:
 @allure.title("process_turn_for_player raises GameNotFoundError when the player has no saved game")
 async def test_process_turn_raises_when_no_game() -> None:
     repo = AsyncMock()
-    repo.get_or_create_web_session.return_value = {"id": "sess-1", "language": "English"}
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
     repo.load_game_state.return_value = None
 
     with pytest.raises(service.GameNotFoundError):
@@ -401,3 +403,69 @@ async def test_process_turn_raises_when_no_game() -> None:
             game_id="game-abc",
             action="look",
         )
+
+
+@pytest.mark.asyncio
+@allure.story("Ownership enforcement")
+@allure.title("process_turn_for_player raises GameNotFoundError when the player has no session row at all")
+async def test_process_turn_raises_when_no_session() -> None:
+    repo = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_web = AsyncMock(return_value=None)
+
+    with pytest.raises(service.GameNotFoundError):
+        await service.process_turn_for_player(
+            repo=repo,
+            cfg=MagicMock(),
+            player_id=_FIXED_PLAYER_ID,
+            game_id="game-abc",
+            action="look",
+        )
+
+
+@pytest.mark.asyncio
+@allure.story("Start game")
+@allure.title("start_game_for_player creates a new session row on every call, preserving prior sessions")
+async def test_start_game_creates_fresh_session_each_call() -> None:
+    repo = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.create_web = AsyncMock(
+        side_effect=[
+            {"id": "sess-1", "language": "English"},
+            {"id": "sess-2", "language": "English"},
+        ],
+    )
+    repo.sessions.update = AsyncMock()
+    repo.save_game_state.return_value = None
+
+    engine = MagicMock()
+    engine.start_game = AsyncMock()
+    engine.knowledge_graph = MagicMock()
+    engine.event_manager = MagicMock(all_events=[])
+    engine.game_state = MagicMock()
+    engine.game_state.uuid = "game-1"
+    engine.game_state.setting.name = "Rome"
+    engine.game_state.conversation_log = []
+    engine.game_state.turn_count = 0
+
+    with patch("interfaces.web.service.create_engine", return_value=engine):
+        await service.start_game_for_player(
+            repo=repo,
+            cfg=MagicMock(),
+            player_id=_FIXED_PLAYER_ID,
+            setting="Rome",
+            language="English",
+        )
+        await service.start_game_for_player(
+            repo=repo,
+            cfg=MagicMock(),
+            player_id=_FIXED_PLAYER_ID,
+            setting="Rome",
+            language="English",
+        )
+
+    create_calls = repo.sessions.create_web.await_args_list
+    assert len(create_calls) == 2
+    assert all(call.args == (_FIXED_PLAYER_ID,) for call in create_calls)
+    save_calls = repo.save_game_state.await_args_list
+    assert {call.args[0] for call in save_calls} == {"sess-1", "sess-2"}

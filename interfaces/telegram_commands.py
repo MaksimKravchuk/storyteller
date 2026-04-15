@@ -34,8 +34,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     assert update.message is not None  # noqa: S101
     async with get_db(db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(update.effective_chat.id)
-        await repo.update_session(session[_SESSION_ID_KEY], state="awaiting_language")
+        session = await repo.sessions.create_telegram(update.effective_chat.id)
+        await repo.sessions.update(session[_SESSION_ID_KEY], state="awaiting_language")
 
     await update.message.reply_text(
         "Welcome to Storyteller!\n\nChoose your story language:",
@@ -56,10 +56,10 @@ async def handle_language_callback(update: Update, context: ContextTypes.DEFAULT
 
     async with get_db(db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(update.effective_chat.id)
-        if session["state"] != "awaiting_language":
+        session = await repo.sessions.get_latest_telegram(update.effective_chat.id)
+        if session is None or session["state"] != "awaiting_language":
             return
-        await repo.update_session(session[_SESSION_ID_KEY], state="awaiting_setting", language=language)
+        await repo.sessions.update(session[_SESSION_ID_KEY], state="awaiting_setting", language=language)
 
     await query.edit_message_text(
         f"Language set to {language}.\n\nDescribe your desired setting (e.g. 'Rome, 1st century AD'):"
@@ -73,8 +73,9 @@ async def cmd_quit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     async with get_db(db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(chat_id)
-        await repo.update_session(session[_SESSION_ID_KEY], state=_STATE_IDLE)
+        session = await repo.sessions.get_latest_telegram(chat_id)
+        if session is not None:
+            await repo.sessions.update(session[_SESSION_ID_KEY], state=_STATE_IDLE)
     await update.message.reply_text("Game ended. Send /start to play again.")
 
 
@@ -100,8 +101,8 @@ async def cmd_wait(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     assert update.message is not None  # noqa: S101
     async with get_db(db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(update.effective_chat.id)
-        if session["state"] != "playing":
+        session = await repo.sessions.get_latest_telegram(update.effective_chat.id)
+        if session is None or session["state"] != "playing":
             await update.message.reply_text("No active game. Send /start to begin.")
             return
         await _handle_wait_action(update, context, repo, session)

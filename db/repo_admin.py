@@ -39,12 +39,20 @@ class AdminQueries:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def list_sessions(self, limit: int = 50, offset: int = 0) -> list[dict]:
-        """List sessions with basic game info for admin view."""
+    async def list_sessions(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        *,
+        web_player_id: str | None = None,
+        telegram_chat_id: int | None = None,
+    ) -> list[dict]:
+        """List sessions with basic game info, optionally filtered by player identity."""
         stmt = (
             select(
                 tbl.sessions.c.id,
                 tbl.sessions.c.telegram_chat_id,
+                tbl.sessions.c.web_player_id,
                 tbl.sessions.c.state,
                 tbl.sessions.c.language,
                 tbl.sessions.c.created_at,
@@ -58,6 +66,10 @@ class AdminQueries:
             .limit(limit)
             .offset(offset)
         )
+        if web_player_id is not None:
+            stmt = stmt.where(tbl.sessions.c.web_player_id == web_player_id)
+        if telegram_chat_id is not None:
+            stmt = stmt.where(tbl.sessions.c.telegram_chat_id == telegram_chat_id)
         sessions_query = await self.session.execute(stmt)
         return list(map(helpers._row_dict, sessions_query.mappings()))
 

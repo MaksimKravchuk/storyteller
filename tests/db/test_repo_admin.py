@@ -2,12 +2,53 @@
 
 from __future__ import annotations
 
+import uuid as _uuid
+
 import allure
 import pytest
 
 from tests.db.conftest import GameRepository
 
 pytestmark = pytest.mark.db
+
+
+def _chat_id() -> int:
+    return int(_uuid.uuid4().int & 0x7FFFFFFF)
+
+
+def _player_id() -> str:
+    return str(_uuid.uuid4())
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Admin queries")
+class TestListSessionsFiltering:
+    @allure.story("List sessions")
+    @allure.title("list_sessions(web_player_id=...) returns every row for that player and nothing else")
+    @pytest.mark.asyncio
+    async def test_filters_to_web_player(self, repo: GameRepository) -> None:
+        player_id = _player_id()
+        other_player_id = _player_id()
+        await repo.sessions.create_web(player_id)
+        await repo.sessions.create_web(player_id)
+        await repo.sessions.create_web(other_player_id)
+
+        rows = await repo.admin.list_sessions(web_player_id=player_id)
+        assert len(rows) == 2
+        assert {row["web_player_id"] for row in rows} == {player_id}
+
+    @allure.story("List sessions")
+    @allure.title("list_sessions(telegram_chat_id=...) narrows to that chat's rows only")
+    @pytest.mark.asyncio
+    async def test_filters_to_telegram_chat(self, repo: GameRepository) -> None:
+        chat_id = _chat_id()
+        other_chat_id = _chat_id()
+        await repo.sessions.create_telegram(chat_id)
+        await repo.sessions.create_telegram(other_chat_id)
+
+        rows = await repo.admin.list_sessions(telegram_chat_id=chat_id)
+        assert len(rows) == 1
+        assert rows[0]["telegram_chat_id"] == chat_id
 
 
 @allure.epic("Memory & Persistence")

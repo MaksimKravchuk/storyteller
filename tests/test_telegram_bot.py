@@ -28,10 +28,11 @@ async def _fake_db_cm(*_args, **_kwargs):
     yield MagicMock()
 
 
-def _patch_db_and_repo(session: dict):
+def _patch_db_and_repo(session: dict | None):
     """Patch ``get_db`` / ``GameRepository`` inside telegram_bot; return patchers and repo."""
     repo = AsyncMock()
-    repo.get_or_create_session = AsyncMock(return_value=session)
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_telegram = AsyncMock(return_value=session)
     db_patch = patch("interfaces.telegram_bot.get_db", _fake_db_cm)
     repo_patch = patch("interfaces.telegram_bot.GameRepository", return_value=repo)
     return db_patch, repo_patch, repo

@@ -20,13 +20,13 @@ def _chat_id() -> int:
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Game repository")
-class TestGetOrCreateSession:
+class TestTelegramSessionLifecycle:
     @allure.story("Session bootstrap")
-    @allure.title("get_or_create_session inserts a new row for an unknown telegram_chat_id")
+    @allure.title("create_telegram_session inserts a new row and returns defaults")
     @pytest.mark.asyncio
-    async def test_inserts_new_row_for_unknown_chat(self, repo: GameRepository) -> None:
+    async def test_create_inserts_new_row(self, repo: GameRepository) -> None:
         chat_id = _chat_id()
-        row = await repo.get_or_create_session(chat_id)
+        row = await repo.sessions.create_telegram(chat_id)
 
         assert row["telegram_chat_id"] == chat_id
         assert row["state"] == "idle"
@@ -34,14 +34,33 @@ class TestGetOrCreateSession:
         assert row["id"]
 
     @allure.story("Session bootstrap")
-    @allure.title("get_or_create_session is idempotent on repeated calls with the same chat_id")
+    @allure.title("get_latest_telegram_session returns None when no session exists for the chat")
     @pytest.mark.asyncio
-    async def test_idempotent_on_second_call(self, repo: GameRepository) -> None:
-        chat_id = _chat_id()
-        first = await repo.get_or_create_session(chat_id)
-        second = await repo.get_or_create_session(chat_id)
+    async def test_get_latest_none_for_unknown_chat(self, repo: GameRepository) -> None:
+        assert await repo.sessions.get_latest_telegram(_chat_id()) is None
 
-        assert first["id"] == second["id"]
+    @allure.story("Session bootstrap")
+    @allure.title("create_telegram_session called twice produces two rows with distinct ids")
+    @pytest.mark.asyncio
+    async def test_two_games_produce_two_sessions(self, repo: GameRepository) -> None:
+        chat_id = _chat_id()
+        first = await repo.sessions.create_telegram(chat_id)
+        second = await repo.sessions.create_telegram(chat_id)
+
+        assert first["id"] != second["id"]
+        assert first["telegram_chat_id"] == second["telegram_chat_id"] == chat_id
+
+    @allure.story("Session bootstrap")
+    @allure.title("get_latest_telegram_session returns the most recently created row")
+    @pytest.mark.asyncio
+    async def test_get_latest_returns_newest(self, repo: GameRepository) -> None:
+        chat_id = _chat_id()
+        await repo.sessions.create_telegram(chat_id)
+        newest = await repo.sessions.create_telegram(chat_id)
+
+        latest = await repo.sessions.get_latest_telegram(chat_id)
+        assert latest is not None
+        assert latest["id"] == newest["id"]
 
 
 @allure.epic("Memory & Persistence")
@@ -51,10 +70,10 @@ class TestUpdateSession:
     @allure.title("update_session(state=...) writes state and leaves language untouched")
     @pytest.mark.asyncio
     async def test_update_state_only(self, repo: GameRepository, async_session) -> None:
-        row = await repo.get_or_create_session(_chat_id())
+        row = await repo.sessions.create_telegram(_chat_id())
         session_id = row["id"]
 
-        await repo.update_session(session_id, state="playing")
+        await repo.sessions.update(session_id, state="playing")
 
         refreshed = await async_session.execute(
             sqlalchemy.select(tbl.sessions).where(tbl.sessions.c.id == session_id),
@@ -67,10 +86,10 @@ class TestUpdateSession:
     @allure.title("update_session(language=...) writes language and leaves state untouched")
     @pytest.mark.asyncio
     async def test_update_language_only(self, repo: GameRepository, async_session) -> None:
-        row = await repo.get_or_create_session(_chat_id())
+        row = await repo.sessions.create_telegram(_chat_id())
         session_id = row["id"]
 
-        await repo.update_session(session_id, language="Russian")
+        await repo.sessions.update(session_id, language="Russian")
 
         refreshed = await async_session.execute(
             sqlalchemy.select(tbl.sessions).where(tbl.sessions.c.id == session_id),
@@ -83,10 +102,10 @@ class TestUpdateSession:
     @allure.title("update_session without kwargs is a no-op and leaves the row unchanged")
     @pytest.mark.asyncio
     async def test_noop_when_no_kwargs(self, repo: GameRepository, async_session) -> None:
-        row = await repo.get_or_create_session(_chat_id())
+        row = await repo.sessions.create_telegram(_chat_id())
         session_id = row["id"]
 
-        await repo.update_session(session_id)
+        await repo.sessions.update(session_id)
 
         refreshed = await async_session.execute(
             sqlalchemy.select(tbl.sessions).where(tbl.sessions.c.id == session_id),
@@ -104,7 +123,7 @@ class TestRollback:
     @pytest.mark.asyncio
     async def test_rollback_discards_insert(self, repo: GameRepository, async_session) -> None:
         chat_id = _chat_id()
-        await repo.get_or_create_session(chat_id)
+        await repo.sessions.create_telegram(chat_id)
 
         await repo.rollback()
 

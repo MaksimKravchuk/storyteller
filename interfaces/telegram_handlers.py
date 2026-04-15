@@ -44,7 +44,7 @@ async def start_new_game(engine: Any, repo: Any, session_id: str, update: Any, t
     """Run start_game and persist. Extracted to keep try-body short."""
     opening = await engine.start_game(text)
     await persist_engine_state(repo, session_id, engine, turn_number=None)
-    await repo.update_session(session_id, state="playing")
+    await repo.sessions.update(session_id, state="playing")
     await update.message.reply_text(
         render(opening, ClientPlatform.TELEGRAM_HTML),
         parse_mode=_TELEGRAM_PARSE_MODE,
@@ -77,7 +77,7 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
             logger.exception("Failed to start game for chat {}", chat_id)
             await ctx.repo.rollback()
             await ctx.update.message.reply_text("Something went wrong. Try /start again.")
-            await ctx.repo.update_session(ctx.session_id, state=_STATE_IDLE)
+            await ctx.repo.sessions.update(ctx.session_id, state=_STATE_IDLE)
 
 
 async def handle_playing(ctx: Any) -> None:
@@ -108,5 +108,5 @@ async def load_game_or_reset(
     loaded = await repo.load_game_state(session_id)
     if loaded is None:
         await update.message.reply_text("No game found. Send /start to begin.")
-        await repo.update_session(session_id, state=_STATE_IDLE)
+        await repo.sessions.update(session_id, state=_STATE_IDLE)
     return loaded

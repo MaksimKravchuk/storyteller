@@ -26,10 +26,12 @@ async def _fake_db_cm(*_args, **_kwargs):
     yield MagicMock()
 
 
-def _patch_db_and_repo(session: dict):
+def _patch_db_and_repo(session: dict | None):
     repo = AsyncMock()
-    repo.get_or_create_session = AsyncMock(return_value=session)
-    repo.update_session = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_telegram = AsyncMock(return_value=session)
+    repo.sessions.create_telegram = AsyncMock(return_value=session)
+    repo.sessions.update = AsyncMock()
     db_patch = patch("interfaces.telegram_commands.get_db", _fake_db_cm)
     repo_patch = patch("interfaces.telegram_commands.GameRepository", return_value=repo)
     return db_patch, repo_patch, repo
@@ -46,7 +48,7 @@ def _edit_text(update) -> str:
 
 
 @allure.story("/start command")
-@allure.title("cmd_start transitions session to awaiting_language and sends language buttons")
+@allure.title("cmd_start creates a fresh session, sets awaiting_language, and sends language buttons")
 @pytest.mark.asyncio
 async def test_cmd_start_sets_awaiting_language() -> None:
     update = make_text_update(text="/start")
@@ -57,7 +59,8 @@ async def test_cmd_start_sets_awaiting_language() -> None:
     with db_patch, repo_patch:
         await cmds.cmd_start(update, context)
 
-    repo.update_session.assert_awaited_once_with("s1", state="awaiting_language")
+    repo.sessions.create_telegram.assert_awaited_once()
+    repo.sessions.update.assert_awaited_once_with("s1", state="awaiting_language")
     update.message.reply_text.assert_awaited_once()
     kwargs = update.message.reply_text.call_args.kwargs
     markup = kwargs["reply_markup"]
@@ -82,7 +85,7 @@ async def test_handle_language_callback_happy_path() -> None:
     with db_patch, repo_patch:
         await cmds.handle_language_callback(update, context)
 
-    repo.update_session.assert_awaited_once_with(
+    repo.sessions.update.assert_awaited_once_with(
         "s1",
         state="awaiting_setting",
         language="Spanish",
@@ -104,7 +107,7 @@ async def test_handle_language_callback_wrong_state() -> None:
     with db_patch, repo_patch:
         await cmds.handle_language_callback(update, context)
 
-    repo.update_session.assert_not_awaited()
+    repo.sessions.update.assert_not_awaited()
     update.callback_query.edit_message_text.assert_not_awaited()
 
 
@@ -120,7 +123,7 @@ async def test_cmd_quit_resets_to_idle() -> None:
     with db_patch, repo_patch:
         await cmds.cmd_quit(update, context)
 
-    repo.update_session.assert_awaited_once_with("s9", state="idle")
+    repo.sessions.update.assert_awaited_once_with("s9", state="idle")
     update.message.reply_text.assert_awaited_once()
     assert "/start" in _reply_text(update)
 
