@@ -60,6 +60,7 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
     ticker = npc_ticker.NPCTicker(gs)
     agents = director_execution._Agents(
         events=events,
+        event_manager=event_mgr,
         dialogue=dialogue,
         retaliation=retaliation,
         npc_turns=npc_turns,

@@ -5,13 +5,15 @@ from __future__ import annotations
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
-from cast.schemas.turn_outputs import TurnOutputs
+from cast.schemas.turn_outputs import TurnOutputs, WaitContext
 from models.scene import Scene
 from prompts.narrator_prompts import NARRATOR_NARRATE, NARRATOR_SYSTEM
 
 _HISTORY_PREVIEW_CHARS = 200
 _NARRATION_MAX_TOKENS = 800
 _KEY_COMPLETED_EVENTS = "completed_events"
+_KEY_WAIT_CONTEXT_LINES = "wait_context_lines"
+_KEY_HOURS_WAITED = "hours_waited"
 
 
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
@@ -27,6 +29,45 @@ def _format_wait_line(wait_reason: str | None) -> str:
     if (wait_reason or "") in ("", "voluntary"):
         return "The player waits and observes the surroundings."
     return "The player cannot act — they are {0}.".format(wait_reason)
+
+
+def _format_wait_context_bullets(ctx: WaitContext) -> list[str]:
+    """Render a :class:`WaitContext` as bullet lines for the narrator prompt."""
+    bullets: list[str] = []
+    for thread in ctx.active_threads:
+        bullets.append("- thread: {0}".format(thread.description))
+    for label in ctx.on_shift_npcs:
+        bullets.append("- on shift: {0}".format(label))
+    for event_line in ctx.imminent_events:
+        bullets.append("- stirring: {0}".format(event_line))
+    return bullets
+
+
+def _append_wait_parts(raw_parts: list[str], input_data: TurnOutputs) -> None:
+    """Render the rich wait-context material when present, else the stub line.
+
+    When :class:`cast.director_execution.PlanExecutor` attaches a
+    :class:`WaitContext` (KER-20) the Narrator surfaces active
+    threads, on-shift NPCs and imminent events so the raw material
+    never bottoms out at ``"No specific scene data."``. When the
+    field is ``None`` (forced-wait fallback, pre-chronicler turns)
+    we keep the original stub so existing tests still pass.
+
+    Lives at module scope rather than as a :class:`Narrator` method
+    so the class stays under its WPS214 method budget — no ``self``
+    state is needed, every input comes from the ``input_data`` arg.
+    """
+    ctx = input_data.wait_context
+    if ctx is None:
+        raw_parts.append(_format_wait_line(input_data.wait_reason))
+        return
+    raw_parts.append("The player waits for roughly {0:.1f} hours.".format(ctx.hours_waited))
+    for thread in ctx.active_threads:
+        raw_parts.append("Ongoing thread: {0}".format(thread.description))
+    for label in ctx.on_shift_npcs:
+        raw_parts.append("On shift nearby: {0}".format(label))
+    for event_line in ctx.imminent_events:
+        raw_parts.append("Stirring in the background: {0}".format(event_line))
 
 
 def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, str]:
@@ -115,7 +156,7 @@ class Narrator(BasePerformer):
         raw_parts.extend(f"Object interaction: {desc}" for desc in input_data.object_interactions)
 
         if input_data.wait:
-            raw_parts.append(_format_wait_line(input_data.wait_reason))
+            _append_wait_parts(raw_parts, input_data)
 
         for npc_turn in input_data.npc_turns:
             raw_parts.append(f"Meanwhile, {npc_turn.npc_name}: {npc_turn.action}")
@@ -158,4 +199,9 @@ class Narrator(BasePerformer):
         }
         if input_data.completed_events:
             kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data.completed_events)
+        if input_data.wait_context is not None:
+            bullets = _format_wait_context_bullets(input_data.wait_context)
+            if bullets:
+                kwargs[_KEY_WAIT_CONTEXT_LINES] = "\n".join(bullets)
+                kwargs[_KEY_HOURS_WAITED] = "{0:.1f}".format(input_data.wait_context.hours_waited)
         return kwargs

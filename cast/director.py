@@ -77,6 +77,7 @@ class Director(BasePerformer):
         self._npc_ticker = NPCTicker(deps.game_state)
         agents = director_execution._Agents(
             events=self._events,
+            event_manager=deps.event_manager,
             dialogue=self._dialogue,
             retaliation=self._retaliation,
             npc_turns=self._npc_turns,

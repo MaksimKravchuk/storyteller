@@ -19,6 +19,7 @@ from loguru import logger
 from models import world_state as world_state_mod
 from models.game_state import GameState
 from timeline.event import GameEvent
+from timeline.event_manager import EventManager
 
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
@@ -27,6 +28,12 @@ _KEY_TARGETS = "targets"
 _DEFAULT_ACTION = "OTHER"
 
 _SCENE_DESC_PREVIEW = 200
+_WAIT_EVENT_LOOKAHEAD_HOURS = 4.0
+# Canonical WAIT duration mirrors ``timeline.time_costs.BASE_ACTION_COSTS``.
+# Kept as a local constant so the WAIT ambience refresh can render a
+# deterministic ``hours_waited`` without pulling an extra module import
+# into this file's WPS201 budget.
+_WAIT_HOURS_DEFAULT = 0.1
 
 
 def _snapshot_moods(npcs: dict) -> dict[str, str]:
@@ -109,9 +116,16 @@ class _Agents:
     import count of this file under the WPS201 budget. The field is
     only handed off to other modules; no method-dispatch against it
     happens inside this module.
+
+    ``event_manager`` is bundled alongside the :class:`EventProcessor`
+    so the WAIT ambience refresh (KER-20) can query pending timeline
+    events without forcing a new passthrough method on
+    :class:`EventProcessor` — that module is already at its WPS214
+    method budget.
     """
 
     events: director_events.EventProcessor
+    event_manager: EventManager
     dialogue: director_dialogue.DialogueHandler
     retaliation: director_retaliation.RetaliationHandler
     npc_turns: npc_turn.NPCTurnResolver
@@ -155,6 +169,8 @@ class PlanExecutor:
 
         if raw_outputs.scene is not None:
             await self._handle_scene_change(raw_outputs, player_action, completed_events)
+        elif raw_outputs.wait:
+            await self._refresh_scene_ambience(raw_outputs, player_action, completed_events)
 
         return await self._narrate_and_review(raw_outputs, player_action)
 
@@ -302,6 +318,106 @@ class PlanExecutor:
                 response.scheduled_events,
                 now=self._gs.game_clock,
             )
+
+    async def _refresh_scene_ambience(
+        self,
+        raw_outputs: turn_outputs.TurnOutputs,
+        player_action: str,
+        completed_events: list[GameEvent],
+    ) -> None:
+        """Populate ``raw_outputs.wait_context`` with living-world motion on WAIT turns.
+
+        1. Re-invokes the World Chronicler via :meth:`_advance_world_state`
+           (no-op when ``world_chronicler`` is not wired) so ``world_state.threads``
+           advance and ``world_mood`` refreshes.
+        2. Collects open :class:`WorldThread` s whose ``involved_locations``
+           include ``game_state.player.location_id``.
+        3. Filters ``location.npcs_present`` UUIDs for NPCs currently on-shift
+           per the :class:`NPCTicker` schedule tables.
+        4. Collects completed-this-turn and soon-firing local
+           :class:`GameEvent` s from the :class:`EventManager`.
+        5. Packages everything into a :class:`WaitContext` attached to
+           ``raw_outputs``.
+
+        Called from :meth:`execute_plan` after ``_resolve_npc_turns`` and
+        ``npc_ticker.tick`` so the ambient picture already includes any
+        departures. ``advance_and_resolve`` has already run in
+        :meth:`Director.act` before this code path, so ``completed_events``
+        is populated for the imminent-events collector.
+        """
+        if self._cast.world_chronicler is not None:
+            await self._advance_world_state(raw_outputs, player_action)
+
+        location_id = self._gs.player.location_id
+        raw_outputs.wait_context = turn_outputs.WaitContext(
+            active_threads=self._collect_active_threads(location_id),
+            on_shift_npcs=self._collect_on_shift_npcs(location_id),
+            imminent_events=self._collect_imminent_events(location_id, completed_events),
+            hours_waited=_WAIT_HOURS_DEFAULT,
+        )
+
+    def _collect_active_threads(self, location_id: str | None) -> list[world_state_mod.WorldThread]:
+        """Return open world threads whose ``involved_locations`` touch ``location_id``."""
+        return [
+            thread
+            for thread in self._gs.world_state.threads
+            if thread.status == "open" and location_id in thread.involved_locations
+        ]
+
+    def _collect_on_shift_npcs(self, location_id: str | None) -> list[str]:
+        """Return 'Name (Occupation)' labels for NPCs currently on-shift at ``location_id``.
+
+        Returns an empty list when the location is unknown or the
+        player has no location fix yet — the WAIT turn should still
+        work in that degraded case. The per-NPC shift check is
+        extracted into :meth:`_on_shift_label` to keep both methods
+        under the project-wide cognitive-complexity budget.
+        """
+        if location_id is None or location_id not in self._gs.locations:
+            return []
+        labels: list[str] = []
+        for npc_uuid in self._gs.locations[location_id].npcs_present:
+            label = self._on_shift_label(npc_uuid)
+            if label is not None:
+                labels.append(label)
+        return labels
+
+    def _on_shift_label(self, npc_uuid: str) -> str | None:
+        """Return the display label for an on-shift NPC, or ``None`` otherwise.
+
+        Reuses :func:`cast.npc_ticker.get_schedule_for` so the
+        "is this NPC present right now?" rule stays in one place.
+        Returns ``None`` for unknown UUIDs and for NPCs whose schedule
+        slot is explicitly ``present=False`` at the current
+        ``game_state.game_time``.
+        """
+        npc = self._gs.npcs.get(npc_uuid)
+        if npc is None:
+            return None
+        slot = npc_ticker_mod.get_schedule_for(npc.occupation).get(self._gs.game_time)
+        if slot is not None and not slot.present:
+            return None
+        return "{0} ({1})".format(npc.name, npc.occupation or "resident")
+
+    def _collect_imminent_events(
+        self,
+        location_id: str | None,
+        completed_events: list[GameEvent],
+    ) -> list[str]:
+        """Return human-readable lines for just-completed and soon-firing local events.
+
+        Combines the events that completed during this turn's clock
+        advance (from :meth:`Director.act`'s ``advance_and_resolve`` call)
+        with pending events at the player's location whose
+        ``completes_at`` falls within ``_WAIT_EVENT_LOOKAHEAD_HOURS`` of
+        the current game clock.
+        """
+        lines = [ev.on_complete_description or ev.name for ev in completed_events]
+        lookahead = self._gs.game_clock + _WAIT_EVENT_LOOKAHEAD_HOURS
+        for pending in self._agents.event_manager.get_pending_events():
+            if pending.location_id == location_id and pending.completes_at <= lookahead:
+                lines.append(pending.on_complete_description or pending.name)
+        return lines
 
     async def _resolve_npc_turns(
         self,

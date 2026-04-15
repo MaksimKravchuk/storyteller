@@ -17,9 +17,10 @@ only has to populate it from the ``NPCTicker`` output.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from models.scene import Scene
+from models.world_state import WorldThread
 
 
 class DialogueEntry(BaseModel):
@@ -48,6 +49,29 @@ class NPCTurnEntry(BaseModel):
     action_type: str
 
 
+class WaitContext(BaseModel):
+    """Structured ambient material surfaced on WAIT turns.
+
+    Populated by :meth:`cast.director_execution.PlanExecutor._refresh_scene_ambience`
+    so the Narrator can render real world motion (active threads,
+    on-shift NPCs, soon-firing events) instead of the pre-KER-20 stub
+    line ``"The player waits and observes the surroundings."``.
+
+    ``active_threads`` carries raw :class:`WorldThread` dataclass
+    instances rather than pre-formatted strings so downstream consumers
+    (Narrator today, future analytics agents tomorrow) can read the
+    structured fields. Pydantic v2 handles dataclass fields natively
+    when ``arbitrary_types_allowed`` is set.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    active_threads: list[WorldThread] = Field(default_factory=list)
+    on_shift_npcs: list[str] = Field(default_factory=list)
+    imminent_events: list[str] = Field(default_factory=list)
+    hours_waited: float = Field(default_factory=float)
+
+
 class TurnOutputs(BaseModel):
     """Typed view of everything produced during a Director turn.
 
@@ -57,10 +81,15 @@ class TurnOutputs(BaseModel):
     The World Chronicler PR ships the field dormant — it is populated
     by the upcoming ``NPCTicker`` (PR B, NPC Autonomy), and the Narrator
     already renders each entry so no further plumbing is needed then.
+
+    ``wait_context`` is attached by the PlanExecutor on WAIT turns
+    (KER-20) so the Narrator can render grounded ambient prose instead
+    of a hard-coded stub. Non-WAIT turns leave it ``None``.
     """
 
     wait: bool = False
     wait_reason: str | None = None
+    wait_context: WaitContext | None = None
     scene: Scene | None = None
     new_npcs: list[str] = Field(default_factory=list)
     dialogue: list[DialogueEntry] = Field(default_factory=list)

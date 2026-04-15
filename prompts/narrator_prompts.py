@@ -81,5 +81,16 @@ NARRATOR_NARRATE = PromptTemplate(
             ),
             required_vars=["completed_events"],
         ),
+        PromptSection(
+            name="wait_context",
+            template=(
+                "The player is waiting and observing for roughly {hours_waited} hours. "
+                "Describe plausible ambient activity grounded in these threads and "
+                "on-shift NPCs:\n{wait_context_lines}\n"
+                "Do NOT write 'nothing happens' or 'time passes uneventfully' — "
+                "surface motion, sound, routine, and the passage of time."
+            ),
+            required_vars=["wait_context_lines", "hours_waited"],
+        ),
     ]
 )
