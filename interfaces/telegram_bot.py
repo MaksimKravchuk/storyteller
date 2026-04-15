@@ -33,9 +33,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Route incoming text messages to the appropriate state handler."""
     async with get_db(cmds.db_factory(context)) as db:
         repo = GameRepository(db)
-        session = await repo.get_or_create_session(update.effective_chat.id)
+        session = await repo.sessions.get_latest_telegram(update.effective_chat.id)
 
-        if session["state"] == _STATE_IDLE:
+        if session is None or session["state"] == _STATE_IDLE:
             await update.message.reply_text("Send /start to begin a new game.")
             return
 

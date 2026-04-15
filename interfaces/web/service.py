@@ -39,7 +39,9 @@ async def get_current_snapshot(
     player_id: str,
 ) -> GameSnapshot | None:
     """Return the current game snapshot for a web player, or ``None`` if none exists."""
-    session_row = await repo.get_or_create_web_session(player_id)
+    session_row = await repo.sessions.get_latest_web(player_id)
+    if session_row is None:
+        return None
     engine = await restore_engine(repo, cfg, session_row)
     if engine is None:
         return None
@@ -64,8 +66,8 @@ async def start_game_for_player(
     setting: str,
     language: str,
 ) -> GameSnapshot:
-    """Create (or replace) a web player's game and return the opening snapshot."""
-    session_row = await repo.get_or_create_web_session(player_id)
+    """Create a fresh session for this web player and return the opening snapshot."""
+    session_row = await repo.sessions.create_web(player_id)
     session_id = session_row["id"]
 
     current_session_id.set(session_id)
@@ -77,7 +79,7 @@ async def start_game_for_player(
         logger.exception("Failed to start web game for player {}", player_id)
         await repo.rollback()
         raise
-    await repo.update_session(session_id, state=_STATE_PLAYING, language=language)
+    await repo.sessions.update(session_id, state=_STATE_PLAYING, language=language)
     return snapshot_from_engine(engine)
 
 
@@ -110,7 +112,9 @@ async def process_turn_for_player(
     Raises ``GameNotFoundError`` if the player has no game and
     ``GameOwnershipError`` if the supplied ``game_id`` doesn't match.
     """
-    session_row = await repo.get_or_create_web_session(player_id)
+    session_row = await repo.sessions.get_latest_web(player_id)
+    if session_row is None:
+        raise GameNotFoundError(player_id)
     session_id = session_row["id"]
     engine = await restore_engine(repo, cfg, session_row)
     if engine is None:

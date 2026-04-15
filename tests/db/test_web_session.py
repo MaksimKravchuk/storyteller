@@ -1,4 +1,4 @@
-"""Tests for ``GameRepository.get_or_create_web_session`` against a real Postgres."""
+"""Tests for web-player session lifecycle methods on ``GameRepository``."""
 
 from __future__ import annotations
 
@@ -22,13 +22,13 @@ def _chat_id() -> int:
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Game repository")
-class TestGetOrCreateWebSession:
+class TestWebSessionLifecycle:
     @allure.story("Web session bootstrap")
-    @allure.title("get_or_create_web_session inserts a new row for an unknown web_player_id")
+    @allure.title("create_web_session inserts a new row for an unknown web_player_id")
     @pytest.mark.asyncio
-    async def test_inserts_new_row_for_unknown_player(self, repo: GameRepository) -> None:
+    async def test_create_inserts_new_row(self, repo: GameRepository) -> None:
         player_id = _player_id()
-        row = await repo.get_or_create_web_session(player_id)
+        row = await repo.sessions.create_web(player_id)
 
         assert row["web_player_id"] == player_id
         assert row["telegram_chat_id"] is None
@@ -37,24 +37,33 @@ class TestGetOrCreateWebSession:
         assert row["id"]
 
     @allure.story("Web session bootstrap")
-    @allure.title("get_or_create_web_session is idempotent on repeated calls with the same player_id")
+    @allure.title("get_latest_web_session returns None when the player has no session yet")
     @pytest.mark.asyncio
-    async def test_idempotent_on_second_call(self, repo: GameRepository) -> None:
-        player_id = _player_id()
-        first = await repo.get_or_create_web_session(player_id)
-        second = await repo.get_or_create_web_session(player_id)
-
-        assert first["id"] == second["id"]
+    async def test_get_latest_none_for_unknown_player(self, repo: GameRepository) -> None:
+        assert await repo.sessions.get_latest_web(_player_id()) is None
 
     @allure.story("Web session bootstrap")
-    @allure.title("get_or_create_web_session produces distinct session rows for different player_ids")
+    @allure.title("create_web_session called twice for one player produces two distinct session rows")
     @pytest.mark.asyncio
-    async def test_distinct_players_get_distinct_sessions(self, repo: GameRepository) -> None:
-        first = await repo.get_or_create_web_session(_player_id())
-        second = await repo.get_or_create_web_session(_player_id())
+    async def test_two_games_produce_two_sessions(self, repo: GameRepository) -> None:
+        player_id = _player_id()
+        first = await repo.sessions.create_web(player_id)
+        second = await repo.sessions.create_web(player_id)
 
         assert first["id"] != second["id"]
-        assert first["web_player_id"] != second["web_player_id"]
+        assert first["web_player_id"] == second["web_player_id"] == player_id
+
+    @allure.story("Web session bootstrap")
+    @allure.title("get_latest_web_session returns the most recently created row for the player")
+    @pytest.mark.asyncio
+    async def test_get_latest_returns_newest(self, repo: GameRepository) -> None:
+        player_id = _player_id()
+        await repo.sessions.create_web(player_id)
+        newest = await repo.sessions.create_web(player_id)
+
+        latest = await repo.sessions.get_latest_web(player_id)
+        assert latest is not None
+        assert latest["id"] == newest["id"]
 
 
 @allure.epic("Memory & Persistence")
@@ -64,8 +73,8 @@ class TestWebAndTelegramCoexist:
     @allure.title("Telegram and web sessions coexist as independent rows in the sessions table")
     @pytest.mark.asyncio
     async def test_telegram_and_web_sessions_are_independent(self, repo: GameRepository) -> None:
-        tg_row = await repo.get_or_create_session(_chat_id())
-        web_row = await repo.get_or_create_web_session(_player_id())
+        tg_row = await repo.sessions.create_telegram(_chat_id())
+        web_row = await repo.sessions.create_web(_player_id())
 
         assert tg_row["id"] != web_row["id"]
         assert tg_row["telegram_chat_id"] is not None

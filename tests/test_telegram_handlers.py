@@ -25,11 +25,12 @@ def _make_ctx(text: str = "hello", state_language: str = "English") -> SimpleNam
     update = make_text_update(text=text)
     repo = AsyncMock()
     repo.save_game_state = AsyncMock()
-    repo.update_session = AsyncMock()
     repo.rollback = AsyncMock()
     repo.load_game_state = AsyncMock()
     repo.ai_logs = MagicMock()
     repo.ai_logs.save = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.update = AsyncMock()
     return SimpleNamespace(
         update=update,
         repo=repo,
@@ -118,7 +119,7 @@ async def test_handle_awaiting_setting_happy_path() -> None:
 
     engine.start_game.assert_awaited_once_with("Medieval France")
     ctx.repo.save_game_state.assert_awaited_once()
-    ctx.repo.update_session.assert_awaited_once_with("sess-1", state="playing")
+    ctx.repo.sessions.update.assert_awaited_once_with("sess-1", state="playing")
     ctx.repo.rollback.assert_not_awaited()
     # Two replies: the "researching..." notice and the opening narration.
     replies_expected = 2
@@ -137,7 +138,7 @@ async def test_handle_awaiting_setting_engine_exception_rolls_back() -> None:
         await handlers.handle_awaiting_setting(ctx, chat_id=42)
 
     ctx.repo.rollback.assert_awaited_once()
-    ctx.repo.update_session.assert_awaited_once_with("sess-1", state="idle")
+    ctx.repo.sessions.update.assert_awaited_once_with("sess-1", state="idle")
     # Two replies: "Researching..." then the error message.
     replies_expected = 2
     assert ctx.update.message.reply_text.await_count == replies_expected
@@ -153,7 +154,7 @@ async def test_handle_playing_missing_state_resets() -> None:
 
     await handlers.handle_playing(ctx)
 
-    ctx.repo.update_session.assert_awaited_once_with("sess-1", state="idle")
+    ctx.repo.sessions.update.assert_awaited_once_with("sess-1", state="idle")
     ctx.update.message.reply_text.assert_awaited_once()
     assert "No game" in _last_reply(ctx)
 
@@ -205,7 +206,7 @@ async def test_handle_playing_process_action_exception() -> None:
     ):
         await handlers.handle_playing(ctx)
 
-    ctx.repo.update_session.assert_not_awaited()
+    ctx.repo.sessions.update.assert_not_awaited()
     ctx.repo.save_game_state.assert_not_awaited()
     ctx.update.message.reply_text.assert_awaited_once()
     assert "wrong" in _last_reply(ctx).lower()

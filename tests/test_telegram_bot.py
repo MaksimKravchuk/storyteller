@@ -28,10 +28,11 @@ async def _fake_db_cm(*_args, **_kwargs):
     yield MagicMock()
 
 
-def _patch_db_and_repo(session: dict):
+def _patch_db_and_repo(session: dict | None):
     """Patch ``get_db`` / ``GameRepository`` inside telegram_bot; return patchers and repo."""
     repo = AsyncMock()
-    repo.get_or_create_session = AsyncMock(return_value=session)
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_telegram = AsyncMock(return_value=session)
     db_patch = patch("interfaces.telegram_bot.get_db", _fake_db_cm)
     repo_patch = patch("interfaces.telegram_bot.GameRepository", return_value=repo)
     return db_patch, repo_patch, repo
@@ -97,6 +98,21 @@ async def test_handle_message_idle_replies_start_prompt() -> None:
     db_patch, repo_patch, _repo = _patch_db_and_repo(
         {"id": "s1", "state": "idle", "language": "English"},
     )
+    with db_patch, repo_patch:
+        await telegram_bot.handle_message(update, context)
+
+    update.message.reply_text.assert_awaited_once()
+    assert "/start" in _reply_message(update)
+
+
+@allure.story("handle_message state routing")
+@allure.title("handle_message replies with the /start prompt when the chat has never started a game")
+@pytest.mark.asyncio
+async def test_handle_message_no_session_replies_start_prompt() -> None:
+    update = make_text_update(text="anything")
+    context = make_context(cfg=SimpleNamespace(telegram_bot_token="TKN"))
+
+    db_patch, repo_patch, _repo = _patch_db_and_repo(None)
     with db_patch, repo_patch:
         await telegram_bot.handle_message(update, context)
 

@@ -26,10 +26,12 @@ async def _fake_db_cm(*_args, **_kwargs):
     yield MagicMock()
 
 
-def _patch_db_and_repo(session: dict):
+def _patch_db_and_repo(session: dict | None):
     repo = AsyncMock()
-    repo.get_or_create_session = AsyncMock(return_value=session)
-    repo.update_session = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_telegram = AsyncMock(return_value=session)
+    repo.sessions.create_telegram = AsyncMock(return_value=session)
+    repo.sessions.update = AsyncMock()
     db_patch = patch("interfaces.telegram_commands.get_db", _fake_db_cm)
     repo_patch = patch("interfaces.telegram_commands.GameRepository", return_value=repo)
     return db_patch, repo_patch, repo
@@ -46,7 +48,7 @@ def _edit_text(update) -> str:
 
 
 @allure.story("/start command")
-@allure.title("cmd_start transitions session to awaiting_language and sends language buttons")
+@allure.title("cmd_start creates a fresh session, sets awaiting_language, and sends language buttons")
 @pytest.mark.asyncio
 async def test_cmd_start_sets_awaiting_language() -> None:
     update = make_text_update(text="/start")
@@ -57,7 +59,8 @@ async def test_cmd_start_sets_awaiting_language() -> None:
     with db_patch, repo_patch:
         await cmds.cmd_start(update, context)
 
-    repo.update_session.assert_awaited_once_with("s1", state="awaiting_language")
+    repo.sessions.create_telegram.assert_awaited_once()
+    repo.sessions.update.assert_awaited_once_with("s1", state="awaiting_language")
     update.message.reply_text.assert_awaited_once()
     kwargs = update.message.reply_text.call_args.kwargs
     markup = kwargs["reply_markup"]
@@ -82,7 +85,7 @@ async def test_handle_language_callback_happy_path() -> None:
     with db_patch, repo_patch:
         await cmds.handle_language_callback(update, context)
 
-    repo.update_session.assert_awaited_once_with(
+    repo.sessions.update.assert_awaited_once_with(
         "s1",
         state="awaiting_setting",
         language="Spanish",
@@ -104,7 +107,21 @@ async def test_handle_language_callback_wrong_state() -> None:
     with db_patch, repo_patch:
         await cmds.handle_language_callback(update, context)
 
-    repo.update_session.assert_not_awaited()
+    repo.sessions.update.assert_not_awaited()
+    update.callback_query.edit_message_text.assert_not_awaited()
+
+
+@allure.story("Language callback")
+@allure.title("handle_language_callback is a no-op when the chat has never run /start (session is None)")
+@pytest.mark.asyncio
+async def test_handle_language_callback_no_session() -> None:
+    update = make_callback_update(callback_data="lang:German")
+    context = make_context(cfg=SimpleNamespace(telegram_bot_token="TKN"))
+    db_patch, repo_patch, repo = _patch_db_and_repo(None)
+    with db_patch, repo_patch:
+        await cmds.handle_language_callback(update, context)
+
+    repo.sessions.update.assert_not_awaited()
     update.callback_query.edit_message_text.assert_not_awaited()
 
 
@@ -120,7 +137,22 @@ async def test_cmd_quit_resets_to_idle() -> None:
     with db_patch, repo_patch:
         await cmds.cmd_quit(update, context)
 
-    repo.update_session.assert_awaited_once_with("s9", state="idle")
+    repo.sessions.update.assert_awaited_once_with("s9", state="idle")
+    update.message.reply_text.assert_awaited_once()
+    assert "/start" in _reply_text(update)
+
+
+@allure.story("/quit command")
+@allure.title("cmd_quit skips the session update when the chat has never started a game")
+@pytest.mark.asyncio
+async def test_cmd_quit_no_session_skips_update() -> None:
+    update = make_text_update(text="/quit")
+    context = make_context(cfg=SimpleNamespace(telegram_bot_token="TKN"))
+    db_patch, repo_patch, repo = _patch_db_and_repo(None)
+    with db_patch, repo_patch:
+        await cmds.cmd_quit(update, context)
+
+    repo.sessions.update.assert_not_awaited()
     update.message.reply_text.assert_awaited_once()
     assert "/start" in _reply_text(update)
 
@@ -134,6 +166,29 @@ async def test_cmd_wait_rejects_when_not_playing() -> None:
     db_patch, repo_patch, _repo = _patch_db_and_repo(
         {"id": "sx", "state": "idle", "language": "English"},
     )
+    handle_playing_mock = AsyncMock()
+    with (
+        db_patch,
+        repo_patch,
+        patch(
+            "interfaces.telegram_handlers.handle_playing",
+            new=handle_playing_mock,
+        ),
+    ):
+        await cmds.cmd_wait(update, context)
+
+    handle_playing_mock.assert_not_awaited()
+    update.message.reply_text.assert_awaited_once()
+    assert "No active game" in _reply_text(update)
+
+
+@allure.story("/wait command")
+@allure.title("cmd_wait replies with the no-game prompt when the chat has no session at all")
+@pytest.mark.asyncio
+async def test_cmd_wait_no_session_replies_no_active_game() -> None:
+    update = make_text_update(text="/wait")
+    context = make_context(cfg=SimpleNamespace(telegram_bot_token="TKN"))
+    db_patch, repo_patch, _repo = _patch_db_and_repo(None)
     handle_playing_mock = AsyncMock()
     with (
         db_patch,
