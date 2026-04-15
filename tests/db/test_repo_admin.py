@@ -24,18 +24,21 @@ def _player_id() -> str:
 @allure.feature("Admin queries")
 class TestListSessionsFiltering:
     @allure.story("List sessions")
-    @allure.title("list_sessions(web_player_id=...) returns every row for that player and nothing else")
+    @allure.title("list_sessions(web_player_id=...) returns rows ordered newest-first for that player")
     @pytest.mark.asyncio
     async def test_filters_to_web_player(self, repo: GameRepository) -> None:
         player_id = _player_id()
         other_player_id = _player_id()
-        await repo.sessions.create_web(player_id)
-        await repo.sessions.create_web(player_id)
+        first = await repo.sessions.create_web(player_id)
+        second = await repo.sessions.create_web(player_id)
         await repo.sessions.create_web(other_player_id)
 
         rows = await repo.admin.list_sessions(web_player_id=player_id)
         assert len(rows) == 2
         assert {row["web_player_id"] for row in rows} == {player_id}
+        # Newest-first ordering is load-bearing: admins looking at a player's
+        # game history expect the most recent game to appear on top.
+        assert [row["id"] for row in rows] == [second["id"], first["id"]]
 
     @allure.story("List sessions")
     @allure.title("list_sessions(telegram_chat_id=...) narrows to that chat's rows only")

@@ -106,6 +106,21 @@ async def test_handle_message_idle_replies_start_prompt() -> None:
 
 
 @allure.story("handle_message state routing")
+@allure.title("handle_message replies with the /start prompt when the chat has never started a game")
+@pytest.mark.asyncio
+async def test_handle_message_no_session_replies_start_prompt() -> None:
+    update = make_text_update(text="anything")
+    context = make_context(cfg=SimpleNamespace(telegram_bot_token="TKN"))
+
+    db_patch, repo_patch, _repo = _patch_db_and_repo(None)
+    with db_patch, repo_patch:
+        await telegram_bot.handle_message(update, context)
+
+    update.message.reply_text.assert_awaited_once()
+    assert "/start" in _reply_message(update)
+
+
+@allure.story("handle_message state routing")
 @allure.title("handle_message with awaiting_setting state routes to handlers.handle_awaiting_setting")
 @pytest.mark.asyncio
 async def test_handle_message_awaiting_setting_routes_to_handlers() -> None:

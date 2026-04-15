@@ -62,7 +62,7 @@ class AdminQueries:
                 tbl.game_states.c.game_time,
             )
             .outerjoin(tbl.game_states, tbl.game_states.c.session_id == tbl.sessions.c.id)
-            .order_by(tbl.sessions.c.updated_at.desc())
+            .order_by(tbl.sessions.c.updated_at.desc(), tbl.sessions.c.id.desc())
             .limit(limit)
             .offset(offset)
         )
