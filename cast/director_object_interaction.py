@@ -31,6 +31,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 from cast.schemas.item_response import ObjectInteractionResponse
 from knowledge.node import KnowledgeScope
 from knowledge.scene_state import record_scene_delta
@@ -90,18 +92,15 @@ def _persist_delta(
 ) -> None:
     """Persist a non-empty delta for ``object_key`` at the current location.
 
-    Writes to two sinks:
-
-    * ``knowledge.scene_state.record_scene_delta`` keeps the existing
-      ``scene_state``-tagged knowledge-graph node (KER-13 behaviour).
-    * ``Location.object_states[object_key] = delta_text`` is the new
-      typed channel introduced by KER-16 — ``SceneBuilder`` reads it
-      on every rebuild and the Narrator surfaces it as a
-      ``Prior damage:`` line on CONTINUATION turns, so damaged
-      objects never get silently reset to pristine.
+    Writes both sinks (``scene_state`` knowledge node and the typed
+    ``Location.object_states`` channel) or neither — the shared
+    early-return guard on ``delta_text``, ``scene``, ``scene.location_id``
+    and ``object_key`` keeps the two sources of truth aligned so a
+    bystander reading persistent world changes never sees a delta the
+    Narrator's ``Prior damage:`` line omits.
     """
     scene = game_state.current_scene
-    if not delta_text or scene is None or not scene.location_id:
+    if not delta_text or not object_key or scene is None or not scene.location_id:
         return
     record_scene_delta(
         game_state.knowledge_graph,
@@ -110,8 +109,13 @@ def _persist_delta(
         game_time=game_state.game_clock,
     )
     location = game_state.locations.get(scene.location_id)
-    if location is not None and object_key:
-        location.object_states[object_key] = delta_text
+    if location is None:
+        logger.warning(
+            "_persist_delta: scene.location_id={0} not in game_state.locations; typed channel skipped",
+            scene.location_id,
+        )
+        return
+    location.record_object_state(object_key, delta_text)
 
 
 def _persist_all_deltas(game_state: GameState, target_deltas: list[tuple[str, str]]) -> None:

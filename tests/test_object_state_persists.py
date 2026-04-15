@@ -3,8 +3,8 @@
 ``SceneBuilder`` regenerates each scene from scratch, so without a
 typed channel for mutable object state, LLM-produced
 ``points_of_interest`` would silently drop the "broken shutter" on
-every turn. These tests pin the two protections that keep damage
-visible end-to-end:
+every turn. These tests pin the protections that keep damage visible
+end-to-end:
 
 1. ``SceneBuilder.act`` injects the current location's
    ``object_states`` into the system prompt AND merges any entry the
@@ -12,6 +12,8 @@ visible end-to-end:
 2. ``Narrator._build_raw_parts`` appends a ``Prior damage:`` line on
    CONTINUATION turns so the lossy scene-history summary is not the
    only source of truth for what got broken earlier.
+3. The whole-word safety-net match in SceneBuilder does not false-match
+   a short key inside an unrelated word.
 """
 
 from __future__ import annotations
@@ -50,21 +52,29 @@ def _seed_damaged_location(game_state) -> None:
     game_state.current_scene = Scene(location_id=_LOCATION_ID, description="A dim tavern.")
 
 
-def _make_narrator() -> Narrator:
-    llm_client = AsyncMock()
-    llm_client.send_message = AsyncMock(
+def _make_narrator() -> tuple[Narrator, AsyncMock]:
+    """Build a Narrator with a stubbed ``send_message`` for prompt inspection.
+
+    Returns the narrator and the ``send_message`` mock so tests can read
+    ``mock.call_args`` without poking at the typed ``llm_client`` attribute
+    (which would trip mypy's ``attr-defined`` check).
+    """
+    mock_send = AsyncMock(
         return_value=AsyncMock(
             body="Narrated text.",
             model="test-model",
             usage={"prompt_tokens": 10, "completion_tokens": 5},
         ),
     )
-    return Narrator(llm_client=llm_client, language="English")
+    llm_client = AsyncMock()
+    llm_client.send_message = mock_send
+    narrator = Narrator(llm_client=llm_client, language="English")
+    return narrator, mock_send
 
 
-def _last_user_message(narrator: Narrator) -> str:
-    call_kwargs = narrator.llm_client.send_message.call_args.kwargs  # type: ignore[attr-defined]
-    return call_kwargs[_MESSAGES][-1].body
+def _last_user_message(mock_send: AsyncMock) -> str:
+    messages = mock_send.call_args.kwargs[_MESSAGES]
+    return messages[-1].body
 
 
 @allure.epic("Scene & Exploration")
@@ -127,9 +137,9 @@ class TestSceneBuilderPreservesObjectStates:
         assert "Known object states" not in rendered_system
 
     @allure.story("Object state persistence")
-    @allure.title("SceneBuilder does not duplicate an object state entry the LLM already mentions in description")
+    @allure.title("SceneBuilder does not duplicate an object state entry the LLM already mentions in the description")
     @pytest.mark.asyncio
-    async def test_no_duplicate_when_already_mentioned(self, game_state) -> None:
+    async def test_no_duplicate_when_mentioned_in_description(self, game_state) -> None:
         _seed_damaged_location(game_state)
         builder = SceneBuilder(llm_client=MagicMock())
         aware_payload = SceneResponse(
@@ -143,6 +153,75 @@ class TestSceneBuilderPreservesObjectStates:
         synthesized_markers = [poi for poi in scene.points_of_interest if poi.startswith(_DAMAGE_KEY)]
         assert not synthesized_markers
 
+    @allure.story("Object state persistence")
+    @allure.title("SceneBuilder does not duplicate an entry the LLM already mentions in a point of interest")
+    @pytest.mark.asyncio
+    async def test_no_duplicate_when_mentioned_in_points_of_interest(self, game_state) -> None:
+        _seed_damaged_location(game_state)
+        builder = SceneBuilder(llm_client=MagicMock())
+        poi_payload = SceneResponse(
+            location_id=_LOCATION_ID,
+            description="A pristine tavern.",
+            points_of_interest=["Broken Shutter hanging on its hinges"],
+        )
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=poi_payload)):
+            scene = await builder.act("look around", {_GAME_STATE: game_state})
+
+        synthesized_markers = [poi for poi in scene.points_of_interest if poi.lower().startswith(_DAMAGE_KEY)]
+        assert not synthesized_markers
+
+    @allure.story("Object state persistence")
+    @allure.title("SceneBuilder safety net fires when a short object_key only appears as a substring of another word")
+    @pytest.mark.asyncio
+    async def test_safety_net_fires_on_word_fragment_collision(self, game_state) -> None:
+        _seed_damaged_location(game_state)
+        game_state.locations[_LOCATION_ID].object_states = {"bar": "cracked down the middle"}
+        builder = SceneBuilder(llm_client=MagicMock())
+        fragment_payload = SceneResponse(
+            location_id=_LOCATION_ID,
+            description="A tavern behind a wooden barricade.",
+            points_of_interest=["barrel"],
+        )
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=fragment_payload)):
+            scene = await builder.act("look around", {_GAME_STATE: game_state})
+
+        merged = " ".join(scene.points_of_interest)
+        assert "bar" in merged
+        assert "cracked down the middle" in merged
+
+    @allure.story("Object state persistence")
+    @allure.title("SceneBuilder falls back to the current scene's location_id when the player has not been placed")
+    @pytest.mark.asyncio
+    async def test_scene_fallback_when_player_location_unset(self, game_state) -> None:
+        _seed_damaged_location(game_state)
+        game_state.player.location_id = None
+        builder = SceneBuilder(llm_client=MagicMock())
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
+            await builder.act("look around", {_GAME_STATE: game_state})
+
+        rendered_system = builder._build_system_prompt()
+        assert "Known object states" in rendered_system
+        assert _DAMAGE_KEY in rendered_system
+
+    @allure.story("Object state persistence")
+    @allure.title("SceneBuilder renders multi-entry object_states in sorted key order")
+    @pytest.mark.asyncio
+    async def test_multi_entry_sort_order(self, game_state) -> None:
+        _seed_damaged_location(game_state)
+        game_state.locations[_LOCATION_ID].object_states = {
+            "zebra pelt": "faded",
+            "anvil": "chipped",
+        }
+        builder = SceneBuilder(llm_client=MagicMock())
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
+            await builder.act("look around", {_GAME_STATE: game_state})
+
+        rendered_system = builder._build_system_prompt()
+        anvil_pos = rendered_system.find("anvil")
+        zebra_pos = rendered_system.find("zebra pelt")
+        assert anvil_pos != -1 and zebra_pos != -1
+        assert anvil_pos < zebra_pos
+
 
 @allure.epic("Narrative Delivery")
 @allure.feature("Narrator")
@@ -152,17 +231,16 @@ class TestNarratorSurfacesPriorDamage:
     @pytest.mark.asyncio
     async def test_continuation_includes_prior_damage(self, game_state) -> None:
         _seed_damaged_location(game_state)
-        narrator = _make_narrator()
+        narrator, mock_send = _make_narrator()
 
         await narrator.act(
             input_data=TurnOutputs(),
             context={_PLAYER_ACTION: "look around", _GAME_STATE: game_state},
         )
 
-        user_msg = _last_user_message(narrator)
-        assert "Prior damage:" in user_msg
-        assert _DAMAGE_KEY in user_msg
-        assert "splintered" in user_msg
+        user_msg = _last_user_message(mock_send)
+        expected_line = "Prior damage:\n- {0}: {1}".format(_DAMAGE_KEY, _DAMAGE_STATE)
+        assert expected_line in user_msg
 
     @allure.story("Object state persistence")
     @allure.title("Narrator omits the Prior damage line when the current location has no tracked object state")
@@ -170,22 +248,39 @@ class TestNarratorSurfacesPriorDamage:
     async def test_continuation_omits_prior_damage_when_clean(self, game_state) -> None:
         _seed_damaged_location(game_state)
         game_state.locations[_LOCATION_ID].object_states.clear()
-        narrator = _make_narrator()
+        narrator, mock_send = _make_narrator()
 
         await narrator.act(
             input_data=TurnOutputs(),
             context={_PLAYER_ACTION: "look around", _GAME_STATE: game_state},
         )
 
-        user_msg = _last_user_message(narrator)
+        user_msg = _last_user_message(mock_send)
         assert "Prior damage:" not in user_msg
 
     @allure.story("Object state persistence")
-    @allure.title("Narrator does not emit Prior damage on NEW_SCENE turns because SceneBuilder already merges damage")
+    @allure.title("Narrator omits the Prior damage line when the location cannot be resolved")
+    @pytest.mark.asyncio
+    async def test_continuation_omits_prior_damage_when_location_missing(self, game_state) -> None:
+        _seed_damaged_location(game_state)
+        game_state.player.location_id = "ghost"
+        game_state.current_scene = Scene(location_id="ghost", description="Nowhere.")
+        narrator, mock_send = _make_narrator()
+
+        await narrator.act(
+            input_data=TurnOutputs(),
+            context={_PLAYER_ACTION: "look around", _GAME_STATE: game_state},
+        )
+
+        user_msg = _last_user_message(mock_send)
+        assert "Prior damage:" not in user_msg
+
+    @allure.story("Object state persistence")
+    @allure.title("Narrator does not emit Prior damage when a scene is supplied on the current turn")
     @pytest.mark.asyncio
     async def test_new_scene_has_no_prior_damage_duplication(self, game_state) -> None:
         _seed_damaged_location(game_state)
-        narrator = _make_narrator()
+        narrator, mock_send = _make_narrator()
         fresh_scene = Scene(
             location_id=_LOCATION_ID,
             description="A dim tavern.",
@@ -197,5 +292,27 @@ class TestNarratorSurfacesPriorDamage:
             context={_PLAYER_ACTION: "enter", _GAME_STATE: game_state},
         )
 
-        user_msg = _last_user_message(narrator)
+        user_msg = _last_user_message(mock_send)
         assert "Prior damage:" not in user_msg
+
+    @allure.story("Object state persistence")
+    @allure.title("Narrator renders multi-entry prior damage in sorted key order")
+    @pytest.mark.asyncio
+    async def test_multi_entry_prior_damage_is_sorted(self, game_state) -> None:
+        _seed_damaged_location(game_state)
+        game_state.locations[_LOCATION_ID].object_states = {
+            "zebra pelt": "faded",
+            "anvil": "chipped",
+        }
+        narrator, mock_send = _make_narrator()
+
+        await narrator.act(
+            input_data=TurnOutputs(),
+            context={_PLAYER_ACTION: "look around", _GAME_STATE: game_state},
+        )
+
+        user_msg = _last_user_message(mock_send)
+        anvil_pos = user_msg.find("anvil")
+        zebra_pos = user_msg.find("zebra pelt")
+        assert anvil_pos != -1 and zebra_pos != -1
+        assert anvil_pos < zebra_pos

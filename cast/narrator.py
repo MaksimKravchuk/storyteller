@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from loguru import logger
+
 from cast.base_performer_class import BasePerformer
 from cast.schemas.turn_outputs import TurnOutputs
 from models.scene import Scene
@@ -39,22 +41,30 @@ def _resolve_current_location_id(game_state: Any) -> str | None:
 
 
 def _resolve_current_location(game_state: Any) -> Any:
-    """Return the player's current ``Location`` or ``None``."""
+    """Return the player's current ``Location`` or ``None``.
+
+    Logs a warning when the resolved ``location_id`` is not registered
+    in ``game_state.locations`` — that state shouldn't happen in
+    production and silently deactivates the Narrator's prior-damage
+    surfacing when it does.
+    """
     location_id = _resolve_current_location_id(game_state)
     if not location_id:
         return None
-    return game_state.locations.get(location_id)
+    location = game_state.locations.get(location_id)
+    if location is None:
+        logger.warning(
+            "Narrator._resolve_current_location: location_id={0} not in game_state.locations",
+            location_id,
+        )
+    return location
 
 
 def _append_prior_damage_parts(raw_parts: list[str], game_state: Any) -> None:
-    """Surface tracked object damage on CONTINUATION turns.
+    """Append a ``Prior damage:`` line for every entry in the location's object_states.
 
-    New-scene turns already carry the damage via SceneBuilder's
-    merged points_of_interest, so this helper only fires when
-    ``input_data.scene`` is ``None``. It looks up the player's
-    current location and emits a ``Prior damage:`` line listing
-    every entry in ``object_states`` so the Narrator never relies
-    on the lossy scene_history summary for persistent state.
+    No-op when the player's current location is unresolvable or has
+    no tracked object state.
     """
     location = _resolve_current_location(game_state)
     if location is None or not location.object_states:
@@ -138,6 +148,8 @@ class Narrator(BasePerformer):
             self._append_history_parts(raw_parts, scene_history)
 
         if input_data.scene is None:
+            # CONTINUATION turns have no SceneBuilder-merged points_of_interest,
+            # so surface tracked object state directly via the typed channel.
             _append_prior_damage_parts(raw_parts, game_state)
         else:
             self._append_scene_parts(raw_parts, input_data.scene, game_state)
