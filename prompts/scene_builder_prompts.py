@@ -29,6 +29,17 @@ SCENE_BUILDER_SYSTEM = PromptTemplate(
             ),
             required_vars=["persistent_world_changes"],
         ),
+        PromptSection(
+            name="known_object_states",
+            template=(
+                "Known object states — the objects listed below already have durable state "
+                "from prior turns. You MUST preserve every listed state exactly; you may add "
+                "new points of interest, but never reset a listed object to a pristine or "
+                "undamaged version.\n"
+                "{known_object_states}"
+            ),
+            required_vars=["known_object_states"],
+        ),
     ]
 )
 

@@ -8,6 +8,7 @@ from db.converters._columns import (
     COL_ID,
     COL_NAME,
     COL_NPCS_PRESENT,
+    COL_OBJECT_STATES,
     COL_POINTS_OF_INTEREST,
     COL_TAGS,
 )
@@ -26,6 +27,7 @@ def location_to_row(loc: Location, game_state_id: str) -> dict:
         "connected_locations": loc.connected_locations,
         COL_NPCS_PRESENT: loc.npcs_present,
         COL_POINTS_OF_INTEREST: loc.points_of_interest,
+        COL_OBJECT_STATES: loc.object_states,
     }
 
 
@@ -40,4 +42,5 @@ def row_to_location(row) -> Location:
         connected_locations=row["connected_locations"],
         npcs_present=row[COL_NPCS_PRESENT],
         points_of_interest=row[COL_POINTS_OF_INTEREST],
+        object_states=row[COL_OBJECT_STATES],
     )

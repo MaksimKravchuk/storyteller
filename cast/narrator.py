@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from loguru import logger
+
 from cast.base_performer_class import BasePerformer
 from cast.schemas.turn_outputs import TurnOutputs
 from models.scene import Scene
@@ -27,6 +29,50 @@ def _format_wait_line(wait_reason: str | None) -> str:
     if (wait_reason or "") in ("", "voluntary"):
         return "The player waits and observes the surroundings."
     return "The player cannot act — they are {0}.".format(wait_reason)
+
+
+def _resolve_current_location_id(game_state: Any) -> str | None:
+    """Return the active location_id via player, then current scene."""
+    player = getattr(game_state, "player", None)
+    if player and player.location_id:
+        return player.location_id
+    scene = getattr(game_state, "current_scene", None)
+    return getattr(scene, "location_id", None) if scene else None
+
+
+def _resolve_current_location(game_state: Any) -> Any:
+    """Return the player's current ``Location`` or ``None``.
+
+    Logs a warning when the resolved ``location_id`` is not registered
+    in ``game_state.locations`` — that state shouldn't happen in
+    production and silently deactivates the Narrator's prior-damage
+    surfacing when it does.
+    """
+    location_id = _resolve_current_location_id(game_state)
+    if not location_id:
+        return None
+    location = game_state.locations.get(location_id)
+    if location is None:
+        logger.warning(
+            "Narrator._resolve_current_location: location_id={0} not in game_state.locations",
+            location_id,
+        )
+    return location
+
+
+def _append_prior_damage_parts(raw_parts: list[str], game_state: Any) -> None:
+    """Append a ``Prior damage:`` line for every entry in the location's object_states.
+
+    No-op when the player's current location is unresolvable or has
+    no tracked object state.
+    """
+    location = _resolve_current_location(game_state)
+    if location is None or not location.object_states:
+        return
+    damage_lines = [
+        "- {0}: {1}".format(object_key, state) for object_key, state in sorted(location.object_states.items())
+    ]
+    raw_parts.append("Prior damage:\n{0}".format("\n".join(damage_lines)))
 
 
 def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, str]:
@@ -101,7 +147,11 @@ class Narrator(BasePerformer):
         if scene_history and not is_new_scene:
             self._append_history_parts(raw_parts, scene_history)
 
-        if input_data.scene is not None:
+        if input_data.scene is None:
+            # CONTINUATION turns have no SceneBuilder-merged points_of_interest,
+            # so surface tracked object state directly via the typed channel.
+            _append_prior_damage_parts(raw_parts, game_state)
+        else:
             self._append_scene_parts(raw_parts, input_data.scene, game_state)
 
         self._append_turn_lines(raw_parts, input_data)

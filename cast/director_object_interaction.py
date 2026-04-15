@@ -31,6 +31,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 from cast.schemas.item_response import ObjectInteractionResponse, ObjectInteractionResult
 from knowledge.node import KnowledgeScope
 from knowledge.scene_state import record_scene_delta
@@ -89,11 +91,20 @@ async def _run_single_interaction(
 
 def _persist_delta(
     game_state: GameState,
+    object_key: str,
     delta_text: str,
 ) -> None:
-    """Write a non-empty delta to the knowledge graph at the current location."""
+    """Persist a non-empty delta for ``object_key`` at the current location.
+
+    Writes both sinks (``scene_state`` knowledge node and the typed
+    ``Location.object_states`` channel) or neither — the shared
+    early-return guard on ``delta_text``, ``scene``, ``scene.location_id``
+    and ``object_key`` keeps the two sources of truth aligned so a
+    bystander reading persistent world changes never sees a delta the
+    Narrator's ``Prior damage:`` line omits.
+    """
     scene = game_state.current_scene
-    if not delta_text or scene is None or not scene.location_id:
+    if not delta_text or not object_key or scene is None or not scene.location_id:
         return
     record_scene_delta(
         game_state.knowledge_graph,
@@ -101,10 +112,18 @@ def _persist_delta(
         delta_text=delta_text,
         game_time=game_state.game_clock,
     )
+    location = game_state.locations.get(scene.location_id)
+    if location is None:
+        logger.warning(
+            "_persist_delta: scene.location_id={0} not in game_state.locations; typed channel skipped",
+            scene.location_id,
+        )
+        return
+    location.record_object_state(object_key, delta_text)
 
 
-def _persist_all_deltas(game_state: GameState, deltas: list[str]) -> None:
-    """Write every non-empty delta to the graph.
+def _persist_all_deltas(game_state: GameState, target_deltas: list[tuple[str, str]]) -> None:
+    """Write every non-empty delta to both persistence sinks.
 
     Extracted into its own function so the loop variable does not
     leak into the enclosing scope — the enclosing coroutine later
@@ -112,8 +131,8 @@ def _persist_all_deltas(game_state: GameState, deltas: list[str]) -> None:
     ``delta`` name, which tripped WPS441 when both lived in the same
     function body.
     """
-    for delta in deltas:
-        _persist_delta(game_state, delta)
+    for object_key, delta in target_deltas:
+        _persist_delta(game_state, object_key, delta)
 
 
 async def _emit_witness_memories(
@@ -168,7 +187,7 @@ async def apply_object_interactions(
         ),
     )
     deltas = [resp.delta for resp in responses]
-    _persist_all_deltas(game_state, deltas)
+    _persist_all_deltas(game_state, list(zip(object_targets, deltas)))
     await asyncio.gather(
         *(_emit_witness_memories(memory_manager, game_state, delta) for delta in deltas),
     )
