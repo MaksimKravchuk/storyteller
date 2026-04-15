@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from cast.director_witness import WitnessedAggression
 from models.scene import Scene
 from models.world_state import WorldThread
 
@@ -85,6 +86,16 @@ class TurnOutputs(BaseModel):
     ``wait_context`` is attached by the PlanExecutor on WAIT turns
     (KER-20) so the Narrator can render grounded ambient prose instead
     of a hard-coded stub. Non-WAIT turns leave it ``None``.
+
+    ``witnessed_events`` carries proximity-witness records for
+    aggressive player actions against inanimate targets (KER-18). The
+    field is populated inside the object-interaction branch of
+    :class:`cast.director_execution.PlanExecutor` and consumed by
+    :class:`cast.npc_turn.NPCTurnResolver` to inject an incident clause
+    into the guard NPC-turn prompt. It is intentionally **not** rendered
+    by the Narrator — the guard reaction surfaces via ``npc_turns`` and
+    the object outcome surfaces via ``object_interactions``, so a
+    separate ``witnessed_events`` render path would duplicate both.
     """
 
     wait: bool = False
@@ -98,3 +109,4 @@ class TurnOutputs(BaseModel):
     npc_turns: list[NPCTurnEntry] = Field(default_factory=list)
     npc_departures: list[str] = Field(default_factory=list)
     completed_events: list[str] = Field(default_factory=list)
+    witnessed_events: list[WitnessedAggression] = Field(default_factory=list)

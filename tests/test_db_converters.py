@@ -67,7 +67,7 @@ class TestSettingConverter:
 @allure.feature("Domain↔row converters")
 class TestLocationConverter:
     @allure.story("Round-trip")
-    @allure.title("Location round-trips including npcs_present and points_of_interest")
+    @allure.title("Location round-trips including npcs_present, points_of_interest, and object_states")
     def test_round_trip(self):
         loc = location.Location(
             name="Market",
@@ -79,6 +79,7 @@ class TestLocationConverter:
         )
         loc.npcs_present = ["npc-1", "npc-2"]
         loc.points_of_interest = ["fountain", "statue"]
+        loc.object_states = {"shutter": "splintered; frame torn loose"}
 
         row = loc_conv.location_to_row(loc, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
@@ -93,6 +94,7 @@ class TestLocationConverter:
         assert restored.connected_locations == ["loc-a", "loc-b"]
         assert restored.npcs_present == ["npc-1", "npc-2"]
         assert restored.points_of_interest == ["fountain", "statue"]
+        assert restored.object_states == {"shutter": "splintered; frame torn loose"}
 
 
 @allure.epic("Persistence")

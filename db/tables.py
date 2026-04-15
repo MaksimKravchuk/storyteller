@@ -153,6 +153,7 @@ locations = Table(
     Column("connected_locations", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("npcs_present", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("points_of_interest", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
+    Column("object_states", JSONB, nullable=False, server_default=_DEFAULT_JSON_OBJECT),
     Index("idx_locations_game_state", _COL_GAME_STATE_ID),
 )
 

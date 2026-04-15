@@ -16,6 +16,7 @@ from typing import Any
 from loguru import logger
 
 from cast.dice import CONTEST_SKILL_MAP, ContestRoll, ContestType, roll_contest
+from cast.director_witness import WitnessedAggression, is_guard_occupation
 from cast.wait_detection import INCAPACITATING_STATES
 from models.game_state import GameState
 
@@ -152,12 +153,23 @@ class NPCTurnResolver:
         self._gs = game_state
         self._actors = actors
 
-    async def resolve_npc_turns(self, player_action_summary: str) -> list[NPCAction]:
-        """Resolve all NPC turns simultaneously. Called after player's action."""
+    async def resolve_npc_turns(
+        self,
+        player_action_summary: str,
+        witnessed_events: list[WitnessedAggression] | None = None,
+    ) -> list[NPCAction]:
+        """Resolve all NPC turns simultaneously. Called after player's action.
+
+        ``witnessed_events`` threads the KER-18 proximity-witness
+        broadcast from ``TurnOutputs`` into every per-NPC turn prompt.
+        Guards in the same location as the vandalism receive an
+        INCIDENT clause and react on the same turn the player smashes
+        the shutter; other occupations get the vanilla prompt.
+        """
         eligible = self._eligible_npcs()
         if not eligible:
             return []
-        actions = await self._gather_actions(eligible, player_action_summary)
+        actions = await self._gather_actions(eligible, player_action_summary, witnessed_events or [])
         for action in actions:
             _apply_scene_mutation(action.npc_uuid, action.action_type, self._gs)
         return actions
@@ -166,11 +178,26 @@ class NPCTurnResolver:
         self,
         eligible: list[tuple[str, Any, Any]],
         summary: str,
+        witnessed_events: list[WitnessedAggression],
     ) -> list[NPCAction]:
         """Concurrently resolve actions for all eligible NPCs."""
-        coros = [self._resolve_single_npc(npc, actor, summary) for _, npc, actor in eligible]
+        coros = self._build_resolve_coros(eligible, summary, witnessed_events)
         gathered = await asyncio.gather(*coros, return_exceptions=True)
         return _filter_successful(gathered, eligible)
+
+    def _build_resolve_coros(
+        self,
+        eligible: list[tuple[str, Any, Any]],
+        summary: str,
+        witnessed_events: list[WitnessedAggression],
+    ) -> list[Any]:
+        """Build the list of per-NPC resolve coroutines.
+
+        Extracted so :meth:`_gather_actions` keeps the ``asyncio.gather``
+        call on one line without tripping WPS221 on the expanded
+        comprehension that reads the witnessed-events kwarg.
+        """
+        return [self._resolve_single_npc(npc, actor, summary, witnessed_events) for _, npc, actor in eligible]
 
     def _eligible_npcs(self) -> list[tuple[str, Any, Any]]:
         """Return (uuid, npc, actor) for NPCs that can act this turn."""
@@ -196,11 +223,17 @@ class NPCTurnResolver:
             return None
         return (snpc.uuid, npc, actor)
 
-    async def _resolve_single_npc(self, npc: Any, actor: Any, player_action_summary: str) -> NPCAction:
+    async def _resolve_single_npc(
+        self,
+        npc: Any,
+        actor: Any,
+        player_action_summary: str,
+        witnessed_events: list[WitnessedAggression],
+    ) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
         try:
             raw_response = await actor.execute(
-                input_data=_build_turn_prompt(npc, player_action_summary, self._gs),
+                input_data=_build_turn_prompt(npc, player_action_summary, self._gs, witnessed_events),
                 context={"npc": npc, "game_state": self._gs, "is_npc_turn": True},
             )
         except Exception:
@@ -209,12 +242,49 @@ class NPCTurnResolver:
         return _build_npc_action(npc, raw_response, self._gs)
 
 
-def _build_turn_prompt(npc: Any, player_action_summary: str, game_state: GameState) -> str:
-    """Build the prompt for an NPC's autonomous turn."""
+def _pick_incident_for_npc(
+    npc: Any,
+    game_state: GameState,
+    witnessed_events: list[WitnessedAggression] | None,
+) -> WitnessedAggression | None:
+    """Return the first witnessed event that applies to this NPC.
+
+    Only NPCs whose occupation passes :func:`is_guard_occupation` see
+    an incident — this matches the Linear issue scope of "guards and
+    watchmen" and keeps tailors and beggars from parroting alarm
+    responses. The event must also pin to the NPC's current scene
+    location so a shutter smash in the Forum does not surface in a
+    tavern prompt.
+    """
+    if not witnessed_events or not is_guard_occupation(npc.occupation):
+        return None
+    scene = game_state.current_scene
+    if scene is None:
+        return None
+    for event in witnessed_events:
+        if event.location_id == scene.location_id:
+            return event
+    return None
+
+
+def _build_turn_prompt(
+    npc: Any,
+    player_action_summary: str,
+    game_state: GameState,
+    witnessed_events: list[WitnessedAggression] | None = None,
+) -> str:
+    """Build the prompt for an NPC's autonomous turn.
+
+    When the KER-18 proximity-witness broadcast has published an
+    aggressive event pinned to this NPC's scene location *and* the NPC
+    is a guard-occupation watcher, an INCIDENT clause is appended to
+    the base prompt so the Actor LLM can decide to intervene, raise
+    the alarm, confront the player, or flee — in character.
+    """
     scene = game_state.current_scene
     scene_desc = scene.description if scene else "unknown location"
 
-    return (
+    base_prompt = (
         "It is {name}'s turn.\n"
         "Recent events: {summary}\n"
         "Scene: {scene}\n"
@@ -231,4 +301,22 @@ def _build_turn_prompt(npc: Any, player_action_summary: str, game_state: GameSta
         scene=scene_desc,
         mood=npc.current_mood,
         status=npc.physical_status,
+    )
+
+    incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
+    if incident is None:
+        return base_prompt
+    return "{0}\n\n{1}".format(base_prompt, _format_incident_clause(npc, incident))
+
+
+def _format_incident_clause(npc: Any, incident: WitnessedAggression) -> str:
+    """Render the KER-18 guard-witness incident clause for a prompt."""
+    return (
+        "INCIDENT: You have just witnessed: {description}\n"
+        "You are a {occupation} standing in this location. Decide in "
+        "character whether to intervene, raise the alarm, confront the "
+        "player, or flee. Act decisively — this is not a routine moment."
+    ).format(
+        description=incident.description,
+        occupation=npc.occupation or "watcher",
     )

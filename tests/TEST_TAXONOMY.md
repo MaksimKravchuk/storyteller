@@ -49,6 +49,8 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 |---|---|---|
 | `test_knowledge.py` | Knowledge graph | "Scope ordering", "Query filtering", "Serialization" |
 | `test_scene_tracking.py` | Scene tracking | "Conversation log scene number", "Scene converter" |
+| `test_scene_builder.py` | Scene Builder | "Scene construction", "Persistent world changes", "Object state persistence" |
+| `test_object_state_persists.py` | Scene Builder / Narrator | "Object state persistence" (cross-cuts Scene & Exploration and Narrative Delivery) |
 
 ### NPC Interaction
 
@@ -84,6 +86,7 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 | File | Feature | Example story |
 |---|---|---|
 | `test_effect_applier.py` | Effect application | "Change status", "No-op on missing target" |
+| `test_effect_apply_object_damage.py` | Effect application | "Apply object damage", "No-op on missing target" |
 | `test_director_routing.py` | Action routing | "Turn counting", "Scene transitions", "Clarification flow" |
 | `test_director_wait.py` | Wait action | "Skips dialogue", "Advances clock" |
 | `test_wait_action.py` | Wait intent detection | "English keywords", "Forced wait", "Incapacitation" |
