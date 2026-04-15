@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from cast.director_witness import WitnessedAggression
 from models.scene import Scene
 
 
@@ -57,6 +58,16 @@ class TurnOutputs(BaseModel):
     The World Chronicler PR ships the field dormant — it is populated
     by the upcoming ``NPCTicker`` (PR B, NPC Autonomy), and the Narrator
     already renders each entry so no further plumbing is needed then.
+
+    ``witnessed_events`` carries proximity-witness records for
+    aggressive player actions against inanimate targets (KER-18). The
+    field is populated inside the object-interaction branch of
+    :class:`cast.director_execution.PlanExecutor` and consumed by
+    :class:`cast.npc_turn.NPCTurnResolver` to inject an incident clause
+    into the guard NPC-turn prompt. It is intentionally **not** rendered
+    by the Narrator — the guard reaction surfaces via ``npc_turns`` and
+    the object outcome surfaces via ``object_interactions``, so a
+    separate ``witnessed_events`` render path would duplicate both.
     """
 
     wait: bool = False
@@ -69,3 +80,4 @@ class TurnOutputs(BaseModel):
     npc_turns: list[NPCTurnEntry] = Field(default_factory=list)
     npc_departures: list[str] = Field(default_factory=list)
     completed_events: list[str] = Field(default_factory=list)
+    witnessed_events: list[WitnessedAggression] = Field(default_factory=list)
