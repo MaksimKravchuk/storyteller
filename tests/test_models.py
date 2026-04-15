@@ -7,6 +7,7 @@ import pytest
 
 from models.base_model import StorytellerBase
 from models.character import Character
+from models.location import Location
 from models.npc_card import NPCCard
 from models.setting import Setting
 
@@ -193,6 +194,41 @@ class TestLocation:
     @allure.title("Removing an NPC not currently in the Location is a silent no-op")
     def test_remove_npc_not_present_is_noop(self, sample_location):
         sample_location.remove_npc("ghost")
+
+    @allure.story("Location object state")
+    @allure.title("record_object_state writes a normalized entry into object_states and returns True")
+    def test_record_object_state_writes_normalized_key(self, sample_location):
+        wrote = sample_location.record_object_state("Wooden_Shutter", "splintered")
+        assert wrote is True
+        assert sample_location.object_states == {"wooden shutter": "splintered"}
+
+    @allure.story("Location object state")
+    @allure.title("record_object_state collapses snake_case and mixed-case keys to the same slot")
+    def test_record_object_state_collapses_paraphrases(self, sample_location):
+        sample_location.record_object_state("wooden_shutter", "cracked")
+        sample_location.record_object_state("Wooden Shutter", "splintered")
+        assert sample_location.object_states == {"wooden shutter": "splintered"}
+
+    @allure.story("Location object state")
+    @allure.title("record_object_state returns False without writing when the key is empty or whitespace")
+    def test_record_object_state_empty_key(self, sample_location):
+        assert sample_location.record_object_state("", "splintered") is False
+        assert sample_location.record_object_state("   ", "splintered") is False
+        assert sample_location.object_states == {}
+
+    @allure.story("Location object state")
+    @allure.title("record_object_state returns False without writing when the state description is empty")
+    def test_record_object_state_empty_description(self, sample_location):
+        assert sample_location.record_object_state("shutter", "") is False
+        assert sample_location.object_states == {}
+
+    @allure.story("Location object state")
+    @allure.title("A new Location starts with an empty object_states dict that is independent per instance")
+    def test_object_states_default_per_instance(self):
+        first = Location(name="A")
+        second = Location(name="B")
+        first.object_states["shutter"] = "splintered"
+        assert second.object_states == {}
 
 
 @allure.epic("Memory & Persistence")

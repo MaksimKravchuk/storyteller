@@ -29,6 +29,8 @@ class EventEffect:
       - ADD_KNOWLEDGE:     {"content": str, "scope": str, "tags": [...]}
       - CHANGE_ATTRIBUTE:  {"target_id": str, "attribute": str, "value": int}
       - CHANGE_STATUS:     {"npc_id": str, "status": str}
+      - APPLY_OBJECT_DAMAGE:
+          {"location_id": str, "object_key": str, "state_description": str}
       - SPAWN_NPC:         {"npc_request": str}   (triggers NPC generator)
       - REMOVE_NPC:        {"npc_id": str}
     """
