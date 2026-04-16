@@ -54,6 +54,16 @@ def _examine_route():
     }
 
 
+def _aggressive_interact_route():
+    return {
+        "action_type": "INTERACT",
+        "is_aggressive": True,
+        "targets": [_GUARD],
+        "needs_clarification": False,
+        "delegate_to": ["actor", "narrator"],
+    }
+
+
 def _idle_json():
     return json.dumps({"action": "The guard watches the crowd.", "type": "IDLE", "target": None})
 
@@ -112,6 +122,56 @@ class TestDirectorCallsNPCTurns:
 
         # EXAMINE is not a turn-counting action, so no NPC turns
         mock_actor.execute.assert_not_called()
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn integration")
+class TestDirectorThreadsIsAggressive:
+    """KER-21: aggressive plans must propagate the flag to NPCTurnResolver.
+
+    The resolver uses ``is_aggressive`` to serialize NPC reactions so each one
+    sees what its peers already did, breaking the template-convergence chorus.
+    """
+
+    @allure.story("Aggressive flag propagation")
+    @allure.title("An aggressive routing plan threads is_aggressive=True into the NPC-turn resolver")
+    @pytest.mark.asyncio
+    async def test_aggressive_plan_threads_is_aggressive_to_resolver(self):
+        gs = make_game_state()
+        _setup_guard(gs)
+        director = make_director(game_state=gs, route_response=_aggressive_interact_route())
+
+        mock_actor = AsyncMock()
+        mock_actor.execute = AsyncMock(return_value=_idle_json())
+        director._actors[_NPC_A] = mock_actor
+
+        resolve_mock = AsyncMock(return_value=[])
+        director._npc_turns.resolve_npc_turns = resolve_mock  # type: ignore[method-assign]
+
+        await director.act("punch the guard")
+
+        resolve_mock.assert_awaited()
+        assert resolve_mock.await_args.kwargs.get("is_aggressive") is True
+
+    @allure.story("Aggressive flag propagation")
+    @allure.title("A routine TALK plan passes is_aggressive=False to the NPC-turn resolver")
+    @pytest.mark.asyncio
+    async def test_non_aggressive_plan_passes_false_to_resolver(self):
+        gs = make_game_state()
+        _setup_guard(gs)
+        director = make_director(game_state=gs, route_response=_talk_route())
+
+        mock_actor = AsyncMock()
+        mock_actor.execute = AsyncMock(side_effect=["Hello traveler.", _idle_json()])
+        director._actors[_NPC_A] = mock_actor
+
+        resolve_mock = AsyncMock(return_value=[])
+        director._npc_turns.resolve_npc_turns = resolve_mock  # type: ignore[method-assign]
+
+        await director.act("talk to the guard")
+
+        resolve_mock.assert_awaited()
+        assert resolve_mock.await_args.kwargs.get("is_aggressive") is False
 
 
 @allure.epic("NPC Interaction")

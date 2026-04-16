@@ -45,10 +45,12 @@ ACTOR_SYSTEM = PromptTemplate(
                 "- Respond as this character would in real life. "
                 "Do NOT try to advance the plot or be overly helpful.\n"
                 "- When the player physically attacks, threatens, or provokes you — "
-                "respond with ACTIONS, not just words. A guard fights back, restrains, "
-                "or calls for help. A merchant flees or screams. A warrior draws steel. "
-                "Do NOT simply warn or lecture — react physically as your character would. "
-                "You CAN be hurt, overpowered, or killed. Stay realistic.\n"
+                "respond with ACTIONS, not just words. React as a {npc_occupation} "
+                "would: your training, station, temperament, and equipment shape "
+                "what you do. Avoid generic 'grab the nearest implement and shout' "
+                "template reactions; do what THIS character, in THIS mood, with "
+                "THIS equipment, would actually do. You CAN be hurt, overpowered, "
+                "or killed. Stay realistic.\n"
                 "- If a [DICE ROLL] and OUTCOME are provided, you MUST narrate that exact "
                 "outcome. The dice determine what happens physically — you narrate HOW "
                 "it happens in character. Never contradict the dice result.\n"
@@ -72,7 +74,7 @@ ACTOR_SYSTEM = PromptTemplate(
                 "(e.g. [STATUS: wounded left arm], [STATUS: barely standing]). "
                 "Only include this tag if status changed from {physical_status}."
             ),
-            required_vars=["current_mood", "physical_status"],
+            required_vars=["current_mood", "physical_status", "npc_occupation"],
         ),
         PromptSection(
             name="language",

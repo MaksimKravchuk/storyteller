@@ -160,6 +160,7 @@ class PlanExecutor:
         """Delegate to agents based on the routing plan and assemble output."""
         raw_outputs = turn_outputs.TurnOutputs()
         action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
+        is_aggressive = bool(plan.get(_KEY_IS_AGGRESSIVE))
 
         local_events = await self._process_events(completed_events)
         new_uuids = await self._dispatch_plan(plan, action_type, player_action, raw_outputs)
@@ -167,7 +168,7 @@ class PlanExecutor:
         if local_events:
             raw_outputs.completed_events = [ev.on_complete_description or ev.name for ev in local_events]
 
-        await self._resolve_npc_turns(action_type, player_action, raw_outputs)
+        await self._resolve_npc_turns(action_type, player_action, raw_outputs, is_aggressive)
         self._agents.npc_ticker.tick(raw_outputs, skip_uuids=new_uuids)
 
         if raw_outputs.scene is not None:
@@ -432,6 +433,7 @@ class PlanExecutor:
         action_type: str,
         player_action: str,
         raw_outputs: turn_outputs.TurnOutputs,
+        is_aggressive: bool = False,
     ) -> None:
         """Resolve NPC autonomous turns for turn-counting actions.
 
@@ -439,12 +441,18 @@ class PlanExecutor:
         so guard NPCs see the KER-18 incident clause on the same turn
         the vandalism is committed — the witness broadcast step ran
         earlier inside :meth:`_interact_with_objects`.
+
+        ``is_aggressive`` (KER-21) is forwarded so the resolver can
+        serialize NPC reactions when the player attacks, letting each
+        successive NPC see what its peers just did and diversifying
+        the combat response away from a single template.
         """
         if action_type not in constants.TURN_COUNTING_ACTIONS:
             return
         npc_actions = await self._agents.npc_turns.resolve_npc_turns(
             player_action,
             witnessed_events=raw_outputs.witnessed_events,
+            is_aggressive=is_aggressive,
         )
         if npc_actions:
             raw_outputs.npc_turns = [

@@ -52,3 +52,47 @@ class TestActorPromptPhysicalStatus:
     def test_prompt_contains_behavioral_rule(self):
         rendered = _render_actor_prompt()
         assert "unconscious" in rendered.lower()
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Actor prompt template")
+class TestActorPromptRoleScopedReactions:
+    """Regression guard for KER-21: the stimulus-response menu must not enumerate occupations.
+
+    The pre-KER-21 prompt listed "A guard fights back, restrains, or calls for help. A
+    merchant flees or screams. A warrior draws steel.", so every NPC — cook, carpenter,
+    beggar — saw the full menu and gravitated toward the most dramatic entry. The fixed
+    prompt refers to the NPC's own ``{npc_occupation}`` instead.
+    """
+
+    @allure.story("Role-scoped combat reactions")
+    @allure.title("Actor constraints no longer enumerate guard / merchant / warrior reactions")
+    def test_constraints_no_enumerated_role_menu(self):
+        rendered = _render_actor_prompt(npc_occupation="cook")
+        lowered = rendered.lower()
+        assert "guard fights back" not in lowered
+        assert "merchant flees" not in lowered
+        assert "warrior draws steel" not in lowered
+
+    @allure.story("Role-scoped combat reactions")
+    @allure.title("Actor constraints reference the NPC's own occupation so reactions stay in character")
+    def test_constraints_reference_own_occupation(self):
+        rendered = _render_actor_prompt(npc_occupation="cook")
+        # The constraints section should bind the combat reaction to THIS NPC's occupation.
+        assert "cook" in rendered
+
+    @allure.story("Role-scoped combat reactions")
+    @allure.title("Actor constraints still instruct NPCs to act physically when attacked")
+    def test_constraints_preserve_physical_action_rule(self):
+        rendered = _render_actor_prompt()
+        lowered = rendered.lower()
+        assert "attack" in lowered
+        assert "actions, not just words" in lowered
+
+    @allure.story("Role-scoped combat reactions")
+    @allure.title("Actor constraints still emit DICE ROLL, MOOD, and STATUS tag instructions")
+    def test_constraints_preserve_dice_mood_status_rules(self):
+        rendered = _render_actor_prompt()
+        assert "[DICE ROLL]" in rendered
+        assert "[MOOD:" in rendered
+        assert "[STATUS:" in rendered

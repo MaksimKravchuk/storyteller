@@ -175,6 +175,70 @@ def _filter_successful(
     return actions
 
 
+_PerNPCResolver = Any
+
+
+@dataclass(frozen=True)
+class _TurnContext:
+    """Shared per-turn inputs passed through every NPC resolution."""
+
+    resolve_single: _PerNPCResolver
+    summary: str
+    witnessed_events: list[WitnessedAggression]
+
+
+async def _resolve_tail(
+    ctx: _TurnContext,
+    remaining: list[tuple[str, Any, Any]],
+    peer_actions: list[tuple[str, str]],
+    ordered_actions: list[NPCAction],
+) -> list[NPCAction]:
+    """Recursively resolve NPCs one-by-one, threading peer actions forward.
+
+    Written as async recursion rather than a ``for`` loop so we do not
+    trip WPS476 (``await`` in loop). Each call resolves the head of
+    ``remaining`` via ``ctx.resolve_single``, appends the result to the
+    peer-action trail, and recurses on the tail. NPC counts per scene
+    are small (single digit), so Python stack depth is not a concern.
+    Failures are logged and skipped — one NPC's LLM hiccup must not
+    stall the rest of the round.
+    """
+    if not remaining:
+        return ordered_actions
+    _, npc, actor = remaining[0]
+    action = await _resolve_one_or_log(ctx, npc, actor, peer_actions)
+    next_peers = peer_actions
+    next_ordered = ordered_actions
+    if action is not None:
+        next_peers = peer_actions + [(action.npc_name, action.action_description)]
+        next_ordered = ordered_actions + [action]
+    return await _resolve_tail(ctx, remaining[1:], next_peers, next_ordered)
+
+
+async def _resolve_one_or_log(
+    ctx: _TurnContext,
+    npc: Any,
+    actor: Any,
+    peer_actions: list[tuple[str, str]],
+) -> NPCAction | None:
+    """Invoke ``ctx.resolve_single`` for one NPC; log and swallow any exception."""
+    try:
+        return await ctx.resolve_single(npc, actor, ctx.summary, ctx.witnessed_events, peer_actions)
+    except Exception as exc:
+        logger.error("NPC turn failed for {} ({}): {}", npc.name, npc.uuid, exc)
+        return None
+
+
+def _build_resolve_coros(
+    ctx: _TurnContext,
+    eligible: list[tuple[str, Any, Any]],
+) -> list[Any]:
+    """Build the list of per-NPC resolve coroutines for the parallel path."""
+    summary = ctx.summary
+    witnessed = ctx.witnessed_events
+    return [ctx.resolve_single(npc, actor, summary, witnessed) for _, npc, actor in eligible]
+
+
 class NPCTurnResolver:
     """Resolves NPC autonomous actions during their turn in a round."""
 
@@ -186,19 +250,34 @@ class NPCTurnResolver:
         self,
         player_action_summary: str,
         witnessed_events: list[WitnessedAggression] | None = None,
+        is_aggressive: bool = False,
     ) -> list[NPCAction]:
-        """Resolve all NPC turns simultaneously. Called after player's action.
+        """Resolve all NPC turns after the player's action.
 
         ``witnessed_events`` threads the KER-18 proximity-witness
         broadcast from ``TurnOutputs`` into every per-NPC turn prompt.
         Guards in the same location as the vandalism receive an
         INCIDENT clause and react on the same turn the player smashes
         the shutter; other occupations get the vanilla prompt.
+
+        ``is_aggressive`` (KER-21) switches the resolution strategy.
+        Routine turns (TALK / EXPLORE / WAIT) keep the concurrent
+        ``asyncio.gather`` path so NPC reactions do not serialize the
+        common case. Aggressive turns resolve NPCs sequentially and
+        thread a running peer-action summary into each subsequent
+        prompt so the second and third NPC to react see what their
+        peers just did and pick an in-character reaction instead of
+        converging on the same template.
         """
         eligible = self._eligible_npcs()
         if not eligible:
             return []
-        actions = await self._gather_actions(eligible, player_action_summary, witnessed_events or [])
+        actions = await self._gather_actions(
+            eligible,
+            player_action_summary,
+            witnessed_events or [],
+            is_aggressive,
+        )
         for action in actions:
             _apply_scene_mutation(action.npc_uuid, action.action_type, self._gs)
         return actions
@@ -208,25 +287,19 @@ class NPCTurnResolver:
         eligible: list[tuple[str, Any, Any]],
         summary: str,
         witnessed_events: list[WitnessedAggression],
+        is_aggressive: bool,
     ) -> list[NPCAction]:
-        """Concurrently resolve actions for all eligible NPCs."""
-        coros = self._build_resolve_coros(eligible, summary, witnessed_events)
+        """Dispatch to the parallel or sequential path based on ``is_aggressive``."""
+        ctx = _TurnContext(
+            resolve_single=self._resolve_single_npc,
+            summary=summary,
+            witnessed_events=witnessed_events,
+        )
+        if is_aggressive:
+            return await _resolve_tail(ctx, eligible, [], [])
+        coros = _build_resolve_coros(ctx, eligible)
         gathered = await asyncio.gather(*coros, return_exceptions=True)
         return _filter_successful(gathered, eligible)
-
-    def _build_resolve_coros(
-        self,
-        eligible: list[tuple[str, Any, Any]],
-        summary: str,
-        witnessed_events: list[WitnessedAggression],
-    ) -> list[Any]:
-        """Build the list of per-NPC resolve coroutines.
-
-        Extracted so :meth:`_gather_actions` keeps the ``asyncio.gather``
-        call on one line without tripping WPS221 on the expanded
-        comprehension that reads the witnessed-events kwarg.
-        """
-        return [self._resolve_single_npc(npc, actor, summary, witnessed_events) for _, npc, actor in eligible]
 
     def _eligible_npcs(self) -> list[tuple[str, Any, Any]]:
         """Return (uuid, npc, actor) for NPCs that can act this turn."""
@@ -258,11 +331,18 @@ class NPCTurnResolver:
         actor: Any,
         player_action_summary: str,
         witnessed_events: list[WitnessedAggression],
+        peer_actions: list[tuple[str, str]] | None = None,
     ) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
         try:
             raw_response = await actor.execute(
-                input_data=_build_turn_prompt(npc, player_action_summary, self._gs, witnessed_events),
+                input_data=_build_turn_prompt(
+                    npc,
+                    player_action_summary,
+                    self._gs,
+                    witnessed_events,
+                    peer_actions,
+                ),
                 context={"npc": npc, "game_state": self._gs, "is_npc_turn": True},
             )
         except Exception:
@@ -301,6 +381,7 @@ def _build_turn_prompt(
     player_action_summary: str,
     game_state: GameState,
     witnessed_events: list[WitnessedAggression] | None = None,
+    peer_actions: list[tuple[str, str]] | None = None,
 ) -> str:
     """Build the prompt for an NPC's autonomous turn.
 
@@ -309,6 +390,11 @@ def _build_turn_prompt(
     is a guard-occupation watcher, an INCIDENT clause is appended to
     the base prompt so the Actor LLM can decide to intervene, raise
     the alarm, confront the player, or flee — in character.
+
+    When ``peer_actions`` is non-empty (KER-21 sequential aggressive
+    path), a "peer reactions" clause is inserted so each NPC sees what
+    its peers already did this turn and is pushed away from echoing
+    the same template reaction.
     """
     scene = game_state.current_scene
     scene_desc = scene.description if scene else "unknown location"
@@ -332,10 +418,29 @@ def _build_turn_prompt(
         status=npc.physical_status,
     )
 
+    clauses: list[str] = [base_prompt]
+    if peer_actions:
+        clauses.append(_format_peer_actions_clause(peer_actions))
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
-    if incident is None:
-        return base_prompt
-    return "{0}\n\n{1}".format(base_prompt, _format_incident_clause(npc, incident))
+    if incident is not None:
+        clauses.append(_format_incident_clause(npc, incident))
+    return "\n\n".join(clauses)
+
+
+def _format_peer_actions_clause(peer_actions: list[tuple[str, str]]) -> str:
+    """Render the KER-21 peer-reactions clause for the next NPC to act.
+
+    Lists what each earlier NPC already did this turn and explicitly
+    warns against echoing them — the behaviour that produced the
+    carpenter / cook / guardsman chorus in the original bug report.
+    """
+    lines = ["- {0}: {1}".format(name, desc) for name, desc in peer_actions]
+    return (
+        "Other NPCs in this scene have already reacted this turn:\n"
+        "{0}\n"
+        "Do something DIFFERENT that fits your character; "
+        "do not echo them."
+    ).format("\n".join(lines))
 
 
 def _format_incident_clause(npc: Any, incident: WitnessedAggression) -> str:
