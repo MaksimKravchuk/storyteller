@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from cast.director_dialogue_helpers import resolve_target_uuids
 from cast.hostility import RETALIATION_THRESHOLD, SEVERITY_HIGH, bump_hostility
+from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
 
@@ -34,6 +35,14 @@ def apply_aggressive_turn(
     for uuid in resolve_target_uuids(target_names, game_state):
         npc = game_state.npcs.get(uuid)
         if npc is None:
+            # A resolved UUID that no longer lives in game_state.npcs means
+            # scene data and the registered NPC map have drifted. Skipping
+            # silently would reintroduce the KER-23 failure mode on a
+            # different vector (no bump → no retaliation).
+            record_turn_event(
+                "hostility_resolve_miss",
+                {"uuid": uuid, "targets": list(target_names), "turn": game_state.turn_count},
+            )
             continue
         bump_hostility(
             npc,

@@ -1,10 +1,4 @@
-"""Deterministic-element tests for the KER-23 escalation benchmark scenario.
-
-Lives in its own module (rather than alongside the memory + autonomy
-predicates) to keep ``tests/test_benchmarks_scenario_elements.py`` under
-the WPS201 import budget — the escalation scenario brings in its own
-state + element imports that would otherwise push that file over.
-"""
+"""Deterministic-element tests for the escalation benchmark scenario."""
 
 from __future__ import annotations
 

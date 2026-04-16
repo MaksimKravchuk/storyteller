@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import types
 
+from llm.turn_event_logger import record_turn_event
 from models.npc_card import NPCCard
 
 _HISTORY_CAP = 3
@@ -93,7 +94,16 @@ def bump_hostility(
     *upward* along the intensity ladder — if the LLM already pushed the
     mood past the computed floor, we leave it alone.
     """
-    bump = _SEVERITY_BUMPS.get(severity, _SEVERITY_BUMPS[SEVERITY_LOW])
+    bump = _SEVERITY_BUMPS.get(severity)
+    if bump is None:
+        # Unknown severity strings (typos, migrations) would otherwise halve
+        # the bump silently — log so the mismatch is visible in turn events.
+        record_turn_event(
+            "hostility_unknown_severity",
+            {"severity": severity, "npc_name": npc.name},
+            npc_id=npc.uuid,
+        )
+        bump = _SEVERITY_BUMPS[SEVERITY_LOW]
     npc.hostility_level = min(npc.hostility_level + bump, _LEVEL_CAP)
 
     history = list(npc.recent_hostile_actions)
@@ -140,8 +150,25 @@ def apply_llm_mood_update(npc: NPCCard, new_mood: str) -> None:
     """
     floor = mood_floor(npc.hostility_level)
     if floor is not None and _is_stronger_mood(floor, new_mood):
-        # LLM tried to de-escalate a mechanically-hostile NPC; keep the floor.
+        record_turn_event(
+            "hostility_mood_downgrade_blocked",
+            {
+                "npc_name": npc.name,
+                "attempted_mood": new_mood,
+                "floor_mood": floor,
+                "hostility_level": npc.hostility_level,
+            },
+            npc_id=npc.uuid,
+        )
         return
+    if new_mood.lower() not in _MOOD_INTENSITY:
+        # LLM-invented moods (e.g. "stoic") would leave roll_aggression
+        # with no threshold to match and silently disable retaliation.
+        record_turn_event(
+            "hostility_mood_unknown",
+            {"npc_name": npc.name, "attempted_mood": new_mood},
+            npc_id=npc.uuid,
+        )
     npc.current_mood = new_mood
 
 

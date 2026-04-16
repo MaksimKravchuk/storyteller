@@ -114,9 +114,7 @@ class Actor(BasePerformer):
             self.set_context(past_memories=_format_past_memories(past_memories))
 
         # Inject hostility context only when the NPC is actually inflamed, so
-        # peaceful dialogue does not carry a spurious "you are in conflict"
-        # banner. The PromptTemplate drops the section when these vars are
-        # absent from kwargs.
+        # peaceful dialogue does not carry a spurious "you are in conflict" banner.
         if self.npc.hostility_level > 0 or self.npc.recent_hostile_actions:
             self.set_context(
                 hostility_level=str(self.npc.hostility_level),

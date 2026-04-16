@@ -41,9 +41,9 @@ ACTOR_SYSTEM = PromptTemplate(
         PromptSection(
             name="hostility",
             template=(
-                "Hostility toward the player: {hostility_level}/10. "
-                "A level of 3 or more means you are actively engaged in conflict — "
-                "do not resume routine pleasantries or a formal challenge formula.\n"
+                "You are engaged in a hostile encounter with the player "
+                "(hostility toward them: {hostility_level}; higher means more engaged). "
+                "Do not resume routine pleasantries or a formal challenge formula.\n"
                 "Recent player actions against you:\n{recent_hostile_actions_summary}"
             ),
             required_vars=["hostility_level", "recent_hostile_actions_summary"],

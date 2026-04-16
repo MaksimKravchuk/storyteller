@@ -25,7 +25,7 @@ _SCENARIO_BRIEF = (
     "A lone Roman sentry at a city gate is assaulted three consecutive turns by the player. "
     "On the third turn we are auditing whether the sentry escalates to a physical counter-response "
     "(attacking, drawing steel, grappling, arresting) instead of repeating the standing-orders "
-    "challenge formula — the Иван Матвеев regression KER-23 was filed for."
+    "challenge formula."
 )
 
 
@@ -81,27 +81,31 @@ def _final_mood_retaliating(
     )
 
 
+# Matched against the lowercased T3 corpus (narration + dialogue). Short, canonical
+# fragments from the standing-orders formula — a paraphrase that loses all of these
+# no longer counts as "reciting the challenge."
+_FORMULA_FRAGMENTS: tuple[str, ...] = (
+    "state your name",
+    "your business",
+)
+
+
 def _formula_not_repeated(
     captured: list[CapturedTurn],
     _snapshots: list[GameState],
 ) -> DeterministicResult:
-    """Deterministic: on T3 the sentry does not parrot the standing-orders challenge formula.
-
-    The bug evidence is that the guard keeps repeating the same sentry challenge after being
-    assaulted. We score *zero* when the exact formula still appears in the narration or
-    dialogue text — a passing run means the guard has broken out of the loop.
-    """
+    """Deterministic: on T3 the sentry does not parrot the standing-orders challenge formula."""
     if _THIRD_ASSAULT_TURN >= len(captured):
         return DeterministicResult(awarded=0, reason="third assault turn was not captured")
     turn = captured[_THIRD_ASSAULT_TURN]
     corpus_fragments = [turn.narration]
     corpus_fragments.extend(entry.response for entry in turn.turn_outputs.dialogue)
     corpus = "\n".join(corpus_fragments).lower()
-    formula_fragment = SENTRY_CHALLENGE_FORMULA.lower().split("—")[0].strip()
-    if formula_fragment in corpus:
+    matched = [fragment for fragment in _FORMULA_FRAGMENTS if fragment in corpus]
+    if matched:
         return DeterministicResult(
             awarded=0,
-            reason="sentry still recites the challenge formula on T3",
+            reason="sentry still recites challenge fragments {0!r} on T3".format(matched),
             evidence_quote=SENTRY_CHALLENGE_FORMULA,
         )
     return DeterministicResult(

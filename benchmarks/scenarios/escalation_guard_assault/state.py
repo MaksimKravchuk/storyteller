@@ -1,4 +1,4 @@
-"""Seed state for the KER-23 escalation regression — lone sentry under repeat assault."""
+"""Seed state for the escalation regression — lone sentry under repeat assault."""
 
 from __future__ import annotations
 
@@ -28,10 +28,10 @@ def _make_setting() -> Setting:
 def _make_sentry() -> NPCCard:
     """Build a rigidly-drilled sentry whose persona pulls toward a formulaic challenge.
 
-    The ``speech_style`` and ``personality_traits`` mirror the Иван Матвеев
-    pattern from the ticket: a guard who, absent escalation pressure, will
-    recite the same challenge formula turn after turn instead of physically
-    engaging.
+    The ``speech_style`` and ``personality_traits`` are tuned to bias the
+    LLM toward reciting the same challenge formula turn after turn absent
+    escalation pressure, so the scenario can detect whether the mechanical
+    hostility ratchet is nudging the sentry out of that loop.
     """
     sentry = NPCCard(
         name=SENTRY_NAME,
