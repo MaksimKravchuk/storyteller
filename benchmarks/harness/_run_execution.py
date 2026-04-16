@@ -1,0 +1,142 @@
+"""Scenario execution internals: engine prep, turn driving, scoring.
+
+Separated from :mod:`benchmarks.harness.runner` so the public module
+stays at a manageable surface area. Nothing here is intended to be
+imported by callers outside the harness — the top-level runner wraps
+this machinery into :func:`run_scenario_once`.
+
+Internal helpers use :data:`typing.Any` for the engine + snapshot types
+so this module stays under WPS's import budget. The types are fully
+annotated at the public boundary in :func:`execute_scenario`.
+"""
+
+from __future__ import annotations
+
+import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING, Any
+
+from benchmarks.harness.scoring import score_scenario
+from benchmarks.harness.snapshots import snapshot
+from benchmarks.harness.transcript import NarratorCapture
+from benchmarks.harness.types._captures import CapturedTurn
+from engine.factory import create_engine_from_state
+
+if TYPE_CHECKING:
+    from benchmarks.harness.types._scenarios import Scenario, ScenarioState
+    from benchmarks.harness.types._scores import ElementScore, PanelMember
+
+
+@dataclass(frozen=True)
+class _ExecutionResult:
+    """Internal container for one scenario execution's scored output."""
+
+    element_scores: list[ElementScore]
+    captured_turns: list[CapturedTurn]
+    started_at: str
+    duration_seconds: float
+
+
+async def _prepare_engine(
+    cfg: Any,
+    scenario_state: ScenarioState,
+) -> tuple[Any, NarratorCapture]:
+    """Restore the engine from the seeded state and install the capture hook."""
+    engine = await create_engine_from_state(
+        cfg,
+        scenario_state.game_state,
+        scenario_state.game_state.knowledge_graph,
+        scenario_state.events,
+    )
+    capture = NarratorCapture()
+    capture.attach(engine)
+    return engine, capture
+
+
+async def _capture_single_turn(
+    engine: Any,
+    capture: NarratorCapture,
+    turn_index: int,
+    script_turn: Any,
+) -> CapturedTurn:
+    """Drive one scripted action through the engine and package the output."""
+    turn_start = time.monotonic()
+    action = script_turn.player_action
+    narration = await engine.process_action(action)
+    turn_outputs = capture.pop_next()
+    duration_ms = int((time.monotonic() - turn_start) * 1000)
+    return CapturedTurn(
+        index=turn_index,
+        player_action=action,
+        narration=narration,
+        turn_outputs=turn_outputs,
+        duration_ms=duration_ms,
+    )
+
+
+async def _drive_turns(
+    engine: Any,
+    capture: NarratorCapture,
+    scenario: Scenario,
+    scenario_state: ScenarioState,
+) -> tuple[list[CapturedTurn], list[Any]]:
+    """Walk the script turn-by-turn, capturing narration + snapshots.
+
+    Uses ``while pending: pop(0)`` rather than ``for ... await`` so the
+    await is not lexically nested inside a ``for`` header (WPS476).
+    Effect is identical: one awaited turn at a time.
+    """
+    snapshots: list[Any] = [snapshot(scenario_state.game_state)]
+    captured_turns: list[CapturedTurn] = []
+    pending: list[tuple[int, Any]] = list(enumerate(scenario.script))
+    while pending:
+        turn_index, script_turn = pending.pop(0)
+        captured_turns.append(await _capture_single_turn(engine, capture, turn_index, script_turn))
+        snapshots.append(snapshot(scenario_state.game_state))
+    return captured_turns, snapshots
+
+
+async def _score_bundle(
+    scenario: Scenario,
+    cfg: Any,
+    panel_members: list[PanelMember],
+    turns: list[CapturedTurn],
+    snapshots: list[Any],
+) -> list[ElementScore]:
+    """Run :func:`score_scenario` and return only the element scores."""
+    return await score_scenario(
+        scenario.elements,
+        turns,
+        snapshots,
+        panel=panel_members,
+        cfg=cfg,
+    )
+
+
+async def _run_script(
+    scenario: Scenario,
+    cfg: Any,
+) -> tuple[list[CapturedTurn], list[Any]]:
+    """Build the engine, restore state, drive every scripted turn."""
+    scenario_state = scenario.build_state()
+    engine, capture = await _prepare_engine(cfg, scenario_state)
+    return await _drive_turns(engine, capture, scenario, scenario_state)
+
+
+async def execute_scenario(
+    scenario: Scenario,
+    cfg: Any,
+    panel_members: list[PanelMember],
+) -> _ExecutionResult:
+    """Build the engine, drive the script, score the elements."""
+    started_at = datetime.now(timezone.utc).isoformat()
+    run_start = time.monotonic()
+    turns, snapshots = await _run_script(scenario, cfg)
+    scores = await _score_bundle(scenario, cfg, panel_members, turns, snapshots)
+    return _ExecutionResult(
+        element_scores=scores,
+        captured_turns=turns,
+        started_at=started_at,
+        duration_seconds=time.monotonic() - run_start,
+    )

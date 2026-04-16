@@ -34,11 +34,17 @@ uv run flake8 .
 # Type check
 uv run mypy .
 
-# Unit tests (excludes e2e)
-uv run pytest tests/ --ignore=tests/e2e -v
+# Unit tests (excludes e2e + benchmarks)
+uv run pytest tests/ --ignore=tests/e2e --ignore=tests/benchmarks -v
 
 # E2E tests (requires OPENAI_API_KEY, ANTHROPIC_API_KEY)
 uv run pytest tests/e2e/ --alluredir=allure-results -v
+
+# Benchmarks (opt-in, requires API keys; hits paid LLMs)
+uv run python -m benchmarks run
+uv run python -m benchmarks run --scenario memory_follow_up_marcus --iterations 1
+uv run python -m benchmarks compare <baseline.json> <current.json>
+uv run pytest tests/benchmarks -m benchmark -v
 
 # Run single test
 uv run pytest tests/test_cli.py -v
@@ -67,6 +73,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - **`db/`** — Async SQLAlchemy + asyncpg with Alembic migrations; `GameRepository` is the single persistence access point; domain↔ORM conversion in `converters.py`
 - **`interfaces/`** — Telegram bot, admin dashboard, and FastAPI web UI (`interfaces/web/`)
 - **`research/`** — Async Wikipedia client
+- **`benchmarks/`** — Deterministic narration benchmark harness (opt-in, hits paid LLMs). Fixed scenarios drive the engine through `create_engine_from_state()`; captured `TurnOutputs` + `GameState` snapshots are scored against an ISU-style rubric with a six-model witness panel for evidence-LLM elements. Results archive to `benchmarks/results/` as JSON + markdown for release-over-release comparison. Entry point: `uv run python -m benchmarks run`.
 
 ### Configuration
 
@@ -87,7 +94,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - NEVER push directly to `main`. For every code change, create a feature branch (`feat/<topic>` or `fix/<topic>`), commit there, and open a PR with `gh pr create`. The only exception is when I explicitly say "push to main".
 - Before every commit, run the full gauntlet and only commit if everything passes:
   ```bash
-  uv run ruff check . && uv run ruff format --check . && uv run flake8 . && uv run mypy . && uv run pytest tests/ --ignore=tests/e2e
+  uv run ruff check . && uv run ruff format --check . && uv run flake8 . && uv run mypy . && uv run pytest tests/ --ignore=tests/e2e --ignore=tests/benchmarks
   ```
 - If lint or type checks fail, REFACTOR the code — do not commit with failures and do not bypass hooks with `--no-verify`.
 

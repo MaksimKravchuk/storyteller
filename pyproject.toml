@@ -41,7 +41,7 @@ module = ["interfaces.telegram_bot"]
 disable_error_code = ["union-attr"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "log_scrubbing.py", "models", "prompts", "research", "timeline"]
+packages = ["benchmarks", "cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "log_scrubbing.py", "models", "prompts", "research", "timeline"]
 
 [dependency-groups]
 dev = [
@@ -63,8 +63,9 @@ dev = [
 env_files = [".env"]
 markers = [
     "db: requires a real Postgres (testcontainers)",
+    "benchmark: opt-in narration benchmarks that hit paid LLMs (see benchmarks/)",
 ]
-addopts = "-m 'not db'"
+addopts = "-m 'not db and not benchmark'"
 
 [tool.coverage.run]
 source = ["cast", "engine", "models", "knowledge", "timeline", "llm", "prompts", "db", "interfaces", "research", "formatting"]

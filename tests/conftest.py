@@ -16,7 +16,7 @@ from models.npc_card import NPCCard
 from models.setting import Setting
 
 _REQUIRED_ALLURE_LABELS = ("epic", "feature", "story")
-_E2E_DIR_PART = "e2e"
+_ALLURE_EXEMPT_DIR_PARTS = ("e2e", "benchmarks")
 _TAXONOMY_DOC = "tests/TEST_TAXONOMY.md"
 
 
@@ -32,7 +32,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     violations: list[str] = []
 
     for item in items:
-        if _is_e2e_item(item):
+        if _is_exempt_item(item):
             continue
 
         labels_present = _collect_allure_label_types(item)
@@ -61,8 +61,8 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         )
 
 
-def _is_e2e_item(item: pytest.Item) -> bool:
-    return _E2E_DIR_PART in item.path.parts
+def _is_exempt_item(item: pytest.Item) -> bool:
+    return any(part in item.path.parts for part in _ALLURE_EXEMPT_DIR_PARTS)
 
 
 def _collect_allure_label_types(item: pytest.Item) -> set[str]:
