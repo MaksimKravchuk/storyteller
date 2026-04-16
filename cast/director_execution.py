@@ -7,15 +7,16 @@ from dataclasses import dataclass
 from typing import Any
 
 from cast import (
-    constants,
     director_dialogue,
     director_events,
+    director_hostility,
     director_object_interaction as doi_mod,
     director_retaliation,
     director_witness,
     npc_ticker as npc_ticker_mod,
     npc_turn,
 )
+from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
 from loguru import logger
 from models import world_state as world_state_mod
@@ -440,7 +441,7 @@ class PlanExecutor:
         the vandalism is committed — the witness broadcast step ran
         earlier inside :meth:`_interact_with_objects`.
         """
-        if action_type not in constants.TURN_COUNTING_ACTIONS:
+        if action_type not in TURN_COUNTING_ACTIONS:
             return
         npc_actions = await self._agents.npc_turns.resolve_npc_turns(
             player_action,
@@ -517,7 +518,7 @@ class PlanExecutor:
         bartender placed by the Scene Builder in a morning tavern is
         not evicted the same turn the player first arrives.
         """
-        needs_rebuild = action_type in constants.SCENE_CHANGING_ACTIONS
+        needs_rebuild = action_type in SCENE_CHANGING_ACTIONS
         # Skip rebuild when MOVE targets are all NPCs already in the scene
         # (e.g. "walk to the guard" — no location change).
         if needs_rebuild and action_type == "MOVE" and targets:
@@ -668,16 +669,24 @@ class PlanExecutor:
     ) -> None:
         """Run NPC dialogue and retaliation checks.
 
+        On aggressive turns the Director bumps ``hostility_level`` on each
+        targeted NPC *before* dialogue runs, replacing the LLM's fragile
+        ``[MOOD:]`` ratchet with a deterministic counter (KER-23).
+
         When a dialogue call already carries a combat contest roll (player
         attacks NPC directly), the Actor physically retaliates inside that
-        response. We pass those NPC UUIDs to ``check_retaliation`` as
-        ``skip_uuids`` so the retaliation phase does not fire a second,
-        redundant Actor call against the same NPC.
+        response. For NPCs whose hostility has not yet crossed the
+        retaliation threshold we pass those UUIDs to ``check_retaliation`` as
+        ``skip_uuids`` so the phase does not fire a second, redundant Actor
+        call. NPCs at or above the threshold are *forced* to roll
+        aggression even if the combat dice already landed, so repeat
+        assaults get an offensive counter-attack.
         """
         mood_snapshot = _snapshot_moods(self._gs.npcs)
+        if is_aggressive:
+            director_hostility.bump_target_hostility(self._gs, target_names, player_action)
 
-        dlg = self._agents.dialogue
-        dialogue_entries, combat_engaged = await dlg.handle_dialogue(
+        dialogue_entries, combat_engaged = await self._agents.dialogue.handle_dialogue(
             player_action,
             target_names,
             is_aggressive=is_aggressive,
@@ -686,9 +695,11 @@ class PlanExecutor:
         if dialogue_entries:
             raw_outputs.dialogue = [turn_outputs.DialogueEntry(**entry) for entry in dialogue_entries]
 
+        force_uuids = director_hostility.force_retaliation_uuids(self._gs, target_names) if is_aggressive else set()
         retaliation_entries = await self._agents.retaliation.check_retaliation(
             mood_snapshot,
-            skip_uuids=combat_engaged,
+            skip_uuids=combat_engaged - force_uuids,
+            force_uuids=force_uuids,
         )
         if retaliation_entries:
             await self._agents.dialogue.summarize_retaliations(retaliation_entries, player_action)

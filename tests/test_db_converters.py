@@ -119,6 +119,10 @@ class TestNPCConverter:
         npc.conversation_history = [{"role": "user", "content": "hi"}]
         npc.current_mood = "suspicious"
         npc.physical_status = "wounded"
+        npc.hostility_level = 4
+        npc.recent_hostile_actions = [
+            {"turn": "7", "action": "player punched you", "severity": "high"},
+        ]
 
         row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
@@ -139,6 +143,10 @@ class TestNPCConverter:
         assert restored.conversation_history == [{"role": "user", "content": "hi"}]
         assert restored.current_mood == "suspicious"
         assert restored.physical_status == "wounded"
+        assert restored.hostility_level == 4
+        assert restored.recent_hostile_actions == [
+            {"turn": "7", "action": "player punched you", "severity": "high"},
+        ]
 
     @allure.story("Backwards compatibility")
     @allure.title("row_to_npc defaults physical_status to 'healthy' on legacy rows lacking that column")
@@ -149,6 +157,18 @@ class TestNPCConverter:
 
         restored = npc_conv.row_to_npc(row)
         assert restored.physical_status == "healthy"
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_npc defaults hostility fields on legacy rows lacking those columns")
+    def test_hostility_defaults_on_legacy_row(self):
+        npc = npc_card.NPCCard(name="Legacy")
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        row.pop("hostility_level")
+        row.pop("recent_hostile_actions")
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.hostility_level == 0
+        assert restored.recent_hostile_actions == []
 
 
 @allure.epic("Persistence")

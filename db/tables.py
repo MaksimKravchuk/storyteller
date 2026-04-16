@@ -182,6 +182,8 @@ npcs = Table(
     Column("conversation_history", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("current_mood", String(_LEN_SHORT), nullable=False, server_default="neutral"),
     Column("physical_status", String(_LEN_LONG), nullable=False, server_default="healthy"),
+    Column("hostility_level", Integer, nullable=False, server_default=_DEFAULT_ZERO),
+    Column("recent_hostile_actions", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Index("idx_npcs_game_state", _COL_GAME_STATE_ID),
 )
 

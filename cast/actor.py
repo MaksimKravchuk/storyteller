@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
+from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
 from knowledge.node import KnowledgeNode
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
@@ -112,6 +113,18 @@ class Actor(BasePerformer):
         if past_memories:
             self.set_context(past_memories=_format_past_memories(past_memories))
 
+        # Inject hostility context only when the NPC is actually inflamed, so
+        # peaceful dialogue does not carry a spurious "you are in conflict"
+        # banner. The PromptTemplate drops the section when these vars are
+        # absent from kwargs.
+        if self.npc.hostility_level > 0 or self.npc.recent_hostile_actions:
+            self.set_context(
+                hostility_level=str(self.npc.hostility_level),
+                recent_hostile_actions_summary=format_hostile_actions_summary(
+                    self.npc.recent_hostile_actions,
+                ),
+            )
+
         response = await self._send(input_data, conversation=self._conversation)
 
         # Extract tags — status first, then mood from cleaned text
@@ -123,7 +136,7 @@ class Actor(BasePerformer):
         self._conversation.append(Message(role=Role.ASSISTANT, body=response))
 
         if new_mood:
-            self.npc.current_mood = new_mood
+            apply_llm_mood_update(self.npc, new_mood)
         if new_status:
             self.npc.physical_status = new_status
 
