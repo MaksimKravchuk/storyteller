@@ -53,6 +53,78 @@ class TestListSessionsFiltering:
         assert len(rows) == 1
         assert rows[0]["telegram_chat_id"] == chat_id
 
+    @allure.story("List sessions")
+    @allure.title("list_sessions(search=<uuid prefix>) matches on sessions.id substring")
+    @pytest.mark.asyncio
+    async def test_search_matches_session_id_prefix(self, repo: GameRepository) -> None:
+        row = await repo.sessions.create_telegram(_chat_id())
+        await repo.sessions.create_telegram(_chat_id())
+        prefix = row["id"][:8]
+
+        rows = await repo.admin.list_sessions(search=prefix)
+        assert row["id"] in {item["id"] for item in rows}
+
+    @allure.story("List sessions")
+    @allure.title("list_sessions(search=<web_player_id substring>) matches on web_player_id")
+    @pytest.mark.asyncio
+    async def test_search_matches_web_player_id(self, repo: GameRepository) -> None:
+        player_id = _player_id()
+        created = await repo.sessions.create_web(player_id)
+        await repo.sessions.create_web(_player_id())
+
+        rows = await repo.admin.list_sessions(search=player_id[:12])
+        assert created["id"] in {item["id"] for item in rows}
+
+    @allure.story("List sessions")
+    @allure.title("list_sessions(search=%) treats LIKE wildcards literally instead of matching everything")
+    @pytest.mark.asyncio
+    async def test_search_escapes_like_wildcards(self, repo: GameRepository) -> None:
+        await repo.sessions.create_telegram(_chat_id())
+
+        rows = await repo.admin.list_sessions(search="%")
+        assert rows == []
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Admin queries")
+class TestNPCDetail:
+    @allure.story("NPC detail")
+    @allure.title("get_npc_detail returns None when the NPC belongs to a different session")
+    @pytest.mark.asyncio
+    async def test_wrong_session_returns_none(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, kg, events = populated_game_state
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+        some_npc_id = next(iter(game_state.npcs))
+
+        other_session = await repo.sessions.create_telegram(_chat_id())
+
+        detail = await repo.admin.get_npc_detail(other_session["id"], some_npc_id)
+        assert detail is None
+
+    @allure.story("NPC detail")
+    @allure.title("get_npc_detail returns the NPC row plus empty memory when no edges are registered")
+    @pytest.mark.asyncio
+    async def test_returns_npc_row_and_empty_memory(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, kg, events = populated_game_state
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+        npc_id = next(iter(game_state.npcs))
+
+        detail = await repo.admin.get_npc_detail(test_session_id, npc_id)
+        assert detail is not None
+        assert detail["npc"]["id"] == npc_id
+        assert detail["memory_nodes"] == []
+        assert detail["memory_edges"] == []
+
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Admin queries")

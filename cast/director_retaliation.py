@@ -5,8 +5,16 @@ from __future__ import annotations
 import asyncio
 from typing import Any, NamedTuple
 
-from cast.dice import CombatOutcome, CombatRoll, roll_aggression, roll_combat
+from cast.dice import (
+    CombatOutcome,
+    CombatRoll,
+    aggression_roll_to_dict,
+    combat_roll_to_dict,
+    roll_aggression,
+    roll_combat,
+)
 from cast.director_context import get_location_name
+from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
 _KEY_GAME_STATE = "game_state"
@@ -96,11 +104,23 @@ def _build_retaliation_work(
         return None
 
     aggression = roll_aggression(npc.current_mood)
-    if aggression is None or not aggression.will_attack:
+    if aggression is None:
+        return None
+    record_turn_event(
+        "dice_aggression",
+        {**aggression_roll_to_dict(aggression), "npc_name": npc.name},
+        npc_id=npc_uuid,
+    )
+    if not aggression.will_attack:
         return None
     retaliated_names.add(npc.name.lower())
 
     combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
+    record_turn_event(
+        "dice_combat",
+        {**combat_roll_to_dict(combat_roll), "npc_name": npc.name},
+        npc_id=npc_uuid,
+    )
     status_hint = ""
     if combat_roll.outcome in (CombatOutcome.ACTOR_SUCCEEDS, CombatOutcome.ACTOR_DOMINATES):
         status_hint = (

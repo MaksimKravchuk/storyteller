@@ -2,15 +2,41 @@
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import String, cast, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import Select
 
-from db import tables as tbl
 from db import repo_admin_helpers as helpers
+from db import repo_admin_npc
+from db import tables as tbl
 
 _COL_ID = "id"
+# Single-character backslash used as the LIKE escape character.
+_BACKSLASH = "\\"
+_LIKE_WILDCARDS = (_BACKSLASH, "%", "_")
+
+
+def _escape_like(term: str) -> str:
+    """Escape LIKE wildcards so pasted UUIDs don't behave as patterns."""
+    escaped = term
+    for char in _LIKE_WILDCARDS:
+        escaped = escaped.replace(char, "{0}{1}".format(_BACKSLASH, char))
+    return escaped
+
+
+def _apply_search_filter(stmt: Select, search: str) -> Select:
+    """Add an ILIKE substring filter over id / web_player_id / telegram_chat_id."""
+    pattern = "%{0}%".format(_escape_like(search))
+    columns = (
+        tbl.sessions.c.id,
+        tbl.sessions.c.web_player_id,
+        tbl.sessions.c.telegram_chat_id,
+    )
+    predicates = [cast(col, String).ilike(pattern, escape=_BACKSLASH) for col in columns]
+    return stmt.where(or_(*predicates))
 
 
 async def fetch_events(session: AsyncSession, session_id: str) -> list[dict]:
@@ -33,11 +59,28 @@ async def fetch_scenes(session: AsyncSession, session_id: str) -> list[dict]:
     )
 
 
+async def fetch_knowledge_graph(session: AsyncSession, session_id: str) -> dict:
+    """Get knowledge graph nodes and edges for a session."""
+    gs_col = tbl.game_states.c
+    gs_id_stmt = select(gs_col.id).where(gs_col.session_id == session_id)
+    game_state_id = (await session.execute(gs_id_stmt)).scalar()
+    if not game_state_id:
+        return {"nodes": [], "edges": []}
+    nodes = await helpers.joined_rows_by_gs(session, tbl.knowledge_nodes, game_state_id)
+    edges = await helpers.joined_rows_by_gs(session, tbl.knowledge_edges, game_state_id)
+    return {"nodes": nodes, "edges": edges}
+
+
 class AdminQueries:
     """Read-only admin queries against the game database."""
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+        # Bind the knowledge-graph fetcher as an attribute so its logic
+        # lives as a module-level function (usable without a class
+        # instance from tests & helpers) while admin code can still
+        # ``await repo.admin.get_knowledge_graph(sid)``.
+        self.get_knowledge_graph = partial(fetch_knowledge_graph, session)
 
     async def list_sessions(
         self,
@@ -46,6 +89,7 @@ class AdminQueries:
         *,
         web_player_id: str | None = None,
         telegram_chat_id: int | None = None,
+        search: str | None = None,
     ) -> list[dict]:
         """List sessions with basic game info, optionally filtered by player identity."""
         stmt = (
@@ -70,6 +114,8 @@ class AdminQueries:
             stmt = stmt.where(tbl.sessions.c.web_player_id == web_player_id)
         if telegram_chat_id is not None:
             stmt = stmt.where(tbl.sessions.c.telegram_chat_id == telegram_chat_id)
+        if search:
+            stmt = _apply_search_filter(stmt, search)
         sessions_query = await self.session.execute(stmt)
         return list(map(helpers._row_dict, sessions_query.mappings()))
 
@@ -107,23 +153,6 @@ class AdminQueries:
         """Get all locations for a session."""
         return await helpers.joined_rows(self.session, tbl.locations, session_id)
 
-    async def get_knowledge_graph(self, session_id: str) -> dict:
-        """Get knowledge graph nodes and edges for a session."""
-        gs_id_stmt = select(tbl.game_states.c.id).where(
-            tbl.game_states.c.session_id == session_id,
-        )
-        game_state_id = (await self.session.execute(gs_id_stmt)).scalar()
-        if not game_state_id:
-            return {"nodes": [], "edges": []}
-
-        nodes = await self.session.execute(
-            select(tbl.knowledge_nodes).where(tbl.knowledge_nodes.c.game_state_id == game_state_id),
-        )
-        edges_stmt = select(tbl.knowledge_edges).where(
-            tbl.knowledge_edges.c.game_state_id == game_state_id,
-        )
-        edges = await self.session.execute(edges_stmt)
-        return {
-            "nodes": list(map(helpers._row_dict, nodes.mappings())),
-            "edges": list(map(helpers._row_dict, edges.mappings())),
-        }
+    async def get_npc_detail(self, session_id: str, npc_id: str) -> dict | None:
+        """Return one NPC's row plus its memory graph subset, or ``None``."""
+        return await repo_admin_npc.fetch_npc_detail(self.session, session_id, npc_id)

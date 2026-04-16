@@ -10,6 +10,10 @@
   a { color: #7c83ff; }
   .sidebar { width: 340px; background: #16213e; border-right: 1px solid #0f3460; overflow-y: auto; flex-shrink: 0; }
   .sidebar h2 { padding: 16px; font-size: 18px; border-bottom: 1px solid #0f3460; color: #e94560; }
+  .sidebar-search-wrap { padding: 10px 12px; border-bottom: 1px solid #0f3460; }
+  .sidebar-search { width: 100%; padding: 8px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 13px; }
+  .sidebar-search:focus { outline: none; border-color: #7c83ff; }
+  .session-id-short { color: #7c83ff; font-family: monospace; font-size: 11px; }
   .session-item { padding: 12px 16px; border-bottom: 1px solid #0f3460; cursor: pointer; transition: background 0.15s; }
   .session-item:hover { background: #0f3460; }
   .session-item.active { background: #0f3460; border-left: 3px solid #e94560; }
@@ -86,16 +90,72 @@
   .scene-info-table.open { display: table; }
   .scene-info-table th { text-align: left; padding: 4px 8px; color: #666; border-bottom: 1px solid #0f3460; font-size: 11px; }
   .scene-info-table td { padding: 4px 8px; border-bottom: 1px solid #0a1025; }
-  .npc-tag { display: inline-block; background: #2d1545; color: #b57cff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px 2px; }
+  .npc-tag { display: inline-block; background: #2d1545; color: #b57cff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px 2px; cursor: pointer; }
+  .npc-tag:hover { background: #3d2055; }
   .poi-tag { display: inline-block; background: #153525; color: #5bd58a; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px 2px; }
   .scene-desc { font-size: 12px; color: #888; margin-bottom: 12px; font-style: italic; }
   .scene-turns { padding-top: 4px; }
+
+  /* Structured LLM messages */
+  .msg-block { margin: 6px 0; border-left: 3px solid #0f3460; padding: 6px 10px; background: #0a0f1e; border-radius: 0 4px 4px 0; }
+  .msg-system { border-left-color: #d5c85b; }
+  .msg-user { border-left-color: #5bd58a; }
+  .msg-assistant { border-left-color: #b57cff; }
+  .msg-tool { border-left-color: #5bd5c8; }
+  .msg-role-badge { display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; color: #999; }
+  .msg-system .msg-role-badge { color: #d5c85b; }
+  .msg-user .msg-role-badge { color: #5bd58a; }
+  .msg-assistant .msg-role-badge { color: #b57cff; }
+  .msg-tool .msg-role-badge { color: #5bd5c8; }
+  .msg-block pre { background: transparent; padding: 0; color: #ddd; font-size: 12px; white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* JSON tree */
+  .json-tree { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; color: #ddd; }
+  .json-tree details { padding-left: 14px; }
+  .json-tree details > summary { cursor: pointer; list-style: none; margin-left: -14px; }
+  .json-tree details > summary::-webkit-details-marker { display: none; }
+  .json-tree details > summary::before { content: '▸ '; color: #666; }
+  .json-tree details[open] > summary::before { content: '▾ '; }
+  .json-key { color: #7c83ff; }
+  .json-str { color: #5bd58a; }
+  .json-num { color: #ffb347; }
+  .json-bool { color: #e94560; }
+  .json-null { color: #888; font-style: italic; }
+  .json-punct { color: #666; }
+
+  /* Per-turn chips */
+  .turn-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .dice-chip { display: inline-block; background: #1a2848; color: #7c83ff; padding: 3px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #0f3460; cursor: help; }
+  .dice-chip.dice-actor-win { background: #153525; color: #5bd58a; }
+  .dice-chip.dice-target-win { background: #4a1525; color: #e94560; }
+  .dice-chip.dice-aggr-attack { background: #4a1525; color: #e94560; }
+  .dice-chip.dice-aggr-calm { background: #2d3015; color: #d5c85b; }
+  .item-chip { display: inline-block; background: #453015; color: #ffb347; padding: 3px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #5a3a15; cursor: help; }
+  .object-chip { display: inline-block; background: #154540; color: #5bd5c8; padding: 3px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #1a5a54; cursor: help; }
+
+  /* NPC detail page */
+  .back-button { background: #0f3460; color: #7c83ff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-right: 12px; }
+  .back-button:hover { background: #16478b; }
+  .npc-detail-header { display: flex; align-items: center; margin-bottom: 16px; }
+  .npc-detail-header h2 { color: #e94560; }
+  .subtabs { display: flex; gap: 0; border-bottom: 2px solid #0f3460; margin-bottom: 16px; }
+  .subtab { padding: 6px 16px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #999; transition: all 0.15s; font-size: 13px; }
+  .subtab:hover { color: #fff; }
+  .subtab.active { color: #e94560; border-bottom-color: #e94560; }
+  .traits-chip { display: inline-block; background: #2d1545; color: #b57cff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px; }
+  .inv-chip { display: inline-block; background: #453015; color: #ffb347; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px; }
+  .view-link { color: #7c83ff; cursor: pointer; text-decoration: underline; }
+  .view-link:hover { color: #aab0ff; }
 </style>
 </head>
 <body>
 
 <div class="sidebar">
   <h2>Storyteller Sessions</h2>
+  <div class="sidebar-search-wrap">
+    <input id="session-search" class="sidebar-search" type="text"
+           placeholder="Search id / player…" oninput="onSearchInput()">
+  </div>
   <div id="session-list"></div>
 </div>
 
@@ -107,6 +167,20 @@
 const API = '';
 let currentSessionId = null;
 let currentTab = 'overview';
+let currentNpcId = null;
+let currentNpcTab = 'state';
+let searchDebounceTimer = null;
+const SEARCH_DEBOUNCE_MS = 250;
+
+function currentSearchTerm() {
+  const el = document.getElementById('session-search');
+  return el ? el.value.trim() : '';
+}
+
+function onSearchInput() {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => loadSessions(currentSearchTerm()), SEARCH_DEBOUNCE_MS);
+}
 
 function badgeClass(state) {
   if (state === 'playing') return 'badge-playing';
@@ -119,15 +193,22 @@ async function fetchJSON(url) {
   return res.json();
 }
 
-async function loadSessions() {
-  const data = await fetchJSON('/api/sessions');
+async function loadSessions(search) {
+  const term = (search ?? currentSearchTerm()).trim();
+  const qs = term ? '?search=' + encodeURIComponent(term) : '';
+  const data = await fetchJSON('/api/sessions' + qs);
   const list = document.getElementById('session-list');
-  list.innerHTML = data.sessions.map(s => `
+  list.innerHTML = data.sessions.map(s => {
+    const chatLabel = s.telegram_chat_id != null ? 'Chat ' + s.telegram_chat_id : 'Web';
+    const playerLabel = s.web_player_id ? ' | player ' + s.web_player_id.slice(0, 8) : '';
+    const idShort = (s.id || '').slice(0, 8);
+    return `
     <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
-      <div class="chat-id">Chat ${s.telegram_chat_id} <span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
+      <div class="chat-id">${chatLabel} <span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
+      <div class="meta"><span class="session-id-short">${idShort}</span>${playerLabel}</div>
       <div class="meta">${s.language} | Turn ${s.turn_count ?? 0} | ${s.game_time ?? '-'}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 async function selectSession(id) {
@@ -139,6 +220,16 @@ async function selectSession(id) {
 async function renderTab() {
   if (!currentSessionId) return;
   const main = document.getElementById('main');
+  if (currentTab === 'npc-detail') {
+    main.innerHTML = '<div id="tab-content"></div>';
+    const content = document.getElementById('tab-content');
+    try {
+      await renderNpcDetail(content);
+    } catch (e) {
+      content.innerHTML = `<div class="empty">Error loading NPC: ${e.message}</div>`;
+    }
+    return;
+  }
   const tabs = `<div class="tabs">
     ${['overview','npcs','locations','events','scenes','knowledge'].map(t =>
       `<div class="tab ${t === currentTab ? 'active' : ''}" onclick="switchTab('${t}')">${t}</div>`
@@ -159,6 +250,24 @@ async function renderTab() {
 }
 
 function switchTab(tab) { currentTab = tab; renderTab(); }
+
+function viewNPC(npcId) {
+  currentNpcId = npcId;
+  currentNpcTab = 'state';
+  currentTab = 'npc-detail';
+  renderTab();
+}
+
+function backToNpcs() {
+  currentNpcId = null;
+  currentTab = 'npcs';
+  renderTab();
+}
+
+function switchNpcTab(tab) {
+  currentNpcTab = tab;
+  renderTab();
+}
 
 async function renderOverview(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}`);
@@ -196,8 +305,8 @@ async function renderOverview(el) {
 async function renderNPCs(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/npcs`);
   if (!d.npcs.length) { el.innerHTML = '<div class="empty">No NPCs</div>'; return; }
-  el.innerHTML = `<table><tr><th>Name</th><th>Occupation</th><th>Mood</th><th>Status</th><th>Location</th><th>Inventory</th></tr>
-    ${d.npcs.map(n => `<tr><td>${n.name}</td><td>${n.occupation}</td><td>${n.current_mood}</td><td>${n.physical_status || 'healthy'}</td><td>${n.location_id || '-'}</td><td>${(n.inventory||[]).join(', ') || '-'}</td></tr>`).join('')}</table>`;
+  el.innerHTML = `<table><tr><th>Name</th><th>Occupation</th><th>Mood</th><th>Status</th><th>Location</th><th>Inventory</th><th>Actions</th></tr>
+    ${d.npcs.map(n => `<tr><td>${escapeHtml(n.name)}</td><td>${escapeHtml(n.occupation || '')}</td><td>${escapeHtml(n.current_mood || '')}</td><td>${escapeHtml(n.physical_status || 'healthy')}</td><td>${escapeHtml(n.location_id || '-')}</td><td>${(n.inventory||[]).map(escapeHtml).join(', ') || '-'}</td><td><span class="view-link" onclick="viewNPC('${n.id}')">View</span></td></tr>`).join('')}</table>`;
 }
 
 async function renderLocations(el) {
@@ -220,6 +329,63 @@ function escapeHtml(s) {
   return d.innerHTML;
 }
 
+function renderSystemPrompt(text) {
+  return `<details><summary><h4 style="display:inline">System Prompt</h4></summary>
+    <pre style="background:#0a0f1e;padding:8px;border-radius:4px;font-size:11px;color:#aaa;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto">${escapeHtml(text || '')}</pre>
+  </details>`;
+}
+
+function renderMessages(messages) {
+  if (!Array.isArray(messages) || !messages.length) {
+    return '<div class="empty">No messages</div>';
+  }
+  return messages.map(m => {
+    const role = (m.role || 'user').toString();
+    const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content, null, 2);
+    return `<div class="msg-block msg-${escapeHtml(role)}">
+      <div class="msg-role-badge">${escapeHtml(role)}</div>
+      <pre>${escapeHtml(content)}</pre>
+    </div>`;
+  }).join('');
+}
+
+function renderResponse(text) {
+  const raw = text || '';
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed !== null && typeof parsed === 'object') {
+      return `<div class="json-tree">${renderJsonTree(parsed, 0)}</div>`;
+    }
+  } catch (e) {
+    // not JSON — fall through to plain rendering
+  }
+  return `<pre style="background:#0a0f1e;padding:8px;border-radius:4px;font-size:12px;color:#ddd;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto">${escapeHtml(raw)}</pre>`;
+}
+
+const _JSON_MAX_DEPTH = 6;
+
+function renderJsonLeaf(val) {
+  if (val === null) return '<span class="json-null">null</span>';
+  if (typeof val === 'boolean') return `<span class="json-bool">${val}</span>`;
+  if (typeof val === 'number') return `<span class="json-num">${val}</span>`;
+  if (typeof val === 'string') return `<span class="json-str">${escapeHtml(JSON.stringify(val))}</span>`;
+  return `<span class="json-str">${escapeHtml(String(val))}</span>`;
+}
+
+function renderJsonTree(obj, depth) {
+  if (depth > _JSON_MAX_DEPTH) return '<span class="json-null">…</span>';
+  if (obj === null || typeof obj !== 'object') return renderJsonLeaf(obj);
+  if (Array.isArray(obj)) {
+    if (!obj.length) return '<span class="json-punct">[]</span>';
+    const items = obj.map((v, i) => `<div>${renderJsonTree(v, depth + 1)}${i < obj.length - 1 ? '<span class="json-punct">,</span>' : ''}</div>`).join('');
+    return `<details open><summary><span class="json-punct">[</span> <span class="json-num">${obj.length}</span> <span class="json-punct">]</span></summary>${items}</details>`;
+  }
+  const keys = Object.keys(obj);
+  if (!keys.length) return '<span class="json-punct">{}</span>';
+  const items = keys.map((k, i) => `<div><span class="json-key">${escapeHtml(JSON.stringify(k))}</span><span class="json-punct">: </span>${renderJsonTree(obj[k], depth + 1)}${i < keys.length - 1 ? '<span class="json-punct">,</span>' : ''}</div>`).join('');
+  return `<details open><summary><span class="json-punct">{</span> <span class="json-num">${keys.length}</span> <span class="json-punct">}</span></summary>${items}</details>`;
+}
+
 function renderSingleCall(c, turnNumber) {
   const tokens = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
   const tokenStr = tokens.length ? tokens.join('+') + ' tok' : '';
@@ -236,12 +402,11 @@ function renderSingleCall(c, turnNumber) {
       </div>
       <div class="ai-call-detail-toggle" onclick="toggleDetail('${uid}')">Show prompt &amp; response</div>
       <div class="ai-call-detail" id="${uid}">
-        <h4>System Prompt</h4>
-        <pre>${escapeHtml(c.system_prompt || '')}</pre>
+        ${renderSystemPrompt(c.system_prompt)}
         <h4>Messages Sent</h4>
-        <pre>${escapeHtml(JSON.stringify(c.messages, null, 2))}</pre>
+        ${renderMessages(c.messages)}
         <h4>Response</h4>
-        <pre>${escapeHtml(c.response_content || '')}</pre>
+        ${renderResponse(c.response_content)}
       </div>
     </div>`;
 }
@@ -301,11 +466,79 @@ function toggleScene(id) {
   if (el) el.classList.toggle('collapsed');
 }
 
+function _chipOutcomeClass(outcome) {
+  if (outcome === 'actor_succeeds' || outcome === 'actor_dominates') return 'dice-actor-win';
+  if (outcome === 'target_resists' || outcome === 'target_dominates') return 'dice-target-win';
+  return '';
+}
+
+function _diceContestChip(ev) {
+  const p = ev.payload || {};
+  const tooltip = `actor ${p.actor_roll ?? '?'}+${p.actor_bonus ?? 0} vs target ${p.target_roll ?? '?'}+${p.target_bonus ?? 0} (${p.contest_type || '?'})${p.description ? '\n' + p.description : ''}`;
+  const label = p.outcome || 'contest';
+  return `<span class="dice-chip ${_chipOutcomeClass(p.outcome)}" title="${escapeHtml(tooltip)}">🎲 ${escapeHtml(label)}</span>`;
+}
+
+function _diceAggressionChip(ev) {
+  const p = ev.payload || {};
+  const cls = p.will_attack ? 'dice-aggr-attack' : 'dice-aggr-calm';
+  const tip = `${p.mood || '?'} | d20 ${p.roll ?? '?'} vs threshold ${p.threshold ?? '?'} → ${p.will_attack ? 'attacks' : 'holds'}`;
+  return `<span class="dice-chip ${cls}" title="${escapeHtml(tip)}">⚔️ ${escapeHtml(p.mood || 'mood')}${p.will_attack ? ' → attacks' : ''}</span>`;
+}
+
+function _diceCombatChip(ev) {
+  const p = ev.payload || {};
+  const cls = _chipOutcomeClass(p.outcome);
+  const tip = `player ${p.player_roll ?? '?'} vs NPC ${p.npc_roll ?? '?'}+${p.npc_bonus ?? 0}${p.description ? '\n' + p.description : ''}`;
+  return `<span class="dice-chip ${cls}" title="${escapeHtml(tip)}">🎲 ${escapeHtml(p.outcome || 'combat')}</span>`;
+}
+
+function _itemListChips(ev) {
+  const expanded = (ev.payload && ev.payload.expanded) || [];
+  return expanded.map(it => `<span class="item-chip" title="${escapeHtml(it)}">📦 ${escapeHtml(it.length > 40 ? it.slice(0, 40) + '…' : it)}</span>`).join('');
+}
+
+function _itemExamineChip(ev) {
+  const p = ev.payload || {};
+  const tip = p.description || '';
+  return `<span class="item-chip" title="${escapeHtml(tip)}">🔍 ${escapeHtml(p.item_name || 'item')}</span>`;
+}
+
+function _objectInteractionChip(ev) {
+  const p = ev.payload || {};
+  const tip = `${p.narration || ''}${p.delta ? '\n\nΔ ' + p.delta : ''}`;
+  return `<span class="object-chip" title="${escapeHtml(tip)}">🛠️ ${escapeHtml(p.object_name || 'object')}</span>`;
+}
+
+function renderTurnChips(events, npcsById) {
+  if (!events || !events.length) return '';
+  const parts = [];
+  const seenNpcIds = new Set();
+  for (const ev of events) {
+    if (ev.event_type === 'dice_contest') parts.push(_diceContestChip(ev));
+    else if (ev.event_type === 'dice_aggression') parts.push(_diceAggressionChip(ev));
+    else if (ev.event_type === 'dice_combat') parts.push(_diceCombatChip(ev));
+    else if (ev.event_type === 'item_list') parts.push(_itemListChips(ev));
+    else if (ev.event_type === 'item_examine') parts.push(_itemExamineChip(ev));
+    else if (ev.event_type === 'object_interaction') parts.push(_objectInteractionChip(ev));
+    if (ev.npc_id && !seenNpcIds.has(ev.npc_id)) {
+      seenNpcIds.add(ev.npc_id);
+      const npc = npcsById && npcsById[ev.npc_id];
+      const name = npc ? npc.name : ev.npc_id.slice(0, 8);
+      parts.push(`<span class="npc-tag" onclick="viewNPC('${ev.npc_id}')">${escapeHtml(name)}</span>`);
+    }
+  }
+  const html = parts.filter(Boolean).join('');
+  return html ? `<div class="turn-chips">${html}</div>` : '';
+}
+
 async function renderScenes(el) {
-  const [convData, scenesData, aiData] = await Promise.all([
+  const [convData, scenesData, aiData, eventsData, npcsData] = await Promise.all([
     fetchJSON(`/api/sessions/${currentSessionId}/conversation`),
     fetchJSON(`/api/sessions/${currentSessionId}/scenes`),
     fetchJSON(`/api/sessions/${currentSessionId}/ai-calls`),
+    fetchJSON(`/api/sessions/${currentSessionId}/turn-events`),
+    fetchJSON(`/api/sessions/${currentSessionId}/npcs`),
   ]);
 
   const aiCalls = aiData.ai_calls || [];
@@ -314,6 +547,15 @@ async function renderScenes(el) {
     const key = call.turn_number != null ? call.turn_number : 'setup';
     (callsByTurn[key] = callsByTurn[key] || []).push(call);
   }
+
+  const eventsByTurn = {};
+  for (const ev of (eventsData.turn_events || [])) {
+    if (ev.turn_number == null) continue;
+    (eventsByTurn[ev.turn_number] = eventsByTurn[ev.turn_number] || []).push(ev);
+  }
+
+  const npcsById = {};
+  for (const n of (npcsData.npcs || [])) npcsById[n.id] = n;
 
   // Index scenes by scene_number
   const scenesByNum = {};
@@ -434,11 +676,13 @@ async function renderScenes(el) {
         <div class="ai-calls-container" id="${cid}">
           ${renderAiCallEntries(turnCalls, e.turn)}
         </div>` : '';
+      const chips = renderTurnChips(eventsByTurn[e.turn], npcsById);
       return `
         <div class="log-entry">
           <div class="turn-info">Turn ${e.turn} | ${e.game_clock?.toFixed(1) ?? '?'}h</div>
           <div class="action">&gt; ${escapeHtml(e.player_action)}</div>
           <div class="response">${escapeHtml(e.response)}</div>
+          ${chips}
           ${aiSection}
         </div>`;
     }).join('');
@@ -461,6 +705,144 @@ async function renderScenes(el) {
   el.innerHTML = html;
 }
 
+function _renderKvGrid(rows) {
+  return `<div class="kv">${rows.map(([label, val]) => `<div class="label">${escapeHtml(label)}</div><div>${val}</div>`).join('')}</div>`;
+}
+
+function _renderChipList(items, cls) {
+  if (!items || !items.length) return '<span style="color:#666">empty</span>';
+  return items.map(it => `<span class="${cls}">${escapeHtml(String(it))}</span>`).join('');
+}
+
+function _renderObjectKv(obj) {
+  const keys = Object.keys(obj || {});
+  if (!keys.length) return '<span style="color:#666">empty</span>';
+  return `<div class="kv">${keys.map(k => `<div class="label">${escapeHtml(k)}</div><div>${escapeHtml(String(obj[k]))}</div>`).join('')}</div>`;
+}
+
+function renderNpcStateTab(npc) {
+  const scalarCard = `<div class="card"><h3>State</h3>${_renderKvGrid([
+    ['Name', escapeHtml(npc.name || '')],
+    ['Occupation', escapeHtml(npc.occupation || '-')],
+    ['Mood', escapeHtml(npc.current_mood || '-')],
+    ['Physical Status', escapeHtml(npc.physical_status || 'healthy')],
+    ['Location', escapeHtml(npc.location_id || '-')],
+    ['Knowledge Scope', escapeHtml(npc.knowledge_scope || '-')],
+    ['Speech Style', escapeHtml(npc.speech_style || '-')],
+  ])}</div>`;
+  const attrsCard = `<div class="card"><h3>Attributes</h3>${_renderObjectKv(npc.attributes)}</div>`;
+  const invCard = `<div class="card"><h3>Inventory</h3>${_renderChipList(npc.inventory, 'inv-chip')}</div>`;
+  const traitsCard = `<div class="card"><h3>Personality Traits</h3>${_renderChipList(npc.personality_traits, 'traits-chip')}</div>`;
+  const relsCard = `<div class="card"><h3>Relationships</h3>${_renderObjectKv(npc.relationships)}</div>`;
+  const bioCard = `<div class="card"><h3>Biography</h3><pre style="white-space:pre-wrap;color:#ccc;font-size:13px">${escapeHtml(npc.biography || '-')}</pre></div>`;
+  const appCard = `<div class="card"><h3>Appearance</h3><pre style="white-space:pre-wrap;color:#ccc;font-size:13px">${escapeHtml(npc.appearance || '-')}</pre></div>`;
+  return scalarCard + attrsCard + invCard + traitsCard + relsCard + bioCard + appCard;
+}
+
+async function renderNpcHistoryTab(npcId) {
+  const [eventsData, aiData] = await Promise.all([
+    fetchJSON(`/api/sessions/${currentSessionId}/turn-events?npc_id=${encodeURIComponent(npcId)}`),
+    fetchJSON(`/api/sessions/${currentSessionId}/ai-calls`),
+  ]);
+  const events = eventsData.turn_events || [];
+  const aiCalls = aiData.ai_calls || [];
+
+  // Group events by turn
+  const evByTurn = {};
+  for (const ev of events) {
+    if (ev.turn_number == null) continue;
+    (evByTurn[ev.turn_number] = evByTurn[ev.turn_number] || []).push(ev);
+  }
+
+  // Only keep AI calls where the NPC's name appears in response or messages — best-effort
+  // Simpler: group calls per turn, so we show all calls for turns where the NPC acted.
+  const callsByTurn = {};
+  for (const c of aiCalls) {
+    const key = c.turn_number != null ? c.turn_number : 'setup';
+    (callsByTurn[key] = callsByTurn[key] || []).push(c);
+  }
+
+  const turns = Object.keys(evByTurn).map(Number).sort((a, b) => a - b);
+  if (!turns.length) return '<div class="empty">No recorded events for this NPC</div>';
+
+  const npcsById = { [npcId]: { name: '' } };
+  return turns.map(tn => {
+    const chips = renderTurnChips(evByTurn[tn], npcsById);
+    const turnCalls = callsByTurn[tn] || [];
+    const cid = 'npc-ai-' + tn + '-' + Math.random().toString(36).slice(2, 10);
+    const aiSection = turnCalls.length ? `
+      <div class="ai-calls-toggle" onclick="toggleAiCalls('${cid}')">
+        AI Calls (${turnCalls.length})
+      </div>
+      <div class="ai-calls-container" id="${cid}">
+        ${renderAiCallEntries(turnCalls, tn)}
+      </div>` : '';
+    return `<div class="log-entry">
+      <div class="turn-info">Turn ${tn}</div>
+      ${chips}
+      ${aiSection}
+    </div>`;
+  }).join('');
+}
+
+function renderNpcMemoryTab(nodes, edges) {
+  if (!nodes.length && !edges.length) {
+    return '<div class="empty">No memory edges for this NPC</div>';
+  }
+  const nodesById = {};
+  for (const n of nodes) nodesById[n.id] = n;
+  const nodesTable = nodes.length ? `<div class="card"><h3>Memory Nodes (${nodes.length})</h3>
+    <table><tr><th>Content</th><th>Scope</th><th>Source</th><th>Canon</th><th>Confidence</th><th>Tags</th><th>Time</th></tr>
+    ${nodes.map(n => `<tr>
+      <td>${escapeHtml((n.content || '').substring(0, 200))}${(n.content || '').length > 200 ? '…' : ''}</td>
+      <td>${escapeHtml(n.scope || '')}</td>
+      <td>${escapeHtml(n.source || '')}</td>
+      <td>${escapeHtml(n.canon || '')}</td>
+      <td>${n.confidence ?? '-'}</td>
+      <td>${(n.tags || []).map(escapeHtml).join(', ')}</td>
+      <td>${n.timestamp ?? '-'}</td>
+    </tr>`).join('')}
+    </table></div>` : '';
+  const edgesTable = edges.length ? `<div class="card"><h3>Edges (${edges.length})</h3>
+    <table><tr><th>Type</th><th>→ Target node (snippet)</th></tr>
+    ${edges.map(e => {
+      const target = nodesById[e.to_node_id];
+      const snippet = target ? (target.content || '').substring(0, 120) : e.to_node_id;
+      return `<tr><td>${escapeHtml(e.edge_type || '')}</td><td>${escapeHtml(snippet)}${target && (target.content || '').length > 120 ? '…' : ''}</td></tr>`;
+    }).join('')}
+    </table></div>` : '';
+  return nodesTable + edgesTable;
+}
+
+async function renderNpcDetail(el) {
+  const data = await fetchJSON(`/api/sessions/${currentSessionId}/npcs/${encodeURIComponent(currentNpcId)}`);
+  if (data.error) { el.innerHTML = `<div class="empty">${data.error}</div>`; return; }
+  const npc = data.npc;
+  const nodes = data.memory_nodes || [];
+  const edges = data.memory_edges || [];
+
+  const subtabs = ['state', 'history', 'memory'];
+  const header = `<div class="npc-detail-header">
+    <button class="back-button" onclick="backToNpcs()">← NPCs</button>
+    <h2>${escapeHtml(npc.name || 'NPC')}</h2>
+  </div>
+  <div class="subtabs">
+    ${subtabs.map(t => `<div class="subtab ${t === currentNpcTab ? 'active' : ''}" onclick="switchNpcTab('${t}')">${t}</div>`).join('')}
+  </div>
+  <div id="npc-subtab-content"></div>`;
+  el.innerHTML = header;
+
+  const content = document.getElementById('npc-subtab-content');
+  if (currentNpcTab === 'state') {
+    content.innerHTML = renderNpcStateTab(npc);
+  } else if (currentNpcTab === 'history') {
+    content.innerHTML = '<div class="empty">Loading…</div>';
+    content.innerHTML = await renderNpcHistoryTab(currentNpcId);
+  } else if (currentNpcTab === 'memory') {
+    content.innerHTML = renderNpcMemoryTab(nodes, edges);
+  }
+}
+
 async function renderKnowledge(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/knowledge`);
   const nodes = d.nodes || [];
@@ -475,9 +857,9 @@ async function renderKnowledge(el) {
   ${nodes.length > 100 ? `<div class="empty">Showing first 100 of ${nodes.length} nodes</div>` : ''}`;
 }
 
-// Auto-refresh session list every 5s
+// Auto-refresh session list every 5s (preserving the active search)
 loadSessions();
-setInterval(loadSessions, 5000);
+setInterval(() => loadSessions(currentSearchTerm()), 5000);
 </script>
 </body>
 </html>

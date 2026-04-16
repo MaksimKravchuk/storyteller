@@ -11,6 +11,7 @@ import random
 import types
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 
 _D20 = 20
@@ -274,3 +275,43 @@ def roll_combat(npc_combat_skill: int, _rng: random.Random | None = None) -> Com
         player_roll=contest.actor_roll,
         npc_bonus=npc_combat_skill,
     )
+
+
+# ---------------------------------------------------------------------------
+# Serialization helpers — produce JSON-safe dicts for the turn_events log.
+# Kept alongside the dataclasses so producers don't re-implement the mapping.
+# ---------------------------------------------------------------------------
+
+
+def contest_roll_to_dict(roll: ContestRoll) -> dict[str, Any]:
+    """Serialize a :class:`ContestRoll` to a JSON-safe dict."""
+    return {
+        "contest_type": roll.contest_type.value,
+        "outcome": roll.outcome.value,
+        "actor_roll": roll.actor_roll,
+        "target_roll": roll.target_roll,
+        "actor_bonus": roll.actor_bonus,
+        "target_bonus": roll.target_bonus,
+        "description": roll.description,
+    }
+
+
+def combat_roll_to_dict(roll: CombatRoll) -> dict[str, Any]:
+    """Serialize a (deprecated) :class:`CombatRoll` to a JSON-safe dict."""
+    return {
+        "outcome": roll.outcome.value,
+        "player_roll": roll.player_roll,
+        "npc_roll": roll.npc_roll,
+        "npc_bonus": roll.npc_bonus,
+        "description": roll.description,
+    }
+
+
+def aggression_roll_to_dict(roll: AggressionRoll) -> dict[str, Any]:
+    """Serialize an :class:`AggressionRoll` to a JSON-safe dict."""
+    return {
+        "will_attack": roll.will_attack,
+        "roll": roll.roll,
+        "threshold": roll.threshold,
+        "mood": roll.mood,
+    }

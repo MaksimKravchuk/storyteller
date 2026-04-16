@@ -15,9 +15,16 @@ from typing import Any
 
 from loguru import logger
 
-from cast.dice import CONTEST_SKILL_MAP, ContestRoll, ContestType, roll_contest
+from cast.dice import (
+    CONTEST_SKILL_MAP,
+    ContestRoll,
+    ContestType,
+    contest_roll_to_dict,
+    roll_contest,
+)
 from cast.director_witness import WitnessedAggression, is_guard_occupation
 from cast.wait_detection import INCAPACITATING_STATES
+from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
 # NPC action types that trigger a contest when targeting another character.
@@ -108,13 +115,35 @@ def _roll_npc_contest(
     actor_skill = npc.get_attribute(skill_pair[0], 0)
 
     if target_name.lower() == "player":
-        return roll_contest(contest_type, actor_skill, 0)
+        contest_roll = roll_contest(contest_type, actor_skill, 0)
+    else:
+        target_npc = _find_target_npc(target_name, game_state)
+        if target_npc is None:
+            logger.warning("NPC {} attempted {} against unknown target {!r}", npc.name, action_type, target_name)
+            return None
+        contest_roll = roll_contest(contest_type, actor_skill, target_npc.get_attribute(skill_pair[1], 0))
 
-    target_npc = _find_target_npc(target_name, game_state)
-    if target_npc is None:
-        logger.warning("NPC {} attempted {} against unknown target {!r}", npc.name, action_type, target_name)
-        return None
-    return roll_contest(contest_type, actor_skill, target_npc.get_attribute(skill_pair[1], 0))
+    _record_npc_contest_event(contest_roll, npc, action_type, target_name)
+    return contest_roll
+
+
+def _record_npc_contest_event(
+    contest_roll: ContestRoll,
+    npc: Any,
+    action_type: str,
+    target_name: str,
+) -> None:
+    """Emit a ``dice_contest`` turn event for an NPC-initiated contest."""
+    record_turn_event(
+        "dice_contest",
+        {
+            **contest_roll_to_dict(contest_roll),
+            "actor_npc_name": npc.name,
+            "action_type": action_type,
+            "target_name": target_name,
+        },
+        npc_id=getattr(npc, "uuid", None),
+    )
 
 
 def _apply_scene_mutation(

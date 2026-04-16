@@ -39,3 +39,11 @@ async def open_repo(request: web.Request) -> AsyncIterator[GameRepository]:
     db_factory = request.app["_db_factory"]
     async with get_db(db_factory) as db:
         yield GameRepository(db)
+
+
+@asynccontextmanager
+async def session_scope(request: web.Request) -> AsyncIterator[tuple[str, GameRepository]]:
+    """Yield ``(session_id, repo)`` — the request's session_id plus a fresh repo."""
+    session_id = request.match_info[_SESSION_ID_PARAM]
+    async with open_repo(request) as repo:
+        yield session_id, repo

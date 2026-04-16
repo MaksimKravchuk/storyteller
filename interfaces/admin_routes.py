@@ -19,6 +19,7 @@ def _session_list_filters(request: web.Request) -> dict:
         "offset": int(request.query.get("offset", _DEFAULT_OFFSET)),
         "web_player_id": request.query.get("web_player_id") or None,
         "telegram_chat_id": int(telegram_chat_id_raw) if telegram_chat_id_raw else None,
+        "search": request.query.get("search") or None,
     }
 
 

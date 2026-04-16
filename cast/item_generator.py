@@ -10,6 +10,7 @@ from cast.schemas.item_response import (
     ItemListResponse,
     ObjectInteractionResponse,
 )
+from llm.turn_event_logger import record_turn_event
 from prompts.item_generator_prompts import (
     ITEM_GENERATOR_BATCH,
     ITEM_GENERATOR_EXAMINE,
@@ -84,6 +85,14 @@ class ItemGenerator(BasePerformer):
         formatted_list = "\n".join("- {0}".format(entry) for entry in inventory)
         prompt = ITEM_GENERATOR_BATCH.render(owner_context=owner_context, item_list=formatted_list)
         response = await self._send_json(prompt, response_model=ItemListResponse)
+        record_turn_event(
+            "item_list",
+            {
+                "owner_context": owner_context,
+                "requested": list(inventory),
+                "expanded": list(response.expanded),
+            },
+        )
 
         expanded = response.expanded
         if len(expanded) != len(inventory):
@@ -101,6 +110,14 @@ class ItemGenerator(BasePerformer):
 
         prompt = ITEM_GENERATOR_EXAMINE.render(item_name=item_name, context_hint=context_hint)
         response = await self._send_json(prompt, response_model=ItemExamineResponse)
+        record_turn_event(
+            "item_examine",
+            {
+                "item_name": item_name,
+                "context_hint": context_hint,
+                "description": response.description,
+            },
+        )
         return response.description or item_name
 
     async def _interact_with_object(
