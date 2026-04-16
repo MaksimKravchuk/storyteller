@@ -100,5 +100,16 @@ NARRATOR_NARRATE_RU = PromptTemplate(
             ),
             required_vars=["wait_context_lines", "hours_waited"],
         ),
+        PromptSection(
+            name="turn_intent",
+            template=(
+                "Заявленное намерение игрока на этот ход: {turn_intent}. "
+                "Соблюди это намерение в повествовании. Если полученный сырой материал "
+                "противоречит намерению (например, игрок пытался переместиться, но сцена "
+                "не изменилась), явно признай это противоречие, а не делай вид, что "
+                "намерения не было."
+            ),
+            required_vars=["turn_intent"],
+        ),
     ]
 )

@@ -96,6 +96,11 @@ class TurnOutputs(BaseModel):
     by the Narrator — the guard reaction surfaces via ``npc_turns`` and
     the object outcome surfaces via ``object_interactions``, so a
     separate ``witnessed_events`` render path would duplicate both.
+
+    ``intent`` is the player's stated goal for the turn, surfaced by the
+    Director routing plan (KER-19). The Narrator honors it in narration
+    and explicitly acknowledges a contradiction when the raw material
+    drifts from the stated goal.
     """
 
     wait: bool = False
@@ -110,3 +115,4 @@ class TurnOutputs(BaseModel):
     npc_departures: list[str] = Field(default_factory=list)
     completed_events: list[str] = Field(default_factory=list)
     witnessed_events: list[WitnessedAggression] = Field(default_factory=list)
+    intent: str | None = None

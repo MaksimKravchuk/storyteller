@@ -158,7 +158,7 @@ class PlanExecutor:
         completed_events: list[GameEvent],
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
-        raw_outputs = turn_outputs.TurnOutputs()
+        raw_outputs = turn_outputs.TurnOutputs(intent=plan.get("intent"))
         action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
 
         local_events = await self._process_events(completed_events)
