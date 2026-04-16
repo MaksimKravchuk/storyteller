@@ -1,17 +1,4 @@
-"""Before/after :class:`GameState` snapshots for deterministic scoring.
-
-:class:`models.game_state.GameState` is a legacy dataclass (see
-``models/base_model.py``), so Pydantic's ``model_copy(deep=True)`` is
-unavailable. We fall back to :func:`copy.deepcopy`, which correctly
-handles the networkx-backed :class:`KnowledgeGraph` and nested Pydantic
-NPC cards without cross-turn aliasing.
-
-Snapshots are captured *before* the first player action and *after*
-each processed turn, producing a list of length ``len(script) + 1``.
-Deterministic element checks can therefore index ``snapshots[i]`` for
-state immediately after turn ``i`` and ``snapshots[0]`` for the pre-run
-baseline.
-"""
+"""Before/after :class:`GameState` snapshots for deterministic scoring."""
 
 from __future__ import annotations
 

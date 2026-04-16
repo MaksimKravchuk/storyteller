@@ -1,9 +1,4 @@
-"""Offline ``HEAD`` resolution for ``current_git_sha`` in :mod:`archive`.
-
-Reading ``.git/HEAD`` (and ``packed-refs``) directly keeps the benchmark
-harness from shelling out to ``git``, so archives still record a SHA in
-containers or tarballs where ``git`` is absent.
-"""
+"""Offline ``HEAD`` resolution — the harness does not shell out to ``git``."""
 
 from __future__ import annotations
 

@@ -9,14 +9,9 @@ if TYPE_CHECKING:
     from cast.schemas.turn_outputs import TurnOutputs
 
 
-@dataclass
+@dataclass(frozen=True)
 class CapturedTurn:
-    """Everything recorded for a single scenario turn.
-
-    ``turn_outputs`` is the structured payload handed to the Narrator
-    (and captured by wrapping the narrator's ``act`` method). ``narration``
-    is the final rendered text returned to the player.
-    """
+    """Everything recorded for a single scenario turn."""
 
     index: int
     player_action: str

@@ -1,22 +1,4 @@
-"""Seed state builder for the three-guardsman tavern scenario.
-
-* Setting: "Ancient Rome, 1st century AD" (reused — the scenario does
-  not actually depend on the setting, but we keep it consistent so the
-  witness panel receives a coherent scenario_brief).
-* Three NPCs — Aulus, Bassus, Cato — all registered with occupation
-  ``city guard`` and mood "neutral". Each gets a distinct name so the
-  scoring predicates can key off names rather than UUIDs, which matches
-  how the Director's dialogue routing resolves targets.
-* The scene's ``npcs_present`` links the three ``SceneNPC`` stubs to
-  their real ``NPCCard`` UUIDs so
-  :class:`cast.director_execution.PlanExecutor` recognises them as
-  initialised and routes npc_turns + dialogue correctly.
-
-The three NPCs all share the ``city guard`` occupation on purpose —
-that keyword triggers the :func:`cast.director_witness.is_guard_occupation`
-path and keeps the benchmark honest about the engine's existing
-proximity-witness wiring.
-"""
+"""Seed state builder for the three-guardsman tavern scenario."""
 
 from __future__ import annotations
 
@@ -31,6 +13,8 @@ from models.setting import Setting
 _AULUS_UUID = "npc-guard-aulus"
 _BASSUS_UUID = "npc-guard-bassus"
 _CATO_UUID = "npc-guard-cato"
+# Shared occupation keyword so ``cast.director_witness.is_guard_occupation``
+# recognises all three and the proximity-witness wiring kicks in.
 _CITY_GUARD_ROLE = "city guard"
 
 
@@ -44,14 +28,9 @@ def _make_setting() -> Setting:
 
 
 def _make_guard(uuid: str, name: str) -> NPCCard:
-    """Build one city-guard NPCCard pinned to a stable uuid.
-
-    Each guard shares the same occupation substring ``city guard`` so
-    the engine's guard-aware branches (``is_guard_occupation`` in
-    ``cast/director_witness.py``) recognise all three. ``combat_skill``
-    is bumped up so the contest rolls don't silently make the engine
-    one-shot the player and short-circuit bystander reactions.
-    """
+    """Build one city-guard NPCCard pinned to a stable uuid."""
+    # combat_skill=5 keeps contest rolls from one-shotting the player and
+    # short-circuiting bystander reactions the scenario is measuring.
     guard = NPCCard(
         name=name,
         biography="A tavern-posted legionary on watch duty, paid to keep the peace.",
@@ -124,6 +103,6 @@ def build_state() -> ScenarioState:
     game_state.locations[location.uuid] = location
     _register_guards(game_state, graph, location)
     game_state.current_scene = _make_scene(location.uuid)
-    game_state.game_clock = 20.5  # Early evening — matches scene's time_of_day.
+    game_state.game_clock = 20.5
     game_state.game_time = "evening"
     return ScenarioState(game_state=game_state, events=[])

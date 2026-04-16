@@ -1,23 +1,4 @@
-"""End-to-end scenario runner — builds the engine, drives turns, scores.
-
-The runner is the top-level orchestration layer. Given a :class:`Scenario`
-definition and a :class:`RunOptions`, it:
-
-1. Calls ``scenario.build_state()`` to obtain a pre-seeded
-   :class:`GameState` + :class:`KnowledgeGraph` + event list.
-2. Hands them to :func:`engine.factory.create_engine_from_state` so the
-   engine wires the Director + all agents without running DataMiner.
-3. Installs a :class:`NarratorCapture` on the engine's narrator.
-4. Snapshots GameState, calls ``process_action`` for each scripted
-   player turn, pops the captured :class:`TurnOutputs`, snapshots
-   again.
-5. Runs :func:`score_scenario` against the captured signals + the
-   provided panel.
-6. Returns a :class:`ScenarioReport` ready to be archived.
-
-Execution internals live in :mod:`benchmarks.harness._run_execution`
-so this module stays below WPS's module-member budget.
-"""
+"""End-to-end scenario runner — builds the engine, drives turns, scores."""
 
 from __future__ import annotations
 
@@ -32,12 +13,7 @@ from config import Config
 
 @dataclass(frozen=True)
 class RunOptions:
-    """Knobs for one :func:`run_scenario_once` invocation.
-
-    Bundled into a single object so the top-level API stays within WPS's
-    five-argument budget and so future options (timeouts, retry counts,
-    judge temperature) can be added without re-threading signatures.
-    """
+    """Knobs for one :func:`run_scenario_once` invocation."""
 
     cfg: Config
     iteration: int = 0
@@ -47,13 +23,7 @@ class RunOptions:
 
 
 async def run_scenario_once(scenario: Scenario, *, options: RunOptions) -> ScenarioReport:
-    """Run one iteration of ``scenario`` and return a scored report.
-
-    Separate iterations of the same scenario are independent — the
-    :class:`GameState` is rebuilt from scratch via
-    ``scenario.build_state()`` on every call so LLM non-determinism is
-    the only source of variance between iterations.
-    """
+    """Run one iteration of ``scenario`` and return a scored report."""
     assembly = assemble_panel(
         options.cfg,
         overrides=options.panel_overrides,

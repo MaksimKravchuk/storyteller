@@ -1,15 +1,4 @@
-"""Scripted player actions for the autonomy / confrontation scenario.
-
-Turn 0 ("look around") gives the Director a chance to land on a pure
-observation routing so every NPC present is initialised / recognised
-before the punch lands on turn 1.
-
-Turn 1 is the trigger — "punch Aulus in the face" — which should route
-as an aggressive INTERACT targeting the Aulus :class:`NPCCard`. This
-produces a combat contest roll on Aulus's dialogue entry and invokes
-the NPC-turn resolver for Bassus and Cato, whose bystander actions are
-the core signal of this scenario.
-"""
+"""Scripted player actions for the autonomy / confrontation scenario."""
 
 from __future__ import annotations
 

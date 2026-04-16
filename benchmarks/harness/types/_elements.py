@@ -11,19 +11,13 @@ if TYPE_CHECKING:
 
 
 ElementKind = Literal["deterministic", "evidence_llm"]
+KIND_DETERMINISTIC: ElementKind = "deterministic"
+KIND_EVIDENCE_LLM: ElementKind = "evidence_llm"
 
 
 @dataclass(frozen=True)
 class EvidencePromptSpec:
-    """Declarative spec for an evidence-LLM element.
-
-    ``scenario_brief`` is the short framing passed to every judge (so the
-    judge knows what the session is about without receiving the whole
-    transcript). ``question`` is the single yes/no-with-quote query the
-    judge must answer. ``evidence_turn`` pins which captured turn's
-    narration + dialogue the quote has to come from; when ``None``, the
-    harness concatenates all recorded turns.
-    """
+    """Yes/no-with-quote prompt for one evidence-LLM element."""
 
     scenario_brief: str
     question: str
@@ -38,29 +32,28 @@ class DeterministicResult:
     reason: str
     evidence_quote: str | None = None
 
+    def __post_init__(self) -> None:
+        if self.awarded < 0:
+            raise ValueError("DeterministicResult.awarded must be non-negative, got {0}".format(self.awarded))
 
-# Signature of a deterministic element predicate. Receives the captured
-# turn record list and the ordered GameState snapshots (one before
-# turn 0 plus one after each turn) and returns a :class:`DeterministicResult`.
+
 DeterministicCheck = Callable[["list[CapturedTurn]", "list[GameState]"], DeterministicResult]
 
 
 @dataclass(frozen=True)
 class Element:
-    """One scored item inside a scenario.
-
-    ``base_value`` is the maximum points the element can contribute to
-    the scenario score. ``kind`` selects the scoring backend:
-
-    * ``deterministic`` — ``check`` must be a :data:`DeterministicCheck`
-      callable; it is evaluated locally without any LLM call.
-    * ``evidence_llm`` — ``check`` must be an :class:`EvidencePromptSpec`;
-      the harness fans it out to every judge in the witness panel and
-      aggregates proportional credit from the valid-YES count.
-    """
+    """One scored item inside a scenario."""
 
     id: str
     label: str
     base_value: int
     kind: ElementKind
     check: DeterministicCheck | EvidencePromptSpec
+
+    def __post_init__(self) -> None:
+        if self.base_value <= 0:
+            raise ValueError("Element {0!r} base_value must be positive, got {1}".format(self.id, self.base_value))
+        if self.kind == KIND_DETERMINISTIC and not callable(self.check):
+            raise TypeError("Deterministic element {0!r} must provide a callable check".format(self.id))
+        if self.kind == KIND_EVIDENCE_LLM and not isinstance(self.check, EvidencePromptSpec):
+            raise TypeError("Evidence-LLM element {0!r} must provide an EvidencePromptSpec".format(self.id))

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ def _parse_timestamp(started_at: str) -> str:
     try:
         started = datetime.fromisoformat(started_at)
     except ValueError:
-        started = datetime.utcnow()
+        started = datetime.now(timezone.utc)
     return started.strftime(_TIMESTAMP_FORMAT)
 
 

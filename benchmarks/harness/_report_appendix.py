@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from benchmarks.harness._report_text import truncate_quote
+from benchmarks.harness.types._elements import KIND_EVIDENCE_LLM
 
 if TYPE_CHECKING:
     from benchmarks.harness.types._scores import ElementScore, JudgeVote
 
 _APPENDIX_QUOTE_LIMIT = 240
-_EVIDENCE_KIND = "evidence_llm"
 _NO_REASONING_PLACEHOLDER = "(no reasoning)"
 
 
@@ -52,7 +52,7 @@ def _element_section(score: ElementScore) -> list[str]:
 
 def render_appendix(scores: list[ElementScore]) -> list[str]:
     """Render a per-element judge vote appendix when any panel data exists."""
-    evidence_scores = [score for score in scores if score.kind == _EVIDENCE_KIND]
+    evidence_scores = [score for score in scores if score.kind == KIND_EVIDENCE_LLM]
     if not evidence_scores:
         return []
     lines = ["## Witness appendix"]

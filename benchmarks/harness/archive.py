@@ -1,13 +1,4 @@
-"""Write scenario reports to ``benchmarks/results/`` with reproducibility meta.
-
-Each run produces two files with the same stem:
-``<timestamp>_<git-sha>_<scenario>_<iter>.{json,md}``. The JSON is the
-machine-readable artefact (consumed by the ``compare`` subcommand); the
-markdown is what a reviewer opens in a PR.
-
-The directory is resolved relative to the repository root so the archive
-layout is stable across ``uv run`` invocations from any subdirectory.
-"""
+"""Write scenario reports to ``benchmarks/results/`` with reproducibility meta."""
 
 from __future__ import annotations
 
@@ -47,12 +38,7 @@ def write_report(report: ScenarioReport) -> tuple[Path, Path]:
 
 
 def current_git_sha() -> str:
-    """Read ``HEAD`` without shelling out, so the harness runs offline.
-
-    Falls back to the empty string when we are not inside a working
-    tree with a readable ``HEAD`` (tarballs, containers with a stripped
-    ``.git``, etc.) — the sha is metadata, not a hard requirement.
-    """
+    """Read ``HEAD`` without shelling out. Empty string when unavailable."""
     head_file = Path(__file__).resolve().parent.parent.parent / ".git" / "HEAD"
     if not head_file.is_file():
         return ""

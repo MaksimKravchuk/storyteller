@@ -1,18 +1,12 @@
-"""Evidence-citing LLM judges for benchmark scoring.
-
-Each judge model answers a narrow yes/no question against captured turn
-text and is required to cite a verbatim quote. Quotes are normalised
-(lowercase, whitespace collapsed) and checked as substrings of the
-original material; hallucinated quotes flip a vote to NO regardless of
-the stated verdict. This is what lets us treat a 6-model panel as a
-reliable witness majority instead of a vibes average.
-"""
+"""Evidence-citing LLM judges for benchmark scoring."""
 
 from __future__ import annotations
 
 import json
 import time
 from dataclasses import dataclass
+
+from loguru import logger
 
 from benchmarks.harness._judge_vote import (
     _build_vote_from_payload,
@@ -88,6 +82,18 @@ async def _send_judge_prompt(
     return response.body
 
 
+def _log_judge_failure(member: PanelMember, stage: str, exc: BaseException) -> None:
+    """Emit a warning log identifying which judge failed and why."""
+    logger.warning(
+        "Benchmark judge {provider}/{model} failed during {stage}: {err_type}: {err}",
+        provider=member.provider,
+        model=member.model_id,
+        stage=stage,
+        err_type=type(exc).__name__,
+        err=str(exc),
+    )
+
+
 async def run_judge(
     member: PanelMember,
     call: JudgeCall,
@@ -95,22 +101,19 @@ async def run_judge(
     cfg: Config,
     temperature: float = _JUDGE_TEMPERATURE,
 ) -> JudgeVote:
-    """Dispatch one judge call and return its vote.
-
-    Errors (network, decode, missing quote field) surface as an
-    ``ERROR`` vote with the exception text so aggregate scoring can
-    treat them as abstentions rather than crashing the whole run.
-    """
+    """Dispatch one judge call and return its vote."""
     start = time.monotonic()
     try:
         body = await _send_judge_prompt(member, call, cfg, temperature)
-    except Exception as exc:
-        return _error_vote(member, _elapsed_ms(start), str(exc))
+    except Exception as send_exc:
+        _log_judge_failure(member, "send", send_exc)
+        return _error_vote(member, _elapsed_ms(start), "send error: {0}".format(send_exc))
     latency_ms = _elapsed_ms(start)
     try:
         payload = _parse_vote_payload(body)
-    except (ValueError, json.JSONDecodeError) as exc:
-        return _error_vote(member, latency_ms, "parse error: {0}".format(exc))
+    except (ValueError, json.JSONDecodeError) as parse_exc:
+        _log_judge_failure(member, "parse", parse_exc)
+        return _error_vote(member, latency_ms, "parse error: {0}".format(parse_exc))
     return _build_vote_from_payload(
         member.model_id,
         member.provider,

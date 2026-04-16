@@ -3,18 +3,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Literal
 
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import ElementKind
 
+JudgeVerdict = Literal["YES", "NO", "ERROR"]
+MajorityVerdict = Literal["YES", "NO", "SPLIT", "PANEL_COLLAPSED"]
 
-@dataclass
+
+@dataclass(frozen=True)
 class JudgeVote:
     """One judge's verdict on one evidence-LLM element."""
 
     model_id: str
     provider: str
-    verdict: str  # "YES" | "NO" | "ERROR"
+    verdict: JudgeVerdict
     reasoning: str
     quote: str
     quote_verified: bool
@@ -22,7 +26,7 @@ class JudgeVote:
     error: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ElementScore:
     """Per-element scoring result, union-shaped across the two kinds."""
 
@@ -31,17 +35,15 @@ class ElementScore:
     kind: ElementKind
     base_value: int
     awarded: int
-    # Deterministic fields
     reason: str | None = None
     evidence_quote: str | None = None
-    # Evidence-LLM fields
     votes: list[JudgeVote] = field(default_factory=list)
     k_yes: int = 0
     n_total: int = 0
-    majority_verdict: str | None = None
+    majority_verdict: MajorityVerdict | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class PanelMember:
     """One model assigned to the judge panel for a run."""
 
@@ -49,7 +51,17 @@ class PanelMember:
     model_id: str
 
 
-@dataclass
+@dataclass(frozen=True)
+class SkippedCandidate:
+    """A roster entry that did not make it onto the panel, with reason."""
+
+    alias: str
+    provider: str
+    model_id: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class ScenarioReport:
     """End-to-end result of one scenario iteration."""
 
@@ -61,7 +73,7 @@ class ScenarioReport:
     element_scores: list[ElementScore]
     captured_turns: list[CapturedTurn]
     panel: list[PanelMember]
-    skipped_panel_candidates: list[dict]
+    skipped_panel_candidates: list[SkippedCandidate]
     engine_git_sha: str
     engine_models: dict[str, str]
     started_at: str

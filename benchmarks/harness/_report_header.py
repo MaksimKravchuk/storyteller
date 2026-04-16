@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from benchmarks.harness.types._scores import ScenarioReport
+    from benchmarks.harness.types._scores import ScenarioReport, SkippedCandidate
 
 _SMALL_PANEL_WARNING_THRESHOLD = 3
 _EMPTY_PANEL_LABEL = "(empty panel)"
@@ -25,12 +25,9 @@ def _warning_suffix(panel_size: int) -> str:
     return ""
 
 
-def _skip_line(skip: dict) -> str:
+def _skip_line(skip: SkippedCandidate) -> str:
     """Format one skipped roster entry as a bullet."""
-    model_id = skip["model_id"]
-    provider = skip["provider"]
-    reason = skip["reason"]
-    return "- `{0}` ({1}): {2}".format(model_id, provider, reason)
+    return "- `{0}` ({1}): {2}".format(skip.model_id, skip.provider, skip.reason)
 
 
 def _base_header(report: ScenarioReport) -> list[str]:

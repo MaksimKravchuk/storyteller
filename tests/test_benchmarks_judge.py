@@ -1,18 +1,15 @@
-"""Unit tests for :mod:`benchmarks.harness.judge` — quote + verdict logic.
-
-The network-facing :func:`run_judge` wrapper is not exercised here; only
-the pure helpers that parse payloads, normalise quotes, and coerce
-verdicts — that is where the interesting behaviour lives.
-"""
+"""Unit tests for :mod:`benchmarks.harness.judge` — quote + verdict logic."""
 
 from __future__ import annotations
+
+from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
 
 from benchmarks.harness._judge_text import (
-    _QUOTE_MATCH_MIN_CHARS,
-    _quote_matches,
+    QUOTE_MATCH_MIN_CHARS,
+    quote_matches,
     turn_text_for_spec,
 )
 from benchmarks.harness._judge_vote import (
@@ -20,9 +17,12 @@ from benchmarks.harness._judge_vote import (
     _coerce_verdict,
     _parse_vote_payload,
 )
+from benchmarks.harness.judge import JudgeCall, run_judge
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import EvidencePromptSpec
+from benchmarks.harness.types._scores import PanelMember
 from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry, TurnOutputs
+from config import Config
 
 
 def _turn(index: int, player_action: str, narration: str, outputs: TurnOutputs) -> CapturedTurn:
@@ -40,37 +40,44 @@ def _turn(index: int, player_action: str, narration: str, outputs: TurnOutputs) 
 @allure.feature("Benchmark harness")
 class TestQuoteMatching:
     @allure.story("Quote verification")
-    @allure.title("_quote_matches rejects empty quotes so YES with no citation never scores")
+    @allure.title("quote_matches rejects empty quotes so YES with no citation never scores")
     def test_empty_quote_rejected(self):
-        assert not _quote_matches("", "anything at all in the turn text")
+        assert not quote_matches("", "anything at all in the turn text")
 
     @allure.story("Quote verification")
-    @allure.title("_quote_matches rejects trivially short quotes below the minimum character budget")
+    @allure.title("quote_matches rejects trivially short quotes below the minimum character budget")
     def test_short_quote_rejected(self):
-        short = "x" * (_QUOTE_MATCH_MIN_CHARS - 1)
+        short = "x" * (QUOTE_MATCH_MIN_CHARS - 1)
 
-        assert not _quote_matches(short, "{0} and more content".format(short))
+        assert not quote_matches(short, "{0} and more content".format(short))
 
     @allure.story("Quote verification")
-    @allure.title("_quote_matches accepts a verbatim substring of the turn text")
+    @allure.title("quote_matches accepts a verbatim substring of the turn text")
     def test_verbatim_substring_accepted(self):
         turn_text = "Marcus leans on his stall and mutters about the stolen wheat loaf."
 
-        assert _quote_matches("stolen wheat loaf", turn_text)
+        assert quote_matches("stolen wheat loaf", turn_text)
 
     @allure.story("Quote verification")
-    @allure.title("_quote_matches is case-insensitive and forgives whitespace collapsing")
+    @allure.title("quote_matches is case-insensitive and forgives whitespace collapsing")
     def test_normalisation_forgives_case_and_whitespace(self):
         turn_text = "Marcus\tleans on his stall."
 
-        assert _quote_matches("leans ON  his STALL", turn_text)
+        assert quote_matches("leans ON  his STALL", turn_text)
 
     @allure.story("Quote verification")
-    @allure.title("_quote_matches rejects a quote that does not appear in the turn text")
+    @allure.title("quote_matches normalises newlines and leading/trailing whitespace in the quote")
+    def test_normalisation_handles_newlines_and_surrounding_whitespace(self):
+        turn_text = "Marcus leans on his stall."
+
+        assert quote_matches("  leans\non\nhis stall  ", turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches rejects a quote that does not appear in the turn text")
     def test_hallucinated_quote_rejected(self):
         turn_text = "Marcus scowls and changes the subject."
 
-        assert not _quote_matches("I suspect Gaius!", turn_text)
+        assert not quote_matches("I suspect Gaius!", turn_text)
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -84,18 +91,24 @@ class TestVerdictCoercion:
         assert _coerce_verdict("Yes") == "YES"
 
     @allure.story("Verdict parsing")
-    @allure.title("_coerce_verdict collapses every non-YES string to NO so fence-sitters do not score")
-    def test_non_yes_becomes_no(self):
+    @allure.title("_coerce_verdict preserves NO verdicts regardless of whitespace or case")
+    def test_no_preserved(self):
         assert _coerce_verdict("NO") == "NO"
-        assert _coerce_verdict("maybe") == "NO"
-        assert _coerce_verdict("") == "NO"
+        assert _coerce_verdict(" no ") == "NO"
 
     @allure.story("Verdict parsing")
-    @allure.title("_coerce_verdict returns NO when passed a non-string verdict (None, numbers, dicts)")
-    def test_non_string_returns_no(self):
-        assert _coerce_verdict(None) == "NO"
-        assert _coerce_verdict(42) == "NO"
-        assert _coerce_verdict({"verdict": "YES"}) == "NO"
+    @allure.title("_coerce_verdict returns None for off-menu strings so they surface as ERROR abstentions")
+    def test_off_menu_string_returns_none(self):
+        assert _coerce_verdict("maybe") is None
+        assert _coerce_verdict("") is None
+        assert _coerce_verdict("yes, but") is None
+
+    @allure.story("Verdict parsing")
+    @allure.title("_coerce_verdict returns None for non-string verdicts (numbers, dicts, None)")
+    def test_non_string_returns_none(self):
+        assert _coerce_verdict(None) is None
+        assert _coerce_verdict(42) is None
+        assert _coerce_verdict({"verdict": "YES"}) is None
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -164,6 +177,17 @@ class TestVoteConstruction:
         assert "quote not found" in vote.reasoning
 
     @allure.story("Vote construction")
+    @allure.title("_build_vote_from_payload downgrades YES to NO when the cited quote is too short to verify")
+    def test_yes_with_short_quote_becomes_no(self):
+        turn_text = "Marcus cheats."
+        payload = {"verdict": "YES", "reasoning": "brief", "quote": "he"}
+
+        vote = _build_vote_from_payload("opus", "anthropic", payload, turn_text, latency_ms=10)
+
+        assert vote.verdict == "NO"
+        assert vote.quote_verified is False
+
+    @allure.story("Vote construction")
     @allure.title("_build_vote_from_payload preserves NO verdicts unchanged regardless of quote validity")
     def test_no_verdict_preserved(self):
         turn_text = "Marcus is silent."
@@ -177,6 +201,26 @@ class TestVoteConstruction:
 
         assert vote.verdict == "NO"
         assert vote.quote_verified is False
+
+    @allure.story("Vote construction")
+    @allure.title("_build_vote_from_payload surfaces malformed verdicts as ERROR rather than silently scoring them NO")
+    def test_malformed_verdict_becomes_error(self):
+        payload = {"verdict": "MAYBE", "reasoning": "hedging", "quote": ""}
+
+        vote = _build_vote_from_payload("opus", "anthropic", payload, "any text", latency_ms=7)
+
+        assert vote.verdict == "ERROR"
+        assert vote.error == "malformed verdict"
+
+    @allure.story("Vote construction")
+    @allure.title("_build_vote_from_payload coerces non-string reasoning/quote fields to empty strings")
+    def test_non_string_reasoning_and_quote_coerced(self):
+        payload: dict = {"verdict": "NO", "reasoning": None, "quote": 42}
+
+        vote = _build_vote_from_payload("opus", "anthropic", payload, "any text", latency_ms=7)
+
+        assert vote.reasoning == ""
+        assert vote.quote == "42"
 
 
 def _captured_turn_pair() -> list[CapturedTurn]:
@@ -247,3 +291,77 @@ class TestTurnTextExcerpt:
         assert "Marcus says" in text
         assert "[IDLE]" in text
         assert "NARRATION: Marcus recalls the theft." in text
+
+    @allure.story("Turn text excerpt")
+    @allure.title("turn_text_for_spec truncates excerpts beyond the budget with a visible marker")
+    def test_excerpt_truncated_for_huge_turns(self):
+        huge_narration = "x" * 8000
+        huge = TurnOutputs(dialogue=[])
+        turn = _turn(0, "look", huge_narration, huge)
+        spec = EvidencePromptSpec(scenario_brief="b", question="q", evidence_turn=0)
+
+        text = turn_text_for_spec(spec, [turn])
+
+        assert len(text) < len(huge_narration) + 200
+        assert "excerpt truncated" in text
+
+
+def _panel_member() -> PanelMember:
+    return PanelMember(provider="openai", model_id="gpt-5.4-mini")
+
+
+def _judge_call(turn_text: str = "a long turn text with the stolen wheat loaf in it") -> JudgeCall:
+    spec = EvidencePromptSpec(scenario_brief="b", question="q", evidence_turn=0)
+    return JudgeCall(spec=spec, turn_text=turn_text)
+
+
+def _cfg() -> Config:
+    return Config(openai_api_key="sk-test", anthropic_api_key=None)
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Benchmark harness")
+class TestRunJudge:
+    @allure.story("Judge dispatch")
+    @allure.title("run_judge returns a parsed JudgeVote for a well-formed LLM response")
+    @pytest.mark.asyncio
+    async def test_happy_path_returns_vote(self):
+        body = '{"verdict": "YES", "reasoning": "cited", "quote": "stolen wheat loaf"}'
+        with patch(
+            "benchmarks.harness.judge._send_judge_prompt",
+            new=AsyncMock(return_value=body),
+        ):
+            vote = await run_judge(_panel_member(), _judge_call(), cfg=_cfg())
+
+        assert vote.verdict == "YES"
+        assert vote.quote == "stolen wheat loaf"
+        assert vote.error is None
+
+    @allure.story("Judge dispatch")
+    @allure.title("run_judge surfaces LLM send failures as ERROR votes tagged with a send-error reason")
+    @pytest.mark.asyncio
+    async def test_send_failure_becomes_error_vote(self):
+        with patch(
+            "benchmarks.harness.judge._send_judge_prompt",
+            new=AsyncMock(side_effect=RuntimeError("connection refused")),
+        ):
+            vote = await run_judge(_panel_member(), _judge_call(), cfg=_cfg())
+
+        assert vote.verdict == "ERROR"
+        assert vote.error is not None
+        assert "send error" in vote.error
+        assert "connection refused" in vote.error
+
+    @allure.story("Judge dispatch")
+    @allure.title("run_judge surfaces unparseable bodies as ERROR votes tagged with a parse-error reason")
+    @pytest.mark.asyncio
+    async def test_parse_failure_becomes_error_vote(self):
+        with patch(
+            "benchmarks.harness.judge._send_judge_prompt",
+            new=AsyncMock(return_value="nothing structured here"),
+        ):
+            vote = await run_judge(_panel_member(), _judge_call(), cfg=_cfg())
+
+        assert vote.verdict == "ERROR"
+        assert vote.error is not None
+        assert "parse error" in vote.error

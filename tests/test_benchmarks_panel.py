@@ -16,12 +16,7 @@ from config import Config
 
 
 def _cfg_with_keys(*, openai: str | None, anthropic: str | None) -> Config:
-    """Build a minimal :class:`Config` with only the api-key fields set.
-
-    pydantic-settings would otherwise pick up real values from the
-    process environment, so we override both keys explicitly on every
-    call.
-    """
+    """Build a :class:`Config` with only the api-key fields set explicitly."""
     return Config(openai_api_key=openai, anthropic_api_key=anthropic)
 
 
@@ -35,7 +30,6 @@ class TestPanelAssembly:
 
         assert len(assembly.members) == DEFAULT_MAX_JUDGES
         assert not assembly.skipped
-        # Panel mirrors the roster ordering one-for-one.
         for member, candidate in zip(assembly.members, DEFAULT_ROSTER):
             assert member.provider == candidate.config.provider
             assert member.model_id == candidate.config.model_id
@@ -46,9 +40,9 @@ class TestPanelAssembly:
         assembly = assemble_panel(_cfg_with_keys(openai="sk-x", anthropic=None))
 
         assert all(m.provider == "openai" for m in assembly.members)
-        skipped_providers = {skip["provider"] for skip in assembly.skipped}
+        skipped_providers = {skip.provider for skip in assembly.skipped}
         assert skipped_providers == {"anthropic"}
-        assert all(skip["reason"] == "no anthropic api key" for skip in assembly.skipped)
+        assert all(skip.reason == "no anthropic api key" for skip in assembly.skipped)
 
     @allure.story("Key-based filtering")
     @allure.title("assemble_panel drops openai candidates and records a skip reason when no openai key is set")
@@ -56,7 +50,7 @@ class TestPanelAssembly:
         assembly = assemble_panel(_cfg_with_keys(openai=None, anthropic="sk-y"))
 
         assert all(m.provider == "anthropic" for m in assembly.members)
-        skipped_providers = {skip["provider"] for skip in assembly.skipped}
+        skipped_providers = {skip.provider for skip in assembly.skipped}
         assert skipped_providers == {"openai"}
 
     @allure.story("Key-based filtering")
@@ -76,8 +70,7 @@ class TestPanelAssembly:
         )
 
         assert len(assembly.members) == 2
-        # Remaining roster entries are recorded with the cap reason.
-        reasons = {skip["reason"] for skip in assembly.skipped}
+        reasons = {skip.reason for skip in assembly.skipped}
         assert reasons == {"panel cap reached (max_judges=2)"}
         assert len(assembly.skipped) == len(DEFAULT_ROSTER) - 2
 
@@ -133,5 +126,4 @@ class TestPanelOverrides:
 
         assert len(assembly.members) == 1
         assert assembly.members[0].model_id == "gpt-5.4-max"
-        # Opus is skipped because no anthropic key is set.
-        assert any(skip["alias"] == "opus" for skip in assembly.skipped)
+        assert any(skip.alias == "opus" for skip in assembly.skipped)

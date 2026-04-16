@@ -1,10 +1,4 @@
-"""Scenario registry — maps scenario ids to :class:`Scenario` definitions.
-
-Adding a scenario: create a package under ``benchmarks/scenarios/`` with
-``state.py``, ``script.py``, and ``elements.py`` modules, expose a
-``SCENARIO`` binding on its ``__init__.py``, and append the import to
-:data:`ALL_SCENARIOS` below.
-"""
+"""Scenario registry — maps scenario ids to :class:`Scenario` definitions."""
 
 from __future__ import annotations
 

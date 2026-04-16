@@ -1,23 +1,10 @@
-"""Judge panel assembly — selects witness models from available API keys.
-
-The benchmark harness scores every evidence-LLM element with a panel of
-distinct LLMs ("witnesses") rather than a single grader. The panel is
-drawn from a curated roster in :data:`DEFAULT_ROSTER`; each candidate is
-kept only if its provider has an API key available in the supplied
-:class:`Config`. The ordering of :data:`DEFAULT_ROSTER` is the natural
-order the panel should fill — starting with the most capable models —
-and the panel size is capped at :data:`DEFAULT_MAX_JUDGES`.
-
-The panel is identical across elements in a run, which keeps per-element
-scores comparable. The full panel (plus the reason any roster candidate
-was skipped) is recorded in the run artefact.
-"""
+"""Judge panel assembly — selects witness models from available API keys."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from benchmarks.harness.types._scores import PanelMember
+from benchmarks.harness.types._scores import PanelMember, SkippedCandidate
 from config import Config, get_api_key_for_provider
 from defaults.models import AI_MODELS, ModelConfig
 
@@ -32,8 +19,7 @@ class RosterCandidate:
     config: ModelConfig
 
 
-# Ordered roster of judge candidates. Keep this list in sync with the
-# ``AI_MODELS`` registry so missing entries fail loudly at import time.
+# Keep in sync with ``AI_MODELS`` so missing entries fail loudly at import.
 DEFAULT_ROSTER: tuple[RosterCandidate, ...] = (
     RosterCandidate(alias="opus", config=AI_MODELS.claude_opus),
     RosterCandidate(alias="sonnet", config=AI_MODELS.claude_sonnet),
@@ -49,27 +35,17 @@ class PanelAssembly:
     """Outcome of panel assembly — the members plus per-skip reasons."""
 
     members: list[PanelMember]
-    skipped: list[dict]
+    skipped: list[SkippedCandidate]
 
 
 def _candidate_matches_override(candidate: RosterCandidate, override: str) -> bool:
-    """Return True when the candidate matches ``override`` by alias or model id.
-
-    Matching is case-insensitive so ``"Opus"`` and ``"CLAUDE-OPUS-4-6"``
-    both pick the Anthropic Opus entry.
-    """
+    """Return True when the candidate matches ``override`` by alias or model id."""
     needle = override.strip().lower()
     return needle in {candidate.alias.lower(), candidate.config.model_id.lower()}
 
 
 def _resolve_roster(overrides: list[str] | None) -> list[RosterCandidate]:
-    """Return the ordered roster after applying optional overrides.
-
-    When ``overrides`` is empty or ``None`` the default roster is
-    returned. Otherwise each override is resolved to a roster candidate
-    in the order the user supplied — unknown overrides raise
-    ``ValueError`` so typos don't silently shrink the panel.
-    """
+    """Return the ordered roster after applying optional overrides."""
     if not overrides:
         return list(DEFAULT_ROSTER)
     resolved: list[RosterCandidate] = []
@@ -81,43 +57,33 @@ def _resolve_roster(overrides: list[str] | None) -> list[RosterCandidate]:
     return resolved
 
 
+def _skip_for(candidate: RosterCandidate, reason: str) -> SkippedCandidate:
+    """Build a :class:`SkippedCandidate` for a rejected roster entry."""
+    return SkippedCandidate(
+        alias=candidate.alias,
+        provider=candidate.config.provider,
+        model_id=candidate.config.model_id,
+        reason=reason,
+    )
+
+
 def assemble_panel(
     cfg: Config,
     *,
     overrides: list[str] | None = None,
     max_judges: int = DEFAULT_MAX_JUDGES,
 ) -> PanelAssembly:
-    """Build the witness panel from the roster + available API keys.
-
-    Each candidate is checked against ``cfg`` via
-    :func:`config.get_api_key_for_provider`. Candidates without a key
-    are skipped and recorded with a reason so the run artefact makes
-    clear why the panel has fewer than ``max_judges`` members.
-    """
+    """Build the witness panel from the roster + available API keys."""
     roster = _resolve_roster(overrides)
     members: list[PanelMember] = []
-    skipped: list[dict] = []
+    skipped: list[SkippedCandidate] = []
     for candidate in roster:
         if len(members) >= max_judges:
-            skipped.append(
-                {
-                    "alias": candidate.alias,
-                    "provider": candidate.config.provider,
-                    "model_id": candidate.config.model_id,
-                    "reason": "panel cap reached (max_judges={0})".format(max_judges),
-                },
-            )
+            skipped.append(_skip_for(candidate, "panel cap reached (max_judges={0})".format(max_judges)))
             continue
         api_key = get_api_key_for_provider(candidate.config.provider, cfg)
         if not api_key:
-            skipped.append(
-                {
-                    "alias": candidate.alias,
-                    "provider": candidate.config.provider,
-                    "model_id": candidate.config.model_id,
-                    "reason": "no {0} api key".format(candidate.config.provider),
-                },
-            )
+            skipped.append(_skip_for(candidate, "no {0} api key".format(candidate.config.provider)))
             continue
         members.append(
             PanelMember(provider=candidate.config.provider, model_id=candidate.config.model_id),

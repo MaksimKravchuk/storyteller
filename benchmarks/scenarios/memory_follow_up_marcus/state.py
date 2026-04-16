@@ -1,24 +1,4 @@
-"""Seed state builder for the Marcus memory follow-up scenario.
-
-Every call returns a fresh :class:`GameState`:
-
-* Setting: "Ancient Rome, 1st century AD".
-* One NPC: ``Marcus`` (baker) registered in ``game_state.npcs`` with
-  ``conversation_history`` pre-populated with two short exchanges that
-  establish (1) a loaf was stolen from his stall yesterday and
-  (2) he suspects a man named Gaius.
-* Knowledge graph: two :class:`KnowledgeNode` entries — one per fact —
-  tagged as ``PERSONAL_EXPERIENCE``. Both are linked from Marcus's
-  actor node via an ``EdgeType.WITNESSED`` edge so
-  :class:`KnowledgeQueryEngine.get_memories_about` surfaces them when
-  Marcus's Actor runs.
-* Current scene: the marketplace, with Marcus already initialised
-  (his ``SceneNPC.uuid`` points at his ``NPCCard.uuid``).
-
-The player's location is set to the marketplace so Narrator's
-location-resolving logic (which prefers ``player.location_id``) finds a
-registered :class:`Location`.
-"""
+"""Seed state builder for the Marcus memory follow-up scenario."""
 
 from __future__ import annotations
 
@@ -31,7 +11,6 @@ from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
 
-_LOCATION_ID = "marketplace-forum"
 _MARCUS_UUID = "npc-marcus-baker"
 
 _ROLE_USER = "user"
@@ -90,14 +69,13 @@ def _make_marcus() -> NPCCard:
         conversation_history=_build_marcus_history(),
         current_mood="worried",
         physical_status="healthy",
-        location_id=_LOCATION_ID,
     )
     # Pin a deterministic uuid so elements can reference Marcus by id.
     marcus.uuid = _MARCUS_UUID
     return marcus
 
 
-def _seed_marcus_memories(graph: KnowledgeGraph, marcus_uuid: str) -> None:
+def _seed_marcus_memories(graph: KnowledgeGraph, marcus_uuid: str, location_id: str) -> None:
     """Attach Marcus's two personal-experience memories to the graph."""
     graph.register_actor_node(marcus_uuid, label="Marcus (baker)")
     for text in (_FACT_STOLEN_LOAF, _FACT_SUSPECT_GAIUS):
@@ -106,7 +84,7 @@ def _seed_marcus_memories(graph: KnowledgeGraph, marcus_uuid: str) -> None:
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.PERSONAL_EXPERIENCE,
             canon=CanonSource.SESSION,
-            location_id=_LOCATION_ID,
+            location_id=location_id,
             tags=["marcus", "stolen-loaf"],
         )
         graph.add_node(node)
@@ -141,9 +119,13 @@ def build_state() -> ScenarioState:
     """Construct the seed :class:`GameState` for this scenario."""
     graph = KnowledgeGraph()
     marcus = _make_marcus()
-    _seed_marcus_memories(graph, marcus.uuid)
 
     location = _make_location()
+    # Memory nodes and Marcus must both pin to the same location id as the
+    # registered Location, or scope-filtered memory lookups go blind.
+    _seed_marcus_memories(graph, marcus.uuid, location.uuid)
+    marcus.location_id = location.uuid
+
     game_state = GameState(
         setting=_make_setting(),
         knowledge_graph=graph,
@@ -151,8 +133,7 @@ def build_state() -> ScenarioState:
     )
     game_state.locations[location.uuid] = location
     game_state.npcs[marcus.uuid] = marcus
-    marcus.location_id = location.uuid
     game_state.current_scene = _make_scene(location.uuid, marcus.uuid)
-    game_state.game_clock = 10.0  # Mid-morning.
+    game_state.game_clock = 10.0
     game_state.game_time = "morning"
     return ScenarioState(game_state=game_state, events=[])

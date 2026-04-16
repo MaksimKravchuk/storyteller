@@ -1,14 +1,4 @@
-"""Scenario execution internals: engine prep, turn driving, scoring.
-
-Separated from :mod:`benchmarks.harness.runner` so the public module
-stays at a manageable surface area. Nothing here is intended to be
-imported by callers outside the harness — the top-level runner wraps
-this machinery into :func:`run_scenario_once`.
-
-Internal helpers use :data:`typing.Any` for the engine + snapshot types
-so this module stays under WPS's import budget. The types are fully
-annotated at the public boundary in :func:`execute_scenario`.
-"""
+"""Scenario execution internals: engine prep, turn driving, scoring."""
 
 from __future__ import annotations
 
@@ -81,14 +71,10 @@ async def _drive_turns(
     scenario: Scenario,
     scenario_state: ScenarioState,
 ) -> tuple[list[CapturedTurn], list[Any]]:
-    """Walk the script turn-by-turn, capturing narration + snapshots.
-
-    Uses ``while pending: pop(0)`` rather than ``for ... await`` so the
-    await is not lexically nested inside a ``for`` header (WPS476).
-    Effect is identical: one awaited turn at a time.
-    """
+    """Walk the script turn-by-turn, capturing narration + snapshots."""
     snapshots: list[Any] = [snapshot(scenario_state.game_state)]
     captured_turns: list[CapturedTurn] = []
+    # while+pop avoids await inside a for-header (WPS476).
     pending: list[tuple[int, Any]] = list(enumerate(scenario.script))
     while pending:
         turn_index, script_turn = pending.pop(0)

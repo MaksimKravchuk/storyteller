@@ -1,8 +1,4 @@
-"""Tiny text utilities shared by the report renderers.
-
-Keeping these here lets the per-section renderers stay focused on layout
-without each re-implementing quote truncation or pipe escaping.
-"""
+"""Tiny text utilities shared by the report renderers."""
 
 from __future__ import annotations
 

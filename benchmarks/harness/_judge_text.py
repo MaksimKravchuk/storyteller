@@ -1,11 +1,4 @@
-"""Turn-text rendering and quote verification for the evidence-LLM judges.
-
-These helpers isolate the non-network bits of the judge pipeline so the
-main :mod:`benchmarks.harness.judge` module stays at a manageable public
-surface. Quote matching is deliberately forgiving on case + whitespace
-but intolerant of empty / trivially-short citations, which is what lets
-the panel refuse to award credit for a YES with no verbatim evidence.
-"""
+"""Turn-text rendering and quote verification for the evidence-LLM judges."""
 
 from __future__ import annotations
 
@@ -14,7 +7,7 @@ import re
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import EvidencePromptSpec
 
-_QUOTE_MATCH_MIN_CHARS = 8
+QUOTE_MATCH_MIN_CHARS = 8
 _TURN_EXCERPT_CHAR_BUDGET = 4000
 _TRUNCATION_NOTE = "\n[...excerpt truncated...]"
 
@@ -24,13 +17,9 @@ def _normalise(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().lower())
 
 
-def _quote_matches(quote: str, turn_text: str) -> bool:
-    """Return True when ``quote`` is a substring of ``turn_text`` post-normalisation.
-
-    We guard against empty / trivially-short quotes so a judge cannot
-    trivially satisfy the citation check with ``"the"``.
-    """
-    if not quote or len(quote.strip()) < _QUOTE_MATCH_MIN_CHARS:
+def quote_matches(quote: str, turn_text: str) -> bool:
+    """Return True when ``quote`` is a normalised substring of ``turn_text``."""
+    if not quote or len(quote.strip()) < QUOTE_MATCH_MIN_CHARS:
         return False
     return _normalise(quote) in _normalise(turn_text)
 
@@ -55,11 +44,7 @@ def _render_turn(turn: CapturedTurn) -> list[str]:
 
 
 def turn_text_for_spec(spec: EvidencePromptSpec, captured_turns: list[CapturedTurn]) -> str:
-    """Return the captured text the spec pins to, concatenated when unpinned.
-
-    We include both the structured ``TurnOutputs`` dialogue/action lines
-    and the final narration so the judge can quote from either layer.
-    """
+    """Return the captured text the spec pins to, concatenated when unpinned."""
     if spec.evidence_turn is None:
         turns: list[CapturedTurn] = list(captured_turns)
     else:

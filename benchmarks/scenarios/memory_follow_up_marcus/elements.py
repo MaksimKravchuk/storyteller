@@ -1,14 +1,4 @@
-"""Scoring rubric for the Marcus memory follow-up scenario.
-
-Total base value: **10 points** across six elements.
-
-* Four deterministic elements sanity-check the engine produced the
-  expected structural signal (Marcus appears in dialogue on the recall
-  turns, the game clock advanced, Marcus's conversation history grew).
-* Two evidence-LLM elements ask the witness panel whether Marcus's
-  narrated reply actually surfaces the prior facts. Each panel vote
-  must cite a verbatim quote to count.
-"""
+"""Scoring rubric for the Marcus memory follow-up scenario."""
 
 from __future__ import annotations
 
@@ -17,9 +7,10 @@ from dataclasses import dataclass
 from benchmarks.harness.snapshots import conversation_history_len
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import (
+    KIND_DETERMINISTIC,
+    KIND_EVIDENCE_LLM,
     DeterministicResult,
     Element,
-    ElementKind,
     EvidencePromptSpec,
 )
 from models.game_state import GameState
@@ -32,8 +23,6 @@ _SCENARIO_BRIEF = (
 _MARCUS_NAME = "marcus"
 _EVIDENCE_QUOTE_CHAR_BUDGET = 120
 _HISTORY_FULL_CREDIT_DELTA = 3
-_KIND_DETERMINISTIC: ElementKind = "deterministic"
-_KIND_EVIDENCE: ElementKind = "evidence_llm"
 
 
 def _is_marcus(npc_name: str) -> bool:
@@ -133,21 +122,21 @@ ELEMENTS: tuple[Element, ...] = (
         id="marcus_speaks_turn1",
         label="Marcus replies on recall turn (loaf)",
         base_value=1,
-        kind=_KIND_DETERMINISTIC,
+        kind=KIND_DETERMINISTIC,
         check=_MarcusSpeaksOn(turn_index=1),
     ),
     Element(
         id="marcus_speaks_turn2",
         label="Marcus replies on recall turn (suspect)",
         base_value=1,
-        kind=_KIND_DETERMINISTIC,
+        kind=KIND_DETERMINISTIC,
         check=_MarcusSpeaksOn(turn_index=2),
     ),
     Element(
         id="marcus_recalls_stolen_loaf",
         label="Marcus's reply references the stolen loaf",
         base_value=3,
-        kind=_KIND_EVIDENCE,
+        kind=KIND_EVIDENCE_LLM,
         check=EvidencePromptSpec(
             scenario_brief=_SCENARIO_BRIEF,
             question=(
@@ -161,7 +150,7 @@ ELEMENTS: tuple[Element, ...] = (
         id="marcus_names_suspect",
         label="Marcus names or clearly implies Gaius as the suspect",
         base_value=3,
-        kind=_KIND_EVIDENCE,
+        kind=KIND_EVIDENCE_LLM,
         check=EvidencePromptSpec(
             scenario_brief=_SCENARIO_BRIEF,
             question=(
@@ -175,14 +164,14 @@ ELEMENTS: tuple[Element, ...] = (
         id="game_clock_advanced",
         label="Game clock advances across the session",
         base_value=1,
-        kind=_KIND_DETERMINISTIC,
+        kind=KIND_DETERMINISTIC,
         check=_game_clock_advanced,
     ),
     Element(
         id="marcus_history_grew",
         label="Marcus's conversation history grew",
         base_value=1,
-        kind=_KIND_DETERMINISTIC,
+        kind=KIND_DETERMINISTIC,
         check=_marcus_history_grew,
     ),
 )

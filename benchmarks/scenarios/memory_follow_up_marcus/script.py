@@ -1,11 +1,4 @@
-"""Scripted player actions for the Marcus memory follow-up scenario.
-
-The script walks the player through a three-turn conversation that
-escalates from a neutral greeting to two increasingly specific recall
-questions. Turn 0 ("greet warmly") establishes that Marcus is
-addressable as a dialogue target; turn 1 asks about the stolen loaf;
-turn 2 asks about the suspect.
-"""
+"""Scripted player actions for the Marcus memory follow-up scenario."""
 
 from __future__ import annotations
 

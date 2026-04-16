@@ -1,53 +1,41 @@
-"""Parse raw judge replies into :class:`JudgeVote` records.
-
-These helpers cover everything *after* the judge LLM has returned its
-body: JSON extraction, verdict normalisation, quote verification, and
-building the final :class:`JudgeVote`. The network-facing dispatch
-lives in :mod:`benchmarks.harness.judge`.
-"""
+"""Parse raw judge replies into ``JudgeVote`` records."""
 
 from __future__ import annotations
 
 import json
 
-from benchmarks.harness._judge_text import _quote_matches
-from benchmarks.harness.types._scores import JudgeVote, PanelMember
+from benchmarks.harness._judge_text import quote_matches
+from benchmarks.harness.types._scores import JudgeVerdict, JudgeVote, PanelMember
 
-_VERDICT_YES = "YES"
-_VERDICT_NO = "NO"
-_VERDICT_ERROR = "ERROR"
+_VERDICT_YES: JudgeVerdict = "YES"
+_VERDICT_NO: JudgeVerdict = "NO"
+_VERDICT_ERROR: JudgeVerdict = "ERROR"
+_PARSEABLE_VERDICTS = frozenset((_VERDICT_YES, _VERDICT_NO))
+_MALFORMED_VERDICT_ERROR = "malformed verdict"
+_MALFORMED_QUOTE_REASONING = "(quote not found in turn text)"
 
 
 def _parse_vote_payload(raw: str) -> dict:
-    """Extract the judge's JSON object from its raw text reply.
-
-    Judges occasionally wrap their JSON in markdown fences or chatty
-    prose even when instructed not to. We try strict parse first, then
-    fall back to an outermost-braces extraction; anything else raises
-    ``ValueError``.
-    """
+    """Extract the judge's JSON object from its raw reply."""
     text = raw.strip()
     try:
         return json.loads(text)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as exc:
         start = text.find("{")
         end = text.rfind("}") + 1
         if start == -1 or end <= start:
-            raise ValueError("Judge produced no JSON object")
+            raise ValueError("Judge produced no JSON object") from exc
         return json.loads(text[start:end])
 
 
-def _coerce_verdict(verdict_field: object) -> str:
-    """Normalise a judge's verdict string to the ``YES``/``NO`` alphabet.
-
-    Any off-menu response collapses to ``NO`` — a judge that cannot
-    commit to a clear verdict does not get to award credit.
-    """
+def _coerce_verdict(verdict_field: object) -> JudgeVerdict | None:
+    """Normalise a judge's verdict to YES or NO. Returns None on malformed input."""
     if not isinstance(verdict_field, str):
-        return _VERDICT_NO
-    if verdict_field.strip().upper() == _VERDICT_YES:
-        return _VERDICT_YES
-    return _VERDICT_NO
+        return None
+    upper = verdict_field.strip().upper()
+    if upper in _PARSEABLE_VERDICTS:
+        return upper  # type: ignore[return-value]
+    return None
 
 
 def _build_vote_from_payload(
@@ -57,18 +45,25 @@ def _build_vote_from_payload(
     turn_text: str,
     latency_ms: int,
 ) -> JudgeVote:
-    """Turn a parsed judge payload into a :class:`JudgeVote`.
-
-    A verdict of YES with a hallucinated or missing quote is downgraded
-    to NO — the quote is the evidence, so no quote means no credit.
-    """
+    """Turn a parsed judge payload into a :class:`JudgeVote`."""
     verdict = _coerce_verdict(payload.get("verdict"))
     reasoning = str(payload.get("reasoning") or "").strip()
     quote = str(payload.get("quote") or "").strip()
-    quote_ok = _quote_matches(quote, turn_text)
+    if verdict is None:
+        return JudgeVote(
+            model_id=model_id,
+            provider=provider,
+            verdict=_VERDICT_ERROR,
+            reasoning=reasoning,
+            quote=quote,
+            quote_verified=False,
+            latency_ms=latency_ms,
+            error=_MALFORMED_VERDICT_ERROR,
+        )
+    quote_ok = quote_matches(quote, turn_text)
     if verdict == _VERDICT_YES and not quote_ok:
         verdict = _VERDICT_NO
-        reasoning = "{0} (quote not found in turn text)".format(reasoning).strip()
+        reasoning = "{0} {1}".format(reasoning, _MALFORMED_QUOTE_REASONING).strip()
     return JudgeVote(
         model_id=model_id,
         provider=provider,

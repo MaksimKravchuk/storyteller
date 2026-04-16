@@ -1,25 +1,13 @@
-"""Scoring rubric for the autonomy / confrontation scenario.
-
-Total base value: **10 points** across four elements.
-
-* Deterministic: Bassus and Cato each produce a non-IDLE npc_turn on
-  the punch turn (3 pts — awarded 2/3 if only one reacts non-idly).
-* Deterministic: Aulus's dialogue entry on the punch turn carries a
-  contest-roll string (2 pts).
-* Deterministic: Bassus and Cato's ``current_mood`` shifts from
-  ``"neutral"`` after the punch lands (2 pts — 1 per bystander).
-* Evidence-LLM: the narrated bystander actions include attacking,
-  arresting, or restraining the player rather than merely protesting
-  (3 pts, scored via witness panel).
-"""
+"""Scoring rubric for the autonomy / confrontation scenario."""
 
 from __future__ import annotations
 
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import (
+    KIND_DETERMINISTIC,
+    KIND_EVIDENCE_LLM,
     DeterministicResult,
     Element,
-    ElementKind,
     EvidencePromptSpec,
 )
 from benchmarks.scenarios.autonomy_three_guards_tavern._moods import score_bystander_moods
@@ -30,8 +18,6 @@ _AULUS = "Aulus"
 _BASSUS = "Bassus"
 _CATO = "Cato"
 _IDLE = "IDLE"
-_KIND_DETERMINISTIC: ElementKind = "deterministic"
-_KIND_EVIDENCE: ElementKind = "evidence_llm"
 
 _SCENARIO_BRIEF = (
     "Three city guards (Aulus, Bassus, Cato) stand in a Roman tavern. On the punch turn the "
@@ -111,28 +97,28 @@ ELEMENTS: tuple[Element, ...] = (
         id="bystanders_not_idle",
         label="Bassus and Cato react (non-IDLE npc_turn)",
         base_value=3,
-        kind=_KIND_DETERMINISTIC,
+        kind=KIND_DETERMINISTIC,
         check=_bystanders_acted,
     ),
     Element(
         id="aulus_contest_roll",
         label="Aulus dialogue carries a contest roll",
         base_value=2,
-        kind=_KIND_DETERMINISTIC,
+        kind=KIND_DETERMINISTIC,
         check=_aulus_contest_roll_present,
     ),
     Element(
         id="bystander_moods_shifted",
         label="Bystander moods shift from neutral",
         base_value=2,
-        kind=_KIND_DETERMINISTIC,
+        kind=KIND_DETERMINISTIC,
         check=_bystander_moods_shifted,
     ),
     Element(
         id="bystander_physical_intervention",
         label="Bystander actions include real intervention (attack / arrest / restrain)",
         base_value=3,
-        kind=_KIND_EVIDENCE,
+        kind=KIND_EVIDENCE_LLM,
         check=EvidencePromptSpec(
             scenario_brief=_SCENARIO_BRIEF,
             question=(

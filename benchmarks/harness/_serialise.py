@@ -1,11 +1,4 @@
-"""JSON-safe serialisation helpers for :class:`ScenarioReport`.
-
-Separated from :mod:`benchmarks.harness.runner` so the runner stays
-focused on orchestration. :func:`dataclasses.asdict` handles the
-scalar fields; the pydantic :class:`TurnOutputs` payloads need
-``model_dump`` by hand, and :class:`PanelMember` is flattened here
-too so the archive artefact is a plain JSON object end-to-end.
-"""
+"""JSON-safe serialisation helpers for :class:`ScenarioReport`."""
 
 from __future__ import annotations
 

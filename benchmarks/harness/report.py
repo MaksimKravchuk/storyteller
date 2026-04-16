@@ -1,14 +1,4 @@
-"""Render a :class:`ScenarioReport` as markdown for humans.
-
-The JSON payload produced by :func:`report_to_serialisable` is the
-machine-readable artefact; the markdown rendered here is the one a
-reviewer opens in a PR. Both cover the same fields, so comparing two
-runs means comparing either pair.
-
-Section renderers live in neighbour modules (``_report_header``,
-``_report_elements``, ``_report_appendix``, ``_report_turns``). This
-file just assembles them in order.
-"""
+"""Render a :class:`ScenarioReport` as markdown for humans."""
 
 from __future__ import annotations
 

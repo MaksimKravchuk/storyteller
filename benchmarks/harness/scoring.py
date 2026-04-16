@@ -1,21 +1,4 @@
-"""Score a scenario's :class:`Element` list against captured signals.
-
-Two element kinds, two code paths:
-
-* **Deterministic** — the element's ``check`` is a pure callable over
-  the captured turn list + GameState snapshots. Full ``base_value`` is
-  awarded on a truthy result, zero otherwise.
-* **Evidence-LLM** — the element's ``check`` is an
-  :class:`benchmarks.harness.types.EvidencePromptSpec`. The harness
-  fans the call out to every :class:`PanelMember`, collects votes, and
-  awards ``round(base_value * k_yes / n_total)`` where ``k_yes`` counts
-  only votes whose verdict is ``YES`` *and* whose quote was verified
-  against the turn text.
-
-Error votes (judge crashed or returned un-parseable JSON) are recorded
-but do not count toward either ``k_yes`` or ``n_total``; they effectively
-abstain. This keeps a flaky provider from silently penalising a run.
-"""
+"""Score a scenario's Element list against captured turns + GameState snapshots."""
 
 from __future__ import annotations
 
@@ -25,15 +8,25 @@ from collections.abc import Sequence
 from benchmarks.harness._judge_text import turn_text_for_spec
 from benchmarks.harness.judge import JudgeCall, run_judge
 from benchmarks.harness.types._captures import CapturedTurn
-from benchmarks.harness.types._elements import DeterministicResult, Element, EvidencePromptSpec
-from benchmarks.harness.types._scores import ElementScore, JudgeVote, PanelMember
+from benchmarks.harness.types._elements import (
+    KIND_DETERMINISTIC,
+    DeterministicResult,
+    Element,
+    EvidencePromptSpec,
+)
+from benchmarks.harness.types._scores import (
+    ElementScore,
+    JudgeVote,
+    MajorityVerdict,
+    PanelMember,
+)
 from config import Config
 from models.game_state import GameState
 
-_VERDICT_YES = "YES"
-_VERDICT_NO = "NO"
-_VERDICT_SPLIT = "SPLIT"
-_KIND_DETERMINISTIC = "deterministic"
+_VERDICT_YES: MajorityVerdict = "YES"
+_VERDICT_NO: MajorityVerdict = "NO"
+_VERDICT_SPLIT: MajorityVerdict = "SPLIT"
+_VERDICT_PANEL_COLLAPSED: MajorityVerdict = "PANEL_COLLAPSED"
 
 
 def score_deterministic_element(
@@ -41,13 +34,7 @@ def score_deterministic_element(
     captured_turns: list[CapturedTurn],
     snapshots: list[GameState],
 ) -> ElementScore:
-    """Evaluate a deterministic element and return its score.
-
-    Predicates are plain callables rather than class instances, so the
-    element author can inline a lambda for one-off checks. Exceptions
-    are allowed to propagate — a crashing predicate is a bug in the
-    scenario, not an outcome to silently record.
-    """
+    """Evaluate a deterministic element and return its score."""
     if not callable(element.check):
         raise TypeError(
             "Deterministic element {0!r} must provide a callable check".format(element.id),
@@ -65,19 +52,13 @@ def score_deterministic_element(
     )
 
 
-def _aggregate_verdict(votes: list[JudgeVote]) -> tuple[int, int, str]:
-    """Return ``(k_yes, n_total, majority)`` for a list of judge votes.
-
-    ``n_total`` excludes error votes so an abstention does not shrink
-    the denominator unfairly. ``majority`` is ``"YES"`` when YES votes
-    strictly exceed NO votes, ``"NO"`` when the reverse, ``"SPLIT"`` on
-    a tie (or when every judge errored).
-    """
+def _aggregate_verdict(votes: list[JudgeVote]) -> tuple[int, int, MajorityVerdict]:
+    """Return ``(k_yes, n_total, majority)`` for a list of judge votes."""
     valid = [vote for vote in votes if vote.verdict in {_VERDICT_YES, _VERDICT_NO}]
     k_yes = sum(1 for vote in valid if vote.verdict == _VERDICT_YES)
     n_total = len(valid)
     if n_total == 0:
-        return 0, 0, _VERDICT_SPLIT
+        return 0, 0, _VERDICT_PANEL_COLLAPSED
     if k_yes * 2 > n_total:
         return k_yes, n_total, _VERDICT_YES
     if k_yes * 2 < n_total:
@@ -131,7 +112,7 @@ async def _score_one(
     cfg: Config,
 ) -> ElementScore:
     """Dispatch one element to its deterministic or evidence scorer."""
-    if element.kind == _KIND_DETERMINISTIC:
+    if element.kind == KIND_DETERMINISTIC:
         return score_deterministic_element(element, captured_turns, snapshots)
     return await score_evidence_element(element, captured_turns, panel=panel, cfg=cfg)
 
@@ -144,16 +125,7 @@ async def score_scenario(
     panel: list[PanelMember],
     cfg: Config,
 ) -> list[ElementScore]:
-    """Score every element in a scenario, preserving their declared order.
-
-    Deterministic elements are evaluated synchronously in-loop;
-    evidence-LLM elements are dispatched concurrently (by
-    :func:`score_evidence_element`, which gathers across the panel)
-    and awaited sequentially so the judge calls for one element finish
-    before the next element's prompt assembly runs. This keeps the
-    aggregate concurrency bounded at ``len(panel)`` judges at a time —
-    well below what the current OpenAI / Anthropic SDKs rate-limit.
-    """
+    """Score every element in a scenario, preserving their declared order."""
     scores: list[ElementScore] = []
     pending = list(elements)
     while pending:

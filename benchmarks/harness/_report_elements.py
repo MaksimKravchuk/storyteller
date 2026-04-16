@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from benchmarks.harness._report_text import escape_pipes, truncate_quote
+from benchmarks.harness.types._elements import KIND_DETERMINISTIC
 
 if TYPE_CHECKING:
     from benchmarks.harness.types._scores import ElementScore
@@ -14,7 +15,7 @@ _CROSS = "✗"
 _SPLIT_SYMBOL = "⚖"
 _DETERMINISTIC_QUOTE_LIMIT = 80
 _EVIDENCE_QUOTE_LIMIT = 120
-_DETERMINISTIC_KIND = "deterministic"
+_VERDICT_PANEL_COLLAPSED = "PANEL_COLLAPSED"
 
 
 def _verdict_symbol(score: ElementScore) -> str:
@@ -28,10 +29,10 @@ def _verdict_symbol(score: ElementScore) -> str:
 
 def _agreement_cell(score: ElementScore) -> str:
     """Inline summary for the agreement column."""
-    if score.kind == _DETERMINISTIC_KIND:
+    if score.kind == KIND_DETERMINISTIC:
         return "det."
-    if score.n_total == 0:
-        return "no valid votes"
+    if score.majority_verdict == _VERDICT_PANEL_COLLAPSED:
+        return "panel collapsed"
     return "{0}/{1} YES ({2})".format(score.k_yes, score.n_total, score.majority_verdict)
 
 
@@ -50,15 +51,14 @@ def _evidence_llm_evidence(score: ElementScore) -> str:
     if valid_yes:
         quote = escape_pipes(valid_yes[0].quote)
         return "> {0}".format(truncate_quote(quote, _EVIDENCE_QUOTE_LIMIT))
-    errors = [vote for vote in score.votes if vote.verdict == "ERROR"]
-    if errors and score.n_total == 0:
-        return "all judges errored"
+    if score.majority_verdict == _VERDICT_PANEL_COLLAPSED:
+        return "panel collapsed — every judge errored"
     return "no quote cited by any witness"
 
 
 def _evidence_cell(score: ElementScore) -> str:
     """Render the most informative cited quote or reason on one line."""
-    if score.kind == _DETERMINISTIC_KIND:
+    if score.kind == KIND_DETERMINISTIC:
         return _deterministic_evidence(score)
     return _evidence_llm_evidence(score)
 

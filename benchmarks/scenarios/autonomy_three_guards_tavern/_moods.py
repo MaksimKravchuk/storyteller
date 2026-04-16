@@ -9,7 +9,7 @@ MoodNote = tuple[bool, str]
 
 
 def guard_uuid_by_name(snap: GameState, name: str) -> str | None:
-    """Resolve a guard's UUID from the snapshot."""
+    """Resolve a guard's UUID from the snapshot by canonical name."""
     target = name.strip().lower()
     for uuid, npc in snap.npcs.items():
         if npc.name.strip().lower() == target:

@@ -16,7 +16,10 @@ def _load_report_payload(path: str) -> dict:
     file_path = Path(path)
     if not file_path.is_file():
         raise FileNotFoundError("Report not found: {0}".format(path))
-    return json.loads(file_path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(file_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError("Report at {0} is not valid JSON: {1}".format(path, exc)) from exc
 
 
 def _format_report_header(tag: str, report: dict) -> str:
