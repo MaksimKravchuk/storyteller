@@ -105,6 +105,17 @@ NARRATOR_NARRATE = PromptTemplate(
             ),
             required_vars=["wait_context_lines", "hours_waited"],
         ),
+        PromptSection(
+            name="turn_intent",
+            template=(
+                "The player's stated intent for this turn was: {turn_intent}. "
+                "Honor this intent in your narration. If the resulting raw material "
+                "contradicts the intent (e.g. the player tried to move but the scene "
+                "did not change), acknowledge the contradiction explicitly rather than "
+                "pretending the intent did not exist."
+            ),
+            required_vars=["turn_intent"],
+        ),
     ]
 )
 

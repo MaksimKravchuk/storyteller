@@ -76,8 +76,11 @@ DIRECTOR_ACTION_ROUTING = PromptTemplate(
                 '  "delegate_to": ["scene_builder", "narrator", "actor", "npc_generator", "item_generator"],\n'
                 '  "contest": null or {{"type": "combat|persuasion|deception|intimidation|stealth", '
                 '"target": "NPC name"}} when the action is a contested challenge,\n'
-                '  "time_cost_override": null or a float (hours) if the default base cost is wrong for this action\n'
-                "}}"
+                '  "time_cost_override": null or a float (hours) if the default base cost is wrong for this action,\n'
+                '  "intent": "<one-sentence summary of what the player is trying to achieve this turn>"\n'
+                "}}\n"
+                "Always fill `intent`. It is a faithful restatement of the player's stated goal, "
+                "not your interpretation of it."
             ),
             required_vars=["player_action"],
         ),

@@ -18,6 +18,7 @@ _NARRATION_MAX_TOKENS = 800
 _KEY_COMPLETED_EVENTS = "completed_events"
 _KEY_WAIT_CONTEXT_LINES = "wait_context_lines"
 _KEY_HOURS_WAITED = "hours_waited"
+_KEY_TURN_INTENT = "turn_intent"
 
 
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
@@ -227,4 +228,6 @@ class Narrator(BasePerformer):
             if bullets:
                 kwargs[_KEY_WAIT_CONTEXT_LINES] = "\n".join(bullets)
                 kwargs[_KEY_HOURS_WAITED] = "{0:.1f}".format(input_data.wait_context.hours_waited)
+        if input_data.intent:
+            kwargs[_KEY_TURN_INTENT] = input_data.intent
         return kwargs

@@ -83,4 +83,5 @@ def build_forced_wait_plan(reason: str) -> dict:
         "delegate_to": ["narrator"],
         "time_cost_override": None,
         "wait_reason": reason,
+        "intent": "wait ({0})".format(reason),
     }
