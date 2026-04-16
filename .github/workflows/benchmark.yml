@@ -1,0 +1,89 @@
+name: Benchmarks
+
+# Manual-dispatch workflow for running the narration benchmark harness.
+# Hits paid LLMs (judge panel of up to 6 models), so runs are opt-in only.
+# Results are archived under benchmarks/results/ and uploaded as an artifact
+# for release-over-release comparison.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Scenario id (leave blank to run every registered scenario)"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - "memory_follow_up_marcus"
+          - "autonomy_three_guards_tavern"
+      iterations:
+        description: "Iterations per scenario"
+        required: false
+        default: "1"
+        type: string
+      judges:
+        description: "Comma-separated judge override (leave blank to auto-assemble the panel from available API keys)"
+        required: false
+        default: ""
+        type: string
+      max_judges:
+        description: "Cap the panel size (leave blank to use the default of 6)"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev --extra anthropic --extra openai
+
+      - name: Run benchmark harness
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DIRECTOR_MODEL: gpt-5.4-mini
+          AGENT_MODEL: gpt-5.4-nano
+          NARRATOR_MODEL: gpt-5.4-mini
+          SCENARIO_INPUT: ${{ inputs.scenario }}
+          ITERATIONS_INPUT: ${{ inputs.iterations }}
+          JUDGES_INPUT: ${{ inputs.judges }}
+          MAX_JUDGES_INPUT: ${{ inputs.max_judges }}
+        run: |
+          set -euo pipefail
+          args=(run)
+          if [ -n "${SCENARIO_INPUT}" ]; then
+            args+=(--scenario "${SCENARIO_INPUT}")
+          fi
+          if [ -n "${ITERATIONS_INPUT}" ]; then
+            args+=(--iterations "${ITERATIONS_INPUT}")
+          fi
+          if [ -n "${JUDGES_INPUT}" ]; then
+            args+=(--judges "${JUDGES_INPUT}")
+          fi
+          if [ -n "${MAX_JUDGES_INPUT}" ]; then
+            args+=(--max-judges "${MAX_JUDGES_INPUT}")
+          fi
+          uv run python -m benchmarks "${args[@]}"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/results/
+          if-no-files-found: warn

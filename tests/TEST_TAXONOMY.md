@@ -126,6 +126,11 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 | `test_call_logger.py` | Call logger context | "Buffer reset", "Agent stack context", "Sequence counter" |
 | `test_openai_sanitize.py` | OpenAI client sanitization | "Control character stripping" |
 | `test_config.py` | Defaults & model config | "ModelConfig dataclass", "AI_MODELS registry" |
+| `test_benchmarks_panel.py` | Benchmark harness | "Key-based filtering", "Panel size capping", "Judge overrides" |
+| `test_benchmarks_judge.py` | Benchmark harness | "Quote verification", "Verdict parsing", "Judge payload parsing", "Vote construction", "Turn text excerpt" |
+| `test_benchmarks_scoring.py` | Benchmark harness | "Panel aggregation", "Deterministic scoring" |
+| `test_benchmarks_scenario_elements.py` | Benchmark harness | "Memory scenario rubric", "Autonomy scenario rubric" |
+| `test_benchmarks_registry.py` | Benchmark harness | "Scenario registry", "Scenario state builder", "Scenario rubric" |
 
 ---
 
