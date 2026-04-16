@@ -7,10 +7,11 @@ from typing import Any
 from loguru import logger
 
 from cast.base_performer_class import BasePerformer
+from cast.narrator_labels import NarratorLabels, get_narrator_labels
 from cast.narrator_wait import append_wait_parts, format_wait_context_bullets
 from cast.schemas.turn_outputs import TurnOutputs
 from models.scene import Scene
-from prompts.narrator_prompts import NARRATOR_NARRATE, NARRATOR_SYSTEM
+from prompts.narrator_prompts import get_narrator_prompts
 
 _HISTORY_PREVIEW_CHARS = 200
 _NARRATION_MAX_TOKENS = 800
@@ -20,7 +21,12 @@ _KEY_HOURS_WAITED = "hours_waited"
 
 
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
-    """Format NPC label as 'Name (Occupation)' or fall back to role."""
+    """Format NPC label as 'Name (Occupation)' or fall back to role.
+
+    The ``Name (Occupation)`` shape is intentionally identical across
+    locales — it is a proper noun + in-world title, which we let the
+    Narrator LLM translate or preserve as it sees fit.
+    """
     if snpc.uuid and snpc.uuid in game_state.npcs:
         npc = game_state.npcs[snpc.uuid]
         return "{0} ({1})".format(npc.name, npc.occupation)
@@ -56,8 +62,8 @@ def _resolve_current_location(game_state: Any) -> Any:
     return location
 
 
-def _append_prior_damage_parts(raw_parts: list[str], game_state: Any) -> None:
-    """Append a ``Prior damage:`` line for every entry in the location's object_states.
+def _append_prior_damage_parts(raw_parts: list[str], game_state: Any, labels: NarratorLabels) -> None:
+    """Append a localised ``Prior damage:`` line for every tracked object state.
 
     No-op when the player's current location is unresolvable or has
     no tracked object state.
@@ -68,7 +74,7 @@ def _append_prior_damage_parts(raw_parts: list[str], game_state: Any) -> None:
     damage_lines = [
         "- {0}: {1}".format(object_key, state) for object_key, state in sorted(location.object_states.items())
     ]
-    raw_parts.append("Prior damage:\n{0}".format("\n".join(damage_lines)))
+    raw_parts.append(labels.prior_damage.format("\n".join(damage_lines)))
 
 
 def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, str]:
@@ -91,14 +97,23 @@ def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, 
 
 
 class Narrator(BasePerformer):
-    """Transforms raw agent outputs into vivid, literary narration."""
+    """Transforms raw agent outputs into vivid, literary narration.
+
+    Resolves the per-locale system prompt, task prompt, and connector
+    labels at construction time based on *language*. Unsupported
+    languages transparently fall back to the English catalogs — see
+    :func:`prompts.locales.resolve_locale`.
+    """
 
     def __init__(self, *, llm_client: Any, language: str = "English"):
+        prompts = get_narrator_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=NARRATOR_SYSTEM,
+            system_prompt_template=prompts.system,
         )
         self._language = language
+        self._narrate_template = prompts.narrate
+        self._labels = get_narrator_labels(language)
 
     async def act(self, input_data: TurnOutputs, context: dict) -> str:
         """Transform raw turn outputs into literary narration.
@@ -118,10 +133,10 @@ class Narrator(BasePerformer):
         raw_parts = self._build_raw_parts(input_data, game_state, context.get("scene_history", []), is_new_scene)
 
         narrated = await self._send(
-            NARRATOR_NARRATE.render(
+            self._narrate_template.render(
                 **self._build_narration_kwargs(
                     context.get("player_action", ""),
-                    "\n".join(raw_parts) if raw_parts else "No specific scene data.",
+                    "\n".join(raw_parts) if raw_parts else self._labels.no_scene_data,
                     is_new_scene,
                     input_data,
                 )
@@ -146,7 +161,7 @@ class Narrator(BasePerformer):
         if input_data.scene is None:
             # CONTINUATION turns have no SceneBuilder-merged points_of_interest,
             # so surface tracked object state directly via the typed channel.
-            _append_prior_damage_parts(raw_parts, game_state)
+            _append_prior_damage_parts(raw_parts, game_state, self._labels)
         else:
             self._append_scene_parts(raw_parts, input_data.scene, game_state)
 
@@ -155,39 +170,42 @@ class Narrator(BasePerformer):
 
     def _append_turn_lines(self, raw_parts: list[str], input_data: TurnOutputs) -> None:
         """Append dialogue, new NPCs, items, wait, NPC turns and departures."""
-        raw_parts.extend(f"{entry.npc_name} says: {entry.response}" for entry in input_data.dialogue)
-        raw_parts.extend(f"New person appears: {desc}" for desc in input_data.new_npcs)
-        raw_parts.extend(f"Item examined: {desc}" for desc in input_data.item_examination)
-        raw_parts.extend(f"Object interaction: {desc}" for desc in input_data.object_interactions)
+        labels = self._labels
+        for entry in input_data.dialogue:
+            raw_parts.append(labels.says.format(entry.npc_name, entry.response))
+        raw_parts.extend(labels.new_person.format(desc) for desc in input_data.new_npcs)
+        raw_parts.extend(labels.item_examined.format(desc) for desc in input_data.item_examination)
+        raw_parts.extend(labels.object_interaction.format(desc) for desc in input_data.object_interactions)
 
         if input_data.wait:
-            append_wait_parts(raw_parts, input_data)
+            append_wait_parts(raw_parts, input_data, labels)
 
         for npc_turn in input_data.npc_turns:
-            raw_parts.append(f"Meanwhile, {npc_turn.npc_name}: {npc_turn.action}")
-        raw_parts.extend(f"Someone departs: {line}" for line in input_data.npc_departures)
+            raw_parts.append(labels.meanwhile.format(npc_turn.npc_name, npc_turn.action))
+        raw_parts.extend(labels.someone_departs.format(line) for line in input_data.npc_departures)
 
     def _append_history_parts(self, raw_parts: list[str], scene_history: list[dict]) -> None:
         """Append scene history summary to raw_parts."""
         lines = [
-            "- Player: {0} → {1}".format(
+            self._labels.scene_history_player_line.format(
                 entry["player_action"],
                 entry.get("response_summary", "")[:_HISTORY_PREVIEW_CHARS],
             )
             for entry in scene_history
         ]
-        raw_parts.append("What happened earlier in this scene:\n{0}".format("\n".join(lines)))
+        raw_parts.append(self._labels.scene_history_heading.format("\n".join(lines)))
 
     def _append_scene_parts(self, raw_parts: list[str], scene: Scene, game_state: Any) -> None:
         """Append scene description parts to raw_parts."""
-        raw_parts.append(f"Scene: {scene.description}")
+        labels = self._labels
+        raw_parts.append(labels.scene.format(scene.description))
         if scene.ambient_description:
-            raw_parts.append(f"Atmosphere: {scene.ambient_description}")
+            raw_parts.append(labels.atmosphere.format(scene.ambient_description))
         if scene.npcs_present:
             npc_descriptions = [_format_npc_label(snpc, game_state) for snpc in scene.npcs_present]
-            raw_parts.append("People visible: {0}".format(", ".join(npc_descriptions)))
+            raw_parts.append(labels.people_visible.format(", ".join(npc_descriptions)))
         if scene.points_of_interest:
-            raw_parts.append("Notable things: {0}".format(", ".join(scene.points_of_interest)))
+            raw_parts.append(labels.notable_things.format(", ".join(scene.points_of_interest)))
 
     def _build_narration_kwargs(
         self,
@@ -205,7 +223,7 @@ class Narrator(BasePerformer):
         if input_data.completed_events:
             kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data.completed_events)
         if input_data.wait_context is not None:
-            bullets = format_wait_context_bullets(input_data.wait_context)
+            bullets = format_wait_context_bullets(input_data.wait_context, self._labels)
             if bullets:
                 kwargs[_KEY_WAIT_CONTEXT_LINES] = "\n".join(bullets)
                 kwargs[_KEY_HOURS_WAITED] = "{0:.1f}".format(input_data.wait_context.hours_waited)

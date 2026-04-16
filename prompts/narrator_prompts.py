@@ -1,6 +1,19 @@
-"""Prompt templates for the Narrator agent."""
+"""Prompt templates for the Narrator agent.
+
+This module owns the **English** Narrator catalog and the
+locale-aware :func:`get_narrator_prompts` lookup. Other locales
+live in sibling modules (e.g. :mod:`prompts.narrator_prompts_ru`)
+and register themselves via :data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.locales import Locale, resolve_locale
+from prompts.narrator_prompts_ru import NARRATOR_NARRATE_RU, NARRATOR_SYSTEM_RU
 
 NARRATOR_SYSTEM = PromptTemplate(
     [
@@ -94,3 +107,34 @@ NARRATOR_NARRATE = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class NarratorPrompts:
+    """Per-locale Narrator prompt bundle.
+
+    ``system`` renders as the Narrator's system prompt (role,
+    formatting rules, output language instruction). ``narrate`` is the
+    per-turn user message template that carries the raw material.
+    """
+
+    system: PromptTemplate
+    narrate: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, NarratorPrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: NarratorPrompts(system=NARRATOR_SYSTEM, narrate=NARRATOR_NARRATE),
+        Locale.RUSSIAN: NarratorPrompts(system=NARRATOR_SYSTEM_RU, narrate=NARRATOR_NARRATE_RU),
+    }
+)
+
+
+def get_narrator_prompts(language: str | None) -> NarratorPrompts:
+    """Return the Narrator prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]
