@@ -1,0 +1,60 @@
+# Fly.io configuration for per-PR preview deployments.
+#
+# The `app` name is NOT set here — it is injected at deploy time via
+# `flyctl deploy --app storyteller-quest-pr-<PR_NUMBER>` by the
+# .github/workflows/fly-preview.yml workflow. Keeping the field absent
+# forces the workflow to always pass an explicit name, which prevents
+# accidentally shipping a preview build to the production app.
+#
+# Compared to fly.toml, this config trades availability for cost:
+#   - min_machines_running = 0    (machines fully stop when idle)
+#   - smaller concurrency limits
+#   - identical resources otherwise, so behaviour mirrors production
+
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8070
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 50
+    soft_limit = 25
+
+[[http_service.checks]]
+  grace_period = "30s"
+  interval = "15s"
+  method = "GET"
+  path = "/healthz"
+  timeout = "5s"
+
+# Admin dashboard on :8080 — same layout as fly.toml so previews
+# behave identically to production.
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 8080
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "get"
+    path = "/healthz"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+[deploy]
+  strategy = "immediate"

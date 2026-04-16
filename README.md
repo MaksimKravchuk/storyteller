@@ -75,3 +75,23 @@ The smell of fish sauce and fresh bread mingles in the morning air...
 
 - Python 3.11+
 - An OpenAI or Anthropic API key
+
+## Deployments
+
+Production runs on Fly.io at [storyteller-quest.fly.dev](https://storyteller-quest.fly.dev) — pushes to `main` trigger the `deploy` job in `.github/workflows/ci.yml`.
+
+### Per-PR preview deployments
+
+Every pull request gets its own disposable Fly.io app at `storyteller-quest-pr-<PR>.fly.dev` via `.github/workflows/fly-preview.yml`. The app is created on PR open, redeployed on every push, and destroyed when the PR is closed. Config lives in `fly.preview.toml` (machines auto-stop to keep costs near zero).
+
+Required GitHub repository secrets:
+
+| Secret | Purpose |
+|---|---|
+| `FLY_API_TOKEN` | Fly.io deploy token (also used by production) |
+| `FLY_ORG` | Fly organisation slug that owns preview apps |
+| `FLY_PREVIEW_DATABASE_URL` | Shared Postgres URL (`postgresql+asyncpg://...`) used by all previews |
+| `OPENAI_API_KEY` | Forwarded to the preview app |
+| `ANTHROPIC_API_KEY` | Forwarded to the preview app |
+
+PRs from forks are skipped — GitHub does not expose secrets to fork workflows.

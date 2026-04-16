@@ -1,0 +1,120 @@
+name: Fly Preview Deployments
+
+# Spin up a per-PR Fly.io app at `storyteller-quest-pr-<PR>.fly.dev` when a
+# pull request is opened or updated, and tear it down when the PR is closed.
+#
+# Required repository secrets:
+#   FLY_API_TOKEN             - a Fly.io API token with access to FLY_ORG
+#   FLY_ORG                   - Fly organisation slug that owns preview apps
+#   FLY_PREVIEW_DATABASE_URL  - DATABASE_URL shared by all previews
+#                               (format: postgresql+asyncpg://user:pw@host/db)
+#   OPENAI_API_KEY            - optional; omit to run without OpenAI
+#   ANTHROPIC_API_KEY         - optional; omit to run without Anthropic
+#
+# PRs from forks are intentionally skipped — GitHub does not expose secrets
+# to fork workflows, so a deploy would always fail. Collaborators should
+# push PR branches to this repo to get a preview.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+# One deploy per PR at a time; superseded runs are cancelled so the latest
+# commit always wins. Cleanup is handled in the same group so a cancelled
+# deploy cannot leak an app after the PR is closed.
+concurrency:
+  group: fly-preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  FLY_APP: storyteller-quest-pr-${{ github.event.pull_request.number }}
+
+jobs:
+  deploy:
+    name: Deploy preview
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Create Fly app if it does not exist
+        run: |
+          if flyctl status --app "$FLY_APP" >/dev/null 2>&1; then
+            echo "App $FLY_APP already exists — reusing."
+          else
+            echo "Creating new Fly app: $FLY_APP"
+            flyctl apps create "$FLY_APP" --org "${{ secrets.FLY_ORG }}"
+          fi
+
+      - name: Set app secrets
+        run: |
+          # --stage writes secrets without triggering a release; the next
+          # `flyctl deploy` will pick them up atomically.
+          flyctl secrets set --app "$FLY_APP" --stage \
+            DATABASE_URL="${{ secrets.FLY_PREVIEW_DATABASE_URL }}" \
+            OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+            ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+
+      - name: Deploy to Fly
+        run: |
+          flyctl deploy \
+            --app "$FLY_APP" \
+            --config fly.preview.toml \
+            --remote-only \
+            --yes
+
+      - name: Comment preview URL on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: fly-preview
+          message: |
+            ### Fly.io preview deployed
+
+            | Service | URL |
+            | ------- | --- |
+            | Web UI  | https://${{ env.FLY_APP }}.fly.dev |
+            | Admin   | https://${{ env.FLY_APP }}.fly.dev:8080 |
+            | Health  | https://${{ env.FLY_APP }}.fly.dev/healthz |
+
+            Commit: `${{ github.event.pull_request.head.sha }}`
+
+            The app auto-stops when idle and cold-starts on the next request.
+            It will be destroyed automatically when this PR is closed.
+
+  cleanup:
+    name: Destroy preview
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Destroy Fly app (if present)
+        run: |
+          if flyctl status --app "$FLY_APP" >/dev/null 2>&1; then
+            echo "Destroying $FLY_APP"
+            flyctl apps destroy "$FLY_APP" --yes
+          else
+            echo "App $FLY_APP not found — nothing to clean up."
+          fi
+
+      - name: Update PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: fly-preview
+          message: |
+            ### Fly.io preview destroyed
+
+            The preview app `${{ env.FLY_APP }}` has been torn down.
