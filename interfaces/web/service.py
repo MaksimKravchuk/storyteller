@@ -21,6 +21,7 @@ from interfaces.web.service_helpers import (
     snapshot_from_engine,
 )
 from llm.call_logger import current_session_id, reset_buffer
+from llm.turn_event_logger import reset_events
 
 _STATE_PLAYING = "playing"
 
@@ -72,6 +73,7 @@ async def start_game_for_player(
 
     current_session_id.set(session_id)
     reset_buffer()
+    reset_events()
     engine = create_engine(cfg, language=language)
     try:
         await _start_and_persist(repo, session_id, engine, setting)
@@ -124,4 +126,5 @@ async def process_turn_for_player(
 
     current_session_id.set(session_id)
     reset_buffer()
+    reset_events()
     return await _act_and_persist(repo, session_id, engine, action)

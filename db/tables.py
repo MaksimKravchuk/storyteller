@@ -31,6 +31,7 @@ _COL_SESSION_ID = "session_id"
 _COL_NAME = "name"
 _COL_LOCATION_ID = "location_id"
 _COL_CREATED_AT = "created_at"
+_COL_TURN_NUMBER = "turn_number"
 _FK_GAME_STATES_ID = "game_states.id"
 _FK_SESSIONS_ID = "sessions.id"
 _ON_DELETE_CASCADE = "CASCADE"
@@ -259,7 +260,7 @@ ai_call_logs = Table(
         ForeignKey(_FK_SESSIONS_ID, ondelete=_ON_DELETE_CASCADE),
         nullable=False,
     ),
-    Column("turn_number", Integer, nullable=True),
+    Column(_COL_TURN_NUMBER, Integer, nullable=True),
     Column("agent_name", String(_LEN_MEDIUM), nullable=False),
     Column("model", String(_LEN_LONG), nullable=False),
     Column("system_prompt", Text, nullable=False),
@@ -272,8 +273,31 @@ ai_call_logs = Table(
     Column("parent_agent", String(_LEN_MEDIUM), nullable=True),
     Column(_COL_CREATED_AT, TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
     Index("idx_ai_calls_session", _COL_SESSION_ID),
-    Index("idx_ai_calls_session_turn", _COL_SESSION_ID, "turn_number"),
+    Index("idx_ai_calls_session_turn", _COL_SESSION_ID, _COL_TURN_NUMBER),
     Index("idx_ai_calls_created", _COL_CREATED_AT),
+)
+
+turn_events = Table(
+    "turn_events",
+    metadata,
+    Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
+    Column(
+        _COL_SESSION_ID,
+        _UUID_STR,
+        ForeignKey(_FK_SESSIONS_ID, ondelete=_ON_DELETE_CASCADE),
+        nullable=False,
+    ),
+    Column(_COL_TURN_NUMBER, Integer, nullable=True),
+    Column("scene_number", Integer, nullable=True),
+    Column("event_type", String(_LEN_SHORT), nullable=False),
+    Column("agent_name", String(_LEN_MEDIUM), nullable=True),
+    Column("npc_id", _UUID_STR, nullable=True),
+    Column("payload", JSONB, nullable=False),
+    Column("sequence", Integer, nullable=True),
+    Column(_COL_CREATED_AT, TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
+    Index("idx_turn_events_session_turn", _COL_SESSION_ID, _COL_TURN_NUMBER),
+    Index("idx_turn_events_session_npc", _COL_SESSION_ID, "npc_id"),
+    Index("idx_turn_events_type", "event_type"),
 )
 
 game_events = Table(

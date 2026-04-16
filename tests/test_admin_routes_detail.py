@@ -16,7 +16,9 @@ pytestmark = [
 ]
 
 _HTTP_OK = 200
+_HTTP_NOT_FOUND = 404
 _SESSION_ID = "sess-xyz"
+_NPC_ID = "npc-abc"
 _BASE = "/api/sessions/{0}".format(_SESSION_ID)
 
 
@@ -170,3 +172,78 @@ async def test_ai_calls_with_turn_passes_int() -> None:
     assert status == _HTTP_OK
     assert body == {"ai_calls": logs}
     mock_repo.ai_logs.get.assert_awaited_once_with(_SESSION_ID, turn_number=3)
+
+
+@allure.story("Turn events")
+@allure.title("/turn-events without query params forwards all filters as None to repo.turn_events.get")
+@pytest.mark.asyncio
+async def test_turn_events_no_filters_forwards_none() -> None:
+    """Without filters, turn_events.get is invoked with turn/npc/type all None."""
+    fetched = [{"event_type": "dice_contest"}]
+    mock_repo = AsyncMock()
+    mock_repo.turn_events.get.return_value = fetched
+
+    status, body = await _do_request(mock_repo, "{0}/turn-events".format(_BASE))
+
+    assert status == _HTTP_OK
+    assert body == {"turn_events": fetched}
+    mock_repo.turn_events.get.assert_awaited_once_with(
+        _SESSION_ID,
+        turn_number=None,
+        npc_id=None,
+        event_type=None,
+    )
+
+
+@allure.story("Turn events")
+@allure.title("/turn-events?turn=2&npc_id=X&event_type=T forwards each query param to repo.turn_events.get")
+@pytest.mark.asyncio
+async def test_turn_events_with_filters_forwards_params() -> None:
+    """With ?turn=2&npc_id=X&event_type=T, filters are parsed and passed through."""
+    fetched = [{"event_type": "item_list"}]
+    mock_repo = AsyncMock()
+    mock_repo.turn_events.get.return_value = fetched
+
+    status, body = await _do_request(
+        mock_repo,
+        "{0}/turn-events?turn=2&npc_id=npc-1&event_type=item_list".format(_BASE),
+    )
+
+    assert status == _HTTP_OK
+    assert body == {"turn_events": fetched}
+    mock_repo.turn_events.get.assert_awaited_once_with(
+        _SESSION_ID,
+        turn_number=2,
+        npc_id="npc-1",
+        event_type="item_list",
+    )
+
+
+@allure.story("NPC detail")
+@allure.title("/npcs/{npc_id} returns the detail payload when the NPC exists")
+@pytest.mark.asyncio
+async def test_npc_detail_returns_payload() -> None:
+    """npc_detail returns the dict from repo.admin.get_npc_detail."""
+    payload = {"npc": {"id": _NPC_ID, "name": "Marcus"}, "memory_nodes": [], "memory_edges": []}
+    mock_repo = AsyncMock()
+    mock_repo.admin.get_npc_detail.return_value = payload
+
+    status, body = await _do_request(mock_repo, "{0}/npcs/{1}".format(_BASE, _NPC_ID))
+
+    assert status == _HTTP_OK
+    assert body == payload
+    mock_repo.admin.get_npc_detail.assert_awaited_once_with(_SESSION_ID, _NPC_ID)
+
+
+@allure.story("NPC detail")
+@allure.title("/npcs/{npc_id} returns 404 when the NPC row is not found for the session")
+@pytest.mark.asyncio
+async def test_npc_detail_404_when_missing() -> None:
+    """npc_detail responds 404 when repo.admin.get_npc_detail returns None."""
+    mock_repo = AsyncMock()
+    mock_repo.admin.get_npc_detail.return_value = None
+
+    status, body = await _do_request(mock_repo, "{0}/npcs/{1}".format(_BASE, _NPC_ID))
+
+    assert status == _HTTP_NOT_FOUND
+    assert body == {"error": "NPC not found"}

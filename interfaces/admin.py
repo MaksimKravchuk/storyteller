@@ -6,7 +6,7 @@ from aiohttp import web
 from aiohttp.typedefs import Handler
 from loguru import logger
 
-from interfaces import admin_routes, admin_routes_detail
+from interfaces import admin_routes, admin_routes_detail, admin_routes_entity
 from interfaces.admin_route_helpers import _json_response
 
 _HTTP_UNAUTHORIZED = 401
@@ -72,6 +72,8 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/knowledge", admin_routes_detail.knowledge)
         self._app.router.add_get("/api/sessions/{id}/events", admin_routes_detail.events)
         self._app.router.add_get("/api/sessions/{id}/npcs", admin_routes_detail.npcs)
+        self._app.router.add_get("/api/sessions/{id}/npcs/{npc_id}", admin_routes_entity.npc_detail)
         self._app.router.add_get("/api/sessions/{id}/locations", admin_routes_detail.locations)
         self._app.router.add_get("/api/sessions/{id}/scenes", admin_routes_detail.scenes)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes_detail.ai_calls)
+        self._app.router.add_get("/api/sessions/{id}/turn-events", admin_routes_entity.turn_events)

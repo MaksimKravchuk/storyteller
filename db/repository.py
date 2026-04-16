@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import repo_admin, repo_ai_logs, repo_loader, repo_saver, repo_sessions
+from db import repo_admin, repo_ai_logs, repo_loader, repo_saver, repo_sessions, repo_turn_events
 from knowledge import graph as graph_mod
 from models.game_state import GameState
 from timeline.event import GameEvent
@@ -19,6 +19,7 @@ class GameRepository:
         self._loader = repo_loader.StateLoader(session)
         self._saver = repo_saver.StateSaver(session)
         self.ai_logs = repo_ai_logs.AILogStore(session)
+        self.turn_events = repo_turn_events.TurnEventStore(session)
         self.sessions = repo_sessions.SessionStore(session)
 
     async def rollback(self) -> None:

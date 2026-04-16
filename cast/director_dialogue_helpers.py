@@ -7,8 +7,8 @@ from typing import Any
 
 from loguru import logger
 
+from cast import dice as dice_mod
 from cast.dice import (
-    CONTEST_SKILL_MAP,
     CombatOutcome,
     CombatRoll,
     ContestOutcome,
@@ -17,6 +17,7 @@ from cast.dice import (
     roll_combat,
     roll_contest,
 )
+from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
 
@@ -129,9 +130,18 @@ def _roll_and_format(
     _rng: random.Random | None = None,
 ) -> tuple[str, ContestRoll]:
     """Roll a contest and format the action text with the result."""
-    _actor_attr, target_attr = CONTEST_SKILL_MAP[contest_type]
+    _actor_attr, target_attr = dice_mod.CONTEST_SKILL_MAP[contest_type]
     contest_roll = roll_contest(contest_type, 0, npc.get_attribute(target_attr, default_skill), _rng=_rng)
     status_hint = _combat_status_hint(contest_roll.outcome) if contest_type == ContestType.COMBAT else ""
+    record_turn_event(
+        "dice_contest",
+        {
+            **dice_mod.contest_roll_to_dict(contest_roll),
+            "player_action": player_action,
+            "npc_name": getattr(npc, "name", None),
+        },
+        npc_id=getattr(npc, "uuid", None),
+    )
     return _format_contest_text(player_action, contest_roll, status_hint), contest_roll
 
 

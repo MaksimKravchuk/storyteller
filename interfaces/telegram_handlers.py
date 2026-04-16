@@ -12,9 +12,16 @@ from engine.game_engine import GameEngine
 from formatting.markdown_render import render
 from formatting.platform import ClientPlatform
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
+from llm.turn_event_logger import get_and_clear_events, reset_events
 
 _STATE_IDLE = "idle"
 _TELEGRAM_PARSE_MODE = "HTML"
+
+
+def _reset_turn_buffers() -> None:
+    """Reset both the AI-call-log buffer and the structured turn-event buffer."""
+    reset_buffer()
+    reset_events()
 
 
 async def persist_engine_state(
@@ -38,6 +45,15 @@ async def persist_engine_state(
     ai_logs = get_and_clear_buffer()
     if ai_logs:
         await repo.ai_logs.save(ai_logs, turn_number=turn_number)
+    turn_events = get_and_clear_events()
+    if turn_events:
+        scene_number = game_state.scene_number if game_state else None
+        await repo.turn_events.save(
+            turn_events,
+            session_id=session_id,
+            turn_number=turn_number,
+            scene_number=scene_number,
+        )
 
 
 async def start_new_game(engine: Any, repo: Any, session_id: str, update: Any, text: str) -> None:
@@ -69,7 +85,7 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
     )
     with logger.contextualize(session_id=ctx.session_id):
         current_session_id.set(ctx.session_id)
-        reset_buffer()
+        _reset_turn_buffers()
         engine = create_engine(ctx.cfg, language=ctx.language)
         try:
             await start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
@@ -91,7 +107,7 @@ async def handle_playing(ctx: Any) -> None:
 
     with logger.contextualize(session_id=ctx.session_id):
         current_session_id.set(ctx.session_id)
-        reset_buffer()
+        _reset_turn_buffers()
         try:
             await process_player_action(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:

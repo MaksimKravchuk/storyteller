@@ -13,6 +13,7 @@ from engine.game_engine import GameEngine
 from interfaces.web.schemas import GameSnapshot
 from interfaces.web.transcript import build_transcript
 from llm.call_logger import get_and_clear_buffer
+from llm.turn_event_logger import get_and_clear_events
 
 _DEFAULT_LANGUAGE = "English"
 
@@ -38,6 +39,15 @@ async def persist_engine(
     ai_logs = get_and_clear_buffer()
     if ai_logs:
         await repo.ai_logs.save(ai_logs, turn_number=turn_number)
+    turn_events = get_and_clear_events()
+    if turn_events:
+        scene_number = game_state.scene_number if game_state else None
+        await repo.turn_events.save(
+            turn_events,
+            session_id=session_id,
+            turn_number=turn_number,
+            scene_number=scene_number,
+        )
 
 
 def snapshot_from_engine(engine: GameEngine) -> GameSnapshot:

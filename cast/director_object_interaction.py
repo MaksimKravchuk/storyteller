@@ -36,6 +36,7 @@ from loguru import logger
 from cast.schemas.item_response import ObjectInteractionResponse, ObjectInteractionResult
 from knowledge.node import KnowledgeScope
 from knowledge.scene_state import record_scene_delta
+from llm.turn_event_logger import record_turn_event
 
 if TYPE_CHECKING:
     from knowledge.memory import MemoryManager
@@ -122,8 +123,13 @@ def _persist_delta(
     location.record_object_state(object_key, delta_text)
 
 
-def _persist_all_deltas(game_state: GameState, target_deltas: list[tuple[str, str]]) -> None:
-    """Write every non-empty delta to both persistence sinks.
+def _persist_and_record(
+    game_state: GameState,
+    object_targets: list[str],
+    player_action: str,
+    responses: list[ObjectInteractionResponse],
+) -> None:
+    """Write deltas to both persistence sinks *and* emit one turn event per target.
 
     Extracted into its own function so the loop variable does not
     leak into the enclosing scope — the enclosing coroutine later
@@ -131,8 +137,17 @@ def _persist_all_deltas(game_state: GameState, target_deltas: list[tuple[str, st
     ``delta`` name, which tripped WPS441 when both lived in the same
     function body.
     """
-    for object_key, delta in target_deltas:
-        _persist_delta(game_state, object_key, delta)
+    for object_key, resp in zip(object_targets, responses):
+        _persist_delta(game_state, object_key, resp.delta)
+        record_turn_event(
+            "object_interaction",
+            {
+                "object_name": object_key,
+                "player_action": player_action,
+                "narration": resp.narration,
+                "delta": resp.delta,
+            },
+        )
 
 
 async def _emit_witness_memories(
@@ -187,7 +202,7 @@ async def apply_object_interactions(
         ),
     )
     deltas = [resp.delta for resp in responses]
-    _persist_all_deltas(game_state, list(zip(object_targets, deltas)))
+    _persist_and_record(game_state, object_targets, player_action, responses)
     await asyncio.gather(
         *(_emit_witness_memories(memory_manager, game_state, delta) for delta in deltas),
     )
