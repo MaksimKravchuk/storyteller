@@ -7,6 +7,7 @@ from typing import Any
 from loguru import logger
 
 from cast.base_performer_class import BasePerformer
+from cast.narrator_wait import append_wait_parts, format_wait_context_bullets
 from cast.schemas.turn_outputs import TurnOutputs
 from models.scene import Scene
 from prompts.narrator_prompts import NARRATOR_NARRATE, NARRATOR_SYSTEM
@@ -14,6 +15,8 @@ from prompts.narrator_prompts import NARRATOR_NARRATE, NARRATOR_SYSTEM
 _HISTORY_PREVIEW_CHARS = 200
 _NARRATION_MAX_TOKENS = 800
 _KEY_COMPLETED_EVENTS = "completed_events"
+_KEY_WAIT_CONTEXT_LINES = "wait_context_lines"
+_KEY_HOURS_WAITED = "hours_waited"
 
 
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
@@ -22,13 +25,6 @@ def _format_npc_label(snpc: Any, game_state: Any) -> str:
         npc = game_state.npcs[snpc.uuid]
         return "{0} ({1})".format(npc.name, npc.occupation)
     return snpc.role
-
-
-def _format_wait_line(wait_reason: str | None) -> str:
-    """Render a single raw-parts line describing the player's wait state."""
-    if (wait_reason or "") in ("", "voluntary"):
-        return "The player waits and observes the surroundings."
-    return "The player cannot act — they are {0}.".format(wait_reason)
 
 
 def _resolve_current_location_id(game_state: Any) -> str | None:
@@ -165,7 +161,7 @@ class Narrator(BasePerformer):
         raw_parts.extend(f"Object interaction: {desc}" for desc in input_data.object_interactions)
 
         if input_data.wait:
-            raw_parts.append(_format_wait_line(input_data.wait_reason))
+            append_wait_parts(raw_parts, input_data)
 
         for npc_turn in input_data.npc_turns:
             raw_parts.append(f"Meanwhile, {npc_turn.npc_name}: {npc_turn.action}")
@@ -208,4 +204,9 @@ class Narrator(BasePerformer):
         }
         if input_data.completed_events:
             kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data.completed_events)
+        if input_data.wait_context is not None:
+            bullets = format_wait_context_bullets(input_data.wait_context)
+            if bullets:
+                kwargs[_KEY_WAIT_CONTEXT_LINES] = "\n".join(bullets)
+                kwargs[_KEY_HOURS_WAITED] = "{0:.1f}".format(input_data.wait_context.hours_waited)
         return kwargs

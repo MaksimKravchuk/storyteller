@@ -7,10 +7,20 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from tests.director_helpers import make_director, make_game_state, setup_npc
+from cast.schemas.chronicler_response import ChroniclerResponse
+from models.location import Location
+from models.world_state import WorldThread
+from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
 
 _NPC_A = "npc-1"
 _GUARD = "guard"
+_FORUM = "forum"
+
+
+def _last_narrator_input(director):
+    """Return the ``TurnOutputs`` most recently handed to the mocked Narrator."""
+    narrator_call = director._cast.narrator.execute.call_args
+    return narrator_call.kwargs["input_data"]
 
 
 def _wait_route():
@@ -145,6 +155,38 @@ class TestForcedWaitFromIncapacitation:
 
         # Actor called twice: dialogue + NPC turn
         assert mock_actor.execute.call_count == 2
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Wait action")
+class TestWaitSurfacesAmbientMaterial:
+    @allure.story("Rich ambient context")
+    @allure.title(
+        "WAIT turn threads world-state content into raw_material so the Narrator is not called with an empty turn"
+    )
+    @pytest.mark.asyncio
+    async def test_wait_surfaces_active_threads_to_narrator(self):
+        gs = make_game_state()
+        gs.player.location_id = _FORUM
+        gs.locations[_FORUM] = Location(name="Forum", npcs_present=[])
+        gs.world_state.threads.append(
+            WorldThread(
+                description="A riot is brewing in the streets",
+                category="political",
+                introduced_scene=0,
+                involved_locations=[_FORUM],
+            ),
+        )
+        director = make_director(game_state=gs, route_response=_wait_route())
+        director._cast.world_chronicler = make_mock_agent(ChroniclerResponse())
+
+        await director.act("wait")
+
+        outputs_sent = _last_narrator_input(director)
+        ctx = outputs_sent.wait_context
+        assert ctx is not None
+        assert ctx.active_threads
+        assert any("riot is brewing" in thread.description for thread in ctx.active_threads)
 
 
 @allure.epic("Game Timeline")
