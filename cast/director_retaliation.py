@@ -62,10 +62,10 @@ class RetaliationHandler:
         ``force_uuids`` lists NPCs whose aggression should roll even when
         their mood did not change during dialogue — used when the Director
         has already mechanically raised their hostility above the
-        retaliation threshold (KER-23). Without this, a repeat assault on
-        an already-"threatened" guard would never get an offensive
-        counter: the floor mood was set on a prior turn, so the current
-        turn's mood-delta is zero.
+        retaliation threshold. Without this, a repeat assault on an
+        already-"threatened" guard would never get an offensive counter:
+        the floor mood was set on a prior turn, so the current turn's
+        mood-delta is zero.
         """
         skip = skip_uuids or set()
         gates = _RetaliationGates(

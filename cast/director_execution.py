@@ -671,7 +671,7 @@ class PlanExecutor:
 
         On aggressive turns the Director bumps ``hostility_level`` on each
         targeted NPC *before* dialogue runs, replacing the LLM's fragile
-        ``[MOOD:]`` ratchet with a deterministic counter (KER-23).
+        ``[MOOD:]`` ratchet with a deterministic counter.
 
         When a dialogue call already carries a combat contest roll (player
         attacks NPC directly), the Actor physically retaliates inside that
@@ -683,8 +683,9 @@ class PlanExecutor:
         assaults get an offensive counter-attack.
         """
         mood_snapshot = _snapshot_moods(self._gs.npcs)
-        if is_aggressive:
-            director_hostility.bump_target_hostility(self._gs, target_names, player_action)
+        force_uuids = (
+            director_hostility.apply_aggressive_turn(self._gs, target_names, player_action) if is_aggressive else set()
+        )
 
         dialogue_entries, combat_engaged = await self._agents.dialogue.handle_dialogue(
             player_action,
@@ -695,7 +696,6 @@ class PlanExecutor:
         if dialogue_entries:
             raw_outputs.dialogue = [turn_outputs.DialogueEntry(**entry) for entry in dialogue_entries]
 
-        force_uuids = director_hostility.force_retaliation_uuids(self._gs, target_names) if is_aggressive else set()
         retaliation_entries = await self._agents.retaliation.check_retaliation(
             mood_snapshot,
             skip_uuids=combat_engaged - force_uuids,

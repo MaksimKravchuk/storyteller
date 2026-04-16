@@ -117,10 +117,14 @@ def format_hostile_actions_summary(actions: list[dict[str, str]]) -> str:
     Empty input yields an empty string so callers can decide whether to
     inject the section at all.
     """
-    if not actions:
-        return ""
-    lines = [_format_entry(entry) for entry in actions]
-    return "\n".join(lines)
+    return "\n".join(
+        "- Turn {0} ({1}): {2}".format(
+            entry.get("turn", "?"),
+            entry.get("severity", SEVERITY_LOW),
+            entry.get("action", ""),
+        )
+        for entry in actions
+    )
 
 
 def apply_llm_mood_update(npc: NPCCard, new_mood: str) -> None:
@@ -139,13 +143,6 @@ def apply_llm_mood_update(npc: NPCCard, new_mood: str) -> None:
         # LLM tried to de-escalate a mechanically-hostile NPC; keep the floor.
         return
     npc.current_mood = new_mood
-
-
-def _format_entry(entry: dict[str, str]) -> str:
-    turn = entry.get("turn", "?")
-    action = entry.get("action", "")
-    severity = entry.get("severity", SEVERITY_LOW)
-    return "- Turn {0} ({1}): {2}".format(turn, severity, action)
 
 
 def _is_stronger_mood(candidate: str, current: str) -> bool:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from benchmarks.harness.snapshots import hostility_level_of
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import (
     KIND_DETERMINISTIC,
@@ -28,11 +29,6 @@ _SCENARIO_BRIEF = (
 )
 
 
-def _hostility_level(snap: GameState) -> int:
-    npc = snap.npcs.get(SENTRY_UUID)
-    return npc.hostility_level if npc else 0
-
-
 def _strictly_increasing(levels: list[int]) -> bool:
     """Return ``True`` when each element is strictly less than the one after it."""
     for index in range(len(levels) - 1):
@@ -51,7 +47,7 @@ def _hostility_monotonic(
             awarded=0,
             reason="need four snapshots (pre + three assault turns), got {0}".format(len(snapshots)),
         )
-    levels = [_hostility_level(snap) for snap in snapshots[:4]]
+    levels = [hostility_level_of(snap, SENTRY_UUID) for snap in snapshots[:4]]
     if _strictly_increasing(levels):
         return DeterministicResult(
             awarded=3,
