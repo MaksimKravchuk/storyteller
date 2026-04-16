@@ -4,13 +4,15 @@ name: Fly Preview Deployments
 # pull request is opened or updated, and tear it down when the PR is closed.
 #
 # Required repository secrets:
-#   FLY_ORG_API_TOKEN         - Fly.io token with **org-level** access (not
-#                               the app-scoped FLY_API_TOKEN used by
-#                               ci.yml's production deploy). Create with:
+#   FLY_API_TOKEN             - Fly.io token with **org-level** access. The
+#                               app-scoped deploy token used by ci.yml's
+#                               production deploy will NOT work: it cannot
+#                               run `apps create` and fails with
+#                               "Not authorized to deploy this app". Create
+#                               an org-scoped token with:
 #                                 flyctl tokens create org <FLY_ORG>
-#                               App-scoped deploy tokens cannot run
-#                               `apps create` and will fail with
-#                               "Not authorized to deploy this app".
+#                               The same secret is reused by ci.yml's
+#                               production deploy job.
 #   FLY_ORG                   - Fly organisation slug that owns preview apps
 #   FLY_PREVIEW_DATABASE_URL  - DATABASE_URL shared by all previews
 #                               (format: postgresql+asyncpg://user:pw@host/db)
@@ -46,7 +48,7 @@ jobs:
       contents: read
       pull-requests: write
     env:
-      FLY_API_TOKEN: ${{ secrets.FLY_ORG_API_TOKEN }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -56,7 +58,7 @@ jobs:
           FLY_PREVIEW_DATABASE_URL: ${{ secrets.FLY_PREVIEW_DATABASE_URL }}
         run: |
           missing=""
-          [ -z "$FLY_API_TOKEN" ] && missing="$missing FLY_ORG_API_TOKEN"
+          [ -z "$FLY_API_TOKEN" ] && missing="$missing FLY_API_TOKEN"
           [ -z "$FLY_ORG" ] && missing="$missing FLY_ORG"
           [ -z "$FLY_PREVIEW_DATABASE_URL" ] && missing="$missing FLY_PREVIEW_DATABASE_URL"
           if [ -n "$missing" ]; then
@@ -118,14 +120,14 @@ jobs:
     permissions:
       pull-requests: write
     env:
-      FLY_API_TOKEN: ${{ secrets.FLY_ORG_API_TOKEN }}
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Destroy Fly app (if present)
         run: |
           if [ -z "$FLY_API_TOKEN" ]; then
-            echo "FLY_ORG_API_TOKEN not set — skipping cleanup."
+            echo "FLY_API_TOKEN not set — skipping cleanup."
             exit 0
           fi
           if flyctl status --app "$FLY_APP" >/dev/null 2>&1; then

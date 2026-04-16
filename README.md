@@ -88,7 +88,7 @@ Required GitHub repository secrets:
 
 | Secret | Purpose |
 |---|---|
-| `FLY_ORG_API_TOKEN` | **Org-scoped** Fly token (not the app-scoped `FLY_API_TOKEN` used for production — that one cannot create new apps). Create with `flyctl tokens create org <FLY_ORG>`. |
+| `FLY_API_TOKEN` | **Org-scoped** Fly token — must be able to create apps, not just deploy one. Create with `flyctl tokens create org <FLY_ORG>`. Reused by the production deploy in `ci.yml`. |
 | `FLY_ORG` | Fly organisation slug that owns preview apps |
 | `FLY_PREVIEW_DATABASE_URL` | Shared Postgres URL (`postgresql+asyncpg://...`) used by all previews |
 | `OPENAI_API_KEY` | Forwarded to the preview app |
