@@ -3,12 +3,30 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'benchmarks/results/**'
+      - 'logs.json'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'docs/**'
   pull_request:
     branches: [main]
+    types: [opened, synchronize, ready_for_review, reopened]
+    paths-ignore:
+      - '**.md'
+      - 'benchmarks/results/**'
+      - 'logs.json'
+      - '.github/ISSUE_TEMPLATE/**'
+      - 'docs/**'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +52,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
@@ -87,6 +106,7 @@ jobs:
 
   test-db:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -115,6 +135,10 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.draft == false
     permissions:
       contents: read
       pull-requests: write
@@ -165,6 +189,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [lint, test, test-db]
     concurrency:
@@ -182,6 +207,7 @@ jobs:
 
   publish-allure:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test, e2e]
     if: always() && github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
