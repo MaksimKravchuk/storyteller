@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from models.game_state import INITIAL_GAME_CLOCK
+from models.game_state import INITIAL_GAME_CLOCK, PlayerState
 
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import (
@@ -20,6 +20,19 @@ if TYPE_CHECKING:
     from llm.base_client import BaseLLMClient
 
 _SUMMARY_MAX_TOKENS = 200
+
+
+def record_player_learned_fact(player: PlayerState, created_ids: list[str]) -> None:
+    """Attach the first created memory UUID to ``player.learned_facts``.
+
+    Callers of :meth:`MemoryManager.create_memory_from_event` where the
+    player was subject or witness pipe the returned list through here so
+    the Character sidebar can surface the fact via ``RememberedFact``.
+    All per-witness nodes in ``created_ids`` share the same
+    ``event_description``, so a single representative UUID is enough.
+    """
+    if created_ids:
+        player.learned_facts.add(created_ids[0])
 
 
 class MemoryManager:

@@ -8,9 +8,12 @@ thin and the shape of the Character sidebar lives next to the schemas.
 
 from __future__ import annotations
 
+from typing import cast
+
+from knowledge.node import KnowledgeNode
 from models.game_state import GameState
 
-from interfaces.web.character_schemas import CharacterInfo, KnownNPC, RememberedFact
+from interfaces.web.character_schemas import CharacterInfo, FactSource, KnownNPC, RememberedFact
 
 
 def _known_npcs(game_state: GameState) -> list[KnownNPC]:
@@ -38,6 +41,17 @@ def _known_npcs(game_state: GameState) -> list[KnownNPC]:
     return rows
 
 
+def _fact_from_node(node: KnowledgeNode) -> RememberedFact:
+    """Build a ``RememberedFact`` from a ``KnowledgeNode``.
+
+    The cast narrows the enum name to the ``FactSource`` ``Literal`` so
+    pydantic validation stays type-safe; every ``KnowledgeSource`` enum
+    member's ``name`` matches one of the four allowed values.
+    """
+    source_name = cast(FactSource, node.source.name)
+    return RememberedFact(text=node.text, source=source_name)
+
+
 def _learned_facts(game_state: GameState) -> list[RememberedFact]:
     """Project each remembered fact UUID into a ``RememberedFact`` row.
 
@@ -53,7 +67,7 @@ def _learned_facts(game_state: GameState) -> list[RememberedFact]:
         node = graph.get_node(fact_uuid)
         if node is None:
             continue
-        rows.append(RememberedFact(text=node.text, source=node.source.name))
+        rows.append(_fact_from_node(node))
     return rows
 
 

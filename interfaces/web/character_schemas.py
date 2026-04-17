@@ -7,7 +7,11 @@ Split out of ``schemas.py`` so that module stays under the wemake
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
+
+FactSource = Literal["FACT", "RUMOR", "PERSONAL_EXPERIENCE", "HEARSAY"]
 
 
 class KnownNPC(BaseModel):
@@ -21,13 +25,12 @@ class KnownNPC(BaseModel):
 class RememberedFact(BaseModel):
     """A fact the player has personally learned.
 
-    ``source`` is the ``KnowledgeSource`` enum name (``FACT`` / ``RUMOR`` /
-    ``PERSONAL_EXPERIENCE`` / ``HEARSAY``) so the client can badge entries
-    without reading the runtime enum module.
+    ``source`` is the ``KnowledgeSource`` enum name so the client can
+    badge entries without reading the runtime enum module.
     """
 
     text: str
-    source: str
+    source: FactSource
 
 
 class CharacterInfo(BaseModel):

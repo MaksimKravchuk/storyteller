@@ -193,15 +193,12 @@ class PlanExecutor:
         capped at :data:`_PLAYER_EVENT_LOG_CAP` entries, with the oldest
         trimmed off the front.
         """
-        new_entries: list[str] = []
-        new_entries.extend(raw_outputs.new_npcs)
-        new_entries.extend(raw_outputs.completed_events)
-        new_entries.extend(raw_outputs.object_interactions)
-        if not new_entries:
-            return
         player = self._gs.player
-        combined = player.player_event_log + new_entries
-        player.player_event_log = combined[-_PLAYER_EVENT_LOG_CAP:]
+        player.player_event_log.extend(raw_outputs.new_npcs)
+        player.player_event_log.extend(raw_outputs.completed_events)
+        player.player_event_log.extend(raw_outputs.object_interactions)
+        if len(player.player_event_log) > _PLAYER_EVENT_LOG_CAP:
+            player.player_event_log = player.player_event_log[-_PLAYER_EVENT_LOG_CAP:]
 
     async def _dispatch_plan(
         self,

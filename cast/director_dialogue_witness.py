@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 from cast.dice import ContestRoll
-from knowledge.memory import MemoryManager
+from knowledge.memory import MemoryManager, record_player_learned_fact
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
 
@@ -110,5 +110,4 @@ async def broadcast_cowitness_memories(
         location_id=scene.location_id if scene else None,
         game_time=game_state.game_clock,
     )
-    if created_ids:
-        game_state.player.learned_facts.add(created_ids[0])
+    record_player_learned_fact(game_state.player, created_ids)
