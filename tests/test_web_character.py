@@ -1,16 +1,10 @@
-"""Unit tests for ``interfaces.web.character.build_character_info``.
-
-Builds a ``GameState`` covering each ``CharacterInfo`` field and asserts
-the builder projects NPCs from ``known_npcs``, recent events from
-``player_event_log``, and facts from ``learned_facts`` through the
-knowledge graph.
-"""
+"""Unit tests for ``interfaces.web.character.build_character_info``."""
 
 from __future__ import annotations
 
 import allure
 
-from interfaces.web.character import build_character_info
+from interfaces.web.character import _SOURCE_WIRE, build_character_info
 from knowledge.node import (
     CanonSource,
     KnowledgeNode,
@@ -137,6 +131,12 @@ def test_builder_sorts_set_backed_fields_by_uuid(game_state: GameState) -> None:
 
     assert [npc.name for npc in sidebar.known_npcs] == ["Aulus", "Brutus"]
     assert [fact.text for fact in sidebar.learned_facts] == ["bread is fresh", "gates close at dusk"]
+
+
+@allure.story(_STORY_BUILDER)
+@allure.title("_SOURCE_WIRE covers every KnowledgeSource member so new enum values fail fast")
+def test_source_wire_is_exhaustive_over_knowledge_source() -> None:
+    assert set(_SOURCE_WIRE) == set(KnowledgeSource)
 
 
 @allure.story(_STORY_BUILDER)

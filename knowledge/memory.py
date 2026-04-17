@@ -25,11 +25,10 @@ _SUMMARY_MAX_TOKENS = 200
 def record_player_learned_fact(player: PlayerState, created_ids: list[str]) -> None:
     """Attach the first created memory UUID to ``player.learned_facts``.
 
-    Callers of :meth:`MemoryManager.create_memory_from_event` where the
-    player was subject or witness pipe the returned list through here so
-    the Character sidebar can surface the fact via ``RememberedFact``.
-    All per-witness nodes in ``created_ids`` share the same
-    ``event_description``, so a single representative UUID is enough.
+    All per-witness nodes produced by LOCAL-scope
+    :meth:`MemoryManager.create_memory_from_event` share the same
+    ``event_description``, so a single representative UUID is enough
+    for the Character sidebar to render a ``RememberedFact``.
     """
     if created_ids:
         player.learned_facts.add(created_ids[0])
@@ -131,12 +130,10 @@ class MemoryManager:
           - CITY/REGION: becomes RUMOR accessible in that area
           - WORLD: becomes FACT accessible broadly
 
-        Returns list of created node UUIDs. Callers where the player was
-        subject or witness read ``created_ids[0]`` and append it to
-        ``game_state.player.learned_facts`` so the Character sidebar can
-        surface it via ``RememberedFact`` — the decision lives at the
-        call site because only the caller knows the player's role in
-        the event.
+        Returns list of created node UUIDs. The first entry is
+        canonical across per-witness duplicates, so callers where the
+        player was subject or witness may pass the list to
+        :func:`record_player_learned_fact`.
         """
         created_ids: list[str] = []
 

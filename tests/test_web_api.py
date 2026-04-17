@@ -422,6 +422,24 @@ async def test_process_turn_raises_when_no_game() -> None:
 
 @pytest.mark.asyncio
 @allure.story("Ownership enforcement")
+@allure.title("_act_and_persist raises RuntimeError when the engine has no game_state after the action")
+async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
+    """Guards the invariant strengthened in the KER-30 refactor: the old
+    ``turn_number or 0`` fallback silently masked a broken engine that had no
+    ``game_state``. The raise now surfaces that as a 500 instead of assembling
+    an ActionResponse with turn_count=0.
+    """
+    repo = AsyncMock()
+    engine = MagicMock()
+    engine.game_state = None
+    engine.process_action = AsyncMock(return_value="prose")
+
+    with pytest.raises(RuntimeError, match="engine.game_state is None"):
+        await service._act_and_persist(repo, "sess-1", engine, "look")
+
+
+@pytest.mark.asyncio
+@allure.story("Ownership enforcement")
 @allure.title("process_turn_for_player raises GameNotFoundError when the player has no session row at all")
 async def test_process_turn_raises_when_no_session() -> None:
     repo = AsyncMock()

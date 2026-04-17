@@ -1,9 +1,4 @@
-"""Shape tests for the ``CharacterInfo`` / ``KnownNPC`` / ``RememberedFact`` DTOs.
-
-Verifies the pydantic contract exposed on ``GameSnapshot`` and
-``ActionResponse`` so web clients can rely on the field names and
-types without reading the engine code.
-"""
+"""Shape tests for the ``CharacterInfo`` / ``KnownNPC`` / ``RememberedFact`` DTOs."""
 
 from __future__ import annotations
 
@@ -88,3 +83,10 @@ def test_nested_models_require_fields() -> None:
         KnownNPC(name="Marcus")  # type: ignore[call-arg]
     with pytest.raises(ValidationError):
         RememberedFact(text="a fact")  # type: ignore[call-arg]
+
+
+@allure.story(_STORY_SCHEMA)
+@allure.title("RememberedFact rejects a source string outside the FactSource Literal")
+def test_remembered_fact_rejects_unknown_source() -> None:
+    with pytest.raises(ValidationError):
+        RememberedFact(text="a fact", source="NOT_A_SOURCE")  # type: ignore[arg-type]

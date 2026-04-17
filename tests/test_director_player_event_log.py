@@ -1,10 +1,4 @@
-"""End-of-turn ``player_event_log`` writes in ``PlanExecutor``.
-
-Exercises :meth:`cast.director_execution.PlanExecutor._append_player_event_log`
-directly: the Character sidebar depends on the log being populated from
-the same ``raw_outputs`` fields the Narrator consumes, and on the 30-entry
-cap so long play sessions don't balloon the payload.
-"""
+"""End-of-turn ``player_event_log`` writes in ``PlanExecutor``."""
 
 from __future__ import annotations
 

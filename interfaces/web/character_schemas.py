@@ -1,9 +1,4 @@
-"""Pydantic models for the Character sidebar payload.
-
-Split out of ``schemas.py`` so that module stays under the wemake
-``WPS202 too many module members`` cap. The types are re-exported from
-``schemas`` for backwards compatibility with existing imports.
-"""
+"""Pydantic models for the Character sidebar payload."""
 
 from __future__ import annotations
 

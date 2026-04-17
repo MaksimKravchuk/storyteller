@@ -8,12 +8,28 @@ thin and the shape of the Character sidebar lives next to the schemas.
 
 from __future__ import annotations
 
-from typing import cast
+from types import MappingProxyType
+from typing import Mapping
 
-from knowledge.node import KnowledgeNode
+from knowledge.node import KnowledgeNode, KnowledgeSource
 from models.game_state import GameState
 
 from interfaces.web.character_schemas import CharacterInfo, FactSource, KnownNPC, RememberedFact
+
+# Explicit projection of the runtime enum to the wire Literal. Defined
+# as a dict (rather than relying on ``enum.name`` matching the Literal
+# by coincidence) so that adding a new ``KnowledgeSource`` member
+# triggers a ``KeyError`` at build time instead of a pydantic
+# validation error far from the cause. Wrapped in ``MappingProxyType``
+# to keep it genuinely read-only at runtime.
+_SOURCE_WIRE: Mapping[KnowledgeSource, FactSource] = MappingProxyType(
+    {
+        KnowledgeSource.FACT: "FACT",
+        KnowledgeSource.RUMOR: "RUMOR",
+        KnowledgeSource.PERSONAL_EXPERIENCE: "PERSONAL_EXPERIENCE",
+        KnowledgeSource.HEARSAY: "HEARSAY",
+    },
+)
 
 
 def _known_npcs(game_state: GameState) -> list[KnownNPC]:
@@ -42,14 +58,8 @@ def _known_npcs(game_state: GameState) -> list[KnownNPC]:
 
 
 def _fact_from_node(node: KnowledgeNode) -> RememberedFact:
-    """Build a ``RememberedFact`` from a ``KnowledgeNode``.
-
-    The cast narrows the enum name to the ``FactSource`` ``Literal`` so
-    pydantic validation stays type-safe; every ``KnowledgeSource`` enum
-    member's ``name`` matches one of the four allowed values.
-    """
-    source_name = cast(FactSource, node.source.name)
-    return RememberedFact(text=node.text, source=source_name)
+    """Build a ``RememberedFact`` from a ``KnowledgeNode``."""
+    return RememberedFact(text=node.text, source=_SOURCE_WIRE[node.source])
 
 
 def _learned_facts(game_state: GameState) -> list[RememberedFact]:

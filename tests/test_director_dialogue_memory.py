@@ -113,6 +113,15 @@ class TestDialogueHandlerLongTermMemory:
         assert _DAMNING_STATEMENT in cowitness_memories[0].text
         assert "Marcus" in cowitness_memories[0].text
 
+        # The co-witness broadcast also surfaces as a learned fact on the
+        # player, so the Character sidebar can render the confession the
+        # player just made.
+        assert len(gs.player.learned_facts) == 1
+        fact_uuid = next(iter(gs.player.learned_facts))
+        fact_node = gs.knowledge_graph.get_node(fact_uuid)
+        assert fact_node is not None
+        assert _DAMNING_STATEMENT in fact_node.text
+
         # LLM is called exactly once — only for the targeted NPC. Co-witness
         # memories are rendered from the raw transcript and do not issue
         # any extra LLM calls.
