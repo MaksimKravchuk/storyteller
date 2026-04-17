@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any
+
+from loguru import logger
 
 from cast.base_performer_class import BasePerformer
 from cast.schemas.npc_response import NPCResponse
@@ -13,6 +14,35 @@ from prompts.npc_generator_prompts import NPC_GENERATOR_CREATE, NPC_GENERATOR_SY
 _SETTING_SUMMARY_MAX = 500
 _SCENE_DESC_MAX = 200
 _SOCIAL_STRUCTURE_MAX = 300
+
+
+def _existing_scene_names(game_state: Any) -> set[str]:
+    """Collect names of NPCs already materialised in the current scene."""
+    scene = getattr(game_state, "current_scene", None)
+    if not scene:
+        return set()
+    taken: set[str] = set()
+    for scene_npc in scene.npcs_present:
+        card = game_state.npcs.get(scene_npc.uuid) if scene_npc.uuid else None
+        if card and card.name:
+            taken.add(card.name)
+    return taken
+
+
+def _disambiguate_name(name: str, occupation: str, taken: set[str]) -> str:
+    """Return a name that does not collide with any name in ``taken``.
+
+    Applied as a last-resort safety net when the LLM ignores the
+    ``forbidden_names`` prompt section and returns a duplicate anyway.
+    Deterministic so collisions in tests are reproducible.
+    """
+    base = "{0} ({1})".format(name, occupation) if occupation else name
+    candidate = base
+    suffix = 2
+    while candidate in taken:
+        candidate = "{0} [{1}]".format(base, suffix)
+        suffix += 1
+    return candidate
 
 
 class NPCGenerator(BasePerformer):
@@ -30,7 +60,10 @@ class NPCGenerator(BasePerformer):
         ``input_data``: List of NPC role descriptions (e.g. ["tavern merchant", "city guard"]).
         ``context``: Must contain ``game_state``.
 
-        Returns a list of ``NPCCard`` objects.
+        Returns a list of ``NPCCard`` objects. Generation is serial so each
+        call can tell the LLM which names have already been handed out in
+        this batch — otherwise two parallel roles with identical context
+        routinely mode-collapse onto the same name.
         """
         from models.game_state import GameState
 
@@ -46,13 +79,40 @@ class NPCGenerator(BasePerformer):
             social_structure=game_state.setting.social_structure[:_SOCIAL_STRUCTURE_MAX],
         )
 
-        tasks = (self._generate_npc(req, game_state) for req in input_data)
-        npcs = await asyncio.gather(*tasks)
-        return list(npcs)
+        taken_names = _existing_scene_names(game_state)
+        cards: list[NPCCard] = []
+        pending = list(input_data)
+        while pending:
+            cards.append(await self._generate_unique(pending.pop(0), game_state, taken_names))
+        return cards
 
-    async def _generate_npc(self, npc_request: str, game_state: Any) -> NPCCard:
+    async def _generate_unique(self, npc_request: str, game_state: Any, taken_names: set[str]) -> NPCCard:
+        """Generate one card and rename it if the LLM ignored ``forbidden_names``.
+
+        The rename is logged at ``error`` because downstream name-matchers
+        (dialogue targeting, interaction filters) compare ``npc.name.lower()``
+        and will silently miss the suffixed form — a sustained rate of renames
+        signals a prompt regression worth investigating.
+        """
+        card = await self._generate_npc(npc_request, game_state, taken_names)
+        if card.name in taken_names:
+            disambiguated = _disambiguate_name(card.name, card.occupation, taken_names)
+            logger.error(
+                "NPCGenerator: LLM returned taken name '{0}' for role '{1}', renaming to '{2}'",
+                card.name,
+                npc_request,
+                disambiguated,
+            )
+            card.name = disambiguated
+        taken_names.add(card.name)
+        return card
+
+    async def _generate_npc(self, npc_request: str, game_state: Any, taken_names: set[str]) -> NPCCard:
         """Generate a single NPC card from a role description."""
-        prompt = NPC_GENERATOR_CREATE.render(npc_request=npc_request)
+        render_vars = {"npc_request": npc_request}
+        if taken_names:
+            render_vars["forbidden_names"] = ", ".join(sorted(taken_names))
+        prompt = NPC_GENERATOR_CREATE.render(**render_vars)
         npc_data = await self._send_json(prompt, response_model=NPCResponse)
 
         return NPCCard(

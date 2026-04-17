@@ -10,7 +10,7 @@ import pytest
 from cast.npc_generator import NPCGenerator
 from cast.schemas.npc_response import NPCResponse
 from models.npc_card import NPCCard
-from models.scene import Scene
+from models.scene import Scene, SceneNPC
 
 _SEND_JSON = "_send_json"
 _SETTING_CAP = 500
@@ -87,15 +87,89 @@ class TestNPCGenerator:
         assert cards[0].location_id is None
 
     @allure.story("Batch generation")
-    @allure.title("NPCGenerator preserves the input order when dispatching requests via asyncio.gather")
+    @allure.title("NPCGenerator preserves input order when generating NPCs sequentially")
     @pytest.mark.asyncio
-    async def test_gather_preserves_order(self, game_state) -> None:
+    async def test_sequential_preserves_order(self, game_state) -> None:
         names = ["One", "Two", "Three", "Four", "Five"]
         payloads = [_full_npc_payload(n) for n in names]
         gen = NPCGenerator(llm_client=MagicMock())
         with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=payloads)):
             cards = await gen.act(names, {"game_state": game_state})
         assert [card.name for card in cards] == names
+
+    @allure.story("Duplicate prevention")
+    @allure.title("NPCGenerator accumulates forbidden_names so each serial call sees earlier picks (KER-25)")
+    @pytest.mark.asyncio
+    async def test_forbidden_names_accumulate_across_batch(self, game_state) -> None:
+        gen = NPCGenerator(llm_client=MagicMock())
+        payloads = [_full_npc_payload("Aulus"), _full_npc_payload("Brutus"), _full_npc_payload("Caius")]
+        send_json = AsyncMock(side_effect=payloads)
+        with patch.object(gen, _SEND_JSON, new=send_json):
+            await gen.act(["guard", "guard", "guard"], {"game_state": game_state})
+        prompts = [call.args[0] for call in send_json.await_args_list]
+        assert "Aulus" not in prompts[0]
+        assert "Aulus" in prompts[1]
+        assert "Aulus" in prompts[2]
+        assert "Brutus" in prompts[2]
+
+    @allure.story("Duplicate prevention")
+    @allure.title("NPCGenerator disambiguates when the LLM returns a duplicate name within a batch (KER-25)")
+    @pytest.mark.asyncio
+    async def test_within_batch_duplicate_is_renamed(self, game_state) -> None:
+        gen = NPCGenerator(llm_client=MagicMock())
+        payloads = [_full_npc_payload("Фрол Михайлов"), _full_npc_payload("Фрол Михайлов")]
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=payloads)):
+            cards = await gen.act(["fisherman", "cooper"], {"game_state": game_state})
+        assert cards[0].name == "Фрол Михайлов"
+        assert cards[1].name != cards[0].name
+        assert "Фрол Михайлов" in cards[1].name
+
+    @allure.story("Duplicate prevention")
+    @allure.title("NPCGenerator appends numeric suffix when three cards collide on the same name")
+    @pytest.mark.asyncio
+    async def test_triple_collision_uses_numeric_suffix(self, game_state) -> None:
+        gen = NPCGenerator(llm_client=MagicMock())
+        payloads = [_full_npc_payload("Фрол Михайлов") for _ in range(3)]
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=payloads)):
+            cards = await gen.act(["fisherman", "cooper", "smith"], {"game_state": game_state})
+        assert cards[0].name == "Фрол Михайлов"
+        assert cards[1].name == "Фрол Михайлов (guard)"
+        assert cards[2].name == "Фрол Михайлов (guard) [2]"
+
+    @allure.story("Duplicate prevention")
+    @allure.title("NPCGenerator forbids names of NPCs already in the current scene")
+    @pytest.mark.asyncio
+    async def test_existing_scene_npc_names_forbidden(self, game_state) -> None:
+        existing = NPCCard(name="Ivan Matveyev", occupation="fisherman")
+        game_state.npcs[existing.uuid] = existing
+        game_state.current_scene = Scene(
+            location_id="village",
+            description="wooden pier",
+            npcs_present=[SceneNPC(role="fisherman", uuid=existing.uuid)],
+        )
+        gen = NPCGenerator(llm_client=MagicMock())
+        send_json = AsyncMock(side_effect=[_full_npc_payload("Pyotr")])
+        with patch.object(gen, _SEND_JSON, new=send_json):
+            await gen.act(["guard"], {"game_state": game_state})
+        rendered_prompt = send_json.await_args_list[0].args[0]
+        assert "Ivan Matveyev" in rendered_prompt
+
+    @allure.story("Duplicate prevention")
+    @allure.title("NPCGenerator disambiguates when LLM echoes an already-present scene NPC's name")
+    @pytest.mark.asyncio
+    async def test_llm_collision_with_existing_scene_npc_is_renamed(self, game_state) -> None:
+        existing = NPCCard(name="Фрол Михайлов", occupation="fisherman")
+        game_state.npcs[existing.uuid] = existing
+        game_state.current_scene = Scene(
+            location_id="village",
+            description="wooden pier",
+            npcs_present=[SceneNPC(role="fisherman", uuid=existing.uuid)],
+        )
+        gen = NPCGenerator(llm_client=MagicMock())
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Фрол Михайлов")])):
+            cards = await gen.act(["cooper"], {"game_state": game_state})
+        assert cards[0].name != "Фрол Михайлов"
+        assert "Фрол Михайлов" in cards[0].name
 
     @allure.story("Context truncation")
     @allure.title("NPCGenerator truncates setting summary, scene description, and social structure to their caps")
