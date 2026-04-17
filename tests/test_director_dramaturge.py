@@ -116,7 +116,11 @@ class TestPlanExecutorDramaturgeGate:
     @allure.title("PlanExecutor does NOT call Dramaturge on a CONTINUATION turn with no new scene")
     @pytest.mark.asyncio
     async def test_dramaturge_not_called_on_continuation(self):
-        executor, _gs, narrator, dramaturge = _make_plan_executor_pieces(with_dramaturge=True)
+        executor, gs, narrator, dramaturge = _make_plan_executor_pieces(with_dramaturge=True)
+        # A continuation turn assumes a scene already exists; without this the
+        # fresh-session fallback in _prepare_scene would build one and trip
+        # the very gate we are testing.
+        gs.current_scene = Scene(location_id="forum", description="The bustling Forum.")
 
         result = await executor.execute_plan(
             plan={"action_type": "TALK", "delegate_to": ["actor"], "targets": []},

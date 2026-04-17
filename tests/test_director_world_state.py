@@ -141,6 +141,10 @@ class TestPlanExecutorChroniclerGate:
     @pytest.mark.asyncio
     async def test_chronicler_not_called_on_continuation(self):
         executor, gs, chronicler, _event_mgr = _make_plan_executor_pieces(with_chronicler=True)
+        # A continuation turn assumes a scene already exists; without this the
+        # fresh-session fallback in _prepare_scene would build one and trip
+        # the chronicler gate we are verifying stays closed here.
+        gs.current_scene = scene_mod.Scene(location_id="forum", description="The bustling Forum.")
 
         # TALK is not a scene-changing action, so PlanExecutor.execute_plan
         # never builds a scene and the chronicler gate should short-circuit.
