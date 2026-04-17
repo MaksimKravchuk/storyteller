@@ -109,7 +109,8 @@ class TestNPCGenerator:
         prompts = [call.args[0] for call in send_json.await_args_list]
         assert "Aulus" not in prompts[0]
         assert "Aulus" in prompts[1]
-        assert "Aulus" in prompts[2] and "Brutus" in prompts[2]
+        assert "Aulus" in prompts[2]
+        assert "Brutus" in prompts[2]
 
     @allure.story("Duplicate prevention")
     @allure.title("NPCGenerator disambiguates when the LLM returns a duplicate name within a batch (KER-25)")

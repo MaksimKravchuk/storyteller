@@ -17,12 +17,7 @@ _SOCIAL_STRUCTURE_MAX = 300
 
 
 def _existing_scene_names(game_state: Any) -> set[str]:
-    """Collect names of NPCs already materialised in the current scene.
-
-    Generation runs before these NPCs are replaced, so the freshly generated
-    batch must avoid colliding with them (e.g. when :class:`DialogueHandler`
-    appends a new ``SceneNPC`` target alongside previously initialised ones).
-    """
+    """Collect names of NPCs already materialised in the current scene."""
     scene = getattr(game_state, "current_scene", None)
     if not scene:
         return set()
@@ -68,7 +63,7 @@ class NPCGenerator(BasePerformer):
         Returns a list of ``NPCCard`` objects. Generation is serial so each
         call can tell the LLM which names have already been handed out in
         this batch — otherwise two parallel roles routinely collapse onto the
-        same random-seeded name (KER-25).
+        same random-seeded name.
         """
         from models.game_state import GameState
 
@@ -108,7 +103,7 @@ class NPCGenerator(BasePerformer):
 
     async def _generate_npc(self, npc_request: str, game_state: Any, taken_names: set[str]) -> NPCCard:
         """Generate a single NPC card from a role description."""
-        render_vars: dict[str, str] = {"npc_request": npc_request}
+        render_vars = {"npc_request": npc_request}
         if taken_names:
             render_vars["forbidden_names"] = ", ".join(sorted(taken_names))
         prompt = NPC_GENERATOR_CREATE.render(**render_vars)
