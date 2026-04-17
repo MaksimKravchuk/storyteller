@@ -174,6 +174,7 @@ npcs = Table(
     Column(_COL_NAME, Text, nullable=False),
     Column("biography", Text, nullable=False, server_default=""),
     Column("appearance", Text, nullable=False, server_default=""),
+    Column("short_descriptor", Text, nullable=False, server_default=""),
     Column("occupation", Text, nullable=False, server_default=""),
     Column("personality_traits", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("speech_style", Text, nullable=False, server_default=""),

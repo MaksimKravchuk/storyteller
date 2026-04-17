@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import allure
 import pytest
 
@@ -14,6 +16,11 @@ from models.setting import Setting
 _DAGGER = "dagger"
 _NPC_A = "npc-1"
 _UUID_LENGTH = 36
+
+
+def _fake_game_state(known_npcs: set[str] | None = None) -> SimpleNamespace:
+    """Minimal stand-in for ``GameState`` used by label-for-player tests."""
+    return SimpleNamespace(player=SimpleNamespace(known_npcs=known_npcs or set()))
 
 
 @allure.epic("Memory & Persistence")
@@ -132,6 +139,62 @@ class TestNPCCard:
     @allure.title("A new NPCCard defaults to a 'neutral' current mood")
     def test_current_mood_default(self, sample_npc):
         assert sample_npc.current_mood == "neutral"
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("NPC label formatting")
+class TestNPCCardLabelForPlayer:
+    """``NPCCard.label_for_player`` gates name reveals on ``PlayerState.known_npcs``.
+
+    Used by the Narrator (scene's ``npcs_present`` line) and the plan
+    executor (``raw_outputs.new_npcs``). The three branches are
+    exercised here against a minimal stand-in for ``GameState`` so the
+    model test suite does not pull in full-game fixtures.
+    """
+
+    @allure.story("Known NPC")
+    @allure.title("label_for_player returns 'Name (Occupation)' when the NPC's UUID is in player.known_npcs")
+    def test_known_npc_renders_name_and_occupation(self):
+        npc = NPCCard(
+            name="Marcus",
+            occupation="centurion",
+            short_descriptor="a tall man in a red cloak",
+        )
+        gs = _fake_game_state({npc.uuid})
+
+        assert npc.label_for_player(gs, role_fallback="soldier") == "Marcus (centurion)"
+
+    @allure.story("Unknown NPC")
+    @allure.title("label_for_player returns the short_descriptor when the NPC is not yet introduced")
+    def test_unknown_npc_with_descriptor_returns_descriptor(self):
+        npc = NPCCard(
+            name="Marcus",
+            occupation="centurion",
+            short_descriptor="a tall man in a red cloak",
+        )
+        gs = _fake_game_state()
+
+        assert npc.label_for_player(gs, role_fallback="soldier") == "a tall man in a red cloak"
+
+    @allure.story("Unknown NPC")
+    @allure.title("label_for_player falls back to role when the card has no short_descriptor")
+    def test_unknown_npc_without_descriptor_falls_back_to_role(self):
+        npc = NPCCard(name="Marcus", occupation="centurion")
+        gs = _fake_game_state()
+
+        assert npc.label_for_player(gs, role_fallback="soldier") == "soldier"
+
+    @allure.story("Unknown NPC")
+    @allure.title("label_for_player tolerates a game state without a player attribute")
+    def test_missing_player_attribute(self):
+        npc = NPCCard(
+            name="Marcus",
+            occupation="centurion",
+            short_descriptor="a tall man in a red cloak",
+        )
+        bare_state = SimpleNamespace()
+
+        assert npc.label_for_player(bare_state, role_fallback="soldier") == "a tall man in a red cloak"
 
 
 @allure.epic("Memory & Persistence")

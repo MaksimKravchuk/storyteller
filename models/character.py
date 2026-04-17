@@ -17,6 +17,7 @@ class Character(StorytellerBase):
     inventory: list[str] = []
     # Extended fields (populated by NPC generator)
     appearance: str = ""
+    short_descriptor: str = ""
     personality_traits: list[str] = []
     occupation: str = ""
     speech_style: str = ""

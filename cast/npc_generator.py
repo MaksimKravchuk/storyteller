@@ -14,6 +14,7 @@ from prompts.npc_generator_prompts import NPC_GENERATOR_CREATE, NPC_GENERATOR_SY
 _SETTING_SUMMARY_MAX = 500
 _SCENE_DESC_MAX = 200
 _SOCIAL_STRUCTURE_MAX = 300
+_SHORT_DESCRIPTOR_MAX = 80
 
 
 def _existing_scene_names(game_state: Any) -> set[str]:
@@ -119,6 +120,7 @@ class NPCGenerator(BasePerformer):
             name=npc_data.name or "Unknown",
             biography=npc_data.biography,
             appearance=npc_data.appearance,
+            short_descriptor=npc_data.short_descriptor.strip()[:_SHORT_DESCRIPTOR_MAX],
             occupation=npc_data.occupation or npc_request,
             personality_traits=npc_data.personality_traits,
             speech_style=npc_data.speech_style or "neutral",

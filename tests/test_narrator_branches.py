@@ -263,9 +263,61 @@ class TestNarratorWorldMood:
 @allure.feature("Narrator")
 class TestFormatNpcLabel:
     @allure.story("NPC label formatting")
-    @allure.title("Narrator labels known-uuid NPCs as 'Name (Occupation)' in the People visible line")
+    @allure.title("Narrator labels introduced NPCs (uuid in known_npcs) as 'Name (Occupation)'")
     @pytest.mark.asyncio
     async def test_known_npc_uses_name_and_occupation(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
+        gs.npcs[npc.uuid] = npc
+        gs.player.known_npcs.add(npc.uuid)
+
+        scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+        )
+
+        await narrator.act(
+            input_data=TurnOutputs(scene=scene),
+            context={"player_action": "enter", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Marcus (centurion)" in body
+        # The descriptor is NOT surfaced once the NPC has been introduced.
+        assert "a tall man in a red cloak" not in body
+
+    @allure.story("NPC label formatting")
+    @allure.title("Narrator hides the name of NPCs not yet in known_npcs and uses short_descriptor instead")
+    @pytest.mark.asyncio
+    async def test_unknown_npc_with_descriptor_hides_name(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
+        gs.npcs[npc.uuid] = npc
+        # Intentionally no known_npcs entry — player has not been introduced.
+
+        scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+        )
+
+        await narrator.act(
+            input_data=TurnOutputs(scene=scene),
+            context={"player_action": "enter", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "a tall man in a red cloak" in body
+        assert "Marcus" not in body
+        assert "centurion" not in body
+
+    @allure.story("NPC label formatting")
+    @allure.title("Narrator falls back to SceneNPC.role when the card has no short_descriptor and is not known")
+    @pytest.mark.asyncio
+    async def test_unknown_npc_without_descriptor_falls_back_to_role(self):
         narrator = _make_narrator()
         gs = _make_game_state()
         npc = NPCCard(name="Marcus", occupation="centurion")
@@ -283,7 +335,8 @@ class TestFormatNpcLabel:
         )
 
         body = _last_user_body(narrator)
-        assert "Marcus (centurion)" in body
+        assert "soldier" in body
+        assert "Marcus" not in body
 
 
 @allure.epic("Narrative Delivery")

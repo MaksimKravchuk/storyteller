@@ -501,7 +501,7 @@ class PlanExecutor:
                 self._cast.item_generator,
             )
             if new_npcs:
-                raw_outputs.new_npcs = ["{0} ({1})".format(npc.name, npc.occupation) for npc in new_npcs]
+                raw_outputs.new_npcs = [npc.label_for_player(self._gs, npc.occupation) for npc in new_npcs]
                 new_uuids = {npc.uuid for npc in new_npcs if npc.uuid}
 
         should_talk = dlg.targets_match_scene_npcs(target_names) or "actor" in plan.get("delegate_to", [])
