@@ -14,7 +14,7 @@ from cast.dice import (
     roll_combat,
 )
 from cast.director_context import get_location_name
-from cast.known_npcs import resolve_revealed_uuids
+from cast.known_npcs import apply_revealed_reply
 from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
@@ -186,10 +186,7 @@ async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> 
             "location_name": get_location_name(work.npc.location_id, game_state),
         },
     )
-    if reply.revealed_names:
-        game_state.player.known_npcs.update(
-            resolve_revealed_uuids(reply.revealed_names, work.npc.uuid, game_state),
-        )
+    apply_revealed_reply(reply, work.npc.uuid, game_state)
     return {
         "npc_uuid": work.npc.uuid,
         "npc_name": work.npc.name,

@@ -1,46 +1,34 @@
-"""Helpers to populate ``PlayerState.known_npcs`` procedurally (KER-29).
+"""Helpers to populate ``PlayerState.known_npcs`` procedurally.
 
-Two signals feed this set:
+Two signals feed the set:
 
-* **Signal A** — the Actor's ``[REVEALED: ...]`` inline tag (parsed in
-  :mod:`cast.actor`). The dialogue pipeline calls
-  :func:`resolve_revealed_uuids` to turn tokens into NPC UUIDs, scoped
-  to the current scene so cross-scene same-name NPCs never leak.
-* **Signal B** — the raw player input text. The Director pipeline
-  calls :func:`scan_player_text_for_known_uuids` after action
-  classification: any NPC in the current scene whose name appears as a
-  whole-word (case-insensitive) match is considered already known.
+* **Signal A** — the Actor's ``[REVEALED: ...]`` inline tag. Callers
+  pass the parsed tokens through :func:`apply_revealed_reply` which
+  resolves them to UUIDs scoped to the current scene.
+* **Signal B** — the raw player input text. The Director calls
+  :func:`mark_player_text_introductions` after action classification;
+  any scene NPC whose name appears as a whole-word (case-insensitive)
+  match is added.
+
+Scene isolation is the load-bearing invariant: same-name NPCs in
+other scenes must never leak into ``known_npcs``.
 """
 
 from __future__ import annotations
 
 import re
-from typing import Iterable
+from typing import Any, Iterable
 
+from cast.director_object_interaction import initialised_scene_witnesses
 from models.game_state import GameState
 
 _SELF_TOKEN = "self"
 
 
-def _initialised_scene_npc_uuids(game_state: GameState) -> set[str]:
-    """Return the UUIDs of NPCs present in the current scene that are registered.
-
-    An uninitialised ``SceneNPC`` (only a role string, no UUID) cannot
-    be recorded as known — there is no stable handle to store. Mirrors
-    the scene-isolation filter used elsewhere in the Director.
-    """
-    scene = game_state.current_scene
-    if scene is None:
-        return set()
-    npcs = game_state.npcs
-    return {snpc.uuid for snpc in scene.npcs_present if snpc.uuid and snpc.uuid in npcs}
-
-
 def _build_scene_name_index(game_state: GameState) -> dict[str, str]:
     """Map lowercase NPC name → UUID for every initialised scene NPC."""
-    scene_uuids = _initialised_scene_npc_uuids(game_state)
     index: dict[str, str] = {}
-    for npc_uuid in scene_uuids:
+    for npc_uuid in initialised_scene_witnesses(game_state):
         name = game_state.npcs[npc_uuid].name
         if name:
             index[name.lower()] = npc_uuid
@@ -70,12 +58,12 @@ def resolve_revealed_uuids(
     """Resolve ``[REVEALED: ...]`` tokens to NPC UUIDs for the current scene.
 
     ``"self"`` maps to ``speaker_uuid``. Any other token is matched
-    case-insensitively against ``npc.name`` for NPCs present in the
-    current scene. Tokens that do not resolve are silently dropped —
-    an LLM hallucination should not corrupt ``known_npcs`` with a
-    UUID that has no corresponding NPC.
+    case-insensitively against ``npc.name`` for NPCs in the current
+    scene. Tokens that do not resolve are silently dropped — an LLM
+    hallucination must not corrupt ``known_npcs`` with a UUID that has
+    no corresponding NPC.
     """
-    scene_uuids = _initialised_scene_npc_uuids(game_state)
+    scene_uuids = set(initialised_scene_witnesses(game_state))
     name_index = _build_scene_name_index(game_state)
     resolved: set[str] = set()
     for raw_token in tokens:
@@ -85,6 +73,19 @@ def resolve_revealed_uuids(
     return resolved
 
 
+def apply_revealed_reply(reply: Any, speaker_uuid: str, game_state: GameState) -> None:
+    """Union resolved UUIDs from an Actor reply into ``known_npcs``.
+
+    No-ops when the reply carries no revealed tokens, keeping the
+    call site in the dialogue/retaliation pipelines a single line.
+    """
+    if not reply.revealed_names:
+        return
+    game_state.player.known_npcs.update(
+        resolve_revealed_uuids(reply.revealed_names, speaker_uuid, game_state),
+    )
+
+
 def scan_player_text_for_known_uuids(
     player_text: str,
     game_state: GameState,
@@ -92,9 +93,8 @@ def scan_player_text_for_known_uuids(
     """Return UUIDs of scene NPCs whose name appears as a whole word in *player_text*.
 
     Match is case-insensitive and word-boundary-guarded so ``"Art"``
-    inside ``"Arthur"`` does not false-match. The scan is scoped to
-    NPCs in the current scene — a player typing ``"Marcus"`` while
-    standing somewhere else must not flag a distant Marcus as known.
+    inside ``"Arthur"`` does not false-match. Scoped to the current
+    scene so typing a name never flags a same-named NPC elsewhere.
     """
     if not player_text:
         return set()
@@ -106,12 +106,12 @@ def scan_player_text_for_known_uuids(
 
 
 def mark_player_text_introductions(player_text: str, game_state: GameState) -> set[str]:
-    """Apply Signal B to the current game state and return the newly-added UUIDs.
+    """Apply Signal B to *game_state* and return the newly-added UUIDs.
 
     Whole-word matches of scene-NPC names are unioned into
     ``game_state.player.known_npcs``. The returned set is the subset
-    that was *newly* added (useful for tests and any future telemetry
-    that wants to emit an introduction event).
+    that was *newly* added — useful for any future telemetry that
+    wants to emit an introduction event.
     """
     matched = scan_player_text_for_known_uuids(player_text, game_state)
     known = game_state.player.known_npcs

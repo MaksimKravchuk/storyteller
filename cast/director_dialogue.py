@@ -57,14 +57,7 @@ async def _execute_npc_dialogue(
     contest_roll: ContestRoll | None,
     game_state: GameState,
 ) -> dict[str, str]:
-    """Execute a single NPC dialogue and return the result entry.
-
-    Consumes the :class:`ActorReply` the Actor returns, stores the
-    spoken ``text`` on the dialogue entry, and feeds any
-    ``revealed_names`` tokens through :func:`resolve_revealed_uuids`
-    so the player's ``known_npcs`` set learns about the speaker and
-    any co-present NPCs named in the line (KER-29).
-    """
+    """Execute a single NPC dialogue and return the result entry."""
     reply = await actor.execute(
         input_data=action_text,
         context={
@@ -73,10 +66,7 @@ async def _execute_npc_dialogue(
             "location_name": director_context.get_location_name(npc.location_id, game_state),
         },
     )
-    if reply.revealed_names:
-        game_state.player.known_npcs.update(
-            known_npcs.resolve_revealed_uuids(reply.revealed_names, npc.uuid, game_state),
-        )
+    known_npcs.apply_revealed_reply(reply, npc.uuid, game_state)
     result_entry: dict[str, str] = {
         "npc_name": npc.name,
         "response": reply.text,

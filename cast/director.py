@@ -107,10 +107,6 @@ class Director(BasePerformer):
             )
 
         self._deps.game_state.pending_clarification = None
-        # Signal B (KER-29): naming a scene NPC in free-text counts as an
-        # introduction. Runs on every non-clarification turn — including
-        # the forced-wait path, since a player who types "wait, come
-        # back Marcus!" has still named Marcus.
         mark_player_text_introductions(input_data, self._deps.game_state)
         action_type = routing_plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
         completed = self._events.advance_and_resolve(action_type, routing_plan.get("time_cost_override"))

@@ -1,11 +1,4 @@
-"""Schema for an Actor's dialogue return value.
-
-Carries the spoken text alongside any ``[REVEALED: ...]`` tokens the
-Actor emitted (see KER-29). Downstream, :class:`DialogueHandler`
-resolves those tokens to NPC UUIDs and adds them to
-``PlayerState.known_npcs`` so the Narrator can render ``Name
-(Occupation)`` on subsequent turns instead of a generic descriptor.
-"""
+"""Schema for an Actor's dialogue return value."""
 
 from __future__ import annotations
 
@@ -18,9 +11,8 @@ class ActorReply(BaseModel):
     ``text`` is the spoken line with all inline tags (``[MOOD:]``,
     ``[STATUS:]``, ``[REVEALED:]``) stripped. ``revealed_names`` carries
     the raw tokens the LLM supplied — ``"self"`` for the speaker, or
-    another NPC's name verbatim. Resolution of tokens to UUIDs happens
-    in :mod:`cast.director_dialogue` where the current scene's
-    NPC list is available.
+    another NPC's name verbatim. Token → UUID resolution is scoped to
+    the current scene to prevent cross-scene same-name leaks.
     """
 
     text: str

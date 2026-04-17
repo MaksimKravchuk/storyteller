@@ -58,10 +58,8 @@ class Actor(BasePerformer):
         ``input_data``: What the player said or did directed at this NPC.
         ``context``: Optional; may contain ``location_name``.
 
-        Returns an :class:`ActorReply` carrying the spoken text (with
-        all inline tags stripped) plus any ``[REVEALED: ...]`` tokens
-        the Actor emitted. Callers resolve the tokens to NPC UUIDs in
-        the dialogue pipeline (KER-29).
+        Returns an :class:`ActorReply` carrying the tag-stripped spoken
+        text plus any ``[REVEALED: ...]`` tokens the Actor emitted.
         """
         # Build knowledge context for this NPC
         accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc, topic_tags=None)

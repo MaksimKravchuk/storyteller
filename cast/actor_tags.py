@@ -1,9 +1,9 @@
 """Trailing-tag extraction for Actor LLM output.
 
-Isolates the MOOD / STATUS / REVEALED regex parsers and the
-order-independent stripping loop used by :class:`cast.actor.Actor` so
-the Actor module stays within its WPS202 module-member budget and the
-extractors remain easy to unit-test without pulling an LLM client.
+Parses the MOOD / STATUS / REVEALED tags the Actor prompt asks the
+LLM to append. The stripping loop is order-independent — the LLM may
+emit the tags in any sequence — and captures at most one occurrence
+per tag type (the first/outermost one).
 """
 
 from __future__ import annotations
@@ -69,11 +69,7 @@ class TrailingTags:
 
 
 def _peel_once(bag: TrailingTags) -> None:
-    """Run each extractor once against ``bag.text``, updating the bag in place.
-
-    Reuses ``text`` / ``hit`` locals across the three peels so the
-    helper stays inside the WPS210 variable budget.
-    """
+    """Run each extractor once against ``bag.text``, updating the bag in place."""
     text = bag.text
     text, hit = extract_status(text)
     if hit is not None and bag.status is None:

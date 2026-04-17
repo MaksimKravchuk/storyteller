@@ -1,8 +1,4 @@
-"""Shared ItemGenerator-related test helpers.
-
-Kept separate from :mod:`tests.director_helpers` so the Director test
-factory stays under its module-import budget.
-"""
+"""Shared ItemGenerator-related test helpers."""
 
 from __future__ import annotations
 
