@@ -82,11 +82,11 @@ def _append_prior_damage_parts(raw_parts: list[str], game_state: Any, labels: Na
 def _build_narrator_context_kwargs(game_state: Any, language: str, is_new_scene: bool) -> dict[str, str]:
     """Build kwargs for ``Narrator.set_context``.
 
-    ``world_mood`` is gated on ``is_new_scene`` so the persistent mood
-    set by the World Chronicler is woven into scene-entry narration
-    only. On CONTINUATION turns a standing order to weave mood into
-    every response turns small actions into atmospheric embroidery,
-    so we omit it there.
+    ``world_mood`` renders only when both conditions hold: the
+    World Chronicler has set a non-empty mood AND this turn is a
+    scene entry. On CONTINUATION turns a standing order to weave
+    mood into every response turns small actions into atmospheric
+    embroidery, so we omit it there.
     """
     ctx_kwargs: dict[str, str] = {
         "setting_name": game_state.setting.name,

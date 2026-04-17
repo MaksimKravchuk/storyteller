@@ -1,16 +1,18 @@
 """Per-NPC dedup helpers used by the Narrator.
 
-Two Director paths can emit a dialogue entry for the same NPC on one
-turn (primary response + retaliation summary); ``npc_turns`` is
-similarly vulnerable when downstream code merges multiple NPC
-schedulers. Serialising the duplicates produces an ``and then… and
-then…`` cadence in the rendered prose, so we collapse the lists
-per-NPC before they reach the narration prompt.
+Two Director paths emit a dialogue entry for the same NPC on one
+turn (primary response + retaliation summary), which serialises into
+an ``and then… and then…`` cadence in the rendered prose. We collapse
+those lists per-NPC before they reach the narration prompt.
+
+``npc_turns`` has no live duplication path today — the dedup is
+applied symmetrically as defence in depth so a future scheduler merge
+(e.g. multiple NPC tickers firing in one turn) cannot reintroduce the
+cadence silently.
 
 Order of first appearance is preserved, exact duplicate texts are
-dropped, and distinct texts for the same NPC are joined with
-``_MULTI_RESPONSE_SEP`` so the Narrator sees a single bullet per
-character.
+dropped, and distinct texts for the same NPC are joined with ``" / "``
+so the Narrator sees a single bullet per character.
 """
 
 from __future__ import annotations
@@ -41,7 +43,14 @@ def _merged_npc_turn(existing: NPCTurnEntry, incoming: NPCTurnEntry, bucket: lis
 
 
 def dedup_dialogue(entries: list[DialogueEntry]) -> list[DialogueEntry]:
-    """Collapse same-NPC dialogue entries into one per name."""
+    """Collapse same-NPC dialogue entries into one per name.
+
+    Exact-duplicate responses are dropped; distinct responses for the
+    same NPC are joined with ``" / "``. ``contest_roll`` is preserved
+    first-seen-wins: the earliest non-empty value is kept, so when the
+    primary-dialogue path (which carries the roll) runs before the
+    retaliation path (which doesn't), the roll survives the merge.
+    """
     grouped: dict[str, DialogueEntry] = {}
     seen: dict[str, list[str]] = {}
     for entry in entries:
@@ -58,7 +67,14 @@ def dedup_dialogue(entries: list[DialogueEntry]) -> list[DialogueEntry]:
 
 
 def dedup_npc_turns(entries: list[NPCTurnEntry]) -> list[NPCTurnEntry]:
-    """Collapse same-NPC ``npc_turns`` entries, mirroring dialogue dedup."""
+    """Collapse same-NPC ``npc_turns`` entries, mirroring dialogue dedup.
+
+    Exact-duplicate actions are dropped; distinct actions for the same
+    NPC are joined with ``" / "``. ``action_type`` is preserved from the
+    first-seen entry — the Narrator does not render it, so the choice
+    is cosmetic today, but downstream readers (benchmarks, schedulers)
+    receive the pre-dedup ``TurnOutputs`` anyway.
+    """
     grouped: dict[str, NPCTurnEntry] = {}
     seen: dict[str, list[str]] = {}
     for entry in entries:

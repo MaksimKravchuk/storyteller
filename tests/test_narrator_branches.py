@@ -335,8 +335,7 @@ class TestNarratorDedup:
 
         body = _last_user_body(narrator)
         assert body.count("Ivan says:") == 1
-        assert "Halt!" in body
-        assert "Who goes there?" in body
+        assert "Ivan says: Halt! / Who goes there?" in body
 
     @allure.story("Dedup")
     @allure.title("Duplicate NPC-turn actions collapse to a single 'Meanwhile' bullet")
