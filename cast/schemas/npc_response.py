@@ -17,6 +17,7 @@ class NPCResponse(BaseModel):
     name: str = "Unknown"
     biography: str = ""
     appearance: str = ""
+    short_descriptor: str = ""
     occupation: str = ""
     personality_traits: list[str] = Field(default_factory=list)
     speech_style: str = "neutral"

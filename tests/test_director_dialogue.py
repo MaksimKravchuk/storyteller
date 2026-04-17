@@ -219,7 +219,11 @@ class TestNPCGeneratorDeduplication:
 
         gs = GameState(setting=make_setting(), knowledge_graph=KnowledgeGraph())
         gs.current_scene = Scene(location_id="market", description="The market.", npcs_present=[])
-        generated = NPCCard(name="Merchant", occupation="cloth merchant")
+        generated = NPCCard(
+            name="Cassia",
+            occupation="cloth merchant",
+            short_descriptor="a woman behind a bolt-laden stall",
+        )
         generated.uuid = "gen-2"
         director = make_director(
             game_state=gs,
@@ -238,7 +242,8 @@ class TestNPCGeneratorDeduplication:
         narrator_call = director._cast.narrator.execute.call_args
         input_data = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
         assert input_data.new_npcs
-        assert any("Merchant" in desc for desc in input_data.new_npcs)
+        assert any("bolt-laden stall" in desc for desc in input_data.new_npcs)
+        assert all("Cassia" not in desc for desc in input_data.new_npcs)
 
 
 @allure.epic("NPC Interaction")

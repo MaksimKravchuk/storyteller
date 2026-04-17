@@ -108,6 +108,7 @@ class TestWaitContextPopulation:
     async def test_wait_context_is_populated(self):
         gs = _seed_forum_state()
         setup_npc(gs, _NPC_MERCHANT, name="Marcus", occupation="merchant")
+        gs.player.known_npcs.add(_NPC_MERCHANT)
         gs.world_state.threads.append(
             WorldThread(
                 description="Grain shipments are delayed",
@@ -138,6 +139,29 @@ class TestWaitContextPopulation:
         assert any("Marcus" in label for label in ctx.on_shift_npcs)
         assert any("market bell" in line for line in ctx.imminent_events)
         assert ctx.hours_waited > 0
+
+    @allure.title("WAIT turn hides the name of on-shift NPCs the player has not been introduced to (KER-28)")
+    @pytest.mark.asyncio
+    async def test_unknown_on_shift_npc_renders_as_descriptor(self):
+        gs = _seed_forum_state()
+        setup_npc(
+            gs,
+            _NPC_MERCHANT,
+            name="Marcus",
+            occupation="merchant",
+            short_descriptor="a wiry vendor behind a cloth stall",
+        )
+
+        director = make_director(game_state=gs, route_response=_wait_route())
+        director._cast.world_chronicler = _chronicler_mock()
+
+        await director.act("wait")
+
+        ctx = _last_narrator_input(director).wait_context
+        assert ctx is not None
+        assert ctx.on_shift_npcs
+        assert any("wiry vendor" in label for label in ctx.on_shift_npcs)
+        assert all("Marcus" not in label for label in ctx.on_shift_npcs)
 
     @allure.title("WAIT turn re-invokes the World Chronicler so threads and mood can advance")
     @pytest.mark.asyncio

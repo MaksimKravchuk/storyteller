@@ -23,6 +23,7 @@ def _full_npc_payload(name: str) -> NPCResponse:
         name=name,
         biography="{0} bio".format(name),
         appearance="tall",
+        short_descriptor="a tall figure in plain cloth",
         occupation="guard",
         personality_traits=["stern"],
         speech_style="gruff",
@@ -195,3 +196,36 @@ class TestNPCGenerator:
         with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("X")])):
             await gen.act(["guard"], {"game_state": game_state})
         assert gen._system_prompt_vars["location_name"] == "Unknown location"
+
+    @allure.story("Short descriptor")
+    @allure.title("NPCGenerator copies short_descriptor from the LLM response onto each card")
+    @pytest.mark.asyncio
+    async def test_short_descriptor_copied(self, game_state) -> None:
+        gen = NPCGenerator(llm_client=MagicMock())
+        payload = _full_npc_payload("Aulus")
+        payload.short_descriptor = "a stocky guard with a scarred brow"
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[payload])):
+            cards = await gen.act(["guard"], {"game_state": game_state})
+        assert cards[0].short_descriptor == "a stocky guard with a scarred brow"
+
+    @allure.story("Short descriptor")
+    @allure.title("NPCGenerator truncates the short_descriptor to 80 characters when the LLM overshoots")
+    @pytest.mark.asyncio
+    async def test_short_descriptor_truncated(self, game_state) -> None:
+        gen = NPCGenerator(llm_client=MagicMock())
+        payload = _full_npc_payload("Aulus")
+        payload.short_descriptor = "a " * 60
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[payload])):
+            cards = await gen.act(["guard"], {"game_state": game_state})
+        assert len(cards[0].short_descriptor) == 80
+
+    @allure.story("Short descriptor")
+    @allure.title("NPCGenerator tolerates an empty short_descriptor from the LLM")
+    @pytest.mark.asyncio
+    async def test_short_descriptor_empty_preserved(self, game_state) -> None:
+        gen = NPCGenerator(llm_client=MagicMock())
+        payload = _full_npc_payload("Aulus")
+        payload.short_descriptor = ""
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[payload])):
+            cards = await gen.act(["guard"], {"game_state": game_state})
+        assert cards[0].short_descriptor == ""

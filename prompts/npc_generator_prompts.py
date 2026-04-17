@@ -33,6 +33,9 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 '  "name": "A historically appropriate name",\n'
                 '  "biography": "2-3 sentences of backstory",\n'
                 '  "appearance": "Physical description, clothing, distinguishing features",\n'
+                '  "short_descriptor": "One visible-features phrase a stranger would notice '
+                "at a glance (≤80 chars). Must NOT include the NPC's name or occupation title. "
+                "Example: 'a stocky woman in a bloodstained apron'.\",\n"
                 '  "occupation": "Their trade or role",\n'
                 '  "personality_traits": ["trait1", "trait2", "trait3"],\n'
                 '  "speech_style": "Describe HOW they speak, never WHAT they say. '

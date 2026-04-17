@@ -43,3 +43,23 @@ class TestNPCGeneratorSpeechStyleInstruction:
         rendered = _render_create_prompt()
         assert "HOW they speak" in rendered
         assert "never WHAT they say" in rendered
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC Generator prompt template")
+class TestNPCGeneratorShortDescriptorInstruction:
+    """Guards KER-28: the prompt must elicit a glance-level visible-features
+    phrase that is safe to surface before the player has been introduced.
+    """
+
+    @allure.story("Short descriptor")
+    @allure.title("NPC generator requests a short_descriptor field in the JSON contract")
+    def test_declares_short_descriptor_field(self) -> None:
+        assert '"short_descriptor"' in _render_create_prompt()
+
+    @allure.story("Short descriptor")
+    @allure.title("NPC generator caps short_descriptor at 80 chars and forbids name or occupation")
+    def test_constrains_short_descriptor_content(self) -> None:
+        rendered = _render_create_prompt()
+        assert "≤80 chars" in rendered
+        assert "name or occupation" in rendered.lower()

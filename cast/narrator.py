@@ -23,15 +23,26 @@ _KEY_TURN_INTENT = "turn_intent"
 
 
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
-    """Format NPC label as 'Name (Occupation)' or fall back to role.
+    """Format NPC label, gating names on ``player.known_npcs``.
 
-    The ``Name (Occupation)`` shape is intentionally identical across
-    locales — it is a proper noun + in-world title, which we let the
-    Narrator LLM translate or preserve as it sees fit.
+    Introduced NPCs render as ``Name (Occupation)`` — a proper noun +
+    in-world title we let the Narrator LLM translate or preserve. NPCs
+    the player has not been introduced to render as their
+    ``short_descriptor`` if the card carries one, else the scene-side
+    ``role`` tag. A ``uuid`` set on the ``SceneNPC`` that is missing
+    from ``game_state.npcs`` is a broken invariant the NPC Ticker is
+    supposed to prevent — surfaced as a warning so operators can trace
+    the divergence while the player-facing fallback keeps rendering.
     """
-    if snpc.uuid and snpc.uuid in game_state.npcs:
-        npc = game_state.npcs[snpc.uuid]
-        return "{0} ({1})".format(npc.name, npc.occupation)
+    if snpc.uuid:
+        npc = game_state.npcs.get(snpc.uuid)
+        if npc is not None:
+            return npc.label_for_player(game_state, snpc.role)
+        logger.warning(
+            "Narrator._format_npc_label: scene uuid={0} role={1} missing from game_state.npcs",
+            snpc.uuid,
+            snpc.role,
+        )
     return snpc.role
 
 

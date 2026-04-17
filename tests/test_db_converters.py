@@ -107,6 +107,7 @@ class TestNPCConverter:
             name="Marcus",
             biography="A veteran legionnaire",
             appearance="Scarred",
+            short_descriptor="a scarred man in legionary mail",
             occupation="guard",
             personality_traits=["stoic", "loyal"],
             speech_style="terse",
@@ -132,6 +133,7 @@ class TestNPCConverter:
         assert restored.name == "Marcus"
         assert restored.biography == "A veteran legionnaire"
         assert restored.appearance == "Scarred"
+        assert restored.short_descriptor == "a scarred man in legionary mail"
         assert restored.occupation == "guard"
         assert restored.personality_traits == ["stoic", "loyal"]
         assert restored.speech_style == "terse"
@@ -169,6 +171,16 @@ class TestNPCConverter:
         restored = npc_conv.row_to_npc(row)
         assert restored.hostility_level == 0
         assert restored.recent_hostile_actions == []
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_npc defaults short_descriptor to empty string on legacy rows lacking the column")
+    def test_short_descriptor_defaults_on_legacy_row(self):
+        npc = npc_card.NPCCard(name="Legacy")
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        row.pop("short_descriptor")
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.short_descriptor == ""
 
 
 @allure.epic("Persistence")
