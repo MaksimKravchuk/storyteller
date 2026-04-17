@@ -96,3 +96,41 @@ class TestActorPromptRoleScopedReactions:
         assert "[DICE ROLL]" in rendered
         assert "[MOOD:" in rendered
         assert "[STATUS:" in rendered
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Actor prompt template")
+class TestActorPromptSituationalRegister:
+    """Regression guard for KER-22: the Actor must not clamp every reply to 1-3
+    sentences, and must treat ``speech_style`` examples as style cues rather
+    than literal catchphrases to echo every turn.
+    """
+
+    @allure.story("Situational register")
+    @allure.title("Actor constraints no longer impose a hard 1-3 sentence length clamp")
+    def test_no_hard_length_clamp(self):
+        rendered = _render_actor_prompt()
+        lowered = rendered.lower()
+        # The old clamp was "Keep responses concise — 1-3 sentences typically."
+        assert "1-3 sentences" not in lowered
+        assert "1\u20133 sentences" not in lowered
+
+    @allure.story("Situational register")
+    @allure.title("Actor constraints tie response length to the situation, not a fixed quota")
+    def test_constraints_situational_length_guidance(self):
+        rendered = _render_actor_prompt()
+        lowered = rendered.lower()
+        assert "match response length to the situation" in lowered
+        # The guidance distinguishes challenge/shout from conversational exchanges.
+        assert "challenge" in lowered
+        assert "introduction" in lowered
+
+    @allure.story("Speech style as cues")
+    @allure.title("Actor constraints forbid echoing quoted example phrases from speech_style")
+    def test_constraints_reject_verbatim_style_echo(self):
+        rendered = _render_actor_prompt()
+        lowered = rendered.lower()
+        assert "style cues" in lowered
+        assert "verbatim" in lowered
+        assert "paraphrase" in lowered
+        assert "catchphrase" in lowered

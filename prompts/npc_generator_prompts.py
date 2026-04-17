@@ -35,7 +35,11 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 '  "appearance": "Physical description, clothing, distinguishing features",\n'
                 '  "occupation": "Their trade or role",\n'
                 '  "personality_traits": ["trait1", "trait2", "trait3"],\n'
-                '  "speech_style": "How they talk — formal, crude, scholarly, etc.",\n'
+                '  "speech_style": "Describe HOW they speak, never WHAT they say. '
+                "Cover: register (formal/casual/coarse), vocabulary level (learned/plain/rustic), "
+                "sentence rhythm (clipped/flowing/rambling), and emotional control "
+                "(measured/volatile/dry). Do NOT include verbatim example phrases, "
+                'catchphrases, or quoted lines they ‘typically say’.",\n'
                 '  "knowledge_scope": "local|city|region|country|world",\n'
                 '  "attributes": {{\n'
                 '    "education": 0-10,\n'
