@@ -57,6 +57,7 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 | File | Feature | Example story |
 |---|---|---|
 | `test_actor_prompt.py` | Actor prompt template | "Physical status tag", "Behavioral rules" |
+| `test_actor_revealed.py` | Revealed tag extraction | "Revealed tag regex", "Multi-tag permutation", "ActorReply return type", "Prompt instruction" |
 | `test_director_context.py` | Director context formatting | "NPC label formatting" |
 | `test_director_dialogue.py` | Dialogue routing | "Duplicate NPC names", "NPC generator integration" |
 | `test_director_mood.py` | Mood & status tracking | "Mood extraction", "Status updates" |
@@ -96,6 +97,7 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 
 | File | Feature | Example story |
 |---|---|---|
+| `test_known_npcs.py` | Player knowledge | "Self token", "Name token", "Mixed tokens", "Scene isolation", "Unknown token", "Whole-word match", "Word-boundary guard", "Cyrillic names", "Uninitialised SceneNPC", "Side-effect wrapper", "Signal A via Director", "Signal A helper", "Signal B via Director" |
 | `test_models.py` | Domain models | "BaseModel UUID", "Character defaults", "NPCCard fields" |
 | `test_models_game.py` | GameState model | "Initial values", "Dataclass fields", "PlayerState" |
 | `test_world_state.py` | WorldState model | "Defaults", "GameState plumbing", "Round-trip", "Backwards compatibility" |

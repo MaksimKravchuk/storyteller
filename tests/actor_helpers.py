@@ -9,7 +9,7 @@ from cast.schemas.actor_reply import ActorReply
 
 def actor_reply(text: str = "", revealed_names: list[str] | None = None) -> ActorReply:
     """Build an :class:`ActorReply` for tests."""
-    return ActorReply(text=text, revealed_names=list(revealed_names or []))
+    return ActorReply(text=text, revealed_names=tuple(revealed_names or ()))
 
 
 def make_mock_actor(text: str = "", revealed_names: list[str] | None = None) -> AsyncMock:

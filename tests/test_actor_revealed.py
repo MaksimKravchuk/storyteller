@@ -1,9 +1,9 @@
-"""Tests for the Actor ``[REVEALED: ...]`` tag (KER-29 Signal A).
+"""Tests for the Actor ``[REVEALED: ...]`` tag.
 
 Covers three layers:
 
-* :func:`cast.actor.extract_revealed` — the regex-level extractor.
-* :func:`cast.actor.strip_trailing_tags` — the order-independent
+* :func:`cast.actor_tags.extract_revealed` — the regex-level extractor.
+* :func:`cast.actor_tags.strip_trailing_tags` — the order-independent
   multi-tag stripper that ``Actor.act`` relies on when the LLM emits
   MOOD / STATUS / REVEALED tags in any permutation.
 * ``Actor.act`` end-to-end — verifies the returned :class:`ActorReply`
@@ -133,6 +133,14 @@ class TestStripTrailingTagsOrderIndependence:
         assert bag.status is None
         assert bag.revealed == []
 
+    @allure.story("Multi-tag permutation")
+    @allure.title("Duplicate [MOOD:] tags collapse to the first/outermost value and both are stripped from text")
+    def test_duplicate_mood_first_wins(self):
+        bag = strip_trailing_tags("Back off!\n[MOOD: angry]\n[MOOD: calm]")
+        assert bag.mood == "calm"
+        assert "[MOOD:" not in bag.text
+        assert bag.text.strip() == "Back off!"
+
 
 @allure.epic("NPC Interaction")
 @allure.feature("Revealed tag extraction")
@@ -147,7 +155,7 @@ class TestActorActReturnsActorReply:
         reply = await actor.act("who are you?", {_LOC_KEY: "forum"})
 
         assert isinstance(reply, ActorReply)
-        assert reply.revealed_names == ["self"]
+        assert reply.revealed_names == ("self",)
         assert "[REVEALED:" not in reply.text
         assert reply.text.strip() == "I am Marcus."
 
@@ -160,7 +168,7 @@ class TestActorActReturnsActorReply:
 
         reply = await actor.act("look at him", {_LOC_KEY: "forum"})
 
-        assert reply.revealed_names == []
+        assert reply.revealed_names == ()
         assert reply.text == "*nods silently*"
 
     @allure.story("ActorReply return type")

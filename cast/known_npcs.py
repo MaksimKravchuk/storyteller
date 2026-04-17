@@ -2,13 +2,13 @@
 
 Two signals feed the set:
 
-* **Signal A** — the Actor's ``[REVEALED: ...]`` inline tag. Callers
-  pass the parsed tokens through :func:`apply_revealed_reply` which
-  resolves them to UUIDs scoped to the current scene.
-* **Signal B** — the raw player input text. The Director calls
-  :func:`mark_player_text_introductions` after action classification;
-  any scene NPC whose name appears as a whole-word (case-insensitive)
-  match is added.
+* **Signal A** — the Actor's ``[REVEALED: ...]`` inline tag. Parsed
+  tokens flow through :func:`apply_revealed_reply` and are resolved
+  to NPC UUIDs.
+* **Signal B** — the raw player input text. Any scene NPC whose name
+  appears as a whole-word (case-insensitive) match is added via
+  :func:`mark_player_text_introductions`, invoked once per
+  non-clarification turn.
 
 Scene isolation is the load-bearing invariant: same-name NPCs in
 other scenes must never leak into ``known_npcs``.
@@ -76,8 +76,8 @@ def resolve_revealed_uuids(
 def apply_revealed_reply(reply: Any, speaker_uuid: str, game_state: GameState) -> None:
     """Union resolved UUIDs from an Actor reply into ``known_npcs``.
 
-    No-ops when the reply carries no revealed tokens, keeping the
-    call site in the dialogue/retaliation pipelines a single line.
+    Most replies carry no revealed tokens; the early return keeps the
+    common case branchless at call sites.
     """
     if not reply.revealed_names:
         return

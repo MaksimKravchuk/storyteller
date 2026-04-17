@@ -1,4 +1,4 @@
-"""Tests for procedural introduction detection (KER-29).
+"""Tests for procedural introduction detection.
 
 Covers the three entry points of :mod:`cast.known_npcs`:
 
@@ -7,10 +7,10 @@ Covers the three entry points of :mod:`cast.known_npcs`:
 * :func:`scan_player_text_for_known_uuids` — Signal B whole-word scan
   of raw player input against scene NPCs.
 * :func:`mark_player_text_introductions` — the side-effecting wrapper
-  used by the Director.
+  invoked by the Director on every non-clarification turn.
 
-Plus an integration test that drives the Director end-to-end and
-verifies ``PlayerState.known_npcs`` is populated both via the Actor's
+Plus integration tests that drive the Director end-to-end and verify
+``PlayerState.known_npcs`` is populated both via the Actor's
 ``[REVEALED:]`` tag *and* via the Signal B scanner after routing.
 """
 
@@ -22,6 +22,7 @@ import allure
 import pytest
 
 from cast.known_npcs import (
+    apply_revealed_reply,
     mark_player_text_introductions,
     resolve_revealed_uuids,
     scan_player_text_for_known_uuids,
@@ -54,8 +55,8 @@ def _scene_with(*uuids: str) -> Scene:
     )
 
 
-@allure.epic("Player Knowledge")
-@allure.feature("Revealed-name resolution")
+@allure.epic("Memory & Persistence")
+@allure.feature("Player knowledge")
 class TestResolveRevealedUuids:
     @allure.story("Self token")
     @allure.title("The 'self' token resolves to the speaker's UUID when the speaker is in the current scene")
@@ -117,8 +118,8 @@ class TestResolveRevealedUuids:
         assert uuids == set()
 
 
-@allure.epic("Player Knowledge")
-@allure.feature("Player-text introduction scan")
+@allure.epic("Memory & Persistence")
+@allure.feature("Player knowledge")
 class TestScanPlayerText:
     @allure.story("Whole-word match")
     @allure.title("Typing an NPC's name in player input matches case-insensitively and returns that NPC's UUID")
@@ -191,8 +192,8 @@ class TestScanPlayerText:
         assert uuids == set()
 
 
-@allure.epic("Player Knowledge")
-@allure.feature("Player-text introduction scan")
+@allure.epic("Memory & Persistence")
+@allure.feature("Player knowledge")
 class TestMarkPlayerTextIntroductions:
     @allure.story("Side-effect wrapper")
     @allure.title("mark_player_text_introductions adds matched UUIDs to PlayerState.known_npcs in place")
@@ -221,8 +222,8 @@ class TestMarkPlayerTextIntroductions:
         assert _NPC_A in gs.player.known_npcs
 
 
-@allure.epic("Player Knowledge")
-@allure.feature("Director wiring")
+@allure.epic("Memory & Persistence")
+@allure.feature("Player knowledge")
 class TestDirectorAppliesSignals:
     """End-to-end: Director.act wires both signals into ``known_npcs``."""
 
@@ -307,3 +308,93 @@ class TestDirectorAppliesSignals:
         await director.act("who are you and who is she?")
 
         assert {_NPC_A, _NPC_B} <= gs.player.known_npcs
+
+    @allure.story("Signal B via Director")
+    @allure.title("A clarification turn does not add any scene-NPC UUIDs to known_npcs (Signal B is skipped)")
+    @pytest.mark.asyncio
+    async def test_clarification_turn_skips_signal_b(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name=_MARCUS, occupation="legionary")
+        gs.current_scene = _scene_with(_NPC_A)
+
+        director = make_director(
+            game_state=gs,
+            route_response={
+                _NEEDS_CLARIFICATION: True,
+                "clarification_question": "Which Marcus?",
+            },
+        )
+
+        await director.act("I walk up to Marcus")
+
+        assert gs.player.known_npcs == set()
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Player knowledge")
+class TestApplyRevealedReply:
+    @allure.story("Signal A helper")
+    @allure.title("apply_revealed_reply is a no-op when the reply carries no revealed_names")
+    def test_empty_revealed_names_is_noop(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name=_MARCUS, occupation="legionary")
+        gs.current_scene = _scene_with(_NPC_A)
+
+        apply_revealed_reply(actor_reply(text="Hello."), _NPC_A, gs)
+
+        assert gs.player.known_npcs == set()
+
+    @allure.story("Signal A helper")
+    @allure.title("apply_revealed_reply unions resolved UUIDs into PlayerState.known_npcs")
+    def test_resolved_uuids_unioned_into_known_npcs(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name=_MARCUS, occupation="legionary")
+        gs.current_scene = _scene_with(_NPC_A)
+
+        apply_revealed_reply(
+            actor_reply(text="I am Marcus.", revealed_names=["self"]),
+            _NPC_A,
+            gs,
+        )
+
+        assert _NPC_A in gs.player.known_npcs
+
+
+@allure.epic("Combat & Action Resolution")
+@allure.feature("NPC retaliation")
+class TestRetaliationAppliesRevealedNames:
+    """The retaliation path also consumes ``[REVEALED:]`` tokens.
+
+    Guards against a silent regression that would drop the call to
+    :func:`apply_revealed_reply` from ``_execute_retaliation`` — the
+    same Actor helper that dialogue uses.
+    """
+
+    @allure.story("Retaliation introduces speaker")
+    @allure.title("A retaliating NPC whose reply carries [REVEALED: self] adds its UUID to PlayerState.known_npcs")
+    @pytest.mark.asyncio
+    async def test_retaliation_reveal_populates_known_npcs(self):
+        from cast.director_retaliation import RetaliationHandler
+        from tests.test_director_retaliation import (
+            _fixed_combat,
+            _make_aggression_stub,
+            _run_patched,
+        )
+
+        gs = make_game_state()
+        npc = setup_npc(gs, _NPC_A, name=_MARCUS, occupation="legionary", mood="hostile")
+        npc.hostility_level = 5
+        mock_actor = AsyncMock()
+        mock_actor.execute = AsyncMock(
+            return_value=actor_reply(text="I am Marcus — stand down!", revealed_names=["self"]),
+        )
+        handler = RetaliationHandler(gs, {_NPC_A: mock_actor})
+
+        entries = await _run_patched(
+            _make_aggression_stub(True),
+            handler.check_retaliation({_NPC_A: "neutral"}),
+            combat_replacement=_fixed_combat,
+        )
+
+        assert len(entries) == 1
+        assert _NPC_A in gs.player.known_npcs

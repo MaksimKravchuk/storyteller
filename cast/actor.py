@@ -109,7 +109,7 @@ class Actor(BasePerformer):
         if parsed.status:
             self.npc.physical_status = parsed.status
 
-        return ActorReply(text=parsed.text.strip(), revealed_names=parsed.revealed)
+        return ActorReply(text=parsed.text.strip(), revealed_names=tuple(parsed.revealed))
 
     def reset_conversation(self) -> None:
         """Clear conversation history (e.g. when player walks away)."""
