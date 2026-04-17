@@ -39,7 +39,9 @@ class NPCCard(Character):
            card's own ``occupation``.
         """
         if self.uuid and self.uuid in game_state.player.known_npcs:
-            return "{0} ({1})".format(self.name, self.occupation)
+            if self.occupation:
+                return "{0} ({1})".format(self.name, self.occupation)
+            return self.name
         if self.short_descriptor:
             return self.short_descriptor
         return role_fallback

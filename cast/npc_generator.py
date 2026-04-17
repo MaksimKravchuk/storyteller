@@ -17,6 +17,26 @@ _SOCIAL_STRUCTURE_MAX = 300
 _SHORT_DESCRIPTOR_MAX = 80
 
 
+def _sanitize_short_descriptor(raw: str, npc_request: str) -> str:
+    """Normalise the LLM-supplied ``short_descriptor`` for the NPC card.
+
+    Strips whitespace and truncates to :data:`_SHORT_DESCRIPTOR_MAX`.
+    An oversize raw value is logged at ``warning`` — the prompt already
+    advertises the ≤80-char cap, so a sustained rate of truncations
+    signals a prompt regression worth investigating, mirroring the
+    ``_disambiguate_name`` escalation pattern below.
+    """
+    trimmed = raw.strip()
+    if len(trimmed) > _SHORT_DESCRIPTOR_MAX:
+        logger.warning(
+            "NPCGenerator: short_descriptor for role '{0}' was {1} chars, truncating to {2}",
+            npc_request,
+            len(trimmed),
+            _SHORT_DESCRIPTOR_MAX,
+        )
+    return trimmed[:_SHORT_DESCRIPTOR_MAX]
+
+
 def _existing_scene_names(game_state: Any) -> set[str]:
     """Collect names of NPCs already materialised in the current scene."""
     scene = getattr(game_state, "current_scene", None)
@@ -120,7 +140,7 @@ class NPCGenerator(BasePerformer):
             name=npc_data.name or "Unknown",
             biography=npc_data.biography,
             appearance=npc_data.appearance,
-            short_descriptor=npc_data.short_descriptor.strip()[:_SHORT_DESCRIPTOR_MAX],
+            short_descriptor=_sanitize_short_descriptor(npc_data.short_descriptor, npc_request),
             occupation=npc_data.occupation or npc_request,
             personality_traits=npc_data.personality_traits,
             speech_style=npc_data.speech_style or "neutral",

@@ -29,10 +29,20 @@ def _format_npc_label(snpc: Any, game_state: Any) -> str:
     in-world title we let the Narrator LLM translate or preserve. NPCs
     the player has not been introduced to render as their
     ``short_descriptor`` if the card carries one, else the scene-side
-    ``role`` tag.
+    ``role`` tag. A ``uuid`` set on the ``SceneNPC`` that is missing
+    from ``game_state.npcs`` is a broken invariant the NPC Ticker is
+    supposed to prevent — surfaced as a warning so operators can trace
+    the divergence while the player-facing fallback keeps rendering.
     """
-    if snpc.uuid and snpc.uuid in game_state.npcs:
-        return game_state.npcs[snpc.uuid].label_for_player(game_state, snpc.role)
+    if snpc.uuid:
+        npc = game_state.npcs.get(snpc.uuid)
+        if npc is not None:
+            return npc.label_for_player(game_state, snpc.role)
+        logger.warning(
+            "Narrator._format_npc_label: scene uuid={0} role={1} missing from game_state.npcs",
+            snpc.uuid,
+            snpc.role,
+        )
     return snpc.role
 
 

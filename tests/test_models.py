@@ -164,6 +164,14 @@ class TestNPCCardLabelForPlayer:
 
         assert npc.label_for_player(gs, role_fallback="soldier") == "Marcus (centurion)"
 
+    @allure.story("Known NPC")
+    @allure.title("label_for_player returns the bare name when an introduced NPC has no occupation")
+    def test_known_npc_without_occupation_drops_empty_parentheses(self):
+        npc = NPCCard(name="Marcus")
+        gs = _fake_game_state({npc.uuid})
+
+        assert npc.label_for_player(gs, role_fallback="soldier") == "Marcus"
+
     @allure.story("Unknown NPC")
     @allure.title("label_for_player returns the short_descriptor when the NPC is not yet introduced")
     def test_unknown_npc_with_descriptor_returns_descriptor(self):

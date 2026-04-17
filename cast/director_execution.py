@@ -407,7 +407,7 @@ class PlanExecutor:
         slot = npc_ticker_mod.get_schedule_for(npc.occupation).get(self._gs.game_time)
         if slot is not None and not slot.present:
             return None
-        return "{0} ({1})".format(npc.name, npc.occupation or "resident")
+        return npc.label_for_player(self._gs, npc.occupation or "resident")
 
     def _collect_imminent_events(
         self,

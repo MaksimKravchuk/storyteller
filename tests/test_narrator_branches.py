@@ -336,6 +336,29 @@ class TestFormatNpcLabel:
         assert "soldier" in body
         assert "Marcus" not in body
 
+    @allure.story("NPC label formatting")
+    @allure.title("Narrator falls back to SceneNPC.role and warns when a scene uuid is missing from game_state.npcs")
+    @pytest.mark.asyncio
+    async def test_orphaned_scene_uuid_falls_back_and_warns(self, loguru_sink):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+
+        scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="soldier", uuid="evicted-uuid")],
+        )
+
+        await narrator.act(
+            input_data=TurnOutputs(scene=scene),
+            context={"player_action": "enter", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "soldier" in body
+        warning_messages = [rec["message"] for rec in loguru_sink if rec["level"].name == "WARNING"]
+        assert any("evicted-uuid" in msg for msg in warning_messages)
+
 
 @allure.epic("Narrative Delivery")
 @allure.feature("Narrator")
