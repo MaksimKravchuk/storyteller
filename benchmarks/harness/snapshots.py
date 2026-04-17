@@ -24,6 +24,12 @@ def physical_status_of(snap: GameState, npc_uuid: str) -> str | None:
     return npc.physical_status if npc else None
 
 
+def hostility_level_of(snap: GameState, npc_uuid: str) -> int:
+    """Return an NPC's ``hostility_level`` in a snapshot, or ``0`` when absent."""
+    npc = snap.npcs.get(npc_uuid)
+    return npc.hostility_level if npc else 0
+
+
 def conversation_history_len(snap: GameState, npc_uuid: str) -> int:
     """Return the length of an NPC's ``conversation_history`` list."""
     npc = snap.npcs.get(npc_uuid)

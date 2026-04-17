@@ -39,6 +39,16 @@ ACTOR_SYSTEM = PromptTemplate(
             required_vars=["past_memories"],
         ),
         PromptSection(
+            name="hostility",
+            template=(
+                "You are engaged in a hostile encounter with the player "
+                "(hostility toward them: {hostility_level}; higher means more engaged). "
+                "Do not resume routine pleasantries or a formal challenge formula.\n"
+                "Recent player actions against you:\n{recent_hostile_actions_summary}"
+            ),
+            required_vars=["hostility_level", "recent_hostile_actions_summary"],
+        ),
+        PromptSection(
             name="constraints",
             template=(
                 "Rules:\n"
@@ -65,10 +75,10 @@ ACTOR_SYSTEM = PromptTemplate(
                 "- Keep responses concise — 1-3 sentences typically.\n"
                 "- Output ONLY your spoken dialogue and brief action "
                 "descriptions (e.g. *scratches his beard*).\n"
-                "- If your mood changed as a result of this interaction, "
-                "append on a NEW line: [MOOD: <one word>] "
-                "(e.g. [MOOD: hostile], [MOOD: terrified]). "
-                "Only include this tag if mood changed from {current_mood}.\n"
+                "- Append on a NEW line [MOOD: <one word>] (e.g. [MOOD: hostile], "
+                "[MOOD: terrified]) whenever your mood has shifted — and ALWAYS "
+                "include the tag while you are in active conflict with the player, "
+                "so the system keeps your internal state calibrated.\n"
                 "- If your physical condition changed (injured, healed, knocked out, etc.), "
                 "append on a NEW line: [STATUS: <description>] "
                 "(e.g. [STATUS: wounded left arm], [STATUS: barely standing]). "

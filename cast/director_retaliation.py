@@ -30,6 +30,14 @@ class RetaliationWork(NamedTuple):
     combat_roll: CombatRoll
 
 
+class _RetaliationGates(NamedTuple):
+    """Per-turn filters shared across every NPC the retaliation phase examines."""
+
+    mood_snapshot: dict[str, str]
+    retaliated_names: set[str]
+    force_uuids: set[str]
+
+
 class RetaliationHandler:
     """Checks for and executes NPC retaliations after dialogue."""
 
@@ -41,6 +49,7 @@ class RetaliationHandler:
         self,
         mood_snapshot: dict[str, str],
         skip_uuids: set[str] | None = None,
+        force_uuids: set[str] | None = None,
     ) -> list[dict[str, str]]:
         """Check if any NPC whose mood changed wants to attack.
 
@@ -49,10 +58,22 @@ class RetaliationHandler:
         of the combat the Actor already narrated, so a second retaliation
         prompt would be redundant. Typically populated from
         :meth:`DialogueHandler.handle_dialogue`'s combat-engaged set.
+
+        ``force_uuids`` lists NPCs whose aggression should roll even when
+        their mood did not change during dialogue — used when the Director
+        has already mechanically raised their hostility above the
+        retaliation threshold. Without this, a repeat assault on an
+        already-"threatened" guard would never get an offensive counter:
+        the floor mood was set on a prior turn, so the current turn's
+        mood-delta is zero.
         """
         skip = skip_uuids or set()
-        retaliated_names = self._seed_retaliated_names(skip)
-        work_items = self._collect_work(skip, retaliated_names, mood_snapshot)
+        gates = _RetaliationGates(
+            mood_snapshot=mood_snapshot,
+            retaliated_names=self._seed_retaliated_names(skip),
+            force_uuids=force_uuids or set(),
+        )
+        work_items = self._collect_work(skip, gates)
         return list(
             await asyncio.gather(
                 *(_execute_retaliation(wi, self._gs) for wi in work_items),
@@ -75,15 +96,14 @@ class RetaliationHandler:
     def _collect_work(
         self,
         skip: set[str],
-        retaliated_names: set[str],
-        mood_snapshot: dict[str, str],
+        gates: _RetaliationGates,
     ) -> list[RetaliationWork]:
         """Build retaliation work items for every NPC that still qualifies."""
         work_items: list[RetaliationWork] = []
         for npc_uuid, actor in self._actors.items():
             if npc_uuid in skip:
                 continue
-            work = _build_retaliation_work(npc_uuid, actor, mood_snapshot, retaliated_names, self._gs)
+            work = _build_retaliation_work(npc_uuid, actor, self._gs, gates)
             if work is not None:
                 work_items.append(work)
         return work_items
@@ -92,15 +112,15 @@ class RetaliationHandler:
 def _build_retaliation_work(
     npc_uuid: str,
     actor: Any,
-    mood_snapshot: dict[str, str],
-    retaliated_names: set[str],
     game_state: GameState,
+    gates: _RetaliationGates,
 ) -> RetaliationWork | None:
     """Check if an NPC should retaliate and build work item if so."""
     npc = game_state.npcs.get(npc_uuid)
-    if not npc or npc.name.lower() in retaliated_names:
+    if not npc or npc.name.lower() in gates.retaliated_names:
         return None
-    if npc.current_mood == mood_snapshot.get(npc_uuid, "neutral"):
+    force_roll = npc_uuid in gates.force_uuids
+    if not force_roll and npc.current_mood == gates.mood_snapshot.get(npc_uuid, "neutral"):
         return None
 
     aggression = roll_aggression(npc.current_mood)
@@ -113,7 +133,7 @@ def _build_retaliation_work(
     )
     if not aggression.will_attack:
         return None
-    retaliated_names.add(npc.name.lower())
+    gates.retaliated_names.add(npc.name.lower())
 
     combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
     record_turn_event(
@@ -121,13 +141,18 @@ def _build_retaliation_work(
         {**combat_roll_to_dict(combat_roll), "npc_name": npc.name},
         npc_id=npc_uuid,
     )
+    return RetaliationWork(npc, actor, _format_retaliation_input(npc.name, combat_roll), aggression, combat_roll)
+
+
+def _format_retaliation_input(npc_name: str, combat_roll: CombatRoll) -> str:
+    """Build the Actor prompt text for an NPC retaliation."""
     status_hint = ""
     if combat_roll.outcome in (CombatOutcome.ACTOR_SUCCEEDS, CombatOutcome.ACTOR_DOMINATES):
         status_hint = (
             "\nThe NPC is injured. Update their physical status to reflect the injury. "
             "Append [STATUS: <description>] at the end of your response."
         )
-    retaliation_input = (
+    return (
         "{0} retaliates against the player!\n\n"
         "[DICE ROLL: player {1} vs "
         "NPC {2}+{3}]\n"
@@ -135,14 +160,13 @@ def _build_retaliation_work(
         "You MUST narrate this outcome. The NPC attacks FIRST — "
         "they are the aggressor now. Do NOT override the dice result.{5}"
     ).format(
-        npc.name,
+        npc_name,
         combat_roll.player_roll,
         combat_roll.npc_roll,
         combat_roll.npc_bonus,
         combat_roll.description,
         status_hint,
     )
-    return RetaliationWork(npc, actor, retaliation_input, aggression, combat_roll)
 
 
 async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> dict[str, str]:

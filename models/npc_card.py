@@ -17,6 +17,8 @@ class NPCCard(Character):
     conversation_history: list[dict[str, str]] = []
     current_mood: str = "neutral"
     physical_status: str = "healthy"
+    hostility_level: int = 0
+    recent_hostile_actions: list[dict[str, str]] = []
 
     def to_prompt_context(self) -> str:
         """Serialise this NPC card into text for injection into a system prompt."""

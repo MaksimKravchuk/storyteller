@@ -18,12 +18,13 @@ from benchmarks.scenarios._registry import ALL_SCENARIOS, get_scenario
 @allure.feature("Benchmark harness")
 class TestScenarioRegistry:
     @allure.story("Scenario registry")
-    @allure.title("ALL_SCENARIOS exposes both flagship scenarios with unique, stable ids")
+    @allure.title("ALL_SCENARIOS exposes every flagship scenario with unique, stable ids")
     def test_registry_contains_flagship_scenarios(self):
         ids = {scenario.id for scenario in ALL_SCENARIOS}
 
         assert "memory_follow_up_marcus" in ids
         assert "autonomy_three_guards_tavern" in ids
+        assert "escalation_guard_assault" in ids
         assert len(ids) == len(ALL_SCENARIOS)  # no duplicates
 
     @allure.story("Scenario registry")

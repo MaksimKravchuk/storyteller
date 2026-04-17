@@ -31,6 +31,8 @@ def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
         "conversation_history": npc.conversation_history,
         "current_mood": npc.current_mood,
         "physical_status": npc.physical_status,
+        "hostility_level": npc.hostility_level,
+        "recent_hostile_actions": npc.recent_hostile_actions,
     }
 
 
@@ -51,4 +53,6 @@ def row_to_npc(row) -> NPCCard:
         conversation_history=row["conversation_history"],
         current_mood=row["current_mood"],
         physical_status=row.get("physical_status", "healthy"),
+        hostility_level=row.get("hostility_level", 0),
+        recent_hostile_actions=row.get("recent_hostile_actions", []),
     )
