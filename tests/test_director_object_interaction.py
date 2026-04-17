@@ -146,6 +146,40 @@ class TestApplyObjectInteractions:
         # exists but has no PERSONAL_EXPERIENCE edges.
         assert KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_UUID) == []
 
+    @allure.story("Witness memories")
+    @allure.title("apply_object_interactions adds the witness-memory node UUID to player.learned_facts")
+    @pytest.mark.asyncio
+    async def test_records_learned_fact_for_player(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_UUID, name="Livia", occupation="innkeeper")
+        gs.knowledge_graph.register_actor_node(_NPC_UUID, label="Livia (innkeeper)")
+        gs.current_scene = scene_mod.Scene(
+            location_id="tavern",
+            description="The Rusty Anchor.",
+            npcs_present=[scene_mod.SceneNPC(role="innkeeper", uuid=_NPC_UUID)],
+        )
+        item_gen = _stub_item_generator(
+            item_resp.ObjectInteractionResponse(
+                narration="Shards clatter to the boards.",
+                delta="The front window is broken.",
+            ),
+        )
+        memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
+
+        await doi_mod.apply_object_interactions(
+            item_gen,
+            ["window"],
+            "break the window",
+            gs,
+            memory_manager,
+        )
+
+        assert len(gs.player.learned_facts) == 1
+        fact_uuid = next(iter(gs.player.learned_facts))
+        node = gs.knowledge_graph.get_node(fact_uuid)
+        assert node is not None
+        assert "window is broken" in node.text.lower()
+
     @allure.story("No item generator wired")
     @allure.title("apply_object_interactions returns early when the cast has no item_generator")
     @pytest.mark.asyncio

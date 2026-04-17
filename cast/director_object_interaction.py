@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from cast.schemas.item_response import ObjectInteractionResponse, ObjectInteractionResult
+from knowledge.memory import record_player_learned_fact
 from knowledge.node import KnowledgeScope
 from knowledge.scene_state import record_scene_delta
 from llm.turn_event_logger import record_turn_event
@@ -165,13 +166,14 @@ async def _emit_witness_memories(
     if not witnesses or not delta_text:
         return
     scene = game_state.current_scene
-    await memory_manager.create_memory_from_event(
+    created_ids = await memory_manager.create_memory_from_event(
         event_description=delta_text,
         witness_ids=witnesses,
         scope=KnowledgeScope.LOCAL,
         location_id=scene.location_id if scene else None,
         game_time=game_state.game_clock,
     )
+    record_player_learned_fact(game_state.player, created_ids)
 
 
 async def apply_object_interactions(

@@ -17,6 +17,7 @@ from fastapi.testclient import TestClient
 from interfaces.web import service
 from interfaces.web.app import app
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
+from interfaces.web.character_schemas import CharacterInfo
 from interfaces.web.schemas import (
     ActionResponse,
     GameSnapshot,
@@ -65,6 +66,18 @@ def client(mock_repo, mock_cfg) -> Iterator[TestClient]:
         app.dependency_overrides.clear()
 
 
+def _empty_character() -> CharacterInfo:
+    return CharacterInfo(
+        name="Player",
+        appearance="",
+        physical_status="healthy",
+        inventory=[],
+        known_npcs=[],
+        recent_events=[],
+        learned_facts=[],
+    )
+
+
 def _sample_snapshot(game_id: str = "game-abc", turn_count: int = 0) -> GameSnapshot:
     narrator_text = "The forum stretches before you."
     return GameSnapshot(
@@ -78,6 +91,7 @@ def _sample_snapshot(game_id: str = "game-abc", turn_count: int = 0) -> GameSnap
             ),
         ],
         turn_count=turn_count,
+        character=_empty_character(),
     )
 
 
@@ -261,6 +275,7 @@ def test_post_action_happy_path(client: TestClient) -> None:
         narration="**Pieter** waves.",
         narration_html=render_narrator_html("**Pieter** waves."),
         turn_count=3,
+        character=_empty_character(),
     )
     process_mock = AsyncMock(return_value=action_response)
     with patch.object(service, "process_turn_for_player", new=process_mock):
@@ -407,6 +422,24 @@ async def test_process_turn_raises_when_no_game() -> None:
 
 @pytest.mark.asyncio
 @allure.story("Ownership enforcement")
+@allure.title("_act_and_persist raises RuntimeError when the engine has no game_state after the action")
+async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
+    """Guards the invariant strengthened in the KER-30 refactor: the old
+    ``turn_number or 0`` fallback silently masked a broken engine that had no
+    ``game_state``. The raise now surfaces that as a 500 instead of assembling
+    an ActionResponse with turn_count=0.
+    """
+    repo = AsyncMock()
+    engine = MagicMock()
+    engine.game_state = None
+    engine.process_action = AsyncMock(return_value="prose")
+
+    with pytest.raises(RuntimeError, match="engine.game_state is None"):
+        await service._act_and_persist(repo, "sess-1", engine, "look")
+
+
+@pytest.mark.asyncio
+@allure.story("Ownership enforcement")
 @allure.title("process_turn_for_player raises GameNotFoundError when the player has no session row at all")
 async def test_process_turn_raises_when_no_session() -> None:
     repo = AsyncMock()
@@ -447,6 +480,18 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     engine.game_state.setting.name = "Rome"
     engine.game_state.conversation_log = []
     engine.game_state.turn_count = 0
+    engine.game_state.player = MagicMock(
+        name="Player",
+        appearance="",
+        physical_status="healthy",
+        inventory=[],
+        known_npcs=set(),
+        player_event_log=[],
+        learned_facts=set(),
+    )
+    # MagicMock coerces the kwarg ``name`` to the mock's own name; re-set it explicitly.
+    engine.game_state.player.name = "Player"
+    engine.game_state.npcs = {}
 
     with patch("interfaces.web.service.create_engine", return_value=engine):
         await service.start_game_for_player(
