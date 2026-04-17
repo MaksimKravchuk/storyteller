@@ -54,5 +54,14 @@ NPC_GENERATOR_CREATE = PromptTemplate(
             ),
             required_vars=["npc_request"],
         ),
+        PromptSection(
+            name="forbidden_names",
+            template=(
+                "The following names are already used by other characters in this scene — "
+                "pick a clearly different full name (distinct first AND last name) for this NPC:\n"
+                "{forbidden_names}"
+            ),
+            required_vars=["forbidden_names"],
+        ),
     ]
 )
