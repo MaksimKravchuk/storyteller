@@ -7,6 +7,7 @@ from typing import Any
 from loguru import logger
 
 from cast.base_performer_class import BasePerformer
+from cast.narrator_dedup import dedup_dialogue, dedup_npc_turns
 from cast.narrator_labels import NarratorLabels, get_narrator_labels
 from cast.narrator_wait import append_wait_parts, format_wait_context_bullets
 from cast.schemas.turn_outputs import TurnOutputs
@@ -78,12 +79,14 @@ def _append_prior_damage_parts(raw_parts: list[str], game_state: Any, labels: Na
     raw_parts.append(labels.prior_damage.format("\n".join(damage_lines)))
 
 
-def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, str]:
+def _build_narrator_context_kwargs(game_state: Any, language: str, is_new_scene: bool) -> dict[str, str]:
     """Build kwargs for ``Narrator.set_context``.
 
-    Only includes ``world_mood`` when the persistent mood set by the
-    World Chronicler is non-empty, so the optional PromptSection in
-    ``NARRATOR_SYSTEM`` renders on hit and skips on miss.
+    ``world_mood`` renders only when both conditions hold: the
+    World Chronicler has set a non-empty mood AND this turn is a
+    scene entry. On CONTINUATION turns a standing order to weave
+    mood into every response turns small actions into atmospheric
+    embroidery, so we omit it there.
     """
     ctx_kwargs: dict[str, str] = {
         "setting_name": game_state.setting.name,
@@ -92,7 +95,7 @@ def _build_narrator_context_kwargs(game_state: Any, language: str) -> dict[str, 
         "language": language,
     }
     mood = game_state.world_state.world_mood
-    if mood:
+    if mood and is_new_scene:
         ctx_kwargs["world_mood"] = mood
     return ctx_kwargs
 
@@ -129,7 +132,7 @@ class Narrator(BasePerformer):
         game_state = context["game_state"]
         is_new_scene = input_data.scene is not None
 
-        self.set_context(**_build_narrator_context_kwargs(game_state, self._language))
+        self.set_context(**_build_narrator_context_kwargs(game_state, self._language, is_new_scene))
 
         raw_parts = self._build_raw_parts(input_data, game_state, context.get("scene_history", []), is_new_scene)
 
@@ -170,9 +173,14 @@ class Narrator(BasePerformer):
         return raw_parts
 
     def _append_turn_lines(self, raw_parts: list[str], input_data: TurnOutputs) -> None:
-        """Append dialogue, new NPCs, items, wait, NPC turns and departures."""
+        """Append dialogue, new NPCs, items, wait, NPC turns and departures.
+
+        Dialogue and ``npc_turns`` are deduplicated per-NPC before
+        rendering so the Narrator does not serialise two entries for
+        the same character into an ``and then… and then…`` cadence.
+        """
         labels = self._labels
-        for entry in input_data.dialogue:
+        for entry in dedup_dialogue(input_data.dialogue):
             raw_parts.append(labels.says.format(entry.npc_name, entry.response))
         raw_parts.extend(labels.new_person.format(desc) for desc in input_data.new_npcs)
         raw_parts.extend(labels.item_examined.format(desc) for desc in input_data.item_examination)
@@ -181,7 +189,7 @@ class Narrator(BasePerformer):
         if input_data.wait:
             append_wait_parts(raw_parts, input_data, labels)
 
-        for npc_turn in input_data.npc_turns:
+        for npc_turn in dedup_npc_turns(input_data.npc_turns):
             raw_parts.append(labels.meanwhile.format(npc_turn.npc_name, npc_turn.action))
         raw_parts.extend(labels.someone_departs.format(line) for line in input_data.npc_departures)
 

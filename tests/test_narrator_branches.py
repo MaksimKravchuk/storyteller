@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from cast.narrator import Narrator
-from cast.schemas.turn_outputs import NPCTurnEntry, TurnOutputs
+from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.npc_card import NPCCard
@@ -223,9 +223,28 @@ class TestNarratorWorldMood:
         assert "Current world mood" not in system_prompt
 
     @allure.story("World mood")
-    @allure.title("Narrator system prompt includes the world_mood hint when world_state.world_mood is set")
+    @allure.title("Narrator system prompt includes world_mood on NEW_SCENE turns when world_state.world_mood is set")
     @pytest.mark.asyncio
-    async def test_world_mood_set_rendered(self):
+    async def test_world_mood_rendered_on_new_scene(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        gs.world_state = WorldState(world_mood="tense and restless")
+        scene = Scene(location_id="forum", description="The Forum.")
+
+        await narrator.act(
+            input_data=TurnOutputs(scene=scene),
+            context={"player_action": "enter forum", "game_state": gs},
+        )
+
+        call_args = narrator.llm_client.send_message.call_args
+        system_prompt = call_args.kwargs["system_prompt"]
+        assert "Current world mood: tense and restless" in system_prompt
+
+    @allure.story("World mood")
+    @allure.title("Narrator system prompt omits world_mood on CONTINUATION turns to avoid per-action embroidery")
+    @pytest.mark.asyncio
+    async def test_world_mood_omitted_on_continuation(self):
+        """Weaving mood into every small action produces cliché padding."""
         narrator = _make_narrator()
         gs = _make_game_state()
         gs.world_state = WorldState(world_mood="tense and restless")
@@ -237,7 +256,7 @@ class TestNarratorWorldMood:
 
         call_args = narrator.llm_client.send_message.call_args
         system_prompt = call_args.kwargs["system_prompt"]
-        assert "Current world mood: tense and restless" in system_prompt
+        assert "Current world mood" not in system_prompt
 
 
 @allure.epic("Narrative Delivery")
@@ -265,3 +284,75 @@ class TestFormatNpcLabel:
 
         body = _last_user_body(narrator)
         assert "Marcus (centurion)" in body
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
+class TestNarratorDedup:
+    """Two Director paths can emit dialogue for the same NPC on one turn
+    (primary response + retaliation summary), and the same is possible
+    for npc_turns. The Narrator must collapse these per-NPC so the
+    rendered prose doesn't serialise them into an 'and then… and then…'
+    cadence.
+    """
+
+    @allure.story("Dedup")
+    @allure.title("Exact-duplicate dialogue entries collapse to a single 'Name says:' bullet")
+    @pytest.mark.asyncio
+    async def test_exact_duplicate_dialogue_collapses(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                dialogue=[
+                    DialogueEntry(npc_name="Ivan", response="Halt!"),
+                    DialogueEntry(npc_name="Ivan", response="Halt!"),
+                ],
+            ),
+            context={"player_action": "approach", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert body.count("Ivan says: Halt!") == 1
+
+    @allure.story("Dedup")
+    @allure.title("Multiple distinct dialogue entries for one NPC merge into a single bullet")
+    @pytest.mark.asyncio
+    async def test_same_npc_distinct_responses_merge(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                dialogue=[
+                    DialogueEntry(npc_name="Ivan", response="Halt!"),
+                    DialogueEntry(npc_name="Ivan", response="Who goes there?"),
+                ],
+            ),
+            context={"player_action": "approach", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert body.count("Ivan says:") == 1
+        assert "Ivan says: Halt! / Who goes there?" in body
+
+    @allure.story("Dedup")
+    @allure.title("Duplicate NPC-turn actions collapse to a single 'Meanwhile' bullet")
+    @pytest.mark.asyncio
+    async def test_duplicate_npc_turn_actions_collapse(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                npc_turns=[
+                    NPCTurnEntry(npc_name="Frol", action="draws his sword", action_type="COMBAT"),
+                    NPCTurnEntry(npc_name="Frol", action="draws his sword", action_type="COMBAT"),
+                ],
+            ),
+            context={"player_action": "shout", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert body.count("Meanwhile, Frol:") == 1
