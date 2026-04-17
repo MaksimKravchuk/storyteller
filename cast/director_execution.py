@@ -436,7 +436,7 @@ class PlanExecutor:
         raw_outputs: turn_outputs.TurnOutputs,
         is_aggressive: bool = False,
     ) -> None:
-        """Resolve NPC autonomous turns for turn-counting actions.
+        """Resolve NPC autonomous turns for turn-counting or aggressive actions.
 
         Passes ``raw_outputs.witnessed_events`` through to the resolver
         so guard NPCs see the KER-18 incident clause on the same turn
@@ -446,9 +446,13 @@ class PlanExecutor:
         ``is_aggressive`` (KER-21) is forwarded so the resolver can
         serialize NPC reactions when the player attacks, letting each
         successive NPC see what its peers just did and diversifying
-        the combat response away from a single template.
+        the combat response away from a single template. An aggressive
+        turn also bypasses the ``TURN_COUNTING_ACTIONS`` gate (KER-33):
+        the router sometimes classifies a punch as ``OTHER`` while
+        still flagging it aggressive, and bystanders must react to
+        visible violence regardless of the action-type label.
         """
-        if action_type not in TURN_COUNTING_ACTIONS:
+        if action_type not in TURN_COUNTING_ACTIONS and not is_aggressive:
             return
         npc_actions = await self._agents.npc_turns.resolve_npc_turns(
             player_action,
@@ -661,6 +665,37 @@ class PlanExecutor:
             if director_witness.is_guard_occupation(self._gs.npcs[uuid].occupation)
         ]
 
+    def _publish_npc_attack_witness(
+        self,
+        target_names: list[str],
+        player_action: str,
+        raw_outputs: turn_outputs.TurnOutputs,
+    ) -> None:
+        """Broadcast a :class:`WitnessedAggression` + bump guard moods for NPC-target aggression (KER-33).
+
+        Mirrors :meth:`_publish_object_witness`: the KER-18 mood-flip
+        originally fired only when the player smashed an object, which
+        left bystander guards standing frozen when the player punched
+        a person instead. Every guard-occupation NPC in the scene gets
+        the bump — the attacked target has already been pushed past
+        ``"neutral"`` by ``apply_aggressive_turn``, so
+        :func:`bump_guard_moods`'s neutral-only gate naturally skips
+        them. Elevated mood is threaded into the NPC-turn prompt on
+        the same turn via ``raw_outputs.witnessed_events``.
+        """
+        scene = self._gs.current_scene
+        if scene is None:
+            return
+        for target_name in target_names:
+            raw_outputs.witnessed_events.append(
+                director_witness.build_npc_attack_witness(
+                    target_name=target_name,
+                    player_action=player_action,
+                    location_id=scene.location_id,
+                ),
+            )
+        director_witness.bump_guard_moods(self._gs, self._guard_witness_uuids())
+
     def _pure_object_targets(self, targets: list[str]) -> list[str]:
         """Return targets that match neither an NPC name nor a scene role.
 
@@ -700,6 +735,8 @@ class PlanExecutor:
         force_uuids = (
             director_hostility.apply_aggressive_turn(self._gs, target_names, player_action) if is_aggressive else set()
         )
+        if is_aggressive and target_names:
+            self._publish_npc_attack_witness(target_names, player_action, raw_outputs)
 
         dialogue_entries, combat_engaged = await self._agents.dialogue.handle_dialogue(
             player_action,
