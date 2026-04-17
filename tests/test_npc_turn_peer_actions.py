@@ -20,11 +20,15 @@ import allure
 import pytest
 
 from cast.npc_turn import NPCTurnResolver
+from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
-from models.game_state import GameState
-from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
-from models.setting import Setting
+from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
+
+GameState = gs_mod.GameState
+NPCCard = npc_card_mod.NPCCard
+Scene = scene_mod.Scene
+SceneNPC = scene_mod.SceneNPC
+Setting = setting_mod.Setting
 
 _NPC_UUID_A = "npc-a"
 _NPC_UUID_B = "npc-b"
@@ -77,42 +81,42 @@ class _OrderedActor:
     """Fake actor whose ``execute`` records enter/exit order in a shared log."""
 
     def __init__(self, response: dict, call_log: list[str], label: str) -> None:
-        self._response_json = json.dumps(response)
+        self._reply = ActorReply(text=json.dumps(response))
         self._call_log = call_log
         self._label = label
 
-    async def execute(self, **_: Any) -> str:
+    async def execute(self, **_: Any) -> ActorReply:
         self._call_log.append("enter:{0}".format(self._label))
         await asyncio.sleep(0)
         self._call_log.append("exit:{0}".format(self._label))
-        return self._response_json
+        return self._reply
 
 
 class _ConcurrencyTrackingActor:
     """Fake actor whose ``execute`` records peak simultaneous in-flight calls."""
 
     def __init__(self, response: dict, tracker: dict) -> None:
-        self._response_json = json.dumps(response)
+        self._reply = ActorReply(text=json.dumps(response))
         self._tracker = tracker
 
-    async def execute(self, **_: Any) -> str:
+    async def execute(self, **_: Any) -> ActorReply:
         self._tracker["active"] = self._tracker.get("active", 0) + 1
         self._tracker["max_active"] = max(self._tracker.get("max_active", 0), self._tracker["active"])
         await asyncio.sleep(0)
         self._tracker["active"] -= 1
-        return self._response_json
+        return self._reply
 
 
 class _PromptCapturingActor:
     """Fake actor whose ``execute`` stores each ``input_data`` prompt verbatim."""
 
     def __init__(self, response: dict, captured: list[str]) -> None:
-        self._response_json = json.dumps(response)
+        self._reply = ActorReply(text=json.dumps(response))
         self._captured = captured
 
-    async def execute(self, **kwargs: Any) -> str:
+    async def execute(self, **kwargs: Any) -> ActorReply:
         self._captured.append(str(kwargs.get("input_data", "")))
-        return self._response_json
+        return self._reply
 
 
 @allure.epic("NPC Interaction")

@@ -10,11 +10,15 @@ import pytest
 
 from cast.dice import ContestType
 from cast.npc_turn import NPCAction, NPCTurnResolver
-from models.game_state import GameState
-from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
-from models.setting import Setting
+from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
+from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
+
+GameState = gs_mod.GameState
+NPCCard = npc_card_mod.NPCCard
+Scene = scene_mod.Scene
+SceneNPC = scene_mod.SceneNPC
+Setting = setting_mod.Setting
 
 _NPC_UUID_A = "npc-a"
 _NPC_UUID_B = "npc-b"
@@ -47,9 +51,9 @@ def _make_scene(*npc_uuids: str) -> Scene:
 
 
 def _make_actor(response: dict) -> AsyncMock:
-    """Create a mock Actor that returns JSON response."""
+    """Create a mock Actor that returns JSON response wrapped in ActorReply."""
     mock = AsyncMock()
-    mock.execute = AsyncMock(return_value=json.dumps(response))
+    mock.execute = AsyncMock(return_value=ActorReply(text=json.dumps(response)))
     return mock
 
 

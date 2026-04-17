@@ -13,7 +13,7 @@ from knowledge.query import KnowledgeQueryEngine
 from llm.message import LLMResponse
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
-from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
+from tests.director_helpers import make_director, make_game_state, make_mock_actor, setup_npc
 
 _NPC_A = "npc-1"
 _NPC_B = "npc-2"
@@ -40,7 +40,7 @@ class TestDialogueHandlerLongTermMemory:
             npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
         )
 
-        actor = make_mock_agent("Hail, traveller.")
+        actor = make_mock_actor("Hail, traveller.")
         memory_llm = AsyncMock()
         memory_llm.send_message = AsyncMock(
             return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
@@ -89,7 +89,7 @@ class TestDialogueHandlerLongTermMemory:
             ],
         )
 
-        actor_a = make_mock_agent("I will report this to the prefect.")
+        actor_a = make_mock_actor("I will report this to the prefect.")
         memory_llm = AsyncMock()
         memory_llm.send_message = AsyncMock(
             return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
@@ -139,7 +139,7 @@ class TestDialogueHandlerLongTermMemory:
             npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
         )
 
-        actor = make_mock_agent("Hail, traveller.")
+        actor = make_mock_actor("Hail, traveller.")
         memory_llm = AsyncMock()
         memory_llm.send_message = AsyncMock(
             return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
@@ -179,7 +179,7 @@ class TestDialogueHandlerLongTermMemory:
             ],
         )
 
-        actor = make_mock_agent("Hail, traveller.")
+        actor = make_mock_actor("Hail, traveller.")
         memory_llm = AsyncMock()
         memory_llm.send_message = AsyncMock(
             return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),

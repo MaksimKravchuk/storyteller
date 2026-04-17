@@ -6,14 +6,20 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 from cast.director import Director, DirectorCast, DirectorDeps
-from cast.schemas.item_response import ObjectInteractionResponse
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
-from models.game_state import GameState
-from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
-from models.setting import Setting
+from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
+from tests import actor_helpers
+from tests.item_helpers import default_item_generator_execute
 from timeline.event_manager import EventManager
+
+actor_reply = actor_helpers.actor_reply
+make_mock_actor = actor_helpers.make_mock_actor
+GameState = gs_mod.GameState
+NPCCard = npc_card_mod.NPCCard
+Scene = scene_mod.Scene
+SceneNPC = scene_mod.SceneNPC
+Setting = setting_mod.Setting
 
 
 def make_setting() -> Setting:
@@ -47,26 +53,11 @@ def make_mock_agent(return_value: object = None) -> AsyncMock:
     return mock
 
 
-async def _default_item_generator_execute(input_data: Any, context: dict | None = None) -> Any:
-    """Mode-aware stub for ItemGenerator.execute used by test fixtures.
-
-    Returns an :class:`ObjectInteractionResponse` when the call is in
-    ``interact`` mode (KER-13 INTERACT-with-object turns) so the
-    downstream persist/emit pipeline treats the turn as a no-op
-    without raising. Other modes (``batch``, ``examine``) keep the
-    pre-KER-13 empty-list default.
-    """
-    mode = (context or {}).get("mode")
-    if mode == "interact":
-        return ObjectInteractionResponse(narration="", delta="")
-    return []
-
-
 def make_cast(narrator_response: str = "Narrated result.") -> DirectorCast:
     """Build a DirectorCast with mocked agents."""
     item_gen = AsyncMock()
-    item_gen.act = AsyncMock(side_effect=_default_item_generator_execute)
-    item_gen.execute = AsyncMock(side_effect=_default_item_generator_execute)
+    item_gen.act = AsyncMock(side_effect=default_item_generator_execute)
+    item_gen.execute = AsyncMock(side_effect=default_item_generator_execute)
     return DirectorCast(
         scene_builder=make_mock_agent(
             Scene(

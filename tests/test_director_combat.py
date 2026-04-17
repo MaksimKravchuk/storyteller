@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
-
 import allure
 import pytest
 
 from models.npc_card import NPCCard
-from tests.director_helpers import make_director, make_game_state, make_mock_agent
+from tests.director_helpers import make_director, make_game_state, make_mock_actor
 
 _HOSTILE = "hostile"
 _NPC_A = "npc-1"
@@ -63,7 +61,7 @@ class TestCombatDiceIntegration:
         npc = NPCCard(name="Merchant", occupation="merchant")
         npc.uuid = _NPC_A
         director._deps.game_state.npcs[_NPC_A] = npc
-        mock_actor = make_mock_agent("*cowers*")
+        mock_actor = make_mock_actor("*cowers*")
         director._actors[_NPC_A] = mock_actor
         await director.act("punch the merchant")
         # First call is dialogue
@@ -90,8 +88,6 @@ class TestCombatDiceIntegration:
                 "delegate_to": ["actor", "narrator"],
             },
         )
-        mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(return_value="*fights back*")
-        mock_actor.execute = AsyncMock(return_value="*fights back*")
+        mock_actor = make_mock_actor("*fights back*")
         director._actors[_NPC_A] = mock_actor
         return director, mock_actor

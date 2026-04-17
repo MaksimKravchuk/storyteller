@@ -335,7 +335,7 @@ class NPCTurnResolver:
     ) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
         try:
-            raw_response = await actor.execute(
+            reply = await actor.execute(
                 input_data=_build_turn_prompt(
                     npc,
                     player_action_summary,
@@ -348,7 +348,7 @@ class NPCTurnResolver:
         except Exception:
             logger.exception("LLM call failed for NPC {}", npc.name)
             raise
-        return _build_npc_action(npc, raw_response, self._gs)
+        return _build_npc_action(npc, reply.text, self._gs)
 
 
 def _pick_incident_for_npc(

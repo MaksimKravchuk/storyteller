@@ -10,7 +10,7 @@ import pytest
 
 from cast.director_retaliation import RetaliationHandler
 from models.npc_card import NPCCard
-from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
+from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_actor, setup_npc
 
 _HOSTILE = "hostile"
 _NEUTRAL = "neutral"
@@ -108,14 +108,14 @@ class _SideEffect:
         if self._call_count is not None:
             return self._mood_change()
         self._npc.current_mood = _HOSTILE
-        return "*shoves you back*"
+        return actor_reply(text="*shoves you back*")
 
     def _mood_change(self):
         self._call_count[0] += 1
         self._npc.current_mood = _HOSTILE
         if self._call_count[0] == 1:
-            return "*blocks the strike*\n[MOOD: {0}]".format(_HOSTILE)
-        return "*retaliates fiercely*\n[MOOD: {0}]".format(_HOSTILE)
+            return actor_reply(text="*blocks the strike*")
+        return actor_reply(text="*retaliates fiercely*")
 
 
 @allure.epic("Combat & Action Resolution")
@@ -159,7 +159,7 @@ class TestNPCRetaliation:
         gs = make_game_state()
         bystander = setup_npc(gs, _NPC_A, name="Bystander", occupation="onlooker")
         bystander.current_mood = _HOSTILE
-        bystander_actor = make_mock_agent("*lunges at the player*")
+        bystander_actor = make_mock_actor("*lunges at the player*")
         handler = RetaliationHandler(gs, {_NPC_A: bystander_actor})
 
         entries = await _run_patched(
@@ -182,7 +182,7 @@ class TestNPCRetaliation:
         gs = make_game_state()
         target = setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
         target.current_mood = _HOSTILE
-        actor = make_mock_agent("*should not be called*")
+        actor = make_mock_actor("*should not be called*")
         handler = RetaliationHandler(gs, {_NPC_A: actor})
 
         entries = await _run_patched(
@@ -214,11 +214,11 @@ class TestNPCRetaliation:
             },
         )
         mock_actor = AsyncMock()
-        mock_actor.act = AsyncMock(return_value="Hello there.")
+        hello_reply = actor_reply(text="Hello there.")
+        idle_reply = actor_reply(text='{"action": "nods", "type": "IDLE", "target": null}')
+        mock_actor.act = AsyncMock(return_value=hello_reply)
         # 1st call: dialogue, 2nd call: NPC turn
-        mock_actor.execute = AsyncMock(
-            side_effect=["Hello there.", '{"action": "nods", "type": "IDLE", "target": null}'],
-        )
+        mock_actor.execute = AsyncMock(side_effect=[hello_reply, idle_reply])
         director._actors[_NPC_A] = mock_actor
 
         await director.act("greet the guard")
@@ -234,7 +234,7 @@ class TestNPCRetaliation:
         director = make_director(game_state=gs, route_response=_aggressive_route())
         effect = _SideEffect(npc)
 
-        actor_a = make_mock_agent(None)
+        actor_a = make_mock_actor("")
         actor_a.act = AsyncMock(side_effect=effect)
         actor_a.execute = AsyncMock(side_effect=effect)
         director._actors[_NPC_A] = actor_a
@@ -252,8 +252,8 @@ class TestNPCRetaliation:
         setup_npc(gs, _BANDIT_SECOND, name="Bandit", occupation="bandit")
 
         director = make_director(game_state=gs)
-        director._actors[_BANDIT_FIRST] = AsyncMock(return_value="I attack!")
-        director._actors[_BANDIT_SECOND] = AsyncMock(return_value="Me too!")
+        director._actors[_BANDIT_FIRST] = make_mock_actor("I attack!")
+        director._actors[_BANDIT_SECOND] = make_mock_actor("Me too!")
 
         gs.npcs[_BANDIT_FIRST].current_mood = _HOSTILE
         gs.npcs[_BANDIT_SECOND].current_mood = _HOSTILE

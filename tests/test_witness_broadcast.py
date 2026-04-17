@@ -39,7 +39,7 @@ from cast.schemas import item_response as item_resp, turn_outputs as to_mod
 from knowledge.memory import MemoryManager
 from llm.message import LLMResponse
 from models.scene import SceneNPC
-from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
+from tests.director_helpers import make_director, make_game_state, make_mock_actor, setup_npc
 
 _GUARD_UUID = "npc-1"
 _TAILOR_UUID = "npc-tailor"
@@ -398,7 +398,7 @@ class TestShutterSmashRegression:
             "The front shutter hangs splintered and broken.",
         )
         director._executor._agents.memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
-        guard_actor = make_mock_agent(
+        guard_actor = make_mock_actor(
             '{"action": "The guard raises the alarm and rushes toward the player.", '
             '"type": "INTIMIDATE", "target": "player"}',
         )
