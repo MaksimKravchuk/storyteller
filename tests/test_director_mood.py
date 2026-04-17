@@ -7,7 +7,8 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from cast.actor import Actor, _extract_mood as _actor_extract_mood, _extract_status
+from cast.actor import Actor
+from cast.actor_tags import extract_mood as _actor_extract_mood, extract_status as _extract_status
 from knowledge.graph import KnowledgeGraph
 from knowledge.query import KnowledgeQueryEngine
 from models.npc_card import NPCCard
@@ -34,7 +35,7 @@ class TestActorMoodUpdate:
         actor._send = AsyncMock(return_value=f"*tackles you*\n[MOOD: {_HOSTILE}]")
         actor_response = await actor.act("attack guard", {_LOC_KEY: "forum"})
         assert npc.current_mood == _HOSTILE
-        assert "[MOOD:" not in actor_response
+        assert "[MOOD:" not in actor_response.text
 
     @allure.story("Mood extraction")
     @allure.title("An actor response without a [MOOD:] tag leaves the NPC's current_mood untouched")
@@ -150,7 +151,7 @@ class TestActorStatusUpdate:
         actor._send = AsyncMock(return_value="*clutches arm*\n[STATUS: wounded left arm]")
         response = await actor.act("slash guard's arm", {_LOC_KEY: _GATE})
         assert npc.physical_status == "wounded left arm"
-        assert _STATUS_TAG not in response
+        assert _STATUS_TAG not in response.text
 
     @allure.story("Status updates")
     @allure.title("An actor response without a [STATUS:] tag leaves the NPC's physical_status as healthy")
@@ -172,8 +173,8 @@ class TestActorStatusUpdate:
         response = await actor.act("hit guard hard", {_LOC_KEY: _GATE})
         assert npc.current_mood == _HOSTILE
         assert npc.physical_status == "barely standing"
-        assert "[MOOD:" not in response
-        assert _STATUS_TAG not in response
+        assert "[MOOD:" not in response.text
+        assert _STATUS_TAG not in response.text
 
     @allure.story("Status updates")
     @allure.title("The [STATUS:] tag is removed from the stored actor conversation history")

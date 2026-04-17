@@ -11,7 +11,15 @@ from llm.message import LLMResponse
 from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
-from tests.director_helpers import make_director, make_game_state, make_mock_agent, make_setting, setup_npc
+from tests.director_helpers import (
+    actor_reply,
+    make_director,
+    make_game_state,
+    make_mock_actor,
+    make_mock_agent,
+    make_setting,
+    setup_npc,
+)
 
 _HOSTILE = "hostile"
 _NPC_A = "npc-1"
@@ -33,7 +41,7 @@ def _mood_side_effect(input_data, context, gs):
     """Side effect that sets both NPCs to hostile mood."""
     gs.npcs[_NPC_A].current_mood = _HOSTILE
     gs.npcs[_NPC_B].current_mood = _HOSTILE
-    return "*blocks*\n[MOOD: {0}]".format(_HOSTILE)
+    return actor_reply(text="*blocks*")
 
 
 @allure.epic("NPC Interaction")
@@ -63,8 +71,8 @@ class TestDuplicateNPCNames:
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
         )
-        director._actors[_NPC_A] = make_mock_agent("Hello.")
-        director._actors[_NPC_B] = make_mock_agent("Hi there.")
+        director._actors[_NPC_A] = make_mock_actor("Hello.")
+        director._actors[_NPC_B] = make_mock_actor("Hi there.")
         await director.act("talk to the guard")
         calls_a = director._actors[_NPC_A].execute.call_count
         calls_b = director._actors[_NPC_B].execute.call_count
@@ -176,8 +184,7 @@ class TestNPCGeneratorDeduplication:
             },
         )
         director._cast.npc_generator = npc_gen
-        mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value="Hello!")
+        mock_actor = make_mock_actor("Hello!")
         director._actors[_NPC_A] = mock_actor
         await director.act("talk to the guard")
         assert npc_gen.execute.call_count == 0
@@ -203,7 +210,7 @@ class TestNPCGeneratorDeduplication:
             },
         )
         director._cast.npc_generator = npc_gen
-        director._actors[_NPC_A] = make_mock_agent("*blocks*")
+        director._actors[_NPC_A] = make_mock_actor("*blocks*")
 
         await director.act("grab his sword")
 
@@ -265,9 +272,7 @@ class TestMoveToExistingNPCNoSceneRebuild:
                 _DELEGATE_TO: [_NARRATOR, _ACTOR],
             },
         )
-        mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value="Halt!")
-        director._actors[_NPC_A] = mock_actor
+        director._actors[_NPC_A] = make_mock_actor("Halt!")
 
         await director.act("walk to the guard")
 

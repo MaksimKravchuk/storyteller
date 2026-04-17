@@ -10,7 +10,7 @@ import pytest
 from cast.schemas.chronicler_response import ChroniclerResponse
 from models.location import Location
 from models.world_state import WorldThread
-from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
+from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_agent, setup_npc
 
 _NPC_A = "npc-1"
 _GUARD = "guard"
@@ -44,7 +44,9 @@ class TestWaitSkipsDialogue:
         setup_npc(gs, _NPC_A, name="Guard", occupation=_GUARD)
         director = make_director(game_state=gs, route_response=_wait_route())
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value='{"action": "watches", "type": "IDLE", "target": null}')
+        mock_actor.execute = AsyncMock(
+            return_value=actor_reply(text='{"action": "watches", "type": "IDLE", "target": null}'),
+        )
         director._actors[_NPC_A] = mock_actor
 
         await director.act("I wait")
@@ -147,7 +149,10 @@ class TestForcedWaitFromIncapacitation:
         mock_actor = AsyncMock()
         # First call: dialogue, second call: NPC turn
         mock_actor.execute = AsyncMock(
-            side_effect=["Hello", '{"action": "watches", "type": "IDLE", "target": null}'],
+            side_effect=[
+                actor_reply(text="Hello"),
+                actor_reply(text='{"action": "watches", "type": "IDLE", "target": null}'),
+            ],
         )
         director._actors[_NPC_A] = mock_actor
 

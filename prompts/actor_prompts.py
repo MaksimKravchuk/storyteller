@@ -90,7 +90,12 @@ ACTOR_SYSTEM = PromptTemplate(
                 "- If your physical condition changed (injured, healed, knocked out, etc.), "
                 "append on a NEW line: [STATUS: <description>] "
                 "(e.g. [STATUS: wounded left arm], [STATUS: barely standing]). "
-                "Only include this tag if status changed from {physical_status}."
+                "Only include this tag if status changed from {physical_status}.\n"
+                "- If you utter your own name, append on a NEW line "
+                "[REVEALED: self]. If you also name another NPC the player "
+                "can see in this scene, add that NPC's name verbatim — "
+                "comma-separated (e.g. [REVEALED: self, Marcus]). Omit "
+                "this tag entirely when no name is spoken."
             ),
             required_vars=["current_mood", "physical_status", "npc_occupation"],
         ),

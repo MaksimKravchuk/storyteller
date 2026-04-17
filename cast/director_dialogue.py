@@ -6,10 +6,13 @@ import asyncio
 import types
 from typing import Any
 
+from cast import (
+    director_context,
+    director_dialogue_helpers as dlg_helpers,
+    director_dialogue_witness,
+    known_npcs,
+)
 from cast.dice import CombatOutcome, ContestRoll, ContestType
-from cast.director_context import get_location_name
-from cast import director_dialogue_helpers as dlg_helpers
-from cast.director_dialogue_witness import broadcast_cowitness_memories
 from knowledge.memory import MemoryManager
 from models.game_state import GameState
 from timeline.event import EventEffect, GameEvent
@@ -54,18 +57,29 @@ async def _execute_npc_dialogue(
     contest_roll: ContestRoll | None,
     game_state: GameState,
 ) -> dict[str, str]:
-    """Execute a single NPC dialogue and return the result entry."""
-    response = await actor.execute(
+    """Execute a single NPC dialogue and return the result entry.
+
+    Consumes the :class:`ActorReply` the Actor returns, stores the
+    spoken ``text`` on the dialogue entry, and feeds any
+    ``revealed_names`` tokens through :func:`resolve_revealed_uuids`
+    so the player's ``known_npcs`` set learns about the speaker and
+    any co-present NPCs named in the line (KER-29).
+    """
+    reply = await actor.execute(
         input_data=action_text,
         context={
             "npc": npc,
             _KEY_GAME_STATE: game_state,
-            "location_name": get_location_name(npc.location_id, game_state),
+            "location_name": director_context.get_location_name(npc.location_id, game_state),
         },
     )
+    if reply.revealed_names:
+        game_state.player.known_npcs.update(
+            known_npcs.resolve_revealed_uuids(reply.revealed_names, npc.uuid, game_state),
+        )
     result_entry: dict[str, str] = {
         "npc_name": npc.name,
-        "response": response,
+        "response": reply.text,
     }
     if contest_roll:
         actor_total = "{0}+{1}".format(contest_roll.actor_roll, contest_roll.actor_bonus)
@@ -187,7 +201,7 @@ class DialogueHandler:
             dlg_helpers.format_dialogue_summary_pairs(work_items, dialogue_entries, player_action),
             self._gs.game_clock,
         )
-        await broadcast_cowitness_memories(
+        await director_dialogue_witness.broadcast_cowitness_memories(
             work_items,
             dialogue_entries,
             player_action,

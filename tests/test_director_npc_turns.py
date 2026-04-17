@@ -9,7 +9,7 @@ import allure
 import pytest
 
 from models.npc_card import NPCCard
-from tests.director_helpers import make_director, make_game_state
+from tests.director_helpers import actor_reply, make_director, make_game_state
 
 _NPC_A = "npc-1"
 _GUARD = "Guard"
@@ -68,6 +68,10 @@ def _idle_json():
     return json.dumps({"action": "The guard watches the crowd.", "type": "IDLE", "target": None})
 
 
+def _idle_reply():
+    return actor_reply(text=_idle_json())
+
+
 @allure.epic("NPC Interaction")
 @allure.feature("NPC turn integration")
 class TestDirectorCallsNPCTurns:
@@ -81,7 +85,7 @@ class TestDirectorCallsNPCTurns:
 
         # Mock actor for dialogue + NPC turn (returns dialogue first, then turn JSON)
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(side_effect=["Hello traveler.", _idle_json()])
+        mock_actor.execute = AsyncMock(side_effect=[actor_reply(text="Hello traveler."), _idle_reply()])
         director._actors[_NPC_A] = mock_actor
 
         await director.act("talk to the guard")
@@ -98,7 +102,7 @@ class TestDirectorCallsNPCTurns:
         director = make_director(game_state=gs)
 
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value=_idle_json())
+        mock_actor.execute = AsyncMock(return_value=_idle_reply())
         director._actors[_NPC_A] = mock_actor
 
         await director.act("/wait")
@@ -115,7 +119,7 @@ class TestDirectorCallsNPCTurns:
         director = make_director(game_state=gs, route_response=_examine_route())
 
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value=_idle_json())
+        mock_actor.execute = AsyncMock(return_value=_idle_reply())
         director._actors[_NPC_A] = mock_actor
 
         await director.act("look at the fountain")
@@ -145,7 +149,7 @@ class TestDirectorCallsNPCTurns:
         director = make_director(game_state=gs, route_response=aggressive_other_route)
 
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value=_idle_json())
+        mock_actor.execute = AsyncMock(return_value=_idle_reply())
         director._actors[_NPC_A] = mock_actor
 
         resolve_mock = AsyncMock(return_value=[])
@@ -175,7 +179,7 @@ class TestDirectorThreadsIsAggressive:
         director = make_director(game_state=gs, route_response=_aggressive_interact_route())
 
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value=_idle_json())
+        mock_actor.execute = AsyncMock(return_value=_idle_reply())
         director._actors[_NPC_A] = mock_actor
 
         resolve_mock = AsyncMock(return_value=[])
@@ -195,7 +199,7 @@ class TestDirectorThreadsIsAggressive:
         director = make_director(game_state=gs, route_response=_talk_route())
 
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(side_effect=["Hello traveler.", _idle_json()])
+        mock_actor.execute = AsyncMock(side_effect=[actor_reply(text="Hello traveler."), _idle_reply()])
         director._actors[_NPC_A] = mock_actor
 
         resolve_mock = AsyncMock(return_value=[])
@@ -219,7 +223,7 @@ class TestNPCTurnsPassedToNarrator:
         director = make_director(game_state=gs)
 
         mock_actor = AsyncMock()
-        mock_actor.execute = AsyncMock(return_value=_idle_json())
+        mock_actor.execute = AsyncMock(return_value=_idle_reply())
         director._actors[_NPC_A] = mock_actor
 
         await director.act("/wait")

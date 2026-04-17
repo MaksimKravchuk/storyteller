@@ -2,19 +2,17 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
+from cast.actor_tags import strip_trailing_tags
 from cast.base_performer_class import BasePerformer
 from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
+from cast.schemas.actor_reply import ActorReply
 from knowledge.node import KnowledgeNode
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
 from models.npc_card import NPCCard
 from prompts.actor_prompts import ACTOR_SYSTEM
-
-_MOOD_RE = re.compile(r"\n?\[MOOD:\s*(\w+)\]\s*$")
-_STATUS_RE = re.compile(r"\n?\[STATUS:\s*([^\]]+)\]\s*$")
 
 _MEMORY_LIMIT = 5
 _MEMORY_TEXT_MAX_CHARS = 200
@@ -29,32 +27,6 @@ def _format_past_memories(memories: list[KnowledgeNode]) -> str:
             text = "{0}...".format(text[: _MEMORY_TEXT_MAX_CHARS - 3])
         lines.append("- {0}".format(text))
     return "\n".join(lines)
-
-
-def _extract_mood(text: str) -> tuple[str, str | None]:
-    """Strip a ``[MOOD: <word>]`` tag from the end of *text*.
-
-    Returns ``(cleaned_text, mood)`` where *mood* is ``None``
-    when no tag was found.
-    """
-    mood_match = _MOOD_RE.search(text)
-    if mood_match:
-        return text[: mood_match.start()], mood_match.group(1).lower()
-    return text, None
-
-
-def _extract_status(text: str) -> tuple[str, str | None]:
-    """Strip a ``[STATUS: <description>]`` tag from the end of *text*.
-
-    Returns ``(cleaned_text, status)`` where *status* is ``None``
-    when no tag was found.  Supports multi-word values like
-    ``wounded left arm``.
-    """
-    status_match = _STATUS_RE.search(text)
-    if status_match:
-        cleaned = status_match.group(1).strip().lower()
-        return text[: status_match.start()], cleaned
-    return text, None
 
 
 class Actor(BasePerformer):
@@ -80,13 +52,16 @@ class Actor(BasePerformer):
         self.knowledge_query = knowledge_query
         self._conversation: list[Message] = []
 
-    async def act(self, input_data: str, context: dict) -> str:
+    async def act(self, input_data: str, context: dict) -> ActorReply:
         """Respond to a player interaction in character.
 
         ``input_data``: What the player said or did directed at this NPC.
         ``context``: Optional; may contain ``location_name``.
 
-        Returns the NPC's spoken response.
+        Returns an :class:`ActorReply` carrying the spoken text (with
+        all inline tags stripped) plus any ``[REVEALED: ...]`` tokens
+        the Actor emitted. Callers resolve the tokens to NPC UUIDs in
+        the dialogue pipeline (KER-29).
         """
         # Build knowledge context for this NPC
         accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc, topic_tags=None)
@@ -123,22 +98,20 @@ class Actor(BasePerformer):
                 ),
             )
 
-        response = await self._send(input_data, conversation=self._conversation)
-
-        # Extract tags — status first, then mood from cleaned text
-        response, new_status = _extract_status(response)
-        response, new_mood = _extract_mood(response)
+        raw = await self._send(input_data, conversation=self._conversation)
+        # Strip trailing inline tags in any order (MOOD / STATUS / REVEALED).
+        parsed = strip_trailing_tags(raw)
 
         # Track conversation for multi-turn dialogue
         self._conversation.append(Message(role=Role.USER, body=input_data))
-        self._conversation.append(Message(role=Role.ASSISTANT, body=response))
+        self._conversation.append(Message(role=Role.ASSISTANT, body=parsed.text))
 
-        if new_mood:
-            apply_llm_mood_update(self.npc, new_mood)
-        if new_status:
-            self.npc.physical_status = new_status
+        if parsed.mood:
+            apply_llm_mood_update(self.npc, parsed.mood)
+        if parsed.status:
+            self.npc.physical_status = parsed.status
 
-        return response.strip()
+        return ActorReply(text=parsed.text.strip(), revealed_names=parsed.revealed)
 
     def reset_conversation(self) -> None:
         """Clear conversation history (e.g. when player walks away)."""

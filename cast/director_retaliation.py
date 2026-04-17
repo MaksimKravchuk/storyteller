@@ -14,6 +14,7 @@ from cast.dice import (
     roll_combat,
 )
 from cast.director_context import get_location_name
+from cast.known_npcs import resolve_revealed_uuids
 from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
@@ -177,7 +178,7 @@ async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> 
     drops the extra, while :meth:`DialogueHandler.summarize_retaliations`
     reads it to pin the WITNESSED memory node to the retaliating NPC.
     """
-    response = await work.actor.execute(
+    reply = await work.actor.execute(
         input_data=work.retaliation_input,
         context={
             "npc": work.npc,
@@ -185,10 +186,14 @@ async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> 
             "location_name": get_location_name(work.npc.location_id, game_state),
         },
     )
+    if reply.revealed_names:
+        game_state.player.known_npcs.update(
+            resolve_revealed_uuids(reply.revealed_names, work.npc.uuid, game_state),
+        )
     return {
         "npc_uuid": work.npc.uuid,
         "npc_name": work.npc.name,
-        "response": response,
+        "response": reply.text,
         "is_retaliation": "true",
         "aggression_roll": "d20: {0} vs threshold {1} (mood: {2}) → attacks".format(
             work.aggression.roll,

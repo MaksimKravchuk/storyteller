@@ -8,6 +8,7 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from cast import director_context, director_dialogue, director_events
 from cast import director_execution, director_retaliation, director_routing
+from cast.known_npcs import mark_player_text_introductions
 from cast.npc_ticker import NPCTicker
 from cast.npc_turn import NPCTurnResolver
 from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
@@ -106,6 +107,11 @@ class Director(BasePerformer):
             )
 
         self._deps.game_state.pending_clarification = None
+        # Signal B (KER-29): naming a scene NPC in free-text counts as an
+        # introduction. Runs on every non-clarification turn — including
+        # the forced-wait path, since a player who types "wait, come
+        # back Marcus!" has still named Marcus.
+        mark_player_text_introductions(input_data, self._deps.game_state)
         action_type = routing_plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
         completed = self._events.advance_and_resolve(action_type, routing_plan.get("time_cost_override"))
         narrated = await self._executor.execute_plan(routing_plan, input_data, completed)

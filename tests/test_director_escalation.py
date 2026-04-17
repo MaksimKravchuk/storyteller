@@ -22,7 +22,7 @@ from cast import director_dialogue, director_hostility, director_retaliation, ho
 from cast.dice import AggressionRoll, CombatOutcome, CombatRoll
 from models.npc_card import NPCCard
 from models.scene import SceneNPC
-from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
+from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_actor, setup_npc
 
 _NPC_A = "npc-1"
 _GUARD = "guard"
@@ -68,10 +68,15 @@ def force_attack_rolls(monkeypatch):
 
 
 def _make_actor_returning(*responses: str) -> AsyncMock:
-    """Build a mock actor whose execute() cycles through the given responses."""
+    """Build a mock actor whose execute() cycles through the given responses.
+
+    Wraps each string in :class:`ActorReply` so the dialogue /
+    retaliation / NPC-turn unwrappers all read through ``.text``.
+    """
+    replies = [actor_reply(text=resp) for resp in responses]
     mock = AsyncMock()
-    mock.act = AsyncMock(return_value=responses[0])
-    mock.execute = AsyncMock(side_effect=list(responses))
+    mock.act = AsyncMock(return_value=replies[0])
+    mock.execute = AsyncMock(side_effect=replies)
     return mock
 
 
@@ -253,7 +258,7 @@ class TestRetaliationHandlerSkipForceInteraction:
         gs = make_game_state()
         target = setup_npc(gs, _NPC_A, name="Guard", occupation="city guard", mood="threatened")
         target.hostility_level = 4
-        actor = make_mock_agent("*should not be called*")
+        actor = make_mock_actor("*should not be called*")
         handler = director_retaliation.RetaliationHandler(gs, {_NPC_A: actor})
 
         entries = await handler.check_retaliation(
