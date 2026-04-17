@@ -118,7 +118,12 @@ class MemoryManager:
           - CITY/REGION: becomes RUMOR accessible in that area
           - WORLD: becomes FACT accessible broadly
 
-        Returns list of created node UUIDs.
+        Returns list of created node UUIDs. Callers where the player was
+        subject or witness read ``created_ids[0]`` and append it to
+        ``game_state.player.learned_facts`` so the Character sidebar can
+        surface it via ``RememberedFact`` — the decision lives at the
+        call site because only the caller knows the player's role in
+        the event.
         """
         created_ids: list[str] = []
 

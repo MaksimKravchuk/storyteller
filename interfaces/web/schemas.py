@@ -11,6 +11,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from interfaces.web.character_schemas import CharacterInfo
+
 _SETTING_MAX_CHARS = 500
 _ACTION_MAX_CHARS = 2000
 _DEFAULT_LANGUAGE = "English"
@@ -55,6 +57,7 @@ class GameSnapshot(BaseModel):
     setting: str
     transcript: list[TurnEntry]
     turn_count: int
+    character: CharacterInfo
 
 
 class ActionResponse(BaseModel):
@@ -67,3 +70,4 @@ class ActionResponse(BaseModel):
     narration: str
     narration_html: str
     turn_count: int
+    character: CharacterInfo

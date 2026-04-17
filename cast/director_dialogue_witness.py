@@ -103,10 +103,12 @@ async def broadcast_cowitness_memories(
         return
     scene = game_state.current_scene
     overheard_text = format_overheard_text(player_action, work_items, dialogue_entries)
-    await memory_manager.create_memory_from_event(
+    created_ids = await memory_manager.create_memory_from_event(
         event_description=overheard_text,
         witness_ids=witnesses,
         scope=KnowledgeScope.LOCAL,
         location_id=scene.location_id if scene else None,
         game_time=game_state.game_clock,
     )
+    if created_ids:
+        game_state.player.learned_facts.add(created_ids[0])

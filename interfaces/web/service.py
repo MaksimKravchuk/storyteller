@@ -13,6 +13,7 @@ from config import Config
 from db.repository import GameRepository
 from engine.factory import create_engine
 from engine.game_engine import GameEngine
+from interfaces.web.character import build_character_info
 from interfaces.web.schemas import ActionResponse, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
@@ -93,12 +94,16 @@ async def _act_and_persist(
 ) -> ActionResponse:
     """Run a player action through the engine and persist the new state."""
     narration = await engine.process_action(action)
-    turn_number = engine.game_state.turn_count if engine.game_state else None
+    game_state = engine.game_state
+    if game_state is None:
+        raise RuntimeError("engine.game_state is None — engine did not initialise correctly")
+    turn_number = game_state.turn_count
     await persist_engine(repo, session_id, engine, turn_number=turn_number)
     return ActionResponse(
         narration=narration,
         narration_html=render_narrator_html(narration),
-        turn_count=turn_number or 0,
+        turn_count=turn_number,
+        character=build_character_info(game_state),
     )
 
 

@@ -10,6 +10,7 @@ from config import Config
 from db.repository import GameRepository
 from engine.factory import create_engine_from_state
 from engine.game_engine import GameEngine
+from interfaces.web.character import build_character_info
 from interfaces.web.schemas import GameSnapshot
 from interfaces.web.transcript import build_transcript
 from llm.call_logger import get_and_clear_buffer
@@ -60,6 +61,7 @@ def snapshot_from_engine(engine: GameEngine) -> GameSnapshot:
         setting=game_state.setting.name,
         transcript=build_transcript(game_state.conversation_log),
         turn_count=game_state.turn_count,
+        character=build_character_info(game_state),
     )
 
 

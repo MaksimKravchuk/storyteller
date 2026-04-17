@@ -38,6 +38,9 @@ _WAIT_EVENT_LOOKAHEAD_HOURS = 4.0
 # deterministic ``hours_waited`` without pulling an extra module import
 # into this file's WPS201 budget.
 _WAIT_HOURS_DEFAULT = 0.1
+# Cap on ``PlayerState.player_event_log`` length. Older entries are
+# trimmed off the front so the Character sidebar stays bounded.
+_PLAYER_EVENT_LOG_CAP = 30
 
 
 def _snapshot_moods(npcs: dict) -> dict[str, str]:
@@ -177,7 +180,28 @@ class PlanExecutor:
         elif raw_outputs.wait:
             await self._refresh_scene_ambience(raw_outputs, player_action, completed_events)
 
+        self._append_player_event_log(raw_outputs)
         return await self._narrate_and_review(raw_outputs, player_action)
+
+    def _append_player_event_log(self, raw_outputs: turn_outputs.TurnOutputs) -> None:
+        """Append this turn's narrator-consumed highlights to the player event log.
+
+        Reuses the same strings the Narrator reads from ``raw_outputs``
+        — newly introduced NPC labels, completed local events, and
+        object-interaction narrations — so the Character sidebar mirrors
+        the prose without a separate summarisation pass. The log is
+        capped at :data:`_PLAYER_EVENT_LOG_CAP` entries, with the oldest
+        trimmed off the front.
+        """
+        new_entries: list[str] = []
+        new_entries.extend(raw_outputs.new_npcs)
+        new_entries.extend(raw_outputs.completed_events)
+        new_entries.extend(raw_outputs.object_interactions)
+        if not new_entries:
+            return
+        player = self._gs.player
+        combined = player.player_event_log + new_entries
+        player.player_event_log = combined[-_PLAYER_EVENT_LOG_CAP:]
 
     async def _dispatch_plan(
         self,
