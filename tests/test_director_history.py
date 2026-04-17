@@ -213,13 +213,13 @@ class TestDelegation:
     async def test_scene_builder_called_via_execute(self):
         director = make_director(
             route_response={
-                _ACTION_TYPE: "EXPLORE",
+                _ACTION_TYPE: "MOVE",
                 _TARGETS: [],
                 _NEEDS_CLARIFICATION: False,
                 _DELEGATE_TO: ["scene_builder"],
             }
         )
-        await director.act("explore the ruins")
+        await director.act("walk to the ruins")
         director._cast.scene_builder.execute.assert_called_once()
 
     @allure.story("Call chain delegation")

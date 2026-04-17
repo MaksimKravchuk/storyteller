@@ -8,6 +8,7 @@ import allure
 import pytest
 
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
+from models.scene import Scene, SceneNPC
 from tests.director_helpers import make_director, make_game_state
 
 _TALK = "TALK"
@@ -101,12 +102,43 @@ class TestSceneChanges:
         director._cast.scene_builder.execute.assert_called_once()
 
     @allure.story("Scene transitions")
-    @allure.title("EXPLORE actions increment the scene number to reflect the player entering a new area")
+    @allure.title("EXPLORE reuses the current scene so pre-seeded or previously-generated NPCs are not orphaned")
     @pytest.mark.asyncio
-    async def test_explore_triggers_scene_change(self):
-        director = make_director(route_response=_route("EXPLORE"))
+    async def test_explore_preserves_current_scene(self):
+        """KER-33: LOOK / EXPLORE in the same location+time must not rebuild.
+
+        A rebuild discards the scene's ``SceneNPC`` UUIDs, which cuts
+        pre-seeded NPCs off from ``_eligible_npcs`` on subsequent
+        turns even though their ``Actor`` and ``NPCCard`` still exist
+        in ``game_state``.
+        """
+        seeded_scene = Scene(
+            location_id="forum",
+            description="The bustling Roman Forum.",
+            npcs_present=[SceneNPC(role="guard", uuid="npc-seeded")],
+        )
+        gs = make_game_state()
+        gs.current_scene = seeded_scene
+        director = make_director(game_state=gs, route_response=_route("EXPLORE"))
+        await director.act("look around")
+        assert gs.scene_number == 0, "EXPLORE must not increment scene_number"
+        assert gs.current_scene is seeded_scene, "EXPLORE must not replace the current scene"
+        director._cast.scene_builder.execute.assert_not_called()
+
+    @allure.story("Scene transitions")
+    @allure.title("EXPLORE on a session with no current scene falls back to building one")
+    @pytest.mark.asyncio
+    async def test_explore_builds_scene_when_none_exists(self):
+        """Fresh-session fallback: when no scene has been built yet, any
+        action (including EXPLORE) must materialise one — otherwise the
+        turn would narrate into a void.
+        """
+        gs = make_game_state()
+        gs.current_scene = None
+        director = make_director(game_state=gs, route_response=_route("EXPLORE"))
         await director.act("explore the area")
-        assert director._deps.game_state.scene_number == 1
+        assert gs.scene_number == 1
+        director._cast.scene_builder.execute.assert_called_once()
 
     @allure.story("Scene transitions")
     @allure.title("SLEEP actions trigger a scene change because the player wakes in a new narrative beat")
@@ -150,10 +182,14 @@ class TestSceneChanges:
         director._cast.scene_builder.act.assert_not_called()
 
     @allure.story("Scene transitions")
-    @allure.title("The SCENE_CHANGING_ACTIONS constant contains exactly EXPLORE, MOVE, and SLEEP")
+    @allure.title("The SCENE_CHANGING_ACTIONS constant contains exactly MOVE and SLEEP")
     @pytest.mark.asyncio
     async def test_scene_changing_actions_constant(self):
-        assert SCENE_CHANGING_ACTIONS == {"EXPLORE", "MOVE", "SLEEP"}
+        """KER-33: EXPLORE is intentionally excluded — LOOK / EXPLORE do not
+        imply a location change or time-of-day shift and must not rebuild the
+        scene (that would orphan pre-seeded NPC UUIDs).
+        """
+        assert SCENE_CHANGING_ACTIONS == {"MOVE", "SLEEP"}
 
     @allure.story("Scene transitions")
     @allure.title(
@@ -163,7 +199,7 @@ class TestSceneChanges:
     async def test_examine_with_scene_builder_delegate_does_not_replace_scene(self):
         """Regression: LLM sometimes routes EXAMINE with scene_builder in delegate_to.
 
-        Director must not replace the current scene in that case — only MOVE/EXPLORE/SLEEP
+        Director must not replace the current scene in that case — only MOVE/SLEEP
         may build a new scene. Otherwise NPCs get regenerated mid-encounter.
         """
         gs = make_game_state()

@@ -50,6 +50,7 @@ GUARD_OCCUPATION_KEYWORDS: frozenset[str] = frozenset(
 
 WITNESS_MOOD_THREATENED = "threatened"
 WITNESS_KIND_OBJECT_SMASH = "object_smash"
+WITNESS_KIND_NPC_ATTACK = "npc_attack"
 _NEUTRAL_MOOD = "neutral"
 
 
@@ -114,6 +115,29 @@ def _format_witness_description(player_action: str, delta_text: str) -> str:
     if action and delta:
         return "{0}. {1}".format(action.rstrip("."), delta)
     return action or delta
+
+
+def build_npc_attack_witness(
+    target_name: str,
+    player_action: str,
+    location_id: str | None,
+) -> WitnessedAggression:
+    """Build a :class:`WitnessedAggression` for an aggressive NPC INTERACT (KER-33).
+
+    Parallel to :func:`build_object_smash_witness` but for the NPC
+    target case: when the player punches or otherwise physically
+    attacks a scene NPC, guards standing in the same room need the
+    same "someone watched you do this" channel so their mood flips to
+    ``"threatened"`` and the NPC-turn prompt sees the incident clause.
+    """
+    action = (player_action or "").strip() or "attacked"
+    description = "{0} attacked {1}.".format(action.rstrip("."), target_name) if target_name else action
+    return WitnessedAggression(
+        kind=WITNESS_KIND_NPC_ATTACK,
+        target=target_name,
+        location_id=location_id,
+        description=description,
+    )
 
 
 def _eligible_for_bump(npc: object) -> bool:

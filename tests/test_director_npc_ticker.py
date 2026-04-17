@@ -177,13 +177,14 @@ class TestPlanExecutorTickerGate:
         _register_npc(gs, _GUARD_UUID, "Lucia", "guard")
         # Force raw_outputs.scene to be set so the chronicler gate opens; we do
         # this by asking the mocked scene_builder to return a scene with the
-        # existing guard still in it and running an EXPLORE action.
+        # existing guard still in it and running a MOVE action (MOVE is one of
+        # the two action types that still trigger a scene rebuild post-KER-33).
         scene = _seed_tavern_scene(gs, _GUARD_UUID)
         executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
 
         await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"], "targets": []},
-            player_action="look around",
+            plan={"action_type": "MOVE", "delegate_to": ["scene_builder"], "targets": []},
+            player_action="walk to the tavern",
             completed_events=[],
         )
 

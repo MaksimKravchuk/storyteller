@@ -26,9 +26,11 @@ import pytest
 from cast import item_generator as ig_mod, npc_turn as npc_turn_mod
 from cast.dice import roll_aggression
 from cast.director_witness import (
+    WITNESS_KIND_NPC_ATTACK,
     WITNESS_KIND_OBJECT_SMASH,
     WITNESS_MOOD_THREATENED,
     WitnessedAggression,
+    build_npc_attack_witness,
     build_object_smash_witness,
     bump_guard_moods,
     is_guard_occupation,
@@ -112,6 +114,21 @@ class TestDirectorWitnessHelpers:
         assert event.location_id == _FORUM
         assert "smash the shutter" in event.description
         assert "splintered" in event.description
+
+    @allure.story("Witness record")
+    @allure.title("build_npc_attack_witness records the NPC target and the player action (KER-33)")
+    def test_build_npc_attack_witness_records_target_and_action(self):
+        event = build_npc_attack_witness(
+            target_name="Aulus",
+            player_action="punch Aulus in the face",
+            location_id=_FORUM,
+        )
+
+        assert event.kind == WITNESS_KIND_NPC_ATTACK
+        assert event.target == "Aulus"
+        assert event.location_id == _FORUM
+        assert "punch Aulus in the face" in event.description
+        assert "Aulus" in event.description
 
     @allure.story("Mood bump")
     @allure.title("bump_guard_moods flips neutral guards to threatened and returns the affected UUIDs")

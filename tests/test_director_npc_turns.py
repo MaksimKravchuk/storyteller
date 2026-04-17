@@ -123,6 +123,39 @@ class TestDirectorCallsNPCTurns:
         # EXAMINE is not a turn-counting action, so no NPC turns
         mock_actor.execute.assert_not_called()
 
+    @allure.story("Aggressive override")
+    @allure.title("An aggressive OTHER-typed action still triggers bystander NPC turns (KER-33)")
+    @pytest.mark.asyncio
+    async def test_aggressive_other_triggers_npc_turns(self):
+        """Regression for KER-33: the router sometimes classifies a punch as
+        ``action_type=OTHER`` while keeping ``is_aggressive=True``. The
+        ``TURN_COUNTING_ACTIONS`` gate must not silently drop bystanders
+        in that case — visible violence demands a reaction whatever the
+        router labelled the turn.
+        """
+        gs = make_game_state()
+        _setup_guard(gs)
+        aggressive_other_route = {
+            "action_type": "OTHER",
+            "is_aggressive": True,
+            "targets": [_GUARD],
+            "needs_clarification": False,
+            "delegate_to": ["actor", "narrator"],
+        }
+        director = make_director(game_state=gs, route_response=aggressive_other_route)
+
+        mock_actor = AsyncMock()
+        mock_actor.execute = AsyncMock(return_value=_idle_json())
+        director._actors[_NPC_A] = mock_actor
+
+        resolve_mock = AsyncMock(return_value=[])
+        director._npc_turns.resolve_npc_turns = resolve_mock  # type: ignore[method-assign]
+
+        await director.act("punch the guard")
+
+        resolve_mock.assert_awaited()
+        assert resolve_mock.await_args.kwargs.get("is_aggressive") is True
+
 
 @allure.epic("NPC Interaction")
 @allure.feature("NPC turn integration")

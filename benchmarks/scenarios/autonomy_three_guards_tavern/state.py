@@ -83,11 +83,17 @@ _GUARD_ROSTER: tuple[tuple[str, str], ...] = (
 
 
 def _register_guards(game_state: GameState, graph: KnowledgeGraph, location: Location) -> None:
-    """Create all roster guards, register them with the state + graph."""
+    """Create all roster guards, register them with the state + graph + location.
+
+    Mirrors what ``Director._register_new_npc`` does for LLM-generated NPCs so
+    location-scoped queries (proximity-witness, occupancy routing) see the
+    pre-seeded guards alongside the scene roster.
+    """
     for uuid, name in _GUARD_ROSTER:
         guard = _make_guard(uuid, name)
         guard.location_id = location.uuid
         game_state.npcs[guard.uuid] = guard
+        location.add_npc(guard.uuid)
         graph.register_actor_node(guard.uuid, label="{0} ({1})".format(guard.name, _CITY_GUARD_ROLE))
 
 

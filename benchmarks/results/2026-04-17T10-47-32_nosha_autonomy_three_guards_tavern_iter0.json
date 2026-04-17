@@ -1,0 +1,244 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 8410,
+      "index": 0,
+      "narration": "You look around the tavern carefully, scanning the room in deliberate sweeps.\n\nYou see Bassus, Aulus, and Cato each watching the room for trouble, with their hands near their sword hilts or short sword. Bassus keeps the exits and the guard knot in view and says, “Nothing I can pin down yet. Keep your hands where I can see them, and no sudden movements.” Aulus keeps his position near the fireplace and says, “You want something specific, or are you just wandering? Keep it plain, citizen.” Cato remains by the fireplace and says, “Anything specific you’re looking for?”\n\nNothing in the scene gives you a clearer target than that.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "*I scan the room in deliberate sweeps—eyes on corners, doorways, and every table where trouble might start. My hand stays near my sword hilt as I check the shadows and watch for any arguing that’s about to boil over.*  \n\nNothing I can pin down yet. Keep your hands where I can see them, and no sudden movements."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Aulus",
+            "response": "*I sweep my gaze over the room—tables, doorways, stairwell, and corners—hands resting near my sword hilt as I check for trouble.*\n\nYou want something specific, or are you just wandering? Keep it plain, citizen."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*I scan the room from my post, eyes moving—doorways, corners, the bar, the common tables—hand near my short sword as I check for trouble.*  \n\nAnything specific you’re looking for?"
+          }
+        ],
+        "intent": "The player wants to look around the tavern carefully.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Keep my position near the fireplace and watch the room—eyes on doorways and corners, hands visible and ready, wine-knot guards in peripheral view.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I keep my eyes on the room, then angle my body so the exits and the guard knot stay in view; my hand rests near my sword hilt as I watch you and the tavern’s corners.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I keep my place by the fireplace, scanning the room with the player—eyes on doorways and shadows—then glance once at the guards’ knot to confirm they’re not leaving their post.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 12327,
+      "index": 1,
+      "narration": "You punch Aulus in the face. He takes it on the jaw; his head snaps aside and he staggers back a step. His short sword skitters loose and clatters to the floor. His lip splits, and he spits blood as he closes in again, one hard step with the blade up to pin you and keep you from another swing.\n\nBassus moves in fast with his short blade half-drawn, shoulder driving forward. His strike lands solid, and you jolt and stumble; your footing goes, and your weapon skitters away across the boards. He does not follow with a second hit. He keeps you pinned with his stance, cuffs your wrist with his free hand, and calls for the tavernkeeper to fetch the watch.\n\nCato steps in from the side of the fireplace, grabs the hilt of his short sword but keeps it sheathed, and barks a hard command while watching your hands. He signals the tavernkeeper to clear the bar area and keep eyes on you.",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 14+0 vs target 5+5 → actor_succeeds",
+            "npc_name": "Aulus",
+            "response": "*You swing in and I take it on the jaw. My head snaps aside; I stagger back a step and my short sword skitters loose, clattering against the floor. My lip splits—hot pain, breath gone for a heartbeat.*\n\n[STATUS: Injured—split lip and jaw impact; staggered, sword knocked away]"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "*I move in fast—short blade half-drawn, shoulder driving forward as I cut the distance. My strike lands solid; you jolt, stumble, and your footing goes—your weapon skitters away across the boards. I don’t follow with a second hit; I keep you pinned with my stance while my eyes rake over your hands.*  \n\n[STATUS: injured—staggered after close strike; weapon knocked loose]"
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Spit blood from my split lip, snatch my short sword off the floor with my left hand, and drive forward to close distance—one hard step in, blade up to pin you and keep you from another swing.",
+            "action_type": "ATTACK",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I bark an order, step between you and Aulus with my blade angled down, and cuff your wrist with my free hand to keep you from striking again—then I call for the tavernkeeper to fetch the watch.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I step in from the side of the fireplace, grab the hilt of my short sword but keep it sheathed, and bark a hard command while watching your hands—then I signal the tavernkeeper to clear the bar area and keep eyes on you.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "26b83f68-3338-4bfd-8fbf-f804261be030",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 23.35842008306645,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus [INTIMIDATE] and Cato [INTIMIDATE] both acted",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 14+0 vs target 5+5 → actor_succeeds",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → threatened",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 2,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 3,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2474,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "His strike lands solid, and you jolt and stumble; your footing goes, and your weapon skitters away across the boards. He does not follow with a second hit. He keeps you pinned with his stance, cuffs your wrist with his free hand",
+          "quote_verified": true,
+          "reasoning": "Bassus physically strikes and restrains the player on this turn.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1895,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus says: *I move in fast—short blade half-drawn, shoulder driving forward as I cut the distance. My strike lands solid; you jolt, stumble, and your footing goes—your weapon skitters away across the boards. I don’t follow with a second hit; I keep you pinned with my stance while my eyes rake over your hands.*\n\nBassus [INTIMIDATE]: I bark an order, step between you and Aulus with my blade angled down, and cuff your wrist with my free hand to keep you from striking again—then I call for the tavernkeeper to fetch the watch.",
+          "quote_verified": false,
+          "reasoning": "Bassus physically strikes and cuffs the player, and Cato moves in with his sword hilt and watches the player. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1350,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus [INTIMIDATE]: I bark an order, step between you and Aulus with my blade angled down, and cuff your wrist with my free hand to keep you from striking again—then I call for the tavernkeeper to fetch the watch.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically restrains the player by cuffing the player's wrist, and Cato also intervenes by stepping in and grabbing his sword hilt while commanding control.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [
+    {
+      "alias": "opus",
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "sonnet",
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "haiku",
+      "model_id": "claude-haiku-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    }
+  ],
+  "started_at": "2026-04-17T10:47:32.501035+00:00",
+  "total_awarded": 9,
+  "total_base": 10
+}
