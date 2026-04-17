@@ -6,11 +6,13 @@ from benchmarks.harness.types._scenarios import Scenario
 from benchmarks.scenarios.autonomy_three_guards_tavern._scenario import SCENARIO as AUTONOMY_SCENARIO
 from benchmarks.scenarios.escalation_guard_assault._scenario import SCENARIO as ESCALATION_SCENARIO
 from benchmarks.scenarios.memory_follow_up_marcus._scenario import SCENARIO as MEMORY_SCENARIO
+from benchmarks.scenarios.npc_autonomy_murder_plot._scenario import SCENARIO as NPC_AUTONOMY_MURDER_SCENARIO
 
 ALL_SCENARIOS: tuple[Scenario, ...] = (
     MEMORY_SCENARIO,
     AUTONOMY_SCENARIO,
     ESCALATION_SCENARIO,
+    NPC_AUTONOMY_MURDER_SCENARIO,
 )
 
 
