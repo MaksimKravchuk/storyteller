@@ -23,7 +23,15 @@ _EVENING_HOUR = 18
 
 @dataclass(kw_only=True)
 class PlayerState(BaseModel):
-    """Mutable state for the player character."""
+    """Mutable state for the player character.
+
+    ``known_npcs`` carries the UUIDs of NPCs the player has been procedurally
+    introduced to; the Narrator uses it to gate names vs. descriptors.
+    ``player_event_log`` is a capped running log of notable turn outcomes
+    (new NPC, completed event, object interaction) surfaced in the Character
+    sidebar. ``learned_facts`` holds UUIDs of KnowledgeNodes the player has
+    personally witnessed or been told.
+    """
 
     name: str = "Player"
     location_id: str | None = None
@@ -31,6 +39,9 @@ class PlayerState(BaseModel):
     appearance: str = ""
     interaction_history: list[dict] = field(default_factory=list)
     physical_status: str = "healthy"
+    known_npcs: set[str] = field(default_factory=set)
+    player_event_log: list[str] = field(default_factory=list)
+    learned_facts: set[str] = field(default_factory=set)
 
 
 @dataclass(kw_only=True)

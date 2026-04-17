@@ -183,9 +183,15 @@ class TestPlayerConverter:
         player.appearance = "A weary adventurer"
         player.interaction_history = [{"turn": 1, "action": "look"}]
         player.physical_status = "exhausted"
+        player.known_npcs = {"npc-1", "npc-2"}
+        player.player_event_log = ["Met Marcus", "Found the shrine"]
+        player.learned_facts = {"fact-a", "fact-b"}
 
         row = pl_conv.player_to_row(player, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
+        assert row["known_npcs"] == ["npc-1", "npc-2"]
+        assert row["player_event_log"] == ["Met Marcus", "Found the shrine"]
+        assert row["learned_facts"] == ["fact-a", "fact-b"]
 
         restored = pl_conv.row_to_player(row)
         assert restored.uuid == player.uuid
@@ -195,6 +201,9 @@ class TestPlayerConverter:
         assert restored.appearance == "A weary adventurer"
         assert restored.interaction_history == [{"turn": 1, "action": "look"}]
         assert restored.physical_status == "exhausted"
+        assert restored.known_npcs == {"npc-1", "npc-2"}
+        assert restored.player_event_log == ["Met Marcus", "Found the shrine"]
+        assert restored.learned_facts == {"fact-a", "fact-b"}
 
     @allure.story("Backwards compatibility")
     @allure.title("row_to_player defaults physical_status to 'healthy' on legacy rows lacking that column")
@@ -205,6 +214,20 @@ class TestPlayerConverter:
 
         restored = pl_conv.row_to_player(row)
         assert restored.physical_status == "healthy"
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_player defaults knowledge fields to empty on legacy rows lacking those columns")
+    def test_knowledge_fields_default_on_legacy_row(self):
+        player = game_state.PlayerState(name="Legacy")
+        row = pl_conv.player_to_row(player, GAME_STATE_ID)
+        row.pop("known_npcs")
+        row.pop("player_event_log")
+        row.pop("learned_facts")
+
+        restored = pl_conv.row_to_player(row)
+        assert restored.known_npcs == set()
+        assert restored.player_event_log == []
+        assert restored.learned_facts == set()
 
 
 @allure.epic("Persistence")
