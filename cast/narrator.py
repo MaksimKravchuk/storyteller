@@ -84,8 +84,9 @@ def _build_narrator_context_kwargs(game_state: Any, language: str, is_new_scene:
 
     ``world_mood`` is gated on ``is_new_scene`` so the persistent mood
     set by the World Chronicler is woven into scene-entry narration
-    only. On CONTINUATION turns it is omitted to stop every small
-    action from getting atmospheric embroidery (see KER-24).
+    only. On CONTINUATION turns a standing order to weave mood into
+    every response turns small actions into atmospheric embroidery,
+    so we omit it there.
     """
     ctx_kwargs: dict[str, str] = {
         "setting_name": game_state.setting.name,
@@ -175,7 +176,8 @@ class Narrator(BasePerformer):
         """Append dialogue, new NPCs, items, wait, NPC turns and departures.
 
         Dialogue and ``npc_turns`` are deduplicated per-NPC before
-        rendering to avoid the pulp cadence flagged in KER-24.
+        rendering so the Narrator does not serialise two entries for
+        the same character into an ``and then… and then…`` cadence.
         """
         labels = self._labels
         for entry in dedup_dialogue(input_data.dialogue):

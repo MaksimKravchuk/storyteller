@@ -1,11 +1,11 @@
-"""Per-NPC dedup helpers used by the Narrator (KER-24).
+"""Per-NPC dedup helpers used by the Narrator.
 
 Two Director paths can emit a dialogue entry for the same NPC on one
-turn (primary response + retaliation summary). The same is possible
-for ``npc_turns`` when downstream code merges multiple NPC schedulers.
-Serialising the duplicates produces the "and then… and then…" pulp
-cadence flagged in KER-24. These helpers collapse the lists per-NPC
-before they reach the narration prompt.
+turn (primary response + retaliation summary); ``npc_turns`` is
+similarly vulnerable when downstream code merges multiple NPC
+schedulers. Serialising the duplicates produces an ``and then… and
+then…`` cadence in the rendered prose, so we collapse the lists
+per-NPC before they reach the narration prompt.
 
 Order of first appearance is preserved, exact duplicate texts are
 dropped, and distinct texts for the same NPC are joined with

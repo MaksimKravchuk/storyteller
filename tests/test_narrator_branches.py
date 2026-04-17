@@ -244,7 +244,7 @@ class TestNarratorWorldMood:
     @allure.title("Narrator system prompt omits world_mood on CONTINUATION turns to avoid per-action embroidery")
     @pytest.mark.asyncio
     async def test_world_mood_omitted_on_continuation(self):
-        """KER-24: weaving mood into every small action produces cliché padding."""
+        """Weaving mood into every small action produces cliché padding."""
         narrator = _make_narrator()
         gs = _make_game_state()
         gs.world_state = WorldState(world_mood="tense and restless")
@@ -289,10 +289,11 @@ class TestFormatNpcLabel:
 @allure.epic("Narrative Delivery")
 @allure.feature("Narrator")
 class TestNarratorDedup:
-    """KER-24: two Director paths can emit dialogue for the same NPC on one
-    turn (primary + retaliation), and the same is possible for npc_turns.
-    The Narrator must collapse these per-NPC so the rendered prose doesn't
-    serialize them into a pulp 'and then… and then…' cadence.
+    """Two Director paths can emit dialogue for the same NPC on one turn
+    (primary response + retaliation summary), and the same is possible
+    for npc_turns. The Narrator must collapse these per-NPC so the
+    rendered prose doesn't serialise them into an 'and then… and then…'
+    cadence.
     """
 
     @allure.story("Dedup")
