@@ -285,7 +285,6 @@ class TestFormatNpcLabel:
 
         body = _last_user_body(narrator)
         assert "Marcus (centurion)" in body
-        # The descriptor is NOT surfaced once the NPC has been introduced.
         assert "a tall man in a red cloak" not in body
 
     @allure.story("NPC label formatting")
@@ -296,7 +295,6 @@ class TestFormatNpcLabel:
         gs = _make_game_state()
         npc = NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
         gs.npcs[npc.uuid] = npc
-        # Intentionally no known_npcs entry — player has not been introduced.
 
         scene = Scene(
             location_id="forum",

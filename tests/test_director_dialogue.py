@@ -242,8 +242,6 @@ class TestNPCGeneratorDeduplication:
         narrator_call = director._cast.narrator.execute.call_args
         input_data = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
         assert input_data.new_npcs
-        # The player has not been introduced to this fresh NPC yet, so the
-        # narrator must see the visible-features descriptor — never the name.
         assert any("bolt-laden stall" in desc for desc in input_data.new_npcs)
         assert all("Cassia" not in desc for desc in input_data.new_npcs)
 

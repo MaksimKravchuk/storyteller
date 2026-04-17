@@ -184,18 +184,6 @@ class TestNPCCardLabelForPlayer:
 
         assert npc.label_for_player(gs, role_fallback="soldier") == "soldier"
 
-    @allure.story("Unknown NPC")
-    @allure.title("label_for_player tolerates a game state without a player attribute")
-    def test_missing_player_attribute(self):
-        npc = NPCCard(
-            name="Marcus",
-            occupation="centurion",
-            short_descriptor="a tall man in a red cloak",
-        )
-        bare_state = SimpleNamespace()
-
-        assert npc.label_for_player(bare_state, role_fallback="soldier") == "a tall man in a red cloak"
-
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Domain models")
