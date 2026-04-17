@@ -43,6 +43,10 @@ class TestSaveLoadRoundTrip:
         assert set(loaded_state.locations.keys()) == set(game_state.locations.keys())
         assert set(loaded_state.npcs.keys()) == set(game_state.npcs.keys())
 
+        assert loaded_state.player.known_npcs == game_state.player.known_npcs
+        assert loaded_state.player.player_event_log == game_state.player.player_event_log
+        assert loaded_state.player.learned_facts == game_state.player.learned_facts
+
         assert loaded_state.current_scene is not None
         assert loaded_state.current_scene.uuid == game_state.current_scene.uuid
         assert loaded_state.current_scene.location_id == game_state.current_scene.location_id

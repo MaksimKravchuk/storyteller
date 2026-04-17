@@ -326,6 +326,9 @@ def _apply_scalars(game_state) -> None:
     game_state.game_time = "afternoon"
     game_state.conversation_log = [{"speaker": "player", "text": "hello"}]
     game_state.scene_conversation_log = [{"speaker": "merchant", "text": "welcome"}]
+    game_state.player.known_npcs = {"npc-known-1", "npc-known-2"}
+    game_state.player.player_event_log = ["Entered the marketplace", "Met the merchant"]
+    game_state.player.learned_facts = {"fact-bronze", "fact-king"}
 
 
 def _attach_world(game_state) -> None:
