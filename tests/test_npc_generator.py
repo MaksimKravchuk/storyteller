@@ -125,6 +125,18 @@ class TestNPCGenerator:
         assert "Фрол Михайлов" in cards[1].name
 
     @allure.story("Duplicate prevention")
+    @allure.title("NPCGenerator appends numeric suffix when three cards collide on the same name")
+    @pytest.mark.asyncio
+    async def test_triple_collision_uses_numeric_suffix(self, game_state) -> None:
+        gen = NPCGenerator(llm_client=MagicMock())
+        payloads = [_full_npc_payload("Фрол Михайлов") for _ in range(3)]
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=payloads)):
+            cards = await gen.act(["fisherman", "cooper", "smith"], {"game_state": game_state})
+        assert cards[0].name == "Фрол Михайлов"
+        assert cards[1].name == "Фрол Михайлов (guard)"
+        assert cards[2].name == "Фрол Михайлов (guard) [2]"
+
+    @allure.story("Duplicate prevention")
     @allure.title("NPCGenerator forbids names of NPCs already in the current scene")
     @pytest.mark.asyncio
     async def test_existing_scene_npc_names_forbidden(self, game_state) -> None:

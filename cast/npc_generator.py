@@ -62,8 +62,8 @@ class NPCGenerator(BasePerformer):
 
         Returns a list of ``NPCCard`` objects. Generation is serial so each
         call can tell the LLM which names have already been handed out in
-        this batch — otherwise two parallel roles routinely collapse onto the
-        same random-seeded name.
+        this batch — otherwise two parallel roles with identical context
+        routinely mode-collapse onto the same name.
         """
         from models.game_state import GameState
 
@@ -87,11 +87,17 @@ class NPCGenerator(BasePerformer):
         return cards
 
     async def _generate_unique(self, npc_request: str, game_state: Any, taken_names: set[str]) -> NPCCard:
-        """Generate one card and rename it if the LLM ignored ``forbidden_names``."""
+        """Generate one card and rename it if the LLM ignored ``forbidden_names``.
+
+        The rename is logged at ``error`` because downstream name-matchers
+        (dialogue targeting, interaction filters) compare ``npc.name.lower()``
+        and will silently miss the suffixed form — a sustained rate of renames
+        signals a prompt regression worth investigating.
+        """
         card = await self._generate_npc(npc_request, game_state, taken_names)
         if card.name in taken_names:
             disambiguated = _disambiguate_name(card.name, card.occupation, taken_names)
-            logger.warning(
+            logger.error(
                 "NPCGenerator: LLM returned taken name '{0}' for role '{1}', renaming to '{2}'",
                 card.name,
                 npc_request,
