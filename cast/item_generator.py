@@ -11,12 +11,7 @@ from cast.schemas.item_response import (
     ObjectInteractionResponse,
 )
 from llm.turn_event_logger import record_turn_event
-from prompts.item_generator_prompts import (
-    ITEM_GENERATOR_BATCH,
-    ITEM_GENERATOR_EXAMINE,
-    ITEM_GENERATOR_INTERACT,
-    ITEM_GENERATOR_SYSTEM,
-)
+from prompts.item_generator_prompts import get_item_generator_prompts
 
 _SETTING_SUMMARY_MAX = 500
 
@@ -24,11 +19,16 @@ _SETTING_SUMMARY_MAX = 500
 class ItemGenerator(BasePerformer):
     """Produces strict, precise item descriptions — no literary flourishes."""
 
-    def __init__(self, *, llm_client: Any):
+    def __init__(self, *, llm_client: Any, language: str = "English"):
+        prompts = get_item_generator_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=ITEM_GENERATOR_SYSTEM,
+            system_prompt_template=prompts.system,
         )
+        self._language = language
+        self._batch_template = prompts.batch
+        self._examine_template = prompts.examine
+        self._interact_template = prompts.interact
 
     async def act(self, input_data: Any, context: dict) -> Any:
         """Dispatch based on context mode.
@@ -80,10 +80,13 @@ class ItemGenerator(BasePerformer):
         if not inventory:
             return inventory
 
-        self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
+        self.set_context(
+            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
+            language=self._language,
+        )
 
         formatted_list = "\n".join("- {0}".format(entry) for entry in inventory)
-        prompt = ITEM_GENERATOR_BATCH.render(owner_context=owner_context, item_list=formatted_list)
+        prompt = self._batch_template.render(owner_context=owner_context, item_list=formatted_list)
         response = await self._send_json(prompt, response_model=ItemListResponse)
         record_turn_event(
             "item_list",
@@ -106,9 +109,12 @@ class ItemGenerator(BasePerformer):
         game_state: Any,
     ) -> str:
         """Generate a detailed physical examination of a single item."""
-        self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
+        self.set_context(
+            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
+            language=self._language,
+        )
 
-        prompt = ITEM_GENERATOR_EXAMINE.render(item_name=item_name, context_hint=context_hint)
+        prompt = self._examine_template.render(item_name=item_name, context_hint=context_hint)
         response = await self._send_json(prompt, response_model=ItemExamineResponse)
         record_turn_event(
             "item_examine",
@@ -135,9 +141,12 @@ class ItemGenerator(BasePerformer):
         means "no lasting change" and signals the caller to skip the
         graph write.
         """
-        self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
+        self.set_context(
+            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
+            language=self._language,
+        )
 
-        prompt = ITEM_GENERATOR_INTERACT.render(
+        prompt = self._interact_template.render(
             player_action=player_action,
             object_name=object_name,
             context_hint=context_hint,

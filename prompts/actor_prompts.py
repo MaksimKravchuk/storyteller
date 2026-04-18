@@ -1,6 +1,19 @@
-"""Prompt templates for the Actor agent (NPC dialogue)."""
+"""Prompt templates for the Actor agent (NPC dialogue).
 
+This module owns the **English** Actor catalog and the locale-aware
+:func:`get_actor_prompts` lookup. Other locales live in sibling modules
+(e.g. :mod:`prompts.actor_prompts_ru`) and register themselves via
+:data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
+
+from prompts.actor_prompts_ru import ACTOR_SYSTEM_RU
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.locales import Locale, resolve_locale
 
 ACTOR_SYSTEM = PromptTemplate(
     [
@@ -106,3 +119,34 @@ ACTOR_SYSTEM = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class ActorPrompts:
+    """Per-locale Actor prompt bundle.
+
+    ``system`` renders as the Actor's system prompt (identity, rules,
+    output-language instruction). The per-turn user message is the raw
+    player action and carries no localisable scaffolding, so the bundle
+    currently exposes only ``system``.
+    """
+
+    system: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, ActorPrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: ActorPrompts(system=ACTOR_SYSTEM),
+        Locale.RUSSIAN: ActorPrompts(system=ACTOR_SYSTEM_RU),
+    }
+)
+
+
+def get_actor_prompts(language: str | None) -> ActorPrompts:
+    """Return the Actor prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]

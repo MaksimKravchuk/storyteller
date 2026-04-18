@@ -9,7 +9,7 @@ from cast.schemas.chronicler_response import ChroniclerResponse
 from cast.schemas.turn_outputs import TurnOutputs
 from models.game_state import GameState
 from models.world_state import WorldThread
-from prompts.chronicler_prompts import CHRONICLER_ADVANCE, CHRONICLER_SYSTEM
+from prompts.chronicler_prompts import get_chronicler_prompts
 
 _EMPTY_THREADS_PLACEHOLDER = "(no open threads)"
 _EMPTY_TURN_PLACEHOLDER = "(nothing notable happened)"
@@ -80,11 +80,14 @@ def _summarize_turn(turn: TurnOutputs) -> str:
 class WorldChronicler(BasePerformer):
     """Advances world threads, schedules offscreen events, and sets world_mood."""
 
-    def __init__(self, *, llm_client: Any):
+    def __init__(self, *, llm_client: Any, language: str = "English"):
+        prompts = get_chronicler_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=CHRONICLER_SYSTEM,
+            system_prompt_template=prompts.system,
         )
+        self._language = language
+        self._advance_template = prompts.advance
 
     async def act(self, input_data: TurnOutputs, context: dict) -> ChroniclerResponse:
         """Produce a conservative set of world updates for the current scene.
@@ -106,9 +109,10 @@ class WorldChronicler(BasePerformer):
             setting_name=game_state.setting.name,
             time_period=game_state.setting.time_period,
             current_location=current_location,
+            language=self._language,
         )
 
-        prompt = CHRONICLER_ADVANCE.render(
+        prompt = self._advance_template.render(
             scene_number=str(game_state.scene_number),
             open_threads=_format_threads(game_state.world_state.threads),
             turn_summary=_summarize_turn(input_data),

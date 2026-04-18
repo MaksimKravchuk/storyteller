@@ -1,6 +1,19 @@
-"""Prompt templates for the Director agent."""
+"""Prompt templates for the Director agent.
+
+This module owns the **English** Director catalog and the locale-aware
+:func:`get_director_prompts` lookup. Other locales live in sibling
+modules (e.g. :mod:`prompts.director_prompts_ru`) and register
+themselves via :data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.director_prompts_ru import DIRECTOR_ACTION_ROUTING_RU, DIRECTOR_SYSTEM_RU
+from prompts.locales import Locale, resolve_locale
 
 DIRECTOR_SYSTEM = PromptTemplate(
     [
@@ -56,6 +69,17 @@ DIRECTOR_SYSTEM = PromptTemplate(
             template="Recent actions in this scene:\n{scene_history_summary}",
             required_vars=["scene_history_summary"],
         ),
+        PromptSection(
+            name="language",
+            template=(
+                "The player will typically phrase actions in {language}; interpret "
+                "their input accordingly. JSON enum values (action_type, "
+                "contest.type, delegate_to) MUST stay in English — they are "
+                "machine-read. Human-readable strings (clarification_question, "
+                "intent, targets) may be in the player's language."
+            ),
+            required_vars=["language"],
+        ),
     ]
 )
 
@@ -86,3 +110,29 @@ DIRECTOR_ACTION_ROUTING = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class DirectorPrompts:
+    """Per-locale Director prompt bundle."""
+
+    system: PromptTemplate
+    action_routing: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, DirectorPrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: DirectorPrompts(system=DIRECTOR_SYSTEM, action_routing=DIRECTOR_ACTION_ROUTING),
+        Locale.RUSSIAN: DirectorPrompts(system=DIRECTOR_SYSTEM_RU, action_routing=DIRECTOR_ACTION_ROUTING_RU),
+    }
+)
+
+
+def get_director_prompts(language: str | None) -> DirectorPrompts:
+    """Return the Director prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]

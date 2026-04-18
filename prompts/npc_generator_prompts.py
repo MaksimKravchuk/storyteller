@@ -1,6 +1,19 @@
-"""Prompt templates for the NPC Generator agent."""
+"""Prompt templates for the NPC Generator agent.
+
+This module owns the **English** NPC-generator catalog and the
+locale-aware :func:`get_npc_generator_prompts` lookup. Other locales
+live in sibling modules (e.g. :mod:`prompts.npc_generator_prompts_ru`)
+and register themselves via :data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.locales import Locale, resolve_locale
+from prompts.npc_generator_prompts_ru import NPC_GENERATOR_CREATE_RU, NPC_GENERATOR_SYSTEM_RU
 
 NPC_GENERATOR_SYSTEM = PromptTemplate(
     [
@@ -17,6 +30,17 @@ NPC_GENERATOR_SYSTEM = PromptTemplate(
             name="setting",
             template=("Setting: {setting_summary}\nLocation: {location_name}\nSocial structure: {social_structure}"),
             required_vars=["setting_summary", "location_name", "social_structure"],
+        ),
+        PromptSection(
+            name="language",
+            template=(
+                "Fill every human-readable text field (name, biography, appearance, "
+                "short_descriptor, occupation, personality_traits, speech_style, "
+                "inventory) in {language}. Keep the JSON keys and enum values "
+                "(knowledge_scope, attributes dict keys) in English — they are "
+                "machine-read."
+            ),
+            required_vars=["language"],
         ),
     ]
 )
@@ -72,3 +96,35 @@ NPC_GENERATOR_CREATE = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class NPCGeneratorPrompts:
+    """Per-locale NPC-generator prompt bundle.
+
+    ``system`` renders as the NPC Generator's system prompt (role,
+    setting, output-language instruction). ``create`` is the per-request
+    user message template that names the NPC role and spells out the
+    JSON schema the LLM must return.
+    """
+
+    system: PromptTemplate
+    create: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, NPCGeneratorPrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: NPCGeneratorPrompts(system=NPC_GENERATOR_SYSTEM, create=NPC_GENERATOR_CREATE),
+        Locale.RUSSIAN: NPCGeneratorPrompts(system=NPC_GENERATOR_SYSTEM_RU, create=NPC_GENERATOR_CREATE_RU),
+    }
+)
+
+
+def get_npc_generator_prompts(language: str | None) -> NPCGeneratorPrompts:
+    """Return the NPC-generator prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]

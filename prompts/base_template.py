@@ -59,6 +59,16 @@ class PromptTemplate:
             all_vars.update(section.required_vars)
         return all_vars
 
+    @property
+    def sections(self) -> tuple[PromptSection, ...]:
+        """Read-only snapshot of the ordered section list.
+
+        Exposed so introspection tools (tests that assert EN/RU catalog
+        parity, admin-dashboard prompt inspectors) can walk the
+        sections without touching the private ``_sections`` list.
+        """
+        return tuple(self._sections)
+
     def __repr__(self) -> str:
         names = [section.name for section in self._sections]
         return f"PromptTemplate(sections={names})"

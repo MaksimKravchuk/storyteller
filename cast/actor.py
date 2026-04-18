@@ -12,7 +12,7 @@ from knowledge.node import KnowledgeNode
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
 from models.npc_card import NPCCard
-from prompts.actor_prompts import ACTOR_SYSTEM
+from prompts.actor_prompts import get_actor_prompts
 
 _MEMORY_LIMIT = 5
 _MEMORY_TEXT_MAX_CHARS = 200
@@ -43,14 +43,17 @@ class Actor(BasePerformer):
         llm_client: Any,
         npc: NPCCard,
         knowledge_query: KnowledgeQueryEngine,
+        language: str = "English",
     ):
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=ACTOR_SYSTEM,
+            system_prompt_template=get_actor_prompts(language).system,
         )
         self.npc = npc
         self.knowledge_query = knowledge_query
+        self._language = language
         self._conversation: list[Message] = []
+        self.set_context(language=language)
 
     async def act(self, input_data: str, context: dict) -> ActorReply:
         """Respond to a player interaction in character.

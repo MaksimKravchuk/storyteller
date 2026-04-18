@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json as _json
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 from llm.message import Message, Role
 from models.game_state import GameState
-from prompts.director_prompts import DIRECTOR_ACTION_ROUTING
+from prompts.base_template import PromptTemplate
 
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
@@ -31,9 +31,11 @@ class ActionRouter:
         self,
         game_state: GameState,
         send_json_fn: Callable[..., Awaitable[dict]],
+        action_routing_template: PromptTemplate,
     ) -> None:
         self._gs = game_state
         self._send_json = send_json_fn
+        self._action_routing_template = action_routing_template
 
     async def route_action(self, player_action: str) -> dict:
         """Use the LLM to classify the action and produce a routing plan."""
@@ -44,12 +46,12 @@ class ActionRouter:
                 player_action,
                 conversation=scene_history + history,
             )
-        prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
+        prompt = self._action_routing_template.render(player_action=player_action)
         return await self._send_json(prompt, conversation=self.build_scene_history())
 
     def save_pending_clarification(self, player_action: str, routing_plan: dict) -> None:
         """Persist a clarification exchange in game state."""
-        prompt = DIRECTOR_ACTION_ROUTING.render(player_action=player_action)
+        prompt = self._action_routing_template.render(player_action=player_action)
         self._gs.pending_clarification = [
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": _json.dumps(routing_plan, ensure_ascii=False)},

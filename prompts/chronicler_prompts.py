@@ -1,6 +1,19 @@
-"""Prompt templates for the World Chronicler agent."""
+"""Prompt templates for the World Chronicler agent.
+
+This module owns the **English** World Chronicler catalog and the
+locale-aware :func:`get_chronicler_prompts` lookup. Other locales live
+in sibling modules (e.g. :mod:`prompts.chronicler_prompts_ru`) and
+register themselves via :data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.chronicler_prompts_ru import CHRONICLER_ADVANCE_RU, CHRONICLER_SYSTEM_RU
+from prompts.locales import Locale, resolve_locale
 
 CHRONICLER_SYSTEM = PromptTemplate(
     [
@@ -44,6 +57,16 @@ CHRONICLER_SYSTEM = PromptTemplate(
                 "Reference existing locations and NPCs by their UUIDs; do not invent new entities."
             ),
         ),
+        PromptSection(
+            name="language",
+            template=(
+                "Write every human-readable output field (description, name, "
+                "on_complete_description, world_mood) in {language}. Keep the JSON "
+                "keys and the enum values (category / status / scope) in English — "
+                "they are machine-read."
+            ),
+            required_vars=["language"],
+        ),
     ]
 )
 
@@ -86,3 +109,29 @@ CHRONICLER_ADVANCE = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class ChroniclerPrompts:
+    """Per-locale World Chronicler prompt bundle."""
+
+    system: PromptTemplate
+    advance: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, ChroniclerPrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: ChroniclerPrompts(system=CHRONICLER_SYSTEM, advance=CHRONICLER_ADVANCE),
+        Locale.RUSSIAN: ChroniclerPrompts(system=CHRONICLER_SYSTEM_RU, advance=CHRONICLER_ADVANCE_RU),
+    }
+)
+
+
+def get_chronicler_prompts(language: str | None) -> ChroniclerPrompts:
+    """Return the World Chronicler prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]
