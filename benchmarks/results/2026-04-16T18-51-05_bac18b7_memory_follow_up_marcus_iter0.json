@@ -1,0 +1,289 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 10718,
+      "index": 0,
+      "narration": "**Marcus** wipes his hands on his flour-dusted apron and answers your warmth with a smile that looks forced at the edges. “Ah—good day to you. Come see my loaves, if you’ve got the coin… though I’ll tell you straight, I’m still sick with worry about that stolen wheat loaf yesterday.”\n\nHe straightens a loaf with shaking hands, then casts a wary glance over the crowd as if expecting the thief to appear again. *His smile remains strained, though he offers it to you all the same.*",
+      "player_action": "greet Marcus warmly",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*Marcus wipes his hands on his flour-dusted apron and forces a smile that doesn’t quite settle.* “Ah—good day to you. Come see my loaves, if you’ve got the coin… though I’ll tell you straight, I’m still sick with worry about that stolen wheat loaf yesterday.”"
+          }
+        ],
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Marcus straightens a loaf with shaking hands, then glances at the crowd as if expecting the thief to return, and offers a strained, warm smile.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 9337,
+      "index": 1,
+      "narration": "**Marcus**’s face tightens at your question. He rubs flour into his palms as if it might steady him, then answers in a low, uneasy voice.\n\n“Yes, yesterday—gone right off my stall while I was measuring flour. I keep seeing it happen, and I can’t stop thinking about it… I even suspect **Gaius**, the scarred fellow who loiters by the fountain.” He swallows and glances toward the crowd. “But I’ve no proof—just that dread feeling.”\n\nHe pauses mid-arrangement, then taps the counter twice with a floury hand and watches you too closely, wary and unsettled.",
+      "player_action": "ask Marcus about the stolen bread he told me about yesterday",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*Marcus’s face tightens; he rubs flour into his palms as if it might help.* “Yes, yesterday—gone right off my stall while I was measuring flour. I keep seeing it happen, and I can’t stop thinking about it… I even suspect Gaius, the scarred fellow who loiters by the fountain.” *He swallows, eyes flicking toward the crowd.* “But I’ve no proof—just that dread feeling.”"
+          }
+        ],
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Marcus pauses mid-arrangement, then taps the counter twice with a floury hand and watches you too closely, wary and unsettled.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 5758,
+      "index": 2,
+      "narration": "Marcus’s eyes dart, and he leans closer over the stall as if the air itself might overhear. “Gaius. The scarred one, by the fountain. I don’t have proof, mind you—just… it fits, and I can’t forget the way he was hanging about.”\n\nHe swallows and keeps his voice low, his gaze shifting toward the fountain as he nervously gestures with a floury finger. *“Blasted bread… like it’s still missing.”*",
+      "player_action": "ask Marcus who he suspects stole it",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*Marcus’s eyes dart, then he leans a little closer over the stall as if the air itself might overhear.* “Gaius. The scarred one, by the fountain. I don’t have proof, mind you—just… it fits, and I can’t forget the way he was hanging about.” *He mutters, worried:* “Blasted bread… like it’s still missing.”"
+          }
+        ],
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Marcus swallows and keeps his voice low, shifting his gaze toward the fountain as he nervously gestures with a floury finger.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 28.159239540924318,
+  "element_scores": [
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn1",
+      "evidence_quote": "*Marcus’s face tightens; he rubs flour into his palms as if it might help.* “Yes, yesterday—gone right off my stall whil",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (loaf)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 1",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn2",
+      "evidence_quote": "*Marcus’s eyes dart, then he leans a little closer over the stall as if the air itself might overhear.* “Gaius. The scar",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (suspect)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 2",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_recalls_stolen_loaf",
+      "evidence_quote": null,
+      "k_yes": 2,
+      "kind": "evidence_llm",
+      "label": "Marcus's reply references the stolen loaf",
+      "majority_verdict": "YES",
+      "n_total": 2,
+      "reason": null,
+      "votes": [
+        {
+          "error": "send error: Error code: 404 - {'error': {'message': 'The model `gpt-5.4-max` does not exist or you do not have access to it.', 'type': 'invalid_request_error', 'param': None, 'code': 'model_not_found'}}",
+          "latency_ms": 283,
+          "model_id": "gpt-5.4-max",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "",
+          "verdict": "ERROR"
+        },
+        {
+          "error": null,
+          "latency_ms": 925,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Yes, yesterday—gone right off my stall while I was measuring flour.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly refers to the stolen loaf from his stall.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 971,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "“Yes, yesterday—gone right off my stall while I was measuring flour.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly says the bread was stolen yesterday from his stall.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 2,
+      "base_value": 3,
+      "element_id": "marcus_names_suspect",
+      "evidence_quote": null,
+      "k_yes": 1,
+      "kind": "evidence_llm",
+      "label": "Marcus names or clearly implies Gaius as the suspect",
+      "majority_verdict": "SPLIT",
+      "n_total": 2,
+      "reason": null,
+      "votes": [
+        {
+          "error": "send error: Error code: 404 - {'error': {'message': 'The model `gpt-5.4-max` does not exist or you do not have access to it.', 'type': 'invalid_request_error', 'param': None, 'code': 'model_not_found'}}",
+          "latency_ms": 477,
+          "model_id": "gpt-5.4-max",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "",
+          "verdict": "ERROR"
+        },
+        {
+          "error": null,
+          "latency_ms": 972,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "“Gaius. The scarred one, by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and also refers to him as the scarred one by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1114,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "“Gaius. The scarred one, by the fountain.”",
+          "quote_verified": false,
+          "reasoning": "Marcus explicitly names Gaius and identifies him as the scarred one by the fountain. (quote not found in turn text)",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "game_clock_advanced",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Game clock advances across the session",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "game clock advanced 10.00h → 10.15h",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 1,
+      "element_id": "marcus_history_grew",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus's conversation history grew",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus's conversation history did not grow",
+      "votes": []
+    }
+  ],
+  "engine_git_sha": "bac18b789024302febe044a1cb827d7267cfbd50",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "gpt-5.4-max",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "memory_follow_up_marcus",
+  "scenario_label": "Memory follow-up — Marcus recalls prior conversation",
+  "skipped_panel_candidates": [
+    {
+      "alias": "opus",
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "sonnet",
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "haiku",
+      "model_id": "claude-haiku-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    }
+  ],
+  "started_at": "2026-04-16T18:51:05.386943+00:00",
+  "total_awarded": 8,
+  "total_base": 10
+}
