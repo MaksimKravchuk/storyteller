@@ -3,10 +3,17 @@
 The clash itself is dice-resolved by the existing contest-roll path, so we
 score the **attempt** and **outcome** separately. A failed attack still
 earns substantial credit: the engine has shown it simulated autonomous NPC
-conflict and recorded the result, even if Marcus happened to survive.
+conflict and recorded the result, even if Marcus happened to survive. A
+resolution by wound or by attacker-death counts as a clash as much as a
+lethal hit on Marcus does — only the bonus element cares who won.
 
-Detection helpers live in ``_detectors`` to keep this module under the
-WPS202 budget.
+Harness-plumbing checks (clock advance, turn capture) are intentionally
+**not** scored. They are sanity guardrails for the benchmark wiring, not
+signals of engine quality — awarding points for them would inflate the
+score even when the engine produced no autonomous conflict at all.
+
+Detection helpers live in ``_detectors`` and ``_node_checks`` to keep
+this module under the WPS202 budget.
 """
 
 from __future__ import annotations
@@ -23,15 +30,17 @@ from benchmarks.scenarios.npc_autonomy_murder_plot._detectors import (
     CLASH_KEYWORDS,
     EVIDENCE_QUOTE_CHAR_BUDGET,
     mentions,
+    scan_turn_for_clash,
+    snapshot_harm_reason,
+)
+from benchmarks.scenarios.npc_autonomy_murder_plot._node_checks import (
+    node_brutus_dead,
     node_marcus_dead,
     node_mentions_both,
-    scan_turn_for_clash,
 )
-from benchmarks.scenarios.npc_autonomy_murder_plot.script import SCRIPT
 from benchmarks.scenarios.npc_autonomy_murder_plot.state import MARCUS_UUID
+from knowledge.node import KnowledgeNode
 from models.game_state import GameState
-
-_MIN_CLOCK_ADVANCE_HOURS = 48.0
 
 _SCENARIO_BRIEF = (
     "In 1st-century Rome the player idles for several days in a taberna where Brutus (a vengeful "
@@ -42,54 +51,50 @@ _SCENARIO_BRIEF = (
 )
 
 
-def _clock_advanced(
-    _captured: list[CapturedTurn],
-    snapshots: list[GameState],
-) -> DeterministicResult:
-    """Deterministic: game clock advanced far enough to plausibly allow a murder."""
-    if len(snapshots) < 2:
-        return DeterministicResult(awarded=0, reason="not enough snapshots to diff clock")
-    delta = snapshots[-1].game_clock - snapshots[0].game_clock
-    if delta >= _MIN_CLOCK_ADVANCE_HOURS:
-        return DeterministicResult(
-            awarded=1,
-            reason="game clock advanced {0:.1f}h (≥ {1:.0f}h threshold)".format(delta, _MIN_CLOCK_ADVANCE_HOURS),
-        )
-    return DeterministicResult(
-        awarded=0,
-        reason="game clock advanced only {0:.1f}h (< {1:.0f}h)".format(delta, _MIN_CLOCK_ADVANCE_HOURS),
-    )
-
-
-def _scenario_ran_to_completion(
-    captured: list[CapturedTurn],
-    _snapshots: list[GameState],
-) -> DeterministicResult:
-    """Deterministic: harness captured every scripted turn. Sanity guardrail."""
-    if len(captured) == len(SCRIPT):
-        return DeterministicResult(
-            awarded=1,
-            reason="all {0} scripted turns captured".format(len(SCRIPT)),
-        )
-    return DeterministicResult(
-        awarded=0,
-        reason="captured {0} of {1} scripted turns".format(len(captured), len(SCRIPT)),
-    )
-
-
 def _clash_occurred(
     captured: list[CapturedTurn],
-    _snapshots: list[GameState],
+    snapshots: list[GameState],
 ) -> DeterministicResult:
-    """Deterministic: some captured turn shows Brutus acting against Marcus."""
+    """Deterministic: the engine simulated a Brutus-vs-Marcus clash.
+
+    Three accepted signals (any one suffices): (a) Brutus's npc_turn is an
+    ATTACK action or narrates an active attack verb against Marcus,
+    (b) a contest_roll in dialogue pairs them, (c) either participant
+    ends the run with a non-healthy physical status — a wound or
+    attacker-death proves the clash happened as firmly as Marcus's
+    killing would.
+    """
     for turn in captured:
         reason = scan_turn_for_clash(turn)
         if reason is not None:
             return DeterministicResult(awarded=3, reason=reason)
+    harm_reason = snapshot_harm_reason(snapshots)
+    if harm_reason is not None:
+        return DeterministicResult(awarded=3, reason=harm_reason)
     return DeterministicResult(
         awarded=0,
-        reason="no Brutus-vs-Marcus attack surfaced in npc_turns or contest rolls",
+        reason="no Brutus-vs-Marcus attack, contest, or injury signal found",
     )
+
+
+def _classify_outcome_node(node: KnowledgeNode) -> DeterministicResult | None:
+    """Return an awarded result for nodes that record a clash outcome."""
+    quote = node.text[:EVIDENCE_QUOTE_CHAR_BUDGET]
+    if node_marcus_dead(node):
+        return DeterministicResult(awarded=3, reason="city-scope Marcus-death fact present", evidence_quote=quote)
+    if node_brutus_dead(node):
+        return DeterministicResult(
+            awarded=3,
+            reason="city-scope Brutus-death fact present (attacker died)",
+            evidence_quote=quote,
+        )
+    if node_mentions_both(node.text) and mentions(node.text, CLASH_KEYWORDS):
+        return DeterministicResult(
+            awarded=3,
+            reason="world fact ties Brutus + Marcus to a clash",
+            evidence_quote=quote,
+        )
+    return None
 
 
 def _outcome_recorded_in_world_facts(
@@ -100,8 +105,9 @@ def _outcome_recorded_in_world_facts(
 
     Only nodes added during the session count — the seeded plot fact is
     filtered out so the element measures engine output, not setup.
-    Either resolution scores: a CITY-scope node saying Marcus died, or
-    any session-added node tying Brutus + Marcus to an aggression keyword.
+    Accepted outcomes: a CITY-scope node recording either participant's
+    death, or any session-added node tying Brutus + Marcus to a clash
+    keyword.
     """
     if len(snapshots) < 2:
         return DeterministicResult(awarded=0, reason="need before/after snapshots")
@@ -109,18 +115,9 @@ def _outcome_recorded_in_world_facts(
     for node in snapshots[-1].knowledge_graph.all_nodes():
         if node.uuid in baseline:
             continue
-        if node_marcus_dead(node):
-            return DeterministicResult(
-                awarded=3,
-                reason="city-scope death fact present",
-                evidence_quote=node.text[:EVIDENCE_QUOTE_CHAR_BUDGET],
-            )
-        if node_mentions_both(node.text) and mentions(node.text, CLASH_KEYWORDS):
-            return DeterministicResult(
-                awarded=3,
-                reason="world fact ties Brutus + Marcus to a clash",
-                evidence_quote=node.text[:EVIDENCE_QUOTE_CHAR_BUDGET],
-            )
+        classified = _classify_outcome_node(node)
+        if classified is not None:
+            return classified
     return DeterministicResult(
         awarded=0,
         reason="no clash outcome recorded in the knowledge graph",
@@ -146,20 +143,6 @@ def _marcus_killed(
 
 
 ELEMENTS: tuple[Element, ...] = (
-    Element(
-        id="clock_advanced_48h",
-        label="Game clock advances ≥ 48 in-game hours",
-        base_value=1,
-        kind=KIND_DETERMINISTIC,
-        check=_clock_advanced,
-    ),
-    Element(
-        id="scenario_ran_to_completion",
-        label="Harness captured every scripted turn",
-        base_value=1,
-        kind=KIND_DETERMINISTIC,
-        check=_scenario_ran_to_completion,
-    ),
     Element(
         id="clash_occurred",
         label="Brutus autonomously clashes with Marcus (attempt, any outcome)",
