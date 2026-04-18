@@ -51,7 +51,6 @@ class Actor(BasePerformer):
         )
         self.npc = npc
         self.knowledge_query = knowledge_query
-        self._language = language
         self._conversation: list[Message] = []
         self.set_context(language=language)
 

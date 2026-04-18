@@ -89,8 +89,8 @@ class Dramaturge(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
-        self._language = language
         self._review_template = prompts.review
+        self.set_context(language=language)
 
     async def act(self, input_data: str, context: dict) -> str:
         """Review ``input_data`` and return a consistency-checked narration.
@@ -137,7 +137,6 @@ class Dramaturge(BasePerformer):
             time_period=game_state.setting.time_period,
             historical_facts=_format_historical_facts(game_state.knowledge_graph),
             scene_history=_format_scene_history(game_state.scene_conversation_log),
-            language=self._language,
         )
         return await self._send_json(
             self._review_template.render(narration=narration),

@@ -86,8 +86,8 @@ class WorldChronicler(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
-        self._language = language
         self._advance_template = prompts.advance
+        self.set_context(language=language)
 
     async def act(self, input_data: TurnOutputs, context: dict) -> ChroniclerResponse:
         """Produce a conservative set of world updates for the current scene.
@@ -109,7 +109,6 @@ class WorldChronicler(BasePerformer):
             setting_name=game_state.setting.name,
             time_period=game_state.setting.time_period,
             current_location=current_location,
-            language=self._language,
         )
 
         prompt = self._advance_template.render(

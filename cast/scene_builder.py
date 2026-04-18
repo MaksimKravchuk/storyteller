@@ -133,8 +133,8 @@ class SceneBuilder(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
-        self._language = language
         self._generate_template = prompts.generate
+        self.set_context(language=language)
 
     async def act(self, input_data: str, context: dict) -> Scene:
         """Build a scene based on a player action and current game state.
@@ -173,7 +173,6 @@ class SceneBuilder(BasePerformer):
             setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
             current_location=current_loc,
             time_of_day=game_state.game_time,
-            language=self._language,
         )
         deltas_block = _format_persistent_world_changes(all_scene_deltas(game_state.knowledge_graph))
         if deltas_block:

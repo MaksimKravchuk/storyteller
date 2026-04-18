@@ -33,7 +33,6 @@ class DataMiner(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
-        self._language = language
         self._search_terms_template = prompts.search_terms
         self._research_template = prompts.research
         self.wikipedia = wikipedia_client or WikipediaClient()

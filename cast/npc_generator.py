@@ -81,8 +81,8 @@ class NPCGenerator(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
-        self._language = language
         self._create_template = prompts.create
+        self.set_context(language=language)
 
     async def act(self, input_data: list[str], context: dict) -> list[NPCCard]:
         """Generate NPC cards.
@@ -107,7 +107,6 @@ class NPCGenerator(BasePerformer):
                 else "Unknown location"
             ),
             social_structure=game_state.setting.social_structure[:_SOCIAL_STRUCTURE_MAX],
-            language=self._language,
         )
 
         taken_names = _existing_scene_names(game_state)

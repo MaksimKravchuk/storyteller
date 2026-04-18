@@ -25,10 +25,10 @@ class ItemGenerator(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
-        self._language = language
         self._batch_template = prompts.batch
         self._examine_template = prompts.examine
         self._interact_template = prompts.interact
+        self.set_context(language=language)
 
     async def act(self, input_data: Any, context: dict) -> Any:
         """Dispatch based on context mode.
@@ -80,10 +80,7 @@ class ItemGenerator(BasePerformer):
         if not inventory:
             return inventory
 
-        self.set_context(
-            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
-            language=self._language,
-        )
+        self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
 
         formatted_list = "\n".join("- {0}".format(entry) for entry in inventory)
         prompt = self._batch_template.render(owner_context=owner_context, item_list=formatted_list)
@@ -109,10 +106,7 @@ class ItemGenerator(BasePerformer):
         game_state: Any,
     ) -> str:
         """Generate a detailed physical examination of a single item."""
-        self.set_context(
-            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
-            language=self._language,
-        )
+        self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
 
         prompt = self._examine_template.render(item_name=item_name, context_hint=context_hint)
         response = await self._send_json(prompt, response_model=ItemExamineResponse)
@@ -141,10 +135,7 @@ class ItemGenerator(BasePerformer):
         means "no lasting change" and signals the caller to skip the
         graph write.
         """
-        self.set_context(
-            setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
-            language=self._language,
-        )
+        self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
 
         prompt = self._interact_template.render(
             player_action=player_action,
