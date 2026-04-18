@@ -287,9 +287,19 @@
     showSettingPanel();
   }
 
+  function initFoldableSections() {
+    document.querySelectorAll(".character-col h4, .character-col h5").forEach((heading) => {
+      const list = heading.nextElementSibling;
+      if (!list || list.tagName !== "UL") return;
+      heading.classList.add("is-foldable");
+      heading.addEventListener("click", () => heading.classList.toggle("is-folded"));
+    });
+  }
+
   els.settingForm.addEventListener("submit", onStartGame);
   els.actionForm.addEventListener("submit", onSubmitAction);
   els.newGameBtn.addEventListener("click", onNewGame);
 
+  initFoldableSections();
   loadCurrent();
 })();

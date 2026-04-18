@@ -211,6 +211,38 @@ button[type="submit"]:disabled {
   margin: 0.9rem 0 0.35rem;
 }
 
+/* ── Foldable headings ───────────────────────────────── */
+.character-col h4.is-foldable,
+.character-col h5.is-foldable {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.character-col h4.is-foldable::after,
+.character-col h5.is-foldable::after {
+  content: "▾";
+  display: inline-block;
+  font-size: 0.65rem;
+  color: rgba(245, 200, 120, 0.45);
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+  margin-left: 0.4rem;
+  letter-spacing: 0;
+}
+
+.character-col h4.is-foldable.is-folded::after,
+.character-col h5.is-foldable.is-folded::after {
+  transform: rotate(-90deg);
+}
+
+.character-col h4.is-foldable.is-folded + ul,
+.character-col h5.is-foldable.is-folded + ul {
+  display: none;
+}
+
 #character-header {
   margin-bottom: 0.5rem;
 }
@@ -249,6 +281,10 @@ button[type="submit"]:disabled {
   list-style: none;
   padding: 0;
   margin: 0;
+  max-height: 10rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 200, 120, 0.2) transparent;
 }
 
 .character-col li {
