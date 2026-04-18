@@ -260,6 +260,20 @@ button[type="submit"]:disabled {
   font-style: italic;
   color: #6a655a;
   padding: 0.3rem 0;
+  text-align: center;
+}
+
+/* Reset icon/counter left-indent and hide glyphs for empty messages */
+#inventory-list li.empty,
+#recent-events-list li.empty,
+#learned-facts-list li.empty {
+  padding-left: 0;
+}
+
+#inventory-list li.empty::before,
+#recent-events-list li.empty::before,
+#learned-facts-list li.empty::before {
+  content: none;
 }
 
 /* Inventory: small gold diamond before each item. */
