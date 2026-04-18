@@ -1,6 +1,24 @@
-"""Prompt templates for the Item Generator agent."""
+"""Prompt templates for the Item Generator agent.
+
+This module owns the **English** Item Generator catalog and the
+locale-aware :func:`get_item_generator_prompts` lookup. To add a new
+locale, create a sibling ``item_generator_prompts_<lang>.py`` module
+and wire its bundle into :data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.item_generator_prompts_ru import (
+    ITEM_GENERATOR_BATCH_RU,
+    ITEM_GENERATOR_EXAMINE_RU,
+    ITEM_GENERATOR_INTERACT_RU,
+    ITEM_GENERATOR_SYSTEM_RU,
+)
+from prompts.locales import Locale, resolve_locale
 
 ITEM_GENERATOR_SYSTEM = PromptTemplate(
     [
@@ -24,6 +42,15 @@ ITEM_GENERATOR_SYSTEM = PromptTemplate(
             name="setting",
             template="Setting: {setting_summary}",
             required_vars=["setting_summary"],
+        ),
+        PromptSection(
+            name="language",
+            template=(
+                "Write every human-readable output field (items, description, "
+                "narration, delta) in {language}. Keep the JSON keys in English "
+                "— they are machine-read."
+            ),
+            required_vars=["language"],
         ),
     ]
 )
@@ -98,3 +125,41 @@ ITEM_GENERATOR_INTERACT = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class ItemGeneratorPrompts:
+    """Per-locale Item Generator prompt bundle."""
+
+    system: PromptTemplate
+    batch: PromptTemplate
+    examine: PromptTemplate
+    interact: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, ItemGeneratorPrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: ItemGeneratorPrompts(
+            system=ITEM_GENERATOR_SYSTEM,
+            batch=ITEM_GENERATOR_BATCH,
+            examine=ITEM_GENERATOR_EXAMINE,
+            interact=ITEM_GENERATOR_INTERACT,
+        ),
+        Locale.RUSSIAN: ItemGeneratorPrompts(
+            system=ITEM_GENERATOR_SYSTEM_RU,
+            batch=ITEM_GENERATOR_BATCH_RU,
+            examine=ITEM_GENERATOR_EXAMINE_RU,
+            interact=ITEM_GENERATOR_INTERACT_RU,
+        ),
+    }
+)
+
+
+def get_item_generator_prompts(language: str | None) -> ItemGeneratorPrompts:
+    """Return the Item Generator prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]

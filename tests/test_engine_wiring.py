@@ -108,15 +108,17 @@ def test_wire_director_uses_injected_data_miner(game_state, populated_graph) -> 
 
 
 class _ActorRecorder:
-    """Callable that returns MagicMocks while recording the npc kwarg passed in."""
+    """Callable that returns MagicMocks while recording the kwargs each Actor was built with."""
 
     def __init__(self) -> None:
         self.created: list[MagicMock] = []
+        self.call_kwargs: list[dict] = []
 
     def __call__(self, **kwargs) -> MagicMock:
         actor = MagicMock(name="actor_{0}".format(kwargs["npc"].name))
         actor.npc = kwargs["npc"]
         self.created.append(actor)
+        self.call_kwargs.append(kwargs)
         return actor
 
 
@@ -150,8 +152,8 @@ def test_restore_actors_creates_and_registers_actor_per_npc(
         register_calls = director.register_actor.call_args_list
         registered_uuids = {call.args[0] for call in register_calls}
         assert registered_uuids == {sample_npc.uuid, second_npc.uuid}
-        for actor in recorder.created:
-            actor.set_context.assert_called_once_with(language="English")
+        for build_kwargs in recorder.call_kwargs:
+            assert build_kwargs["language"] == "English"
 
 
 @allure.story("restore_actors")
@@ -163,3 +165,15 @@ def test_restore_actors_noop_on_empty_npcs(populated_graph, game_state) -> None:
         restore_actors(director, game_state, populated_graph, MagicMock(), "English")
         actor_cls.assert_not_called()
         director.register_actor.assert_not_called()
+
+
+@allure.story("restore_actors")
+@allure.title("restore_actors threads a non-English session language into every rebuilt Actor")
+def test_restore_actors_threads_russian_language(sample_npc, populated_graph, game_state) -> None:
+    """Russian sessions must rebuild Actors with ``language='Russian'`` so their system prompts localise."""
+    game_state.npcs[sample_npc.uuid] = sample_npc
+    director = MagicMock()
+    recorder = _ActorRecorder()
+    with patch("cast.actor.Actor", side_effect=recorder):
+        restore_actors(director, game_state, populated_graph, MagicMock(), "Russian")
+        assert recorder.call_kwargs == [{**recorder.call_kwargs[0], "language": "Russian"}]

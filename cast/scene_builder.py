@@ -11,7 +11,7 @@ from cast.base_performer_class import BasePerformer
 from cast.schemas.scene_response import SceneResponse
 from knowledge.scene_state import all_scene_deltas
 from models.scene import Scene, SceneNPC
-from prompts.scene_builder_prompts import SCENE_BUILDER_GENERATE, SCENE_BUILDER_SYSTEM
+from prompts.scene_builder_prompts import get_scene_builder_prompts
 
 _SETTING_SUMMARY_MAX = 500
 
@@ -127,11 +127,14 @@ def _scene_from_response(scene_data: SceneResponse, fallback_time_of_day: str) -
 class SceneBuilder(BasePerformer):
     """Generates structured scene data for the Narrator to narrate."""
 
-    def __init__(self, *, llm_client: Any):
+    def __init__(self, *, llm_client: Any, language: str = "English"):
+        prompts = get_scene_builder_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=SCENE_BUILDER_SYSTEM,
+            system_prompt_template=prompts.system,
         )
+        self._generate_template = prompts.generate
+        self.set_context(language=language)
 
     async def act(self, input_data: str, context: dict) -> Scene:
         """Build a scene based on a player action and current game state.
@@ -146,7 +149,7 @@ class SceneBuilder(BasePerformer):
         game_state: GameState = context["game_state"]
         self._prime_context(game_state)
 
-        prompt = SCENE_BUILDER_GENERATE.render(
+        prompt = self._generate_template.render(
             player_action=input_data,
             time_of_day=game_state.game_time,
         )

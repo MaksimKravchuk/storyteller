@@ -14,7 +14,7 @@ from cast.npc_turn import NPCTurnResolver
 from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
 from models import game_state as gs_mod
-from prompts import director_prompts
+from prompts.director_prompts import get_director_prompts
 from timeline import event as event_mod, event_manager as event_manager_mod
 
 _KEY_ACTION_TYPE = "action_type"
@@ -60,17 +60,23 @@ class Director(BasePerformer):
         cast: DirectorCast,
         language: str = "English",
     ):
+        prompts = get_director_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=director_prompts.DIRECTOR_SYSTEM,
+            system_prompt_template=prompts.system,
         )
         self._deps = deps
         self._cast = cast
         self._actors: dict[str, Any] = dict(cast.actors)
         self._language = language
+        self.set_context(language=language)
 
         self._ctx = director_context.ContextFormatter(deps.game_state)
-        self._router = director_routing.ActionRouter(deps.game_state, self._send_json)
+        self._router = director_routing.ActionRouter(
+            deps.game_state,
+            self._send_json,
+            prompts.action_routing,
+        )
         self._events = director_events.EventProcessor(deps.game_state, deps.event_manager, deps.memory_manager)
         self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors, deps.memory_manager)
         self._retaliation = director_retaliation.RetaliationHandler(deps.game_state, self._actors)
@@ -158,6 +164,6 @@ class Director(BasePerformer):
             llm_client=self.llm_client,
             npc=npc,
             knowledge_query=KnowledgeQueryEngine(self._deps.game_state.knowledge_graph),
+            language=self._language,
         )
-        actor.set_context(language=self._language)
         self.register_actor(npc.uuid, actor)

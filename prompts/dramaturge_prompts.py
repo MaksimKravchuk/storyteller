@@ -1,6 +1,19 @@
-"""Prompt templates for the Dramaturge consistency oracle."""
+"""Prompt templates for the Dramaturge consistency oracle.
+
+This module owns the **English** Dramaturge catalog and the
+locale-aware :func:`get_dramaturge_prompts` lookup. To add a new
+locale, create a sibling ``dramaturge_prompts_<lang>.py`` module and
+wire its bundle into :data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.dramaturge_prompts_ru import DRAMATURGE_REVIEW_RU, DRAMATURGE_SYSTEM_RU
+from prompts.locales import Locale, resolve_locale
 
 DRAMATURGE_SYSTEM = PromptTemplate(
     [
@@ -92,3 +105,29 @@ DRAMATURGE_REVIEW = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class DramaturgePrompts:
+    """Per-locale Dramaturge prompt bundle."""
+
+    system: PromptTemplate
+    review: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, DramaturgePrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: DramaturgePrompts(system=DRAMATURGE_SYSTEM, review=DRAMATURGE_REVIEW),
+        Locale.RUSSIAN: DramaturgePrompts(system=DRAMATURGE_SYSTEM_RU, review=DRAMATURGE_REVIEW_RU),
+    }
+)
+
+
+def get_dramaturge_prompts(language: str | None) -> DramaturgePrompts:
+    """Return the Dramaturge prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]

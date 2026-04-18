@@ -9,7 +9,7 @@ from loguru import logger
 from cast.base_performer_class import BasePerformer
 from cast.schemas.npc_response import NPCResponse
 from models.npc_card import NPCCard
-from prompts.npc_generator_prompts import NPC_GENERATOR_CREATE, NPC_GENERATOR_SYSTEM
+from prompts.npc_generator_prompts import get_npc_generator_prompts
 
 _SETTING_SUMMARY_MAX = 500
 _SCENE_DESC_MAX = 200
@@ -69,11 +69,14 @@ def _disambiguate_name(name: str, occupation: str, taken: set[str]) -> str:
 class NPCGenerator(BasePerformer):
     """Creates NPC cards with bio, appearance, knowledge level, etc."""
 
-    def __init__(self, *, llm_client: Any):
+    def __init__(self, *, llm_client: Any, language: str = "English"):
+        prompts = get_npc_generator_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=NPC_GENERATOR_SYSTEM,
+            system_prompt_template=prompts.system,
         )
+        self._create_template = prompts.create
+        self.set_context(language=language)
 
     async def act(self, input_data: list[str], context: dict) -> list[NPCCard]:
         """Generate NPC cards.
@@ -133,7 +136,7 @@ class NPCGenerator(BasePerformer):
         render_vars = {"npc_request": npc_request}
         if taken_names:
             render_vars["forbidden_names"] = ", ".join(sorted(taken_names))
-        prompt = NPC_GENERATOR_CREATE.render(**render_vars)
+        prompt = self._create_template.render(**render_vars)
         npc_data = await self._send_json(prompt, response_model=NPCResponse)
 
         return NPCCard(

@@ -25,7 +25,7 @@ from knowledge.graph_queries import query_by_canon
 from knowledge.node import CanonSource, KnowledgeNode
 from loguru import logger
 from models.game_state import GameState
-from prompts.dramaturge_prompts import DRAMATURGE_REVIEW, DRAMATURGE_SYSTEM
+from prompts.dramaturge_prompts import get_dramaturge_prompts
 
 _MAX_HISTORICAL_FACTS = 20
 _FACT_PREVIEW_CHARS = 240
@@ -84,11 +84,13 @@ class Dramaturge(BasePerformer):
     """Consistency oracle that validates Narrator output against canon."""
 
     def __init__(self, *, llm_client: Any, language: str = "English"):
+        prompts = get_dramaturge_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=DRAMATURGE_SYSTEM,
+            system_prompt_template=prompts.system,
         )
-        self._language = language
+        self._review_template = prompts.review
+        self.set_context(language=language)
 
     async def act(self, input_data: str, context: dict) -> str:
         """Review ``input_data`` and return a consistency-checked narration.
@@ -135,10 +137,9 @@ class Dramaturge(BasePerformer):
             time_period=game_state.setting.time_period,
             historical_facts=_format_historical_facts(game_state.knowledge_graph),
             scene_history=_format_scene_history(game_state.scene_conversation_log),
-            language=self._language,
         )
         return await self._send_json(
-            DRAMATURGE_REVIEW.render(narration=narration),
+            self._review_template.render(narration=narration),
             response_model=DramaturgeResponse,
         )
 

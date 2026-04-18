@@ -12,11 +12,7 @@ from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from loguru import logger
 from models.setting import Setting
-from prompts.data_miner_prompts import (
-    DATA_MINER_RESEARCH,
-    DATA_MINER_SEARCH_TERMS,
-    DATA_MINER_SYSTEM,
-)
+from prompts.data_miner_prompts import get_data_miner_prompts
 from research.wikipedia_client import WikipediaClient
 
 
@@ -30,14 +26,19 @@ class DataMiner(BasePerformer):
         *,
         llm_client: Any,
         wikipedia_client: WikipediaClient | None = None,
+        language: str = "English",
     ):
+        prompts = get_data_miner_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=DATA_MINER_SYSTEM,
+            system_prompt_template=prompts.system,
         )
+        self._search_terms_template = prompts.search_terms
+        self._research_template = prompts.research
         self.wikipedia = wikipedia_client or WikipediaClient()
         self._fact_cache: dict[str, str] = {}  # entity name → node UUID
         self._fact_locks: dict[str, asyncio.Lock] = {}  # per-entity asyncio lock
+        self.set_context(language=language)
 
     async def act(self, input_data: str, context: dict | None = None) -> Setting:
         """Research a topic and produce a structured Setting.
@@ -55,7 +56,7 @@ class DataMiner(BasePerformer):
         raw_articles: dict[str, dict] = dict(zip(search_terms, summaries))
 
         # Step 3: Synthesise into a Setting via LLM
-        research_prompt = DATA_MINER_RESEARCH.render(
+        research_prompt = self._research_template.render(
             setting_request=input_data,
             raw_research=json.dumps(raw_articles, indent=2, ensure_ascii=False),
         )
@@ -127,6 +128,6 @@ class DataMiner(BasePerformer):
 
     async def _extract_search_terms(self, description: str) -> list[str]:
         """Ask the LLM to generate Wikipedia search terms."""
-        prompt = DATA_MINER_SEARCH_TERMS.render(setting_request=description)
+        prompt = self._search_terms_template.render(setting_request=description)
         search_json = await self._send_json(prompt, response_model=SearchTermsResponse)
         return search_json.search_terms or [description]

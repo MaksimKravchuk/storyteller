@@ -84,12 +84,12 @@ def wire_director(
             ),
         ),
         cast=director_mod.DirectorCast(
-            scene_builder=scene_builder_mod.SceneBuilder(llm_client=clients.agent),
+            scene_builder=scene_builder_mod.SceneBuilder(llm_client=clients.agent, language=language),
             narrator=narrator_mod.Narrator(llm_client=clients.narrator, language=language),
-            npc_generator=npc_gen_mod.NPCGenerator(llm_client=clients.agent),
-            data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent),
-            item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent),
-            world_chronicler=world_chronicler_mod.WorldChronicler(llm_client=clients.agent),
+            npc_generator=npc_gen_mod.NPCGenerator(llm_client=clients.agent, language=language),
+            data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent, language=language),
+            item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent, language=language),
+            world_chronicler=world_chronicler_mod.WorldChronicler(llm_client=clients.agent, language=language),
             dramaturge=dramaturge,
         ),
         language=language,
@@ -124,6 +124,6 @@ def restore_actors(
             llm_client=llm_client,
             npc=npc,
             knowledge_query=KnowledgeQueryEngine(knowledge_graph),
+            language=language,
         )
-        actor.set_context(language=language)
         director.register_actor(npc_uuid, actor)

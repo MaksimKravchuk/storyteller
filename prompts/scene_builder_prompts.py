@@ -1,6 +1,19 @@
-"""Prompt templates for the Scene Builder agent."""
+"""Prompt templates for the Scene Builder agent.
+
+This module owns the **English** Scene Builder catalog and the
+locale-aware :func:`get_scene_builder_prompts` lookup. To add a new
+locale, create a sibling ``scene_builder_prompts_<lang>.py`` module
+and wire its bundle into :data:`_CATALOG` below.
+"""
+
+from __future__ import annotations
+
+import types
+from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.locales import Locale, resolve_locale
+from prompts.scene_builder_prompts_ru import SCENE_BUILDER_GENERATE_RU, SCENE_BUILDER_SYSTEM_RU
 
 SCENE_BUILDER_SYSTEM = PromptTemplate(
     [
@@ -40,6 +53,16 @@ SCENE_BUILDER_SYSTEM = PromptTemplate(
             ),
             required_vars=["known_object_states"],
         ),
+        PromptSection(
+            name="language",
+            template=(
+                "Fill every human-readable text field (description, npcs_present, "
+                "points_of_interest, ambient_description) in {language}. Keep the JSON "
+                "keys and the location_id / time_of_day values in English — they are "
+                "machine-read."
+            ),
+            required_vars=["language"],
+        ),
     ]
 )
 
@@ -67,3 +90,29 @@ SCENE_BUILDER_GENERATE = PromptTemplate(
         ),
     ]
 )
+
+
+@dataclass(frozen=True)
+class SceneBuilderPrompts:
+    """Per-locale Scene Builder prompt bundle."""
+
+    system: PromptTemplate
+    generate: PromptTemplate
+
+
+_CATALOG: types.MappingProxyType[Locale, SceneBuilderPrompts] = types.MappingProxyType(
+    {
+        Locale.ENGLISH: SceneBuilderPrompts(system=SCENE_BUILDER_SYSTEM, generate=SCENE_BUILDER_GENERATE),
+        Locale.RUSSIAN: SceneBuilderPrompts(system=SCENE_BUILDER_SYSTEM_RU, generate=SCENE_BUILDER_GENERATE_RU),
+    }
+)
+
+
+def get_scene_builder_prompts(language: str | None) -> SceneBuilderPrompts:
+    """Return the Scene Builder prompt bundle for *language*.
+
+    Unrecognised languages transparently fall back to the English
+    catalog (see :func:`prompts.locales.resolve_locale`). The returned
+    bundle is a module-level singleton — callers must not mutate it.
+    """
+    return _CATALOG[resolve_locale(language)]

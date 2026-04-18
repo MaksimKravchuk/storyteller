@@ -53,7 +53,7 @@ class _StartGameHarness:
         self._stack.enter_context(
             patch("engine.game_engine.create_llm_clients", return_value=self.clients),
         )
-        self._stack.enter_context(
+        self.data_miner_cls: MagicMock = self._stack.enter_context(
             patch("engine.game_engine.DataMiner", return_value=self.data_miner),
         )
         self.wire_mock = self._stack.enter_context(
@@ -100,6 +100,24 @@ async def test_start_game_wires_director_with_data_miner(simple_setting) -> None
         assert positional[0] is harness.clients
         assert positional[2] == "Italian"
         assert positional[3] is harness.data_miner
+
+
+@allure.story("start_game wiring")
+@allure.title("start_game builds the initial DataMiner with the engine's session language")
+@pytest.mark.asyncio
+async def test_start_game_builds_data_miner_with_session_language(simple_setting) -> None:
+    """DataMiner constructed during setting research must localise to the engine's session language.
+
+    Regression guard: earlier versions built the initial DataMiner with the default ``language="English"``,
+    so a Russian session received English setting data and every downstream agent's system prompt ended up
+    layered over an English summary. Cross-check against ``wire_director``'s ``data_miner or DataMiner(...)``
+    short-circuit — the pre-built instance wins, so it must be localised here at construction time.
+    """
+    engine = GameEngine(language="Russian")
+    with _StartGameHarness(simple_setting) as harness:
+        await engine.start_game("Санкт-Петербург при Петре I")
+        harness.data_miner_cls.assert_called_once()
+        assert harness.data_miner_cls.call_args.kwargs["language"] == "Russian"
 
 
 @allure.story("process_action guard")
