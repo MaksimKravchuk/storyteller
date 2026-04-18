@@ -37,9 +37,15 @@ header button {
 header button:hover { border-color: #e8e4d8; }
 
 main {
-  max-width: 780px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 1.5rem;
+}
+
+/* Setting panel keeps its old narrow measure for the new-game form. */
+#setting-panel {
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 h2 {
@@ -155,3 +161,258 @@ button[type="submit"]:disabled {
 }
 
 .status.info { color: #8c8; }
+
+/* ============================================================
+ * Character column — illuminated-margin sidebar.
+ * Keeps the existing Georgia / dark literary palette and reuses
+ * the narrator-bold gold (#f5c878) as the single warm accent.
+ * ============================================================ */
+
+.game-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.character-col {
+  border-left: 1px solid rgba(245, 200, 120, 0.18);
+  padding-left: 1.5rem;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+}
+
+.character-col h3,
+.character-col h4,
+.character-col h5 {
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.character-col h3 {
+  font-size: 0.7rem;
+  color: #a39880;
+  margin: 0 0 0.4rem;
+}
+
+.character-col h4 {
+  font-size: 0.78rem;
+  color: #c8c0a8;
+  margin: 1.4rem 0 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(245, 200, 120, 0.14);
+}
+
+.character-col h5 {
+  font-size: 0.68rem;
+  color: #8a8270;
+  margin: 0.9rem 0 0.35rem;
+}
+
+#character-header {
+  margin-bottom: 0.5rem;
+}
+
+.char-name {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.35rem;
+  color: #f5c878;
+  letter-spacing: 0.02em;
+  margin: 0;
+  text-shadow: 0 0 12px rgba(245, 200, 120, 0.15);
+}
+
+.char-appearance {
+  color: #9bb8d8;
+  font-style: italic;
+  font-size: 0.88rem;
+  margin: 0.25rem 0 0;
+  line-height: 1.45;
+}
+
+/* Physical-status badge only shows when the player is not "healthy". */
+.char-status {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #c88;
+  border: 1px solid #5a3030;
+  padding: 0.05rem 0.5rem;
+  border-radius: 2px;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+
+.character-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.character-col li {
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.character-col .empty {
+  font-style: italic;
+  color: #6a655a;
+  padding: 0.3rem 0;
+}
+
+/* Inventory: small gold diamond before each item. */
+#inventory-list li {
+  position: relative;
+  padding: 0.3rem 0 0.3rem 1.1rem;
+}
+
+#inventory-list li::before {
+  content: "\25C6"; /* ◆ */
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  color: rgba(245, 200, 120, 0.55);
+  font-size: 0.7rem;
+  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
+}
+
+/* Known NPCs: name in gold, occupation in italic blue, descriptor on a
+ * second line under a faint blue rule. */
+#known-npcs-list li {
+  padding: 0.5rem 0;
+}
+
+.npc-line {
+  display: block;
+}
+
+.npc-name {
+  color: #f5c878;
+}
+
+.npc-sep {
+  color: #6a655a;
+  margin: 0 0.3rem;
+}
+
+.npc-occupation {
+  color: #9bb8d8;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.npc-descriptor {
+  display: block;
+  color: #c8c0a8;
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid rgba(155, 184, 216, 0.18);
+  line-height: 1.45;
+}
+
+/* Recent events: lowercase Roman numerals via CSS counters. */
+#recent-events-list {
+  counter-reset: evt;
+}
+
+#recent-events-list li {
+  position: relative;
+  padding: 0.3rem 0 0.3rem 1.6rem;
+  counter-increment: evt;
+}
+
+#recent-events-list li:not(.empty)::before {
+  content: counter(evt, lower-roman) ".";
+  position: absolute;
+  left: 0;
+  top: 0.3rem;
+  color: #6a655a;
+  font-size: 0.82rem;
+  font-style: italic;
+  min-width: 1.4rem;
+  text-align: right;
+}
+
+/* Learned facts: source-prefix glyph driven by data-source. */
+#learned-facts-list li {
+  position: relative;
+  padding: 0.35rem 0 0.35rem 1.4rem;
+}
+
+#learned-facts-list li::before {
+  position: absolute;
+  left: 0;
+  top: 0.45rem;
+  font-size: 0.78rem;
+  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
+}
+
+#learned-facts-list li[data-source="FACT"]::before {
+  content: "\2B28"; /* ⬨ */
+  color: #f5c878;
+}
+
+#learned-facts-list li[data-source="PERSONAL_EXPERIENCE"]::before {
+  content: "\274B"; /* ❋ */
+  color: #f5c878;
+}
+
+#learned-facts-list li[data-source="RUMOR"]::before {
+  content: "\25CB"; /* ○ */
+  color: #9bb8d8;
+}
+
+#learned-facts-list li[data-source="HEARSAY"]::before {
+  content: "\2761"; /* ❡ */
+  color: #9bb8d8;
+}
+
+.fact-source {
+  display: block;
+  font-size: 0.7rem;
+  color: #6a655a;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 0.15rem;
+}
+
+/* Reveal animation for entries that arrived this turn. */
+@keyframes character-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+    text-shadow: 0 0 14px rgba(245, 200, 120, 0.55);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    text-shadow: none;
+  }
+}
+
+.character-col li.is-new {
+  animation: character-reveal 0.55s ease-out both;
+  animation-delay: calc(var(--stagger, 0) * 40ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-col li.is-new { animation: none; }
+}
+
+@media (max-width: 720px) {
+  .game-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .character-col {
+    max-height: none;
+    border-left: none;
+    border-top: 1px solid rgba(245, 200, 120, 0.18);
+    padding-left: 0;
+    padding-top: 1.25rem;
+    margin-top: 1rem;
+  }
+}
