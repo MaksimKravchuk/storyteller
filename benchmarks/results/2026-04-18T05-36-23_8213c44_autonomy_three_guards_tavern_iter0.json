@@ -1,0 +1,249 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 6663,
+      "index": 0,
+      "narration": "You look around the tavern carefully.\n\nCato scans the room, his eyes moving over the tables, corners, and doorways, one hand resting near his sword hilt. He says, “No brawls. No obvious weapons out of place. Keep your hands where I can see them.”\n\nAulus sweeps the room with his eyes, checking the doorways, corners, and the spaces between the tables, his hand resting near his short sword. He says, “Nothing out of place. Keep your hands where I can see them.”\n\nBassus stands watch and scans the room, checking the exits, the crowd, and the shadows beneath the benches, his hand resting near his short sword without drawing it. He says, “No trouble. Not yet. Keep your hands visible and your business quiet.”\n\nAulus remains in the guards’ knot by the fireplace, eyes moving across the exits, shadows, and crowd, cup in hand but ready.\n\nBassus angles his shoulders toward the exits, gives the room one more hard scan of the fireplace, door, windows, and darker corners near the stairs, then settles back into a watch stance with his hand away from his blade.\n\nCato stands with the other guards by the fireplace, tracking the room and the exits with his posture firm and his hands visible.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*I scan the room—eyes sweeping the tables, corners, and doorways—hand resting near my sword hilt as I check for trouble.*\n\nNo brawls. No obvious weapons out of place. Keep your hands where I can see them."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Aulus",
+            "response": "*I sweep the room with my eyes—doorways, corners, the space between tables—hand resting near my short sword as I watch for trouble.*\n\nNothing out of place. Keep your hands where I can see them."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "*I scan the room from where I stand on watch—eyes moving over tables, doorways, and corners, hand resting near my short sword but not drawing it. I check the exits, then the crowd, then the shadows beneath benches.*\n\nNo trouble. Not yet. Keep your hands visible and your business quiet."
+          }
+        ],
+        "intent": "Look around the tavern carefully.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I keep my eyes moving across the room—exits, shadows, and the crowd—while remaining in the guards’ knot by the fireplace, cup in hand but ready.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "*I angle my shoulders toward the exits and give the room one more hard scan—fireplace, door, windows, and the darker corners near the stairs—then settle back into a watch stance with my hand away from my blade.*",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Stand with the other guards by the fireplace, eyes tracking the room and the exits while keeping my posture firm and hands visible.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 11425,
+      "index": 1,
+      "narration": "You punch Aulus in the face. He staggers back a half-step, then twists inside your arm, clamps hard with both hands, and drives you down into the floorboards, pinning you there with his weight.\n\nAulus keeps his short sword sheathed and says, “Enough. Hands. Visible. Now.”\n\nBassus lunges in close, steps to control your arm, and drives you down hard near his boots, pinning you with his breath knocked out. His segmented plates bite into the floorboards. He says, “Enough. Hands where I can see them—now.”\n\nCato steps in hard, catches your swing, shoves you back, and your weapon clatters away onto the boards. He presses you down with his forearm, keeping you pinned and your hands in front of you.\n\nAulus then wrenches you up from the floorboards by your pinned arm, twists you toward him, and clamps a forearm across your chest to stop any second strike. Bassus shoves in from the side to widen the gap between you and the guards, right hand open and visible, left braced near his hilt. Cato closes the distance, takes hold of your wrist, and forces your hands up and away from your body while he barks for the tavernkeeper to clear the space.",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 8+0 vs target 15+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "*You drive your fist into my face—pain flashes, and I stagger back a half-step. Before you can settle, my training snaps in: I twist inside your arm, clamp hard with both hands, and drive you down into the floorboards, pinning you there with my weight.*\n\n*My short sword stays sheathed; my grip doesn’t.* “Enough. Hands. Visible. Now.”"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "*I lunge first, stepping in close with my shoulder and trying to control your arm—then you beat me to it. Your weight and strength turn the moment: you drive me down and pin me hard near my boots, my breath knocked out as my segmented plates bite into the floorboards.*\n\n*My hand scrabbles for balance, sword still sheathed—eyes up, jaw clenched.*\n\n“Enough. Hands where I can see them—now.”"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*I step in hard before you can recover—my shoulder drives forward and my short blade stays sheathed. You swing, but my counter catches you clean; I shove you back and you stumble, and your weapon clatters away onto the boards. I press you down with my forearm, keeping you pinned and your hands in front of you.*"
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I wrench you up from the floorboards by your pinned arm, twist you toward me, and clamp a forearm across your chest to stop any second strike; my eyes stay locked on your hands, and I bark for the tavernkeeper to keep clear.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "*I shove in from the side to widen the gap between you and the guards, then bark for order—my right hand stays open and visible, left braced near my hilt but not drawing. I keep my eyes on your hands, ready to restrain if you move wrong.*",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I close the distance fast, take hold of your wrist with a tight grip to force your hands up and away from your body, and bark for the tavernkeeper to clear the space while I keep you from any second strike.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "fd55ea7b-fccc-432a-a2f3-5e1381a864f4",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 20.054964540991932,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus [INTIMIDATE] and Cato [INTIMIDATE] both acted",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 8+0 vs target 15+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → threatened",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 2,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 3,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1943,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus lunges in close, steps to control your arm, and drives you down hard near his boots, pinning you with his breath knocked out.",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato are described physically pinning and restraining the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1214,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus lunges in close, steps to control your arm, and drives you down hard near his boots, pinning you with his breath knocked out. ... Cato steps in hard, catches your swing, shoves you back, and your weapon clatters away onto the boards. He presses you down with his forearm, keeping you pinned and your hands in front of you.",
+          "quote_verified": false,
+          "reasoning": "Bassus and Cato both physically intervene by pinning, shoving, and restraining the player. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1922,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Cato says: *I step in hard before you can recover—my shoulder drives forward and my short blade stays sheathed. You swing, but my counter catches you clean; I shove you back and you stumble, and your weapon clatters away onto the boards. I press you down with my forearm, keeping you pinned and your hands in front of you.*",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato physically intervene by lunging to control the player and by shoving/pressing and taking hold of the player's wrist to restrain them.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "8213c44e1c3cea8186ccf314729c49281a3cabcd",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [
+    {
+      "alias": "opus",
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "sonnet",
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "haiku",
+      "model_id": "claude-haiku-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    }
+  ],
+  "started_at": "2026-04-18T05:36:23.201875+00:00",
+  "total_awarded": 9,
+  "total_base": 10
+}

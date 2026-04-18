@@ -1,0 +1,299 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 34469,
+      "index": 0,
+      "narration": "You take in the tavern with care, letting your gaze move slowly over the room. It is a dim stone chamber with a low ceiling and uneven plaster walls, crowded close with tables of rough, scarred wood. Most are occupied or just recently vacated, their chairs left askew on the packed earth floor where straw lies scattered and old wine has darkened the ground in stains.\n\nAcross the room, the **hearth** burns low and steady, its dark brick and mortar frame holding a small iron grate and a bed of glowing coals. Soot-stained logs wait beside it, and warm firelight flickers over the room in uneven patches. Thin oil lamps along the walls add only wavering strips of light. Near the fire, three **city guards** stand in a loose knot, close enough to share a cup; their cloaks and leather gear catch the glow as they watch the room with practiced stillness.\n\nBehind the **bar counter**, the tavernkeeper, **Titus Livius Soter**, polishes cups with a bored hand while worn shelves hold earthenware jars and mismatched metal cups. A small **chalkboard sign** hangs nearby, its writing smudged beyond easy reading. At the back, a narrow **doorway** leads into a darker passage, while the front **entrance door** stands propped with a latch and a hanging curtain that stirs faintly with drafts. In one corner, a scuffed wooden bench sits beside a rack with tankards and a couple of rolled cloaks.\n\nAround you, the room keeps its voice low. **Aulus Quintilius Silo**, **Bassus**, and **Gaius Cato** all seem to be measuring the place as carefully as you are, their eyes moving over exits, corners, and hands. **Tiberius Claudius Severus** keeps one hand near his belt and looks your way. **Lucius Varius Secundus** remains near the hearth, watching the doors and the room’s hands. **Gaius Servilius Priscus** gives you a small, measured nod. The tavern feels watched, and every pause seems counted.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Aulus Quintilius Silo",
+            "response": "*He lifts his narrow gaze, turning it slowly from beam to bench, from door to hearth, noting faces, hands, and exits as if counting seals on a tablet.*  \nLow room. Smoke in the rafters. One door, likely the back passage by the kitchen if the innkeeper is not a fool. I see no ledger worth stealing, only men who think themselves discreet."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "*I scan the room from my post, eyes moving over corners, doorways, and any clusters of trouble; hand near my short sword, posture steady.*  \nIf you’re causing trouble, I’ll see it. If not—keep your hands to yourself."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*I scan the room in slow, practiced sweeps—eyes on corners, exits, and any hands that linger where they shouldn’t.*  \nNothing out of order. Keep your business clean."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Aulus",
+            "response": "*I scan the room in disciplined sweeps, eyes on exits, corners, and any hands that look like they might move.*  \n*No trouble I can see—keep your business clean, citizen.*"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Gaius Cato",
+            "response": "*His eyes move first to the exits, then the corners, then the room itself; fingers rest briefly on the edge of his cloak.* I am no innkeeper, but I see a low room, likely smoke-darkened, with tables, benches, and the usual clutter of a tavern. If you want a proper tally of who sits where, I can give it only if you tell me what is before us."
+          }
+        ],
+        "intent": "Look around the tavern carefully.",
+        "item_examination": [],
+        "new_npcs": [
+          "Aulus Quintilius Silo (Document-checker and debt-arranger (private clerk for hire))",
+          "Bassus (Ledger-keeper and broker’s assistant for small merchants (documentation, coin reconciliation, and arranging local transport))",
+          "Gaius Cato (Petitioner’s clerk and letter-writer (freelance copyist and minor legal scribe))"
+        ],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*rests a hand near his belt and scans the room from hearth to door, then settles his gaze on the player* No trouble seen. Keep your hands where I can see them.",
+            "action_type": "TALK",
+            "npc_name": "Tiberius Claudius Severus"
+          },
+          {
+            "action": "I keep my place by the hearth, take a slow sip, and watch the front door, back passage, and the room’s hands.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Varius Secundus"
+          },
+          {
+            "action": "I keep my hand near my belt and let my eyes pass once more over the room, then give a small, measured nod toward the player.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Servilius Priscus"
+          },
+          {
+            "action": "Keeps polishing the cups behind the bar, eyes flicking once to the guards and back to the room.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Livius Soter"
+          },
+          {
+            "action": "I keep still a moment, then let my eyes pass from the guards to the back passage, and from the tavernkeeper to the front curtain; I note faces, hands, and exits, as if tallying seals.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus Quintilius Silo"
+          },
+          {
+            "action": "I keep my place and watch the guards, the back passage, and the front curtain in turn, thumb rubbing once at the edge of my belt.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I keep my place and make a quiet, practiced survey of the room—guards, bar, back passage, and the front curtain—without drawing notice.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Low murmurs from patrons kept to a minimum, the soft crackle of the fire, occasional clink of metal cups from the bar, and the muted scrape of chairs on packed earth. Smells of wine, old smoke, and damp stone linger under the sharper scent of spilled alcohol. The room feels watched—subtle tension in the pauses between sounds.",
+          "description": "A dim, crowded tavern room in stone with a low ceiling and uneven plaster walls. The hearth/fireplace sits on the far side of the room, built of dark brick and mortar, with a small iron grate and a glowing coal bed; a few soot-stained logs are stacked beside it. Warm firelight flickers across tables made of rough, scarred wood. Several tables are spaced tightly; most are occupied or recently vacated, leaving a few empty chairs. Near the fireplace, three city guards stand in a loose knot, close enough to share a cup, their cloaks and leather gear catching the firelight. Behind the bar, a bored tavernkeeper polishes cups on a cloth, the bar front worn smooth by use. The bar shelves hold earthenware jars and a row of mismatched metal cups. A narrow doorway at the back leads to a darker passage; a second entrance door at the front is propped with a latch and a hanging curtain that moves slightly with drafts. The floor is packed earth with scattered straw and spilled wine stains. A small chalkboard sign hangs near the bar, partially smudged. A few hanging oil lamps along the walls cast thin, wavering light. In the corner, a wooden bench and a narrow rack hold tankards and a couple of rolled cloaks. The overall atmosphere is tense despite the tavern’s half-empty state—patrons keep their voices low and glance toward the guards.",
+          "location_id": "rome_tavern_fireplace_guards",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "city guard (standing near fireplace, early principate uniform and cloak)",
+              "uuid": "6c27affd-c0a2-4a55-ae4f-dc82373abcc0"
+            },
+            {
+              "role": "city guard (standing near fireplace, holding a cup of wine)",
+              "uuid": "fc261251-e0b0-4576-8eed-cb3de74b4b46"
+            },
+            {
+              "role": "city guard (standing near fireplace, leaning slightly toward the others)",
+              "uuid": "7d04ca75-a718-461e-849a-3b3b64989da8"
+            },
+            {
+              "role": "tavernkeeper (bored, polishing cups behind the bar)",
+              "uuid": "83086f21-c72a-470a-8d98-94eb29d3e9f2"
+            },
+            {
+              "role": "Aulus",
+              "uuid": "816b0c72-26a1-4f38-8da3-cca21c470d9e"
+            },
+            {
+              "role": "Bassus",
+              "uuid": "5da6a8d6-92dd-4b4d-be68-f32cbc4b7f06"
+            },
+            {
+              "role": "Cato",
+              "uuid": "8a55af44-4498-4d06-a652-a7ce1383e8f8"
+            }
+          ],
+          "points_of_interest": [
+            "fireplace (iron grate, glowing coals, soot-stained logs stacked beside it)",
+            "bar counter (polished wood surface with jars and cups on shelves)",
+            "hanging oil lamps (flickering light sources along the walls)",
+            "chalkboard sign near the bar (smudged menu text and prices)",
+            "tavern entrance door (front door with latch; curtain hanging beside it)",
+            "back doorway (narrow door leading to a darker passage)",
+            "tables and chairs (rough wood; tightly spaced seating)",
+            "wooden bench in the corner (scuffed seat and nearby storage area)",
+            "tankard rack (a few tankards and a couple of rolled cloaks)",
+            "floor area near the fireplace (spilled wine stains and scattered straw)"
+          ],
+          "time_of_day": "evening",
+          "uuid": "0d08f899-4e40-4105-bf2c-837c9048067a"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 4989,
+      "index": 1,
+      "narration": "You swing at **Aulus Quintilius Silo** again, aiming for his face, but he meets the motion with brutal force. *His head snaps with the blow, then his forearm slams across your throat, cutting off your breath for a moment as he shoves you back toward the table edge.*\n\n**Aulus Quintilius Silo** glares at you and says, “You chose badly. Keep your hands away from my face, or I will have the guards measure the rest of you by the floorboards.”",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 9+0 vs target 15+1 → target_dominates",
+            "npc_name": "Aulus Quintilius Silo",
+            "response": "*His head snaps with the blow, but he turns with it and drives a hard forearm across your throat, then shoves you back toward the table edge before you can square up.* You chose badly. Keep your hands away from my face, or I will have the guards measure the rest of you by the floorboards."
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 40.882332917070016,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "neither Bassus nor Cato produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no contest_roll on Aulus dialogue entry",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → wary; Cato: stayed neutral",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "NO",
+      "n_total": 3,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1395,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turn text only describes Aulus acting and contains no narrated action by Bassus or Cato.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 736,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "No narrated actions from Bassus or Cato are present on this turn.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 768,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "Bassus and Cato do not take any physical intervention actions in the provided turn text.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "1ef6677acd8913a130938bb9da97f39f7bb94fa4",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [
+    {
+      "alias": "opus",
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "sonnet",
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "haiku",
+      "model_id": "claude-haiku-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    }
+  ],
+  "started_at": "2026-04-17T09:38:49.105354+00:00",
+  "total_awarded": 1,
+  "total_base": 10
+}

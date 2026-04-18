@@ -1,0 +1,252 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 6712,
+      "index": 0,
+      "narration": "You drive your fist toward the sentry’s jaw, but he blocks it with his forearm and absorbs the blow.\n\nHe grinds his stance, then shoves you back with a shoulder-check. His pilum comes up into guard, aimed toward your chest, while his gladius stays ready at his hip.",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 19+0 vs target 16+5 → target_resists",
+            "npc_name": "Quintus",
+            "response": "*Your fist drives toward his jaw; the sentry meets it with a hard block, forearm snapping up and absorbing the impact. He grinds his stance, then shoves you back with a shoulder-check, pilum lifting into guard as his eyes stay fixed on you.*"
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*He drives in a short, controlled shove to break your footing, then snaps his pilum up to threaten your chest, keeping his gladius ready at his hip.*",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "2936593c-ce15-4dfa-b806-a523139b4bc7",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 5649,
+      "index": 1,
+      "narration": "You come down hard on the sentry’s foot. The stomp lands through his guard, and his leg jerks.\n\nThe pilum slips from his grip as he buckles in the archway. He staggers back into the arch’s shadow, one hand clawing for the dropped weapon while the other braces his weight on the wall, eyes locked on you.",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 20+0 vs target 5+5 → actor_dominates",
+            "npc_name": "Quintus",
+            "response": "*You come down hard—your stomp lands through the sentry’s guard. My leg jerks; pain sparks white and immediate. The pilum slips from my grip as I buckle in the archway, breath knocked out, my stance broken.*"
+          }
+        ],
+        "intent": "Stomp on the sentry's foot.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*I stagger back into the arch’s shadow, one hand clawing for my dropped pilum while the other braces my weight on the wall, eyes locked on you.*",
+            "action_type": "MOVE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "2936593c-ce15-4dfa-b806-a523139b4bc7",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 4119,
+      "index": 2,
+      "narration": "You drive a knee into the sentry’s ribs. His torso compresses, and he doubles over as the blow forces the breath out of him.\n\nHis balance goes with it. The pilum stays planted, but his stance collapses, and his tunic shifts where the knee lands. A fresh bruise and a reddened mark show at the contact point.",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "drive a knee into the sentry's ribs",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [],
+        "object_interactions": [
+          "The player drives a knee into the sentry’s ribs. The sentry’s torso compresses and he doubles over, losing balance as breath is forced out; his pilum remains planted but his stance collapses. His tunic wrinkles and shifts, and the impact leaves visible bruising and a reddened mark at the contact point."
+        ],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked sentry.",
+            "kind": "npc_attack",
+            "location_id": "2936593c-ce15-4dfa-b806-a523139b4bc7",
+            "target": "sentry"
+          },
+          {
+            "description": "drive a knee into the sentry's ribs. The sentry shows a fresh bruise and reddened injury on the ribs, and his posture is bent and unsteady.",
+            "kind": "object_smash",
+            "location_id": "2936593c-ce15-4dfa-b806-a523139b4bc7",
+            "target": "sentry"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 17.82382020901423,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level did not strictly increase: [0, 2, 4, 4]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'hostile' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "NO",
+      "n_total": 3,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1319,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turn only describes Quintus being hit and losing balance, not counter-attacking or restraining the player.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1173,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The sentry only reacts to being hit and does not counter-attack or restrain the player.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1085,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "His balance goes with it. The pilum stays planted, but his stance collapses",
+          "quote_verified": true,
+          "reasoning": "Quintus only reacts to being hit and does not strike, draw a weapon, grapple, restrain, or attempt to arrest the player.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "8213c44e1c3cea8186ccf314729c49281a3cabcd",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [
+    {
+      "alias": "opus",
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "sonnet",
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "haiku",
+      "model_id": "claude-haiku-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    }
+  ],
+  "started_at": "2026-04-18T05:36:43.259142+00:00",
+  "total_awarded": 5,
+  "total_base": 11
+}

@@ -1,0 +1,292 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 7750,
+      "index": 0,
+      "narration": "You greet Marcus warmly.\n\nMarcus looks up from his flour-dusted hands, startled for a heartbeat, then forces a thin, worried smile and wipes them on his apron. “Ah—hello. Welcome. You buying bread, or just passing through? I’m—well, I’m watching my stall extra close these days.”\n\nHe shifts his gaze between the loaves and the crowd, gives you a cautious, thin smile, and tightens his grip on the edge of the stall as he arranges the bread more neatly.",
+      "player_action": "greet Marcus warmly",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*Marcus looks up from his flour-dusted hands, startled for a heartbeat—then forces a thin, worried smile and wipes them on his apron.* “Ah—hello. Welcome. You buying bread, or just passing through? I’m—well, I’m watching my stall extra close these days.”"
+          }
+        ],
+        "intent": "The player wants to greet Marcus warmly.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Marcus shifts his gaze between the loaves and the crowd, then gives the player a cautious, thin smile and tightens his grip on the edge of the stall as he arranges the bread more neatly.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 7522,
+      "index": 1,
+      "narration": "You ask Marcus about the stolen bread he told you about yesterday.\n\nMarcus looks up from his flour-dusted hands, startled for a heartbeat, then forces a thin, worried smile and wipes them on his apron. “Ah—hello. Welcome. You buying bread, or about the stolen bread?”\n\nHe says, “Yesterday, while I was measuring flour… one wheat loaf just—gone. No smash, no fuss. That’s what makes me sick. I’ve got a bad feeling about that scarred fellow who hangs round the fountain… Gaius, I think. But I didn’t see it plain with my own eyes, so don’t go running with it—just… be careful.”\n\nMarcus keeps arranging the loaves, then glances toward the fountain again and back to you, speaking under his breath while still trying to look calm.",
+      "player_action": "ask Marcus about the stolen bread he told me about yesterday",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "“About the stolen bread?” *Marcus’s eyes flick, not quite to you—more like to the space behind you—then he swallows and keeps his hands busy, lining loaves up too carefully.* “Yesterday, while I was measuring flour… one wheat loaf just—gone. No smash, no fuss. That’s what makes me sick. I’ve got a bad feeling about that scarred fellow who hangs round the fountain… Gaius, I think. But I didn’t see it plain with my own eyes, so don’t go running with it—just… be careful.”"
+          }
+        ],
+        "intent": "Ask Marcus about the stolen bread he told me about yesterday.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Marcus keeps arranging the loaves, then glances toward the fountain again and back to you, speaking under his breath while still trying to look calm.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 7488,
+      "index": 2,
+      "narration": "Marcus looks up from his flour-dusted hands, startled for a heartbeat, then forces a thin, worried smile and wipes them on his apron.\n\nYou ask Marcus who he suspects stole the bread. He says, “Gaius,” too quickly, then falters and lowers his voice. “The scarred one by the fountain. He loiters there, and yesterday—after I turned back to my measuring—my wheat loaf was simply missing. I can’t swear it was him, mind you... but my gut says it was.”\n\nMarcus rubs his floury hands together, gives you a cautious look, and nudges the nearest loaf back into line.",
+      "player_action": "ask Marcus who he suspects stole it",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "“Gaius,” *Marcus says too quickly, then falters and lowers his voice as the crowd roars.* “The scarred one by the fountain. He loiters there, and yesterday—after I turned back to my measuring—my wheat loaf was simply missing. I can’t swear it was him, mind you… but my gut says it was.”"
+          }
+        ],
+        "intent": "Ask Marcus who he suspects stole the bread.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Marcus rubs his floury hands together, then gives the player a cautious look and nudges the nearest loaf back into line, as if to keep himself steady.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 26.090664207935333,
+  "element_scores": [
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn1",
+      "evidence_quote": "“About the stolen bread?” *Marcus’s eyes flick, not quite to you—more like to the space behind you—then he swallows and ",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (loaf)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 1",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn2",
+      "evidence_quote": "“Gaius,” *Marcus says too quickly, then falters and lowers his voice as the crowd roars.* “The scarred one by the founta",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (suspect)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 2",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_recalls_stolen_loaf",
+      "evidence_quote": null,
+      "k_yes": 3,
+      "kind": "evidence_llm",
+      "label": "Marcus's reply references the stolen loaf",
+      "majority_verdict": "YES",
+      "n_total": 3,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1575,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Yesterday, while I was measuring flour… one wheat loaf just—gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the stolen bread and the missing wheat loaf.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1051,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Yesterday, while I was measuring flour… one wheat loaf just—gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the stolen wheat loaf from yesterday.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1099,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "“Yesterday, while I was measuring flour… one wheat loaf just—gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the stolen bread from yesterday in his reply.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_names_suspect",
+      "evidence_quote": null,
+      "k_yes": 3,
+      "kind": "evidence_llm",
+      "label": "Marcus names or clearly implies Gaius as the suspect",
+      "majority_verdict": "YES",
+      "n_total": 3,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1547,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "“Gaius,” *Marcus says too quickly, then falters and lowers his voice as the crowd roars.* “The scarred one by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and identifies him as the scarred one by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1152,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "“Gaius,” *Marcus says too quickly, then falters and lowers his voice as the crowd roars.* “The scarred one by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and also refers to the scarred one by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1063,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Marcus says: “Gaius,” *Marcus says too quickly, then falters and lowers his voice as the crowd roars.* “The scarred one by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and also refers to the scarred man by the fountain.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "game_clock_advanced",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Game clock advances across the session",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "game clock advanced 10.00h → 10.15h",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 1,
+      "element_id": "marcus_history_grew",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus's conversation history grew",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus's conversation history did not grow",
+      "votes": []
+    }
+  ],
+  "engine_git_sha": "8213c44e1c3cea8186ccf314729c49281a3cabcd",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "memory_follow_up_marcus",
+  "scenario_label": "Memory follow-up — Marcus recalls prior conversation",
+  "skipped_panel_candidates": [
+    {
+      "alias": "opus",
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "sonnet",
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    },
+    {
+      "alias": "haiku",
+      "model_id": "claude-haiku-4-20250514",
+      "provider": "anthropic",
+      "reason": "no anthropic api key"
+    }
+  ],
+  "started_at": "2026-04-18T05:35:57.107267+00:00",
+  "total_awarded": 9,
+  "total_base": 10
+}
