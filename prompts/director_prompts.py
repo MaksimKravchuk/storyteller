@@ -1,9 +1,9 @@
 """Prompt templates for the Director agent.
 
 This module owns the **English** Director catalog and the locale-aware
-:func:`get_director_prompts` lookup. Other locales live in sibling
-modules (e.g. :mod:`prompts.director_prompts_ru`) and register
-themselves via :data:`_CATALOG` below.
+:func:`get_director_prompts` lookup. To add a new locale, create a
+sibling ``director_prompts_<lang>.py`` module and wire its bundle into
+:data:`_CATALOG` below.
 """
 
 from __future__ import annotations

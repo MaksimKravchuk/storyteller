@@ -165,3 +165,15 @@ def test_restore_actors_noop_on_empty_npcs(populated_graph, game_state) -> None:
         restore_actors(director, game_state, populated_graph, MagicMock(), "English")
         actor_cls.assert_not_called()
         director.register_actor.assert_not_called()
+
+
+@allure.story("restore_actors")
+@allure.title("restore_actors threads a non-English session language into every rebuilt Actor")
+def test_restore_actors_threads_russian_language(sample_npc, populated_graph, game_state) -> None:
+    """Russian sessions must rebuild Actors with ``language='Russian'`` so their system prompts localise."""
+    game_state.npcs[sample_npc.uuid] = sample_npc
+    director = MagicMock()
+    recorder = _ActorRecorder()
+    with patch("cast.actor.Actor", side_effect=recorder):
+        restore_actors(director, game_state, populated_graph, MagicMock(), "Russian")
+        assert recorder.call_kwargs == [{**recorder.call_kwargs[0], "language": "Russian"}]

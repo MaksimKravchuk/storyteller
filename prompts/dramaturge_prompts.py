@@ -1,9 +1,9 @@
 """Prompt templates for the Dramaturge consistency oracle.
 
 This module owns the **English** Dramaturge catalog and the
-locale-aware :func:`get_dramaturge_prompts` lookup. Other locales live
-in sibling modules (e.g. :mod:`prompts.dramaturge_prompts_ru`) and
-register themselves via :data:`_CATALOG` below.
+locale-aware :func:`get_dramaturge_prompts` lookup. To add a new
+locale, create a sibling ``dramaturge_prompts_<lang>.py`` module and
+wire its bundle into :data:`_CATALOG` below.
 """
 
 from __future__ import annotations

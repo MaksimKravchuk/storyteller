@@ -1,9 +1,9 @@
 """Prompt templates for the NPC Generator agent.
 
 This module owns the **English** NPC-generator catalog and the
-locale-aware :func:`get_npc_generator_prompts` lookup. Other locales
-live in sibling modules (e.g. :mod:`prompts.npc_generator_prompts_ru`)
-and register themselves via :data:`_CATALOG` below.
+locale-aware :func:`get_npc_generator_prompts` lookup. To add a new
+locale, create a sibling ``npc_generator_prompts_<lang>.py`` module and
+wire its bundle into :data:`_CATALOG` below.
 """
 
 from __future__ import annotations

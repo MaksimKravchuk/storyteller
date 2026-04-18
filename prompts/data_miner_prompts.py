@@ -1,9 +1,9 @@
 """Prompt templates for the Data Miner agent.
 
 This module owns the **English** Data Miner catalog and the
-locale-aware :func:`get_data_miner_prompts` lookup. Other locales live
-in sibling modules (e.g. :mod:`prompts.data_miner_prompts_ru`) and
-register themselves via :data:`_CATALOG` below.
+locale-aware :func:`get_data_miner_prompts` lookup. To add a new
+locale, create a sibling ``data_miner_prompts_<lang>.py`` module and
+wire its bundle into :data:`_CATALOG` below.
 """
 
 from __future__ import annotations

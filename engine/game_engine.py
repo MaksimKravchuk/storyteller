@@ -95,7 +95,7 @@ class GameEngine:
             dramaturge_model=self._models.dramaturge,
         )
 
-        data_miner = DataMiner(llm_client=clients.agent)
+        data_miner = DataMiner(llm_client=clients.agent, language=self._language)
         setting = await data_miner.execute(setting_description)
 
         self._knowledge_graph = KnowledgeGraph()

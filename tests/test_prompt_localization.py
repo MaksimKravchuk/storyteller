@@ -19,8 +19,8 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from cast.narrator import Narrator
-from cast.narrator_labels import get_narrator_labels
+from cast import narrator as narrator_mod, narrator_labels as narrator_labels_mod
+from cast.director_routing import ActionRouter
 from cast.schemas.turn_outputs import DialogueEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod
@@ -71,7 +71,7 @@ def _make_game_state() -> gs_mod.GameState:
     return gs
 
 
-def _make_narrator(language: str) -> Narrator:
+def _make_narrator(language: str) -> narrator_mod.Narrator:
     llm_client = AsyncMock()
     llm_client.send_message = AsyncMock(
         return_value=AsyncMock(
@@ -80,16 +80,16 @@ def _make_narrator(language: str) -> Narrator:
             usage={"prompt_tokens": 10, "completion_tokens": 5},
         )
     )
-    return Narrator(llm_client=llm_client, language=language)
+    return narrator_mod.Narrator(llm_client=llm_client, language=language)
 
 
-def _system_prompt(narrator: Narrator) -> str:
+def _system_prompt(narrator: narrator_mod.Narrator) -> str:
     """Return the system prompt most recently sent through the mock LLM."""
     call_kwargs = narrator.llm_client.send_message.call_args.kwargs  # type: ignore[attr-defined]
     return call_kwargs["system_prompt"]
 
 
-def _last_user_message(narrator: Narrator) -> str:
+def _last_user_message(narrator: narrator_mod.Narrator) -> str:
     call_kwargs = narrator.llm_client.send_message.call_args.kwargs  # type: ignore[attr-defined]
     return call_kwargs[_MESSAGES][-1].body
 
@@ -168,8 +168,8 @@ class TestNarratorLabels:
     @allure.story("Connector strings")
     @allure.title("Russian and English narrator labels are distinct")
     def test_labels_differ_per_locale(self) -> None:
-        english = get_narrator_labels("English")
-        russian = get_narrator_labels("Russian")
+        english = narrator_labels_mod.get_narrator_labels("English")
+        russian = narrator_labels_mod.get_narrator_labels("Russian")
         assert english.scene != russian.scene
         assert russian.scene.startswith("Сцена:")
         assert english.atmosphere != russian.atmosphere
@@ -178,8 +178,8 @@ class TestNarratorLabels:
     @allure.story("Connector strings")
     @allure.title("Unknown language falls back to English labels")
     def test_unknown_language_falls_back(self) -> None:
-        fallback = get_narrator_labels("Esperanto")
-        english = get_narrator_labels("English")
+        fallback = narrator_labels_mod.get_narrator_labels("Esperanto")
+        english = narrator_labels_mod.get_narrator_labels("English")
         assert fallback is english
 
 
@@ -466,3 +466,23 @@ class TestDirectorPromptCatalog:
         assert "EXPLORE|TALK|INTERACT|EXAMINE|MOVE|SLEEP|WAIT|OTHER" in rendered
         assert "combat|persuasion|deception|intimidation|stealth" in rendered
         assert "Действие игрока" in rendered
+
+    @allure.story("End-to-end")
+    @allure.title("ActionRouter threads the Russian routing template into the LLM call")
+    @pytest.mark.asyncio
+    async def test_action_router_sends_russian_template_to_llm(self) -> None:
+        """Integration-layer guard for the Director action-routing path.
+
+        The routing template is stored on a separate ``ActionRouter`` (not on the Director's
+        ``BasePerformer`` context), so a bundle regression here would be invisible to the
+        template-level catalog tests above.
+        """
+        gs = _make_game_state()
+        send_json = AsyncMock(return_value={"action_type": "EXPLORE"})
+        router = ActionRouter(gs, send_json, get_director_prompts("Russian").action_routing)
+        await router.route_action("осмотреться вокруг")
+        assert send_json.await_args is not None
+        prompt_sent = send_json.await_args.args[0]
+        assert "EXPLORE|TALK|INTERACT|EXAMINE|MOVE|SLEEP|WAIT|OTHER" in prompt_sent
+        assert "Действие игрока" in prompt_sent
+        assert "Player action" not in prompt_sent

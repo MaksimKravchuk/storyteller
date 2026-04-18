@@ -1,9 +1,9 @@
 """Prompt templates for the Scene Builder agent.
 
 This module owns the **English** Scene Builder catalog and the
-locale-aware :func:`get_scene_builder_prompts` lookup. Other locales
-live in sibling modules (e.g. :mod:`prompts.scene_builder_prompts_ru`)
-and register themselves via :data:`_CATALOG` below.
+locale-aware :func:`get_scene_builder_prompts` lookup. To add a new
+locale, create a sibling ``scene_builder_prompts_<lang>.py`` module
+and wire its bundle into :data:`_CATALOG` below.
 """
 
 from __future__ import annotations

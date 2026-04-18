@@ -1,8 +1,8 @@
 """Prompt templates for the Actor agent (NPC dialogue).
 
 This module owns the **English** Actor catalog and the locale-aware
-:func:`get_actor_prompts` lookup. Other locales live in sibling modules
-(e.g. :mod:`prompts.actor_prompts_ru`) and register themselves via
+:func:`get_actor_prompts` lookup. To add a new locale, create a sibling
+``actor_prompts_<lang>.py`` module and wire its bundle into
 :data:`_CATALOG` below.
 """
 
@@ -125,10 +125,8 @@ ACTOR_SYSTEM = PromptTemplate(
 class ActorPrompts:
     """Per-locale Actor prompt bundle.
 
-    ``system`` renders as the Actor's system prompt (identity, rules,
-    output-language instruction). The per-turn user message is the raw
-    player action and carries no localisable scaffolding, so the bundle
-    currently exposes only ``system``.
+    The per-turn user message is the raw player action and carries no
+    localisable scaffolding, so only ``system`` is exposed.
     """
 
     system: PromptTemplate

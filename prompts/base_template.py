@@ -61,12 +61,7 @@ class PromptTemplate:
 
     @property
     def sections(self) -> tuple[PromptSection, ...]:
-        """Read-only snapshot of the ordered section list.
-
-        Exposed so introspection tools (tests that assert EN/RU catalog
-        parity, admin-dashboard prompt inspectors) can walk the
-        sections without touching the private ``_sections`` list.
-        """
+        """Read-only snapshot of the ordered section list for introspection."""
         return tuple(self._sections)
 
     def __repr__(self) -> str:

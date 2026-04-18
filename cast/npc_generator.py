@@ -67,13 +67,7 @@ def _disambiguate_name(name: str, occupation: str, taken: set[str]) -> str:
 
 
 class NPCGenerator(BasePerformer):
-    """Creates NPC cards with bio, appearance, knowledge level, etc.
-
-    Resolves the per-locale system prompt and create template at
-    construction time based on *language*. Unsupported languages
-    transparently fall back to the English catalogs — see
-    :func:`prompts.locales.resolve_locale`.
-    """
+    """Creates NPC cards with bio, appearance, knowledge level, etc."""
 
     def __init__(self, *, llm_client: Any, language: str = "English"):
         prompts = get_npc_generator_prompts(language)
