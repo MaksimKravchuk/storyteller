@@ -20,9 +20,28 @@
     actionSubmit: $("action-submit"),
     actionStatus: $("action-status"),
     newGameBtn: $("new-game-btn"),
+    characterHeader: $("character-header"),
+    inventoryList: $("inventory-list"),
+    knownNpcsList: $("known-npcs-list"),
+    recentEventsList: $("recent-events-list"),
+    learnedFactsList: $("learned-facts-list"),
   };
 
   let currentGameId = null;
+  // Snapshot of the last character payload, used to detect newly-arrived
+  // items so they can briefly glow gold on the turn they appear.
+  let prevCharacter = null;
+
+  const FACT_TITLES = {
+    FACT: "fact",
+    RUMOR: "rumor",
+    PERSONAL_EXPERIENCE: "personal experience",
+    HEARSAY: "hearsay",
+  };
+
+  const identityKey = (value) => value;
+  const npcKey = (npc) => npc.name;
+  const factKey = (fact) => fact.text;
 
   function show(el) { el.hidden = false; }
   function hide(el) { el.hidden = true; }
@@ -42,12 +61,117 @@
     els.log.scrollTop = els.log.scrollHeight;
   }
 
+  function renderInventoryItem(item) {
+    const li = document.createElement("li");
+    li.textContent = item;
+    return li;
+  }
+
+  function renderKnownNpc(npc) {
+    const li = document.createElement("li");
+    const line = document.createElement("span");
+    line.className = "npc-line";
+    const name = document.createElement("span");
+    name.className = "npc-name";
+    name.textContent = npc.name;
+    const sep = document.createElement("span");
+    sep.className = "npc-sep";
+    sep.textContent = "·";
+    const occupation = document.createElement("span");
+    occupation.className = "npc-occupation";
+    occupation.textContent = npc.occupation;
+    line.append(name, sep, occupation);
+    const descriptor = document.createElement("span");
+    descriptor.className = "npc-descriptor";
+    descriptor.textContent = npc.descriptor;
+    li.append(line, descriptor);
+    return li;
+  }
+
+  function renderRecentEvent(event) {
+    const li = document.createElement("li");
+    li.textContent = event;
+    return li;
+  }
+
+  function renderLearnedFact(fact) {
+    const li = document.createElement("li");
+    li.dataset.source = fact.source;
+    li.title = "Source: " + (FACT_TITLES[fact.source] || fact.source);
+    li.textContent = fact.text;
+    return li;
+  }
+
+  function renderEmptyPlaceholder(listEl) {
+    const li = document.createElement("li");
+    li.className = "empty";
+    li.textContent = "— nothing yet —";
+    listEl.appendChild(li);
+  }
+
+  // Rebuild listEl from items. Items whose key is absent from prevItems
+  // are marked .is-new with a per-item --stagger so the reveal animation
+  // staggers from top to bottom.
+  function renderList(listEl, items, prevItems, makeItem, getKey) {
+    listEl.innerHTML = "";
+    if (!items || items.length === 0) {
+      renderEmptyPlaceholder(listEl);
+      return;
+    }
+    const prevKeys = new Set((prevItems || []).map(getKey));
+    let stagger = 0;
+    for (const item of items) {
+      const li = makeItem(item);
+      if (!prevKeys.has(getKey(item))) {
+        li.classList.add("is-new");
+        li.style.setProperty("--stagger", String(stagger));
+        stagger += 1;
+      }
+      listEl.appendChild(li);
+    }
+  }
+
+  function renderCharacterHeader(character) {
+    els.characterHeader.innerHTML = "";
+    const name = document.createElement("p");
+    name.className = "char-name";
+    name.textContent = character.name;
+    els.characterHeader.appendChild(name);
+    if (character.appearance) {
+      const appearance = document.createElement("p");
+      appearance.className = "char-appearance";
+      appearance.textContent = character.appearance;
+      els.characterHeader.appendChild(appearance);
+    }
+    if (character.physical_status && character.physical_status !== "healthy") {
+      const status = document.createElement("span");
+      status.className = "char-status";
+      status.textContent = character.physical_status;
+      els.characterHeader.appendChild(status);
+    }
+  }
+
+  function renderCharacter(character) {
+    if (!character) return;
+    renderCharacterHeader(character);
+    const prev = prevCharacter || {};
+    renderList(els.inventoryList, character.inventory, prev.inventory, renderInventoryItem, identityKey);
+    renderList(els.knownNpcsList, character.known_npcs, prev.known_npcs, renderKnownNpc, npcKey);
+    renderList(els.recentEventsList, character.recent_events, prev.recent_events, renderRecentEvent, identityKey);
+    renderList(els.learnedFactsList, character.learned_facts, prev.learned_facts, renderLearnedFact, factKey);
+    prevCharacter = character;
+  }
+
   function renderSnapshot(snapshot) {
     currentGameId = snapshot.game_id;
     els.log.innerHTML = "";
     for (const entry of snapshot.transcript) {
       appendTurnHTML(entry.role, entry.html);
     }
+    // Seed prevCharacter with the snapshot itself so the first render produces
+    // zero "new" items — we don't want every entry to glow on load or reload.
+    prevCharacter = snapshot.character;
+    renderCharacter(snapshot.character);
     hide(els.settingPanel);
     show(els.gamePanel);
     show(els.newGameBtn);
@@ -56,6 +180,7 @@
 
   function showSettingPanel() {
     currentGameId = null;
+    prevCharacter = null;
     hide(els.gamePanel);
     hide(els.newGameBtn);
     show(els.settingPanel);
@@ -146,6 +271,7 @@
       }
       const data = await response.json();
       appendTurnHTML("narrator", data.narration_html);
+      renderCharacter(data.character);
       setStatus(els.actionStatus, "");
     } catch (err) {
       setStatus(els.actionStatus, "Error: " + err.message);
@@ -161,9 +287,19 @@
     showSettingPanel();
   }
 
+  function initFoldableSections() {
+    document.querySelectorAll(".character-col h4, .character-col h5").forEach((heading) => {
+      const list = heading.nextElementSibling;
+      if (!list || list.tagName !== "UL") return;
+      heading.classList.add("is-foldable");
+      heading.addEventListener("click", () => heading.classList.toggle("is-folded"));
+    });
+  }
+
   els.settingForm.addEventListener("submit", onStartGame);
   els.actionForm.addEventListener("submit", onSubmitAction);
   els.newGameBtn.addEventListener("click", onNewGame);
 
+  initFoldableSections();
   loadCurrent();
 })();

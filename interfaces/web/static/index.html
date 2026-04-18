@@ -43,20 +43,41 @@
     </section>
 
     <section id="game-panel" hidden>
-      <div id="log" aria-live="polite"></div>
-      <form id="action-form">
-        <input
-          id="action-input"
-          name="action"
-          type="text"
-          maxlength="2000"
-          required
-          autocomplete="off"
-          placeholder="What do you do?"
-        />
-        <button type="submit" id="action-submit">Act</button>
-      </form>
-      <p id="action-status" class="status"></p>
+      <div class="game-grid">
+        <div class="transcript-col">
+          <div id="log" aria-live="polite"></div>
+          <form id="action-form">
+            <input
+              id="action-input"
+              name="action"
+              type="text"
+              maxlength="2000"
+              required
+              autocomplete="off"
+              placeholder="What do you do?"
+            />
+            <button type="submit" id="action-submit">Act</button>
+          </form>
+          <p id="action-status" class="status"></p>
+        </div>
+        <aside class="character-col" id="character-panel" aria-label="Character">
+          <h3>Character</h3>
+          <div id="character-header"></div>
+          <section class="char-section">
+            <h4>Inventory</h4>
+            <ul id="inventory-list"></ul>
+          </section>
+          <section class="char-section">
+            <h4>Memory</h4>
+            <h5>People you know</h5>
+            <ul id="known-npcs-list"></ul>
+            <h5>Recent events</h5>
+            <ul id="recent-events-list"></ul>
+            <h5>Things you've learned</h5>
+            <ul id="learned-facts-list"></ul>
+          </section>
+        </aside>
+      </div>
     </section>
   </main>
 
