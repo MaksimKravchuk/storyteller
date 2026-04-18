@@ -111,6 +111,9 @@ class TestPlayerState:
         assert ps.name == "Player"
         assert ps.inventory == []
         assert ps.location_id is None
+        assert ps.known_npcs == set()
+        assert ps.player_event_log == []
+        assert ps.learned_facts == set()
 
     @allure.story("PlayerState")
     @allure.title("PlayerState accepts a custom player name at construction time")
