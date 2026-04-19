@@ -435,7 +435,7 @@ async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
     engine.process_action = AsyncMock(return_value="prose")
 
     with pytest.raises(RuntimeError, match="engine.game_state is None"):
-        await service._act_and_persist(repo, "sess-1", engine, "look")
+        await service._act_and_persist(repo, "sess-1", engine, "look", "English")
 
 
 @pytest.mark.asyncio

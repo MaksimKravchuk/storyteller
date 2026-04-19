@@ -14,7 +14,7 @@ from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope,
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
+from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 from models.world_state import WorldThread
 
@@ -88,7 +88,11 @@ def _make_location() -> Location:
         description=_LOCATION_DESCRIPTION,
         location_type="building",
         tags=["tavern", "indoor", "city"],
-        points_of_interest=["plank tables", "amphorae row", "sooty hearth"],
+        points_of_interest=[
+            PointOfInterest(names=["plank tables"]),
+            PointOfInterest(names=["amphorae row"]),
+            PointOfInterest(names=["sooty hearth"]),
+        ],
     )
 
 
@@ -104,7 +108,11 @@ def _make_scene(location_id: str) -> Scene:
             SceneNPC(role=BRUTUS_OCCUPATION, uuid=BRUTUS_UUID),
             SceneNPC(role=MARCUS_OCCUPATION, uuid=MARCUS_UUID),
         ],
-        points_of_interest=["plank tables", "amphorae row", "sooty hearth"],
+        points_of_interest=[
+            PointOfInterest(names=["plank tables"]),
+            PointOfInterest(names=["amphorae row"]),
+            PointOfInterest(names=["sooty hearth"]),
+        ],
         ambient_description="Dim light, smell of cheap wine and woodsmoke, low murmur of midday trade.",
         time_of_day="midday",
     )

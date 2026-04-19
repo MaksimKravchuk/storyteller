@@ -11,15 +11,33 @@ from html import escape
 from typing import Literal
 
 from formatting import markdown_render
+from formatting.entity_markup import wrap_entities
 from interfaces.web.schemas import TurnEntry
+from models.visible_entity import VisibleEntity
 
 _ROLE_PLAYER: Literal["player"] = "player"
 _ROLE_NARRATOR: Literal["narrator"] = "narrator"
+_DEFAULT_LANGUAGE = "English"
 
 
-def render_narrator_html(text: str) -> str:
-    """Render narrator markdown into the HTML subset used by the web UI."""
-    return markdown_render.to_html(text) if text else ""
+def render_narrator_html(
+    text: str,
+    visible_entities: list[VisibleEntity] | None = None,
+    language: str = _DEFAULT_LANGUAGE,
+) -> str:
+    """Render narrator markdown into the HTML subset used by the web UI.
+
+    When ``visible_entities`` is provided, the rendered HTML is also
+    post-processed by :func:`formatting.entity_markup.wrap_entities`
+    so entity mentions (NPC names, POI aliases, tracked items) are
+    wrapped in clickable spans carrying the entity kind and id.
+    """
+    if not text:
+        return ""
+    html = markdown_render.to_html(text)
+    if not visible_entities:
+        return html
+    return wrap_entities(html, visible_entities, language)
 
 
 def render_player_html(text: str) -> str:

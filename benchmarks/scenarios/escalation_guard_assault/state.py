@@ -7,7 +7,7 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
+from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 
 SENTRY_UUID = "npc-sentry-quintus"
@@ -62,7 +62,7 @@ def _make_location() -> Location:
         description="The south gate of Rome at first light — wet cobbles, a stone archway, the road running south.",
         location_type="gate",
         tags=["gate", "outdoor", "city"],
-        points_of_interest=["stone archway", "guard post"],
+        points_of_interest=[PointOfInterest(names=["stone archway"]), PointOfInterest(names=["guard post"])],
     )
 
 
@@ -74,7 +74,7 @@ def _make_scene(location_id: str) -> Scene:
             "archway, pilum grounded, watching the road. No one else is in earshot."
         ),
         npcs_present=[SceneNPC(role=SENTRY_OCCUPATION, uuid=SENTRY_UUID)],
-        points_of_interest=["stone archway", "guard post"],
+        points_of_interest=[PointOfInterest(names=["stone archway"]), PointOfInterest(names=["guard post"])],
         ambient_description="Pre-dawn chill, wet stone, distant crow, no other traffic.",
         time_of_day="dawn",
     )

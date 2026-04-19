@@ -10,7 +10,7 @@ from loguru import logger
 from cast.base_performer_class import BasePerformer
 from cast.schemas.scene_response import SceneResponse
 from knowledge.scene_state import all_scene_deltas
-from models.scene import Scene, SceneNPC
+from models.scene import PointOfInterest, Scene, SceneNPC
 from prompts.scene_builder_prompts import get_scene_builder_prompts
 
 _SETTING_SUMMARY_MAX = 500
@@ -60,7 +60,8 @@ def _key_mentioned(object_key: str, scene: Scene) -> bool:
     pattern = re.compile(r"\b{0}\b".format(re.escape(object_key.lower())))
     if pattern.search(scene.description.lower()):
         return True
-    return any(pattern.search(poi.lower()) for poi in scene.points_of_interest)
+    poi_names = [name.lower() for poi in scene.points_of_interest for name in poi.names]
+    return any(pattern.search(name) for name in poi_names)
 
 
 def _merge_known_object_states(scene: Scene, object_states: dict[str, str]) -> None:
@@ -81,7 +82,7 @@ def _merge_known_object_states(scene: Scene, object_states: dict[str, str]) -> N
     for object_key, state_description in object_states.items():
         if not _key_mentioned(object_key, scene):
             scene.points_of_interest.append(
-                "{0} ({1})".format(object_key, state_description),
+                PointOfInterest(names=["{0} ({1})".format(object_key, state_description)]),
             )
 
 
@@ -114,11 +115,12 @@ def _current_object_states(game_state: Any) -> dict[str, str]:
 def _scene_from_response(scene_data: SceneResponse, fallback_time_of_day: str) -> Scene:
     """Convert a raw LLM ``SceneResponse`` payload into a typed ``Scene``."""
     npcs = [SceneNPC(role=role_str) for role_str in scene_data.npcs_present]
+    pois = [PointOfInterest(names=[raw]) for raw in scene_data.points_of_interest]
     return Scene(
         location_id=scene_data.location_id or "unknown",
         description=scene_data.description,
         npcs_present=npcs,
-        points_of_interest=scene_data.points_of_interest,
+        points_of_interest=pois,
         ambient_description=scene_data.ambient_description,
         time_of_day=scene_data.time_of_day or fallback_time_of_day,
     )

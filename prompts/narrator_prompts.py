@@ -86,6 +86,17 @@ NARRATOR_SYSTEM = PromptTemplate(
             ),
             required_vars=[],
         ),
+        PromptSection(
+            name="entity_names",
+            template=(
+                "Entity naming: when the raw material lists alternatives for an "
+                'entity ("Tony (aka: the watchman)", "fireplace (aka: the hearth)"), '
+                "treat every listed form as an acceptable way to refer to that "
+                "entity this turn. Alternate between them for natural prose; do "
+                "NOT invent new names or paraphrase descriptors that are not listed."
+            ),
+            required_vars=[],
+        ),
     ]
 )
 

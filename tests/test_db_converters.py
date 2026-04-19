@@ -93,7 +93,7 @@ class TestLocationConverter:
         assert restored.tags == ["commerce"]
         assert restored.connected_locations == ["loc-a", "loc-b"]
         assert restored.npcs_present == ["npc-1", "npc-2"]
-        assert restored.points_of_interest == ["fountain", "statue"]
+        assert [poi.primary_name for poi in restored.points_of_interest] == ["fountain", "statue"]
         assert restored.object_states == {"shutter": "splintered; frame torn loose"}
 
 
@@ -271,7 +271,7 @@ class TestSceneConverter:
         assert len(restored.npcs_present) == 1
         assert restored.npcs_present[0].role == "guard"
         assert restored.npcs_present[0].uuid == "npc-1"
-        assert restored.points_of_interest == ["well"]
+        assert [poi.primary_name for poi in restored.points_of_interest] == ["well"]
         assert restored.ambient_description == "Birds chirp"
         assert restored.time_of_day == "dawn"
         assert restored.narrated_text == "You stand in a quiet square at dawn."

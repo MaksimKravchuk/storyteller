@@ -39,7 +39,7 @@ def format_npcs_present(scene: Any, game_state: GameState) -> str:
 def format_pois(scene: Any) -> str:
     """Format points of interest for the system prompt."""
     if scene and scene.points_of_interest:
-        return ", ".join(scene.points_of_interest)
+        return ", ".join(poi.primary_name for poi in scene.points_of_interest)
     return "None"
 
 

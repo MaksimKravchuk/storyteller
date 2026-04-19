@@ -42,7 +42,7 @@ class TestSceneBuilder:
         assert len(scene.npcs_present) == 2
         assert all(isinstance(npc, SceneNPC) for npc in scene.npcs_present)
         assert [npc.role for npc in scene.npcs_present] == ["senator", "merchant"]
-        assert scene.points_of_interest == ["statue"]
+        assert [poi.primary_name for poi in scene.points_of_interest] == ["statue"]
         assert scene.ambient_description == "murmuring crowd"
         assert scene.time_of_day == "morning"
 

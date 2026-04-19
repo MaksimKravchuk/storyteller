@@ -26,7 +26,7 @@ def location_to_row(loc: Location, game_state_id: str) -> dict:
         COL_TAGS: loc.tags,
         "connected_locations": loc.connected_locations,
         COL_NPCS_PRESENT: loc.npcs_present,
-        COL_POINTS_OF_INTEREST: loc.points_of_interest,
+        COL_POINTS_OF_INTEREST: [poi.model_dump() for poi in loc.points_of_interest],
         COL_OBJECT_STATES: loc.object_states,
     }
 

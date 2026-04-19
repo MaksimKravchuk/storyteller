@@ -19,6 +19,7 @@ from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
     persist_engine,
     restore_engine,
+    session_language,
     snapshot_from_engine,
 )
 from llm.call_logger import current_session_id, reset_buffer
@@ -91,6 +92,7 @@ async def _act_and_persist(
     session_id: str,
     engine: GameEngine,
     action: str,
+    language: str,
 ) -> ActionResponse:
     """Run a player action through the engine and persist the new state."""
     narration = await engine.process_action(action)
@@ -99,11 +101,13 @@ async def _act_and_persist(
         raise RuntimeError("engine.game_state is None — engine did not initialise correctly")
     turn_number = game_state.turn_count
     await persist_engine(repo, session_id, engine, turn_number=turn_number)
+    visible_entities = list(game_state.last_visible_entities)
     return ActionResponse(
         narration=narration,
-        narration_html=render_narrator_html(narration),
+        narration_html=render_narrator_html(narration, visible_entities, language),
         turn_count=turn_number,
         character=build_character_info(game_state),
+        visible_entities=visible_entities,
     )
 
 
@@ -132,4 +136,4 @@ async def process_turn_for_player(
     current_session_id.set(session_id)
     reset_buffer()
     reset_events()
-    return await _act_and_persist(repo, session_id, engine, action)
+    return await _act_and_persist(repo, session_id, engine, action, session_language(session_row))

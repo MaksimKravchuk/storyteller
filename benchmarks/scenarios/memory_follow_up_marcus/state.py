@@ -8,7 +8,7 @@ from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope,
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
+from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 
 _MARCUS_UUID = "npc-marcus-baker"
@@ -97,7 +97,11 @@ def _make_location() -> Location:
         description="A sun-bright plaza of stalls and pillars, dense with shoppers and the smell of bread.",
         location_type="district",
         tags=["market", "forum", "city"],
-        points_of_interest=["bread stall", "fountain", "statue of Caesar"],
+        points_of_interest=[
+            PointOfInterest(names=["bread stall"]),
+            PointOfInterest(names=["fountain"]),
+            PointOfInterest(names=["statue of Caesar"]),
+        ],
     )
 
 
@@ -109,7 +113,11 @@ def _make_scene(location_id: str, marcus_uuid: str) -> Scene:
             "arranging loaves with distracted hands."
         ),
         npcs_present=[SceneNPC(role="baker", uuid=marcus_uuid)],
-        points_of_interest=["bread stall", "fountain", "statue of Caesar"],
+        points_of_interest=[
+            PointOfInterest(names=["bread stall"]),
+            PointOfInterest(names=["fountain"]),
+            PointOfInterest(names=["statue of Caesar"]),
+        ],
         ambient_description="Midday sun, smell of fresh bread and dust, a murmur of Latin bargaining.",
         time_of_day="midday",
     )

@@ -51,14 +51,43 @@
     el.className = "status" + (kind ? " " + kind : "");
   }
 
-  function appendTurnHTML(role, html) {
+  function appendTurnHTML(role, html, visibleEntities) {
     const div = document.createElement("div");
     div.className = "turn " + role;
     // The server pre-renders both player input (escaped) and narrator output
     // (markdown subset → safe HTML), so innerHTML is safe here.
     div.innerHTML = html;
+    if (role === "narrator" && visibleEntities && visibleEntities.length) {
+      div.appendChild(renderEntityChips(visibleEntities));
+    }
     els.log.appendChild(div);
     els.log.scrollTop = els.log.scrollHeight;
+  }
+
+  function renderEntityChips(entities) {
+    const row = document.createElement("div");
+    row.className = "entity-chips";
+    for (const entity of entities) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "entity-chip entity-" + entity.kind;
+      chip.dataset.kind = entity.kind;
+      chip.dataset.id = entity.id;
+      chip.textContent = entity.names[0];
+      if (entity.names.length > 1) {
+        chip.title = entity.names.slice(1).join(" · ");
+      }
+      chip.addEventListener("click", () => onChipClick(entity));
+      row.appendChild(chip);
+    }
+    return row;
+  }
+
+  function onChipClick(entity) {
+    if (!els.actionInput) return;
+    const verbs = { npc: "Talk to ", poi: "Examine ", item: "Examine " };
+    els.actionInput.value = (verbs[entity.kind] || "Examine ") + entity.names[0];
+    els.actionInput.focus();
   }
 
   function renderInventoryItem(item) {
@@ -166,7 +195,7 @@
     currentGameId = snapshot.game_id;
     els.log.innerHTML = "";
     for (const entry of snapshot.transcript) {
-      appendTurnHTML(entry.role, entry.html);
+      appendTurnHTML(entry.role, entry.html, entry.visible_entities);
     }
     // Seed prevCharacter with the snapshot itself so the first render produces
     // zero "new" items — we don't want every entry to glow on load or reload.
@@ -270,7 +299,7 @@
         throw new Error(await parseError(response));
       }
       const data = await response.json();
-      appendTurnHTML("narrator", data.narration_html);
+      appendTurnHTML("narrator", data.narration_html, data.visible_entities);
       renderCharacter(data.character);
       setStatus(els.actionStatus, "");
     } catch (err) {

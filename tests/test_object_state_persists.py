@@ -28,7 +28,7 @@ from cast.scene_builder import SceneBuilder
 from cast.schemas.scene_response import SceneResponse
 from cast.schemas.turn_outputs import TurnOutputs
 from models.location import Location
-from models.scene import Scene
+from models.scene import PointOfInterest, Scene
 
 _SEND_JSON = "_send_json"
 _PLAYER_ACTION = "player_action"
@@ -108,7 +108,7 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=pristine_payload)):
             scene = await builder.act("look around", {_GAME_STATE: game_state})
 
-        merged = " ".join(scene.points_of_interest)
+        merged = " ".join(poi.primary_name for poi in scene.points_of_interest)
         assert _DAMAGE_KEY in merged
         assert "splintered" in merged
 
@@ -150,7 +150,7 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=aware_payload)):
             scene = await builder.act("look around", {_GAME_STATE: game_state})
 
-        synthesized_markers = [poi for poi in scene.points_of_interest if poi.startswith(_DAMAGE_KEY)]
+        synthesized_markers = [poi for poi in scene.points_of_interest if poi.primary_name.startswith(_DAMAGE_KEY)]
         assert not synthesized_markers
 
     @allure.story("Object state persistence")
@@ -167,7 +167,9 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=poi_payload)):
             scene = await builder.act("look around", {_GAME_STATE: game_state})
 
-        synthesized_markers = [poi for poi in scene.points_of_interest if poi.lower().startswith(_DAMAGE_KEY)]
+        synthesized_markers = [
+            poi for poi in scene.points_of_interest if poi.primary_name.lower().startswith(_DAMAGE_KEY)
+        ]
         assert not synthesized_markers
 
     @allure.story("Object state persistence")
@@ -185,7 +187,7 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=fragment_payload)):
             scene = await builder.act("look around", {_GAME_STATE: game_state})
 
-        merged = " ".join(scene.points_of_interest)
+        merged = " ".join(poi.primary_name for poi in scene.points_of_interest)
         assert "bar" in merged
         assert "cracked down the middle" in merged
 
@@ -284,7 +286,7 @@ class TestNarratorSurfacesPriorDamage:
         fresh_scene = Scene(
             location_id=_LOCATION_ID,
             description="A dim tavern.",
-            points_of_interest=["shutter (splintered; frame torn loose)"],
+            points_of_interest=[PointOfInterest(names=["shutter (splintered; frame torn loose)"])],
         )
 
         await narrator.act(

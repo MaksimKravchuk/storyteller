@@ -20,6 +20,7 @@ dependencies = [
     "pydantic-settings>=2.0",
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
+    "pymorphy3>=2.0",
 ]
 
 [project.optional-dependencies]

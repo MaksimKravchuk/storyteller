@@ -65,7 +65,7 @@ def _make_game_state() -> gs_mod.GameState:
         location_id="neva_delta",
         description="Туманная Нева на рассвете.",
         npcs_present=[scene_mod.SceneNPC(role="часовой", uuid="npc-1")],
-        points_of_interest=["деревянный помост"],
+        points_of_interest=[scene_mod.PointOfInterest(names=["деревянный помост"])],
         ambient_description="Сырой воздух и запах смолы.",
     )
     return gs

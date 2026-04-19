@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from cast.director_witness import WitnessedAggression
 from models.scene import Scene
+from models.visible_entity import VisibleEntity
 from models.world_state import WorldThread
 
 
@@ -116,3 +117,4 @@ class TurnOutputs(BaseModel):
     completed_events: list[str] = Field(default_factory=list)
     witnessed_events: list[WitnessedAggression] = Field(default_factory=list)
     intent: str | None = None
+    visible_entities: list[VisibleEntity] = Field(default_factory=list)
