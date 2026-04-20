@@ -9,6 +9,7 @@ import pytest
 
 from benchmarks.harness._judge_text import (
     QUOTE_MATCH_MIN_CHARS,
+    QUOTE_PARTIAL_MATCH_MIN_CHARS,
     quote_matches,
     turn_text_for_spec,
 )
@@ -78,6 +79,73 @@ class TestQuoteMatching:
         turn_text = "Marcus scowls and changes the subject."
 
         assert not quote_matches("I suspect Gaius!", turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches accepts ellipsis-joined fragments when each half is present in the corpus")
+    def test_ellipsis_joined_fragments_accepted(self):
+        turn_text = (
+            "Bassus lunges in close, steps to control your arm, and drives you down hard near his boots, "
+            "pinning you with his breath knocked out. "
+            "His segmented plates bite into the floorboards. "
+            "Cato steps in hard, catches your swing, shoves you back, and your weapon clatters away onto the boards."
+        )
+        quote = (
+            "Bassus lunges in close, steps to control your arm, and drives you down hard near his boots, "
+            "pinning you with his breath knocked out. ... "
+            "Cato steps in hard, catches your swing, shoves you back, and your weapon clatters away onto the boards"
+        )
+
+        assert quote_matches(quote, turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches accepts Unicode-ellipsis terminal truncation of an otherwise verbatim quote")
+    def test_unicode_ellipsis_terminal_truncation_accepted(self):
+        turn_text = (
+            "Bassus says: I move in fast—short blade half-drawn, shoulder driving forward as I cut the distance. "
+            "My strike lands solid; you jolt, stumble, and your footing goes—your weapon skitters "
+            "away across the boards. I don't follow with a second hit; I keep you pinned with my stance."
+        )
+        quote = (
+            "Bassus says: I move in fast—short blade half-drawn, shoulder driving forward as I cut the distance. "
+            "My strike lands solid; you jolt, stumble, and your footing goes—your weapon skitters "
+            "away across the boards. I don't follow with a second \u2026"
+        )
+
+        assert quote_matches(quote, turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches rejects ellipsis-split quotes when one fragment is hallucinated")
+    def test_ellipsis_fragments_rejected_when_one_hallucinated(self):
+        turn_text = "Bassus lunges in close and pins you to the floorboards. Cato steps back warily."
+
+        assert not quote_matches(
+            "Bassus lunges in close and pins you to the floorboards. ... Aulus draws a crossbow and fires",
+            turn_text,
+        )
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches forgives a judge that wraps a verbatim spoken line in stray trailing punctuation")
+    def test_partial_overlap_forgives_trailing_punctuation(self):
+        turn_text = (
+            "Marcus leans closer over the stall. \u201cGaius. The scarred one, by the fountain. "
+            "I don't have proof, mind you\u2014just... it fits.\u201d"
+        )
+        quote = "\u201cGaius. The scarred one, by the fountain.\u201d"
+
+        assert quote_matches(quote, turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches rejects a mostly-hallucinated quote even when a short phrase overlaps the corpus")
+    def test_partial_overlap_rejects_mostly_hallucinated_quote(self):
+        turn_text = "The scarred guard was struck down by a thrown stool in the brawl."
+        quote = "The scarred guard was struck and killed by the spear thrust from behind"
+
+        assert not quote_matches(quote, turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("QUOTE_PARTIAL_MATCH_MIN_CHARS is tuned high enough to reject short coincidental overlaps")
+    def test_partial_match_threshold_is_conservative(self):
+        assert QUOTE_PARTIAL_MATCH_MIN_CHARS >= 24
 
 
 @allure.epic("Engine & LLM Infrastructure")
