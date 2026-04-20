@@ -159,7 +159,18 @@ class Narrator(BasePerformer):
         game_state = context["game_state"]
         is_new_scene = input_data.scene is not None
 
-        game_state.last_visible_entities = collect_for_turn(input_data, game_state)
+        # Chip-row payload is best-effort: a failure here (invariant break
+        # in scene/NPC data, validator rejecting an empty alias) must not
+        # abort the turn. The narration and timeline advance matter more
+        # than the sidebar chips.
+        try:
+            game_state.last_visible_entities = collect_for_turn(input_data, game_state)
+        except Exception:
+            logger.exception(
+                "Narrator.act: collect_for_turn failed; proceeding without visible_entities (turn={0})",
+                getattr(game_state, "turn_count", "?"),
+            )
+            game_state.last_visible_entities = []
 
         self.set_context(**_build_narrator_context_kwargs(game_state, self._language, is_new_scene))
 

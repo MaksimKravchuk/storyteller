@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from typing import Iterator
+
 import allure
+from loguru import logger
 
 from cast.visible_entities import collect_visible_entities
 from knowledge.graph import KnowledgeGraph
@@ -11,6 +15,17 @@ from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
+
+
+@contextmanager
+def _capture_warnings() -> Iterator[list[str]]:
+    """Collect loguru WARNING messages emitted inside the with-block."""
+    messages: list[str] = []
+    sink_id = logger.add(messages.append, level="WARNING", format="{level} {message}")
+    try:
+        yield messages
+    finally:
+        logger.remove(sink_id)
 
 
 def _make_state() -> GameState:
@@ -108,3 +123,42 @@ class TestCollectVisibleEntities:
     def test_none_scene(self):
         gs = _make_state()
         assert collect_visible_entities(None, gs, None) == []
+
+    @allure.story("Tracked items")
+    @allure.title("Token-boundary suppression: a short item key is NOT swallowed by a longer POI alias containing it")
+    def test_item_short_key_not_swallowed_by_substring(self):
+        gs = _make_state()
+        scene = Scene(
+            location_id="tavern",
+            points_of_interest=[PointOfInterest(names=["bar"])],
+        )
+        location = Location(name="Tavern", object_states={"ar": "etched"})
+        entities = collect_visible_entities(scene, gs, location)
+        item_ids = {entity.id for entity in entities if entity.kind == "item"}
+        assert "ar" in item_ids
+
+    @allure.story("Invariant logging")
+    @allure.title("A SceneNPC with a uuid but no NPCCard registered logs a warning and is skipped")
+    def test_missing_npc_card_logs_warning(self):
+        gs = _make_state()
+        scene = Scene(
+            location_id="tavern",
+            npcs_present=[SceneNPC(role="guard", uuid="npc-missing")],
+        )
+        with _capture_warnings() as messages:
+            entities = collect_visible_entities(scene, gs, None)
+        assert entities == []
+        assert any("npc-missing" in message for message in messages)
+
+    @allure.story("Invariant logging")
+    @allure.title("A SceneNPC without a uuid is skipped silently (pre-init state is expected)")
+    def test_scene_npc_without_uuid_skipped_silently(self):
+        gs = _make_state()
+        scene = Scene(
+            location_id="tavern",
+            npcs_present=[SceneNPC(role="guard")],
+        )
+        with _capture_warnings() as messages:
+            entities = collect_visible_entities(scene, gs, None)
+        assert entities == []
+        assert not any("visible_entities" in message for message in messages)

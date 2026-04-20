@@ -87,3 +87,10 @@ class TestKnownNamesForPlayer:
         if known:
             gs.player.known_npcs.add(_UUID)
         assert npc.label_for_player(gs, role_fallback="guard") == expected
+
+    @allure.story("Unknown NPC")
+    @allure.title("A whitespace-only short_descriptor is treated as missing and falls back to the role")
+    def test_whitespace_descriptor_falls_back(self):
+        gs = _make_state()
+        npc = _make_npc(short_descriptor="   ")
+        assert npc.known_names_for_player(gs, role_fallback="stranger") == ["stranger"]

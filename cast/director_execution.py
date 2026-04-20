@@ -24,7 +24,6 @@ from models.game_state import GameState
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 
-
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"

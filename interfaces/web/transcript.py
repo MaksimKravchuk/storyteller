@@ -10,6 +10,8 @@ from __future__ import annotations
 from html import escape
 from typing import Literal
 
+from loguru import logger
+
 from formatting import markdown_render
 from formatting.entity_markup import wrap_entities
 from interfaces.web.schemas import TurnEntry
@@ -30,14 +32,25 @@ def render_narrator_html(
     When ``visible_entities`` is provided, the rendered HTML is also
     post-processed by :func:`formatting.entity_markup.wrap_entities`
     so entity mentions (NPC names, POI aliases, tracked items) are
-    wrapped in clickable spans carrying the entity kind and id.
+    wrapped in clickable spans carrying the entity kind and id. Post-
+    match failure degrades to plain markdown HTML rather than bringing
+    down the already-paid-for narration — chips on the side payload
+    still carry the entity list.
     """
     if not text:
         return ""
     html = markdown_render.to_html(text)
     if not visible_entities:
         return html
-    return wrap_entities(html, visible_entities, language)
+    try:
+        return wrap_entities(html, visible_entities, language)
+    except Exception:
+        logger.exception(
+            "render_narrator_html: wrap_entities failed; returning plain HTML (language={0}, n_entities={1})",
+            language,
+            len(visible_entities),
+        )
+        return html
 
 
 def render_player_html(text: str) -> str:

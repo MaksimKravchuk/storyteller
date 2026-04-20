@@ -1,8 +1,12 @@
 """Language-aware lemmatization helpers for entity markup.
 
-Russian uses pymorphy3 for full inflection coverage; English uses a tiny
-suffix stemmer; anything else falls back to case-insensitive exact match
-if pymorphy3 is unavailable.
+Russian uses pymorphy3 for full inflection coverage; English uses a
+tiny suffix stemmer. Languages unknown to ``prompts.locales.Locale``
+fall back to the English stemmer (callers get lowercase + light
+suffix trimming). If pymorphy3 is missing or its dictionary fails to
+load — which should not happen in production since pymorphy3 is a
+required dependency — the Russian path degrades to case-insensitive
+exact match and is logged loudly so operators can trace the break.
 """
 
 from __future__ import annotations
@@ -21,12 +25,7 @@ Lemmatizer = Callable[[str], str]
 
 
 def pick_lemmatizer(language: str) -> Lemmatizer:
-    """Return the lemmatization callable for ``language``.
-
-    Falls back to a no-op lowercasing callable whenever the heavier
-    backend is unavailable — that keeps callers free of try/except and
-    gives the post-match its documented graceful-degradation behaviour.
-    """
+    """Return the lemmatization callable for ``language``."""
     locale = resolve_locale(language)
     if locale is Locale.RUSSIAN:
         return _russian_lemmatizer()
@@ -34,7 +33,6 @@ def pick_lemmatizer(language: str) -> Lemmatizer:
 
 
 def english_lemmatizer(token: str) -> str:
-    """Tiny stemmer: lowercase, strip one common English suffix."""
     stem = token.lower()
     suffix = _first_strippable_suffix(stem)
     if suffix is None:
@@ -43,12 +41,10 @@ def english_lemmatizer(token: str) -> str:
 
 
 def exact_lowercase(token: str) -> str:
-    """Fallback lemmatizer — used when pymorphy3 is unavailable."""
     return token.lower()
 
 
 def _first_strippable_suffix(stem: str) -> str | None:
-    """Return the first English suffix on ``stem`` that is safe to trim."""
     threshold = _MIN_STEM_LEN
     for suffix in _ENGLISH_SUFFIXES:
         if not stem.endswith(suffix):
@@ -73,12 +69,29 @@ class _PymorphyLemmatizer:
 
 @lru_cache(maxsize=1)
 def _russian_lemmatizer() -> Lemmatizer:
-    """Return a Russian lemmatizer backed by pymorphy3, with fallback."""
+    """Return a Russian lemmatizer backed by pymorphy3, with loud fallback.
+
+    pymorphy3 is a required dependency of this project (see
+    ``pyproject.toml``), so an ``ImportError`` or ``MorphAnalyzer``
+    construction failure here indicates a broken install, not an
+    optional-dep miss. Log at ``error`` level so Sentry picks it up,
+    and return the case-insensitive fallback so the render path
+    survives — Russian entity matching will silently miss inflected
+    forms until the install is fixed.
+    """
     try:
         import pymorphy3
     except ImportError:
-        logger.warning(
-            "pymorphy3 not installed — entity_markup will fall back to case-insensitive exact match",
+        logger.error(
+            "pymorphy3 not importable — Russian entity_markup degrading to exact-lowercase. "
+            "Required dependency missing; check the Python environment.",
         )
         return exact_lowercase
-    return _PymorphyLemmatizer(pymorphy3.MorphAnalyzer())
+    try:
+        analyzer = pymorphy3.MorphAnalyzer()
+    except Exception:
+        logger.exception(
+            "pymorphy3.MorphAnalyzer() failed — Russian entity_markup degrading to exact-lowercase.",
+        )
+        return exact_lowercase
+    return _PymorphyLemmatizer(analyzer)

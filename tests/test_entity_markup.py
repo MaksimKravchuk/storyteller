@@ -95,3 +95,24 @@ class TestWrapEntities:
         html = "<p>A fireplace crackles; the hearth is warm.</p>"
         wrapped = wrap_entities(html, [_POI], "English")
         assert wrapped.count('data-id="poi-1"') == 2
+
+    @allure.story("Russian")
+    @allure.title("A single-word match does NOT wrap a multi-word alias: lemma order matters")
+    def test_russian_partial_alias_does_not_wrap(self):
+        # The narrator says "Мужчина стоит" — just "man". An alias of
+        # "вооружённый мужчина" (armed man) must NOT match the bare
+        # "мужчина" because the full lemma sequence isn't there.
+        html = "<p>Мужчина стоит у двери.</p>"
+        wrapped = wrap_entities(html, [_NPC_RU], "Russian")
+        assert "data-id=" not in wrapped
+
+    @allure.story("Multiple entities")
+    @allure.title("When two entities share an alias the longest-first sort breaks the tie deterministically")
+    def test_shared_alias_across_entities_is_deterministic(self):
+        first = VisibleEntity(kind="npc", id="npc-first", names=["captain"])
+        second = VisibleEntity(kind="npc", id="npc-second", names=["captain"])
+        html = "<p>The captain waits.</p>"
+        wrapped = wrap_entities(html, [first, second], "English")
+        # Registration order wins when alias lengths tie (sort is stable).
+        assert 'data-id="npc-first"' in wrapped
+        assert 'data-id="npc-second"' not in wrapped

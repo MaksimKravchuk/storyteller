@@ -68,21 +68,23 @@ class NPCCard(Character):
     def known_names_for_player(self, game_state: GameState, role_fallback: str) -> list[str]:
         """Return every alias the player may read for this NPC this turn.
 
-        The Narrator picks among them for natural variation; the
-        entity-markup post-match wraps any of them as a hit for the
-        same entity id.
+        The Narrator picks among the returned aliases for natural
+        variation; the entity-markup post-match wraps any of them as a
+        hit for the same entity id. The first element is always the
+        primary label (so ``label_for_player`` keeps the legacy
+        ``"Name (Occupation)"`` shape).
 
-        1. Introduced (``uuid in game_state.player.known_npcs``):
-           ``[<Name>]`` plus ``"the <occupation>"`` when occupation is
-           set. Also keeps the combined ``"Name (Occupation)"`` form as
-           the primary element so ``label_for_player`` is unchanged.
-        2. Unknown, ``short_descriptor`` set: ``[short_descriptor]``.
-        3. Neither: ``[role_fallback]``.
+        Introduced (``uuid in game_state.player.known_npcs``) with
+        occupation set: ``["Name (Occupation)", "Name", "the <occupation>"]``.
+        Introduced without occupation: ``["Name"]``.
+        Unknown with ``short_descriptor`` set: ``[short_descriptor]``.
+        Unknown without descriptor: ``[role_fallback]``.
         """
         if self.uuid and self.uuid in game_state.player.known_npcs:
             return _dedup_preserving_order(_introduced_aliases(self.name, self.occupation))
-        if self.short_descriptor:
-            return [self.short_descriptor]
+        descriptor = self.short_descriptor.strip() if self.short_descriptor else ""
+        if descriptor:
+            return [descriptor]
         return [role_fallback]
 
     def to_prompt_context(self) -> str:
