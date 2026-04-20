@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from benchmarks.harness._archive_naming import file_stem
 from benchmarks.harness._git_sha import read_head_sha
@@ -24,17 +25,22 @@ def results_dir() -> Path:
     return archive_path
 
 
-def write_report(report: ScenarioReport) -> tuple[Path, Path]:
-    """Persist both JSON + markdown artefacts. Returns their paths."""
-    base = results_dir() / file_stem(report)
+def write_pair(stem: str, payload: Any, markdown: str) -> tuple[Path, Path]:
+    """Persist a sibling ``<stem>.json`` + ``<stem>.md`` pair under ``results_dir``."""
+    base = results_dir() / stem
     json_path = base.with_suffix(".json")
     md_path = base.with_suffix(".md")
     json_path.write_text(
-        json.dumps(report_to_serialisable(report), indent=2, sort_keys=True, ensure_ascii=False),
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False),
         encoding=_ENCODING,
     )
-    md_path.write_text(render_markdown(report), encoding=_ENCODING)
+    md_path.write_text(markdown, encoding=_ENCODING)
     return json_path, md_path
+
+
+def write_report(report: ScenarioReport) -> tuple[Path, Path]:
+    """Persist both JSON + markdown artefacts. Returns their paths."""
+    return write_pair(file_stem(report), report_to_serialisable(report), render_markdown(report))
 
 
 def current_git_sha() -> str:

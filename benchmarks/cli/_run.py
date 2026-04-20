@@ -6,8 +6,9 @@ import argparse
 from dataclasses import dataclass
 from typing import AsyncIterator
 
+from benchmarks.cli._aggregate_flow import finalise_aggregates
 from benchmarks.cli._jobs import RunContext, build_context, expand_jobs
-from benchmarks.cli._summary import RunRow, print_summary_table
+from benchmarks.cli._summary import print_summary_table
 from benchmarks.cli._writer import Writer, default_writer
 from benchmarks.harness.archive import write_report
 from benchmarks.harness.runner import RunOptions, run_scenario_once
@@ -43,8 +44,8 @@ async def _iterate_runs(
         yield _CompletedIteration(scenario=scenario, iteration=iteration, report=report)
 
 
-def _record_iteration(done: _CompletedIteration, writer: Writer) -> RunRow:
-    """Write archive files, emit the iteration line, and build the summary row."""
+def _record_iteration(done: _CompletedIteration, writer: Writer) -> None:
+    """Write archive files and emit the per-iteration progress line."""
     _, md_path = write_report(done.report)
     writer(
         "[{0}] iter {1}: {2}/{3} — wrote {4}".format(
@@ -55,18 +56,16 @@ def _record_iteration(done: _CompletedIteration, writer: Writer) -> RunRow:
             md_path,
         ),
     )
-    return RunRow(
-        scenario_id=done.scenario.id,
-        iteration=done.iteration,
-        awarded=done.report.total_awarded,
-        base=done.report.total_base,
-    )
 
 
 async def run_command(args: argparse.Namespace, writer: Writer = default_writer) -> int:
     """Execute the ``run`` subcommand."""
     ctx = build_context(args)
     jobs = expand_jobs(args)
-    rows = [_record_iteration(done, writer) async for done in _iterate_runs(jobs, ctx)]
-    print_summary_table(rows, writer=writer)
+    completed: list[ScenarioReport] = []
+    async for done in _iterate_runs(jobs, ctx):
+        _record_iteration(done, writer)
+        completed.append(done.report)
+    aggregates = finalise_aggregates(completed, ctx.sha, writer)
+    print_summary_table(aggregates, writer=writer)
     return 0
