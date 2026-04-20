@@ -11,6 +11,7 @@ from cast.narrator_dedup import dedup_dialogue, dedup_npc_turns
 from cast.narrator_labels import NarratorLabels, get_narrator_labels
 from cast.narrator_wait import append_wait_parts, format_wait_context_bullets
 from cast.schemas.turn_outputs import TurnOutputs
+from cast.visible_entities import collect_for_turn
 from models.scene import Scene
 from prompts.narrator_prompts import get_narrator_prompts
 
@@ -20,6 +21,21 @@ _KEY_COMPLETED_EVENTS = "completed_events"
 _KEY_WAIT_CONTEXT_LINES = "wait_context_lines"
 _KEY_HOURS_WAITED = "hours_waited"
 _KEY_TURN_INTENT = "turn_intent"
+
+
+def _format_poi_labels(poi: Any) -> str:
+    """Render a POI as ``primary (aka: alias1, alias2)`` for the Narrator prompt.
+
+    The Narrator receives the full alias list so it can alternate between
+    synonyms naturally rather than repeating one label. POIs with a single
+    name render just that name.
+    """
+    names = list(poi.names)
+    primary = names[0]
+    aliases = names[1:]
+    if not aliases:
+        return primary
+    return "{0} (aka: {1})".format(primary, ", ".join(aliases))
 
 
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
@@ -143,6 +159,16 @@ class Narrator(BasePerformer):
         game_state = context["game_state"]
         is_new_scene = input_data.scene is not None
 
+        # Best-effort: a bad scene/NPC invariant must not abort the turn.
+        try:
+            game_state.last_visible_entities = collect_for_turn(input_data, game_state)
+        except Exception:
+            logger.exception(
+                "Narrator.act: collect_for_turn failed; proceeding without visible_entities (turn={0})",
+                getattr(game_state, "turn_count", "?"),
+            )
+            game_state.last_visible_entities = []
+
         self.set_context(**_build_narrator_context_kwargs(game_state, self._language, is_new_scene))
 
         raw_parts = self._build_raw_parts(input_data, game_state, context.get("scene_history", []), is_new_scene)
@@ -225,7 +251,8 @@ class Narrator(BasePerformer):
             npc_descriptions = [_format_npc_label(snpc, game_state) for snpc in scene.npcs_present]
             raw_parts.append(labels.people_visible.format(", ".join(npc_descriptions)))
         if scene.points_of_interest:
-            raw_parts.append(labels.notable_things.format(", ".join(scene.points_of_interest)))
+            poi_labels = [_format_poi_labels(poi) for poi in scene.points_of_interest]
+            raw_parts.append(labels.notable_things.format(", ".join(poi_labels)))
 
     def _build_narration_kwargs(
         self,

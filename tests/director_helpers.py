@@ -40,7 +40,7 @@ def make_game_state() -> GameState:
         location_id="forum",
         description="The bustling Roman Forum.",
         npcs_present=[SceneNPC(role="guard", uuid="npc-1")],
-        points_of_interest=["fountain", "statue"],
+        points_of_interest=[scene_mod.PointOfInterest(names=["fountain"]), scene_mod.PointOfInterest(names=["statue"])],
     )
     return gs
 

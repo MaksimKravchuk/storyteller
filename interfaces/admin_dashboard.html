@@ -642,9 +642,12 @@ async function renderScenes(el) {
 
       if (pois.length) {
         const poiTableId = 'poi-tbl-' + sn;
-        const poiRows = pois.map((p, i) =>
-          `<tr><td>${i + 1}</td><td>${escapeHtml(p)}</td></tr>`
-        ).join('');
+        const poiRows = pois.map((p, i) => {
+          const label = typeof p === 'object'
+            ? ((p.names && p.names.join(', ')) || '-')
+            : p;
+          return `<tr><td>${i + 1}</td><td>${escapeHtml(label)}</td></tr>`;
+        }).join('');
         infoHtml += `<div class="scene-info-group">
           <div class="scene-info-toggle" onclick="document.getElementById('${poiTableId}').classList.toggle('open')">
             Points of Interest <span class="count-badge">${pois.length}</span>

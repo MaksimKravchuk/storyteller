@@ -19,6 +19,7 @@ from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
     persist_engine,
     restore_engine,
+    session_language,
     snapshot_from_engine,
 )
 from llm.call_logger import current_session_id, reset_buffer
@@ -47,7 +48,7 @@ async def get_current_snapshot(
     engine = await restore_engine(repo, cfg, session_row)
     if engine is None:
         return None
-    return snapshot_from_engine(engine)
+    return snapshot_from_engine(engine, session_language(session_row))
 
 
 async def _start_and_persist(
@@ -83,7 +84,7 @@ async def start_game_for_player(
         await repo.rollback()
         raise
     await repo.sessions.update(session_id, state=_STATE_PLAYING, language=language)
-    return snapshot_from_engine(engine)
+    return snapshot_from_engine(engine, language)
 
 
 async def _act_and_persist(
@@ -91,6 +92,7 @@ async def _act_and_persist(
     session_id: str,
     engine: GameEngine,
     action: str,
+    language: str,
 ) -> ActionResponse:
     """Run a player action through the engine and persist the new state."""
     narration = await engine.process_action(action)
@@ -101,7 +103,11 @@ async def _act_and_persist(
     await persist_engine(repo, session_id, engine, turn_number=turn_number)
     return ActionResponse(
         narration=narration,
-        narration_html=render_narrator_html(narration),
+        narration_html=render_narrator_html(
+            narration,
+            list(game_state.last_visible_entities),
+            language,
+        ),
         turn_count=turn_number,
         character=build_character_info(game_state),
     )
@@ -132,4 +138,4 @@ async def process_turn_for_player(
     current_session_id.set(session_id)
     reset_buffer()
     reset_events()
-    return await _act_and_persist(repo, session_id, engine, action)
+    return await _act_and_persist(repo, session_id, engine, action, session_language(session_row))

@@ -55,7 +55,8 @@
     const div = document.createElement("div");
     div.className = "turn " + role;
     // The server pre-renders both player input (escaped) and narrator output
-    // (markdown subset → safe HTML), so innerHTML is safe here.
+    // (markdown subset → safe HTML, with inline entity <span>s already wrapped
+    // by formatting.entity_markup.wrap_entities), so innerHTML is safe here.
     div.innerHTML = html;
     els.log.appendChild(div);
     els.log.scrollTop = els.log.scrollHeight;

@@ -22,7 +22,7 @@ def scene_to_row(scene: Scene, game_state_id: str, is_current: bool = False, sce
         COL_LOCATION_ID: scene.location_id,
         COL_DESCRIPTION: scene.description,
         COL_NPCS_PRESENT: [snpc.model_dump() for snpc in scene.npcs_present],
-        COL_POINTS_OF_INTEREST: scene.points_of_interest,
+        COL_POINTS_OF_INTEREST: [poi.model_dump() for poi in scene.points_of_interest],
         "ambient_description": scene.ambient_description,
         "time_of_day": scene.time_of_day,
         "narrated_text": scene.narrated_text,

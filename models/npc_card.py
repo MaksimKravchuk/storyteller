@@ -12,6 +12,36 @@ def _format_attr(attr_name: str, attr_val: object) -> str:
     return "{0}={1}".format(attr_name, attr_val)
 
 
+def _dedup_preserving_order(names: list[str]) -> list[str]:
+    """Drop empty/whitespace entries and duplicates while keeping order."""
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for raw in names:
+        stripped = raw.strip() if raw else raw
+        if not stripped or stripped in seen:
+            continue
+        seen.add(stripped)
+        deduped.append(stripped)
+    return deduped
+
+
+def _introduced_aliases(name: str, occupation: str) -> list[str]:
+    """Build the alias list for an introduced NPC.
+
+    Primary element keeps the legacy ``"Name (Occupation)"`` shape so
+    ``label_for_player`` reads the same. The bare name and
+    ``"the <occupation>"`` follow for narrator variation and post-match
+    coverage.
+    """
+    if occupation:
+        return [
+            "{0} ({1})".format(name, occupation),
+            name,
+            "the {0}".format(occupation),
+        ]
+    return [name]
+
+
 class NPCCard(Character):
     """Extended character profile created by the NPC Generator.
 
@@ -26,25 +56,36 @@ class NPCCard(Character):
     recent_hostile_actions: list[dict[str, str]] = []
 
     def label_for_player(self, game_state: GameState, role_fallback: str) -> str:
-        """Return the label the player should see for this NPC.
+        """Return the primary label the player should see for this NPC.
 
-        Three-branch rule shared by the Narrator (``npcs_present`` line)
-        and the plan executor (``raw_outputs.new_npcs``):
+        Thin accessor over :meth:`known_names_for_player` — picks the
+        first (primary) alias. Preserves the historical shape:
+        ``"Name (Occupation)"`` when introduced, else the descriptor,
+        else the role fallback.
+        """
+        return self.known_names_for_player(game_state, role_fallback)[0]
 
-        1. Player has been introduced (``uuid`` is in
-           ``game_state.player.known_npcs``) → ``"Name (Occupation)"``.
-        2. Card carries a ``short_descriptor`` → the descriptor verbatim.
-        3. Neither → ``role_fallback`` — the ``SceneNPC.role`` tag or,
-           for freshly-generated cards not yet in any scene, the
-           card's own ``occupation``.
+    def known_names_for_player(self, game_state: GameState, role_fallback: str) -> list[str]:
+        """Return every alias the player may read for this NPC this turn.
+
+        The Narrator picks among the returned aliases for natural
+        variation; the entity-markup post-match wraps any of them as a
+        hit for the same entity id. The first element is always the
+        primary label (so ``label_for_player`` keeps the legacy
+        ``"Name (Occupation)"`` shape).
+
+        Introduced (``uuid in game_state.player.known_npcs``) with
+        occupation set: ``["Name (Occupation)", "Name", "the <occupation>"]``.
+        Introduced without occupation: ``["Name"]``.
+        Unknown with ``short_descriptor`` set: ``[short_descriptor]``.
+        Unknown without descriptor: ``[role_fallback]``.
         """
         if self.uuid and self.uuid in game_state.player.known_npcs:
-            if self.occupation:
-                return "{0} ({1})".format(self.name, self.occupation)
-            return self.name
-        if self.short_descriptor:
-            return self.short_descriptor
-        return role_fallback
+            return _dedup_preserving_order(_introduced_aliases(self.name, self.occupation))
+        descriptor = self.short_descriptor.strip() if self.short_descriptor else ""
+        if descriptor:
+            return [descriptor]
+        return [role_fallback]
 
     def to_prompt_context(self) -> str:
         """Serialise this NPC card into text for injection into a system prompt."""

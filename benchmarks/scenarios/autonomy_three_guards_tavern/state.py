@@ -7,7 +7,7 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
+from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 
 _AULUS_UUID = "npc-guard-aulus"
@@ -53,7 +53,11 @@ def _make_location() -> Location:
         description="A smoky tavern of blackened beams, amphorae of wine, and a long plank bar.",
         location_type="building",
         tags=["tavern", "indoor", "city"],
-        points_of_interest=["long plank bar", "fireplace", "amphorae row"],
+        points_of_interest=[
+            PointOfInterest(names=["long plank bar"]),
+            PointOfInterest(names=["fireplace"]),
+            PointOfInterest(names=["amphorae row"]),
+        ],
     )
 
 
@@ -69,7 +73,11 @@ def _make_scene(location_id: str) -> Scene:
             SceneNPC(role=_CITY_GUARD_ROLE, uuid=_BASSUS_UUID),
             SceneNPC(role=_CITY_GUARD_ROLE, uuid=_CATO_UUID),
         ],
-        points_of_interest=["long plank bar", "fireplace", "amphorae row"],
+        points_of_interest=[
+            PointOfInterest(names=["long plank bar"]),
+            PointOfInterest(names=["fireplace"]),
+            PointOfInterest(names=["amphorae row"]),
+        ],
         ambient_description="Low firelight, smell of smoke and spiced wine, murmurs in Latin.",
         time_of_day="evening",
     )

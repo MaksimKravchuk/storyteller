@@ -39,7 +39,7 @@ def format_npcs_present(scene: Any, game_state: GameState) -> str:
 def format_pois(scene: Any) -> str:
     """Format points of interest for the system prompt."""
     if scene and scene.points_of_interest:
-        return ", ".join(scene.points_of_interest)
+        return ", ".join(poi.primary_name for poi in scene.points_of_interest)
     return "None"
 
 
@@ -98,6 +98,10 @@ class ContextFormatter:
                 _KEY_PLAYER_ACTION: player_action,
                 "response": narrated_response,
                 "game_clock": self._gs.game_clock,
+                # Per-turn snapshot; transcript rebuild needs it to rewrap
+                # inline spans, and present game_state can't reconstruct
+                # past scenes' entity lists.
+                "visible_entities": [entity.model_dump() for entity in self._gs.last_visible_entities],
             }
         )
         self._gs.scene_conversation_log.append(

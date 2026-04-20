@@ -152,6 +152,73 @@ def test_build_transcript_renders_html_fields() -> None:
 
 
 @allure.story("Transcript building")
+@allure.title("build_transcript rewraps narrator history with inline entity spans from the persisted snapshot")
+def test_build_transcript_rewraps_history_entities() -> None:
+    log = [
+        {
+            "player_action": "look",
+            "response": "An armed man blocks the door.",
+            "visible_entities": [{"kind": "npc", "id": "npc-1", "names": ["an armed man"]}],
+        },
+    ]
+    transcript = build_transcript(log, language="English")
+    narrator_entry = transcript[1]
+    assert 'data-id="npc-1"' in narrator_entry.html
+    assert ">An armed man</span>" in narrator_entry.html
+
+
+@allure.story("Transcript building")
+@allure.title("build_transcript tolerates legacy entries without a visible_entities key")
+def test_build_transcript_tolerates_legacy_entries() -> None:
+    log = [{"player_action": "look", "response": "A quiet room."}]
+    transcript = build_transcript(log, language="English")
+    assert transcript[1].html == "<p>A quiet room.</p>"
+
+
+@allure.story("Transcript building")
+@allure.title("build_transcript tolerates every shape of malformed visible_entities payload")
+@pytest.mark.parametrize(
+    "bad_entities",
+    [
+        None,
+        "not a list",
+        {"kind": "npc"},
+        [{"kind": "npc", "id": "", "names": ["x"]}],  # validator rejects empty id
+        [{"kind": "npc", "id": "n1", "names": []}],  # validator rejects empty names
+        [{"kind": "poi"}],  # missing required fields
+        ["string inside list"],
+        [42],
+    ],
+)
+def test_build_transcript_skips_malformed_visible_entities(bad_entities) -> None:
+    log = [
+        {
+            "player_action": "look",
+            "response": "A quiet room.",
+            "visible_entities": bad_entities,
+        },
+    ]
+    transcript = build_transcript(log, language="English")
+    assert transcript[1].html == "<p>A quiet room.</p>"
+
+
+@allure.story("Transcript building")
+@allure.title("build_transcript rewraps multiple narrator entries in one pass sharing the lemma cache")
+def test_build_transcript_rewraps_multiple_entries() -> None:
+    entities = [{"kind": "npc", "id": "npc-1", "names": ["страж"]}]
+    log = [
+        # Inflected forms (genitive, instrumental) both lemmatize to "страж"
+        # so the entity wrap hits on both historical entries.
+        {"player_action": "осмотреть", "response": "Стража не видно.", "visible_entities": entities},
+        {"player_action": "ждать", "response": "Ты говоришь со стражем.", "visible_entities": entities},
+    ]
+    transcript = build_transcript(log, language="Russian")
+    narrator_entries = [entry for entry in transcript if entry.role == "narrator"]
+    assert len(narrator_entries) == 2
+    assert all('data-id="npc-1"' in entry.html for entry in narrator_entries)
+
+
+@allure.story("Transcript building")
 @allure.title("render_player_html escapes ampersands and angle brackets without applying markdown")
 def test_render_player_html_escapes_special_chars() -> None:
     raw = "look at <thing> & say **hi**"
@@ -435,7 +502,7 @@ async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
     engine.process_action = AsyncMock(return_value="prose")
 
     with pytest.raises(RuntimeError, match="engine.game_state is None"):
-        await service._act_and_persist(repo, "sess-1", engine, "look")
+        await service._act_and_persist(repo, "sess-1", engine, "look", "English")
 
 
 @pytest.mark.asyncio

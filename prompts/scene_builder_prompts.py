@@ -79,9 +79,22 @@ SCENE_BUILDER_GENERATE = PromptTemplate(
                 '  "description": "Detailed visual description of the scene (what you see, architecture, objects)",\n'
                 '  "npcs_present": ["EVERY person/character visible in the scene — guards, merchants,'
                 ' beggars, passers-by, etc. Use role descriptions like: guard, merchant, beggar, scribe"],\n'
-                '  "points_of_interest": ["ONLY objects, environmental features, and locations the player'
-                " can interact with — doors, signs, items, architecture. NEVER put people here; people go"
-                ' in npcs_present"],\n'
+                '  "points_of_interest": [{{"names": ["full descriptive phrase",'
+                ' "short head noun", "alt short head"]}}, ...],\n'
+                '    // 3 to 7 items. Each entry is an object with a "names" list.\n'
+                "    // names[0] is the primary descriptive phrase the Narrator can use in"
+                " prose (e.g. 'a wooden notice board with wax-sealed scrolls'). names[1..]"
+                " are 1-3 SHORT head-noun synonyms the Narrator is likely to use on"
+                " second mention (e.g. 'notice board', 'board'). The short heads are what"
+                " make inline highlighting robust — without them the post-match can't wrap"
+                " abbreviated references. Include EVERY story-bearing object you expect the"
+                " Narrator to describe prominently in prose: information carriers (boards,"
+                " notices, signs, inscriptions, altars), movement gates (doors, gates,"
+                " stairs, ladders), containers (chests, barrels, crates, strongboxes), and"
+                " state-bearing fixtures (locks, torches, braziers, levers, fires). SKIP"
+                " purely decorative architecture (plain niches, rings, mouldings, plinths,"
+                " gutters) unless it hides a secret or has a use. NEVER put people here;"
+                " people go in npcs_present.\n"
                 '  "ambient_description": "Sounds, smells, atmosphere",\n'
                 '  "time_of_day": "{time_of_day}"\n'
                 "}}"

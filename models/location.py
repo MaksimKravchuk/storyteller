@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from pydantic import Field
+from typing import Any
+
+from pydantic import ConfigDict, Field, field_validator
 
 from models.base_model import StorytellerBase
+from models.scene import PointOfInterest, _coerce_points_of_interest
 
 
 class Location(StorytellerBase):
@@ -12,6 +15,8 @@ class Location(StorytellerBase):
     (building -> district -> city -> region -> country).
     """
 
+    model_config = ConfigDict(validate_assignment=True)
+
     name: str
     description: str = ""
     parent_location_id: str | None = None
@@ -19,7 +24,7 @@ class Location(StorytellerBase):
     tags: list[str] = []
     connected_locations: list[str] = []  # UUIDs
     npcs_present: list[str] = []  # NPC UUIDs currently at this location
-    points_of_interest: list[str] = []
+    points_of_interest: list[PointOfInterest] = []
     object_states: dict[str, str] = Field(default_factory=dict)
 
     def add_npc(self, npc_id: str) -> None:
@@ -46,3 +51,8 @@ class Location(StorytellerBase):
             return False
         self.object_states[normalized_key] = state_description
         return True
+
+    @field_validator("points_of_interest", mode="before")
+    @classmethod
+    def _coerce_pois(cls, raw: Any) -> list[PointOfInterest]:
+        return _coerce_points_of_interest(raw)

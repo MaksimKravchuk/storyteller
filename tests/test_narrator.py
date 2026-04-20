@@ -11,7 +11,7 @@ from cast.narrator import Narrator
 from cast.schemas.turn_outputs import DialogueEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
-from models.scene import Scene, SceneNPC
+from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 from prompts.narrator_prompts import NARRATOR_SYSTEM
 
@@ -43,7 +43,7 @@ def _make_game_state() -> GameState:
         location_id="forum",
         description="The bustling Roman Forum.",
         npcs_present=[SceneNPC(role="guard", uuid="npc-1")],
-        points_of_interest=["fountain"],
+        points_of_interest=[PointOfInterest(names=["fountain"])],
         ambient_description="The air smells of roasted nuts.",
     )
     return gs

@@ -39,7 +39,9 @@ class TurnEntry(BaseModel):
     ``*italic*`` / ```` `code` ```` markdown subset). ``html`` is the same
     content already rendered to safe HTML so a browser client can drop it
     into ``innerHTML`` directly: player text is escaped, narrator text is
-    rendered through ``formatting.markdown_render.to_html``.
+    rendered through ``formatting.markdown_render.to_html`` and — when the
+    entity collector ran for this turn — already carries the inline
+    ``<span class="poi" data-kind=... data-id=...>`` wrappers.
     """
 
     role: Literal["player", "narrator"]
@@ -64,7 +66,8 @@ class ActionResponse(BaseModel):
     """Response body for ``POST /api/games/{game_id}/actions``.
 
     ``narration`` is the raw markdown text the engine produced;
-    ``narration_html`` is the same value pre-rendered for browser clients.
+    ``narration_html`` is the same value pre-rendered for browser clients
+    with inline entity spans already baked in.
     """
 
     narration: str

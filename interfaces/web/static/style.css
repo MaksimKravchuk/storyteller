@@ -452,6 +452,15 @@ button[type="submit"]:disabled {
   .character-col li.is-new { animation: none; }
 }
 
+/* Inline entity spans inserted by formatting.entity_markup.wrap_entities. */
+.turn.narrator .poi {
+  border-bottom: 1px dotted currentColor;
+  cursor: help;
+}
+.turn.narrator .poi[data-kind="npc"]  { color: #b4dcff; }
+.turn.narrator .poi[data-kind="poi"]  { color: #f5c878; }
+.turn.narrator .poi[data-kind="item"] { color: #c8f5b4; }
+
 @media (max-width: 720px) {
   .game-grid {
     grid-template-columns: 1fr;
