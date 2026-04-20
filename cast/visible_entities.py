@@ -73,11 +73,10 @@ def _poi_entities(scene: Any) -> list[VisibleEntity]:
 
 
 def _item_entities(location: Any, already_collected: list[VisibleEntity]) -> list[VisibleEntity]:
-    """Surface ``location.object_states`` keys not already covered by a POI name.
+    """Surface ``location.object_states`` keys not already covered by a POI alias.
 
-    v1 only emits items for object-state keys that do not overlap a POI
-    alias (case-insensitive substring check). The id is the object-state
-    key itself — stable across turns for a given location.
+    The object-state key is reused as the entity id so chips for the
+    same tracked object stay stable across turns.
     """
     object_states = getattr(location, "object_states", None) or {}
     if not object_states:

@@ -75,16 +75,15 @@ def _build_plans(entities: list[VisibleEntity], lemmatize: Lemmatizer) -> list[_
 
 
 class _Rewriter:
-    """Walks HTML text nodes and rewrites alias hits into entity spans.
-
-    Encapsulates the per-turn state (lemmatizer + alias plans) so the
-    module-level surface stays small — a free-function implementation
-    pushed past wemake's ``WPS202 too many module members`` cap.
-    """
+    """Walks HTML text nodes and rewrites alias hits into entity spans."""
 
     def __init__(self, plans: list[_AliasPlan], lemmatize: Lemmatizer) -> None:
         self._plans = plans
         self._lemmatize = lemmatize
+        # Memoize lemmatized prose tokens within one rewrite call —
+        # pymorphy3.parse is the dominant per-token cost on Russian turns
+        # and typical prose repeats many common words.
+        self._lemma_cache: dict[str, str] = {}
 
     def rewrite(self, html: str) -> str:
         """Replace alias hits inside HTML text nodes, leaving tags untouched."""
@@ -104,7 +103,7 @@ class _Rewriter:
         tokens = list(_TOKEN_RE.finditer(chunk))
         if not tokens:
             return chunk
-        lemmas = [self._lemmatize(match.group(0)) for match in tokens]
+        lemmas = [self._lemma_of(match.group(0)) for match in tokens]
         return _apply_replacements(chunk, self._find_replacements(tokens, lemmas))
 
     def _find_replacements(
@@ -149,6 +148,14 @@ class _Rewriter:
             if tuple(lemmas[start_idx:end_idx]) == plan.lemmas:
                 return plan
         return None
+
+    def _lemma_of(self, token: str) -> str:
+        cached = self._lemma_cache.get(token)
+        if cached is not None:
+            return cached
+        lemma = self._lemmatize(token)
+        self._lemma_cache[token] = lemma
+        return lemma
 
 
 def _apply_replacements(

@@ -1,8 +1,8 @@
 """Language-aware lemmatization helpers for entity markup.
 
-Split out of :mod:`formatting.entity_markup` so each module stays under
-wemake's ``WPS202 too many module members`` cap. Public surface is the
-single :func:`pick_lemmatizer` factory.
+Russian uses pymorphy3 for full inflection coverage; English uses a tiny
+suffix stemmer; anything else falls back to case-insensitive exact match
+if pymorphy3 is unavailable.
 """
 
 from __future__ import annotations
@@ -59,11 +59,7 @@ def _first_strippable_suffix(stem: str) -> str | None:
 
 
 class _PymorphyLemmatizer:
-    """Callable wrapper around a pymorphy3 ``MorphAnalyzer``.
-
-    Implemented as a class rather than a closure so wemake's
-    ``WPS430 nested function`` stays clean.
-    """
+    """Callable wrapper around a pymorphy3 ``MorphAnalyzer``."""
 
     def __init__(self, analyzer) -> None:
         self._analyzer = analyzer

@@ -13,6 +13,8 @@ from typing import Literal
 
 from pydantic import BaseModel, field_validator
 
+from models.scene import clean_names
+
 VisibleEntityKind = Literal["npc", "poi", "item"]
 
 
@@ -31,7 +33,4 @@ class VisibleEntity(BaseModel):
     @field_validator("names")
     @classmethod
     def _names_non_empty(cls, raw: list[str]) -> list[str]:
-        stripped = [name.strip() for name in raw if name and name.strip()]
-        if not stripped:
-            raise ValueError("VisibleEntity.names must contain at least one non-empty name")
-        return stripped
+        return clean_names(raw, "VisibleEntity")

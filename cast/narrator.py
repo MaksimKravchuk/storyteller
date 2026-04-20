@@ -159,8 +159,7 @@ class Narrator(BasePerformer):
         game_state = context["game_state"]
         is_new_scene = input_data.scene is not None
 
-        input_data.visible_entities = collect_for_turn(input_data, game_state)
-        game_state.last_visible_entities = list(input_data.visible_entities)
+        game_state.last_visible_entities = collect_for_turn(input_data, game_state)
 
         self.set_context(**_build_narrator_context_kwargs(game_state, self._language, is_new_scene))
 

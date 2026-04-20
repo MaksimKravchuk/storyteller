@@ -7,9 +7,16 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from models.base_model import StorytellerBase
 
 
-def _clean_names(names: list[str]) -> list[str]:
-    """Strip whitespace and drop blanks from a raw alias list."""
-    return [name.strip() for name in names if name and name.strip()]
+def clean_names(names: list[str], context: str) -> list[str]:
+    """Strip whitespace and drop blanks, raising when no usable name remains.
+
+    Shared by :class:`PointOfInterest` and :class:`models.visible_entity.VisibleEntity`
+    so the contract — at least one non-empty alias — has a single enforcement point.
+    """
+    cleaned = [name.strip() for name in names if name and name.strip()]
+    if not cleaned:
+        raise ValueError("{0}.names must contain at least one non-empty name".format(context))
+    return cleaned
 
 
 class PointOfInterest(StorytellerBase):
@@ -32,10 +39,7 @@ class PointOfInterest(StorytellerBase):
     @field_validator("names")
     @classmethod
     def _names_non_empty(cls, raw: list[str]) -> list[str]:
-        cleaned = _clean_names(raw)
-        if not cleaned:
-            raise ValueError("PointOfInterest.names must contain at least one non-empty name")
-        return cleaned
+        return clean_names(raw, "PointOfInterest")
 
 
 class SceneNPC(BaseModel):
