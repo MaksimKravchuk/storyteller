@@ -9,7 +9,7 @@ import allure
 import pytest
 
 from cast.dice import ContestType
-from cast.npc_turn import NPCAction, NPCTurnResolver
+from cast.npc_turn import NPCAction, NPCTurnResolver, _build_turn_prompt
 from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
 from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
@@ -312,6 +312,41 @@ class TestNPCTurnResolverErrorHandling:
 
         assert len(actions) == 1
         assert actions[0].npc_name == _MERCHANT
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
+class TestBuildTurnPromptNudgeRemoval:
+    """KER-42: the "Most turns are routine" nudge flattened every autonomous
+    decision toward IDLE even when the NPC's mood, relationships, and
+    inventory supplied ample motive. The fix removes the nudge — the
+    character data drives the choice.
+    """
+
+    @allure.story("Routine-nudge removal")
+    @allure.title("_build_turn_prompt does not contain the 'Most turns are routine' clause")
+    def test_prompt_does_not_contain_routine_nudge(self):
+        gs = _make_gs()
+        npc = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = npc
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+
+        prompt = _build_turn_prompt(npc, "Player waited.", gs)
+
+        assert "Most turns are routine" not in prompt
+        assert "Only take dramatic action" not in prompt
+
+    @allure.story("Routine-nudge removal")
+    @allure.title("_build_turn_prompt still anchors the NPC to 'Stay in character.'")
+    def test_prompt_preserves_stay_in_character(self):
+        gs = _make_gs()
+        npc = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = npc
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+
+        prompt = _build_turn_prompt(npc, "Player waited.", gs)
+
+        assert "Stay in character." in prompt
 
 
 @allure.epic("NPC Interaction")

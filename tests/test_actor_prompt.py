@@ -4,27 +4,37 @@ from __future__ import annotations
 
 import allure
 
-from prompts.actor_prompts import ACTOR_SYSTEM
+from prompts.actor_prompts import ACTOR_SYSTEM, ACTOR_SYSTEM_ACTION, get_actor_prompts
+from prompts.actor_prompts_ru import ACTOR_SYSTEM_ACTION_RU
+
+_DEFAULT_RENDER_VARS = dict(
+    npc_name="Guard",
+    npc_occupation="city guard",
+    location_name="forum",
+    npc_biography="A loyal soldier.",
+    personality_traits="brave, stern",
+    speech_style="curt",
+    npc_appearance="tall, armored",
+    npc_inventory="spear, shield",
+    accessible_knowledge="The forum closes at dusk.",
+    current_mood="neutral",
+    physical_status="healthy",
+    language="English",
+)
 
 
 def _render_actor_prompt(**overrides) -> str:
     """Render ACTOR_SYSTEM with sensible defaults, applying overrides."""
-    defaults = dict(
-        npc_name="Guard",
-        npc_occupation="city guard",
-        location_name="forum",
-        npc_biography="A loyal soldier.",
-        personality_traits="brave, stern",
-        speech_style="curt",
-        npc_appearance="tall, armored",
-        npc_inventory="spear, shield",
-        accessible_knowledge="The forum closes at dusk.",
-        current_mood="neutral",
-        physical_status="healthy",
-        language="English",
-    )
+    defaults = dict(_DEFAULT_RENDER_VARS)
     defaults.update(overrides)
     return ACTOR_SYSTEM.render(**defaults)
+
+
+def _render_action_prompt(**overrides) -> str:
+    """Render ACTOR_SYSTEM_ACTION with sensible defaults, applying overrides."""
+    defaults = dict(_DEFAULT_RENDER_VARS)
+    defaults.update(overrides)
+    return ACTOR_SYSTEM_ACTION.render(**defaults)
 
 
 @allure.epic("NPC Interaction")
@@ -134,3 +144,88 @@ class TestActorPromptSituationalRegister:
         assert "verbatim" in lowered
         assert "paraphrase" in lowered
         assert "catchphrase" in lowered
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Actor action-mode prompt template")
+class TestActorSystemActionStructure:
+    """KER-42: the NPC autonomous-turn branch uses a dedicated template
+    whose constraints section replaces dialogue output rules with a
+    JSON-object directive. Character context (identity, biography,
+    knowledge, memory, hostility, inventory) is reused verbatim.
+    """
+
+    @allure.story("Action-mode required vars")
+    @allure.title("ACTOR_SYSTEM_ACTION declares the same character-context required vars as the dialogue template")
+    def test_action_required_vars_match_character_context(self):
+        shared_vars = {
+            "npc_name",
+            "npc_occupation",
+            "location_name",
+            "npc_biography",
+            "personality_traits",
+            "speech_style",
+            "npc_appearance",
+            "npc_inventory",
+            "accessible_knowledge",
+            "current_mood",
+            "physical_status",
+            "language",
+        }
+        assert shared_vars.issubset(ACTOR_SYSTEM_ACTION.required_vars)
+
+    @allure.story("Action-mode output directive")
+    @allure.title("ACTOR_SYSTEM_ACTION instructs the LLM to return only a JSON object — no fences, no tags")
+    def test_action_prompt_instructs_json_only(self):
+        rendered = _render_action_prompt()
+        lowered = rendered.lower()
+        assert "json object" in lowered
+        assert "no markdown fences" in lowered
+
+    @allure.story("Action-mode output directive")
+    @allure.title("ACTOR_SYSTEM_ACTION omits the dialogue-only output rules from ACTOR_SYSTEM")
+    def test_action_prompt_omits_dialogue_rules(self):
+        rendered = _render_action_prompt()
+        assert "Output ONLY your spoken dialogue" not in rendered
+        assert "[MOOD:" not in rendered
+        assert "[STATUS:" not in rendered
+        assert "[REVEALED:" not in rendered
+        assert "[DICE ROLL]" not in rendered
+
+    @allure.story("Action-mode character context")
+    @allure.title("ACTOR_SYSTEM_ACTION still carries biography, personality, knowledge, and inventory")
+    def test_action_prompt_preserves_character_context(self):
+        rendered = _render_action_prompt(
+            npc_biography="A disgraced legionary plotting revenge.",
+            personality_traits="vengeful, calculating",
+            accessible_knowledge="Your brother was ruined by Marcus the merchant.",
+            npc_inventory="concealed pugio",
+        )
+        assert "A disgraced legionary plotting revenge." in rendered
+        assert "vengeful, calculating" in rendered
+        assert "Your brother was ruined by Marcus the merchant." in rendered
+        assert "concealed pugio" in rendered
+
+    @allure.story("Action-mode character context")
+    @allure.title("ACTOR_SYSTEM_ACTION preserves the physical-action rule — attacked NPCs act, not just speak")
+    def test_action_prompt_preserves_physical_action_rule(self):
+        rendered = _render_action_prompt()
+        assert "actions, not just words" in rendered.lower()
+
+    @allure.story("Locale catalog")
+    @allure.title("get_actor_prompts exposes ``system_action`` for both English and Russian locales")
+    def test_catalog_exposes_system_action_per_locale(self):
+        assert get_actor_prompts("English").system_action is ACTOR_SYSTEM_ACTION
+        assert get_actor_prompts("Russian").system_action is ACTOR_SYSTEM_ACTION_RU
+
+    @allure.story("Locale catalog")
+    @allure.title("Russian action template exposes the same required vars as the English action template")
+    def test_ru_action_required_vars_match_en(self):
+        assert ACTOR_SYSTEM_ACTION_RU.required_vars == ACTOR_SYSTEM_ACTION.required_vars
+
+    @allure.story("Locale catalog")
+    @allure.title("Russian action template exposes the same section names as the English action template")
+    def test_ru_action_section_names_match_en(self):
+        en_names = [section.name for section in ACTOR_SYSTEM_ACTION.sections]
+        ru_names = [section.name for section in ACTOR_SYSTEM_ACTION_RU.sections]
+        assert en_names == ru_names

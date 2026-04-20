@@ -1,4 +1,17 @@
-"""Actor — an NPC that speaks and acts in character."""
+"""Actor — an NPC that speaks and acts in character.
+
+The Actor has two distinct call modes, selected by ``context["is_npc_turn"]``:
+
+* **Dialogue** (default): the NPC replies to a player utterance as free
+  text, optionally emitting trailing ``[MOOD]`` / ``[STATUS]`` /
+  ``[REVEALED]`` tags. Conversation history is maintained across turns
+  so multi-turn exchanges stay coherent.
+* **Autonomous action** (``is_npc_turn=True``, KER-42): the NPC returns
+  a single JSON object describing one in-character action. The
+  action-mode system template is used, no conversation history is
+  passed or stored, and trailing tags are neither emitted nor parsed —
+  ``cast.npc_turn`` owns JSON parsing downstream.
+"""
 
 from __future__ import annotations
 
@@ -45,25 +58,49 @@ class Actor(BasePerformer):
         knowledge_query: KnowledgeQueryEngine,
         language: str = "English",
     ):
+        bundle = get_actor_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=get_actor_prompts(language).system,
+            system_prompt_template=bundle.system,
         )
+        self._dialogue_template = bundle.system
+        self._action_template = bundle.system_action
         self.npc = npc
         self.knowledge_query = knowledge_query
         self._conversation: list[Message] = []
         self.set_context(language=language)
 
     async def act(self, input_data: str, context: dict) -> ActorReply:
-        """Respond to a player interaction in character.
+        """Respond to a player interaction or drive an autonomous turn.
 
-        ``input_data``: What the player said or did directed at this NPC.
-        ``context``: Optional; may contain ``location_name``.
+        ``input_data``: player utterance (dialogue mode) or the NPC-turn
+        JSON-schema prompt built in :mod:`cast.npc_turn`.
+        ``context``: may carry ``location_name`` and, for autonomous
+        turns, ``is_npc_turn=True``.
 
-        Returns an :class:`ActorReply` carrying the tag-stripped spoken
-        text plus any ``[REVEALED: ...]`` tokens the Actor emitted.
+        Returns an :class:`ActorReply`. In dialogue mode the reply's
+        ``text`` is tag-stripped and ``revealed_names`` carries any
+        ``[REVEALED: ...]`` tokens the LLM emitted. In action mode the
+        ``text`` is the raw JSON body (whitespace-stripped) and
+        ``revealed_names`` is empty — downstream parsing lives in
+        :mod:`cast.npc_turn`.
         """
-        # Build knowledge context for this NPC
+        self._populate_character_context(context)
+        if context.get("is_npc_turn"):
+            return await self._act_npc_turn(input_data)
+        return await self._act_dialogue(input_data)
+
+    def reset_conversation(self) -> None:
+        """Clear conversation history (e.g. when player walks away)."""
+        self._conversation.clear()
+
+    def _populate_character_context(self, context: dict) -> None:
+        """Set every system-prompt variable this Actor's templates need.
+
+        Both the dialogue and action-mode templates share the same
+        character-context sections (identity, inventory, knowledge,
+        memory, hostility), so the same context block feeds both.
+        """
         accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc, topic_tags=None)
 
         self.set_context(
@@ -98,11 +135,11 @@ class Actor(BasePerformer):
                 ),
             )
 
+    async def _act_dialogue(self, input_data: str) -> ActorReply:
+        """Run the in-character dialogue path (free-text reply with trailing tags)."""
         raw = await self._send(input_data, conversation=self._conversation)
-        # Strip trailing inline tags in any order (MOOD / STATUS / REVEALED).
         parsed = strip_trailing_tags(raw)
 
-        # Track conversation for multi-turn dialogue
         self._conversation.append(Message(role=Role.USER, body=input_data))
         self._conversation.append(Message(role=Role.ASSISTANT, body=parsed.text))
 
@@ -113,6 +150,23 @@ class Actor(BasePerformer):
 
         return ActorReply(text=parsed.text.strip(), revealed_names=tuple(parsed.revealed))
 
-    def reset_conversation(self) -> None:
-        """Clear conversation history (e.g. when player walks away)."""
-        self._conversation.clear()
+    async def _act_npc_turn(self, input_data: str) -> ActorReply:
+        """Run the KER-42 autonomous-action path — JSON reply, no conversation, no tags.
+
+        The action-mode system template is swapped in for a single
+        ``_send`` call, then restored so a subsequent dialogue turn on
+        the same Actor starts clean. No conversation history is passed
+        (dialogue context must not leak into JSON mode) and
+        ``_conversation`` is not appended to (the JSON payload is not
+        speech). The raw body flows downstream to
+        :func:`cast.npc_turn._parse_npc_response` which already handles
+        malformed JSON.
+        """
+        self.system_prompt_template = self._action_template
+        try:
+            raw = await self._send(input_data)
+        except Exception:
+            self.system_prompt_template = self._dialogue_template
+            raise
+        self.system_prompt_template = self._dialogue_template
+        return ActorReply(text=raw.strip(), revealed_names=())

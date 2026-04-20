@@ -408,8 +408,7 @@ def _build_turn_prompt(
         '{{"action": "Brief description of what you do", '
         '"type": "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE", '
         '"target": "name of target, \'player\', or null if no target"}}\n\n'
-        "Stay in character. Most turns are routine. "
-        "Only take dramatic action when justified by mood and situation."
+        "Stay in character."
     ).format(
         name=npc.name,
         summary=player_action_summary,
