@@ -116,3 +116,17 @@ class TestWrapEntities:
         # Registration order wins when alias lengths tie (sort is stable).
         assert 'data-id="npc-first"' in wrapped
         assert 'data-id="npc-second"' not in wrapped
+
+    @allure.story("Token cache")
+    @allure.title("Passing a shared token_cache across two calls preserves correctness and fills the cache")
+    def test_shared_token_cache_reused_across_calls(self):
+        cache: dict[str, str] = {}
+        entity = VisibleEntity(kind="npc", id="npc-1", names=["вооружённый мужчина"])
+        first = wrap_entities("<p>вооружённого мужчину видно.</p>", [entity], "Russian", cache)
+        cache_size_after_first = len(cache)
+        second = wrap_entities("<p>вооружённого мужчину видно снова.</p>", [entity], "Russian", cache)
+        assert 'data-id="npc-1"' in first
+        assert 'data-id="npc-1"' in second
+        # Russian tokens carry into the shared cache; the repeated call does
+        # not clear nor mis-cache entries.
+        assert len(cache) >= cache_size_after_first

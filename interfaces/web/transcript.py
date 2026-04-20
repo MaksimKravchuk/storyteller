@@ -103,16 +103,21 @@ def _rehydrate_entities(raw: object) -> list[VisibleEntity]:
         return []
     rehydrated: list[VisibleEntity] = []
     malformed = 0
+    first_error: Exception | None = None
     for payload in raw:
         if not isinstance(payload, dict):
             malformed += 1
             continue
         try:
             rehydrated.append(VisibleEntity.model_validate(payload))
-        except Exception:
+        except Exception as exc:
             malformed += 1
+            if first_error is None:
+                first_error = exc
     if malformed:
-        logger.warning(
+        # Log one representative traceback per batch so schema drift is
+        # still investigable, without flooding Sentry per bad item.
+        logger.opt(exception=first_error).warning(
             "build_transcript: skipped {0} malformed visible_entity payload(s)",
             malformed,
         )

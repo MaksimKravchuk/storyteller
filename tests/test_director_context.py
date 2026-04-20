@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import allure
 
-from cast.director_context import format_npcs_present
+from cast.director_context import ContextFormatter, format_npcs_present
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
+from models.visible_entity import VisibleEntity
 
 _GUARD_NAME = "Guard"
 _GUARD = "guard"
@@ -73,3 +74,28 @@ class TestFormatNpcsPresent:
     def test_no_scene_returns_none(self):
         gs = _make_game_state_with_npcs([])
         assert format_npcs_present(None, gs) == "None"
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Director context formatting")
+@allure.story("Turn log snapshot")
+class TestAppendTurnLogsVisibleEntities:
+    @allure.title("append_turn_logs snapshots last_visible_entities into the new conversation_log entry")
+    def test_visible_entities_serialized_into_log(self) -> None:
+        gs = _make_game_state_with_npcs([])
+        gs.last_visible_entities = [
+            VisibleEntity(kind="npc", id="npc-1", names=["an armed man"]),
+            VisibleEntity(kind="poi", id="poi-1", names=["notice board", "board"]),
+        ]
+        ContextFormatter(gs).append_turn_logs("look", "You see the gate.", "EXPLORE")
+        entry = gs.conversation_log[-1]
+        assert entry["visible_entities"] == [
+            {"kind": "npc", "id": "npc-1", "names": ["an armed man"]},
+            {"kind": "poi", "id": "poi-1", "names": ["notice board", "board"]},
+        ]
+
+    @allure.title("append_turn_logs writes an empty visible_entities list when the narrator produced none")
+    def test_empty_visible_entities_still_serialized(self) -> None:
+        gs = _make_game_state_with_npcs([])
+        ContextFormatter(gs).append_turn_logs("look", "Silence.", "EXPLORE")
+        assert gs.conversation_log[-1]["visible_entities"] == []

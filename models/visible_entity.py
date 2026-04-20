@@ -34,3 +34,13 @@ class VisibleEntity(BaseModel):
     @classmethod
     def _names_non_empty(cls, raw: list[str]) -> list[str]:
         return clean_names(raw, "VisibleEntity")
+
+    @field_validator("id")
+    @classmethod
+    def _id_non_empty(cls, raw: str) -> str:
+        # An empty id would serialize to `data-id=""` inline spans and
+        # break chip click handlers; fail at construction instead.
+        stripped = raw.strip() if raw else ""
+        if not stripped:
+            raise ValueError("VisibleEntity.id must be a non-empty string")
+        return stripped

@@ -1,10 +1,10 @@
 """End-to-end regression for the user story that motivated PR #108.
 
 The player enters a scene where the NPC "Tony (watchman)" is present
-but has not yet been introduced. The chip row and inline narrator HTML
-must both refer to "an armed man", never to "Tony" or "watchman".
-After introduction the labels flip to Tony / the watchman and both
-wrap to the same NPC id.
+but has not yet been introduced. The collector's entity list and the
+inline-wrapped narrator HTML must both refer to "an armed man", never
+to "Tony" or "watchman". After introduction the labels flip to Tony /
+the watchman and both wrap to the same NPC id.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def _make_state() -> GameState:
 
 
 def _render_turn(gs: GameState, prose_md: str) -> tuple[list, str]:
-    """Run the full chip-row + inline-span pipeline for one narration."""
+    """Run the entity collection + inline-span pipeline for one narration."""
     entities = collect_for_turn(TurnOutputs(scene=gs.current_scene), gs)
     html = wrap_entities(markdown_render.to_html(prose_md), entities, "English")
     return entities, html
@@ -49,7 +49,7 @@ def _render_turn(gs: GameState, prose_md: str) -> tuple[list, str]:
 @allure.feature("Watchman Tony regression")
 class TestWatchmanRegression:
     @allure.story("Unintroduced")
-    @allure.title("Before introduction the chip reads 'an armed man' and no 'Tony' appears anywhere")
+    @allure.title("Before introduction the alias is 'an armed man' and no 'Tony' appears in HTML")
     def test_before_introduction(self):
         gs = _make_state()
         entities, html = _render_turn(gs, "An armed man blocks the door.")

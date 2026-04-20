@@ -176,6 +176,49 @@ def test_build_transcript_tolerates_legacy_entries() -> None:
 
 
 @allure.story("Transcript building")
+@allure.title("build_transcript tolerates every shape of malformed visible_entities payload")
+@pytest.mark.parametrize(
+    "bad_entities",
+    [
+        None,
+        "not a list",
+        {"kind": "npc"},
+        [{"kind": "npc", "id": "", "names": ["x"]}],  # validator rejects empty id
+        [{"kind": "npc", "id": "n1", "names": []}],  # validator rejects empty names
+        [{"kind": "poi"}],  # missing required fields
+        ["string inside list"],
+        [42],
+    ],
+)
+def test_build_transcript_skips_malformed_visible_entities(bad_entities) -> None:
+    log = [
+        {
+            "player_action": "look",
+            "response": "A quiet room.",
+            "visible_entities": bad_entities,
+        },
+    ]
+    transcript = build_transcript(log, language="English")
+    assert transcript[1].html == "<p>A quiet room.</p>"
+
+
+@allure.story("Transcript building")
+@allure.title("build_transcript rewraps multiple narrator entries in one pass sharing the lemma cache")
+def test_build_transcript_rewraps_multiple_entries() -> None:
+    entities = [{"kind": "npc", "id": "npc-1", "names": ["страж"]}]
+    log = [
+        # Inflected forms (genitive, instrumental) both lemmatize to "страж"
+        # so the entity wrap hits on both historical entries.
+        {"player_action": "осмотреть", "response": "Стража не видно.", "visible_entities": entities},
+        {"player_action": "ждать", "response": "Ты говоришь со стражем.", "visible_entities": entities},
+    ]
+    transcript = build_transcript(log, language="Russian")
+    narrator_entries = [entry for entry in transcript if entry.role == "narrator"]
+    assert len(narrator_entries) == 2
+    assert all('data-id="npc-1"' in entry.html for entry in narrator_entries)
+
+
+@allure.story("Transcript building")
 @allure.title("render_player_html escapes ampersands and angle brackets without applying markdown")
 def test_render_player_html_escapes_special_chars() -> None:
     raw = "look at <thing> & say **hi**"
