@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from benchmarks.cli._writer import Writer
-from benchmarks.harness.types._aggregates import ScenarioAggregate
+from benchmarks.harness.types._aggregates import ElementPassRate, ScenarioAggregate
 
 _LABEL_COL_WIDTH = 40
 _HEADER_FMT = "{0:<40} {1:>5} {2:>8} {3:>10}"
@@ -42,7 +42,7 @@ def _format_aggregate_row(aggregate: ScenarioAggregate) -> str:
     )
 
 
-def _format_element_line(scenario_id: str, pass_rate) -> str:
+def _format_element_line(scenario_id: str, pass_rate: ElementPassRate) -> str:
     """Format one per-element pass-rate line."""
     return "  [{0}] {1}: {2}/{3}".format(
         scenario_id,

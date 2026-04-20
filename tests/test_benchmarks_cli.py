@@ -95,6 +95,14 @@ class TestRunArgs:
         with pytest.raises(SystemExit):
             parse_args(["run", "--quick", "--iterations", "5"])
 
+    @allure.story("CLI parsing")
+    @allure.title("--iterations rejects zero and negative counts at the argparse layer")
+    def test_iterations_rejects_non_positive(self):
+        with pytest.raises(SystemExit):
+            parse_args(["run", "--iterations", "0"])
+        with pytest.raises(SystemExit):
+            parse_args(["run", "--iterations", "-3"])
+
 
 @allure.epic("Engine & LLM Infrastructure")
 @allure.feature("Benchmark harness")

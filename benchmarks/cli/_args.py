@@ -8,6 +8,17 @@ _DEFAULT_ITERATIONS = 3
 _QUICK_ITERATIONS = 1
 
 
+def _positive_int(raw: str) -> int:
+    """Argparse type for ``--iterations``: reject zero and negative values."""
+    try:
+        candidate = int(raw)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("iterations must be an integer, got {0!r}".format(raw)) from exc
+    if candidate < 1:
+        raise argparse.ArgumentTypeError("iterations must be >= 1, got {0}".format(candidate))
+    return candidate
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     """Parse the ``benchmarks`` CLI invocation."""
     parser = argparse.ArgumentParser(
@@ -32,7 +43,7 @@ def _register_run_parser(sub: argparse._SubParsersAction) -> None:
     iter_group = run_cmd.add_mutually_exclusive_group()
     iter_group.add_argument(
         "--iterations",
-        type=int,
+        type=_positive_int,
         default=_DEFAULT_ITERATIONS,
         help="Number of iterations per scenario (default {0}).".format(_DEFAULT_ITERATIONS),
     )

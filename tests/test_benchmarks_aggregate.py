@@ -113,6 +113,20 @@ class TestAggregateReports:
         assert rates["b"].passes == 1
 
     @allure.story("Aggregation")
+    @allure.title("aggregate_reports on a single iteration reports mean == min == max (covers --quick)")
+    def test_single_iteration_collapses_to_point(self):
+        reports = [
+            _report(iteration=0, awarded=4, element_scores=[_element("e1", base=3, awarded=3)]),
+        ]
+
+        result = aggregate_reports(reports)
+
+        assert result.iterations == 1
+        assert result.mean_awarded == pytest.approx(4.0)
+        assert result.min_awarded == 4
+        assert result.max_awarded == 4
+
+    @allure.story("Aggregation")
     @allure.title("aggregate_reports rejects empty input so callers cannot silently produce a nonsensical summary")
     def test_empty_reports_raise(self):
         with pytest.raises(ValueError, match="at least one report"):
