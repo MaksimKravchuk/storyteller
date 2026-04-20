@@ -394,6 +394,39 @@ class TestDialogueHandlerConversationHistory:
             {"role": "assistant", "content": "Cassia speaks."},
         ]
 
+    @allure.story("Conversation history append")
+    @allure.title("handle_dialogue persists the bare player utterance, not the dice-wrapped action_text")
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_persists_bare_player_action_when_aggressive(self):
+        """Pins the design choice from KER-37 — the persisted history records what the
+        player *said*, not the contest-decorated prompt the Actor LLM consumes. A
+        future refactor that swaps ``player_action`` for the work-item ``action_text``
+        would leak ``[DICE ROLL: …]`` blobs into JSONB; this test catches that.
+        """
+        gs = make_game_state()
+        npc = setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
+        )
+
+        actor = make_mock_actor("*draws sword*")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor}, memory_manager)
+
+        await handler.handle_dialogue("shove him", ["Marcus"], is_aggressive=True)
+
+        assert npc.conversation_history == [
+            {"role": "user", "content": "shove him"},
+            {"role": "assistant", "content": "*draws sword*"},
+        ]
+
 
 @allure.epic("NPC Interaction")
 @allure.feature("Director registration")
