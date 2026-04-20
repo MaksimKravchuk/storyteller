@@ -152,6 +152,30 @@ def test_build_transcript_renders_html_fields() -> None:
 
 
 @allure.story("Transcript building")
+@allure.title("build_transcript rewraps narrator history with inline entity spans from the persisted snapshot")
+def test_build_transcript_rewraps_history_entities() -> None:
+    log = [
+        {
+            "player_action": "look",
+            "response": "An armed man blocks the door.",
+            "visible_entities": [{"kind": "npc", "id": "npc-1", "names": ["an armed man"]}],
+        },
+    ]
+    transcript = build_transcript(log, language="English")
+    narrator_entry = transcript[1]
+    assert 'data-id="npc-1"' in narrator_entry.html
+    assert ">An armed man</span>" in narrator_entry.html
+
+
+@allure.story("Transcript building")
+@allure.title("build_transcript tolerates legacy entries without a visible_entities key")
+def test_build_transcript_tolerates_legacy_entries() -> None:
+    log = [{"player_action": "look", "response": "A quiet room."}]
+    transcript = build_transcript(log, language="English")
+    assert transcript[1].html == "<p>A quiet room.</p>"
+
+
+@allure.story("Transcript building")
 @allure.title("render_player_html escapes ampersands and angle brackets without applying markdown")
 def test_render_player_html_escapes_special_chars() -> None:
     raw = "look at <thing> & say **hi**"

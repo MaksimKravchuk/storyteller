@@ -51,15 +51,19 @@ async def persist_engine(
         )
 
 
-def snapshot_from_engine(engine: GameEngine) -> GameSnapshot:
-    """Build a ``GameSnapshot`` view from a fully-initialised engine."""
+def snapshot_from_engine(engine: GameEngine, language: str = _DEFAULT_LANGUAGE) -> GameSnapshot:
+    """Build a ``GameSnapshot`` view from a fully-initialised engine.
+
+    ``language`` is forwarded to ``build_transcript`` so history lines can
+    be re-wrapped with language-appropriate entity lemmatisation.
+    """
     game_state = engine.game_state
     if game_state is None:
         raise RuntimeError("engine.game_state is None — cannot build snapshot")
     return GameSnapshot(
         game_id=str(game_state.uuid),
         setting=game_state.setting.name,
-        transcript=build_transcript(game_state.conversation_log),
+        transcript=build_transcript(game_state.conversation_log, language),
         turn_count=game_state.turn_count,
         character=build_character_info(game_state),
     )

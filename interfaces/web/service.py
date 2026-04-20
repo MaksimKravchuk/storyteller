@@ -48,7 +48,7 @@ async def get_current_snapshot(
     engine = await restore_engine(repo, cfg, session_row)
     if engine is None:
         return None
-    return snapshot_from_engine(engine)
+    return snapshot_from_engine(engine, session_language(session_row))
 
 
 async def _start_and_persist(
@@ -84,7 +84,7 @@ async def start_game_for_player(
         await repo.rollback()
         raise
     await repo.sessions.update(session_id, state=_STATE_PLAYING, language=language)
-    return snapshot_from_engine(engine)
+    return snapshot_from_engine(engine, language)
 
 
 async def _act_and_persist(

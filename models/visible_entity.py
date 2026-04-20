@@ -1,10 +1,10 @@
 """Typed descriptor for a single player-visible entity in a scene.
 
-A ``VisibleEntity`` is the payload the UI renders as an interactive chip
-and the post-match step uses to wrap entity spans in narrator prose. It
-carries the list of player-visible aliases rather than a single label —
-the Narrator may alternate between them for natural prose and the
-post-match wraps any of them as a hit for the same ``id``.
+A ``VisibleEntity`` is the payload the post-match step uses to wrap
+entity spans in narrator prose. It carries the list of player-visible
+aliases rather than a single label — the Narrator may alternate between
+them for natural prose and the post-match wraps any of them as a hit
+for the same ``id``.
 """
 
 from __future__ import annotations

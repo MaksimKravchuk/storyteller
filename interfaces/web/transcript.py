@@ -59,13 +59,18 @@ def render_player_html(text: str) -> str:
     return escape(text or "", quote=False)
 
 
-def build_transcript(conversation_log: list[dict]) -> list[TurnEntry]:
+def build_transcript(conversation_log: list[dict], language: str = _DEFAULT_LANGUAGE) -> list[TurnEntry]:
     """Convert ``GameState.conversation_log`` entries into flat TurnEntry pairs.
 
     Each log entry has shape ``{player_action, response, turn, ...}``; we emit
     a player line followed by a narrator line so the client can render a chat
     log without knowing the internal schema. Each entry carries both raw
     ``text`` and pre-rendered ``html``.
+
+    Narrator lines are re-wrapped with inline entity spans using the
+    ``visible_entities`` snapshot captured by the Director on the turn
+    they were produced; older entries without that key just render as
+    plain markdown HTML.
     """
     transcript: list[TurnEntry] = []
     for entry in conversation_log:
@@ -84,7 +89,31 @@ def build_transcript(conversation_log: list[dict]) -> list[TurnEntry]:
                 TurnEntry(
                     role=_ROLE_NARRATOR,
                     text=str(narrator_text),
-                    html=render_narrator_html(str(narrator_text)),
+                    html=render_narrator_html(
+                        str(narrator_text),
+                        _rehydrate_entities(entry.get("visible_entities")),
+                        language,
+                    ),
                 ),
             )
     return transcript
+
+
+def _rehydrate_entities(raw: object) -> list[VisibleEntity]:
+    """Rebuild ``VisibleEntity`` instances from a persisted conversation_log entry.
+
+    Tolerates missing, ``None``, or partially malformed payloads — the
+    inline highlight is a nice-to-have for history, so we degrade to an
+    empty list rather than blowing up transcript rendering.
+    """
+    if not isinstance(raw, list):
+        return []
+    rehydrated: list[VisibleEntity] = []
+    for payload in raw:
+        if not isinstance(payload, dict):
+            continue
+        try:
+            rehydrated.append(VisibleEntity.model_validate(payload))
+        except Exception:
+            logger.exception("build_transcript: skipping malformed visible_entity payload")
+    return rehydrated
