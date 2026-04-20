@@ -1,0 +1,262 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 9765,
+      "index": 0,
+      "narration": "You scan the tavern carefully and take in the room in deliberate sweeps. It is a single-room hall with lime-plastered masonry walls and a low, timber-framed ceiling. The floor is packed earth covered in worn straw, with scuffed bare boards marking the main walking paths.\n\nAgainst one wall stands a brick-and-stone fireplace with a soot-darkened hearth and a simple iron rack above it. The bar is a long plank counter of darkened wood, worn with repeated scratches, knife marks, water stains, cup rings, grime, and oxidation on the iron nails and fittings. Nearby, a line of amphorae sits side-by-side along the wall beside the fireplace; several have chips at the rim or neck and hairline cracks, and none are sealed.\n\nBassus says, “Nothing out of order. Keep your business quiet, and you won’t have trouble.”\n\nCato says, “What are you looking for? Don’t make a habit of roaming without telling me.”\n\nAulus says, “Nothing out of order. Keep your hands where I can see them.”",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "*I scan the room in deliberate sweeps—eyes on doorways, corners, and the crowded tables—hand resting near my short sword as I keep watch.*  \nNothing out of order. Keep your business quiet, and you won’t have trouble."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*I scan the room from the doorway, eyes sweeping—tables, benches, corners, exits—hand resting near my sword hilt as I take stock of who’s where and what’s out of place.*  \n\n*I keep my gaze moving, then settle it on the busiest paths through the floor.*  \n\nWhat are you looking for? Don’t make a habit of roaming without telling me."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Aulus",
+            "response": "*I scan the room in tight, controlled sweeps—eyes flicking from tables to doorways to shadows—hand resting near my short sword, posture steady.*\n\nNothing out of order. Keep your hands where I can see them."
+          }
+        ],
+        "intent": "Look around the tavern carefully.",
+        "item_examination": [
+          "Detailed physical description: The tavern interior consists of a single-room hall with lime-plastered masonry walls and a low, timber-framed ceiling; the floor is packed earth covered in worn straw and scuffed bare boards at the main walking paths. A brick-and-stone fireplace with a soot-darkened hearth sits against one wall; above it is a simple iron rack for hanging pots, with heat discoloration and ash residue. The bar is a long plank counter of darkened wood (about 1.8–2.2 m long, 0.8–0.9 m high), with iron nails and a shallow groove where cups are commonly set; the bar top shows repeated scratches, knife marks, and water stains. Overall condition is moderate-worn: soot on the fireplace surround, cup rings and grime on the bar surface, and scattered straw fragments near the hearth; no maker marks are visible on the walls or fireplace, but individual nail heads and iron fittings show oxidation.",
+          "Detailed physical description: A long plank bar of rough-sawn, unfinished wood, likely oak or similar hardwood, with a rectangular cross-section measuring about 5 cm by 2.5 cm and roughly 1.2–1.5 m in length. The bar is made from a single plank, with squared edges and shallow tool-planed faces; it shows darkened grain and a few small surface nicks and dents from handling. Weight is estimated at about 2.5–4 kg depending on thickness and moisture content. No maker’s marks are visible; the ends are slightly uneven and show minor splitting at one end.",
+          "Detailed physical description: A masonry fireplace set into the tavern’s interior wall, built from rough-fired bricks and mortar with a rectangular opening about 1.0 m wide and 0.6 m high; the hearth floor is a level slab of fired tile/stone about 1.2 m by 0.8 m. The interior surfaces are soot-darkened with small spalled patches near the lower corners, and the flue throat above is lined with darker, heat-reddened brick. A shallow ash deposit layer is visible at the hearth edge, with occasional scorched marks and hairline cracks in the mortar joints; no maker’s marks are visible on the exposed brickwork. Weight estimate: the fireplace mass is roughly 1.5–2.5 tons depending on thickness of the wall and hearth slab.",
+          "Amphorae row: a line of 6–10 storage amphorae set side-by-side along the tavern wall beside the fireplace, each about 0.9–1.1 m tall, with a bulbous body and two small loop handles on either side of the neck. The vessels are made of fired clay with a porous surface and a dull, slightly uneven slip; bases are rounded and sit directly on the floor, with some soot staining near the bottom and scuffing on the lower third from handling. Several show chips at the rim or neck and hairline cracks typical of fired pottery; none appear to be sealed with wax or plugs. No maker stamps or legible incised marks are visible from the standing position.",
+          "No tavernkeeper object is provided for examination. The scene shows a human tavernkeeper behind the bar, but no physical item (clothing, tools, or goods) is specified with measurable dimensions, materials, or visible maker marks."
+        ],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 13354,
+      "index": 1,
+      "narration": "You drive a punch at Aulus’s face, but he meets it in guard. He catches your wrist mid-swing and twists hard, driving you backward with his shoulder.\n\nAulus slams his forearm across your chest and holds you in place. Bassus steps in, grabs your free wrist, and keeps you from striking again. Cato closes in with his short sword raised in a ready guard, cutting off your line to the door.\n\n“You hit a city watchman and think you can walk away? Hands. Still. Now,” Aulus says.\n\n“You’re not standing clean anymore; you’re held, breath tight, sword kept low but ready,” Bassus says.\n\n“Enough. You hit one of ours—now you explain yourself, slow and clear,” Cato says.",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 11+0 vs target 20+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "*Your fist snaps in—right into my guard. I don’t go down. I catch your wrist mid-swing, twist hard, and drive you backward with my shoulder. Then I slam my forearm across your chest to pin you, breath sharp, eyes blazing.*\n\nYou hit a city watchman and think you can walk away? Hands. Still. Now."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "*My eyes snap to you—too close, too restless. I step in hard, shoulder-first, and drive you off balance—then I wrench your arm up and back, pinning you to the nearest table edge with my forearm across your chest. You’re not standing clean anymore; you’re held, breath tight, sword kept low but ready.*"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*I don’t wait for you to make your next move. My blade flashes free a finger-width—enough to threaten, not to gift you a clean opening—then I step in hard and fast, closing your space before you can set yourself.*  \n\n*Your approach comes in on me; I meet it with a tight guard, redirecting the motion. I drive you back with a sharp shove of my forearm, boots scraping as I keep you off-balance. My eyes lock on yours, measuring—no more games.*  \n\nHands. Still. Now. Tell me what you’re hunting, or you’ll be carried out."
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*I wrench you off-balance by the wrist I’ve caught, pinning you hard against the knot of our boots; my left hand clamps your arm while my right keeps my short sword angled low but ready. I bark for the others as I hold you.*",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I shove into the loose knot of guards, grab the player’s free wrist to keep them from striking again, and shout for the tavernkeeper to keep his hands off—then I angle my short sword point-up to threaten without stabbing.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "*I snap my short sword up into a ready guard and bark over the knot, stepping to cut off the player’s line to the door—eyes on their hands, not their face.* “Enough. You hit one of ours—now you explain yourself, slow and clear.”",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "2cecc4a6-c4ec-4f4d-bf09-df9a21c5aade",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 29.14557187492028,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus [INTIMIDATE] and Cato [INTIMIDATE] both acted",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 11+0 vs target 20+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → threatened",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 5,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 5,
+      "reason": null,
+      "votes": [
+        {
+          "error": "send error: Error code: 500 - {'type': 'error', 'error': {'type': 'api_error', 'message': 'Internal server error'}, 'request_id': 'req_011CaE5K1TpJec74PNZ1qdeG'}",
+          "latency_ms": 6007,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "",
+          "verdict": "ERROR"
+        },
+        {
+          "error": null,
+          "latency_ms": 2247,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus steps in, grabs your free wrist, and keeps you from striking again. Cato closes in with his short sword raised in a ready guard, cutting off your line to the door.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato take physical restraining actions against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1240,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus steps in, grabs your free wrist, and keeps you from striking again. Cato closes in with his short sword raised in a ready guard, cutting off your line to the door.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Bassus grabs the player's free wrist and pins them to a table, while Cato closes in with sword raised and cuts off the door.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1655,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus steps in, grabs your free wrist, and keeps you from striking again. Cato closes in with his short sword raised in a ready guard, cutting off your line to the door.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically restrains the player and Cato draws a weapon while cutting off escape.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1112,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus steps in, grabs your free wrist, and keeps you from striking again. Cato closes in with his short sword raised in a ready guard, cutting off your line to the door.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically restrains the player and Cato closes in with a raised sword to cut off escape.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1366,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus says: *My eyes snap to you—too close, too restless. I step in hard, shoulder-first, and drive you off balance—then I wrench your arm up and back, pinning you to the nearest table edge with my forearm across your chest.",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato physically intervene by grabbing/pinning the player and raising a sword to threaten while stepping in to stop movement.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-20T00:26:58.949885+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}

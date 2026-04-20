@@ -1,0 +1,401 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 6367,
+      "index": 0,
+      "narration": "You take a quiet corner of the taberna and wait.\n\nA short stretch of time passes. Nearby, the former legionary remains on shift, and the cloth merchant does as well. Their presence marks the room while you watch the hours drift.\n\nAcross the room, Brutus keeps his hands low beneath his loose grey tunic, thumb resting near the concealed pugio. He takes one slow sip, his eyes fixed on Marcus, jaw tight as he measures the distance and the exits. Marcus lifts his cup to the light, takes another slow sip, and smooths the front of his embroidered tunic while watching Brutus from the corner of his eye.",
+      "player_action": "I find a quiet corner of the taberna and wait, watching the hours drift past.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player wants to find a quiet corner of the taberna and wait while watching the hours drift past.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Keeps his hands low beneath the loose grey tunic, thumb resting near the concealed pugio; takes one slow sip, eyes fixed on Marcus across the room, jaw tight as he measures distance and exits.*",
+            "action_type": "IDLE",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "*lifts his cup to the light, then takes another slow sip, contentedly smoothing the front of his embroidered tunic while watching Brutus from the corner of his eye*",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 5223,
+      "index": 1,
+      "narration": "You keep waiting in your quiet corner of the taberna.\n\nNearby, the former legionary remains on shift, and the cloth merchant does as well. Their presence continues to mark the room while you watch the hours narrow into a short stretch of time.\n\nBrutus does not raise his voice. He shifts his weight on the bench, keeps the cup between himself and Marcus for cover, and makes a small, careful glance toward the nearest dark doorway before looking back and waiting. Marcus leans back in his chair, rolls the wine in his cup with a satisfied little smile, then glances again at Brutus as if assessing cloth quality rather than intent.",
+      "player_action": "I keep waiting through the night. I do nothing and speak to no one.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player wants to keep waiting through the night, doing nothing and speaking to no one.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Does not lift his voice. Brutus shifts his weight on the bench, keeping the cup between himself and Marcus for cover, and makes a small, careful glance toward the nearest dark doorway—then back, waiting.*",
+            "action_type": "IDLE",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "*leans back in his chair, rolling the wine in his cup with a satisfied little smile, then glances again at Brutus as if assessing cloth quality rather than intent*",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 7222,
+      "index": 2,
+      "narration": "You remain in your quiet corner of the taberna, doing nothing as the hours continue to pass.\n\nNearby, the former legionary stays on shift, and the cloth merchant does as well. Their presence continues to mark the room. Around Brutus and Marcus, the low chatter thins. Brutus shifts position to keep Marcus within reach and to keep his exit route clear.\n\nIn the quiet hour, Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus. Brutus keeps his cup in hand, posture rigid, his gaze fixed on Marcus and his thumb ready at the hem where the pugio lies concealed. Marcus sets his cup down with a soft clink, adjusts the hem of his tunic, and takes one more leisurely sip.",
+      "player_action": "I wait another full day here, doing nothing at all.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait another full day here, doing nothing at all.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Nurses his cup in silence, posture rigid. His gaze stays locked on Marcus; his thumb stays ready at the hem where the pugio lies concealed.*",
+            "action_type": "IDLE",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "*sets his cup down with a soft clink, then reaches to adjust the hem of his tunic and takes one more leisurely sip, as though the whole Forum Taberna exists to serve him*",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [
+            "Brutus shifts position to keep Marcus within reach, keeping his exit route clear; the room’s low chatter continues but seems to thin around their table.",
+            "In the quiet hour, Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus, but the outcome hinges on whether Marcus remains unaware."
+          ],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 6397,
+      "index": 3,
+      "narration": "You remain in your quiet corner of the taberna as more time passes.\n\nNearby, the former legionary stays on shift, and the cloth merchant does as well. Brutus keeps still, shoulders squared. He takes a measured sip, then sets the cup down without a sound, listening to the room while keeping Marcus in his sights. Marcus wipes a finger along the rim of his cup as if it were a display of fine workmanship, then idly watches Brutus over the top of his wine.",
+      "player_action": "I continue to wait. More time passes, and still I do nothing.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player wants to continue waiting and do nothing while more time passes.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Keeps still, shoulders squared. He takes a measured sip, then sets the cup down without a sound, listening to the room while keeping Marcus in his sights.*",
+            "action_type": "IDLE",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "*wipes a finger along the rim of his cup as if it were a display of fine workmanship, then idly watches Brutus over the top of his wine*",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 6170,
+      "index": 4,
+      "narration": "You remain in your quiet corner of the taberna and wait.\n\nNearby, the former legionary stays on shift, and the cloth merchant does as well. Brutus holds himself still, then shifts his bench a finger’s width closer to the edge, keeping quiet with his hand still near the concealed pugio. Marcus raises his cup once more, takes the last of it, then settles deeper into his chair with a smug little sigh and keeps watching Brutus without moving closer.",
+      "player_action": "I wait.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player wants to wait.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Breath held a moment, then released. Brutus shifts his bench a finger’s width closer to the edge, staying quiet, eyes never leaving Marcus, hand still near the concealed pugio.*",
+            "action_type": "MOVE",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "*raises his cup once more, savoring the last of it, then settles deeper into his chair with a smug little sigh and keeps watching Brutus without moving closer*",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 6382,
+      "index": 5,
+      "narration": "You remain in your quiet corner of the taberna and wait for one more day before considering your next move.\n\nNearby, the former legionary stays on shift, and the cloth merchant does as well. Brutus shifts from passive watching into a more deliberate plan, then moves closer when the taberna grows momentarily busy, keeping his intent hidden behind ordinary conversation and the clink of cups. *Marcus signals the serving girl with a lazy flick of his fingers for another taste of wine, then keeps his gaze on Brutus like he’s judging a bolt of cloth for flaws.*\n\nAs the hour goes on, a passing patron or taberna-server calls out for attention, and Brutus’s timing is broken. The concealed pugio remains unused.",
+      "player_action": "I wait for one more day before considering my next move.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player wants to wait for one more day before deciding on their next move.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*signals the serving girl with a lazy flick of his fingers for another taste of wine, then keeps his gaze on Brutus like he’s judging a bolt of cloth for flaws*",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [
+            "Brutus shifts from passive watching to a more deliberate plan, concealing his intent as the hour passes.",
+            "Brutus shifts closer when the taberna grows momentarily busy, keeping his intent hidden behind ordinary conversation and the clink of cups.",
+            "As the tension peaks, a passing patron or taberna-server calls out for attention, momentarily breaking Brutus’s timing; the concealed pugio remains unused."
+          ],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 43.2410912909545,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "clash_occurred",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Brutus autonomously clashes with Marcus (attempt, any outcome)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no Brutus-vs-Marcus attack, contest, or injury signal found",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "outcome_recorded_in_world_facts",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Clash outcome lands in the knowledge graph",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no clash outcome recorded in the knowledge graph",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "marcus_killed",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus is killed (lethal resolution bonus)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus still alive (physical_status='healthy')",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "narration_describes_clash",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Narration describes Brutus clashing with Marcus (any outcome)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3667,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus.",
+          "quote_verified": true,
+          "reasoning": "Turn 2's narration explicitly states that Brutus attempts to carry out the murder on Marcus, which constitutes an attack attempt regardless of outcome.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 5082,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "In the quiet hour, Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus.",
+          "quote_verified": true,
+          "reasoning": "The narration explicitly describes Brutus attempting murder on Marcus.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1262,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "In the quiet hour, Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus.",
+          "quote_verified": true,
+          "reasoning": "Turn 2 narration explicitly states 'Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus,' describing an attack attempt.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1515,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "In the quiet hour, Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus.",
+          "quote_verified": true,
+          "reasoning": "The narration explicitly says Brutus attempts to murder Marcus.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 939,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus.",
+          "quote_verified": true,
+          "reasoning": "The narration explicitly says Brutus attempts the murder on Marcus.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1139,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "In the quiet hour, Brutus slips toward the nearest dark doorway and attempts to carry out the murder on Marcus.",
+          "quote_verified": true,
+          "reasoning": "The narration explicitly states Brutus attempts to carry out the murder on Marcus.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "npc_autonomy_murder_plot",
+  "scenario_label": "NPC autonomy — Brutus plots to murder Marcus while the player waits",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-20T00:34:29.180784+00:00",
+  "total_awarded": 2,
+  "total_base": 10
+}
