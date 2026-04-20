@@ -44,6 +44,7 @@ def wrap_entities(
     html: str,
     entities: list[VisibleEntity],
     language: str,
+    token_cache: dict[str, str] | None = None,
 ) -> str:
     """Return ``html`` with entity-alias mentions wrapped in clickable spans.
 
@@ -51,6 +52,11 @@ def wrap_entities(
     :func:`formatting.markdown_render.to_html` (or an equivalently-
     escaped fragment) — we rely on HTML escaping having already
     neutralised any player-controlled content.
+
+    Pass ``token_cache`` when rewrapping many narrator lines back-to-back
+    (e.g. ``build_transcript`` on reload) to share pymorphy3 output
+    across calls — on Russian prose, lemmatisation is the dominant cost
+    and common tokens repeat heavily across turns.
     """
     if not html or not entities:
         return html
@@ -58,7 +64,7 @@ def wrap_entities(
     plans = _build_plans(entities, lemmatize)
     if not plans:
         return html
-    return _Rewriter(plans, lemmatize).rewrite(html)
+    return _Rewriter(plans, lemmatize, token_cache).rewrite(html)
 
 
 def _build_plans(entities: list[VisibleEntity], lemmatize: Lemmatizer) -> list[_AliasPlan]:
@@ -77,13 +83,18 @@ def _build_plans(entities: list[VisibleEntity], lemmatize: Lemmatizer) -> list[_
 class _Rewriter:
     """Walks HTML text nodes and rewrites alias hits into entity spans."""
 
-    def __init__(self, plans: list[_AliasPlan], lemmatize: Lemmatizer) -> None:
+    def __init__(
+        self,
+        plans: list[_AliasPlan],
+        lemmatize: Lemmatizer,
+        token_cache: dict[str, str] | None = None,
+    ) -> None:
         self._plans = plans
         self._lemmatize = lemmatize
-        # Memoize lemmatized prose tokens within one rewrite call —
-        # pymorphy3.parse is the dominant per-token cost on Russian turns
-        # and typical prose repeats many common words.
-        self._lemma_cache: dict[str, str] = {}
+        # pymorphy3.parse is the dominant per-token cost on Russian turns.
+        # When a caller passes in a cache, share it across calls so the
+        # same common tokens aren't re-parsed for every narrator entry.
+        self._lemma_cache: dict[str, str] = {} if token_cache is None else token_cache
 
     def rewrite(self, html: str) -> str:
         """Replace alias hits inside HTML text nodes, leaving tags untouched."""

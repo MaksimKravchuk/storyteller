@@ -26,17 +26,12 @@ def render_narrator_html(
     text: str,
     visible_entities: list[VisibleEntity] | None = None,
     language: str = _DEFAULT_LANGUAGE,
+    token_cache: dict[str, str] | None = None,
 ) -> str:
     """Render narrator markdown into the HTML subset used by the web UI.
 
-    When ``visible_entities`` is provided, the rendered HTML is also
-    post-processed by :func:`formatting.entity_markup.wrap_entities`
-    so entity mentions (NPC names, POI aliases, tracked items) are
-    wrapped in inline spans carrying the entity kind and id. Post-
-    match failure degrades to plain markdown HTML rather than bringing
-    down the already-paid-for narration — the wrapped spans are the
-    only vehicle for entity UX, so the degraded path just loses the
-    highlight rather than the narration itself.
+    Wrap failures degrade to plain markdown HTML so already-paid-for
+    narration is never dropped.
     """
     if not text:
         return ""
@@ -44,7 +39,7 @@ def render_narrator_html(
     if not visible_entities:
         return html
     try:
-        return wrap_entities(html, visible_entities, language)
+        return wrap_entities(html, visible_entities, language, token_cache)
     except Exception:
         logger.exception(
             "render_narrator_html: wrap_entities failed; returning plain HTML (language={0}, n_entities={1})",
@@ -62,17 +57,15 @@ def render_player_html(text: str) -> str:
 def build_transcript(conversation_log: list[dict], language: str = _DEFAULT_LANGUAGE) -> list[TurnEntry]:
     """Convert ``GameState.conversation_log`` entries into flat TurnEntry pairs.
 
-    Each log entry has shape ``{player_action, response, turn, ...}``; we emit
-    a player line followed by a narrator line so the client can render a chat
-    log without knowing the internal schema. Each entry carries both raw
-    ``text`` and pre-rendered ``html``.
-
-    Narrator lines are re-wrapped with inline entity spans using the
-    ``visible_entities`` snapshot captured by the Director on the turn
-    they were produced; older entries without that key just render as
-    plain markdown HTML.
+    Emits a player line followed by a narrator line per log entry.
+    Narrator lines are re-wrapped with the ``visible_entities`` snapshot
+    captured on the turn they were produced; legacy entries without that
+    key fall back to plain markdown HTML.
     """
     transcript: list[TurnEntry] = []
+    # Share one pymorphy3 cache across every narrator line so common
+    # tokens ("дверь", "the") aren't re-lemmatised per-turn.
+    token_cache: dict[str, str] = {}
     for entry in conversation_log:
         player_text = entry.get("player_action")
         if player_text:
@@ -93,6 +86,7 @@ def build_transcript(conversation_log: list[dict], language: str = _DEFAULT_LANG
                         str(narrator_text),
                         _rehydrate_entities(entry.get("visible_entities")),
                         language,
+                        token_cache,
                     ),
                 ),
             )
@@ -100,20 +94,26 @@ def build_transcript(conversation_log: list[dict], language: str = _DEFAULT_LANG
 
 
 def _rehydrate_entities(raw: object) -> list[VisibleEntity]:
-    """Rebuild ``VisibleEntity`` instances from a persisted conversation_log entry.
+    """Rebuild ``VisibleEntity`` instances from a persisted log entry.
 
-    Tolerates missing, ``None``, or partially malformed payloads — the
-    inline highlight is a nice-to-have for history, so we degrade to an
-    empty list rather than blowing up transcript rendering.
+    Tolerates missing, ``None``, or malformed payloads by skipping them
+    — inline highlight for history is best-effort.
     """
     if not isinstance(raw, list):
         return []
     rehydrated: list[VisibleEntity] = []
+    malformed = 0
     for payload in raw:
         if not isinstance(payload, dict):
+            malformed += 1
             continue
         try:
             rehydrated.append(VisibleEntity.model_validate(payload))
         except Exception:
-            logger.exception("build_transcript: skipping malformed visible_entity payload")
+            malformed += 1
+    if malformed:
+        logger.warning(
+            "build_transcript: skipped {0} malformed visible_entity payload(s)",
+            malformed,
+        )
     return rehydrated

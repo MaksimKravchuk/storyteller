@@ -3,9 +3,9 @@
 The collector is the single source of truth for "what can the player see
 and interact with this turn?" — NPCs, points of interest, and tracked
 items. It stitches together :meth:`NPCCard.known_names_for_player`
-(knowledge gating) and the typed :class:`PointOfInterest` aliases so the
-frontend chip row and the inline entity-markup post-match share one
-vocabulary.
+(knowledge gating) and the typed :class:`PointOfInterest` aliases into
+the shared vocabulary that :func:`formatting.entity_markup.wrap_entities`
+uses to wrap inline spans in narrator prose.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def collect_for_turn(raw_outputs: Any, game_state: Any) -> list[VisibleEntity]:
 
     Uses ``raw_outputs.scene`` when present (new-scene turns) and falls
     back to ``game_state.current_scene`` so continuation turns still
-    carry a chip row. The location is looked up by the scene's
+    carry entity highlights. The location is looked up by the scene's
     ``location_id`` from ``game_state.locations``.
     """
     active_scene = raw_outputs.scene or getattr(game_state, "current_scene", None)
@@ -85,8 +85,8 @@ def _item_entities(location: Any, already_collected: list[VisibleEntity]) -> lis
     Suppression is token-boundary, not substring — a short key like
     ``"ar"`` must still surface even when a longer POI alias like
     ``"bar"`` happens to contain those characters. The object-state key
-    doubles as the entity id so chips for the same tracked object stay
-    stable across turns.
+    doubles as the entity id so the same tracked object stays stable
+    across turns.
     """
     object_states = getattr(location, "object_states", None) or {}
     if not object_states:

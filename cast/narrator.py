@@ -159,10 +159,7 @@ class Narrator(BasePerformer):
         game_state = context["game_state"]
         is_new_scene = input_data.scene is not None
 
-        # Chip-row payload is best-effort: a failure here (invariant break
-        # in scene/NPC data, validator rejecting an empty alias) must not
-        # abort the turn. The narration and timeline advance matter more
-        # than the sidebar chips.
+        # Best-effort: a bad scene/NPC invariant must not abort the turn.
         try:
             game_state.last_visible_entities = collect_for_turn(input_data, game_state)
         except Exception:

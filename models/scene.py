@@ -23,10 +23,10 @@ class PointOfInterest(StorytellerBase):
     """A named, addressable feature inside a scene or location.
 
     ``names`` is the list of player-visible aliases. The first element
-    is the primary label (used when a single name must be picked — e.g.
-    chip text). The rest are acceptable synonyms: the Narrator may
-    alternate between them for natural prose, and the entity-markup
-    post-match wraps any of them.
+    is the primary label (used when a single name must be picked). The
+    rest are acceptable synonyms: the Narrator may alternate between
+    them for natural prose, and the entity-markup post-match wraps any
+    of them.
     """
 
     names: list[str]

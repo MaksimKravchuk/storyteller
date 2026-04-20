@@ -98,10 +98,9 @@ class ContextFormatter:
                 _KEY_PLAYER_ACTION: player_action,
                 "response": narrated_response,
                 "game_clock": self._gs.game_clock,
-                # Snapshot the narrator's per-turn entity list so the web
-                # transcript can rewrap inline spans on reload. Without this
-                # the opening narration would lose its highlights the moment
-                # the player refreshes the page.
+                # Per-turn snapshot; transcript rebuild needs it to rewrap
+                # inline spans, and present game_state can't reconstruct
+                # past scenes' entity lists.
                 "visible_entities": [entity.model_dump() for entity in self._gs.last_visible_entities],
             }
         )
