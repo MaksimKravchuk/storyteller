@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import argparse
 
+_DEFAULT_ITERATIONS = 3
+_QUICK_ITERATIONS = 1
+
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     """Parse the ``benchmarks`` CLI invocation."""
@@ -26,11 +29,17 @@ def _register_run_parser(sub: argparse._SubParsersAction) -> None:
         default=None,
         help="Scenario id (repeatable). Omit to run every registered scenario.",
     )
-    run_cmd.add_argument(
+    iter_group = run_cmd.add_mutually_exclusive_group()
+    iter_group.add_argument(
         "--iterations",
         type=int,
-        default=1,
-        help="Number of iterations per scenario (default 1).",
+        default=_DEFAULT_ITERATIONS,
+        help="Number of iterations per scenario (default {0}).".format(_DEFAULT_ITERATIONS),
+    )
+    iter_group.add_argument(
+        "--quick",
+        action="store_true",
+        help="Run a single iteration per scenario (smoke-run shorthand for --iterations 1).",
     )
     run_cmd.add_argument(
         "--judges",
@@ -48,6 +57,13 @@ def _register_run_parser(sub: argparse._SubParsersAction) -> None:
 
 def _register_compare_parser(sub: argparse._SubParsersAction) -> None:
     """Register the ``compare`` subcommand."""
-    compare_cmd = sub.add_parser("compare", help="Diff two archived JSON reports.")
-    compare_cmd.add_argument("baseline", type=str, help="Path to the baseline JSON report.")
-    compare_cmd.add_argument("current", type=str, help="Path to the new JSON report.")
+    compare_cmd = sub.add_parser("compare", help="Diff two archived aggregate reports.")
+    compare_cmd.add_argument("baseline", type=str, help="Path to the baseline aggregate JSON report.")
+    compare_cmd.add_argument("current", type=str, help="Path to the new aggregate JSON report.")
+
+
+def resolve_iterations(args: argparse.Namespace) -> int:
+    """Resolve --quick/--iterations into the effective iteration count."""
+    if getattr(args, "quick", False):
+        return _QUICK_ITERATIONS
+    return int(args.iterations)

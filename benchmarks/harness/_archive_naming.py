@@ -19,7 +19,7 @@ def _safe_char(char: str) -> str:
     return "_"
 
 
-def _sanitise(component: str) -> str:
+def sanitise_filename(component: str) -> str:
     """Scrub filesystem-hostile characters from a filename component."""
     return "".join(_safe_char(char) for char in component)
 
@@ -33,12 +33,21 @@ def _parse_timestamp(started_at: str) -> str:
     return started.strftime(_TIMESTAMP_FORMAT)
 
 
+def current_timestamp() -> str:
+    """Return ``now`` formatted to match the archive filename timestamp style."""
+    return datetime.now(timezone.utc).strftime(_TIMESTAMP_FORMAT)
+
+
+def sha_fragment(sha: str) -> str:
+    """Return a filesystem-safe 7-char SHA prefix (or ``nosha`` when empty)."""
+    return sanitise_filename(sha[:7]) or "nosha"
+
+
 def file_stem(report: ScenarioReport) -> str:
     """Build the ``<timestamp>_<sha>_<scenario>_iterN`` stem."""
-    sha_fragment = _sanitise(report.engine_git_sha[:7]) or "nosha"
     return "{0}_{1}_{2}_iter{3}".format(
         _parse_timestamp(report.started_at),
-        sha_fragment,
-        _sanitise(report.scenario_id),
+        sha_fragment(report.engine_git_sha),
+        sanitise_filename(report.scenario_id),
         report.iteration,
     )
