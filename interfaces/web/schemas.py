@@ -12,7 +12,6 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from interfaces.web.character_schemas import CharacterInfo
-from models.visible_entity import VisibleEntity
 
 _SETTING_MAX_CHARS = 500
 _ACTION_MAX_CHARS = 2000
@@ -40,17 +39,14 @@ class TurnEntry(BaseModel):
     ``*italic*`` / ```` `code` ```` markdown subset). ``html`` is the same
     content already rendered to safe HTML so a browser client can drop it
     into ``innerHTML`` directly: player text is escaped, narrator text is
-    rendered through ``formatting.markdown_render.to_html``.
-
-    ``visible_entities`` is the per-turn chip payload — NPCs, points of
-    interest and tracked items the player can see on this narrator line.
-    Player rows leave it empty.
+    rendered through ``formatting.markdown_render.to_html`` and — when the
+    entity collector ran for this turn — already carries the inline
+    ``<span class="poi" data-kind=... data-id=...>`` wrappers.
     """
 
     role: Literal["player", "narrator"]
     text: str
     html: str
-    visible_entities: list[VisibleEntity] = Field(default_factory=list)
 
 
 class GameSnapshot(BaseModel):
@@ -70,12 +66,11 @@ class ActionResponse(BaseModel):
     """Response body for ``POST /api/games/{game_id}/actions``.
 
     ``narration`` is the raw markdown text the engine produced;
-    ``narration_html`` is the same value pre-rendered for browser clients.
-    ``visible_entities`` carries the chip payload for the rendered turn.
+    ``narration_html`` is the same value pre-rendered for browser clients
+    with inline entity spans already baked in.
     """
 
     narration: str
     narration_html: str
     turn_count: int
     character: CharacterInfo
-    visible_entities: list[VisibleEntity] = Field(default_factory=list)

@@ -452,34 +452,6 @@ button[type="submit"]:disabled {
   .character-col li.is-new { animation: none; }
 }
 
-/* Entity chips: per-turn row of clickable NPC / POI / item pills shown under
-   narrator prose, giving the player an affordance for what's interactive. */
-.entity-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px dashed rgba(245, 200, 120, 0.18);
-}
-
-.entity-chip {
-  font-family: inherit;
-  font-size: 0.85rem;
-  padding: 0.2rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid rgba(245, 200, 120, 0.4);
-  background: rgba(245, 200, 120, 0.08);
-  color: #e8e4d8;
-  cursor: pointer;
-}
-
-.entity-chip:hover { background: rgba(245, 200, 120, 0.18); }
-
-.entity-chip.entity-npc  { border-color: rgba(180, 220, 255, 0.55); color: #b4dcff; }
-.entity-chip.entity-poi  { border-color: rgba(245, 200, 120, 0.55); color: #f5c878; }
-.entity-chip.entity-item { border-color: rgba(200, 245, 180, 0.55); color: #c8f5b4; }
-
 /* Inline entity spans inserted by formatting.entity_markup.wrap_entities. */
 .turn.narrator .poi {
   border-bottom: 1px dotted currentColor;

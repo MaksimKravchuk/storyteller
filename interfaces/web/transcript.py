@@ -32,10 +32,11 @@ def render_narrator_html(
     When ``visible_entities`` is provided, the rendered HTML is also
     post-processed by :func:`formatting.entity_markup.wrap_entities`
     so entity mentions (NPC names, POI aliases, tracked items) are
-    wrapped in clickable spans carrying the entity kind and id. Post-
+    wrapped in inline spans carrying the entity kind and id. Post-
     match failure degrades to plain markdown HTML rather than bringing
-    down the already-paid-for narration — chips on the side payload
-    still carry the entity list.
+    down the already-paid-for narration — the wrapped spans are the
+    only vehicle for entity UX, so the degraded path just loses the
+    highlight rather than the narration itself.
     """
     if not text:
         return ""

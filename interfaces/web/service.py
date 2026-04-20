@@ -101,13 +101,15 @@ async def _act_and_persist(
         raise RuntimeError("engine.game_state is None — engine did not initialise correctly")
     turn_number = game_state.turn_count
     await persist_engine(repo, session_id, engine, turn_number=turn_number)
-    visible_entities = list(game_state.last_visible_entities)
     return ActionResponse(
         narration=narration,
-        narration_html=render_narrator_html(narration, visible_entities, language),
+        narration_html=render_narrator_html(
+            narration,
+            list(game_state.last_visible_entities),
+            language,
+        ),
         turn_count=turn_number,
         character=build_character_info(game_state),
-        visible_entities=visible_entities,
     )
 
 
