@@ -9,16 +9,27 @@ from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import EvidencePromptSpec
 
 QUOTE_MATCH_MIN_CHARS = 8
-QUOTE_PARTIAL_MATCH_MIN_CHARS = 40
+QUOTE_PARTIAL_MATCH_MIN_CHARS = 24
 QUOTE_PARTIAL_MATCH_MIN_RATIO = 0.9
 _TURN_EXCERPT_CHAR_BUDGET = 4000
 _TRUNCATION_NOTE = "\n[...excerpt truncated...]"
 _ELLIPSIS_PATTERN = re.compile(r"\.{3,}|\u2026")
+_SMART_PUNCTUATION = str.maketrans(
+    {
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2013": "-",
+        "\u2014": "-",
+    },
+)
 
 
 def _normalise(text: str) -> str:
-    """Lowercase and collapse whitespace so quote matching is forgiving."""
-    return re.sub(r"\s+", " ", text.strip().lower())
+    """Lowercase, fold smart punctuation, and collapse whitespace for forgiving matching."""
+    folded = text.translate(_SMART_PUNCTUATION)
+    return re.sub(r"\s+", " ", folded.strip().lower())
 
 
 def _ellipsis_fragments_present(normalised_quote: str, normalised_corpus: str) -> bool:
@@ -30,23 +41,20 @@ def _ellipsis_fragments_present(normalised_quote: str, normalised_corpus: str) -
     return all(fragment in normalised_corpus for fragment in fragments)
 
 
+def _matching_char_count(normalised_quote: str, normalised_corpus: str) -> int:
+    """Return the total characters of the quote that align, in order, with the corpus."""
+    matcher = SequenceMatcher(None, normalised_quote, normalised_corpus, autojunk=False)
+    return sum(block.size for block in matcher.get_matching_blocks())
+
+
 def _partial_overlap_accepted(normalised_quote: str, normalised_corpus: str) -> bool:
-    """Return True when most of the quote matches a contiguous run in the corpus."""
+    """Return True when the quote is overwhelmingly grounded in corpus text, up to small drift."""
     if not normalised_quote or not normalised_corpus:
         return False
-    longest = (
-        SequenceMatcher(
-            None,
-            normalised_quote,
-            normalised_corpus,
-            autojunk=False,
-        )
-        .find_longest_match()
-        .size
-    )
-    if longest < QUOTE_PARTIAL_MATCH_MIN_CHARS:
+    matched = _matching_char_count(normalised_quote, normalised_corpus)
+    if matched < QUOTE_PARTIAL_MATCH_MIN_CHARS:
         return False
-    return longest / len(normalised_quote) >= QUOTE_PARTIAL_MATCH_MIN_RATIO
+    return matched / len(normalised_quote) >= QUOTE_PARTIAL_MATCH_MIN_RATIO
 
 
 def quote_matches(quote: str, turn_text: str) -> bool:

@@ -147,6 +147,42 @@ class TestQuoteMatching:
     def test_partial_match_threshold_is_conservative(self):
         assert QUOTE_PARTIAL_MATCH_MIN_CHARS >= 24
 
+    @allure.story("Quote verification")
+    @allure.title("quote_matches folds Unicode smart quotes and dashes to their ASCII equivalents")
+    def test_smart_punctuation_folded_to_ascii(self):
+        turn_text = (
+            "Brutus shifts from watching to acting just enough to startle Marcus; the concealed "
+            "pugio is drawn only partway, and the room\u2019s attention turns toward the tense exchange."
+        )
+        quote = (
+            "Brutus shifts from watching to acting just enough to startle Marcus; the concealed "
+            "pugio is drawn only partway, and the room's attention turns toward the tense exchange."
+        )
+
+        assert quote_matches(quote, turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches folds em-dashes in the corpus against a judge that used ASCII hyphens")
+    def test_em_dash_folded_to_ascii(self):
+        turn_text = "Gaius\u2014the scarred one by the fountain\u2014stops mid-stride and glares."
+        quote = "Gaius-the scarred one by the fountain-stops mid-stride and glares"
+
+        assert quote_matches(quote, turn_text)
+
+    @allure.story("Quote verification")
+    @allure.title("quote_matches tolerates a single punctuation drift inside an otherwise verbatim sentence")
+    def test_single_comma_drift_tolerated(self):
+        turn_text = (
+            "He wrenches your pinned arm outward, brings his pilum up to lever your shoulder, "
+            "and forces you back from the stones."
+        )
+        quote = (
+            "He wrenches your pinned arm outward, brings his pilum up to lever your shoulder "
+            "and forces you back from the stones."
+        )
+
+        assert quote_matches(quote, turn_text)
+
 
 @allure.epic("Engine & LLM Infrastructure")
 @allure.feature("Benchmark harness")
