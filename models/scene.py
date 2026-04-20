@@ -63,8 +63,14 @@ class SceneNPC(BaseModel):
         return self.uuid is None
 
 
-def _coerce_single_poi(entry: Any) -> PointOfInterest:
-    """Convert one heterogeneous POI entry to a ``PointOfInterest`` instance."""
+def coerce_point_of_interest(entry: Any) -> PointOfInterest:
+    """Convert one heterogeneous POI entry to a ``PointOfInterest`` instance.
+
+    Accepts the three shapes producers commonly emit: an existing
+    ``PointOfInterest``, a bare legacy string (promoted to a single-alias
+    POI), or a dict matching :class:`PointOfInterest`'s schema (the new
+    ``{"names": [...]}`` form that carries head-noun aliases).
+    """
     if isinstance(entry, PointOfInterest):
         return entry
     if isinstance(entry, str):
@@ -87,7 +93,7 @@ def _coerce_points_of_interest(raw: Any) -> list[PointOfInterest]:
     """
     if raw is None:
         return []
-    return [_coerce_single_poi(entry) for entry in raw]
+    return [coerce_point_of_interest(entry) for entry in raw]
 
 
 class Scene(StorytellerBase):

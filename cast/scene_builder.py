@@ -10,7 +10,7 @@ from loguru import logger
 from cast.base_performer_class import BasePerformer
 from cast.schemas.scene_response import SceneResponse
 from knowledge.scene_state import all_scene_deltas
-from models.scene import PointOfInterest, Scene, SceneNPC
+from models.scene import PointOfInterest, Scene, SceneNPC, coerce_point_of_interest
 from prompts.scene_builder_prompts import get_scene_builder_prompts
 
 _SETTING_SUMMARY_MAX = 500
@@ -115,7 +115,11 @@ def _current_object_states(game_state: Any) -> dict[str, str]:
 def _scene_from_response(scene_data: SceneResponse, fallback_time_of_day: str) -> Scene:
     """Convert a raw LLM ``SceneResponse`` payload into a typed ``Scene``."""
     npcs = [SceneNPC(role=role_str) for role_str in scene_data.npcs_present]
-    pois = [PointOfInterest(names=[raw]) for raw in scene_data.points_of_interest]
+    # Promote the heterogeneous ``list[str | dict]`` from the LLM into typed
+    # PointOfInterest instances here so the Scene constructor receives the
+    # strictly-typed shape mypy expects. The LLM dict form carries head-noun
+    # aliases; bare strings stay supported for the legacy single-alias shape.
+    pois = [coerce_point_of_interest(raw) for raw in scene_data.points_of_interest]
     return Scene(
         location_id=scene_data.location_id or "unknown",
         description=scene_data.description,

@@ -47,6 +47,24 @@ class TestSceneBuilder:
         assert scene.time_of_day == "morning"
 
     @allure.story("Scene construction")
+    @allure.title("SceneBuilder accepts dict-form POIs so head-noun aliases flow through to PointOfInterest.names")
+    @pytest.mark.asyncio
+    async def test_poi_dict_form_preserves_head_aliases(self, game_state) -> None:
+        builder = SceneBuilder(llm_client=MagicMock())
+        payload = SceneResponse(
+            points_of_interest=[
+                {"names": ["a wooden notice board with wax-sealed scrolls", "notice board", "board"]},
+                "a plain torch",
+            ],
+        )
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=payload)):
+            scene = await builder.act("look", {"game_state": game_state})
+        first, second = scene.points_of_interest
+        assert first.names == ["a wooden notice board with wax-sealed scrolls", "notice board", "board"]
+        assert first.primary_name == "a wooden notice board with wax-sealed scrolls"
+        assert second.names == ["a plain torch"]
+
+    @allure.story("Scene construction")
     @allure.title("SceneBuilder defaults every optional scene field when the LLM response is empty")
     @pytest.mark.asyncio
     async def test_empty_response_defaults(self, game_state) -> None:
