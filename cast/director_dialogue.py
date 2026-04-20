@@ -187,6 +187,7 @@ class DialogueHandler:
         dialogue_entries = list(
             await asyncio.gather(*(_execute_npc_dialogue(*wi, self._gs) for wi in work_items)),
         )
+        dlg_helpers.append_conversation_history(work_items, dialogue_entries, player_action)
         await self._memory_manager.summarize_interactions_batch(
             dlg_helpers.format_dialogue_summary_pairs(work_items, dialogue_entries, player_action),
             self._gs.game_clock,

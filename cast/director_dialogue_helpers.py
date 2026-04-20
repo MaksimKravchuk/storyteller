@@ -169,6 +169,27 @@ def format_dialogue_summary_pairs(
     ]
 
 
+_ROLE_USER = "user"
+_ROLE_ASSISTANT = "assistant"
+
+
+def append_conversation_history(
+    work_items: list[tuple[Any, Any, str, ContestRoll | None]],
+    dialogue_entries: list[dict[str, str]],
+    player_action: str,
+) -> None:
+    """Append the bare player utterance + NPC reply to each NPC's persisted log.
+
+    Bare ``player_action`` is used (not the contest-wrapped ``action_text``
+    seen by the Actor LLM) so the persisted history matches the
+    role/content shape the benchmark fixture and the JSONB column expect.
+    """
+    for work_item, entry in zip(work_items, dialogue_entries):
+        npc = work_item[0]
+        npc.conversation_history.append({"role": _ROLE_USER, "content": player_action})
+        npc.conversation_history.append({"role": _ROLE_ASSISTANT, "content": entry.get("response", "")})
+
+
 def build_combat_action(
     player_action: str,
     npc: Any,

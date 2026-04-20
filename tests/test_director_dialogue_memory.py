@@ -289,6 +289,112 @@ class TestDialogueHandlerLongTermMemory:
             assert call.args[0] == []
 
 
+@allure.epic("Memory & Persistence")
+@allure.feature("NPC conversation history")
+class TestDialogueHandlerConversationHistory:
+    """After a TALK turn, the targeted NPC's ``conversation_history`` grows (KER-37)."""
+
+    @allure.story("Conversation history append")
+    @allure.title("handle_dialogue appends one user/assistant pair to a freshly initialised NPC")
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_appends_player_and_npc_entries(self):
+        gs = make_game_state()
+        npc = setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
+        )
+
+        actor = make_mock_actor("Hail, traveller.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor}, memory_manager)
+
+        await handler.handle_dialogue("greetings", ["Marcus"])
+
+        assert npc.conversation_history == [
+            {"role": "user", "content": "greetings"},
+            {"role": "assistant", "content": "Hail, traveller."},
+        ]
+
+    @allure.story("Conversation history append")
+    @allure.title("handle_dialogue extends a pre-seeded conversation_history without replacing it")
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_extends_pre_seeded_history(self):
+        gs = make_game_state()
+        seed = [
+            {"role": "user", "content": "Tell me how business is, Marcus."},
+            {"role": "assistant", "content": "Terrible, friend."},
+        ]
+        npc = setup_npc(gs, _NPC_A, name="Marcus", occupation="baker")
+        npc.conversation_history = list(seed)
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (baker)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="baker", uuid=_NPC_A)],
+        )
+
+        actor = make_mock_actor("Still terrible, friend.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor}, memory_manager)
+
+        await handler.handle_dialogue("How is business today?", ["Marcus"])
+
+        assert npc.conversation_history[:2] == seed
+        assert npc.conversation_history[2:] == [
+            {"role": "user", "content": "How is business today?"},
+            {"role": "assistant", "content": "Still terrible, friend."},
+        ]
+
+    @allure.story("Conversation history append")
+    @allure.title("handle_dialogue appends per NPC independently when multiple targets share a turn")
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_appends_per_npc_independently(self):
+        gs = make_game_state()
+        npc_a = setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        npc_b = setup_npc(gs, _NPC_B, name="Cassia", occupation="innkeeper")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.knowledge_graph.register_actor_node(_NPC_B, label="Cassia (innkeeper)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[
+                SceneNPC(role="legionary", uuid=_NPC_A),
+                SceneNPC(role="innkeeper", uuid=_NPC_B),
+            ],
+        )
+
+        actor_a = make_mock_actor("Marcus speaks.")
+        actor_b = make_mock_actor("Cassia speaks.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor_a, _NPC_B: actor_b}, memory_manager)
+
+        await handler.handle_dialogue("hello both", ["Marcus", "Cassia"])
+
+        assert npc_a.conversation_history == [
+            {"role": "user", "content": "hello both"},
+            {"role": "assistant", "content": "Marcus speaks."},
+        ]
+        assert npc_b.conversation_history == [
+            {"role": "user", "content": "hello both"},
+            {"role": "assistant", "content": "Cassia speaks."},
+        ]
+
+
 @allure.epic("NPC Interaction")
 @allure.feature("Director registration")
 class TestDirectorRegistersNpcGraphNode:
