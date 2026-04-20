@@ -1,5 +1,37 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(uv run ruff check *)",
+      "Bash(uv run pytest tests/*)",
+      "Bash(uv run flake8 *)",
+      "Bash(uv run ruff format *)",
+      "Bash(uv run mypy *)",
+      "Bash(uv run alembic heads)",
+      "mcp__linear-server__get_issue",
+      "mcp__linear-server__list_teams",
+      "mcp__linear-server__list_issues",
+      "mcp__linear-server__list_comments",
+      "mcp__Claude_Preview__preview_screenshot"
+    ]
+  },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit *)",
+            "command": ".claude/hooks/require-skill.sh simplify \"Run /simplify on the staged changes — it reviews changed code for reuse, quality, and efficiency, then fixes any issues found.\" \"git commit\""
+          },
+          {
+            "type": "command",
+            "if": "Bash(gh pr create *)",
+            "command": ".claude/hooks/require-skill.sh pr-review-toolkit_review-pr \"Run /pr-review-toolkit:review-pr to do a comprehensive PR review with the specialized agents before opening this PR.\" \"gh pr create\""
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
