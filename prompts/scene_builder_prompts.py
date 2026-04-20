@@ -79,13 +79,16 @@ SCENE_BUILDER_GENERATE = PromptTemplate(
                 '  "description": "Detailed visual description of the scene (what you see, architecture, objects)",\n'
                 '  "npcs_present": ["EVERY person/character visible in the scene — guards, merchants,'
                 ' beggars, passers-by, etc. Use role descriptions like: guard, merchant, beggar, scribe"],\n'
-                '  "points_of_interest": ["3 to 5 items max. Pick ONLY the most story-bearing'
-                " objects — things that carry information (boards, notices, signs, inscriptions),"
-                " gate movement (doors, gates, stairs), hold contents (chests, barrels, crates),"
-                " or have visible state the player might change (locks, torches, levers, fires)."
-                " SKIP decorative or incidental architecture (niches, rings, mouldings, plinths,"
-                " gutters) unless they carry a secret or a use. NEVER put people here; people go"
-                ' in npcs_present"],\n'
+                '  "points_of_interest": ["3 to 7 items. Include EVERY story-bearing object'
+                " you expect the Narrator to describe prominently in prose — if the scene has"
+                " a notice board, an altar, a shrine, a lit torch, a locked door, a stair, a"
+                " gate, a chest, a barrel, a signpost, or a donation box, list it. Concretely:"
+                " information carriers (boards, notices, signs, inscriptions, altars),"
+                " movement gates (doors, gates, stairs, ladders), containers (chests, barrels,"
+                " crates, strongboxes), and state-bearing fixtures (locks, torches, braziers,"
+                " levers, fires). SKIP purely decorative architecture (plain niches, rings,"
+                " mouldings, plinths, gutters) unless it hides a secret or has a use. NEVER"
+                ' put people here; people go in npcs_present"],\n'
                 '  "ambient_description": "Sounds, smells, atmosphere",\n'
                 '  "time_of_day": "{time_of_day}"\n'
                 "}}"

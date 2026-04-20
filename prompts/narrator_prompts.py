@@ -93,7 +93,25 @@ NARRATOR_SYSTEM = PromptTemplate(
                 'entity ("Tony (aka: the watchman)", "fireplace (aka: the hearth)"), '
                 "treat every listed form as an acceptable way to refer to that "
                 "entity this turn. Alternate between them for natural prose; do "
-                "NOT invent new names or paraphrase descriptors that are not listed."
+                "NOT invent new names or paraphrase descriptors that are not listed. "
+                "Use one of the listed forms verbatim for every on-scene mention — "
+                "a near-miss ('a stocky man in leather armor' when the descriptor "
+                "is 'a stout man in worn leather armor') reads fine but breaks the "
+                "downstream entity lookup, so copy the exact alias."
+            ),
+            required_vars=[],
+        ),
+        PromptSection(
+            name="entity_roster",
+            template=(
+                "Entity roster: the raw material lists every person present and "
+                "every point of interest. Do NOT introduce new people who are not "
+                "in that list — no extra guards, merchants, bystanders, or named "
+                "individuals. Do NOT give a proper name ('Tony', 'Marcus') to any "
+                "NPC whose card is not already known to the player. Describe only "
+                "the objects the raw material lists; you may reference ambient "
+                "detail (sounds, smells, lighting) freely, but every addressable "
+                "thing — person, door, object, fixture — must come from the list."
             ),
             required_vars=[],
         ),
