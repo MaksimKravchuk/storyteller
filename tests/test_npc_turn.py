@@ -317,10 +317,10 @@ class TestNPCTurnResolverErrorHandling:
 @allure.epic("NPC Interaction")
 @allure.feature("NPC turn resolution")
 class TestBuildTurnPromptNudgeRemoval:
-    """KER-42: the "Most turns are routine" nudge flattened every autonomous
+    """The "Most turns are routine" nudge flattened every autonomous
     decision toward IDLE even when the NPC's mood, relationships, and
-    inventory supplied ample motive. The fix removes the nudge — the
-    character data drives the choice.
+    inventory supplied ample motive. The character data drives the
+    choice on its own.
     """
 
     @allure.story("Routine-nudge removal")

@@ -149,8 +149,8 @@ class TestActorPromptSituationalRegister:
 @allure.epic("NPC Interaction")
 @allure.feature("Actor action-mode prompt template")
 class TestActorSystemActionStructure:
-    """KER-42: the NPC autonomous-turn branch uses a dedicated template
-    whose constraints section replaces dialogue output rules with a
+    """The NPC autonomous-turn branch uses a dedicated template whose
+    constraints section replaces dialogue output rules with a
     JSON-object directive. Character context (identity, biography,
     knowledge, memory, hostility, inventory) is reused verbatim.
     """
@@ -217,6 +217,12 @@ class TestActorSystemActionStructure:
     def test_catalog_exposes_system_action_per_locale(self):
         assert get_actor_prompts("English").system_action is ACTOR_SYSTEM_ACTION
         assert get_actor_prompts("Russian").system_action is ACTOR_SYSTEM_ACTION_RU
+
+    @allure.story("Locale catalog")
+    @allure.title("Unknown locales fall back to the English action template")
+    def test_unknown_locale_falls_back_to_english_action(self):
+        assert get_actor_prompts("Klingon").system_action is ACTOR_SYSTEM_ACTION
+        assert get_actor_prompts(None).system_action is ACTOR_SYSTEM_ACTION
 
     @allure.story("Locale catalog")
     @allure.title("Russian action template exposes the same required vars as the English action template")

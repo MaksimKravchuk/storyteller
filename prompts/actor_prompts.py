@@ -10,11 +10,11 @@ Two templates are exposed per locale:
 * ``system`` — dialogue mode. The NPC speaks in character, emits ``[MOOD]``
   / ``[STATUS]`` / ``[REVEALED]`` trailing tags, and the LLM reply flows
   through :mod:`cast.actor_tags` and :mod:`cast.hostility`.
-* ``system_action`` — KER-42 autonomous-turn mode. The NPC returns a
-  single JSON object describing one in-character action; no tags, no
-  prose. Character-context sections (identity, inventory, knowledge,
-  memory, hostility, language) are reused verbatim so the only
-  difference is the constraints block.
+* ``system_action`` — autonomous-turn mode. The NPC returns a single
+  JSON object describing one in-character action; no tags, no prose.
+  Character-context sections (identity, inventory, knowledge, memory,
+  hostility, language) are reused verbatim so the only difference is
+  the constraints block.
 """
 
 from __future__ import annotations
@@ -188,8 +188,8 @@ class ActorPrompts:
     """Per-locale Actor prompt bundle.
 
     The per-turn user message is the raw player action (dialogue mode)
-    or a JSON-schema directive (KER-42 action mode); both carry no
-    localisable scaffolding, so only the system templates are exposed.
+    or a JSON-schema directive (action mode); both carry no localisable
+    scaffolding, so only the system templates are exposed.
     """
 
     system: PromptTemplate

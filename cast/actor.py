@@ -6,8 +6,8 @@ The Actor has two distinct call modes, selected by ``context["is_npc_turn"]``:
   text, optionally emitting trailing ``[MOOD]`` / ``[STATUS]`` /
   ``[REVEALED]`` tags. Conversation history is maintained across turns
   so multi-turn exchanges stay coherent.
-* **Autonomous action** (``is_npc_turn=True``, KER-42): the NPC returns
-  a single JSON object describing one in-character action. The
+* **Autonomous action** (``is_npc_turn=True``): the NPC returns a
+  single JSON object describing one in-character action. The
   action-mode system template is used, no conversation history is
   passed or stored, and trailing tags are neither emitted nor parsed —
   ``cast.npc_turn`` owns JSON parsing downstream.
@@ -77,13 +77,6 @@ class Actor(BasePerformer):
         JSON-schema prompt built in :mod:`cast.npc_turn`.
         ``context``: may carry ``location_name`` and, for autonomous
         turns, ``is_npc_turn=True``.
-
-        Returns an :class:`ActorReply`. In dialogue mode the reply's
-        ``text`` is tag-stripped and ``revealed_names`` carries any
-        ``[REVEALED: ...]`` tokens the LLM emitted. In action mode the
-        ``text`` is the raw JSON body (whitespace-stripped) and
-        ``revealed_names`` is empty — downstream parsing lives in
-        :mod:`cast.npc_turn`.
         """
         self._populate_character_context(context)
         if context.get("is_npc_turn"):
@@ -91,7 +84,7 @@ class Actor(BasePerformer):
         return await self._act_dialogue(input_data)
 
     def reset_conversation(self) -> None:
-        """Clear conversation history (e.g. when player walks away)."""
+        """Clear conversation history."""
         self._conversation.clear()
 
     def _populate_character_context(self, context: dict) -> None:
@@ -136,7 +129,7 @@ class Actor(BasePerformer):
             )
 
     async def _act_dialogue(self, input_data: str) -> ActorReply:
-        """Run the in-character dialogue path (free-text reply with trailing tags)."""
+        """Run the dialogue path — free-text reply, trailing tags parsed, conversation retained."""
         raw = await self._send(input_data, conversation=self._conversation)
         parsed = strip_trailing_tags(raw)
 
@@ -151,21 +144,19 @@ class Actor(BasePerformer):
         return ActorReply(text=parsed.text.strip(), revealed_names=tuple(parsed.revealed))
 
     async def _act_npc_turn(self, input_data: str) -> ActorReply:
-        """Run the KER-42 autonomous-action path — JSON reply, no conversation, no tags.
+        """Run the autonomous-action path — JSON reply, no conversation, no tags.
 
         The action-mode system template is swapped in for a single
         ``_send`` call, then restored so a subsequent dialogue turn on
-        the same Actor starts clean. No conversation history is passed
-        (dialogue context must not leak into JSON mode) and
-        ``_conversation`` is not appended to (the JSON payload is not
-        speech). The raw body flows downstream to
-        :func:`cast.npc_turn._parse_npc_response` which already handles
-        malformed JSON.
+        the same Actor starts clean. The restore path catches
+        :exc:`BaseException` so cancellation and shutdown signals do
+        not leave the Actor pinned to the action template — the next
+        dialogue turn must not render a JSON-only system prompt.
         """
         self.system_prompt_template = self._action_template
         try:
             raw = await self._send(input_data)
-        except Exception:
+        except BaseException:
             self.system_prompt_template = self._dialogue_template
             raise
         self.system_prompt_template = self._dialogue_template

@@ -1,4 +1,4 @@
-"""Regression tests for KER-42 — Actor dispatches on ``is_npc_turn``.
+"""Tests for Actor dispatch on ``is_npc_turn``.
 
 The NPC autonomous-turn path must use a system prompt shaped for JSON
 output, must not leak prior dialogue history into the action-mode call,
@@ -187,6 +187,34 @@ class TestActorTemplateSwapIsNotSticky:
         actor = _make_actor(client)
 
         await actor.execute(_NPC_TURN_USER_PROMPT, context={**_LOC_CONTEXT, "is_npc_turn": True})
+
+        assert actor.system_prompt_template is actor._dialogue_template
+
+    @allure.story("Template swap hygiene")
+    @allure.title("If the LLM call raises, the dialogue template is still restored before the exception propagates")
+    @pytest.mark.asyncio
+    async def test_template_restored_when_send_raises(self):
+        client = _mock_llm()
+        client.send_message.side_effect = RuntimeError("LLM timeout")
+        actor = _make_actor(client)
+
+        with pytest.raises(RuntimeError):
+            await actor.execute(_NPC_TURN_USER_PROMPT, context={**_LOC_CONTEXT, "is_npc_turn": True})
+
+        assert actor.system_prompt_template is actor._dialogue_template
+
+    @allure.story("Template swap hygiene")
+    @allure.title("asyncio.CancelledError still restores the dialogue template and propagates")
+    @pytest.mark.asyncio
+    async def test_template_restored_on_cancellation(self):
+        import asyncio
+
+        client = _mock_llm()
+        client.send_message.side_effect = asyncio.CancelledError()
+        actor = _make_actor(client)
+
+        with pytest.raises(asyncio.CancelledError):
+            await actor.execute(_NPC_TURN_USER_PROMPT, context={**_LOC_CONTEXT, "is_npc_turn": True})
 
         assert actor.system_prompt_template is actor._dialogue_template
 

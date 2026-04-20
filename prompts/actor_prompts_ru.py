@@ -5,7 +5,7 @@ and required variables match exactly) so the two catalogs are drop-in
 replacements for each other inside :class:`cast.actor.Actor`.
 
 Two templates are exposed: :data:`ACTOR_SYSTEM_RU` (dialogue mode) and
-:data:`ACTOR_SYSTEM_ACTION_RU` (KER-42 autonomous-turn JSON mode). The
+:data:`ACTOR_SYSTEM_ACTION_RU` (autonomous-turn JSON mode). The
 ``[MOOD: ...]``, ``[STATUS: ...]``, ``[REVEALED: ...]`` trailing tags
 used by the dialogue template are parsed by regexes anchored on the
 English tag NAMES in :mod:`cast.actor_tags`. Those names MUST stay
