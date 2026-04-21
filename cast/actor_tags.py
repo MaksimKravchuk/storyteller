@@ -1,9 +1,9 @@
-"""Trailing-tag extraction for Actor LLM output.
+"""Trailing-tag extraction for Actor LLM output — DEPRECATED shim.
 
-Parses the MOOD / STATUS / REVEALED tags the Actor prompt asks the
-LLM to append. The stripping loop is order-independent — the LLM may
-emit the tags in any sequence — and captures at most one occurrence
-per tag type (the first/outermost one).
+The canonical Actor path now uses a strict JSON envelope (see
+``cast.schemas.actor_reply.ActorEnvelope``).  This module is kept only
+to support the legacy fallback when ``actor_envelope_mode=False`` and
+for existing unit tests.  It will be removed in a follow-up release.
 """
 
 from __future__ import annotations

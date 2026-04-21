@@ -57,6 +57,12 @@ class Config(BaseSettings):
     # contradict historical canon or prior in-scene dialogue.
     dramaturge_enabled: bool = False
 
+    # Actor envelope mode: when True (default) the Actor emits a strict JSON
+    # envelope instead of free-text with trailing [MOOD/STATUS/REVEALED] tags.
+    # Set ACTOR_ENVELOPE_MODE=false to fall back to the legacy tag-parsing path
+    # for a prod rollback without a redeploy.
+    actor_envelope_mode: bool = True
+
     # Telegram
     telegram_bot_token: str | None = None
 
