@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any, TypeVar, overload
 
+from cast._performer_retry import RetryContext as _RetryContext
 from llm.base_client import BaseLLMClient, LLMJSONError, OutputFormat
 from llm.call_logger import (
     agent_stack,
@@ -15,7 +15,7 @@ from llm.call_logger import (
     current_session_id,
     next_sequence,
 )
-from llm.message import LLMResponse, Message, Role
+from llm.message import LLMResponse, Message, Role, Tool, ToolCall
 from loguru import logger
 from prompts.base_template import PromptTemplate
 from pydantic import BaseModel, ValidationError
@@ -31,27 +31,30 @@ _VALIDATION_FEEDBACK_TEMPLATE = (
 BaseModelT = TypeVar("BaseModelT", bound=BaseModel)
 
 
-@dataclass(frozen=True)
-class _RetryContext:
-    """Parameters shared between attempts of a ``_send_json`` retry loop.
+_TOOL_CALL_LOG_TEMPLATE = "[tool:{0}] {1}"
 
-    Bundles the recursion state so the retry helpers don't need to take
-    eight positional arguments each.
+
+def _render_response_content(response: LLMResponse) -> str:
+    """Render the dashboard's ``response_content`` string from a response.
+
+    Pure prose responses return their body unchanged. Tool calls are
+    rendered as ``[tool:<name>] {<json-args>}`` lines, newline-joined,
+    and prepended to any body prose so the admin log stays useful
+    without a new column.
     """
-
-    user_message: str
-    conversation: list[Message] | None
-    retries: int
-    attempt: int
-    response_model: type[BaseModel] | None
-
-    @property
-    def total_attempts(self) -> int:
-        return self.retries + 1
-
-    @property
-    def can_retry(self) -> bool:
-        return self.attempt < self.retries
+    if not response.tool_calls:
+        return response.body
+    tool_lines = [
+        _TOOL_CALL_LOG_TEMPLATE.format(
+            call.name,
+            json.dumps(call.arguments, ensure_ascii=False, default=str),
+        )
+        for call in response.tool_calls
+    ]
+    joined = "\n".join(tool_lines)
+    if response.body:
+        return "{0}\n{1}".format(joined, response.body)
+    return joined
 
 
 def _record_llm_call(
@@ -84,7 +87,7 @@ def _record_llm_call(
             "model": model,
             "system_prompt": system_prompt,
             "messages": [{"role": msg.role.value, "content": msg.body} for msg in messages],
-            "response_content": response.body,
+            "response_content": _render_response_content(response),
             "prompt_tokens": response.usage.get("prompt_tokens"),
             "completion_tokens": response.usage.get("completion_tokens"),
             "parent_agent": parent,
@@ -105,10 +108,6 @@ async def _retry_after_validation_failure(
     Used only by the prompt-based fallback path. The strict path raises
     immediately on validation failure because the provider guaranteed the
     shape — a failure there indicates a deeper bug, not a recoverable miss.
-
-    Recursion stays on the prompt-fallback path (we never re-attempt strict
-    mode after a validation miss) so providers that do not support strict
-    structured outputs are not asked twice per retry.
     """
     errors_preview = str(exc.errors())[:_VALIDATION_ERROR_PREVIEW_CHARS]
     logger.warning(
@@ -191,12 +190,13 @@ async def _send_json_strict(
         schema=response_model.model_json_schema(),
         schema_name=response_model.__name__,
     )
-    raw = await _call_llm(
+    response = await _call_llm(
         performer,
         user_message=user_message,
         conversation=conversation,
         output_format=output_format,
     )
+    raw = response.body
     try:
         return response_model.model_validate(json.loads(raw))
     except (json.JSONDecodeError, ValidationError) as exc:
@@ -213,20 +213,23 @@ async def _call_llm(
     conversation: list[Message] | None,
     output_format: OutputFormat | None,
     overrides: dict[str, Any] | None = None,
-) -> str:
-    """Single LLM-call site shared by ``_send`` and the strict ``_send_json`` path.
+) -> LLMResponse:
+    """Single LLM-call site shared by ``_send``, ``_send_json``, and ``_send_tool``.
 
     Centralizing the call here keeps timing, output-format selection, and
     ``_record_llm_call`` bookkeeping consistent regardless of which public
     helper invoked the LLM. Lives at module level to keep the ``BasePerformer``
     method count under the WPS limit.
 
-    ``overrides`` may contain ``temperature`` and/or ``max_tokens`` keys; they
-    are forwarded to ``llm_client.send_message`` verbatim.
+    Returns the full :class:`LLMResponse` so callers can read either
+    ``response.body`` (text path) or ``response.tool_calls`` (tool path).
+    ``overrides`` may contain ``temperature`` and/or ``max_tokens`` keys;
+    they are forwarded to ``llm_client.send_message`` verbatim. Tool-use
+    controls travel on ``output_format.tools`` / ``output_format.tool_choice``.
     """
     messages = list(conversation or [])
     messages.append(Message(role=Role.USER, body=user_message))
-    system_prompt = performer._build_system_prompt()
+    system_prompt = performer.system_prompt_template.render(**performer._system_prompt_vars)
 
     call_kwargs: dict[str, Any] = {
         "messages": messages,
@@ -247,7 +250,7 @@ async def _call_llm(
         system_prompt,
         messages,
     )
-    return response.body
+    return response
 
 
 class BasePerformer(ABC):
@@ -334,9 +337,6 @@ class BasePerformer(ABC):
     # LLM helpers
     # ------------------------------------------------------------------
 
-    def _build_system_prompt(self) -> str:
-        return self.system_prompt_template.render(**self._system_prompt_vars)
-
     async def _send(
         self,
         user_message: str,
@@ -355,13 +355,43 @@ class BasePerformer(ABC):
             overrides["temperature"] = temperature
         if max_tokens is not None:
             overrides["max_tokens"] = max_tokens
-        return await _call_llm(
+        response = await _call_llm(
             self,
             user_message=user_message,
             conversation=conversation,
             output_format=output_format,
             overrides=overrides or None,
         )
+        return response.body
+
+    async def _send_tool(
+        self,
+        user_message: str,
+        tools: list[Tool],
+        conversation: list[Message] | None = None,
+        tool_choice: str = "required",
+    ) -> ToolCall:
+        """Send a message and expect the LLM to invoke one of the provided tools.
+
+        Returns the first tool call on the response. Raises
+        :class:`LLMJSONError` (with the prose body as ``raw_response``)
+        when the model returned prose instead of a tool call, so the
+        caller can surface the failure the same way other routing
+        miscommunications are handled.
+        """
+        output_format = OutputFormat(tools=tuple(tools), tool_choice=tool_choice)
+        response = await _call_llm(
+            self,
+            user_message=user_message,
+            conversation=conversation,
+            output_format=output_format,
+        )
+        if not response.tool_calls:
+            raise LLMJSONError(
+                "Agent returned no tool call when one was required.",
+                raw_response=response.body,
+            )
+        return response.tool_calls[0]
 
     @overload
     async def _send_json(

@@ -11,14 +11,14 @@ from cast import director_execution, director_retaliation, director_routing
 from cast.known_npcs import mark_player_text_introductions
 from cast.npc_ticker import NPCTicker
 from cast.npc_turn import NPCTurnResolver
+from cast.schemas.action_plan import ClarificationRequest, WaitPlan
 from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
 from models import game_state as gs_mod
 from prompts.director_prompts import get_director_prompts
 from timeline import event as event_mod, event_manager as event_manager_mod
 
-_KEY_ACTION_TYPE = "action_type"
-_DEFAULT_ACTION = "OTHER"
+_DEFAULT_CLARIFICATION = "Could you be more specific about what you want to do?"
 
 
 @dataclasses.dataclass
@@ -74,7 +74,7 @@ class Director(BasePerformer):
         self._ctx = director_context.ContextFormatter(deps.game_state)
         self._router = director_routing.ActionRouter(
             deps.game_state,
-            self._send_json,
+            self._send_tool,
             prompts.action_routing,
         )
         self._events = director_events.EventProcessor(deps.game_state, deps.event_manager, deps.memory_manager)
@@ -101,22 +101,18 @@ class Director(BasePerformer):
         """Process a player action and return the narrated response."""
         self._ctx.sync_context(self)
 
-        routing_plan = self._check_forced_wait(input_data)
-        if routing_plan is None:
-            routing_plan = await self._router.route_action(input_data)
+        forced_wait = self._check_forced_wait(input_data)
+        plan: Any = await self._router.route_action(input_data) if forced_wait is None else forced_wait
 
-        if routing_plan.get("needs_clarification"):
-            self._router.save_pending_clarification(input_data, routing_plan)
-            return routing_plan.get(
-                "clarification_question",
-                "Could you be more specific about what you want to do?",
-            )
+        if isinstance(plan, ClarificationRequest):
+            self._router.save_pending_clarification(input_data, plan)
+            return plan.question or _DEFAULT_CLARIFICATION
 
         self._deps.game_state.pending_clarification = None
         mark_player_text_introductions(input_data, self._deps.game_state)
-        action_type = routing_plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
-        completed = self._events.advance_and_resolve(action_type, routing_plan.get("time_cost_override"))
-        narrated = await self._executor.execute_plan(routing_plan, input_data, completed)
+        action_type = plan.action_type
+        completed = self._events.advance_and_resolve(action_type, plan.time_cost_override)
+        narrated = await self._executor.execute_plan(plan, input_data, completed)
 
         self._ctx.append_turn_logs(input_data, narrated, action_type)
         return narrated
@@ -133,7 +129,7 @@ class Director(BasePerformer):
     # Internal
     # ------------------------------------------------------------------
 
-    def _check_forced_wait(self, input_data: str) -> dict | None:
+    def _check_forced_wait(self, input_data: str) -> WaitPlan | None:
         """Short-circuit to WAIT if player is incapacitated or typed a wait keyword."""
         player_status = self._deps.game_state.player.physical_status
         if is_incapacitated(player_status):

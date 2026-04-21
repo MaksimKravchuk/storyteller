@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import copy
+import json
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
 from llm.base_client import BaseLLMClient, OutputFormat
-from llm.message import Message, LLMResponse
+from llm.message import LLMResponse, Message, Tool, ToolCall
 
 if TYPE_CHECKING:
     from openai import APIStatusError
@@ -15,6 +16,16 @@ if TYPE_CHECKING:
 
 _ALLOWED_CONTROL = frozenset("\t\n\r")
 _SYSTEM_PROMPT_LOG_CHARS = 200
+
+# Centralised OpenAI payload keys so the string doesn't repeat through the
+# translation helpers (flake8 WPS226 caps literal re-use at 3).
+_KEY_TYPE = "type"
+_TYPE_JSON_SCHEMA = "json_schema"
+_TYPE_FUNCTION = "function"
+
+# Short aliases to keep tool translation signatures readable (flake8 WPS221).
+_WireTools = list[dict[str, Any]]
+_WireToolChoice = Any
 
 
 def _is_printable(ch: str) -> bool:
@@ -50,8 +61,8 @@ class _StrictSchemaNormalizer:
         normalized = copy.deepcopy(schema)
         cls._walk(normalized)
         return {
-            "type": "json_schema",
-            "json_schema": {
+            _KEY_TYPE: _TYPE_JSON_SCHEMA,
+            _TYPE_JSON_SCHEMA: {
                 "name": name,
                 "schema": normalized,
                 "strict": True,
@@ -118,6 +129,99 @@ def _build_response_format(output_format: OutputFormat | None) -> dict[str, Any]
     return output_format.response_format
 
 
+class _ToolWire:
+    """Translate provider-agnostic tool types into OpenAI's wire payload.
+
+    Grouped as classmethods so the module stays within the flake8
+    module-member budget. The class is a namespace only; it's never
+    instantiated.
+    """
+
+    # Tool parameter schemas are static (built once at module load from
+    # Pydantic models), so the deepcopy+normalize cost is hoisted out of
+    # the per-request hot path and keyed on object identity.
+    _normalized_cache: dict[int, dict[str, Any]] = {}
+
+    @classmethod
+    def normalize_parameters(cls, schema: dict[str, Any]) -> dict[str, Any]:
+        """Apply OpenAI strict-function constraints to a tool's parameters schema."""
+        cached = cls._normalized_cache.get(id(schema))
+        if cached is not None:
+            return cached
+        normalized = copy.deepcopy(schema)
+        _StrictSchemaNormalizer._walk(normalized)
+        cls._normalized_cache[id(schema)] = normalized
+        return normalized
+
+    @classmethod
+    def build_tools(cls, tools: tuple[Tool, ...] | None) -> _WireTools | None:
+        """Translate tool definitions into the OpenAI ``tools`` payload.
+
+        Returns ``None`` when no tools are exposed this call, so the key
+        is omitted from the request entirely.
+        """
+        if not tools:
+            return None
+        return [cls._tool_wire_entry(tool) for tool in tools]
+
+    @classmethod
+    def build_tool_choice(cls, tool_choice: str | None) -> _WireToolChoice:
+        """Translate the portable ``tool_choice`` knob into OpenAI's shape.
+
+        Accepts ``"auto"``, ``"required"``, or a tool name (forces that
+        specific function). Returns ``None`` when the caller did not pin
+        a choice; OpenAI defaults to ``"auto"`` in that case.
+        """
+        if tool_choice is None:
+            return None
+        if tool_choice in {"auto", "required", "none"}:
+            return tool_choice
+        return {_KEY_TYPE: _TYPE_FUNCTION, _TYPE_FUNCTION: {"name": tool_choice}}
+
+    @classmethod
+    def parse_calls(cls, choice: Any) -> list[ToolCall]:
+        """Extract ``ToolCall`` objects from an OpenAI ``ChatCompletion`` choice.
+
+        OpenAI returns ``arguments`` as a JSON string; we decode it here
+        so callers always see a ``dict``. Malformed JSON is wrapped into
+        ``{"__raw__": <string>}`` rather than crashing, so the raw payload
+        remains available for assertions and log inspection.
+        """
+        raw_calls = getattr(choice.message, "tool_calls", None) or []
+        parsed = [cls._build_tool_call(raw) for raw in raw_calls]
+        return [call for call in parsed if call is not None]
+
+    @classmethod
+    def _tool_wire_entry(cls, tool: Tool) -> dict[str, Any]:
+        """Build one ``{"type": "function", ...}`` entry for OpenAI."""
+        return {
+            _KEY_TYPE: _TYPE_FUNCTION,
+            _TYPE_FUNCTION: {
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": cls.normalize_parameters(tool.parameters_schema),
+                "strict": True,
+            },
+        }
+
+    @classmethod
+    def _build_tool_call(cls, raw: Any) -> ToolCall | None:
+        """Build one :class:`ToolCall` from an OpenAI SDK tool-call object."""
+        fn = getattr(raw, _TYPE_FUNCTION, None)
+        if fn is None:
+            return None
+        arguments_str = fn.arguments or "{}"
+        try:
+            arguments = json.loads(arguments_str)
+        except json.JSONDecodeError:
+            arguments = {"__raw__": arguments_str}
+        return ToolCall(
+            name=fn.name,
+            arguments=arguments if isinstance(arguments, dict) else {"__raw__": arguments_str},
+            call_id=getattr(raw, "id", None),
+        )
+
+
 def _extract_error_body(exc: Any) -> Any:
     """Return the richest available payload from an OpenAI ``APIStatusError``.
 
@@ -172,18 +276,13 @@ class OpenAIClient(BaseLLMClient):
         max_tokens: int | None = None,
         output_format: OutputFormat | None = None,
     ) -> LLMResponse:
-        formatted = self._format_messages(messages, system_prompt)
-
-        kwargs: dict[str, Any] = {
-            "model": self.model,
-            "messages": formatted,
-            "temperature": self.temperature if temperature is None else temperature,
-            "max_completion_tokens": self.max_tokens if max_tokens is None else max_tokens,
-        }
-        wire_response_format = _build_response_format(output_format)
-        if wire_response_format is not None:
-            kwargs["response_format"] = wire_response_format
-
+        kwargs = self._build_request_kwargs(
+            messages,
+            system_prompt,
+            temperature,
+            max_tokens,
+            output_format,
+        )
         try:
             response = await self._client.chat.completions.create(**kwargs)
         except self._api_status_error as exc:
@@ -199,6 +298,7 @@ class OpenAIClient(BaseLLMClient):
                 "completion_tokens": response.usage.completion_tokens if response.usage else 0,
             },
             model=response.model,
+            tool_calls=_ToolWire.parse_calls(choice),
         )
 
     async def send_message_streaming(
@@ -220,6 +320,35 @@ class OpenAIClient(BaseLLMClient):
             delta = chunk.choices[0].delta
             if delta.content:
                 yield delta.content
+
+    def _build_request_kwargs(
+        self,
+        messages: list[Message],
+        system_prompt: str,
+        temperature: float | None,
+        max_tokens: int | None,
+        output_format: OutputFormat | None,
+    ) -> dict[str, Any]:
+        """Build the kwargs dict handed to ``chat.completions.create``.
+
+        Kept separate so :meth:`send_message` stays within the flake8
+        local-variable budget; the translation logic lives here.
+        """
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": self._format_messages(messages, system_prompt),
+            "temperature": self.temperature if temperature is None else temperature,
+            "max_completion_tokens": self.max_tokens if max_tokens is None else max_tokens,
+        }
+        wire_response_format = _build_response_format(output_format)
+        if wire_response_format is not None:
+            kwargs["response_format"] = wire_response_format
+        if output_format is not None and output_format.has_tools:
+            kwargs["tools"] = _ToolWire.build_tools(output_format.tools)
+            wire_tool_choice = _ToolWire.build_tool_choice(output_format.tool_choice)
+            if wire_tool_choice is not None:
+                kwargs["tool_choice"] = wire_tool_choice
+        return kwargs
 
     def _format_messages(
         self,

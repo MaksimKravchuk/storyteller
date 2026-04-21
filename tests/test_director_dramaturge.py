@@ -17,12 +17,15 @@ import pytest
 
 from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
 from cast.director import DirectorCast
-from knowledge.graph import KnowledgeGraph
-from knowledge.memory import MemoryManager
+from knowledge import graph as knowledge_graph, memory as knowledge_memory
 from models.game_state import GameState
 from models.scene import Scene
 from models.setting import Setting
+from tests.director_helpers import route_plan
 from timeline.event_manager import EventManager
+
+KnowledgeGraph = knowledge_graph.KnowledgeGraph
+MemoryManager = knowledge_memory.MemoryManager
 
 
 def _make_plan_executor_pieces(*, with_dramaturge: bool):
@@ -87,7 +90,7 @@ class TestPlanExecutorDramaturgeGate:
         executor, _gs, narrator, dramaturge = _make_plan_executor_pieces(with_dramaturge=True)
 
         result = await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"]},
+            plan=route_plan("EXPLORE", delegate=["scene_builder"]),
             player_action="explore the forum",
             completed_events=[],
         )
@@ -104,7 +107,7 @@ class TestPlanExecutorDramaturgeGate:
         executor, _gs, narrator, _none = _make_plan_executor_pieces(with_dramaturge=False)
 
         result = await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"]},
+            plan=route_plan("EXPLORE", delegate=["scene_builder"]),
             player_action="explore the forum",
             completed_events=[],
         )
@@ -123,7 +126,7 @@ class TestPlanExecutorDramaturgeGate:
         gs.current_scene = Scene(location_id="forum", description="The bustling Forum.")
 
         result = await executor.execute_plan(
-            plan={"action_type": "TALK", "delegate_to": ["actor"], "targets": []},
+            plan=route_plan("TALK", delegate=["actor"], targets=[]),
             player_action="greet the guard",
             completed_events=[],
         )
@@ -143,7 +146,7 @@ class TestPlanExecutorDramaturgeGate:
         dramaturge.execute = AsyncMock(side_effect=RuntimeError("kaboom"))
 
         result = await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"]},
+            plan=route_plan("EXPLORE", delegate=["scene_builder"]),
             player_action="explore the forum",
             completed_events=[],
         )

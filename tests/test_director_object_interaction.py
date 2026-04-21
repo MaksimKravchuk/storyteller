@@ -307,7 +307,7 @@ class TestSceneBuilderDeltaInjection:
             returned_scene = await builder.act("walk back to the tavern", {"game_state": gs})
         gs.current_scene = returned_scene
 
-        rendered_system_prompt = builder._build_system_prompt()
+        rendered_system_prompt = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "The front window is broken." in rendered_system_prompt
         assert "tavern" in rendered_system_prompt
         # Sanity: the delta did not evaporate during the round-trip.

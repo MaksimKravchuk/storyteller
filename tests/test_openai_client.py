@@ -11,6 +11,7 @@ import pytest
 from llm import message as msg
 from llm.base_client import OutputFormat
 from llm.openai_client import OpenAIClient, _StrictSchemaNormalizer
+from llm.message import Tool
 
 
 def _to_strict_schema(schema: dict, name: str) -> dict:
@@ -178,6 +179,87 @@ class TestOpenAIClient:
             )
         wrapped = create_mock.call_args.kwargs["response_format"]
         assert wrapped["json_schema"]["name"] == "Response"
+
+    @allure.story("Tool calls")
+    @allure.title("OpenAIClient.send_message serialises tools into the chat completion payload")
+    @pytest.mark.asyncio
+    async def test_send_message_serialises_tools(self) -> None:
+        sdk_class, create_mock = _install_sdk_mock()
+        tool = Tool(
+            name="move",
+            description="Player moves.",
+            parameters_schema={
+                "type": "object",
+                "properties": {"direction": {"type": "string"}},
+            },
+        )
+        with patch(_OPENAI_CTOR, sdk_class):
+            client = OpenAIClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(tools=(tool,), tool_choice="required"),
+            )
+        kwargs = create_mock.call_args.kwargs
+        assert kwargs["tool_choice"] == "required"
+        wire_tools = kwargs["tools"]
+        assert len(wire_tools) == 1
+        wire_tool = wire_tools[0]
+        assert wire_tool["type"] == "function"
+        assert wire_tool["function"]["name"] == "move"
+        assert wire_tool["function"]["strict"] is True
+        # Strict-validator normalisation must have been applied to parameters.
+        assert wire_tool["function"]["parameters"]["additionalProperties"] is False
+
+    @allure.story("Tool calls")
+    @allure.title("OpenAIClient.send_message maps a tool name in tool_choice to the OpenAI dict shape")
+    @pytest.mark.asyncio
+    async def test_tool_choice_by_name(self) -> None:
+        sdk_class, create_mock = _install_sdk_mock()
+        tool = Tool(
+            name="talk",
+            description="Player talks.",
+            parameters_schema={"type": "object", "properties": {}},
+        )
+        with patch(_OPENAI_CTOR, sdk_class):
+            client = OpenAIClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(tools=(tool,), tool_choice="talk"),
+            )
+        assert create_mock.call_args.kwargs["tool_choice"] == {
+            "type": "function",
+            "function": {"name": "talk"},
+        }
+
+    @allure.story("Tool calls")
+    @allure.title("OpenAIClient.send_message parses tool_calls from the response, decoding JSON arguments")
+    @pytest.mark.asyncio
+    async def test_send_message_parses_tool_calls(self) -> None:
+        tool_call_obj = SimpleNamespace(
+            id="call_123",
+            function=SimpleNamespace(
+                name="move",
+                arguments='{"direction": "north"}',
+            ),
+        )
+        response = SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    message=SimpleNamespace(content=None, tool_calls=[tool_call_obj]),
+                ),
+            ],
+            usage=SimpleNamespace(prompt_tokens=3, completion_tokens=2),
+            model=_MODEL,
+        )
+        sdk_class, _ = _install_sdk_mock(response)
+        with patch(_OPENAI_CTOR, sdk_class):
+            client = OpenAIClient(model=_MODEL, api_key="k")
+            result = await client.send_message(messages=[_user_msg()])
+        assert len(result.tool_calls) == 1
+        parsed = result.tool_calls[0]
+        assert parsed.name == "move"
+        assert parsed.arguments == {"direction": "north"}
+        assert parsed.call_id == "call_123"
 
     @allure.story("send_message")
     @allure.title("OpenAIClient.send_message returns an empty body and zeroed usage when the SDK response is blank")

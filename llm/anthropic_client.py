@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
 from llm.base_client import BaseLLMClient, OutputFormat
-from llm.message import Message, LLMResponse, Role
+from llm.message import LLMResponse, Message, Role, Tool, ToolCall
 
 if TYPE_CHECKING:
     from anthropic import BadRequestError
@@ -17,6 +17,18 @@ _STRUCTURED_OUTPUT_REJECTION_MARKERS = (
     "output_format",
     "output_config",
 )
+
+# Centralised Anthropic payload keys so string literals don't repeat
+# through the translation helpers (flake8 WPS226 caps re-use at 3).
+_KEY_TYPE = "type"
+_TYPE_TOOL = "tool"
+_TYPE_AUTO = "auto"
+_TYPE_ANY = "any"
+_TYPE_NONE = "none"
+
+# Short aliases so tool-translation signatures stay within the
+# line-complexity budget.
+_WireTools = list[dict[str, Any]]
 
 
 def _extract_error_message(exc: "BadRequestError") -> str:
@@ -33,6 +45,66 @@ def _is_structured_output_rejection(exc: "BadRequestError") -> bool:
     """Return True when a 400 error indicates the model cannot honor the schema."""
     haystack = (_extract_error_message(exc) or str(exc)).lower()
     return any(marker in haystack for marker in _STRUCTURED_OUTPUT_REJECTION_MARKERS)
+
+
+def _build_tools(tools: tuple[Tool, ...] | None) -> _WireTools | None:
+    """Translate tool definitions into Anthropic's ``tools`` payload.
+
+    Anthropic uses ``input_schema`` where OpenAI uses ``parameters``. The
+    raw Pydantic schema is passed through verbatim; Anthropic does not
+    require the OpenAI-style strict normalization for tool inputs.
+    """
+    if not tools:
+        return None
+    return [
+        {
+            "name": tool.name,
+            "description": tool.description,
+            "input_schema": tool.parameters_schema,
+        }
+        for tool in tools
+    ]
+
+
+def _build_tool_choice(tool_choice: str | None) -> dict[str, Any] | None:
+    """Translate the portable ``tool_choice`` knob into Anthropic's shape.
+
+    Mapping: ``"auto"`` → ``{"type": "auto"}``, ``"required"`` →
+    ``{"type": "any"}``, tool name → ``{"type": "tool", "name": ...}``.
+    """
+    if tool_choice is None:
+        return None
+    named_choice_map = {
+        "auto": {_KEY_TYPE: _TYPE_AUTO},
+        "required": {_KEY_TYPE: _TYPE_ANY},
+        "none": {_KEY_TYPE: _TYPE_NONE},
+    }
+    mapped = named_choice_map.get(tool_choice)
+    if mapped is not None:
+        return mapped
+    return {_KEY_TYPE: _TYPE_TOOL, "name": tool_choice}
+
+
+def _parse_tool_calls(response: Any) -> list[ToolCall]:
+    """Extract ``ToolCall`` objects from an Anthropic ``Message`` response.
+
+    Anthropic returns tool invocations as ``tool_use`` blocks inside
+    ``response.content``; the ``input`` field is already a dict, so no
+    JSON decoding is needed.
+    """
+    parsed: list[ToolCall] = []
+    for block in response.content:
+        if getattr(block, _KEY_TYPE, None) != "tool_use":
+            continue
+        arguments = getattr(block, "input", None) or {}
+        parsed.append(
+            ToolCall(
+                name=block.name,
+                arguments=arguments if isinstance(arguments, dict) else {"__raw__": arguments},
+                call_id=getattr(block, "id", None),
+            ),
+        )
+    return parsed
 
 
 class AnthropicClient(BaseLLMClient):
@@ -61,17 +133,13 @@ class AnthropicClient(BaseLLMClient):
         max_tokens: int | None = None,
         output_format: OutputFormat | None = None,
     ) -> LLMResponse:
-        formatted = self._format_messages(messages)
-
-        kwargs: dict[str, Any] = {
-            "model": self.model,
-            "messages": formatted,
-            "temperature": self.temperature if temperature is None else temperature,
-            "max_tokens": self.max_tokens if max_tokens is None else max_tokens,
-        }
-        if system_prompt:
-            kwargs["system"] = system_prompt
-
+        kwargs = self._build_request_kwargs(
+            messages,
+            system_prompt,
+            temperature,
+            max_tokens,
+            output_format,
+        )
         if output_format is not None and output_format.is_strict:
             response = await self._send_with_schema(kwargs, output_format.schema or {})
         else:
@@ -90,6 +158,7 @@ class AnthropicClient(BaseLLMClient):
                 "completion_tokens": response.usage.output_tokens,
             },
             model=response.model,
+            tool_calls=_parse_tool_calls(response),
         )
 
     async def send_message_streaming(
@@ -112,6 +181,35 @@ class AnthropicClient(BaseLLMClient):
             async for text in stream.text_stream:
                 yield text
 
+    def _build_request_kwargs(
+        self,
+        messages: list[Message],
+        system_prompt: str,
+        temperature: float | None,
+        max_tokens: int | None,
+        output_format: OutputFormat | None,
+    ) -> dict[str, Any]:
+        """Build the kwargs dict handed to ``messages.create``.
+
+        Kept separate so :meth:`send_message` stays inside the
+        local-variable / argument budget; tool/system translation lives
+        here.
+        """
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": self._format_messages(messages),
+            "temperature": self.temperature if temperature is None else temperature,
+            "max_tokens": self.max_tokens if max_tokens is None else max_tokens,
+        }
+        if system_prompt:
+            kwargs["system"] = system_prompt
+        if output_format is not None and output_format.has_tools:
+            kwargs["tools"] = _build_tools(output_format.tools)
+            wire_tool_choice = _build_tool_choice(output_format.tool_choice)
+            if wire_tool_choice is not None:
+                kwargs["tool_choice"] = wire_tool_choice
+        return kwargs
+
     async def _send_with_schema(
         self,
         kwargs: dict[str, Any],
@@ -123,7 +221,7 @@ class AnthropicClient(BaseLLMClient):
         the model or endpoint does not support structured outputs, so callers
         can degrade to the prompt-based JSON path.
         """
-        kwargs["output_format"] = {"type": "json_schema", "schema": json_schema}
+        kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": json_schema}
         try:
             return await self._client.beta.messages.create(**kwargs)
         except self._bad_request_error as exc:

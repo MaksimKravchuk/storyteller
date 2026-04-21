@@ -1,11 +1,20 @@
-"""Action routing helpers for Director."""
+"""Action routing helpers for Director.
+
+Uses provider tool calls to classify the player action. The LLM picks
+exactly one of the verb tools (or the ``clarify`` tool) defined in
+:mod:`cast.director_tools`; this module wraps the invocation, persists
+the pending-clarification exchange across turns, and exposes the scene
+history so the model has context on previous plans.
+"""
 
 from __future__ import annotations
 
 import json as _json
 from typing import Awaitable, Callable
 
-from llm.message import Message, Role
+from cast.director_tools import ACTION_TOOLS, RouteResult, parse_tool_call
+from cast.schemas import action_plan as plan_schemas
+from llm.message import Message, Role, Tool, ToolCall
 from models.game_state import GameState
 from prompts.base_template import PromptTemplate
 
@@ -30,39 +39,60 @@ class ActionRouter:
     def __init__(
         self,
         game_state: GameState,
-        send_json_fn: Callable[..., Awaitable[dict]],
+        send_tool_fn: Callable[..., Awaitable[ToolCall]],
         action_routing_template: PromptTemplate,
+        tools: list[Tool] | None = None,
     ) -> None:
         self._gs = game_state
-        self._send_json = send_json_fn
+        self._send_tool = send_tool_fn
         self._action_routing_template = action_routing_template
+        self._tools: list[Tool] = list(ACTION_TOOLS) if tools is None else list(tools)
 
-    async def route_action(self, player_action: str) -> dict:
-        """Use the LLM to classify the action and produce a routing plan.
+    async def route_action(self, player_action: str) -> RouteResult:
+        """Use the LLM to classify the action and return a typed plan.
 
-        Calls ``_send_json`` without a ``response_model``, so it takes the
-        prompt-based fallback path. Decode failures there now raise
-        ``ValueError`` immediately (no bracket-extraction recovery since
-        the strict-outputs refactor in #115). The follow-up Director ticket
-        will migrate this call to a strict Pydantic schema; until then,
-        GPT-5.4-mini's JSON mode is reliable enough in practice.
+        Invokes the provider's tool-call surface via ``_send_tool`` with
+        the eight verb tools plus the clarify tool registered in
+        :data:`cast.director_tools.ACTION_TOOLS`. The provider enforces
+        the enum at the schema level, so misspellings and off-spec
+        values can no longer leak through. Returns one of the eight
+        verb plan classes on a routing call, or
+        :class:`ClarificationRequest` when the model needs more info.
         """
         history = self.load_pending_clarification()
         if history:
             scene_history = self.build_scene_history() or []
-            return await self._send_json(
+            call = await self._send_tool(
                 player_action,
+                tools=self._tools,
                 conversation=scene_history + history,
             )
-        prompt = self._action_routing_template.render(player_action=player_action)
-        return await self._send_json(prompt, conversation=self.build_scene_history())
+        else:
+            prompt = self._action_routing_template.render(player_action=player_action)
+            call = await self._send_tool(
+                prompt,
+                tools=self._tools,
+                conversation=self.build_scene_history(),
+            )
+        return parse_tool_call(call)
 
-    def save_pending_clarification(self, player_action: str, routing_plan: dict) -> None:
-        """Persist a clarification exchange in game state."""
+    def save_pending_clarification(
+        self,
+        player_action: str,
+        request: plan_schemas.ClarificationRequest,
+    ) -> None:
+        """Persist a clarification exchange in game state.
+
+        The persisted shape is a JSON-encoded dict so existing saved
+        sessions keep deserialising cleanly.
+        """
         prompt = self._action_routing_template.render(player_action=player_action)
         self._gs.pending_clarification = [
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": _json.dumps(routing_plan, ensure_ascii=False)},
+            {
+                "role": "assistant",
+                "content": _json.dumps(request.model_dump(), ensure_ascii=False),
+            },
         ]
 
     def load_pending_clarification(self) -> list[Message] | None:
@@ -76,7 +106,10 @@ class ActionRouter:
         """Build a conversation history from the current scene's log.
 
         Returns ``Message`` pairs (user action + assistant routing response)
-        for the last 10 exchanges.
+        for the last 10 exchanges. The assistant messages are rendered
+        in the legacy ``{"action_type", "result_summary"}`` JSON shape
+        so the model sees the same conversational context the pre-tools
+        pipeline produced.
         """
         log = self._gs.scene_conversation_log
         if not log:

@@ -166,37 +166,37 @@ class TestIsIncapacitated:
 @allure.epic("Game Timeline")
 @allure.feature("Wait intent detection")
 class TestBuildForcedWaitPlan:
-    """Forced wait produces a valid routing plan."""
+    """Forced wait produces a valid WaitPlan."""
 
     @allure.story("Forced wait plan")
     @allure.title("A forced wait plan has action_type set to 'WAIT'")
     def test_action_type_is_wait(self):
         plan = build_forced_wait_plan("unconscious")
-        assert plan["action_type"] == "WAIT"
+        assert plan.action_type == "WAIT"
 
     @allure.story("Forced wait plan")
-    @allure.title("A forced wait plan never asks the player for clarification")
-    def test_no_clarification_needed(self):
+    @allure.title("A forced wait plan delegates narration directly to the narrator")
+    def test_delegates_to_narrator(self):
         plan = build_forced_wait_plan("stunned")
-        assert plan["needs_clarification"] is False
+        assert plan.delegate_to == ["narrator"]
 
     @allure.story("Forced wait plan")
-    @allure.title("A forced wait plan has no action targets")
-    def test_empty_targets(self):
+    @allure.title("A forced wait plan carries a human-readable intent string")
+    def test_carries_intent(self):
         plan = build_forced_wait_plan("tied up")
-        assert plan["targets"] == []
+        assert "tied up" in plan.intent
 
     @allure.story("Forced wait plan")
-    @allure.title("A forced wait plan is flagged as non-aggressive")
-    def test_not_aggressive(self):
+    @allure.title("A forced wait plan does not override the default time cost")
+    def test_no_time_cost_override(self):
         plan = build_forced_wait_plan("frightened")
-        assert plan["is_aggressive"] is False
+        assert plan.time_cost_override is None
 
     @allure.story("Forced wait plan")
     @allure.title("A forced wait plan records the incapacitation reason in its wait_reason field")
     def test_has_reason(self):
         plan = build_forced_wait_plan("unconscious")
-        assert "unconscious" in plan.get("wait_reason", "")
+        assert plan.wait_reason == "unconscious"
 
 
 @allure.epic("Game Timeline")

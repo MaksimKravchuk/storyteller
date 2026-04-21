@@ -19,26 +19,16 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from cast import narrator as narrator_mod, narrator_labels as narrator_labels_mod
-from cast.director_routing import ActionRouter
+from cast import director_routing, narrator as narrator_mod, narrator_labels as narrator_labels_mod
 from cast.schemas.turn_outputs import DialogueEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod
-from prompts import (
-    actor_prompts,
-    chronicler_prompts,
-    data_miner_prompts,
-    director_prompts,
-    dramaturge_prompts,
-)
-from prompts import (
-    item_generator_prompts,
-    narrator_prompts,
-    npc_generator_prompts,
-    scene_builder_prompts,
-)
+from llm.message import ToolCall
+from prompts import actor_prompts, chronicler_prompts, data_miner_prompts, director_prompts, dramaturge_prompts
+from prompts import item_generator_prompts, narrator_prompts, npc_generator_prompts, scene_builder_prompts
 from prompts.locales import DEFAULT_LOCALE, Locale, resolve_locale
 
+ActionRouter = director_routing.ActionRouter
 get_actor_prompts = actor_prompts.get_actor_prompts
 get_chronicler_prompts = chronicler_prompts.get_chronicler_prompts
 get_data_miner_prompts = data_miner_prompts.get_data_miner_prompts
@@ -465,14 +455,13 @@ class TestDirectorPromptCatalog:
         assert get_director_prompts("Klingon") is english
 
     @allure.story("Catalog lookup")
-    @allure.title("Russian Director routing prompt keeps action_type enum values in English")
-    def test_action_type_values_stay_english(self) -> None:
+    @allure.title("Russian Director routing prompt renders the player action header in Russian")
+    def test_russian_routing_prompt_uses_russian_header(self) -> None:
         rendered = get_director_prompts("Russian").action_routing.render(
             player_action="пойти на рынок",
         )
-        assert "EXPLORE|TALK|INTERACT|EXAMINE|MOVE|SLEEP|WAIT|OTHER" in rendered
-        assert "combat|persuasion|deception|intimidation|stealth" in rendered
         assert "Действие игрока" in rendered
+        assert "Player action" not in rendered
 
     @allure.story("End-to-end")
     @allure.title("ActionRouter threads the Russian routing template into the LLM call")
@@ -485,11 +474,20 @@ class TestDirectorPromptCatalog:
         template-level catalog tests above.
         """
         gs = _make_game_state()
-        send_json = AsyncMock(return_value={"action_type": "EXPLORE"})
-        router = ActionRouter(gs, send_json, get_director_prompts("Russian").action_routing)
+        send_tool = AsyncMock(
+            return_value=ToolCall(
+                name="explore",
+                arguments={
+                    "action_type": "EXPLORE",
+                    "intent": "look around",
+                    "delegate_to": ["narrator"],
+                    "targets": [],
+                },
+            ),
+        )
+        router = ActionRouter(gs, send_tool, get_director_prompts("Russian").action_routing)
         await router.route_action("осмотреться вокруг")
-        assert send_json.await_args is not None
-        prompt_sent = send_json.await_args.args[0]
-        assert "EXPLORE|TALK|INTERACT|EXAMINE|MOVE|SLEEP|WAIT|OTHER" in prompt_sent
+        assert send_tool.await_args is not None
+        prompt_sent = send_tool.await_args.args[0]
         assert "Действие игрока" in prompt_sent
         assert "Player action" not in prompt_sent

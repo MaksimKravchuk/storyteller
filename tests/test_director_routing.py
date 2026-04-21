@@ -9,23 +9,10 @@ import pytest
 
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from models.scene import Scene, SceneNPC
-from tests.director_helpers import make_director, make_game_state
+from tests.director_helpers import make_director, make_game_state, route_plan as _route
 
 _TALK = "TALK"
 _SUMMARY_MAX_LENGTH = 500
-
-
-def _route(action_type, *, clarify=False, clarify_q=None, delegate=("narrator",), targets=()):
-    """Build a route_response dict for Director tests."""
-    action_plan = {
-        "action_type": action_type,
-        "targets": list(targets),
-        "needs_clarification": clarify,
-        "delegate_to": list(delegate) if clarify else delegate,
-    }
-    if clarify_q:
-        action_plan["clarification_question"] = clarify_q
-    return action_plan
 
 
 async def _run_action_check(action_type):

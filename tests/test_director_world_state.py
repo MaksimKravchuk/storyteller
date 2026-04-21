@@ -20,6 +20,7 @@ from cast.director import DirectorCast
 from cast.schemas import chronicler_response as chronicler_schema
 from knowledge import graph as graph_mod, memory as memory_mod
 from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod, world_state as world_state_mod
+from tests.director_helpers import route_plan
 from timeline.event_manager import EventManager
 
 
@@ -104,7 +105,7 @@ class TestPlanExecutorChroniclerGate:
         executor, gs, chronicler, event_mgr = _make_plan_executor_pieces(with_chronicler=True)
 
         await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"]},
+            plan=route_plan("EXPLORE", delegate=["scene_builder"]),
             player_action="explore the forum",
             completed_events=[],
         )
@@ -127,7 +128,7 @@ class TestPlanExecutorChroniclerGate:
         executor, gs, _unused, _event_mgr = _make_plan_executor_pieces(with_chronicler=False)
 
         await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"]},
+            plan=route_plan("EXPLORE", delegate=["scene_builder"]),
             player_action="explore the forum",
             completed_events=[],
         )
@@ -149,7 +150,7 @@ class TestPlanExecutorChroniclerGate:
         # TALK is not a scene-changing action, so PlanExecutor.execute_plan
         # never builds a scene and the chronicler gate should short-circuit.
         await executor.execute_plan(
-            plan={"action_type": "TALK", "delegate_to": ["actor"], "targets": []},
+            plan=route_plan("TALK", delegate=["actor"], targets=[]),
             player_action="greet the guard",
             completed_events=[],
         )

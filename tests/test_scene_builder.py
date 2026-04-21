@@ -127,7 +127,7 @@ class TestSceneBuilder:
         builder = SceneBuilder(llm_client=MagicMock())
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look", {"game_state": game_state})
-        rendered_system = builder._build_system_prompt()
+        rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "Persistent world changes" not in rendered_system
 
     @allure.story("Persistent world changes")
@@ -150,7 +150,7 @@ class TestSceneBuilder:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look", {"game_state": game_state})
 
-        rendered_system = builder._build_system_prompt()
+        rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "Persistent world changes" in rendered_system
         assert "tavern: The front window is broken." in rendered_system
         assert "forum: The statue of Jupiter is toppled." in rendered_system

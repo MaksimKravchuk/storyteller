@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 import types
 
+from cast.schemas.action_plan import WaitPlan
+
 # ---------------------------------------------------------------------------
 # Incapacitating states — force the player to WAIT
 # ---------------------------------------------------------------------------
@@ -72,16 +74,16 @@ def is_incapacitated(physical_status: str) -> bool:
     return (physical_status or "").lower() in INCAPACITATING_STATES
 
 
-def build_forced_wait_plan(reason: str) -> dict:
-    """Build a routing plan dict for a forced WAIT action."""
-    return {
-        "action_type": "WAIT",
-        "is_aggressive": False,
-        "targets": [],
-        "needs_clarification": False,
-        "clarification_question": "",
-        "delegate_to": ["narrator"],
-        "time_cost_override": None,
-        "wait_reason": reason,
-        "intent": "wait ({0})".format(reason),
-    }
+def build_forced_wait_plan(reason: str) -> WaitPlan:
+    """Build a typed WaitPlan for a forced WAIT action.
+
+    Used when the player is incapacitated or typed a wait keyword, so
+    no LLM round-trip is needed. The shape mirrors what the tool-call
+    path would produce for a voluntary WAIT.
+    """
+    return WaitPlan(
+        intent="wait ({0})".format(reason),
+        delegate_to=["narrator"],
+        time_cost_override=None,
+        wait_reason=reason,
+    )

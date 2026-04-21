@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from llm.message import Role
-from tests.director_helpers import make_director, make_game_state
+from llm.message import Role, ToolCall
+from tests.director_helpers import make_director, make_game_state, route_plan
 
 _PLAYER_ACTION = "player_action"
 _RESPONSE_SUMMARY = "response_summary"
@@ -19,12 +19,22 @@ _INTERACT = "INTERACT"
 _ROLE = "role"
 _MSG_CONTENT = "content"
 _NEEDS_CLARIFICATION = "needs_clarification"
-_TARGETS = "targets"
-_DELEGATE_TO = "delegate_to"
-_NARRATOR = "narrator"
-_CONVERSATION = "conversation"
 _HISTORY_LOG_SIZE = 15
 _EXPECTED_HISTORY_PAIRS = 20
+
+
+def _interact_tool_call() -> ToolCall:
+    """Canonical interact tool call used to drive the clarification follow-up path."""
+    return ToolCall(
+        name="interact",
+        arguments={
+            "action_type": "INTERACT",
+            "intent": "grab the weapon",
+            "delegate_to": ["narrator"],
+            "targets": ["guard"],
+            "is_aggressive": False,
+        },
+    )
 
 
 @allure.epic("Memory & Persistence")
@@ -127,28 +137,15 @@ class TestClarificationPreservesSceneHistory:
             {_ROLE: "user", _MSG_CONTENT: 'Player action: "grab his weapon"'},
             {
                 _ROLE: "assistant",
-                _MSG_CONTENT: json.dumps(
-                    {_NEEDS_CLARIFICATION: True, "clarification_question": "Whose weapon?"},
-                ),
+                _MSG_CONTENT: json.dumps({"question": "Whose weapon?", "reason": ""}),
             },
         ]
         director = make_director(game_state=gs)
-        director._router._send_json = AsyncMock(
-            return_value={
-                _ACTION_TYPE: _INTERACT,
-                _TARGETS: ("guard",),
-                _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: (_NARRATOR,),
-            }
-        )
+        director._router._send_tool = AsyncMock(return_value=_interact_tool_call())
         await director._router.route_action("the guard")
 
-        call_kwargs = director._router._send_json.call_args
-        conversation_val = (
-            call_kwargs.kwargs.get(_CONVERSATION) or call_kwargs.args[1]
-            if len(call_kwargs.args) > 1
-            else call_kwargs.kwargs[_CONVERSATION]
-        )
+        call_kwargs = director._router._send_tool.call_args
+        conversation_val = call_kwargs.kwargs["conversation"]
         assert len(conversation_val) == 4
         assert conversation_val[0].role == Role.USER
         assert "punch guard" in conversation_val[0].body
@@ -162,28 +159,15 @@ class TestClarificationPreservesSceneHistory:
             {_ROLE: "user", _MSG_CONTENT: 'Player action: "take it"'},
             {
                 _ROLE: "assistant",
-                _MSG_CONTENT: json.dumps(
-                    {_NEEDS_CLARIFICATION: True, "clarification_question": "Take what?"},
-                ),
+                _MSG_CONTENT: json.dumps({"question": "Take what?", "reason": ""}),
             },
         ]
         director = make_director(game_state=gs)
-        director._router._send_json = AsyncMock(
-            return_value={
-                _ACTION_TYPE: _INTERACT,
-                _TARGETS: [],
-                _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: (_NARRATOR,),
-            }
-        )
+        director._router._send_tool = AsyncMock(return_value=_interact_tool_call())
         await director._router.route_action("the sword")
 
-        call_kwargs = director._router._send_json.call_args
-        conversation_val = (
-            call_kwargs.kwargs.get(_CONVERSATION) or call_kwargs.args[1]
-            if len(call_kwargs.args) > 1
-            else call_kwargs.kwargs[_CONVERSATION]
-        )
+        call_kwargs = director._router._send_tool.call_args
+        conversation_val = call_kwargs.kwargs["conversation"]
         assert len(conversation_val) == 2
 
 
@@ -196,14 +180,7 @@ class TestDelegation:
     @allure.title("Director delegates to the Narrator via execute() so the call chain is recorded")
     @pytest.mark.asyncio
     async def test_narrator_called_via_execute(self):
-        director = make_director(
-            route_response={
-                _ACTION_TYPE: "OTHER",
-                _TARGETS: [],
-                _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: (_NARRATOR,),
-            }
-        )
+        director = make_director(route_response=route_plan("OTHER"))
         await director.act("look around")
         director._cast.narrator.execute.assert_called_once()
 
@@ -211,14 +188,7 @@ class TestDelegation:
     @allure.title("Director delegates to the SceneBuilder via execute() so the call chain is recorded")
     @pytest.mark.asyncio
     async def test_scene_builder_called_via_execute(self):
-        director = make_director(
-            route_response={
-                _ACTION_TYPE: "MOVE",
-                _TARGETS: [],
-                _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: ["scene_builder"],
-            }
-        )
+        director = make_director(route_response=route_plan("MOVE", delegate=["scene_builder"]))
         await director.act("walk to the ruins")
         director._cast.scene_builder.execute.assert_called_once()
 
@@ -230,15 +200,7 @@ class TestDelegation:
         gs.scene_conversation_log = [
             {_PLAYER_ACTION: "attack guard", _RESPONSE_SUMMARY: "Guard blocks.", _ACTION_TYPE: _INTERACT},
         ]
-        director = make_director(
-            game_state=gs,
-            route_response={
-                _ACTION_TYPE: _INTERACT,
-                _TARGETS: [],
-                _NEEDS_CLARIFICATION: False,
-                _DELEGATE_TO: (_NARRATOR,),
-            },
-        )
+        director = make_director(game_state=gs, route_response=route_plan(_INTERACT))
         await director.act("attack again")
 
         narrator_call = director._cast.narrator.execute.call_args
