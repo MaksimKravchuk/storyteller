@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import copy
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
-from llm.base_client import BaseLLMClient
+from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import Message, LLMResponse
 
 if TYPE_CHECKING:
@@ -19,6 +20,102 @@ _SYSTEM_PROMPT_LOG_CHARS = 200
 def _is_printable(ch: str) -> bool:
     """Return True if the character is safe for JSON strings."""
     return (ch >= "\x20" and ch != "\x7f") or ch in _ALLOWED_CONTROL
+
+
+class _StrictSchemaNormalizer:
+    """Convert a Pydantic JSON schema into OpenAI's strict ``response_format`` envelope.
+
+    OpenAI's strict validator requires ``additionalProperties: false`` on
+    every object, lists every defined property as ``required`` (even ones
+    Pydantic considered optional), and forbids ``default`` keys.
+    """
+
+    _composites: tuple[str, ...] = ("anyOf", "oneOf", "allOf")
+
+    @classmethod
+    def wrap(cls, schema: dict[str, Any], name: str) -> dict[str, Any]:
+        """Return the full ``{"type": "json_schema", ...}`` payload.
+
+        The input ``schema`` is never mutated — a deep copy is normalized
+        in place before being returned inside the envelope.
+
+        Note: Pydantic fields with defaults (e.g. ``scope: Literal["local",
+        "remote"] = "remote"``) emit a ``default`` key that OpenAI's strict
+        validator forbids. We strip it, so the LLM is now *required* to
+        produce the field explicitly — the Pydantic default no longer fills
+        in on LLM omission because strict mode does not allow omissions.
+        Behavior-compatible for enum/literal fields (the LLM just picks a
+        valid value), but worth knowing when adding new optional fields.
+        """
+        normalized = copy.deepcopy(schema)
+        cls._walk(normalized)
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": name,
+                "schema": normalized,
+                "strict": True,
+            },
+        }
+
+    @classmethod
+    def _walk(cls, node: Any) -> None:
+        """Recursively normalize a JSON-schema node in place."""
+        if not isinstance(node, dict):
+            return
+        node.pop("default", None)
+        if node.get("type") == "object" or "properties" in node:
+            cls._normalize_object(node)
+        cls._walk_children(node)
+        cls._walk_composites(node)
+
+    @classmethod
+    def _normalize_object(cls, node: dict[str, Any]) -> None:
+        """Apply object-level strict-mode constraints (``additionalProperties``, ``required``)."""
+        properties = node.get("properties")
+        if not isinstance(properties, dict):
+            return
+        node["additionalProperties"] = False
+        node["required"] = list(properties.keys())
+        for prop_schema in properties.values():
+            if isinstance(prop_schema, dict):
+                cls._walk(prop_schema)
+
+    @classmethod
+    def _walk_children(cls, node: dict[str, Any]) -> None:
+        """Descend into array items and ``$defs`` definitions if present."""
+        array_items = node.get("items")
+        if isinstance(array_items, dict):
+            cls._walk(array_items)
+        defs = node.get("$defs")
+        if isinstance(defs, dict):
+            for def_schema in defs.values():
+                cls._walk(def_schema)
+
+    @classmethod
+    def _walk_composites(cls, node: dict[str, Any]) -> None:
+        """Recurse into ``anyOf`` / ``oneOf`` / ``allOf`` branches if present."""
+        for composite_key in cls._composites:
+            composite = node.get(composite_key)
+            if isinstance(composite, list):
+                for branch in composite:
+                    cls._walk(branch)
+
+
+def _build_response_format(output_format: OutputFormat | None) -> dict[str, Any] | None:
+    """Translate an ``OutputFormat`` into the OpenAI ``response_format`` payload.
+
+    Returns ``None`` when the caller did not request any specific format.
+    Strict mode (``output_format.is_strict``) wins over the legacy dict.
+    """
+    if output_format is None:
+        return None
+    if output_format.is_strict:
+        return _StrictSchemaNormalizer.wrap(
+            output_format.schema or {},
+            output_format.schema_name or "Response",
+        )
+    return output_format.response_format
 
 
 def _extract_error_body(exc: Any) -> Any:
@@ -73,7 +170,7 @@ class OpenAIClient(BaseLLMClient):
         system_prompt: str = "",
         temperature: float | None = None,
         max_tokens: int | None = None,
-        response_format: dict[str, Any] | None = None,
+        output_format: OutputFormat | None = None,
     ) -> LLMResponse:
         formatted = self._format_messages(messages, system_prompt)
 
@@ -83,8 +180,9 @@ class OpenAIClient(BaseLLMClient):
             "temperature": self.temperature if temperature is None else temperature,
             "max_completion_tokens": self.max_tokens if max_tokens is None else max_tokens,
         }
-        if response_format:
-            kwargs["response_format"] = response_format
+        wire_response_format = _build_response_format(output_format)
+        if wire_response_format is not None:
+            kwargs["response_format"] = wire_response_format
 
         try:
             response = await self._client.chat.completions.create(**kwargs)

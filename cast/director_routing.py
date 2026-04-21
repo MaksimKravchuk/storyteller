@@ -38,7 +38,15 @@ class ActionRouter:
         self._action_routing_template = action_routing_template
 
     async def route_action(self, player_action: str) -> dict:
-        """Use the LLM to classify the action and produce a routing plan."""
+        """Use the LLM to classify the action and produce a routing plan.
+
+        Calls ``_send_json`` without a ``response_model``, so it takes the
+        prompt-based fallback path. Decode failures there now raise
+        ``ValueError`` immediately (no bracket-extraction recovery since
+        the strict-outputs refactor in #115). The follow-up Director ticket
+        will migrate this call to a strict Pydantic schema; until then,
+        GPT-5.4-mini's JSON mode is reliable enough in practice.
+        """
         history = self.load_pending_clarification()
         if history:
             scene_history = self.build_scene_history() or []

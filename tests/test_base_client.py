@@ -8,7 +8,7 @@ from typing import Any
 import allure
 import pytest
 
-from llm.base_client import BaseLLMClient
+from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import LLMResponse, Message
 
 
@@ -20,14 +20,25 @@ async def _empty_stream() -> AsyncIterator[str]:
 class _StubClient(BaseLLMClient):
     """Minimal concrete subclass used to exercise the base constructor."""
 
+    def __init__(self, model: str, **kwargs: Any) -> None:
+        super().__init__(model=model, **kwargs)
+        self.last_send_kwargs: dict[str, Any] = {}
+
     async def send_message(
         self,
         messages: list[Message],
         system_prompt: str = "",
         temperature: float | None = None,
         max_tokens: int | None = None,
-        response_format: dict[str, Any] | None = None,
+        output_format: OutputFormat | None = None,
     ) -> LLMResponse:
+        self.last_send_kwargs = {
+            "messages": messages,
+            "system_prompt": system_prompt,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "output_format": output_format,
+        }
         return LLMResponse(body="")
 
     async def send_message_streaming(
@@ -73,3 +84,21 @@ class TestBaseLLMClient:
     def test_cannot_instantiate_abstract_base(self) -> None:
         with pytest.raises(TypeError):
             BaseLLMClient(model="m-1")  # type: ignore[abstract]
+
+    @allure.story("Abstract contract")
+    @allure.title(
+        "BaseLLMClient.send_message accepts an OutputFormat carrying schema and schema_name "
+        "for strict structured outputs",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_signature_accepts_output_format(self) -> None:
+        client = _StubClient(model="m-1")
+        of = OutputFormat(
+            schema={"type": "object", "properties": {}},
+            schema_name="WidgetResponse",
+        )
+        await client.send_message(messages=[], output_format=of)
+        captured = client.last_send_kwargs["output_format"]
+        assert captured.is_strict is True
+        assert captured.schema == {"type": "object", "properties": {}}
+        assert captured.schema_name == "WidgetResponse"

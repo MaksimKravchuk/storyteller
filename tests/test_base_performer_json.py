@@ -1,4 +1,10 @@
-"""Tests for BasePerformer._send_json — JSON parsing, retries, and bracket extraction."""
+"""Tests for BasePerformer._send_json — prompt-based fallback path (no schema).
+
+The strict-mode path (with ``response_model``) is covered in
+``test_send_json_validation.py``. These tests cover the schema-less branch
+where ``_send_json`` returns a raw dict and decode failures hard-raise (the
+old bracket-extraction recovery has been deleted).
+"""
 
 from __future__ import annotations
 
@@ -36,43 +42,39 @@ class TestSendJson:
             output = await performer._send_json(_PROMPT)
         assert output == {"key": "value"}
 
-    @allure.story("Bracket extraction")
+    @allure.story("Decode failure")
     @allure.title(
-        "BasePerformer._send_json recovers a JSON object embedded in surrounding prose via bracket extraction"
+        "BasePerformer._send_json raises immediately on the fallback path when the LLM returns "
+        "non-JSON; bracket extraction has been removed",
     )
     @pytest.mark.asyncio
-    async def test_bracket_extraction_fallback(self):
+    async def test_decode_failure_raises_immediately_on_fallback(self):
         performer = self._make()
-        with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value='noise {"extracted": true} noise')):
-            extracted = await performer._send_json(_PROMPT, retries=0)
-        assert extracted == {"extracted": True}
-
-    @allure.story("Retry on bad JSON")
-    @allure.title(
-        "BasePerformer._send_json retries the requested number of times then raises when every attempt is invalid"
-    )
-    @pytest.mark.asyncio
-    async def test_raises_when_all_retries_fail(self):
-        performer = self._make()
-        with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="not json at all")) as mock_send:
-            with pytest.raises(ValueError, match="failed to produce valid JSON"):
+        with patch.object(
+            performer,
+            _SEND_METHOD,
+            new=AsyncMock(return_value="not json at all"),
+        ) as mock_send:
+            with pytest.raises(ValueError, match="non-JSON response on fallback path"):
                 await performer._send_json(_PROMPT, retries=2)
-        assert mock_send.call_count == 3
+        assert mock_send.call_count == 1
 
-    @allure.story("Bracket extraction")
+    @allure.story("Decode failure")
     @allure.title(
-        "BasePerformer._send_json raises a ValueError when the extracted brace region still contains broken JSON"
+        "BasePerformer._send_json no longer recovers JSON embedded in prose via bracket extraction; "
+        "the call raises instead",
     )
     @pytest.mark.asyncio
-    async def test_invalid_inner_braces(self):
+    async def test_decode_failure_does_not_extract_from_prose(self):
         performer = self._make()
-        with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value="prefix {broken json} suffix")):
-            with pytest.raises(ValueError, match="failed to produce valid JSON"):
+        body = 'noise {"extracted": true} noise'
+        with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value=body)):
+            with pytest.raises(ValueError, match="non-JSON response on fallback path"):
                 await performer._send_json(_PROMPT, retries=0)
 
     @allure.story("Error handling")
     @allure.title(
-        "Non-JSON exceptions raised by _send propagate out of _send_json instead of being swallowed as parse errors"
+        "Non-JSON exceptions raised by _send propagate out of _send_json instead of being swallowed as parse errors",
     )
     @pytest.mark.asyncio
     async def test_non_json_exception_propagates(self):
