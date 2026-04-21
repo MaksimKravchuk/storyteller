@@ -8,6 +8,18 @@ from typing import Any
 from llm.message import Message, LLMResponse
 
 
+class LLMJSONError(ValueError):
+    """Raised when an LLM fails to produce valid JSON / schema after retries.
+
+    Carries the last raw response so callers can log it or use it as a
+    salvage narration (see cast.actor.Actor.act's envelope-failure fallback).
+    """
+
+    def __init__(self, message: str, raw_response: str):
+        super().__init__(message)
+        self.raw_response = raw_response
+
+
 @dataclass(frozen=True)
 class OutputFormat:
     """Output-shape controls for a single LLM call.

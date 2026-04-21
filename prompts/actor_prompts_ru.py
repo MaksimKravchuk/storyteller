@@ -4,14 +4,12 @@ Mirrors the structure of :mod:`prompts.actor_prompts` (section names
 and required variables match exactly) so the two catalogs are drop-in
 replacements for each other inside :class:`cast.actor.Actor`.
 
-The ``[MOOD: ...]``, ``[STATUS: ...]``, ``[REVEALED: ...]`` trailing
-tags are parsed by regexes anchored on the English tag NAMES in
-:mod:`cast.actor_tags`. Those names MUST stay English. The MOOD tag
-value is additionally mapped against the English-keyed enum in
-:mod:`cast.hostility` (``hostile``, ``enraged``, ``angry`` …) — so the
-Russian prompt explicitly instructs the LLM to emit English words for
-that tag value. STATUS values and REVEALED names are free-form and can
-be Russian.
+The JSON envelope field names (narration, mood, status, revealed_names)
+must stay English as they are parsed by the ActorEnvelope schema.
+The ``mood`` value must be an English word (hostile, enraged, angry …)
+because it is matched against the English-keyed enum in
+:mod:`cast.hostility`.  ``status`` values and ``revealed_names`` entries
+can be in the game language (Russian).
 """
 
 from prompts.base_template import PromptSection, PromptTemplate
@@ -102,29 +100,21 @@ ACTOR_SYSTEM_RU = PromptTemplate(
                 "разговорная реплика; воспоминание, объяснение или "
                 "эмоциональный момент может быть длиннее. Никогда не разводи "
                 "воду, но и не рубли естественный ответ до рявка.\n"
-                "- Выводи ТОЛЬКО произнесённую реплику и краткие описания "
+                "- Твой ответ ОБЯЗАН быть JSON-объектом ровно с четырьмя "
+                "полями — никакого дополнительного текста, никаких markdown-блоков:\n"
+                '  "narration": произнесённая реплика и краткие описания '
                 "действий (например *гладит бороду*).\n"
-                "- На НОВОЙ строке добавляй [MOOD: <одно слово>] (например "
-                "[MOOD: hostile], [MOOD: terrified]) всегда, когда твоё "
-                "настроение сместилось — и ОБЯЗАТЕЛЬНО, пока ты в активном "
-                "конфликте с игроком, чтобы система держала твоё внутреннее "
-                "состояние откалиброванным. Значение тега MOOD указывай "
-                "АНГЛИЙСКИМ словом (hostile, enraged, angry, threatened, "
-                "irritated, suspicious, neutral, calm, happy и т.п.) — оно "
-                "читается кодом.\n"
-                "- Если физическое состояние изменилось (ранен, вылечен, "
-                "без сознания и т.п.), добавь на НОВОЙ строке "
-                "[STATUS: <описание>] (например [STATUS: ранена левая рука], "
-                "[STATUS: еле стоит]). Включай только если состояние "
-                "изменилось относительно {physical_status}.\n"
-                "- Если ты произнёс своё имя, добавь на НОВОЙ строке "
-                "[REVEALED: self]. Если ты также назвал имя другого NPC, "
-                "которого игрок видит в этой сцене, добавь его имя дословно "
-                "— через запятую (например [REVEALED: self, Марк]). Если "
-                "имён никто не называл — не включай этот тег вовсе.\n"
-                "- Теги MOOD, STATUS, REVEALED всегда пиши АНГЛИЙСКИМИ "
-                "заглавными буквами в квадратных скобках — по ним "
-                "сопоставляет код."
+                '  "mood": если настроение сместилось или ты в активном '
+                "конфликте с игроком — ОДНО АНГЛИЙСКОЕ слово "
+                '(например "hostile", "terrified"). '
+                "Null, если настроение не изменилось — система использует это "
+                "поле для калибровки твоего внутреннего состояния.\n"
+                '  "status": если физическое состояние изменилось относительно '
+                "{physical_status} — краткое описание "
+                '(например "ранена левая рука"). Null, если не изменилось.\n'
+                '  "revealed_names": если ты произнёс своё имя — добавь "self"; '
+                "если также назвал имя другого NPC в этой сцене — добавь его "
+                "дословно. Пустой массив, если имён не звучало."
             ),
             required_vars=["current_mood", "physical_status", "npc_occupation"],
         ),

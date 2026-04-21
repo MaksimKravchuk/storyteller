@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, TypeVar, overload
 
-from llm.base_client import BaseLLMClient, OutputFormat
+from llm.base_client import BaseLLMClient, LLMJSONError, OutputFormat
 from llm.call_logger import (
     agent_stack,
     call_log_buffer,
@@ -118,11 +118,12 @@ async def _retry_after_validation_failure(
         errors_preview,
     )
     if not ctx.can_retry:
-        raise ValueError(
+        raise LLMJSONError(
             "Agent failed schema validation after {0} attempts. Errors: {1}".format(
                 ctx.total_attempts,
                 errors_preview,
             ),
+            raw_response=raw,
         )
     retry_conversation = list(ctx.conversation or [])
     retry_conversation.append(Message(role=Role.ASSISTANT, body=raw))
@@ -146,7 +147,7 @@ async def _send_json_prompt_fallback(performer: BasePerformer, ctx: _RetryContex
     """Prompt-based JSON path with validation-only retries (no decode retry).
 
     Module-level helper to keep ``BasePerformer`` from accumulating too many
-    methods. Decode failures hard-raise ``ValueError`` immediately — the
+    methods. Decode failures hard-raise ``LLMJSONError`` immediately — the
     bracket-extraction recovery has been removed.
     """
     raw = await performer._send(
@@ -158,8 +159,9 @@ async def _send_json_prompt_fallback(performer: BasePerformer, ctx: _RetryContex
         parsed = json.loads(raw)
     except json.JSONDecodeError as exc:
         preview = raw[:_LOG_PREVIEW_CHARS]
-        raise ValueError(
+        raise LLMJSONError(
             "Agent returned non-JSON response on fallback path: {0}".format(preview),
+            raw_response=raw,
         ) from exc
 
     if ctx.response_model is None:
@@ -182,7 +184,7 @@ async def _send_json_strict(
     Module-level to keep the ``BasePerformer`` method count under the WPS
     limit. Raises ``NotImplementedError`` when the provider does not support
     strict structured outputs (caller falls back to the prompt path) and
-    ``ValueError`` when the provider returns text that does not match the
+    ``LLMJSONError`` when the provider returns text that does not match the
     schema (a contract violation, not a recoverable miss).
     """
     output_format = OutputFormat(
@@ -198,8 +200,9 @@ async def _send_json_strict(
     try:
         return response_model.model_validate(json.loads(raw))
     except (json.JSONDecodeError, ValidationError) as exc:
-        raise ValueError(
+        raise LLMJSONError(
             "Strict structured output failed validation: {0}".format(exc),
+            raw_response=raw,
         ) from exc
 
 
@@ -393,14 +396,14 @@ class BasePerformer(ABC):
 
         When ``response_model`` is provided, the strict path runs first: the
         Pydantic schema is sent to the provider and the response is guaranteed
-        to match the shape (any deviation raises ``ValueError`` with no
+        to match the shape (any deviation raises ``LLMJSONError`` with no
         retry). If the provider raises ``NotImplementedError``, the call
         degrades to the prompt-based fallback path.
 
         Without ``response_model`` the prompt-based fallback path runs:
         ``response_format`` ``{"type": "json_object"}`` is requested, the
         response is parsed with ``json.loads`` (decode failures raise
-        ``ValueError`` immediately — there is no bracket-extraction recovery
+        ``LLMJSONError`` immediately — there is no bracket-extraction recovery
         anymore), and on ``ValidationError`` the conversation is appended
         with the assistant's bad response and a user feedback message
         before retrying.

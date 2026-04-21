@@ -158,7 +158,7 @@ class TestNPCGeneratorDeduplication:
         )
         director._cast.npc_generator = npc_gen
         director.llm_client.send_message = AsyncMock(
-            return_value=LLMResponse(body="I'm the blacksmith!", model="test", usage={})
+            return_value=LLMResponse(body='{"narration": "I\'m the blacksmith!"}', model="test", usage={})
         )
         await director.act("talk to the blacksmith")
         assert npc_gen.execute.call_count == 1
@@ -243,7 +243,7 @@ class TestNPCGeneratorDeduplication:
         )
         director._cast.npc_generator = make_mock_agent([generated])
         director.llm_client.send_message = AsyncMock(
-            return_value=LLMResponse(body="Fine silks!", model="test", usage={})
+            return_value=LLMResponse(body='{"narration": "Fine silks!"}', model="test", usage={})
         )
         await director.act("talk to the merchant")
         narrator_call = director._cast.narrator.execute.call_args

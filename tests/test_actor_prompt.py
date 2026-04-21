@@ -42,10 +42,10 @@ class TestActorPromptPhysicalStatus:
         assert "wounded left arm" in rendered
 
     @allure.story("Physical status tag")
-    @allure.title("Actor prompt tells the NPC to emit a [STATUS:] tag so changes can be parsed")
-    def test_prompt_contains_status_tag_instruction(self):
+    @allure.title("Actor prompt tells the NPC to report status changes via the JSON envelope status field")
+    def test_prompt_contains_status_field_instruction(self):
         rendered = _render_actor_prompt()
-        assert "[STATUS:" in rendered
+        assert '"status"' in rendered
 
     @allure.story("Behavioral rules")
     @allure.title("Actor prompt instructs NPCs to go unconscious when their status reaches that threshold")
@@ -90,12 +90,12 @@ class TestActorPromptRoleScopedReactions:
         assert "actions, not just words" in lowered
 
     @allure.story("Role-scoped combat reactions")
-    @allure.title("Actor constraints still emit DICE ROLL, MOOD, and STATUS tag instructions")
+    @allure.title("Actor constraints still emit DICE ROLL instruction and describe the mood/status JSON fields")
     def test_constraints_preserve_dice_mood_status_rules(self):
         rendered = _render_actor_prompt()
         assert "[DICE ROLL]" in rendered
-        assert "[MOOD:" in rendered
-        assert "[STATUS:" in rendered
+        assert '"mood"' in rendered
+        assert '"status"' in rendered
 
 
 @allure.epic("NPC Interaction")

@@ -94,21 +94,19 @@ ACTOR_SYSTEM = PromptTemplate(
                 "answer, or exchange of names is a normal conversational reply; "
                 "recounting, explaining, or emotionally charged moments can run longer. "
                 "Never pad, but do not clip a natural reply into a bark either.\n"
-                "- Output ONLY your spoken dialogue and brief action "
-                "descriptions (e.g. *scratches his beard*).\n"
-                "- Append on a NEW line [MOOD: <one word>] (e.g. [MOOD: hostile], "
-                "[MOOD: terrified]) whenever your mood has shifted — and ALWAYS "
-                "include the tag while you are in active conflict with the player, "
-                "so the system keeps your internal state calibrated.\n"
-                "- If your physical condition changed (injured, healed, knocked out, etc.), "
-                "append on a NEW line: [STATUS: <description>] "
-                "(e.g. [STATUS: wounded left arm], [STATUS: barely standing]). "
-                "Only include this tag if status changed from {physical_status}.\n"
-                "- If you utter your own name, append on a NEW line "
-                "[REVEALED: self]. If you also name another NPC the player "
-                "can see in this scene, add that NPC's name verbatim — "
-                "comma-separated (e.g. [REVEALED: self, Marcus]). Omit "
-                "this tag entirely when no name is spoken."
+                "- Your response MUST be a JSON object with exactly these four fields "
+                "— no extra text, no markdown fences:\n"
+                '  "narration": your spoken dialogue and brief action descriptions '
+                "(e.g. *scratches his beard*).\n"
+                '  "mood": if your mood has shifted or you are in active conflict, '
+                'one English word (e.g. "hostile", "terrified"). '
+                "Null when mood is unchanged — the system uses this to keep your "
+                "internal state calibrated.\n"
+                '  "status": if your physical condition changed from {physical_status}, '
+                'a short description (e.g. "wounded left arm"). Null when unchanged.\n'
+                '  "revealed_names": if you utter your own name, include "self"; '
+                "add other NPC names verbatim if you name them in this scene. "
+                "Empty array when no names are spoken."
             ),
             required_vars=["current_mood", "physical_status", "npc_occupation"],
         ),
