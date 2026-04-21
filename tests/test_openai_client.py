@@ -9,7 +9,14 @@ import allure
 import pytest
 
 from llm import message as msg
-from llm.openai_client import OpenAIClient
+from llm.base_client import OutputFormat
+from llm.openai_client import OpenAIClient, _StrictSchemaNormalizer
+
+
+def _to_strict_schema(schema: dict, name: str) -> dict:
+    """Thin shim so tests can keep using a function-level call."""
+    return _StrictSchemaNormalizer.wrap(schema, name)
+
 
 _OPENAI_CTOR = "openai.AsyncOpenAI"
 _MODEL = "gpt-4"
@@ -104,9 +111,73 @@ class TestOpenAIClient:
             client = OpenAIClient(model=_MODEL, api_key="k")
             await client.send_message(
                 messages=[_user_msg()],
-                response_format={"type": _JSON_MODE_TYPE},
+                output_format=OutputFormat(response_format={"type": _JSON_MODE_TYPE}),
             )
         assert create_mock.call_args.kwargs["response_format"] == {"type": _JSON_MODE_TYPE}
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "OpenAIClient.send_message wraps a strict OutputFormat schema into the response_format "
+        "envelope and names it after the supplied schema_name",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_wraps_response_format(self) -> None:
+        sdk_class, create_mock = _install_sdk_mock()
+        widget_schema = {
+            "type": "object",
+            "properties": {
+                "count": {"type": "integer"},
+                "label": {"type": "string", "default": "x"},
+            },
+            "required": ["count"],
+        }
+        with patch(_OPENAI_CTOR, sdk_class):
+            client = OpenAIClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema=widget_schema, schema_name="WidgetResponse"),
+            )
+        wrapped = create_mock.call_args.kwargs["response_format"]
+        assert wrapped["type"] == "json_schema"
+        assert wrapped["json_schema"]["name"] == "WidgetResponse"
+        assert wrapped["json_schema"]["strict"] is True
+        normalized = wrapped["json_schema"]["schema"]
+        assert normalized["additionalProperties"] is False
+        assert normalized["required"] == ["count", "label"]
+        assert "default" not in normalized["properties"]["label"]
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "OpenAIClient.send_message prefers a strict schema over response_format when both are set on the OutputFormat",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_overrides_response_format(self) -> None:
+        sdk_class, create_mock = _install_sdk_mock()
+        with patch(_OPENAI_CTOR, sdk_class):
+            client = OpenAIClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(
+                    response_format={"type": _JSON_MODE_TYPE},
+                    schema={"type": "object", "properties": {"x": {"type": "string"}}},
+                    schema_name="Widget",
+                ),
+            )
+        assert create_mock.call_args.kwargs["response_format"]["type"] == "json_schema"
+
+    @allure.story("Strict structured outputs")
+    @allure.title("OpenAIClient.send_message defaults the schema name to 'Response' when schema_name is omitted")
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_defaults_name(self) -> None:
+        sdk_class, create_mock = _install_sdk_mock()
+        with patch(_OPENAI_CTOR, sdk_class):
+            client = OpenAIClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema={"type": "object", "properties": {}}),
+            )
+        wrapped = create_mock.call_args.kwargs["response_format"]
+        assert wrapped["json_schema"]["name"] == "Response"
 
     @allure.story("send_message")
     @allure.title("OpenAIClient.send_message returns an empty body and zeroed usage when the SDK response is blank")
@@ -207,7 +278,7 @@ class TestOpenAIClient:
                     await client.send_message(
                         messages=[_user_msg("trigger 400")],
                         system_prompt="director system prompt",
-                        response_format={"type": _JSON_MODE_TYPE},
+                        output_format=OutputFormat(response_format={"type": _JSON_MODE_TYPE}),
                     )
         finally:
             logger.remove(sink_id)
@@ -215,3 +286,88 @@ class TestOpenAIClient:
         assert any("OpenAI API error" in entry for entry in captured)
         assert any(_MODEL in entry for entry in captured)
         assert any("json_object" in entry for entry in captured)
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("OpenAI client — strict schema normalizer")
+class TestToStrictSchema:
+    @allure.story("Object normalization")
+    @allure.title(
+        "_to_strict_schema sets additionalProperties=false and lists every property as required",
+    )
+    def test_object_node_is_normalized(self) -> None:
+        schema = {
+            "type": "object",
+            "properties": {"a": {"type": "string"}, "b": {"type": "integer"}},
+            "required": ["a"],
+        }
+        wrapped = _to_strict_schema(schema, "Widget")
+        normalized = wrapped["json_schema"]["schema"]
+        assert normalized["additionalProperties"] is False
+        assert normalized["required"] == ["a", "b"]
+
+    @allure.story("Defaults")
+    @allure.title("_to_strict_schema strips default keys from every nested property")
+    def test_defaults_are_stripped(self) -> None:
+        schema = {
+            "type": "object",
+            "properties": {
+                "scope": {"type": "string", "default": "remote", "enum": ["local", "remote"]},
+                "label": {"type": "string", "default": ""},
+            },
+        }
+        normalized = _to_strict_schema(schema, "Widget")["json_schema"]["schema"]
+        assert "default" not in normalized["properties"]["scope"]
+        assert "default" not in normalized["properties"]["label"]
+
+    @allure.story("Recursion")
+    @allure.title("_to_strict_schema recurses into array items, $defs, and anyOf composites")
+    def test_recurses_into_items_defs_and_anyof(self) -> None:
+        schema = {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {"name": {"type": "string", "default": "x"}},
+                    },
+                },
+                "either": {
+                    "anyOf": [
+                        {"type": "object", "properties": {"k": {"type": "integer"}}},
+                        {"type": "null"},
+                    ],
+                },
+            },
+            "$defs": {
+                "Nested": {
+                    "type": "object",
+                    "properties": {"x": {"type": "string", "default": "y"}},
+                },
+            },
+        }
+        normalized = _to_strict_schema(schema, "Widget")["json_schema"]["schema"]
+        item = normalized["properties"]["items"]["items"]
+        assert item["additionalProperties"] is False
+        assert item["required"] == ["name"]
+        assert "default" not in item["properties"]["name"]
+        either_obj = normalized["properties"]["either"]["anyOf"][0]
+        assert either_obj["additionalProperties"] is False
+        nested = normalized["$defs"]["Nested"]
+        assert nested["additionalProperties"] is False
+        assert nested["required"] == ["x"]
+        assert "default" not in nested["properties"]["x"]
+
+    @allure.story("Caller isolation")
+    @allure.title("_to_strict_schema does not mutate the caller's schema dict")
+    def test_caller_schema_is_not_mutated(self) -> None:
+        property_a: dict[str, object] = {"type": "string", "default": "x"}
+        schema: dict[str, object] = {
+            "type": "object",
+            "properties": {"a": property_a},
+            "required": ["a"],
+        }
+        _to_strict_schema(schema, "Widget")
+        assert "additionalProperties" not in schema
+        assert property_a["default"] == "x"

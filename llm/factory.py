@@ -3,9 +3,20 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from defaults.models import ModelConfig
+from llm.base_client import OutputFormat
 
 if TYPE_CHECKING:
     from llm.base_client import BaseLLMClient
+
+
+def json_object_format() -> OutputFormat:
+    """Convenience: produce the OpenAI-style JSON-mode ``OutputFormat``.
+
+    Exposed here so callers can request legacy prompt-based JSON mode without
+    importing ``OutputFormat`` themselves (keeps module import counts small
+    at call sites that only need one extra knob).
+    """
+    return OutputFormat(response_format={"type": "json_object"})
 
 
 def create_llm_client(

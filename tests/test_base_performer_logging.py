@@ -70,16 +70,14 @@ class TestExecuteLogging:
 
     @allure.story("JSON warnings")
     @allure.title(
-        "BasePerformer._send_json emits a WARNING per failed attempt plus a final bracket-extraction failure warning"
+        "BasePerformer._send_json no longer logs warnings on the fallback path when the LLM "
+        "returns non-JSON; the call raises ValueError immediately",
     )
     @pytest.mark.asyncio
-    async def test_send_json_warning_per_attempt(self, loguru_sink):
+    async def test_send_json_decode_failure_raises_without_warnings(self, loguru_sink):
         performer = _JsonLogging(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
         with patch.object(performer, "_send", new=AsyncMock(return_value="not json")):
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="non-JSON response on fallback path"):
                 await performer._send_json("prompt", retries=1)
         warnings = [rec for rec in loguru_sink if rec["level"].name == "WARNING"]
-        assert len(warnings) == 3
-        assert "attempt 1/2" in warnings[0][_MESSAGE_KEY]
-        assert "attempt 2/2" in warnings[1][_MESSAGE_KEY]
-        assert "Bracket extraction also failed" in warnings[2][_MESSAGE_KEY]
+        assert warnings == []

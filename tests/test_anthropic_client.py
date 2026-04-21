@@ -12,9 +12,32 @@ import pytest
 
 from llm import message as msg
 from llm.anthropic_client import AnthropicClient
+from llm.base_client import OutputFormat
 
 _ANTHROPIC_CTOR = "anthropic.AsyncAnthropic"
 _MODEL = "claude-sonnet-4-20250514"
+
+
+class _FakeBadRequest(Exception):
+    """Stand-in for ``anthropic.BadRequestError`` used in unit tests.
+
+    Lets us exercise the 400-to-NotImplementedError translation path without
+    importing the Anthropic SDK's exception class (and the ``httpx`` objects
+    its constructor requires) just for a unit test.
+    """
+
+    def __init__(self, message: str, body: dict) -> None:
+        super().__init__(message)
+        self.body = body
+
+
+def _reject_400(client: AnthropicClient) -> None:
+    """Wire the client to match ``_FakeBadRequest`` in its ``except`` clause."""
+    # mypy sees ``_bad_request_error`` as ``type[BadRequestError]``; the stand-in
+    # Exception subclass is only used in-process inside the test, so we patch the
+    # attribute via ``setattr`` to avoid a type-ignore and let the client's
+    # ``except self._bad_request_error`` match our fake.
+    client.__dict__["_bad_request_error"] = _FakeBadRequest
 
 
 def _text_block(text: str) -> SimpleNamespace:
@@ -46,6 +69,23 @@ def _install_sdk_mock(response: SimpleNamespace | None = None) -> tuple[MagicMoc
     sdk_instance.messages.create = create_mock
     sdk_class.return_value = sdk_instance
     return sdk_class, create_mock
+
+
+def _install_beta_sdk_mock(
+    response: SimpleNamespace | None = None,
+    side_effect: BaseException | None = None,
+) -> tuple[MagicMock, AsyncMock]:
+    """Patch AsyncAnthropic and wire its ``beta.messages.create`` async mock."""
+    sdk_class = MagicMock()
+    sdk_instance = MagicMock()
+    if side_effect is None:
+        payload = _make_response() if response is None else response
+        beta_create = AsyncMock(return_value=payload)
+    else:
+        beta_create = AsyncMock(side_effect=side_effect)
+    sdk_instance.beta.messages.create = beta_create
+    sdk_class.return_value = sdk_instance
+    return sdk_class, beta_create
 
 
 async def _text_gen(chunks: list[str]):
@@ -133,6 +173,79 @@ class TestAnthropicClient:
         kwargs = create_mock.call_args.kwargs
         assert kwargs["temperature"] == pytest.approx(0.25)
         assert kwargs["max_tokens"] == 128
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "AnthropicClient.send_message routes through beta.messages.create with output_format "
+        "when a json_schema is supplied",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_uses_beta_endpoint(self) -> None:
+        sdk_class, beta_create = _install_beta_sdk_mock()
+        widget_schema = {"type": "object", "properties": {"x": {"type": "string"}}}
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema=widget_schema, schema_name="Widget"),
+            )
+        kwargs = beta_create.call_args.kwargs
+        assert kwargs["output_format"] == {"type": "json_schema", "schema": widget_schema}
+        assert kwargs["model"] == _MODEL
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "AnthropicClient.send_message translates an unsupported-feature 400 into NotImplementedError naming the model",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_unsupported_translates_to_notimplemented(self) -> None:
+        rejection = _FakeBadRequest(
+            "400 Bad Request",
+            body={
+                "error": {
+                    "message": "structured outputs are not supported on this model",
+                    "type": "invalid_request_error",
+                },
+            },
+        )
+        sdk_class, _ = _install_beta_sdk_mock(side_effect=rejection)
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            _reject_400(client)
+            with pytest.raises(NotImplementedError, match=_MODEL):
+                await client.send_message(
+                    messages=[_user_msg()],
+                    output_format=OutputFormat(
+                        schema={"type": "object", "properties": {}},
+                        schema_name="Widget",
+                    ),
+                )
+
+    @allure.story("Strict structured outputs")
+    @allure.title("AnthropicClient.send_message lets unrelated 400 errors propagate without translation")
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_unrelated_400_propagates_unchanged(self) -> None:
+        rejection = _FakeBadRequest(
+            "400 Bad Request",
+            body={
+                "error": {
+                    "message": "rate limit exceeded",
+                    "type": "invalid_request_error",
+                },
+            },
+        )
+        sdk_class, _ = _install_beta_sdk_mock(side_effect=rejection)
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            _reject_400(client)
+            with pytest.raises(_FakeBadRequest):
+                await client.send_message(
+                    messages=[_user_msg()],
+                    output_format=OutputFormat(
+                        schema={"type": "object", "properties": {}},
+                        schema_name="Widget",
+                    ),
+                )
 
     @allure.story("Streaming")
     @allure.title("AnthropicClient.send_message_streaming yields text chunks from the SDK stream context manager")
