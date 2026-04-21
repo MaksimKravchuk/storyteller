@@ -38,6 +38,14 @@ class _StrictSchemaNormalizer:
 
         The input ``schema`` is never mutated — a deep copy is normalized
         in place before being returned inside the envelope.
+
+        Note: Pydantic fields with defaults (e.g. ``scope: Literal["local",
+        "remote"] = "remote"``) emit a ``default`` key that OpenAI's strict
+        validator forbids. We strip it, so the LLM is now *required* to
+        produce the field explicitly — the Pydantic default no longer fills
+        in on LLM omission because strict mode does not allow omissions.
+        Behavior-compatible for enum/literal fields (the LLM just picks a
+        valid value), but worth knowing when adding new optional fields.
         """
         normalized = copy.deepcopy(schema)
         cls._walk(normalized)

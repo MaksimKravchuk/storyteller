@@ -63,7 +63,7 @@ def _record_llm_call(
 ) -> None:
     """Log the LLM call and capture details for the admin dashboard."""
     stack = agent_stack.get(None) or []
-    parent = stack[-2] if stack[1:] else None
+    parent = stack[-2] if len(stack) >= 2 else None
     logger.info(
         "LLM | agent={} model={} parent={} | prompt_tokens={} completion_tokens={} duration_ms={}",
         agent_name,
@@ -294,7 +294,7 @@ class BasePerformer(ABC):
         logger.info(
             "agent={} parent={} | start",
             new_stack[-1],
-            new_stack[-2] if new_stack[1:] else None,
+            new_stack[-2] if len(new_stack) >= 2 else None,
         )
         try:
             act_response = await self.act(input_data, context or {})
@@ -302,7 +302,7 @@ class BasePerformer(ABC):
             logger.exception(
                 "agent={} parent={} | error | exc_type={} | duration_ms={}",
                 new_stack[-1],
-                new_stack[-2] if new_stack[1:] else None,
+                new_stack[-2] if len(new_stack) >= 2 else None,
                 type(exc).__name__,
                 int((time.monotonic() - start) * 1000),
             )
@@ -311,7 +311,7 @@ class BasePerformer(ABC):
             logger.info(
                 "agent={} parent={} | done | duration_ms={}",
                 new_stack[-1],
-                new_stack[-2] if new_stack[1:] else None,
+                new_stack[-2] if len(new_stack) >= 2 else None,
                 int((time.monotonic() - start) * 1000),
             )
             return act_response

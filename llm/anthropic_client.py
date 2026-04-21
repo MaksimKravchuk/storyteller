@@ -11,12 +11,11 @@ if TYPE_CHECKING:
 
 
 _STRUCTURED_OUTPUT_REJECTION_MARKERS = (
-    "structured",
+    "structured output",
+    "structured outputs",
     "json_schema",
     "output_format",
     "output_config",
-    "unsupported",
-    "beta",
 )
 
 
