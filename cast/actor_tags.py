@@ -1,9 +1,15 @@
 """Trailing-tag extraction for Actor LLM output — DEPRECATED shim.
 
 The canonical Actor path now uses a strict JSON envelope (see
-``cast.schemas.actor_reply.ActorEnvelope``).  This module is kept only
-to support the legacy fallback when ``actor_envelope_mode=False`` and
-for existing unit tests.  It will be removed in a follow-up release.
+``cast.schemas.actor_reply.ActorEnvelope``).  This module is kept
+solely as the backend for the ``ACTOR_ENVELOPE_MODE=false`` env-var
+rollback lever (and ``envelope_mode=False`` in tests that pin the
+legacy behavior).
+
+Removal condition: once the envelope path has run two releases in prod
+with ``ACTOR_ENVELOPE_MODE`` unset and no JSON-parse fallbacks logged
+(``LLMJSONError`` in cast/actor.py), delete this module, the
+``envelope_mode`` constructor flag, and ``tests/test_legacy_actor_tags.py``.
 """
 
 from __future__ import annotations

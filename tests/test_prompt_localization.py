@@ -305,7 +305,7 @@ class TestActorPromptCatalog:
         assert get_actor_prompts("Klingon") is english
 
     @allure.story("Catalog lookup")
-    @allure.title("Russian Actor system prompt keeps MOOD / STATUS / REVEALED tag names in English")
+    @allure.title("Russian Actor system prompt keeps JSON envelope field names in English")
     def test_machine_parsed_tags_stay_english(self) -> None:
         rendered = get_actor_prompts("Russian").system.render(
             npc_name="Марк",
@@ -321,9 +321,16 @@ class TestActorPromptCatalog:
             physical_status="здоров",
             language="русском",
         )
-        assert "[MOOD:" in rendered
-        assert "[STATUS:" in rendered
-        assert "[REVEALED: self]" in rendered
+        assert '"narration"' in rendered
+        assert '"mood"' in rendered
+        assert '"status"' in rendered
+        assert '"revealed_names"' in rendered
+        assert '"self"' in rendered
+        # The mood VALUE must also stay English (hostility.py's enum is
+        # English-keyed) — a prompt that drops this instruction silently
+        # breaks AGGRESSION_THRESHOLDS matching.
+        assert '"hostile"' in rendered
+        assert "АНГЛИЙСКОЕ" in rendered
         assert "Отвечай на языке: русском." in rendered
 
 

@@ -19,6 +19,7 @@ from __future__ import annotations
 import types
 
 from llm.turn_event_logger import record_turn_event
+from loguru import logger
 from models.npc_card import NPCCard
 
 _HISTORY_CAP = 3
@@ -162,8 +163,19 @@ def apply_llm_mood_update(npc: NPCCard, new_mood: str) -> None:
         )
         return
     if new_mood.lower() not in _MOOD_INTENSITY:
-        # LLM-invented moods (e.g. "stoic") would leave roll_aggression
-        # with no threshold to match and silently disable retaliation.
+        # LLM-invented moods (e.g. "stoic") score 0 in ``_MOOD_INTENSITY``
+        # and so have no ``AGGRESSION_THRESHOLDS`` entry — if the NPC were
+        # ever rolled-for-retaliation with this label, the roll would be
+        # silently skipped. That's defended against by the
+        # ``bump_hostility`` pre-pass: on the next aggressive turn it
+        # resets the mood to a floor label before retaliation runs. We
+        # still warn here so operators can see the LLM drift.
+        logger.warning(
+            "Actor {} ({}) emitted unknown mood {!r}; will be overridden on next hostility bump.",
+            npc.name,
+            npc.uuid,
+            new_mood,
+        )
         record_turn_event(
             "hostility_mood_unknown",
             {"npc_name": npc.name, "attempted_mood": new_mood},

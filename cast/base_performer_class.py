@@ -31,6 +31,18 @@ _VALIDATION_FEEDBACK_TEMPLATE = (
 BaseModelT = TypeVar("BaseModelT", bound=BaseModel)
 
 
+class LLMJSONError(ValueError):
+    """Raised when an LLM fails to produce valid JSON / schema after retries.
+
+    Carries the last raw response so callers can log it or use it as a
+    salvage narration (see cast.actor.Actor.act's envelope-failure fallback).
+    """
+
+    def __init__(self, message: str, raw_response: str = ""):
+        super().__init__(message)
+        self.raw_response = raw_response
+
+
 @dataclass(frozen=True)
 class _RetryContext:
     """Parameters shared between attempts of a ``_send_json`` retry loop.
@@ -53,17 +65,17 @@ class _RetryContext:
     def can_retry(self) -> bool:
         return self.attempt < self.retries
 
-
-def _try_bracket_extraction(raw: str) -> dict | None:
-    """Attempt to extract JSON by finding outermost braces. Returns dict or None."""
-    start = raw.find("{")
-    end = raw.rfind("}") + 1
-    if start == -1 or end <= start:
-        return None
-    try:
-        return json.loads(raw[start:end])
-    except json.JSONDecodeError:
-        return None
+    @classmethod
+    def try_bracket_extraction(cls, raw: str) -> dict | None:
+        """Attempt to extract JSON by finding outermost braces. Returns dict or None."""
+        start = raw.find("{")
+        end = raw.rfind("}") + 1
+        if start == -1 or end <= start:
+            return None
+        try:
+            return json.loads(raw[start:end])
+        except json.JSONDecodeError:
+            return None
 
 
 def _parent_agent(stack: list[str] | None) -> str | None:
@@ -134,7 +146,7 @@ async def _retry_after_decode_failure(
             _attempt=ctx.attempt + 1,
             response_model=ctx.response_model,
         )
-    extracted = _try_bracket_extraction(raw)
+    extracted = ctx.try_bracket_extraction(raw)
     if extracted is not None:
         if ctx.response_model is None:
             return extracted
@@ -153,11 +165,12 @@ async def _retry_after_decode_failure(
         raw[:_LOG_PREVIEW_CHARS],
     )
     preview = raw[:_LOG_PREVIEW_CHARS]
-    raise ValueError(
+    raise LLMJSONError(
         "Agent failed to produce valid JSON after {0} attempts. Last response: {1}".format(
             ctx.total_attempts,
             preview,
         ),
+        raw_response=raw,
     )
 
 
@@ -176,11 +189,12 @@ async def _retry_after_validation_failure(
         errors_preview,
     )
     if not ctx.can_retry:
-        raise ValueError(
+        raise LLMJSONError(
             "Agent failed schema validation after {0} attempts. Errors: {1}".format(
                 ctx.total_attempts,
                 errors_preview,
             ),
+            raw_response=raw,
         )
     retry_conversation = list(ctx.conversation or [])
     retry_conversation.append(Message(role=Role.ASSISTANT, body=raw))

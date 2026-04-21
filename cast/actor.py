@@ -2,34 +2,22 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
+from cast.actor_config import ENVELOPE_MODE_DEFAULT, format_past_memories
 from cast.actor_tags import strip_trailing_tags
-from cast.base_performer_class import BasePerformer
+from cast.base_performer_class import BasePerformer, LLMJSONError
 from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
 from cast.schemas.actor_reply import ActorEnvelope, ActorReply
-from knowledge.node import KnowledgeNode
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
+from loguru import logger
 from models.npc_card import NPCCard
 from prompts.actor_prompts import get_actor_prompts
 
 _MEMORY_LIMIT = 5
-_MEMORY_TEXT_MAX_CHARS = 200
-# Evaluated once at module import; tests override via the constructor parameter.
-_ENVELOPE_MODE_DEFAULT: bool = os.environ.get("ACTOR_ENVELOPE_MODE", "true").lower() != "false"
-
-
-def _format_past_memories(memories: list[KnowledgeNode]) -> str:
-    """Render a newline-joined bullet list of memory texts, truncated for prompt safety."""
-    lines: list[str] = []
-    for memory in memories:
-        text = memory.text
-        if len(text) > _MEMORY_TEXT_MAX_CHARS:
-            text = "{0}...".format(text[: _MEMORY_TEXT_MAX_CHARS - 3])
-        lines.append("- {0}".format(text))
-    return "\n".join(lines)
+_FALLBACK_NARRATION = "..."
+_SALVAGE_NARRATION_MAX = 500
 
 
 class Actor(BasePerformer):
@@ -47,7 +35,7 @@ class Actor(BasePerformer):
         npc: NPCCard,
         knowledge_query: KnowledgeQueryEngine,
         language: str = "English",
-        envelope_mode: bool = _ENVELOPE_MODE_DEFAULT,
+        envelope_mode: bool = ENVELOPE_MODE_DEFAULT,
     ):
         super().__init__(
             llm_client=llm_client,
@@ -91,7 +79,7 @@ class Actor(BasePerformer):
         # required vars are MISSING from kwargs, not when they are empty strings.
         past_memories = self.knowledge_query.get_memories_about(self.npc.uuid, limit=_MEMORY_LIMIT)
         if past_memories:
-            self.set_context(past_memories=_format_past_memories(past_memories))
+            self.set_context(past_memories=format_past_memories(past_memories))
 
         # Inject hostility context only when the NPC is actually inflamed, so
         # peaceful dialogue does not carry a spurious "you are in conflict" banner.
@@ -103,35 +91,57 @@ class Actor(BasePerformer):
                 ),
             )
 
-        if self._envelope_mode:
-            narration, mood, status, revealed = await self._act_envelope(input_data)
-        else:
-            narration, mood, status, revealed = await self._act_legacy(input_data)
+        envelope = await self._produce_envelope(input_data)
 
         # Store only the prose narration so multi-turn dialogue context stays clean.
         self._conversation.append(Message(role=Role.USER, body=input_data))
-        self._conversation.append(Message(role=Role.ASSISTANT, body=narration))
+        self._conversation.append(Message(role=Role.ASSISTANT, body=envelope.narration))
 
-        if mood:
-            apply_llm_mood_update(self.npc, mood)
-        if status:
-            self.npc.physical_status = status
+        if envelope.mood:
+            apply_llm_mood_update(self.npc, envelope.mood)
+        if envelope.status:
+            self.npc.physical_status = envelope.status
 
-        return ActorReply(text=narration.strip(), revealed_names=tuple(revealed))
-
-    async def _act_envelope(self, input_data: str) -> tuple[str, str | None, str | None, list[str]]:
-        envelope = await self._send_json(
-            input_data,
-            conversation=self._conversation,
-            response_model=ActorEnvelope,
-        )
-        return envelope.narration, envelope.mood, envelope.status, envelope.revealed_names
-
-    async def _act_legacy(self, input_data: str) -> tuple[str, str | None, str | None, list[str]]:
-        raw = await self._send(input_data, conversation=self._conversation)
-        parsed = strip_trailing_tags(raw)
-        return parsed.text, parsed.mood, parsed.status, parsed.revealed
+        return ActorReply(text=envelope.narration.strip(), revealed_names=tuple(envelope.revealed_names))
 
     def reset_conversation(self) -> None:
         """Clear conversation history (e.g. when player walks away)."""
         self._conversation.clear()
+
+    async def _produce_envelope(self, input_data: str) -> ActorEnvelope:
+        """Call the envelope or legacy path, with a graceful fallback on LLM JSON failure.
+
+        Without this fallback, three consecutive malformed LLM responses
+        bubble an :class:`LLMJSONError` all the way to the web/telegram
+        interface and surface as an opaque 500 — killing the scene on one
+        bad batch of tokens.
+        """
+        dispatch = self._act_envelope if self._envelope_mode else self._act_legacy
+        try:
+            return await dispatch(input_data)
+        except LLMJSONError as exc:
+            logger.warning(
+                "Actor envelope parse failed for NPC {} ({}): {}",
+                self.npc.name,
+                self.npc.uuid,
+                exc,
+            )
+            salvaged = (exc.raw_response or "").strip()[:_SALVAGE_NARRATION_MAX]
+            return ActorEnvelope(narration=salvaged or _FALLBACK_NARRATION)
+
+    async def _act_envelope(self, input_data: str) -> ActorEnvelope:
+        return await self._send_json(
+            input_data,
+            conversation=self._conversation,
+            response_model=ActorEnvelope,
+        )
+
+    async def _act_legacy(self, input_data: str) -> ActorEnvelope:
+        raw = await self._send(input_data, conversation=self._conversation)
+        parsed = strip_trailing_tags(raw)
+        return ActorEnvelope(
+            narration=parsed.text,
+            mood=parsed.mood,
+            status=parsed.status,
+            revealed_names=parsed.revealed,
+        )
