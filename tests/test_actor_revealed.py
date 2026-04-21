@@ -194,30 +194,12 @@ class TestActorEnvelopeIntegrationWithLLMClient:
     """Drive ``Actor.act`` through the real ``_send_json`` path.
 
     The envelope tests above stub ``_send_json`` itself, so the
-    json-decode + pydantic-validate + retry-with-feedback chain in
-    ``base_performer_class`` is never exercised. These tests mock one
-    layer lower — ``llm_client.send_message`` — so the integration is
-    real and the fallback safety net at ``cast.actor._produce_envelope``
-    is actually covered.
+    json-decode + pydantic-validate chain in ``base_performer_class`` is
+    never exercised. These tests mock one layer lower —
+    ``llm_client.send_message`` — so the integration is real and the
+    fallback safety net at ``cast.actor._produce_envelope`` is actually
+    covered.
     """
-
-    @allure.story("Validation retry")
-    @allure.title("Malformed JSON on first attempt followed by a valid envelope resolves without raising")
-    @pytest.mark.asyncio
-    async def test_retry_recovers_from_malformed_first_response(self):
-        actor, _ = _make_actor(envelope_mode=True)
-        actor.llm_client.send_message = AsyncMock(  # type: ignore[method-assign]
-            side_effect=[
-                _llm_body("not json at all"),
-                _llm_body('{"narration": "Hail, traveler."}'),
-            ],
-        )
-
-        reply = await actor.act("who are you?", {_LOC_KEY: "forum"})
-
-        assert reply.text == "Hail, traveler."
-        assert reply.revealed_names == ()
-        assert actor.llm_client.send_message.await_count == 2
 
     @allure.story("Envelope-failure fallback")
     @allure.title("Three consecutive bad JSON responses yield a placeholder ActorReply instead of a 500")
