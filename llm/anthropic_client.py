@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import types
 from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
@@ -25,6 +26,16 @@ _TYPE_TOOL = "tool"
 _TYPE_AUTO = "auto"
 _TYPE_ANY = "any"
 _TYPE_NONE = "none"
+
+# Portable ``tool_choice`` keyword → Anthropic wire payload. Frozen so
+# it isn't rebuilt on every request and is safe as a module constant.
+_NAMED_CHOICE_MAP: types.MappingProxyType[str, dict[str, Any]] = types.MappingProxyType(
+    {
+        "auto": {_KEY_TYPE: _TYPE_AUTO},
+        "required": {_KEY_TYPE: _TYPE_ANY},
+        "none": {_KEY_TYPE: _TYPE_NONE},
+    },
+)
 
 # Short aliases so tool-translation signatures stay within the
 # line-complexity budget.
@@ -74,12 +85,7 @@ def _build_tool_choice(tool_choice: str | None) -> dict[str, Any] | None:
     """
     if tool_choice is None:
         return None
-    named_choice_map = {
-        "auto": {_KEY_TYPE: _TYPE_AUTO},
-        "required": {_KEY_TYPE: _TYPE_ANY},
-        "none": {_KEY_TYPE: _TYPE_NONE},
-    }
-    mapped = named_choice_map.get(tool_choice)
+    mapped = _NAMED_CHOICE_MAP.get(tool_choice)
     if mapped is not None:
         return mapped
     return {_KEY_TYPE: _TYPE_TOOL, "name": tool_choice}

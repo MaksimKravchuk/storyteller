@@ -8,6 +8,7 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from cast import director_context, director_dialogue, director_events
 from cast import director_execution, director_retaliation, director_routing
+from cast.director_tools import RouteResult
 from cast.known_npcs import mark_player_text_introductions
 from cast.npc_ticker import NPCTicker
 from cast.npc_turn import NPCTurnResolver
@@ -102,7 +103,7 @@ class Director(BasePerformer):
         self._ctx.sync_context(self)
 
         forced_wait = self._check_forced_wait(input_data)
-        plan: Any = await self._router.route_action(input_data) if forced_wait is None else forced_wait
+        plan: RouteResult = await self._router.route_action(input_data) if forced_wait is None else forced_wait
 
         if isinstance(plan, ClarificationRequest):
             self._router.save_pending_clarification(input_data, plan)

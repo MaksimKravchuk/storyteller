@@ -138,8 +138,11 @@ class _ToolWire:
     """
 
     # Tool parameter schemas are static (built once at module load from
-    # Pydantic models), so the deepcopy+normalize cost is hoisted out of
-    # the per-request hot path and keyed on object identity.
+    # Pydantic models) and live for the process lifetime, so keying the
+    # cache on ``id(schema)`` is safe: the schema objects are never
+    # garbage-collected, and IDs therefore never get reused out from
+    # under the cache. Callers that build tools dynamically (outside
+    # ACTION_TOOLS) would need a different strategy.
     _normalized_cache: dict[int, dict[str, Any]] = {}
 
     @classmethod
