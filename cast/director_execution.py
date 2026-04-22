@@ -17,7 +17,11 @@ from cast import (
     npc_turn,
 )
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
-from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
+from cast.schemas import (
+    chronicler_response as chronicler_schema,
+    plan_access,
+    turn_outputs,
+)
 from loguru import logger
 from models import world_state as world_state_mod
 from models.game_state import GameState
@@ -25,11 +29,8 @@ from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 
 _KEY_PLAYER_ACTION = "player_action"
-_KEY_ACTION_TYPE = "action_type"
 _KEY_GAME_STATE = "game_state"
-_KEY_TARGETS = "targets"
-_KEY_IS_AGGRESSIVE = "is_aggressive"
-_DEFAULT_ACTION = "OTHER"
+
 
 _SCENE_DESC_PREVIEW = 200
 _WAIT_EVENT_LOOKAHEAD_HOURS = 4.0
@@ -95,7 +96,7 @@ def _apply_thread_updates(
 
 
 def _ensure_npc_targets_in_scene(
-    plan: dict,
+    plan: Any,
     target_names: list[str],
     game_state: GameState,
     dlg: Any,
@@ -108,7 +109,7 @@ def _ensure_npc_targets_in_scene(
     """
     npc_targets = (
         target_names
-        if "npc_generator" in plan.get("delegate_to", [])
+        if "npc_generator" in plan_access.delegate_to(plan)
         else _filter_known_npc_targets(target_names, game_state)
     )
     dlg.ensure_targets_in_scene(npc_targets)
@@ -157,14 +158,14 @@ class PlanExecutor:
 
     async def execute_plan(
         self,
-        plan: dict,
+        plan: Any,
         player_action: str,
         completed_events: list[GameEvent],
     ) -> str:
         """Delegate to agents based on the routing plan and assemble output."""
-        raw_outputs = turn_outputs.TurnOutputs(intent=plan.get("intent"))
-        action_type = plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION)
-        is_aggressive = bool(plan.get(_KEY_IS_AGGRESSIVE))
+        raw_outputs = turn_outputs.TurnOutputs(intent=plan.intent)
+        action_type = plan.action_type
+        is_aggressive = plan_access.is_aggressive(plan)
 
         local_events = await self._process_events(completed_events)
         new_uuids = await self._dispatch_plan(plan, action_type, player_action, raw_outputs)
@@ -202,7 +203,7 @@ class PlanExecutor:
 
     async def _dispatch_plan(
         self,
-        plan: dict,
+        plan: Any,
         action_type: str,
         player_action: str,
         raw_outputs: turn_outputs.TurnOutputs,
@@ -217,11 +218,12 @@ class PlanExecutor:
         """
         if action_type == "WAIT":
             raw_outputs.wait = True
-            if plan.get("wait_reason"):
-                raw_outputs.wait_reason = plan["wait_reason"]
+            wait_reason = getattr(plan, "wait_reason", None)
+            if wait_reason:
+                raw_outputs.wait_reason = wait_reason
             return set()
-        targets = plan.get(_KEY_TARGETS, [])
-        is_aggressive = bool(plan.get(_KEY_IS_AGGRESSIVE))
+        targets = plan_access.targets(plan)
+        is_aggressive = plan_access.is_aggressive(plan)
         new_uuids = await self._prepare_scene(action_type, targets, player_action, raw_outputs)
         new_uuids |= await self._process_target_npcs(plan, player_action, raw_outputs)
         await self._run_action_handler(action_type, targets, player_action, is_aggressive, raw_outputs)
@@ -499,7 +501,7 @@ class PlanExecutor:
 
     async def _process_target_npcs(
         self,
-        plan: dict,
+        plan: Any,
         player_action: str,
         raw_outputs: turn_outputs.TurnOutputs,
     ) -> set[str]:
@@ -512,7 +514,7 @@ class PlanExecutor:
         very turn.
         """
         dlg = self._agents.dialogue
-        target_names = plan.get("targets", [])
+        target_names = plan_access.targets(plan)
         new_uuids: set[str] = set()
         if target_names:
             _ensure_npc_targets_in_scene(plan, target_names, self._gs, dlg)
@@ -525,14 +527,14 @@ class PlanExecutor:
                 raw_outputs.new_npcs = [npc.label_for_player(self._gs, npc.occupation) for npc in new_npcs]
                 new_uuids = {npc.uuid for npc in new_npcs if npc.uuid}
 
-        should_talk = dlg.targets_match_scene_npcs(target_names) or "actor" in plan.get("delegate_to", [])
-        if should_talk or plan.get(_KEY_ACTION_TYPE, _DEFAULT_ACTION) == "TALK":
+        should_talk = dlg.targets_match_scene_npcs(target_names) or "actor" in plan_access.delegate_to(plan)
+        if should_talk or plan.action_type == "TALK":
             await self._run_interactions(
                 player_action,
                 target_names,
-                bool(plan.get("is_aggressive")),
+                plan_access.is_aggressive(plan),
                 raw_outputs,
-                plan.get("contest"),
+                plan_access.contest_as_dict(plan),
             )
         return new_uuids
 

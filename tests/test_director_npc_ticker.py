@@ -20,9 +20,11 @@ from cast import director_dialogue, director_events, director_execution, directo
 from cast.director import DirectorCast
 from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
 from knowledge import graph as graph_mod, memory as memory_mod
-from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod
-from models.npc_card import NPCCard
+from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
+from tests.director_helpers import route_plan
 from timeline.event_manager import EventManager
+
+NPCCard = npc_card_mod.NPCCard
 
 _BARTENDER_UUID = "npc-bartender"
 _GUARD_UUID = "npc-guard"
@@ -119,7 +121,7 @@ class TestPlanExecutorTickerGate:
         scene = _seed_tavern_scene(gs, _BARTENDER_UUID)
 
         await executor.execute_plan(
-            plan={"action_type": "TALK", "delegate_to": [], "targets": []},
+            plan=route_plan("TALK", delegate=[], targets=[]),
             player_action="look around the tavern",
             completed_events=[],
         )
@@ -140,7 +142,7 @@ class TestPlanExecutorTickerGate:
         assert gs.current_scene is None
 
         await executor.execute_plan(
-            plan={"action_type": "TALK", "delegate_to": [], "targets": []},
+            plan=route_plan("TALK", delegate=[], targets=[]),
             player_action="shout into the void",
             completed_events=[],
         )
@@ -157,7 +159,7 @@ class TestPlanExecutorTickerGate:
         scene = _seed_tavern_scene(gs, _GUARD_UUID)
 
         await executor.execute_plan(
-            plan={"action_type": "TALK", "delegate_to": [], "targets": []},
+            plan=route_plan("TALK", delegate=[], targets=[]),
             player_action="look around",
             completed_events=[],
         )
@@ -183,7 +185,7 @@ class TestPlanExecutorTickerGate:
         executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
 
         await executor.execute_plan(
-            plan={"action_type": "MOVE", "delegate_to": ["scene_builder"], "targets": []},
+            plan=route_plan("MOVE", delegate=["scene_builder"], targets=[]),
             player_action="walk to the tavern",
             completed_events=[],
         )
@@ -219,7 +221,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
         executor._cast.npc_generator.execute = AsyncMock(return_value=[marco])
 
         await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"], "targets": []},
+            plan=route_plan("EXPLORE", delegate=["scene_builder"], targets=[]),
             player_action="step into the tavern",
             completed_events=[],
         )
@@ -261,7 +263,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
         executor._cast.npc_generator.execute = AsyncMock(return_value=[marco])
 
         await executor.execute_plan(
-            plan={"action_type": "EXPLORE", "delegate_to": ["scene_builder"], "targets": []},
+            plan=route_plan("EXPLORE", delegate=["scene_builder"], targets=[]),
             player_action="walk into the tavern",
             completed_events=[],
         )
@@ -317,11 +319,11 @@ class TestPlanExecutorSameTurnEvictionSkip:
         executor._agents.retaliation.check_retaliation = AsyncMock(return_value=[])
 
         await executor.execute_plan(
-            plan={
-                "action_type": "EXPLORE",
-                "delegate_to": ["scene_builder", "npc_generator"],
-                "targets": ["Bruno the baker"],
-            },
+            plan=route_plan(
+                "EXPLORE",
+                delegate=["scene_builder", "npc_generator"],
+                targets=["Bruno the baker"],
+            ),
             player_action="walk into the tavern and find the baker",
             completed_events=[],
         )

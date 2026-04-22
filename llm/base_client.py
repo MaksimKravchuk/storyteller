@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
 
-from llm.message import Message, LLMResponse
+from llm.message import Message, LLMResponse, Tool
 
 
 class LLMJSONError(ValueError):
@@ -24,23 +24,36 @@ class LLMJSONError(ValueError):
 class OutputFormat:
     """Output-shape controls for a single LLM call.
 
-    ``response_format`` is the legacy provider-specific dict (e.g.
-    ``{"type": "json_object"}`` for OpenAI's JSON mode). ``schema`` and
-    ``schema_name`` request strict, schema-validated output through the
-    provider's structured-outputs surface (the schema is a Pydantic
-    ``model_json_schema()``). The two modes are mutually exclusive — when
-    ``schema`` is set, the provider MUST honor it (or raise
-    ``NotImplementedError``) and ignore ``response_format``.
+    Three modes are mutually exclusive at the response-shape level:
+
+    - ``response_format`` — legacy provider-specific dict (e.g.
+      ``{"type": "json_object"}`` for OpenAI's JSON mode).
+    - ``schema`` / ``schema_name`` — strict structured outputs (Pydantic
+      ``model_json_schema()`` compatible). When set, the provider MUST
+      honor it or raise ``NotImplementedError``.
+
+    ``tools`` / ``tool_choice`` are orthogonal: a tool-use call normally
+    leaves ``response_format`` / ``schema`` unset since the model's output
+    arrives on :attr:`llm.message.LLMResponse.tool_calls`. ``tool_choice``
+    accepts ``"auto"`` (model picks), ``"required"`` (model must call any
+    tool), or a tool name (model must call that specific tool).
     """
 
     response_format: dict[str, Any] | None = None
     schema: dict[str, Any] | None = None
     schema_name: str | None = None
+    tools: tuple[Tool, ...] | None = None
+    tool_choice: str | None = None
 
     @property
     def is_strict(self) -> bool:
         """True when this format requests strict, schema-validated output."""
         return self.schema is not None
+
+    @property
+    def has_tools(self) -> bool:
+        """True when tool definitions are attached to this call."""
+        return bool(self.tools)
 
 
 class BaseLLMClient(ABC):
@@ -73,11 +86,16 @@ class BaseLLMClient(ABC):
     ) -> LLMResponse:
         """Send messages and return the model response.
 
-        When ``output_format.is_strict`` is true, the provider MUST request
-        strict, schema-validated output from its API. If the provider or
-        pinned model does not support strict structured outputs, it MUST
-        raise ``NotImplementedError`` so callers can fall back to prompt-
-        based JSON.
+        ``output_format`` bundles three orthogonal concerns:
+
+        - Legacy JSON mode (``response_format``) and strict structured
+          outputs (``schema`` / ``schema_name``): when ``output_format.is_strict``
+          is true the provider MUST honor the schema or raise
+          ``NotImplementedError`` so callers can fall back.
+        - Tool calls (``tools`` / ``tool_choice``): when present, the
+          provider exposes the tools and translates ``tool_choice`` to its
+          native shape. Results arrive on :attr:`LLMResponse.tool_calls`
+          with already-decoded argument dicts.
         """
         ...
 

@@ -190,7 +190,7 @@ class TestDramaturgePromptAssembly:
             context={_GAME_STATE: gs, _PLAYER_ACTION: "look"},
         )
 
-        system_prompt = dram._build_system_prompt()
+        system_prompt = dram.system_prompt_template.render(**dram._system_prompt_vars)
         assert "capital of the empire" in system_prompt
         assert "bribed the Praetorian" not in system_prompt
 
@@ -215,7 +215,7 @@ class TestDramaturgePromptAssembly:
             context={_GAME_STATE: gs, _PLAYER_ACTION: "approach"},
         )
 
-        system_prompt = dram._build_system_prompt()
+        system_prompt = dram.system_prompt_template.render(**dram._system_prompt_vars)
         assert "introduces himself as Marcus" in system_prompt
 
     @allure.story("Empty narration")

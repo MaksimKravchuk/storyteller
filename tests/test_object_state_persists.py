@@ -89,7 +89,7 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look around", {_GAME_STATE: game_state})
 
-        rendered_system = builder._build_system_prompt()
+        rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "Known object states" in rendered_system
         assert _DAMAGE_KEY in rendered_system
         assert "splintered" in rendered_system
@@ -133,7 +133,7 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look around", {_GAME_STATE: game_state})
 
-        rendered_system = builder._build_system_prompt()
+        rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "Known object states" not in rendered_system
 
     @allure.story("Object state persistence")
@@ -201,7 +201,7 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look around", {_GAME_STATE: game_state})
 
-        rendered_system = builder._build_system_prompt()
+        rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "Known object states" in rendered_system
         assert _DAMAGE_KEY in rendered_system
 
@@ -218,7 +218,7 @@ class TestSceneBuilderPreservesObjectStates:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look around", {_GAME_STATE: game_state})
 
-        rendered_system = builder._build_system_prompt()
+        rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         anvil_pos = rendered_system.find("anvil")
         zebra_pos = rendered_system.find("zebra pelt")
         assert anvil_pos != -1 and zebra_pos != -1
