@@ -9,9 +9,11 @@ import allure
 import pytest
 
 from cast.dice import ContestType
+from cast import npc_turn as npc_turn_mod
 from cast.npc_turn import NPCAction, NPCTurnResolver
 from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
+from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
 
 GameState = gs_mod.GameState
@@ -312,6 +314,93 @@ class TestNPCTurnResolverErrorHandling:
 
         assert len(actions) == 1
         assert actions[0].npc_name == _MERCHANT
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC autonomous turn — opportunity window")
+def _place_both(gs: GameState, actor: NPCCard, target: NPCCard) -> None:
+    gs.npcs[actor.uuid] = actor
+    gs.npcs[target.uuid] = target
+    gs.current_scene = _make_scene(actor.uuid, target.uuid)
+
+
+def _plot_knowledge(gs: GameState, npc_uuid: str, text: str) -> None:
+    plot_node = KnowledgeNode(
+        text=text,
+        scope=KnowledgeScope.LOCAL,
+        source=KnowledgeSource.PERSONAL_EXPERIENCE,
+        canon=CanonSource.SESSION,
+    )
+    gs.knowledge_graph.add_node(plot_node)
+    gs.knowledge_graph.add_edge(npc_uuid, plot_node.uuid, EdgeType.WITNESSED)
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC autonomous turn — opportunity window")
+class TestBuildTurnPromptOpportunityWindow:
+    """KER-42: ``_build_turn_prompt`` surfaces an OPPORTUNITY clause when the
+    scene puts a hostile-labelled target (via relationship) or a violence-flavoured
+    knowledge fact about a co-located NPC within reach, and drops the baseline
+    "most turns are routine" nudge so the two do not contradict each other.
+    """
+
+    @allure.story("Opportunity window")
+    @allure.title("Co-located hostile relationship fires the opportunity clause and drops the routine nudge")
+    def test_hostile_relationship_fires_clause(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        _place_both(gs, brutus, marcus)
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" in prompt
+        assert "Most turns are routine" not in prompt
+
+    @allure.story("Opportunity window")
+    @allure.title("Peaceful peer with no hostile signals sees the baseline routine nudge")
+    def test_peaceful_peer_keeps_routine_nudge(self):
+        gs = _make_gs()
+        cook = _make_npc(_NPC_UUID_A, "Cook")
+        carpenter = _make_npc(_NPC_UUID_B, "Carpenter")
+        cook.relationships[_NPC_UUID_B] = "acquaintance"
+        _place_both(gs, cook, carpenter)
+
+        prompt = npc_turn_mod._build_turn_prompt(cook, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" not in prompt
+        assert "Most turns are routine" in prompt
+
+    @allure.story("Opportunity window")
+    @allure.title("Violent knowledge fact naming a co-located NPC fires the clause without any relationship")
+    def test_knowledge_only_gate_fires_clause(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        _place_both(gs, brutus, marcus)
+        _plot_knowledge(gs, brutus.uuid, "Brutus intends to kill Marcus today.")
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" in prompt
+        assert "Most turns are routine" not in prompt
+
+    @allure.story("Opportunity window")
+    @allure.title("Violent knowledge naming an absent NPC does not fire the clause")
+    def test_knowledge_about_absent_npc_does_not_fire(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        other_bystander = _make_npc(_NPC_UUID_B, "Titus")
+        absent = _make_npc("npc-absent", "Marcus")
+        gs.npcs[absent.uuid] = absent
+        _place_both(gs, brutus, other_bystander)
+        _plot_knowledge(gs, brutus.uuid, "Brutus intends to kill Marcus today.")
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" not in prompt
+        assert "Most turns are routine" in prompt
 
 
 @allure.epic("NPC Interaction")

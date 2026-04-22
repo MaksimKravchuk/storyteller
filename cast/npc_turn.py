@@ -5,8 +5,6 @@ to act.  Actions are LLM-driven via the NPC's Actor agent and returned
 as structured ``NPCAction`` results.
 """
 
-from __future__ import annotations
-
 import asyncio
 import json as _json
 import types
@@ -23,6 +21,7 @@ from cast.dice import (
     roll_contest,
 )
 from cast.director_witness import WitnessedAggression, is_guard_occupation
+from cast.npc_opportunity import OPPORTUNITY_CLAUSE, detect_opportunity
 from cast.wait_detection import INCAPACITATING_STATES
 from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
@@ -395,27 +394,19 @@ def _build_turn_prompt(
     path), a "peer reactions" clause is inserted so each NPC sees what
     its peers already did this turn and is pushed away from echoing
     the same template reaction.
-    """
-    scene = game_state.current_scene
-    scene_desc = scene.description if scene else "unknown location"
 
-    base_prompt = (
-        "It is {name}'s turn.\n"
-        "Recent events: {summary}\n"
-        "Scene: {scene}\n"
-        "Your mood: {mood}, Status: {status}\n\n"
-        "Respond as JSON:\n"
-        '{{"action": "Brief description of what you do", '
-        '"type": "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE", '
-        '"target": "name of target, \'player\', or null if no target"}}\n\n'
-        "Stay in character. Most turns are routine. "
-        "Only take dramatic action when justified by mood and situation."
-    ).format(
-        name=npc.name,
-        summary=player_action_summary,
-        scene=scene_desc,
-        mood=npc.current_mood,
-        status=npc.physical_status,
+    When the KER-42 opportunity gate detects a co-located target named
+    in a hostile relationship or a violence-flavoured knowledge fact,
+    an OPPORTUNITY clause is appended and the baseline "most turns are
+    routine" nudge is dropped — the two directly contradict each other,
+    and the conservative one wins today.
+    """
+    opportunity_fires = detect_opportunity(npc, game_state)
+    base_prompt = _format_base_turn_prompt(
+        npc=npc,
+        player_action_summary=player_action_summary,
+        game_state=game_state,
+        include_routine_nudge=not opportunity_fires,
     )
 
     clauses: list[str] = [base_prompt]
@@ -424,7 +415,35 @@ def _build_turn_prompt(
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
     if incident is not None:
         clauses.append(_format_incident_clause(npc, incident))
+    if opportunity_fires:
+        clauses.append(OPPORTUNITY_CLAUSE)
     return "\n\n".join(clauses)
+
+
+def _format_base_turn_prompt(
+    npc: Any,
+    player_action_summary: str,
+    game_state: GameState,
+    include_routine_nudge: bool,
+) -> str:
+    """Render the base turn prompt, optionally appending the routine-turn nudge."""
+    scene = game_state.current_scene
+    scene_desc = scene.description if scene else "unknown location"
+    tail = (
+        "Stay in character. Most turns are routine. Only take dramatic action when justified by mood and situation."
+        if include_routine_nudge
+        else "Stay in character."
+    )
+    return (
+        "It is {name}'s turn.\nRecent events: {summary}\nScene: {scene}\nYour mood: {mood}, Status: {status}\n\n{tail}"
+    ).format(
+        name=npc.name,
+        summary=player_action_summary,
+        scene=scene_desc,
+        mood=npc.current_mood,
+        status=npc.physical_status,
+        tail=tail,
+    )
 
 
 def _format_peer_actions_clause(peer_actions: list[tuple[str, str]]) -> str:

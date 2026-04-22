@@ -50,6 +50,62 @@ def _llm_body(body: str) -> LLMResponse:
 
 
 @allure.epic("NPC Interaction")
+@allure.feature("Action-mode NPC turn")
+class TestActorActNPCTurnMode:
+    """KER-42: ``Actor.act`` respects ``context['is_npc_turn']`` by feeding
+    the action-mode system prompt and returning the raw action JSON — no
+    envelope parse, no conversation persistence, no mood/status mutation.
+    """
+
+    @allure.story("Action-mode dispatch")
+    @allure.title("is_npc_turn context flag routes through _send with the action-mode system prompt")
+    @pytest.mark.asyncio
+    async def test_npc_turn_uses_action_mode_prompt(self):
+        actor, npc = _make_actor()
+        stub_raw = '{"action": "Brutus grips the pugio.", "type": "IDLE", "target": null}'
+        actor._send = AsyncMock(return_value=stub_raw)  # type: ignore[method-assign]
+
+        reply = await actor.act("It is Brutus's turn.", {_LOC_KEY: "taberna", "is_npc_turn": True})
+
+        assert isinstance(reply, ActorReply)
+        assert reply.text == stub_raw
+        assert reply.revealed_names == ()
+
+    @allure.story("Action-mode dispatch")
+    @allure.title("Action-mode call bypasses the envelope path and does not touch conversation state")
+    @pytest.mark.asyncio
+    async def test_npc_turn_skips_envelope_and_conversation(self):
+        actor, npc = _make_actor()
+        stub_raw = '{"action": "watches the merchant", "type": "IDLE", "target": null}'
+        actor._send = AsyncMock(return_value=stub_raw)  # type: ignore[method-assign]
+        envelope_guard = AsyncMock(side_effect=AssertionError("_send_json must not run in NPC-turn mode"))
+        actor._send_json = envelope_guard  # type: ignore[method-assign]
+
+        await actor.act("Marcus sits across the room.", {_LOC_KEY: "taberna", "is_npc_turn": True})
+
+        assert actor._conversation == []
+
+    @allure.story("Action-mode dispatch")
+    @allure.title("Action-mode sets the output_mode_action gate var on the system-prompt context")
+    @pytest.mark.asyncio
+    async def test_npc_turn_sets_action_mode_gate_var(self):
+        actor, _ = _make_actor()
+        actor._send = AsyncMock(  # type: ignore[method-assign]
+            return_value='{"action": "stands watch", "type": "IDLE", "target": null}',
+        )
+
+        await actor.act("Turn advances.", {_LOC_KEY: "taberna", "is_npc_turn": True})
+
+        assert actor._system_prompt_vars.get("output_mode_action") == "1"
+        assert "output_mode_dialogue" not in actor._system_prompt_vars
+
+        rendered = ACTOR_SYSTEM.render(**actor._system_prompt_vars)
+        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" in rendered
+        assert '"narration"' not in rendered
+        assert '"revealed_names"' not in rendered
+
+
+@allure.epic("NPC Interaction")
 @allure.feature("Revealed names envelope field")
 class TestActorActReturnsActorReply:
     @allure.story("ActorReply return type")
@@ -140,6 +196,7 @@ class TestActorPromptDescribesEnvelope:
             current_mood="neutral",
             physical_status="healthy",
             language="English",
+            output_mode_dialogue="1",
         )
         assert "revealed_names" in rendered
         assert "self" in rendered

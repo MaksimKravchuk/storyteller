@@ -310,6 +310,7 @@ class TestActorPromptCatalog:
             current_mood="подозрительное",
             physical_status="здоров",
             language="русском",
+            output_mode_dialogue="1",
         )
         assert '"narration"' in rendered
         assert '"mood"' in rendered

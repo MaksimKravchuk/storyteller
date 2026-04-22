@@ -99,8 +99,14 @@ ACTOR_SYSTEM_RU = PromptTemplate(
                 "спокойное знакомство, ответ или обмен именами — обычная "
                 "разговорная реплика; воспоминание, объяснение или "
                 "эмоциональный момент может быть длиннее. Никогда не разводи "
-                "воду, но и не рубли естественный ответ до рявка.\n"
-                "- Твой ответ ОБЯЗАН быть JSON-объектом ровно с четырьмя "
+                "воду, но и не рубли естественный ответ до рявка."
+            ),
+            required_vars=["current_mood", "physical_status", "npc_occupation"],
+        ),
+        PromptSection(
+            name="output_dialogue",
+            template=(
+                "Твой ответ ОБЯЗАН быть JSON-объектом ровно с четырьмя "
                 "полями — никакого дополнительного текста, никаких markdown-блоков:\n"
                 '  "narration": произнесённая реплика и краткие описания '
                 "действий (например *гладит бороду*).\n"
@@ -116,7 +122,24 @@ ACTOR_SYSTEM_RU = PromptTemplate(
                 "если также назвал имя другого NPC в этой сцене — добавь его "
                 "дословно. Пустой массив, если имён не звучало."
             ),
-            required_vars=["current_mood", "physical_status", "npc_occupation"],
+            required_vars=["physical_status", "output_mode_dialogue"],
+        ),
+        PromptSection(
+            name="output_action",
+            template=(
+                "Верни ровно один JSON-объект, описывающий одно действие в "
+                "характере — никакого дополнительного текста, никаких "
+                'markdown-блоков. Ключи и значение поля "type" — строго '
+                "в указанном виде (их разбирает система):\n"
+                '  {{"action": "<brief description of what you do>", '
+                '"type": "<ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE>", '
+                '"target": "<name of target, \'player\', or null if no target>"}}\n'
+                "Оставайся в образе: твоя профессия, снаряжение, настроение и "
+                "стоящие перед тобой цели определяют этот выбор. Бездействие — "
+                "тоже выбор; делай его только если оно подходит именно этому "
+                "персонажу прямо сейчас."
+            ),
+            required_vars=["output_mode_action"],
         ),
         PromptSection(
             name="language",

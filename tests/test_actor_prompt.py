@@ -5,26 +5,38 @@ from __future__ import annotations
 import allure
 
 from prompts.actor_prompts import ACTOR_SYSTEM
+from prompts.actor_prompts_ru import ACTOR_SYSTEM_RU
 
 
-def _render_actor_prompt(**overrides) -> str:
-    """Render ACTOR_SYSTEM with sensible defaults, applying overrides."""
-    defaults = dict(
-        npc_name="Guard",
-        npc_occupation="city guard",
-        location_name="forum",
-        npc_biography="A loyal soldier.",
-        personality_traits="brave, stern",
-        speech_style="curt",
-        npc_appearance="tall, armored",
-        npc_inventory="spear, shield",
-        accessible_knowledge="The forum closes at dusk.",
-        current_mood="neutral",
-        physical_status="healthy",
-        language="English",
-    )
-    defaults.update(overrides)
-    return ACTOR_SYSTEM.render(**defaults)
+_BASE_PROMPT_VARS = dict(
+    npc_name="Guard",
+    npc_occupation="city guard",
+    location_name="forum",
+    npc_biography="A loyal soldier.",
+    personality_traits="brave, stern",
+    speech_style="curt",
+    npc_appearance="tall, armored",
+    npc_inventory="spear, shield",
+    accessible_knowledge="The forum closes at dusk.",
+    current_mood="neutral",
+    physical_status="healthy",
+    language="English",
+)
+
+
+def _render_actor_prompt(template=ACTOR_SYSTEM, mode: str = "dialogue", **overrides) -> str:
+    """Render the Actor system prompt.
+
+    ``mode`` is ``"dialogue"``, ``"action"``, or ``"none"`` — "none" leaves
+    both gate vars unset so neither output section renders (defensive
+    assertion for the mutual-exclusion contract).
+    """
+    prompt_vars = {**_BASE_PROMPT_VARS, **overrides}
+    if mode == "dialogue":
+        prompt_vars["output_mode_dialogue"] = "1"
+    elif mode == "action":
+        prompt_vars["output_mode_action"] = "1"
+    return template.render(**prompt_vars)
 
 
 @allure.epic("NPC Interaction")
@@ -134,3 +146,57 @@ class TestActorPromptSituationalRegister:
         assert "verbatim" in lowered
         assert "paraphrase" in lowered
         assert "catchphrase" in lowered
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Actor prompt template")
+class TestActorPromptOutputModes:
+    """KER-42: Actor system prompt carries mode-gated output rules.
+
+    Dialogue mode keeps the narration/mood/status/revealed_names envelope.
+    Action mode (NPC autonomous turn) emits the action/type/target schema
+    instead — the two sections are mutually exclusive so the LLM is never
+    asked to satisfy both envelopes at once.
+    """
+
+    @allure.story("Output mode gating")
+    @allure.title("Dialogue mode renders the narration envelope schema and not the action schema")
+    def test_dialogue_mode_contains_envelope_schema(self):
+        rendered = _render_actor_prompt()
+        assert '"narration"' in rendered
+        assert '"revealed_names"' in rendered
+        assert "ATTACK|TALK|MOVE" not in rendered
+
+    @allure.story("Output mode gating")
+    @allure.title("Action mode renders the action/type/target schema and not the narration envelope")
+    def test_action_mode_contains_action_schema(self):
+        rendered = _render_actor_prompt(mode="action")
+        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" in rendered
+        assert '"action"' in rendered
+        assert '"target"' in rendered
+        assert '"narration"' not in rendered
+        assert '"revealed_names"' not in rendered
+
+    @allure.story("Output mode gating")
+    @allure.title("Action mode keeps the shared constraints block (dice, in-character, physical status)")
+    def test_action_mode_preserves_common_constraints(self):
+        rendered = _render_actor_prompt(mode="action")
+        assert "[DICE ROLL]" in rendered
+        assert "Stay in character" in rendered
+        assert "Your physical status:" in rendered
+
+    @allure.story("Output mode gating")
+    @allure.title("Russian catalog mirrors the output-mode split")
+    def test_russian_catalog_action_mode(self):
+        rendered = _render_actor_prompt(template=ACTOR_SYSTEM_RU, mode="action")
+        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" in rendered
+        assert '"narration"' not in rendered
+
+    @allure.story("Output mode gating")
+    @allure.title("Neither output section renders when no output_mode var is set")
+    def test_no_output_section_when_mode_unset(self):
+        # Defensive assertion: callers always set one gate var, but a
+        # forgotten call must degrade to no schema rather than double-rendering.
+        rendered = _render_actor_prompt(mode="none")
+        assert '"narration"' not in rendered
+        assert "ATTACK|TALK|MOVE" not in rendered
