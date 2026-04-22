@@ -117,14 +117,14 @@ class Actor(BasePerformer):
         self._conversation.clear()
 
     async def _act_npc_turn(self, input_data: str) -> ActorReply:
-        """Run the NPC autonomous-turn path: action-mode system prompt, no conversation.
+        """Action-mode dispatch: raw action JSON in, no envelope, no conversation state.
 
-        Returns an ``ActorReply`` whose ``text`` is the raw action JSON
-        produced by the LLM — ``NPCTurnResolver`` parses it downstream.
-        We skip conversation persistence and envelope parsing on purpose:
-        an autonomous turn is not dialogue, its output schema is
-        ``action/type/target`` (not the narration envelope), and mood/status
-        stay calibrated from the next dialogue turn.
+        An autonomous turn is not dialogue — its output schema is
+        ``action/type/target``, not the narration envelope — so we bypass
+        the envelope parse, do not append to ``self._conversation``, and
+        do not mutate ``npc.current_mood`` / ``npc.physical_status``. Those
+        stay calibrated from the next dialogue turn. ``NPCTurnResolver``
+        parses the returned ``ActorReply.text`` as the action JSON.
         """
         self.set_context(output_mode_action="1")
         raw = await self._send(input_data, conversation=[])

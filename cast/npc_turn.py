@@ -395,11 +395,11 @@ def _build_turn_prompt(
     its peers already did this turn and is pushed away from echoing
     the same template reaction.
 
-    When the KER-42 opportunity gate detects a co-located target named
-    in a hostile relationship or a violence-flavoured knowledge fact,
-    an OPPORTUNITY clause is appended and the baseline "most turns are
-    routine" nudge is dropped — the two directly contradict each other,
-    and the conservative one wins today.
+    When the opportunity gate detects a co-located target named in a
+    hostile relationship or a violence-flavoured knowledge fact, an
+    OPPORTUNITY clause is appended and the baseline "most turns are
+    routine" nudge is dropped. The two directly contradict each other,
+    and the conservative one silently wins if both are present.
     """
     opportunity_fires = detect_opportunity(npc, game_state)
     base_prompt = _format_base_turn_prompt(
@@ -426,7 +426,6 @@ def _format_base_turn_prompt(
     game_state: GameState,
     include_routine_nudge: bool,
 ) -> str:
-    """Render the base turn prompt, optionally appending the routine-turn nudge."""
     scene = game_state.current_scene
     scene_desc = scene.description if scene else "unknown location"
     tail = (

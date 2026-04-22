@@ -338,8 +338,8 @@ def _plot_knowledge(gs: GameState, npc_uuid: str, text: str) -> None:
 @allure.epic("NPC Interaction")
 @allure.feature("NPC autonomous turn — opportunity window")
 class TestBuildTurnPromptOpportunityWindow:
-    """KER-42: ``_build_turn_prompt`` surfaces an OPPORTUNITY clause when the
-    scene puts a hostile-labelled target (via relationship) or a violence-flavoured
+    """``_build_turn_prompt`` surfaces an OPPORTUNITY clause when the scene
+    puts a hostile-labelled target (via relationship) or a violence-flavoured
     knowledge fact about a co-located NPC within reach, and drops the baseline
     "most turns are routine" nudge so the two do not contradict each other.
     """
@@ -401,6 +401,75 @@ class TestBuildTurnPromptOpportunityWindow:
 
         assert "OPPORTUNITY:" not in prompt
         assert "Most turns are routine" in prompt
+
+    @allure.story("Opportunity window")
+    @allure.title("Label containing 'kill' as a substring of 'skillful' does not fire on its own")
+    def test_skillful_prefix_alone_does_not_fire(self):
+        gs = _make_gs()
+        apprentice = _make_npc(_NPC_UUID_A, "Apprentice")
+        apothecary = _make_npc(_NPC_UUID_B, "Apothecary")
+        apprentice.relationships[_NPC_UUID_B] = "skillful apprentice"
+        _place_both(gs, apprentice, apothecary)
+        _plot_knowledge(gs, apprentice.uuid, "The pharmacist Apothecary mixes salves all day.")
+
+        prompt = npc_turn_mod._build_turn_prompt(apprentice, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" not in prompt
+        assert "Most turns are routine" in prompt
+
+    @allure.story("Opportunity window")
+    @allure.title("Genuine keyword fires even when the label also contains substring-only matches")
+    def test_genuine_keyword_fires_alongside_false_positive_prefix(self):
+        gs = _make_gs()
+        apprentice = _make_npc(_NPC_UUID_A, "Apprentice")
+        apothecary = _make_npc(_NPC_UUID_B, "Apothecary")
+        # "skillful" contains "kill" but is word-boundary-rejected; "rival"
+        # is a genuine keyword and must still fire alongside it.
+        apprentice.relationships[_NPC_UUID_B] = "skillful rival apprentice"
+        _place_both(gs, apprentice, apothecary)
+
+        prompt = npc_turn_mod._build_turn_prompt(apprentice, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" in prompt
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC autonomous turn — opportunity window")
+class TestBuildTurnPromptOpportunityWindowIntegration:
+    """End-to-end check that the OPPORTUNITY clause actually reaches the
+    Actor's LLM call. ``_build_turn_prompt`` output becomes the Actor's
+    ``input_data`` in ``NPCTurnResolver._resolve_single_npc``; if that
+    plumbing breaks, the unit tests above would still pass but the LLM
+    would never see the cue.
+    """
+
+    @allure.story("Opportunity window")
+    @allure.title("Opportunity clause reaches Actor.execute input_data via the resolver path")
+    @pytest.mark.asyncio
+    async def test_opportunity_clause_flows_into_actor_input(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        _place_both(gs, brutus, marcus)
+
+        brutus_actor = _make_actor(_idle_response("Brutus"))
+        marcus_actor = _make_actor(_idle_response(_MERCHANT))
+        resolver = NPCTurnResolver(
+            game_state=gs,
+            actors={_NPC_UUID_A: brutus_actor, _NPC_UUID_B: marcus_actor},
+        )
+
+        await resolver.resolve_npc_turns("Player waits.")
+
+        brutus_input = brutus_actor.execute.await_args.kwargs["input_data"]
+        assert "OPPORTUNITY:" in brutus_input
+        assert "Most turns are routine" not in brutus_input
+        brutus_context = brutus_actor.execute.await_args.kwargs["context"]
+        assert brutus_context["is_npc_turn"] is True
+
+        marcus_input = marcus_actor.execute.await_args.kwargs["input_data"]
+        assert "OPPORTUNITY:" not in marcus_input
 
 
 @allure.epic("NPC Interaction")

@@ -52,8 +52,8 @@ def _llm_body(body: str) -> LLMResponse:
 @allure.epic("NPC Interaction")
 @allure.feature("Action-mode NPC turn")
 class TestActorActNPCTurnMode:
-    """KER-42: ``Actor.act`` respects ``context['is_npc_turn']`` by feeding
-    the action-mode system prompt and returning the raw action JSON — no
+    """``Actor.act`` respects ``context['is_npc_turn']`` by feeding the
+    action-mode system prompt and returning the raw action JSON — no
     envelope parse, no conversation persistence, no mood/status mutation.
     """
 

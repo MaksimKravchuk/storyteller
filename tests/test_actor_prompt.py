@@ -151,7 +151,7 @@ class TestActorPromptSituationalRegister:
 @allure.epic("NPC Interaction")
 @allure.feature("Actor prompt template")
 class TestActorPromptOutputModes:
-    """KER-42: Actor system prompt carries mode-gated output rules.
+    """The Actor system prompt carries mode-gated output rules.
 
     Dialogue mode keeps the narration/mood/status/revealed_names envelope.
     Action mode (NPC autonomous turn) emits the action/type/target schema
