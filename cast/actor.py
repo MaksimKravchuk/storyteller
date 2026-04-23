@@ -51,10 +51,14 @@ class Actor(BasePerformer):
         """Respond to a player interaction in character.
 
         ``input_data``: What the player said or did directed at this NPC.
-        ``context``: Optional; may contain ``location_name``.
+        ``context``: Optional; may contain ``location_name`` and
+        ``is_npc_turn`` (set by ``NPCTurnResolver`` when the NPC is acting
+        on its own turn rather than responding to the player).
 
-        Returns an :class:`ActorReply` with the spoken text and any
-        names the NPC revealed during this turn.
+        Returns an :class:`ActorReply` with the spoken text (or raw action
+        JSON, in NPC-turn mode) and any names the NPC revealed during this
+        turn. NPC-turn mode returns ``revealed_names=()`` — action JSON
+        carries no name-reveal signal.
         """
         # Build knowledge context for this NPC
         accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc, topic_tags=None)
@@ -91,6 +95,10 @@ class Actor(BasePerformer):
                 ),
             )
 
+        if context.get("is_npc_turn"):
+            return await self._act_npc_turn(input_data)
+
+        self.set_context(output_mode_dialogue="1")
         envelope = await self._produce_envelope(input_data)
 
         # Store only the prose narration so multi-turn dialogue context stays clean.
@@ -107,6 +115,20 @@ class Actor(BasePerformer):
     def reset_conversation(self) -> None:
         """Clear conversation history (e.g. when player walks away)."""
         self._conversation.clear()
+
+    async def _act_npc_turn(self, input_data: str) -> ActorReply:
+        """Action-mode dispatch: raw action JSON in, no envelope, no conversation state.
+
+        An autonomous turn is not dialogue — its output schema is
+        ``action/type/target``, not the narration envelope — so we bypass
+        the envelope parse, do not append to ``self._conversation``, and
+        do not mutate ``npc.current_mood`` / ``npc.physical_status``. Those
+        stay calibrated from the next dialogue turn. ``NPCTurnResolver``
+        parses the returned ``ActorReply.text`` as the action JSON.
+        """
+        self.set_context(output_mode_action="1")
+        raw = await self._send(input_data, conversation=[])
+        return ActorReply(text=raw.strip(), revealed_names=())
 
     async def _produce_envelope(self, input_data: str) -> ActorEnvelope:
         """Call the envelope or legacy path, with a graceful fallback on LLM JSON failure.

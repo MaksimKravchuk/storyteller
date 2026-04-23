@@ -93,8 +93,14 @@ ACTOR_SYSTEM = PromptTemplate(
                 "challenge, threat, or shout is 1-2 sentences; a calm introduction, "
                 "answer, or exchange of names is a normal conversational reply; "
                 "recounting, explaining, or emotionally charged moments can run longer. "
-                "Never pad, but do not clip a natural reply into a bark either.\n"
-                "- Your response MUST be a JSON object with exactly these four fields "
+                "Never pad, but do not clip a natural reply into a bark either."
+            ),
+            required_vars=["current_mood", "physical_status", "npc_occupation"],
+        ),
+        PromptSection(
+            name="output_dialogue",
+            template=(
+                "Your response MUST be a JSON object with exactly these four fields "
                 "— no extra text, no markdown fences:\n"
                 '  "narration": your spoken dialogue and brief action descriptions '
                 "(e.g. *scratches his beard*).\n"
@@ -108,7 +114,21 @@ ACTOR_SYSTEM = PromptTemplate(
                 "add other NPC names verbatim if you name them in this scene. "
                 "Empty array when no names are spoken."
             ),
-            required_vars=["current_mood", "physical_status", "npc_occupation"],
+            required_vars=["physical_status", "output_mode_dialogue"],
+        ),
+        PromptSection(
+            name="output_action",
+            template=(
+                "You will return a single JSON object representing one in-character "
+                "action — no extra text, no markdown fences:\n"
+                '  {{"action": "<brief description of what you do>", '
+                '"type": "<ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE>", '
+                '"target": "<name of target, \'player\', or null if no target>"}}\n'
+                "Stay in character: your occupation, equipment, mood, and standing goals "
+                "drive this choice. Inaction is itself a choice — pick it only when it "
+                "fits this character right now."
+            ),
+            required_vars=["output_mode_action"],
         ),
         PromptSection(
             name="language",
