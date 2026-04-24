@@ -36,7 +36,8 @@
   .settings-role .current code { color: #e0e0e0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   .settings-row { display: flex; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
   .settings-row select, .settings-row input { padding: 6px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 13px; }
-  .settings-row select { min-width: 220px; }
+  .settings-row select { min-width: 120px; }
+  .settings-row select.settings-model-sel { min-width: 200px; flex: 1; }
   .settings-row input { min-width: 220px; flex: 1; }
   .settings-row button { padding: 6px 14px; background: #e94560; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; }
   .settings-row button:hover { background: #c13651; }
@@ -191,6 +192,8 @@
 
 <script>
 const API = '';
+let _settingsCatalog = [];
+let _settingsKeys = {};
 let currentSessionId = null;
 let currentTab = 'overview';
 let currentNpcId = null;
@@ -941,6 +944,9 @@ async function renderSettingsView() {
 }
 
 function renderSettingsHtml(keys, models) {
+  _settingsCatalog = models.catalog || [];
+  _settingsKeys = keys || {};
+
   const keysCard = `<div class="card"><h3>API Keys</h3>
     <div class="kv">
       ${['openai','anthropic','openrouter'].map(p =>
@@ -951,32 +957,39 @@ function renderSettingsHtml(keys, models) {
     </div>
   </div>`;
 
-  const catalog = models.catalog || [];
   const roles = models.roles || {};
+  const providers = [...new Set(_settingsCatalog.map(m => m.provider))].sort();
+
   const rolesCard = `<div class="card"><h3>Model Roles</h3>
     ${['director','agent','narrator','dramaturge'].map(role => {
-      const current = roles[role] || {provider: '?', model_id: '?', source: '?'};
-      const optionList = catalog.map(m => {
-        const hasKey = keys[m.provider];
-        const suffix = hasKey ? '' : ' (no API key)';
-        const selected = (current.provider === m.provider && current.model_id === m.model_id) ? 'selected' : '';
-        return `<option value="${m.provider}::${m.model_id}" ${hasKey ? '' : 'disabled'} ${selected}>${m.provider} / ${m.model_id}${suffix}</option>`;
-      }).join('');
+      const current = roles[role] || {provider: '', model_id: '', source: 'default'};
+      const currentProvider = providers.includes(current.provider) ? current.provider : '';
+
+      const providerOptions = providers.map(p =>
+        `<option value="${escapeHtml(p)}" ${p === currentProvider ? 'selected' : ''}>${escapeHtml(p)}</option>`
+      ).join('');
+
+      const modelOptions = _buildModelOptions(currentProvider, current.model_id);
+
       return `<div class="settings-role" data-role="${role}">
         <h4>${role}</h4>
-        <div class="current">Current: <code>${escapeHtml(current.provider)}</code> / <code>${escapeHtml(current.model_id)}</code>
-          &nbsp;<span class="badge badge-${current.source === 'db' ? 'playing' : 'idle'}">source: ${escapeHtml(current.source)}</span>
+        <div class="current">Current: <code>${escapeHtml(current.provider || '?')}</code> / <code>${escapeHtml(current.model_id || '?')}</code>
+          &nbsp;<span class="badge badge-${current.source === 'db' ? 'playing' : 'idle'}">source: ${escapeHtml(current.source || '?')}</span>
         </div>
         <div class="settings-row">
-          <select class="settings-select-${role}" onchange="onCatalogPick('${role}', this.value)">
-            <option value="">-- pick from catalog --</option>
-            ${optionList}
+          <select class="settings-provider-${role}" onchange="onProviderPick('${role}', this.value)">
+            <option value="">-- provider --</option>
+            ${providerOptions}
+          </select>
+          <select class="settings-model-sel settings-model-${role}" onchange="onModelPick('${role}', this.value)">
+            <option value="">-- model --</option>
+            ${modelOptions}
           </select>
         </div>
         <div class="settings-row">
           <input type="text" class="settings-input-${role}"
                  placeholder="or type a custom model_id (e.g. deepseek/deepseek-chat-v3.1)"
-                 value="${escapeHtml(current.model_id)}">
+                 value="${escapeHtml(current.model_id || '')}">
           <button onclick="saveModel('${role}')">Save</button>
         </div>
         <div class="settings-banner-${role}" style="display:none"></div>
@@ -985,6 +998,18 @@ function renderSettingsHtml(keys, models) {
   </div>`;
 
   return keysCard + rolesCard;
+}
+
+function _buildModelOptions(provider, currentModelId) {
+  if (!provider) return '';
+  const hasKey = !!_settingsKeys[provider];
+  return _settingsCatalog
+    .filter(m => m.provider === provider)
+    .map(m => {
+      const sel = m.model_id === currentModelId ? 'selected' : '';
+      const dis = hasKey ? '' : 'disabled';
+      return `<option value="${escapeHtml(m.model_id)}" ${dis} ${sel}>${escapeHtml(m.model_id)}</option>`;
+    }).join('');
 }
 
 function detectProviderFromModelId(modelId) {
@@ -996,12 +1021,19 @@ function detectProviderFromModelId(modelId) {
   return null;
 }
 
-function onCatalogPick(role, value) {
-  if (!value) return;
-  const [provider, modelId] = value.split('::');
+function onProviderPick(role, provider) {
+  const modelSelect = document.querySelector(`.settings-model-${role}`);
+  if (modelSelect) {
+    modelSelect.innerHTML = '<option value="">-- model --</option>' + _buildModelOptions(provider, '');
+    modelSelect.value = '';
+  }
+  const input = document.querySelector(`.settings-input-${role}`);
+  if (input) input.value = '';
+}
+
+function onModelPick(role, modelId) {
   const input = document.querySelector(`.settings-input-${role}`);
   if (input) input.value = modelId;
-  input.dataset.provider = provider;
 }
 
 function showBanner(role, message, ok) {
@@ -1014,19 +1046,13 @@ function showBanner(role, message, ok) {
 
 async function saveModel(role) {
   const input = document.querySelector(`.settings-input-${role}`);
-  const select = document.querySelector(`.settings-select-${role}`);
+  const providerSelect = document.querySelector(`.settings-provider-${role}`);
   const modelId = (input?.value || '').trim();
   if (!modelId) {
     showBanner(role, 'model_id is empty', false);
     return;
   }
-  let provider = input?.dataset?.provider;
-  if (!provider && select?.value) {
-    provider = select.value.split('::')[0];
-  }
-  if (!provider) {
-    provider = detectProviderFromModelId(modelId);
-  }
+  let provider = providerSelect?.value || detectProviderFromModelId(modelId);
   if (!provider) {
     showBanner(role, 'could not detect provider from model_id — please pick from catalog', false);
     return;
