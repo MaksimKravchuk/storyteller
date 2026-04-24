@@ -7,7 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, TypeVar, overload
 
-from cast._performer_retry import RetryContext as _RetryContext
+from cast._performer_retry import RetryContext as _RetryContext, _strip_markdown_fence
 from llm.base_client import BaseLLMClient, LLMJSONError, OutputFormat
 from llm.call_logger import (
     agent_stack,
@@ -100,7 +100,7 @@ def _record_llm_call(
 async def _retry_after_validation_failure(
     performer: BasePerformer,
     ctx: _RetryContext,
-    raw: str,
+    assistant_text: str,
     exc: ValidationError,
 ) -> Any:
     """Retry with validation feedback or raise after exhausting attempts.
@@ -122,10 +122,10 @@ async def _retry_after_validation_failure(
                 ctx.total_attempts,
                 errors_preview,
             ),
-            raw_response=raw,
+            raw_response=assistant_text,
         )
     retry_conversation = list(ctx.conversation or [])
-    retry_conversation.append(Message(role=Role.ASSISTANT, body=raw))
+    retry_conversation.append(Message(role=Role.ASSISTANT, body=assistant_text))
     retry_conversation.append(
         Message(
             role=Role.USER,
@@ -154,8 +154,9 @@ async def _send_json_prompt_fallback(performer: BasePerformer, ctx: _RetryContex
         conversation=ctx.conversation,
         response_format={"type": "json_object"},
     )
+    cleaned = _strip_markdown_fence(raw)
     try:
-        parsed = json.loads(raw)
+        parsed = json.loads(cleaned)
     except json.JSONDecodeError as exc:
         preview = raw[:_LOG_PREVIEW_CHARS]
         raise LLMJSONError(
@@ -169,7 +170,7 @@ async def _send_json_prompt_fallback(performer: BasePerformer, ctx: _RetryContex
     try:
         return ctx.response_model.model_validate(parsed)
     except ValidationError as exc:
-        return await _retry_after_validation_failure(performer, ctx, raw, exc)
+        return await _retry_after_validation_failure(performer, ctx, cleaned, exc)
 
 
 async def _send_json_strict(
