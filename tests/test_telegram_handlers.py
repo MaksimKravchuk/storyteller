@@ -109,7 +109,10 @@ async def test_handle_awaiting_setting_happy_path() -> None:
     engine = _make_engine(with_state=True)
 
     with (
-        patch("interfaces.telegram_handlers.create_engine", return_value=engine),
+        patch(
+            "interfaces.telegram_handlers.create_engine_with_db_overrides",
+            new=AsyncMock(return_value=engine),
+        ),
         patch(
             "interfaces.telegram_handlers.get_and_clear_buffer",
             return_value=[],
@@ -134,7 +137,10 @@ async def test_handle_awaiting_setting_engine_exception_rolls_back() -> None:
     engine = _make_engine(with_state=True)
     engine.start_game = AsyncMock(side_effect=RuntimeError("boom"))
 
-    with patch("interfaces.telegram_handlers.create_engine", return_value=engine):
+    with patch(
+        "interfaces.telegram_handlers.create_engine_with_db_overrides",
+        new=AsyncMock(return_value=engine),
+    ):
         await handlers.handle_awaiting_setting(ctx, chat_id=42)
 
     ctx.repo.rollback.assert_awaited_once()

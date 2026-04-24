@@ -203,3 +203,18 @@ async def test_post_set_model_invalid_json() -> None:
         resp = await client.post(_API_MODELS, data="not-json")
         status = resp.status
     assert status == _HTTP_BAD_REQUEST
+
+
+@allure.story("Model overrides")
+@allure.title("POST surfaces a repo-level ValueError as a 400 response")
+@pytest.mark.asyncio
+async def test_post_set_model_repo_value_error_becomes_400() -> None:
+    cfg = _make_cfg()
+    mock_repo = AsyncMock()
+    mock_repo.settings.set_model.side_effect = ValueError("model_id must be 1..200 chars")
+    payload = {"role": "narrator", "provider": "anthropic", "model_id": "claude-opus-4-6"}
+
+    status, body = await _post_set(cfg, mock_repo, payload)
+
+    assert status == _HTTP_BAD_REQUEST
+    assert "model_id" in body["error"]

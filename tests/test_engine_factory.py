@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from defaults.models import AI_MODELS, ModelConfig
-from engine.factory import create_engine, create_engine_from_state
+from engine.factory import create_engine, create_engine_from_state, create_engine_with_db_overrides
 from engine.game_engine import GameEngine
 from knowledge.graph import KnowledgeGraph
 
@@ -147,6 +147,27 @@ def test_create_engine_applies_overrides() -> None:
     # Only the agent role called resolve_model_config.
     assert resolver.call_count == 1
     assert resolver.call_args_list[0].args[0] == "gpt-5.4-nano"
+
+
+@allure.story("create_engine_with_db_overrides")
+@allure.title("create_engine_with_db_overrides reads DB overrides and applies them to the built engine")
+@pytest.mark.asyncio
+async def test_create_engine_with_db_overrides_reads_repo_and_applies() -> None:
+    """The convenience wrapper must read role overrides from the repo and apply them."""
+    cfg = _make_config()
+    repo = AsyncMock()
+    repo.settings.get_model_overrides.return_value = {
+        "narrator": ("anthropic", "claude-opus-4-6"),
+    }
+    with patch("engine.factory.resolve_model_config", side_effect=_resolver_side_effect):
+        engine = await create_engine_with_db_overrides(repo, cfg, language="Russian")
+
+    repo.settings.get_model_overrides.assert_awaited_once()
+    assert engine._language == "Russian"
+    assert engine._models.narrator.provider == "anthropic"
+    assert engine._models.narrator.model_id == "claude-opus-4-6"
+    # Non-overridden roles still come from the env defaults.
+    assert engine._models.director is AI_MODELS.gpt5_4_mini
 
 
 @allure.story("create_engine_from_state")
