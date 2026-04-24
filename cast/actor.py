@@ -127,10 +127,10 @@ class Actor(BasePerformer):
         stay calibrated from the next dialogue turn. ``NPCTurnResolver``
         parses the returned ``ActorReply.text`` as the action JSON.
 
-        ``output_mode_dialogue`` is cleared before setting ``output_mode_action``
-        so a preceding dialogue turn does not leave both gate vars in the
-        cumulative ``_system_prompt_vars`` dict, which would render both
-        output-format sections and confuse the LLM into emitting envelope JSON.
+        Each dispatch path clears the other's gate var before setting its own
+        (``_act_npc_turn`` pops ``output_mode_dialogue``; the dialogue path in
+        ``act()`` pops ``output_mode_action``), so exactly one output-format
+        section renders regardless of call order on the same Actor instance.
         """
         self._system_prompt_vars.pop("output_mode_dialogue", None)
         self.set_context(output_mode_action="1")
