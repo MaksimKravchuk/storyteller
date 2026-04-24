@@ -6,6 +6,7 @@ import allure
 import pytest
 
 pytestmark = [
+    pytest.mark.db,
     allure.epic("Admin panel"),
     allure.feature("Model overrides"),
 ]
