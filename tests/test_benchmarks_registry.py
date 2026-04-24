@@ -23,6 +23,7 @@ class TestScenarioRegistry:
         ids = {scenario.id for scenario in ALL_SCENARIOS}
 
         assert "memory_follow_up_marcus" in ids
+        assert "memory_follow_up_marcus_graph_only" in ids
         assert "autonomy_three_guards_tavern" in ids
         assert "escalation_guard_assault" in ids
         assert len(ids) == len(ALL_SCENARIOS)  # no duplicates
