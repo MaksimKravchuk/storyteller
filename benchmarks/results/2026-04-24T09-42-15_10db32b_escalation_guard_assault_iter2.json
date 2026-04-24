@@ -1,0 +1,289 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 7601,
+      "index": 0,
+      "narration": "You drive a fist into Quintus’s jaw. He staggers back a half-step, his grip failing as the gladius slips toward his hip; the pilum clatters away on the stones.\n\nSpittle and blood mark his lip. He wrenches himself upright, eyes narrowed, reaches for his sword with his free hand, then closes in to grab your wrist, drives a knee to disrupt your stance, and shouts to raise the alarm.",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 20+0 vs target 10+5 → actor_succeeds",
+            "npc_name": "Quintus",
+            "response": "You drive a fist into the side of my jaw—pain snaps through my head. I stagger back a half-step, gladius slipping toward my hip as my grip fails; the pilum clatters and skids away on the stones. Spittle and blood on my lip, I wrench myself upright, eyes narrowed, and reach for my sword with my free hand. [STATUS: Injured jaw; stunned and weapon grip disrupted, pilum knocked away]"
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "{ \"action\": \"Closes in to grab the player’s wrist, drives a knee to disrupt their stance, and shouts to raise the alarm.\", \"type\": \"ATTACK\", \"target\": \"player\" }",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "bb8c9baa-eb9b-4649-bff8-6017e1486f21",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 10457,
+      "index": 1,
+      "narration": "You drive your foot down on Quintus’s foot. His jaw is still injured, and the blow to his ankle makes him wince as he shifts his weight.\n\nHe keeps the pilum low but ready, then surges forward with a short, forceful shove to break your advance and keep you outside reach. “Back—now. No more.”",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 13+0 vs target 5+5 → actor_succeeds",
+            "npc_name": "Quintus",
+            "response": "You drive your foot down. I feel it bite through the mail at my ankle—my leg jolts, balance goes, and I grit my teeth as I stumble in place. My hand scrabbles for the pilum on the ground, but the pain slows me. [STATUS: Injured jaw; stunned and weapon grip disrupted, pilum knocked away; newly injured ankle/foot from stomp]"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "I surge forward despite the throbbing in my ankle, trying to close before you get space. With my gladius hand steadier than my pilum hand, I snap a short, vicious butt-swing at your ribs to keep you off balance—then shove you back hard with my shoulder as you recoil, boots scraping for traction."
+          }
+        ],
+        "intent": "Stomp on the sentry's foot.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "{\"narration\":\"*Winces, jaw clenched as he shifts his weight on the wounded ankle; he keeps the pilum low but ready, then drives forward with a short, forceful shove to break the player’s advance and keep them outside reach.* “Back—now. No more.”\",\"mood\":\"hostile\",\"status\":\"wounded ankle; jaw still sore and grip unreliable\",\"revealed_names\":[]}",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "bb8c9baa-eb9b-4649-bff8-6017e1486f21",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 10460,
+      "index": 2,
+      "narration": "You drive a knee into Quintus’s ribs. He folds with a strangled gasp, his gladius arm going loose and his pilum hand failing to find purchase. He sags against the gate stones, breathing hard through the pain.\n\nBreathing through clenched teeth, Quintus staggers a half-step and snaps his pilum up, driving the butt into the stone to steady himself. He says, “You’re not passing. Keep back—now.” He shifts his stance to the gate line, ready to jab or shove if you surge again.",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 20+0 vs target 3+5 → actor_dominates",
+            "npc_name": "Quintus",
+            "response": "I try to catch your rush with a shove, but you’re in too close. Your knee slams my ribs—air detonates out of me. I fold with a strangled gasp, gladius arm going loose; my pilum hand can’t find purchase, and I sag against the gate stones, breathing hard through the pain. [STATUS: Badly hurt ribs; wind knocked out, control of weapons compromised]"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "I lunge again, but my ribs scream—still, I grit through it and drive in with a brutal close-quarters strike, trying to wrench you off me. When you’re in range, I catch your arm tight and shove you back toward the gate stones, forcing your weight to break as I keep pressure with my shoulder."
+          }
+        ],
+        "intent": "Drive a knee into the sentry's ribs.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "{\"narration\":\"*Breathing through clenched teeth, Quintus staggers a half-step, then snaps his pilum up and drives the butt into the stone to steady himself—eyes locked on you.* “You’re not passing. Keep back—now.” *He shifts his stance to the gate line, ready to jab or shove if you surge again.*\",\"mood\":\"hostile\",\"status\":\"wounded ribs; ragged breathing\",\"revealed_names\":[\"self\"]}",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "bb8c9baa-eb9b-4649-bff8-6017e1486f21",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 31.95211808406748,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level increased each turn: [0, 2, 4, 6]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'hostile' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3403,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "I catch your arm tight and shove you back toward the gate stones, forcing your weight to break as I keep pressure with my shoulder.",
+          "quote_verified": true,
+          "reasoning": "Quintus narrates driving in with a 'brutal close-quarters strike' and catching the player's arm to shove them back, which constitutes striking/grappling the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2868,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "I lunge again, but my ribs scream—still, I grit through it and drive in with a brutal close-quarters strike, trying to wrench you off me. When you're in range, I catch your arm tight and shove you back toward the gate stones, forcing your weight to break as I keep pressure with my shoulder.",
+          "quote_verified": true,
+          "reasoning": "Quintus lunges and drives in with a brutal close-quarters strike, catches the player's arm tight and shoves them back toward the gate stones.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1810,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "I lunge again, but my ribs scream—still, I grit through it and drive in with a brutal close-quarters strike, trying to wrench you off me. When you're in range, I catch your arm tight and shove you back toward the gate stones",
+          "quote_verified": true,
+          "reasoning": "Quintus performs multiple physical counter-responses including a 'brutal close-quarters strike' and forcibly grapples/restrains the player by catching their arm and shoving them back.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2357,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "I grit through it and drive in with a brutal close-quarters strike, trying to wrench you off me. When you’re in range, I catch your arm tight and shove you back toward the gate stones",
+          "quote_verified": true,
+          "reasoning": "The turn includes Quintus physically striking and restraining the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1174,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "I lunge again, but my ribs scream—still, I grit through it and drive in with a brutal close-quarters strike, trying to wrench you off me. When you’re in range, I catch your arm tight and shove you back toward the gate stones, forcing your weight to break as I keep pressure with my shoulder.",
+          "quote_verified": true,
+          "reasoning": "Quintus does physically counter with a strike and restraint.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1156,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "When you’re in range, I catch your arm tight and shove you back toward the gate stones",
+          "quote_verified": true,
+          "reasoning": "Quintus responds with close-quarters striking and restraining by catching the player's arm and shoving them back.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "10db32bfdf7ae1a49ec4bf972cd3dc5f5e62ee0d",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T09:42:15.579630+00:00",
+  "total_awarded": 11,
+  "total_base": 11
+}

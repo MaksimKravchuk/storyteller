@@ -1,0 +1,648 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 7309,
+      "index": 0,
+      "narration": "You wait in a quiet corner of the taberna for roughly a tenth of an hour, watching the hours drift past.\n\nNearby, the former legionary remains on shift, and the cloth merchant remains on shift as well. Brutus shifts his weight near his table, keeps his cup low, angles his body so he can leave the corner without being seen, and settles his hand under his tunic where the pugio lies. His eyes stay fixed on Marcus as he prepares to close the distance.\n\nMarcus lifts his cup in a casual, superior salute from his far table, then turns his chair slightly to face Brutus and calls across the room in a mild, friendly tone, as if they were merely acquaintances.",
+      "player_action": "I find a quiet corner of the taberna and wait, watching the hours drift past.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player waits in a quiet corner of the taberna while watching the hours pass.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I shift my weight near my table, keeping my cup low, and angle my body so I can leave the corner without being seen; my hand settles under my tunic where the pugio lies, eyes fixed on Marcus as I ready myself to close the distance.",
+            "action_type": "STEALTH",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "Marcus lifts his cup in a casual, superior salute from his far table, then turns his chair slightly to face Brutus and calls across the room in a mild, friendly tone, as if they’re merely acquaintances.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 20107,
+      "index": 1,
+      "narration": "You remain inside the Forum taberna through the night, doing nothing and speaking to no one.\n\nThe shopfront opens onto the Forum, but most of the room lies in shadow. A few oil lamps sit in wall niches, and a single brazier near the back holds glowing coals under a bronze guard. At the center, the long wooden tables are mostly empty. At the far table, Marcus sits with a clay cup and a small wine amphora within arm’s reach, while the rim of his cup catches the lamplight. Another table holds a folded linen cloth, a few shallow bowls, and a stack of flat bread wrapped in waxed paper.\n\nAlong the walls are shelves with ceramic jugs, small sacks, and a locked strongbox on a low platform near the counter. The strongbox shows a bronze hasp and a keyhole. Near the counter hangs a wooden tally board with chalk marks and a painted label for the day’s prices. A hanging oil-lamp chain sways slightly above, and a narrow doorway to the back room stands half-closed. The floor is packed earth with scattered straw and dried wine stains. Across the room, Brutus sits alone at another table, his single cup untouched, his attention fixed on Marcus.\n\nThe lean patron with ink-stained hands and a neatly worn bronze signet ring remains there as well, in a frayed cloak, with watchful eyes. No one speaks. Cups remain still.",
+      "player_action": "I keep waiting through the night. I do nothing and speak to no one.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I keep waiting through the night, doing nothing and speaking to no one.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I remain seated with my cup near at hand, watching Brutus over the rim and saying nothing for the moment; I let the silence do its work.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Junius Priscus"
+          },
+          {
+            "action": "I remain where I am, quiet and watchful, letting my eyes move between Marcus, Brutus, and the half-closed back room while I wait for anything worth noting.",
+            "action_type": "IDLE",
+            "npc_name": "Quintus Valerius Silo"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Low, steady lamp-hiss and the faint crackle of coals. The smell of sour wine, warm oil, and old wood. Outside, distant Forum noise filters in—murmurs, occasional footsteps, and a cart wheel—then falls away into a tense quiet. No one speaks; cups remain still, and the air feels held.",
+          "description": "Inside a Forum taberna during a quiet hour: a narrow, low-ceilinged shopfront opens onto the Forum, but most of the action is sheltered in shadow. The room is lit by a few oil lamps set in wall niches and a single brazier near the back, its coals glowing under a bronze guard. At the center, long wooden tables are mostly empty; at the far table Marcus sits with a clay cup and a small wine amphora within arm’s reach, the rim of his cup catching lamplight. Another table holds a folded linen cloth, a few shallow bowls, and a stack of flat bread wrapped in waxed paper. Along the walls are shelves with ceramic jugs, small sacks, and a locked strongbox set on a low platform near the counter; the strongbox has a visible bronze hasp and a keyhole. Near the counter hangs a wooden tally board with chalk marks and a simple painted label for the day’s prices. A hanging oil-lamp chain sways slightly above, and a narrow doorway to the back room stands half-closed, casting a thin stripe of darkness. The floor is packed earth with scattered straw and spilled wine stains that have dried dark. Across the room, Brutus sits alone at another table, his single cup untouched, his attention fixed on Marcus.",
+          "location_id": "forum_taberna_quiet_hour",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "Marcus, patron",
+              "uuid": "adc65624-e88b-4465-8b96-117bb889b46d"
+            },
+            {
+              "role": "Brutus, lean onlooker",
+              "uuid": "0192d266-d606-47f8-a326-278f603045b8"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a locked bronze strongbox on a low platform near the counter",
+                "strongbox",
+                "bronze box"
+              ],
+              "uuid": "20c6b4f7-7b9d-4c02-9077-0cdcd6e654f5"
+            },
+            {
+              "names": [
+                "a wooden tally board with chalk marks and a painted price label",
+                "tally board",
+                "price board"
+              ],
+              "uuid": "73ebd4cf-030b-4e18-a276-c84599f81537"
+            },
+            {
+              "names": [
+                "a small wine amphora within reach of Marcus at the far table",
+                "wine amphora",
+                "amphora"
+              ],
+              "uuid": "0d375ba3-7cac-43f1-b8af-42532150f4a1"
+            },
+            {
+              "names": [
+                "a brazier near the back of the taberna with glowing coals under a bronze guard",
+                "brazier",
+                "coals"
+              ],
+              "uuid": "58cfac23-8c7e-4eb9-b1e2-3170ee1c916a"
+            },
+            {
+              "names": [
+                "a half-closed doorway leading to the taberna’s back room",
+                "back doorway",
+                "doorway"
+              ],
+              "uuid": "568b2698-aeaa-4e30-b6a5-40add2660e15"
+            }
+          ],
+          "time_of_day": "evening",
+          "uuid": "d05cd9bc-7adb-4299-b706-217d7cecce76"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 21707,
+      "index": 2,
+      "narration": "You remain in the Forum taberna through the quiet hour and into the next day without doing anything.\n\nInside, the narrow shopfront opens onto the Forum, while most of the room stays in shadow. A few oil lamps in wall niches leave small pools of light. Near the back, a brazier with a bronze guard holds glowing coals. At the center, long wooden tables sit mostly empty. On one table, Marcus sits with a clay cup and a small wine amphora within arm’s reach; he watches Brutus over the rim without speaking. At the far side, Brutus sits alone with one untouched cup, his attention fixed on Marcus.\n\nAnother table holds a folded linen cloth, a few shallow bowls, and a stack of flat bread wrapped in waxed paper. Along the walls are shelves with ceramic jugs and small sacks. Near the counter, a locked strongbox rests on a low platform, with a bronze hasp and keyhole visible. A wooden tally board hangs nearby with chalk marks and a painted label for the day’s prices. A hanging oil-lamp chain sways slightly above the counter area. A narrow doorway to the back room stands half-closed, casting a thin stripe of darkness across the packed-earth floor, where straw and dried dark wine stains lie.\n\nThe lean merchant with ink-stained fingers and a tight, watchful gaze remains near the counter in plain view. The lean ink-stained man with a dulled signet ring and restless eyes stays by the room, watching quietly. Marcus straightens the cloth at his place and lets the quiet hour pass as it will.",
+      "player_action": "I wait another full day here, doing nothing at all.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait another full day here and do nothing at all.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I remain at my table, one hand near the wine cup, and watch Brutus over the rim without speaking. After a moment, I straighten the cloth at my place and let the quiet hour pass as it will.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Livius Soter"
+          },
+          {
+            "action": "I remain near the counter in plain view, watching the room quietly and letting the hour pass without drawing notice.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Septimius Crispus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Low voices and distant Forum bustle filter in through the front opening; inside, the lamps hiss softly and the brazier crackles faintly. The air smells of stale wine, oil smoke, bread, and dust. Straw shifts under occasional footfalls from the Forum outside, while the hanging lamp chain gives a minor creak as it settles.",
+          "description": "Inside a Forum taberna during a quiet hour, the narrow shopfront opens onto the crowded Forum, but most of the action is sheltered in shadow. The ceiling is low; a few oil lamps in wall niches throw small pools of light, leaving the corners dim. Near the back stands a single brazier with a bronze guard; its coals glow through the metal grate. At the center, long wooden tables sit mostly empty. At the far table Marcus sits with a clay cup and a small wine amphora within arm’s reach; the cup’s rim catches lamplight while the rest of his table remains orderly. Another table holds a folded linen cloth, a few shallow bowls, and a stack of flat bread wrapped in waxed paper. Along the walls, shelves carry ceramic jugs and small sacks. Near the counter, a locked strongbox sits on a low platform; it has a visible bronze hasp and a keyhole. A wooden tally board hangs near the counter with chalk marks and a simple painted label for the day’s prices. A hanging oil-lamp chain sways slightly above the counter area. A narrow doorway to the back room stands half-closed, casting a thin stripe of darkness across the packed-earth floor, which has scattered straw and dried dark wine stains. Across the room, Brutus sits alone at another table, his single cup untouched, his attention fixed on Marcus.",
+          "location_id": "forum_taberna_quiet_hour",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "Marcus, merchant",
+              "uuid": "2c607e73-af84-4641-aaa3-9463b6c4eade"
+            },
+            {
+              "role": "Brutus, client",
+              "uuid": "18d4869c-797c-4f90-9a42-4231846b0bbb"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a locked bronze strongbox with a visible hasp and keyhole",
+                "strongbox",
+                "bronze box",
+                "hasp"
+              ],
+              "uuid": "4de69778-69c5-4494-97ef-87c53ff21c15"
+            },
+            {
+              "names": [
+                "a wooden tally board with chalk marks and a painted label for the day’s prices",
+                "tally board",
+                "price board",
+                "chalk marks"
+              ],
+              "uuid": "46ad0c5f-5f1b-4102-ba0b-e2348c0249fe"
+            },
+            {
+              "names": [
+                "a brazier with glowing coals protected by a bronze guard",
+                "brazier",
+                "coals",
+                "bronze guard"
+              ],
+              "uuid": "78b97cb7-c057-40d0-8cea-74f51fbedd51"
+            },
+            {
+              "names": [
+                "a small wine amphora kept within arm’s reach of Marcus’s table",
+                "wine amphora",
+                "amphora",
+                "wine"
+              ],
+              "uuid": "181fdc40-fa66-46ea-9c01-36c316462d56"
+            },
+            {
+              "names": [
+                "a stack of flat bread wrapped in waxed paper on the side table",
+                "waxed bread",
+                "flat bread",
+                "bread stack"
+              ],
+              "uuid": "9c51dee7-802d-4656-ad85-2b1e88a4c889"
+            },
+            {
+              "names": [
+                "a half-closed narrow doorway leading to the back room",
+                "back doorway",
+                "back room door",
+                "doorway"
+              ],
+              "uuid": "94fdf874-3405-4646-b176-918ea7ef239c"
+            }
+          ],
+          "time_of_day": "evening",
+          "uuid": "ad7bfe1a-c337-4c96-a9fd-eae7822e1f13"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 19916,
+      "index": 3,
+      "narration": "You remain in the taberna while more time passes, and nothing changes in your position.\n\nMarcus Livius Celer sits at the far table with the clay cup and the small wine amphora within arm’s reach. He takes a slow sip and keeps his eyes on Brutus and the room. Across from him, Titus Aelius Brutus stays seated in silence, his posture easy, with his attention fixed on Marcus and the room.\n\nThe **strongbox** remains on its low platform near the counter, with its bronze hasp and keyhole visible. The **tally board** still hangs nearby with chalk marks and the painted label for the day’s prices. The **back doorway** stays half-closed, and the stripe of darkness remains across the packed-earth floor. The **brazier** continues to sit near the back with its glowing coals behind the bronze guard.\n\nThe lean man with ink-stained hands and a faded dark cloak remains in shadow.",
+      "player_action": "I continue to wait. More time passes, and still I do nothing.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I continue to wait and do nothing while more time passes.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "He sits a while longer with his cup, eyes on Brutus and the room, and takes a slow sip without speaking.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Livius Celer"
+          },
+          {
+            "action": "I remain seated and watch Marcus and the room in silence, keeping my posture easy while I note the strongbox, the back doorway, and who looks toward whom.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Aelius Brutus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Low murmur from the Forum beyond the shopfront, distant footsteps and bargaining voices muted by the taberna’s walls. Inside: faint clink of wooden tables as the crowd shifts, the soft hiss of oil lamps, and a steady heat-spell from the brazier. Smells of stale wine, warm lamp oil, and bread dough hang in the air.",
+          "description": "Inside a Forum taberna during a quiet hour, the narrow shopfront opens onto the crowded Forum, but most of the action is sheltered in shadow. The ceiling is low; a few oil lamps in wall niches throw small pools of light, leaving the corners dim. Near the back stands a single brazier with a bronze guard; its coals glow through the metal grate. At the center, long wooden tables sit mostly empty. At the far table Marcus sits with a clay cup and a small wine amphora within arm’s reach; the cup’s rim catches lamplight while the rest of his table remains orderly. Another table holds a folded linen cloth, a few shallow bowls, and a stack of flat bread wrapped in waxed paper. Along the walls, shelves carry ceramic jugs and small sacks. Near the counter, a locked strongbox sits on a low platform; it has a visible bronze hasp and a keyhole. A wooden tally board hangs near the counter with chalk marks and a simple painted label for the day’s prices. A hanging oil-lamp chain sways slightly above the counter area. A narrow doorway to the back room stands half-closed, casting a thin stripe of darkness across the packed-earth floor, where scattered straw and dried dark wine stains remain visible. Across the room, Brutus sits alone at another table, his single cup untouched, his attention fixed on Marcus.",
+          "location_id": "forum_taberna_shadow_hour",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "Marcus, patron and quiet drinker",
+              "uuid": "6f5b46df-9ddc-4121-8720-4fdcb4b908f4"
+            },
+            {
+              "role": "Brutus, watchful patron",
+              "uuid": "7d717b48-297b-4e71-8b87-d44ed5700348"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a locked bronze strongbox on a low platform with a visible keyhole",
+                "strongbox",
+                "bronze strongbox"
+              ],
+              "uuid": "0cb97d4c-daac-47d7-8bbc-ec41d775cabd"
+            },
+            {
+              "names": [
+                "a wooden tally board with chalk marks and a painted label for the day’s prices",
+                "tally board",
+                "price board"
+              ],
+              "uuid": "0ce3a088-174d-4cc1-90f1-55cb5cbfd160"
+            },
+            {
+              "names": [
+                "a brazier with a bronze guard and glowing coals near the back",
+                "brazier",
+                "glowing coals"
+              ],
+              "uuid": "0901d8a5-43ad-449d-9d26-d81abf22a5f0"
+            },
+            {
+              "names": [
+                "a small wine amphora within arm’s reach of Marcus at the far table",
+                "wine amphora",
+                "amphora"
+              ],
+              "uuid": "a001f74d-7b3c-40d9-a36a-dbd822354dfa"
+            },
+            {
+              "names": [
+                "a stack of flat bread wrapped in waxed paper with shallow bowls on a nearby table",
+                "waxed bread",
+                "bread stack"
+              ],
+              "uuid": "14c0eece-2e7f-4835-a904-023d96d7911d"
+            },
+            {
+              "names": [
+                "a narrow half-closed doorway to a back room casting a stripe of darkness across the floor",
+                "back doorway",
+                "doorway"
+              ],
+              "uuid": "56c720aa-f668-4d35-ad96-098bf974d87a"
+            }
+          ],
+          "time_of_day": "night",
+          "uuid": "23036f6f-5f83-45ad-980e-0b9ae9abece8"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 5519,
+      "index": 4,
+      "narration": "You remain in the taberna while the waiting continues.\n\nAt the far table, **Marcus Livius Celer** keeps his clay cup within reach beside the small wine amphora. He sits still, takes a slow sip, then rests a hand near his purse and watches the room without giving **Titus Aelius Brutus** any reaction.\n\n**Titus Aelius Brutus** stays seated and watches Marcus and the room in silence, taking in the counter, the back doorway, and the movement of the lamp chain without making himself known.\n\nNearby, the former legionary and the cloth merchant remain on shift as the room goes on around them.",
+      "player_action": "I wait.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I sit still with my cup and let Brutus look if he likes. I take a slow sip, then rest a hand near my purse and watch the room without giving him the satisfaction of a reaction.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Livius Celer"
+          },
+          {
+            "action": "I remain seated and watch Marcus and the room in silence, taking in the counter, the back doorway, and the movement of the lamp chain without making myself known.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Aelius Brutus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 24343,
+      "index": 5,
+      "narration": "You remain in the Forum taberna through another day of waiting.\n\nInside, the narrow shopfront opens onto the crowded Forum, but most of the activity stays sheltered in shadow. The ceiling is low, and small pools of light from oil lamps in wall niches leave the corners dim. Near the back, a single brazier with a bronze guard shows coals glowing through the metal grate. At the center, long wooden tables sit mostly empty.\n\nAt the far table, Marcus sits with a clay cup and a small wine amphora within arm’s reach. His cup’s rim catches the lamplight while the rest of his table stays orderly. Across the room, Brutus sits alone at another table, his single cup untouched, his attention fixed on Marcus. Near the counter, a locked strongbox sits on a low platform with a bronze hasp and keyhole. A wooden tally board hangs nearby with chalk marks and a simple painted label for the day’s prices. A hanging oil-lamp chain sways slightly above the counter area.\n\nA narrow doorway to the back room stands half-closed, casting a thin stripe of darkness across the packed-earth floor, where scattered straw and dried dark wine stains remain visible. Along the walls, shelves carry ceramic jugs and small sacks. Another table holds a folded linen cloth, a few shallow bowls, and a stack of flat bread wrapped in waxed paper.\n\nMarcus remains seated, one hand near his cup, glancing briefly at Brutus before returning his attention to the room. Decimus Bruttius Celer stays near the taberna’s front, watching Marcus and Brutus without drawing attention, listening more than speaking.",
+      "player_action": "I wait for one more day before considering my next move.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait for one more day before considering my next move.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I remain seated at the far table, one hand near my cup, and let my eyes rest briefly on Brutus before returning to the room at large; I make no move beyond a quiet, measured watchfulness.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Livius Soranus"
+          },
+          {
+            "action": "I stay where I am near the taberna’s front, watching Marcus and Brutus without drawing attention, listening more than speaking.",
+            "action_type": "IDLE",
+            "npc_name": "Decimus Bruttius Celer"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Distant Forum noise filters through the shopfront—murmurs, occasional footsteps, and the clink of street commerce—while inside it stays hushed. Oil lamps hiss softly in their niches. The brazier warms the back of the room with a faint smell of smoke and hot metal. Straw and dried wine stains give a sour, old-wood tang to the air.",
+          "description": "Inside a Forum taberna during a quiet hour, the narrow shopfront opens onto the crowded Forum, but most of the activity is sheltered in shadow. The ceiling is low, and small pools of light from oil lamps in wall niches leave the corners dim. Near the back stands a single brazier with a bronze guard; its coals glow through the metal grate. At the center, long wooden tables sit mostly empty. At the far table Marcus sits with a clay cup and a small wine amphora within arm’s reach; the cup’s rim catches lamplight while the rest of his table remains orderly. Another table holds a folded linen cloth, a few shallow bowls, and a stack of flat bread wrapped in waxed paper. Along the walls, shelves carry ceramic jugs and small sacks. Near the counter, a locked strongbox sits on a low platform; it has a visible bronze hasp and a keyhole. A wooden tally board hangs near the counter with chalk marks and a simple painted label for the day’s prices. A hanging oil-lamp chain sways slightly above the counter area. A narrow doorway to the back room stands half-closed, casting a thin stripe of darkness across the packed-earth floor, where scattered straw and dried dark wine stains remain visible. Across the room, Brutus sits alone at another table, his single cup untouched, his attention fixed on Marcus.",
+          "location_id": "forum_taberna_quiet_hour",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "Marcus, patron and discreet buyer/host",
+              "uuid": "ff9482d9-8f26-43af-8964-8d5f0797cae9"
+            },
+            {
+              "role": "Brutus, tense watcher and potential intermediary",
+              "uuid": "a4084ea8-303e-4854-89a7-1c6a9a9183de"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a locked strongbox with a bronze hasp and keyhole on a low platform near the counter",
+                "locked strongbox",
+                "strongbox",
+                "hasp"
+              ],
+              "uuid": "72b0be67-b25b-42f0-9f59-aa3da3149240"
+            },
+            {
+              "names": [
+                "a wooden tally board with chalk marks and a painted label for the day’s prices",
+                "tally board",
+                "price board",
+                "chalk marks"
+              ],
+              "uuid": "05c8759c-5877-449e-88d1-b070d5ac4d2a"
+            },
+            {
+              "names": [
+                "a brazier with a bronze guard near the back, coals glowing through the grate",
+                "bronze brazier",
+                "brazier",
+                "glowing coals"
+              ],
+              "uuid": "2431a994-022f-422b-be45-08725a5f4e44"
+            },
+            {
+              "names": [
+                "a hanging chain of an oil lamp above the counter area, swaying slightly",
+                "hanging lamp chain",
+                "lamp chain",
+                "lamp chain"
+              ],
+              "uuid": "4d5ce7ff-4322-41e4-aa48-75ab4930bb19"
+            },
+            {
+              "names": [
+                "a half-closed narrow doorway to a back room, casting a stripe of darkness across the packed-earth floor",
+                "back-room doorway",
+                "doorway",
+                "back room"
+              ],
+              "uuid": "b94057c0-7c71-43aa-a33e-64972c5c830e"
+            },
+            {
+              "names": [
+                "Marcus’s orderly table with a clay cup and a small wine amphora within arm’s reach",
+                "Marcus’s table",
+                "clay cup",
+                "wine amphora"
+              ],
+              "uuid": "d37c1c82-795b-4754-a71f-65c4524713cb"
+            },
+            {
+              "names": [
+                "a table with folded linen, shallow bowls, and flat bread wrapped in waxed paper",
+                "linen and bread table",
+                "waxed bread",
+                "folded linen"
+              ],
+              "uuid": "577ca13f-4bbd-405b-a036-79cca4b86fbe"
+            }
+          ],
+          "time_of_day": "night",
+          "uuid": "98b33b42-d4ae-45f2-b9ae-e4d82e90bb72"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 102.60556525015272,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "clash_occurred",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Brutus autonomously clashes with Marcus (attempt, any outcome)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no Brutus-vs-Marcus attack, contest, or injury signal found",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "outcome_recorded_in_world_facts",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Clash outcome lands in the knowledge graph",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no clash outcome recorded in the knowledge graph",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "marcus_killed",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus is killed (lethal resolution bonus)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus still alive (physical_status='healthy')",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_describes_clash",
+      "evidence_quote": null,
+      "k_yes": 1,
+      "kind": "evidence_llm",
+      "label": "Narration describes Brutus clashing with Marcus (any outcome)",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3665,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Brutus shifts his weight near his table, keeps his cup low, angles his body so he can leave the corner without being seen, and settles his hand under his tunic where the pugio lies.",
+          "quote_verified": true,
+          "reasoning": "The narration only describes Brutus preparing and watching Marcus, and both characters idling; no actual attack, clash, or attempt to kill is described or referenced across the captured turns.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2769,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Brutus shifts his weight near his table, keeps his cup low, angles his body so he can leave the corner without being seen, and settles his hand under his tunic where the pugio lies. His eyes stay fixed on Marcus as he prepares to close the distance.",
+          "quote_verified": true,
+          "reasoning": "The text only describes Brutus preparing and positioning himself but no actual attack or clash occurs.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1697,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration describes Brutus preparing to attack (settling hand on concealed blade, preparing to close distance) and Marcus watching him, but no actual clash, attack, or attempted killing occurs across the turns—only ambient waiting and positioning.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1864,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turns only show Brutus preparing and watching Marcus, not attacking or clashing.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1188,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "my hand settles under my tunic where the pugio lies, eyes fixed on Marcus as I ready myself to close the distance",
+          "quote_verified": true,
+          "reasoning": "The text explicitly says Brutus prepares to close the distance with Marcus and keeps his hand on the pugio, indicating an attempted attack.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1408,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "my hand settles under my tunic where the pugio lies, eyes fixed on Marcus as I ready myself to close the distance.",
+          "quote_verified": true,
+          "reasoning": "The turns describe waiting and Brutus preparing to close distance, but do not narrate Brutus attacking, clashing with, or attempting to kill Marcus with any outcome.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "10db32bfdf7ae1a49ec4bf972cd3dc5f5e62ee0d",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 1,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "npc_autonomy_murder_plot",
+  "scenario_label": "NPC autonomy — Brutus plots to murder Marcus while the player waits",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T09:44:29.252547+00:00",
+  "total_awarded": 0,
+  "total_base": 10
+}

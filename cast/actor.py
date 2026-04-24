@@ -98,6 +98,7 @@ class Actor(BasePerformer):
         if context.get("is_npc_turn"):
             return await self._act_npc_turn(input_data)
 
+        self._system_prompt_vars.pop("output_mode_action", None)
         self.set_context(output_mode_dialogue="1")
         envelope = await self._produce_envelope(input_data)
 
@@ -125,7 +126,13 @@ class Actor(BasePerformer):
         do not mutate ``npc.current_mood`` / ``npc.physical_status``. Those
         stay calibrated from the next dialogue turn. ``NPCTurnResolver``
         parses the returned ``ActorReply.text`` as the action JSON.
+
+        Each dispatch path clears the other's gate var before setting its own
+        (``_act_npc_turn`` pops ``output_mode_dialogue``; the dialogue path in
+        ``act()`` pops ``output_mode_action``), so exactly one output-format
+        section renders regardless of call order on the same Actor instance.
         """
+        self._system_prompt_vars.pop("output_mode_dialogue", None)
         self.set_context(output_mode_action="1")
         raw = await self._send(input_data, conversation=[])
         return ActorReply(text=raw.strip(), revealed_names=())

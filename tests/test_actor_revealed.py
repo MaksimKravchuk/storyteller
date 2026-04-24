@@ -104,6 +104,65 @@ class TestActorActNPCTurnMode:
         assert '"narration"' not in rendered
         assert '"revealed_names"' not in rendered
 
+    @allure.story("Action-mode dispatch")
+    @allure.title("NPC-turn after dialogue does not render both output sections — only action schema appears")
+    @pytest.mark.asyncio
+    async def test_npc_turn_after_dialogue_clears_dialogue_gate(self):
+        """Regression: cumulative _system_prompt_vars kept output_mode_dialogue from the
+        preceding dialogue call, so both output sections rendered.  The LLM then followed
+        the dialogue schema and returned envelope JSON, parsed as IDLE by NPCTurnResolver."""
+        actor, _ = _make_actor()
+
+        # Simulate a preceding dialogue turn (sets output_mode_dialogue="1")
+        actor._send_json = AsyncMock(  # type: ignore[method-assign]
+            return_value=ActorEnvelope(narration="Aye.", revealed_names=[]),
+        )
+        await actor.act("Tell me your name.", {_LOC_KEY: "taberna"})
+
+        assert "output_mode_dialogue" in actor._system_prompt_vars
+
+        # Now an NPC autonomous turn runs on the same Actor instance
+        actor._send = AsyncMock(  # type: ignore[method-assign]
+            return_value='{"action": "draws sword", "type": "ATTACK", "target": "player"}',
+        )
+        await actor.act("Turn advances.", {_LOC_KEY: "taberna", "is_npc_turn": True})
+
+        assert "output_mode_dialogue" not in actor._system_prompt_vars
+        assert actor._system_prompt_vars.get("output_mode_action") == "1"
+
+        rendered = ACTOR_SYSTEM.render(**actor._system_prompt_vars)
+        assert '"narration"' not in rendered
+        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" in rendered
+
+    @allure.story("Action-mode dispatch")
+    @allure.title("Dialogue after NPC-turn does not render both output sections — only envelope schema appears")
+    @pytest.mark.asyncio
+    async def test_dialogue_after_npc_turn_clears_action_gate(self):
+        """Reverse-direction regression: output_mode_action from a prior NPC-turn call
+        must be cleared when a subsequent dialogue call runs on the same Actor instance."""
+        actor, _ = _make_actor()
+
+        # Simulate a preceding NPC autonomous turn (sets output_mode_action="1")
+        actor._send = AsyncMock(  # type: ignore[method-assign]
+            return_value='{"action": "stands watch", "type": "IDLE", "target": null}',
+        )
+        await actor.act("Turn advances.", {_LOC_KEY: "taberna", "is_npc_turn": True})
+
+        assert "output_mode_action" in actor._system_prompt_vars
+
+        # Now a dialogue turn runs on the same Actor instance
+        actor._send_json = AsyncMock(  # type: ignore[method-assign]
+            return_value=ActorEnvelope(narration="Aye.", revealed_names=[]),
+        )
+        await actor.act("Tell me your name.", {_LOC_KEY: "taberna"})
+
+        assert "output_mode_action" not in actor._system_prompt_vars
+        assert actor._system_prompt_vars.get("output_mode_dialogue") == "1"
+
+        rendered = ACTOR_SYSTEM.render(**actor._system_prompt_vars)
+        assert '"narration"' in rendered
+        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" not in rendered
+
 
 @allure.epic("NPC Interaction")
 @allure.feature("Revealed names envelope field")
