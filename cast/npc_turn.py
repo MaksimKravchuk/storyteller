@@ -21,7 +21,7 @@ from cast.dice import (
     roll_contest,
 )
 from cast.director_witness import WitnessedAggression, is_guard_occupation
-from cast.npc_opportunity import OPPORTUNITY_CLAUSE, detect_opportunity
+from cast.npc_opportunity import get_opportunity_clause
 from cast.wait_detection import INCAPACITATING_STATES
 from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
@@ -148,6 +148,7 @@ def _record_npc_contest_event(
 def _apply_scene_mutation(
     npc_uuid: str,
     action_type: str,
+    action_target: str | None,
     game_state: GameState,
 ) -> None:
     """Mutate the scene based on the NPC's action."""
@@ -156,7 +157,28 @@ def _apply_scene_mutation(
     scene = game_state.current_scene
     if not scene:
         return
+    if _is_targeting_scene_npc(action_target, npc_uuid, scene, game_state):
+        return
     scene.npcs_present = [snpc for snpc in scene.npcs_present if snpc.uuid != npc_uuid]
+
+
+def _is_targeting_scene_npc(
+    target: str | None,
+    self_uuid: str,
+    scene: Any,
+    game_state: GameState,
+) -> bool:
+    """Return True when *target* names a co-located NPC (repositioning, not departure)."""
+    if not target:
+        return False
+    lower_target = target.lower()
+    for snpc in scene.npcs_present:
+        if snpc.uuid == self_uuid:
+            continue
+        peer = game_state.npcs.get(snpc.uuid)
+        if peer and peer.name.lower() == lower_target:
+            return True
+    return False
 
 
 def _filter_successful(
@@ -278,7 +300,7 @@ class NPCTurnResolver:
             is_aggressive,
         )
         for action in actions:
-            _apply_scene_mutation(action.npc_uuid, action.action_type, self._gs)
+            _apply_scene_mutation(action.npc_uuid, action.action_type, action.target, self._gs)
         return actions
 
     async def _gather_actions(
@@ -396,17 +418,16 @@ def _build_turn_prompt(
     the same template reaction.
 
     When the opportunity gate detects a co-located target named in a
-    hostile relationship or a violence-flavoured knowledge fact, an
-    OPPORTUNITY clause is appended and the baseline "most turns are
-    routine" nudge is dropped. The two directly contradict each other,
-    and the conservative one silently wins if both are present.
+    hostile relationship or a violence-flavoured knowledge fact, a
+    directive OPPORTUNITY clause naming the specific target is appended
+    and the baseline "most turns are routine" nudge is dropped.
     """
-    opportunity_fires = detect_opportunity(npc, game_state)
+    opportunity_clause = get_opportunity_clause(npc, game_state)
     base_prompt = _format_base_turn_prompt(
         npc=npc,
         player_action_summary=player_action_summary,
         game_state=game_state,
-        include_routine_nudge=not opportunity_fires,
+        include_routine_nudge=opportunity_clause is None,
     )
 
     clauses: list[str] = [base_prompt]
@@ -415,8 +436,8 @@ def _build_turn_prompt(
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
     if incident is not None:
         clauses.append(_format_incident_clause(npc, incident))
-    if opportunity_fires:
-        clauses.append(OPPORTUNITY_CLAUSE)
+    if opportunity_clause is not None:
+        clauses.append(opportunity_clause)
     return "\n\n".join(clauses)
 
 

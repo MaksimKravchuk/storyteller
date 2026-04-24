@@ -71,6 +71,10 @@ def _move_response() -> dict:
     return {"action": "The merchant packs up and walks away.", "type": "MOVE", "target": None}
 
 
+def _move_response_targeting(target: str) -> dict:
+    return {"action": "The guard repositions toward the merchant.", "type": "MOVE", "target": target}
+
+
 def _talk_response(target: str = "player") -> dict:
     return {"action": "The merchant calls out to you.", "type": "TALK", "target": target}
 
@@ -282,9 +286,31 @@ class TestNPCTurnSceneMutation:
 
         assert len(actions) == 1
         assert actions[0].action_type == "MOVE"
-        # NPC should be removed from scene
         scene_uuids = [snpc.uuid for snpc in gs.current_scene.npcs_present]
         assert _NPC_UUID_A not in scene_uuids
+
+    @allure.story("Scene mutation")
+    @allure.title("A MOVE targeting a co-located NPC name is repositioning, not departure — NPC stays in scene")
+    @pytest.mark.asyncio
+    async def test_move_targeting_scene_npc_keeps_npc_in_scene(self):
+        gs = _make_gs()
+        guard = _make_npc(_NPC_UUID_A, _GUARD)
+        merchant = _make_npc(_NPC_UUID_B, _MERCHANT)
+        gs.npcs[_NPC_UUID_A] = guard
+        gs.npcs[_NPC_UUID_B] = merchant
+        gs.current_scene = _make_scene(_NPC_UUID_A, _NPC_UUID_B)
+
+        actor_a = _make_actor(_move_response_targeting(_MERCHANT))
+        actor_b = _make_actor(_idle_response(_MERCHANT))
+        resolver = NPCTurnResolver(
+            game_state=gs,
+            actors={_NPC_UUID_A: actor_a, _NPC_UUID_B: actor_b},
+        )
+
+        await resolver.resolve_npc_turns("Player waited.")
+
+        scene_uuids = [snpc.uuid for snpc in gs.current_scene.npcs_present]
+        assert _NPC_UUID_A in scene_uuids
 
 
 @allure.epic("NPC Interaction")
@@ -416,6 +442,19 @@ class TestBuildTurnPromptOpportunityWindow:
 
         assert "OPPORTUNITY:" not in prompt
         assert "Most turns are routine" in prompt
+
+    @allure.story("Opportunity window")
+    @allure.title("Opportunity clause names the specific hostile co-located target")
+    def test_opportunity_clause_names_target(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        _place_both(gs, brutus, marcus)
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "Marcus" in prompt
 
     @allure.story("Opportunity window")
     @allure.title("Genuine keyword fires even when the label also contains substring-only matches")

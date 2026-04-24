@@ -124,6 +124,9 @@ ACTOR_SYSTEM = PromptTemplate(
                 '  {{"action": "<brief description of what you do>", '
                 '"type": "<ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE>", '
                 '"target": "<name of target, \'player\', or null if no target>"}}\n'
+                "Type guide: MOVE = leave this scene entirely for another location; "
+                "STEALTH = move or act covertly within this scene without alerting others; "
+                "ATTACK = direct physical confrontation with the target.\n"
                 "Stay in character: your occupation, equipment, mood, and standing goals "
                 "drive this choice. Inaction is itself a choice — pick it only when it "
                 "fits this character right now."

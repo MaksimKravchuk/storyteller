@@ -134,6 +134,9 @@ ACTOR_SYSTEM_RU = PromptTemplate(
                 '  {{"action": "<brief description of what you do>", '
                 '"type": "<ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE>", '
                 '"target": "<name of target, \'player\', or null if no target>"}}\n'
+                "Значения type: MOVE = покинуть текущую локацию и уйти в другое место; "
+                "STEALTH = скрытно действовать или перемещаться в пределах этой сцены; "
+                "ATTACK = прямое физическое столкновение с целью.\n"
                 "Оставайся в образе: твоя профессия, снаряжение, настроение и "
                 "стоящие перед тобой цели определяют этот выбор. Бездействие — "
                 "тоже выбор; делай его только если оно подходит именно этому "
