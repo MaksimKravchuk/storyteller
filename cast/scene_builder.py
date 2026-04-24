@@ -115,7 +115,10 @@ def _current_object_states(game_state: Any) -> dict[str, str]:
 def _scene_from_response(scene_data: SceneResponse, fallback_time_of_day: str) -> Scene:
     """Convert a raw LLM ``SceneResponse`` payload into a typed ``Scene``."""
     npcs = [SceneNPC(role=role_str) for role_str in scene_data.npcs_present]
-    pois = [coerce_point_of_interest(raw) for raw in scene_data.points_of_interest]
+    pois = [
+        coerce_point_of_interest(raw if isinstance(raw, str) else raw.model_dump())
+        for raw in scene_data.points_of_interest
+    ]
     return Scene(
         location_id=scene_data.location_id or "unknown",
         description=scene_data.description,

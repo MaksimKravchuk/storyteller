@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from cast.scene_builder import SceneBuilder
-from cast.schemas.scene_response import SceneResponse
+from cast.schemas.scene_response import PointOfInterestResponse, SceneResponse
 from models.scene import Scene, SceneNPC
 
 _SEND_JSON = "_send_json"
@@ -53,7 +53,9 @@ class TestSceneBuilder:
         builder = SceneBuilder(llm_client=MagicMock())
         payload = SceneResponse(
             points_of_interest=[
-                {"names": ["a wooden notice board with wax-sealed scrolls", "notice board", "board"]},
+                PointOfInterestResponse(
+                    names=["a wooden notice board with wax-sealed scrolls", "notice board", "board"],
+                ),
                 "a plain torch",
             ],
         )

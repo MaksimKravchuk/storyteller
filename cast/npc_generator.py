@@ -148,7 +148,7 @@ class NPCGenerator(BasePerformer):
             personality_traits=npc_data.personality_traits,
             speech_style=npc_data.speech_style or "neutral",
             knowledge_scope=npc_data.knowledge_scope or "local",
-            attributes=npc_data.attributes,
+            attributes=npc_data.attributes.model_dump(),
             inventory=npc_data.inventory,
             location_id=(game_state.current_scene.location_id if game_state.current_scene else None),
         )
