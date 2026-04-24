@@ -1,0 +1,241 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 5061,
+      "index": 0,
+      "narration": "You look around the tavern carefully, but the scene does not change.\n\nBy the **fireplace**, Aulus scans the tavern floor and the exits, keeping his eyes on the loose knot of guards and the doorway, with his hand resting near his short sword. Bassus keeps his eyes moving through the room from the fireplace knot, posture squared, hand near his short sword, watching for trouble while the other guards trade idle words over wine. Cato scans the room from his post by the hearth, eyes moving over patrons and exits, then shifts his weight and keeps watch on the three guards by the fireplace.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I scan the tavern floor and exits from my post by the fireplace, keeping my eyes on the loose knot of guards and the doorway, hand resting near my short sword as I wait for any trouble.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I keep my eyes moving through the room from the fireplace knot, posture squared and hand near my short sword, watching for trouble while the other guards trade idle words over wine.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I scan the room from my post by the hearth, eyes moving over patrons and exits, then shift my weight and keep watch on the three guards by the fireplace.",
+            "action_type": "MOVE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 9101,
+      "index": 1,
+      "narration": "You punch Aulus in the face. He jerks his head aside too late, and your fist drives into him. He staggers back a step, armour ringing, and one hand claps to his cheek as his short sword skitters loose from his grip.\n\nAulus’s eyes water. He tries to spit blood and fails, breathing hard through the pain. He staggers, breath rasping through his teeth, then drops to one knee to keep balance. He rakes a hand toward his skittered short sword but does not reach it in time. His eyes lock on you, furious and watery.\n\n“Enough. Back—now.”\n\nBassus steps in hard between you and Aulus, one hand snapping to his short sword’s hilt while the other grips the edge of his cloak to keep space. He glares you down and barks to the other guards to hold their positions and watch your hands.",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 18+0 vs target 7+5 → actor_dominates",
+            "npc_name": "Aulus",
+            "response": "*Aulus jerks his head aside too late—your fist drives into his face. He staggers back a step, armour ringing, one hand claps to his cheek as his short sword skitters loose from his grip.* *His eyes water; he tries to spit blood and fails, breathing hard through the pain.* [STATUS: crushed impact to the face, disarmed; badly hurt and reeling]"
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "{\"narration\":\"*Aulus staggers, breath rasping through his teeth, then drops to one knee to keep balance. He rakes a hand toward his skittered short sword but doesn’t reach it in time—his eyes lock on the player, furious and watery.* “Enough. Back—now.” *He draws himself up as best he can, wine forgotten, guards at his sides already shifting to look at you.*\",\"mood\":\"hostile\",\"status\":null,\"revealed_names\":[]}",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I step in hard between you and Aulus, hand snapping to my short sword’s hilt while my other grips the edge of my cloak to keep space, and I glare you down—then I bark to the other guards to hold their positions and watch your hands.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Bassus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "905dd4fd-a7ff-4bac-9d5e-38004faa75e3",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 17.981380874989554,
+  "element_scores": [
+    {
+      "awarded": 2,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "only Bassus produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 18+0 vs target 7+5 → actor_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: stayed neutral",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 4,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3788,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus steps in hard between you and Aulus, one hand snapping to his short sword's hilt while the other grips the edge of his cloak to keep space.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically steps between the player and Aulus and draws his weapon (hand snapping to his short sword's hilt), which constitutes physical intervention beyond merely shouting.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2600,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus steps in hard between you and Aulus, one hand snapping to his short sword's hilt while the other grips the edge of his cloak to keep space",
+          "quote_verified": true,
+          "reasoning": "Bassus only steps between the player and Aulus while gripping his sword hilt, but does not draw the weapon or physically attack/restrain the player.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2373,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus steps in hard between you and Aulus, one hand snapping to his short sword's hilt while the other grips the edge of his cloak to keep space.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically intervenes by stepping between the player and Aulus, drawing his hand to his sword hilt, and using his body to create space—these are genuine physical actions beyond mere shouting.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2784,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turn shows Bassus only stepping between you and Aulus with a hand on his hilt, and gives no action from Cato.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1373,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus [INTIMIDATE]: I step in hard between you and Aulus, hand snapping to my short sword’s hilt while my other grips the edge of my cloak to keep space",
+          "quote_verified": true,
+          "reasoning": "Bassus physically intervenes by stepping between the player and Aulus and drawing on his sword hilt.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1364,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus steps in hard between you and Aulus, one hand snapping to his short sword’s hilt",
+          "quote_verified": true,
+          "reasoning": "Bassus physically intervenes by stepping between the player and Aulus and drawing his short sword’s hilt against the player.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "10db32bfdf7ae1a49ec4bf972cd3dc5f5e62ee0d",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T09:40:53.278643+00:00",
+  "total_awarded": 7,
+  "total_base": 10
+}

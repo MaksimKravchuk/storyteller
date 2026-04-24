@@ -1,0 +1,45 @@
+{
+  "element_pass_rates": [
+    {
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "iterations": 3,
+      "label": "hostility_level increases on every assault turn",
+      "passes": 3
+    },
+    {
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "iterations": 3,
+      "label": "Final sentry mood is one that can roll aggression",
+      "passes": 3
+    },
+    {
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "iterations": 3,
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "passes": 3
+    },
+    {
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "iterations": 3,
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "passes": 3
+    }
+  ],
+  "engine_git_sha": "10db32bfdf7ae1a49ec4bf972cd3dc5f5e62ee0d",
+  "iteration_totals": [
+    11,
+    11,
+    11
+  ],
+  "iterations": 3,
+  "max_awarded": 11,
+  "mean_awarded": 11.0,
+  "min_awarded": 11,
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "total_base": 11
+}
