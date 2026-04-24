@@ -9,13 +9,12 @@ from loguru import logger
 from db.repository import GameRepository
 from engine.factory import create_engine_from_state, create_engine_with_db_overrides
 from engine.game_engine import GameEngine
-from interfaces.telegram_handlers_helpers import recover_from_start_failure
+from interfaces.telegram_handlers_helpers import recover_from_start_failure, _STATE_IDLE
 from formatting.markdown_render import render
 from formatting.platform import ClientPlatform
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
 from llm.turn_event_logger import get_and_clear_events, reset_events
 
-_STATE_IDLE = "idle"
 _TELEGRAM_PARSE_MODE = "HTML"
 
 

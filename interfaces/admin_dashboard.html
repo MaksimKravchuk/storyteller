@@ -964,8 +964,8 @@ function renderSettingsHtml(keys, models) {
       }).join('');
       return `<div class="settings-role" data-role="${role}">
         <h4>${role}</h4>
-        <div class="current">Current: <code>${current.provider}</code> / <code>${current.model_id}</code>
-          &nbsp;<span class="badge badge-${current.source === 'db' ? 'playing' : 'idle'}">source: ${current.source}</span>
+        <div class="current">Current: <code>${escapeHtml(current.provider)}</code> / <code>${escapeHtml(current.model_id)}</code>
+          &nbsp;<span class="badge badge-${current.source === 'db' ? 'playing' : 'idle'}">source: ${escapeHtml(current.source)}</span>
         </div>
         <div class="settings-row">
           <select class="settings-select-${role}" onchange="onCatalogPick('${role}', this.value)">
@@ -976,7 +976,7 @@ function renderSettingsHtml(keys, models) {
         <div class="settings-row">
           <input type="text" class="settings-input-${role}"
                  placeholder="or type a custom model_id (e.g. deepseek/deepseek-chat-v3.1)"
-                 value="${current.model_id}">
+                 value="${escapeHtml(current.model_id)}">
           <button onclick="saveModel('${role}')">Save</button>
         </div>
         <div class="settings-banner-${role}" style="display:none"></div>
