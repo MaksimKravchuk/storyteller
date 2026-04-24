@@ -476,6 +476,7 @@ class TestBuildTurnPromptOpportunityWindow:
         prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
 
         assert "OPPORTUNITY:" in prompt
+        assert "TACTICAL CHOICE:" in prompt
         assert "Most turns are routine" not in prompt
         assert "Marcus" in prompt
 
@@ -654,6 +655,29 @@ class TestNPCTurnSceneMutationLocation:
         await resolver.resolve_npc_turns("Player waited.")
 
         assert _NPC_UUID_A in gs.locations["forum"].npcs_present
+
+    @allure.story("Scene mutation")
+    @allure.title("MOVE with an unregistered location_id removes NPC from scene and does not raise")
+    @pytest.mark.asyncio
+    async def test_move_with_missing_location_does_not_raise(self):
+        gs = _make_gs()
+        npc = _make_npc(_NPC_UUID_A, _MERCHANT)
+        gs.npcs[_NPC_UUID_A] = npc
+        gs.current_scene = Scene(
+            location_id="ghost",
+            description="Unregistered location.",
+            npcs_present=[SceneNPC(role="npc", uuid=_NPC_UUID_A)],
+        )
+
+        actor = _make_actor(_move_response())
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
+
+        actions = await resolver.resolve_npc_turns("Player waited.")
+
+        assert len(actions) == 1
+        assert actions[0].action_type == "MOVE"
+        scene_uuids = [snpc.uuid for snpc in gs.current_scene.npcs_present]
+        assert _NPC_UUID_A not in scene_uuids
 
 
 @allure.epic("NPC Interaction")

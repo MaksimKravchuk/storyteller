@@ -160,9 +160,17 @@ def _apply_scene_mutation(
     if _is_targeting_scene_npc(action_target, npc_uuid, scene, game_state):
         return
     scene.npcs_present = [snpc for snpc in scene.npcs_present if snpc.uuid != npc_uuid]
+    # npc.location_id is not updated here — we know the NPC left but not their destination.
     location = game_state.locations.get(scene.location_id)
-    if location is not None:
-        location.remove_npc(npc_uuid)
+    if location is None:
+        logger.warning(
+            "NPC {} MOVEd away but location_id {!r} is not registered; "
+            "scene.npcs_present updated but location.npcs_present was not",
+            npc_uuid,
+            scene.location_id,
+        )
+        return
+    location.remove_npc(npc_uuid)
 
 
 def _is_targeting_scene_npc(
