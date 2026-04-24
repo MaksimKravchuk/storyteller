@@ -100,7 +100,7 @@ def _record_llm_call(
 async def _retry_after_validation_failure(
     performer: BasePerformer,
     ctx: _RetryContext,
-    raw: str,
+    assistant_text: str,
     exc: ValidationError,
 ) -> Any:
     """Retry with validation feedback or raise after exhausting attempts.
@@ -122,10 +122,10 @@ async def _retry_after_validation_failure(
                 ctx.total_attempts,
                 errors_preview,
             ),
-            raw_response=raw,
+            raw_response=assistant_text,
         )
     retry_conversation = list(ctx.conversation or [])
-    retry_conversation.append(Message(role=Role.ASSISTANT, body=raw))
+    retry_conversation.append(Message(role=Role.ASSISTANT, body=assistant_text))
     retry_conversation.append(
         Message(
             role=Role.USER,

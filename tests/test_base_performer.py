@@ -148,3 +148,9 @@ class TestStripMarkdownFence:
     @allure.title("_strip_markdown_fence returns prose as-is when no fence is present")
     def test_prose_returned_as_is(self):
         assert _strip_markdown_fence("not json at all") == "not json at all"
+
+    @allure.story("Markdown fence stripping")
+    @allure.title("_strip_markdown_fence strips uppercase ```JSON fences without including the tag in the content")
+    def test_strips_uppercase_json_tag(self):
+        result = _strip_markdown_fence('```JSON\n{"key": "value"}\n```')
+        assert result == '{"key": "value"}'

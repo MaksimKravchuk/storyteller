@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from llm.message import Message
     from pydantic import BaseModel
 
-_MARKDOWN_FENCE_RE = re.compile(r"^```(?:json)?\s*\n?(.*?)\n?```\s*$", re.DOTALL)
+_MARKDOWN_FENCE_RE = re.compile(r"^```[a-zA-Z]*\s*\n?(.*?)\n?```\s*$", re.DOTALL)
 
 
 def _strip_markdown_fence(text: str) -> str:
