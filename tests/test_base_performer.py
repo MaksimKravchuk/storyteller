@@ -154,3 +154,10 @@ class TestStripMarkdownFence:
     def test_strips_uppercase_json_tag(self):
         result = _strip_markdown_fence('```JSON\n{"key": "value"}\n```')
         assert result == '{"key": "value"}'
+
+    @allure.story("Markdown fence stripping")
+    @allure.title("_strip_markdown_fence strips fences even with trailing text after closing ```")
+    def test_strips_fence_with_trailing_text(self):
+        raw = '```json\n{"key": "value"}\n```\nNote: here you go.'
+        result = _strip_markdown_fence(raw)
+        assert result == '{"key": "value"}'
