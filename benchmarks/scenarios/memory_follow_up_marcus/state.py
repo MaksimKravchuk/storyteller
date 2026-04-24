@@ -36,11 +36,6 @@ _MARCUS_HISTORY_PAIRS: tuple[tuple[str, str], ...] = (
 )
 
 
-def _build_marcus_history() -> list[dict[str, str]]:
-    """Materialise the canonical history as a fresh list of role/content dicts."""
-    return [{"role": role, "content": body} for role, body in _MARCUS_HISTORY_PAIRS]
-
-
 _FACT_STOLEN_LOAF = "A wheat loaf was stolen from my market stall yesterday while I was measuring flour."
 _FACT_SUSPECT_GAIUS = (
     "I suspect Gaius — the scarred fellow who loiters by the fountain — of stealing my loaf yesterday."
@@ -56,8 +51,8 @@ def _make_setting() -> Setting:
     )
 
 
-def _make_marcus() -> NPCCard:
-    """Build the pre-populated Marcus card."""
+def _make_marcus_base() -> NPCCard:
+    """Build the Marcus card without any conversation history."""
     marcus = NPCCard(
         name="Marcus",
         biography="A middle-aged baker who runs a small stall at the Roman Forum marketplace.",
@@ -66,12 +61,18 @@ def _make_marcus() -> NPCCard:
         personality_traits=["earnest", "talkative", "anxious"],
         speech_style="plain, blunt, often lapses into worried mutters",
         knowledge_scope="local",
-        conversation_history=_build_marcus_history(),
+        conversation_history=[],
         current_mood="worried",
         physical_status="healthy",
     )
-    # Pin a deterministic uuid so elements can reference Marcus by id.
     marcus.uuid = _MARCUS_UUID
+    return marcus
+
+
+def _make_marcus() -> NPCCard:
+    """Build the pre-populated Marcus card with seeded conversation history."""
+    marcus = _make_marcus_base()
+    marcus.conversation_history = [{"role": role, "content": body} for role, body in _MARCUS_HISTORY_PAIRS]
     return marcus
 
 
