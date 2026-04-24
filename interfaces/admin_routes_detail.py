@@ -5,6 +5,7 @@ from __future__ import annotations
 from aiohttp import web
 
 from db.repo_admin import fetch_events, fetch_scenes
+from db.repo_admin_models import fetch_session_models
 from interfaces import admin_route_helpers as helpers
 from interfaces.admin_route_helpers import _json_response
 
@@ -53,3 +54,10 @@ async def ai_calls(request: web.Request) -> web.Response:
             turn_number=int(turn) if turn else None,
         )
     return _json_response({"ai_calls": logs})
+
+
+async def session_models(request: web.Request) -> web.Response:
+    """Return distinct (agent_name, model, calls) used in this session."""
+    async with helpers.session_scope(request) as (session_id, repo):
+        models = await fetch_session_models(repo.admin.session, session_id)
+    return _json_response({"models": models})

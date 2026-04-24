@@ -11,7 +11,7 @@ from loguru import logger
 
 from config import Config
 from db.repository import GameRepository
-from engine.factory import create_engine
+from engine.factory import create_engine_with_db_overrides
 from engine.game_engine import GameEngine
 from interfaces.web.character import build_character_info
 from interfaces.web.schemas import ActionResponse, GameSnapshot
@@ -76,7 +76,7 @@ async def start_game_for_player(
     current_session_id.set(session_id)
     reset_buffer()
     reset_events()
-    engine = create_engine(cfg, language=language)
+    engine = await create_engine_with_db_overrides(repo, cfg, language=language)
     try:
         await _start_and_persist(repo, session_id, engine, setting)
     except Exception:

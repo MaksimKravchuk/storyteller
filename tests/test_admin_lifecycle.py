@@ -23,7 +23,7 @@ pytestmark = [
 @allure.title("AdminServer binds and responds to /healthz, then cleans up on stop()")
 @pytest.mark.asyncio
 async def test_admin_server_start_and_stop_serves_healthz() -> None:
-    server = AdminServer(MagicMock(), port=0, token=None)
+    server = AdminServer(MagicMock(), MagicMock(), port=0, token=None)
 
     await server.start()
     try:
@@ -47,7 +47,7 @@ async def _assert_healthz_ok(server: AdminServer) -> None:
 @allure.title("AdminServer.stop() on a server that never started is a no-op and leaves it unbound")
 @pytest.mark.asyncio
 async def test_admin_server_stop_without_start_is_noop() -> None:
-    server = AdminServer(MagicMock(), port=0, token=None)
+    server = AdminServer(MagicMock(), MagicMock(), port=0, token=None)
 
     # No start() — _runner is still None. stop() should not raise.
     await server.stop()
@@ -60,7 +60,7 @@ async def test_admin_server_stop_without_start_is_noop() -> None:
 @allure.title("AdminServer auth middleware rejects unauthorized /api/* and accepts with Bearer token")
 @pytest.mark.asyncio
 async def test_admin_server_auth_middleware_rejects_and_accepts() -> None:
-    server = AdminServer(MagicMock(), port=0, token="secret")
+    server = AdminServer(MagicMock(), MagicMock(), port=0, token="secret")
 
     await server.start()
     try:

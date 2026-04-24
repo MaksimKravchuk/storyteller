@@ -329,3 +329,14 @@ game_events = Table(
     Column("on_complete_description", Text, nullable=False, server_default=""),
     Index("idx_events_game_state", _COL_GAME_STATE_ID),
 )
+
+# Key-value store for operator-mutable runtime settings (model overrides, etc.).
+# Empty table ⇒ engine falls back to env-var defaults. See db/repo_settings.py.
+admin_settings = Table(
+    "admin_settings",
+    metadata,
+    Column("key", Text, primary_key=True),
+    Column("provider", Text, nullable=False),
+    Column("model_id", Text, nullable=False),
+    Column("updated_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
+)

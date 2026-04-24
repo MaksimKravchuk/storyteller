@@ -247,3 +247,33 @@ async def test_npc_detail_404_when_missing() -> None:
 
     assert status == _HTTP_NOT_FOUND
     assert body == {"error": "NPC not found"}
+
+
+@allure.story("Session models")
+@allure.title("/models aggregates distinct (agent, model) pairs used in the session")
+@pytest.mark.asyncio
+async def test_session_models_returns_distinct_agents() -> None:
+    """session_models returns {'models': <list>} from fetch_session_models."""
+    rows = [
+        {"agent_name": "director", "model": "gpt-5.4-mini", "calls": 42},
+        {"agent_name": "narrator", "model": "claude-opus-4-6", "calls": 12},
+    ]
+    mock_repo = AsyncMock()
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
+            patch(
+                "interfaces.admin_routes_detail.fetch_session_models",
+                new=AsyncMock(return_value=rows),
+            ) as fetch_mock,
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get("{0}/models".format(_BASE))
+            status = resp.status
+            body = await resp.json()
+            fetch_mock.assert_awaited_once()
+
+    assert status == _HTTP_OK
+    assert body == {"models": rows}

@@ -7,11 +7,20 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from defaults.models import ModelConfig
+from defaults.models import PROVIDER_ANTHROPIC, PROVIDER_OPENAI, PROVIDER_OPENROUTER, ModelConfig
 
 _GPT5_4_MINI = "gpt-5.4-mini"
 _GPT5_4_NANO = "gpt-5.4-nano"
-_PROVIDER_OPENAI = "openai"
+
+_OPENROUTER_PREFIXES = (
+    "deepseek/",
+    "google/",
+    "x-ai/",
+    "qwen/",
+    "moonshotai/",
+    "meta-llama/",
+    "mistralai/",
+)
 
 _DEFAULT_TEMPERATURE = 0.7
 _TEMPERATURE_MIN = float(0)
@@ -44,6 +53,7 @@ class Config(BaseSettings):
     # API keys (None means the SDK will try its own env-var fallback)
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    openrouter_api_key: str | None = None
 
     # Model selection per agent role
     director_model: str = _GPT5_4_MINI
@@ -61,7 +71,7 @@ class Config(BaseSettings):
     telegram_bot_token: str | None = None
 
     # Defaults
-    default_provider: str = _PROVIDER_OPENAI
+    default_provider: str = PROVIDER_OPENAI
     temperature: float = Field(default=_DEFAULT_TEMPERATURE, ge=_TEMPERATURE_MIN, le=_TEMPERATURE_MAX)
     max_tokens: int = Field(default=_DEFAULT_MAX_TOKENS, gt=0)
 
@@ -91,10 +101,12 @@ def load_config(env_path: str | None = None) -> Config:
 def _detect_provider(model_id: str, fallback: str) -> str:
     """Guess the provider from the model name."""
     model_lower = model_id.lower()
+    if any(model_lower.startswith(prefix) for prefix in _OPENROUTER_PREFIXES):
+        return PROVIDER_OPENROUTER
     if model_lower.startswith(("gpt-", "o1", "o3", "o4")):
-        return _PROVIDER_OPENAI
+        return PROVIDER_OPENAI
     if model_lower.startswith(("claude", "claude-")):
-        return "anthropic"
+        return PROVIDER_ANTHROPIC
     return fallback
 
 
@@ -115,8 +127,19 @@ def resolve_model_config(model_id: str, config: Config) -> ModelConfig:
 
 def get_api_key_for_provider(provider: str, config: Config) -> str | None:
     """Return the API key for the given provider, or None."""
-    if provider == _PROVIDER_OPENAI:
+    if provider == PROVIDER_OPENAI:
         return config.openai_api_key
-    if provider == "anthropic":
+    if provider == PROVIDER_ANTHROPIC:
         return config.anthropic_api_key
+    if provider == PROVIDER_OPENROUTER:
+        return config.openrouter_api_key
     return None
+
+
+def list_api_key_status(config: Config) -> dict[str, bool]:
+    """Return ``{provider: bool}`` indicating which providers have a key set."""
+    return {
+        PROVIDER_OPENAI: bool(config.openai_api_key),
+        PROVIDER_ANTHROPIC: bool(config.anthropic_api_key),
+        PROVIDER_OPENROUTER: bool(config.openrouter_api_key),
+    }

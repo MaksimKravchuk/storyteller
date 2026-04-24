@@ -46,5 +46,14 @@ def create_llm_client(
             temperature=config.temperature,
             max_tokens=config.max_tokens,
         )
+    elif config.provider == "openrouter":
+        from llm.openrouter_client import OpenRouterClient
+
+        return OpenRouterClient(
+            model=config.model_id,
+            api_key=api_key,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+        )
     else:
         raise ValueError(f"Unknown LLM provider: {config.provider}")

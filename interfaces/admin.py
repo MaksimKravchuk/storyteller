@@ -6,7 +6,13 @@ from aiohttp import web
 from aiohttp.typedefs import Handler
 from loguru import logger
 
-from interfaces import admin_routes, admin_routes_detail, admin_routes_entity
+from config import Config
+from interfaces import (
+    admin_routes,
+    admin_routes_detail,
+    admin_routes_entity,
+    admin_routes_settings,
+)
 from interfaces.admin_route_helpers import _json_response
 
 _HTTP_UNAUTHORIZED = 401
@@ -30,11 +36,19 @@ async def _healthz(_request: web.Request) -> web.Response:
 class AdminServer:
     """Lightweight admin dashboard for inspecting Storyteller sessions."""
 
-    def __init__(self, db_session_factory, *, port: int = 8080, token: str | None = None):
+    def __init__(
+        self,
+        db_session_factory,
+        cfg: Config,
+        *,
+        port: int = 8080,
+        token: str | None = None,
+    ):
         self._port = port
         self._app = web.Application(middlewares=[_auth_middleware])
         self._app["_auth_token"] = token
         self._app["_db_factory"] = db_session_factory
+        self._app["_cfg"] = cfg
         self._setup_routes()
         self._runner: web.AppRunner | None = None
 
@@ -67,6 +81,12 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)
         self._app.router.add_get("/api/sessions/{id}/conversation", admin_routes.conversation)
         self._setup_detail_routes()
+        self._setup_settings_routes()
+
+    def _setup_settings_routes(self) -> None:
+        self._app.router.add_get("/api/settings/keys", admin_routes_settings.get_keys)
+        self._app.router.add_get("/api/settings/models", admin_routes_settings.get_models)
+        self._app.router.add_post("/api/settings/models", admin_routes_settings.set_model)
 
     def _setup_detail_routes(self) -> None:
         self._app.router.add_get("/api/sessions/{id}/knowledge", admin_routes_detail.knowledge)
@@ -77,3 +97,4 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/scenes", admin_routes_detail.scenes)
         self._app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes_detail.ai_calls)
         self._app.router.add_get("/api/sessions/{id}/turn-events", admin_routes_entity.turn_events)
+        self._app.router.add_get("/api/sessions/{id}/models", admin_routes_detail.session_models)

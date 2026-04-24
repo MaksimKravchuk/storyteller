@@ -7,14 +7,14 @@ from typing import Any
 from loguru import logger
 
 from db.repository import GameRepository
-from engine.factory import create_engine, create_engine_from_state
+from engine.factory import create_engine_from_state, create_engine_with_db_overrides
 from engine.game_engine import GameEngine
+from interfaces.telegram_handlers_helpers import recover_from_start_failure, _STATE_IDLE
 from formatting.markdown_render import render
 from formatting.platform import ClientPlatform
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
 from llm.turn_event_logger import get_and_clear_events, reset_events
 
-_STATE_IDLE = "idle"
 _TELEGRAM_PARSE_MODE = "HTML"
 
 
@@ -86,14 +86,11 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
     with logger.contextualize(session_id=ctx.session_id):
         current_session_id.set(ctx.session_id)
         _reset_turn_buffers()
-        engine = create_engine(ctx.cfg, language=ctx.language)
+        engine = await create_engine_with_db_overrides(ctx.repo, ctx.cfg, language=ctx.language)
         try:
             await start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:
-            logger.exception("Failed to start game for chat {}", chat_id)
-            await ctx.repo.rollback()
-            await ctx.update.message.reply_text("Something went wrong. Try /start again.")
-            await ctx.repo.sessions.update(ctx.session_id, state=_STATE_IDLE)
+            await recover_from_start_failure(ctx, chat_id)
 
 
 async def handle_playing(ctx: Any) -> None:

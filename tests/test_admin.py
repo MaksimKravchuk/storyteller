@@ -22,7 +22,7 @@ pytestmark = [
 
 
 def _make_app(token=None) -> web.Application:
-    return AdminServer(MagicMock(), port=0, token=token)._app
+    return AdminServer(MagicMock(), MagicMock(), port=0, token=token)._app
 
 
 @allure.story("No-auth mode")
