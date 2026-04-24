@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+from benchmarks.harness.prose_quality import (
+    no_action_repetition,
+    no_cliches,
+    no_invented_inner_states,
+    no_purple_prose,
+)
 from benchmarks.harness.snapshots import hostility_level_of
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import (
@@ -151,5 +157,33 @@ ELEMENTS: tuple[Element, ...] = (
             ).format(SENTRY_NAME),
             evidence_turn=_THIRD_ASSAULT_TURN,
         ),
+    ),
+    Element(
+        id="narration_no_cliches",
+        label="Narrator avoids cinematic action-movie clichés on the climax turn",
+        base_value=2,
+        kind=KIND_EVIDENCE_LLM,
+        check=no_cliches(_SCENARIO_BRIEF, evidence_turn=_THIRD_ASSAULT_TURN),
+    ),
+    Element(
+        id="narration_no_purple_prose",
+        label="Narrator avoids overwrought or melodramatic language on the climax turn",
+        base_value=2,
+        kind=KIND_EVIDENCE_LLM,
+        check=no_purple_prose(_SCENARIO_BRIEF, evidence_turn=_THIRD_ASSAULT_TURN),
+    ),
+    Element(
+        id="narration_no_repetition",
+        label="Narrator avoids repeating phrases or cadence patterns across assault turns",
+        base_value=2,
+        kind=KIND_EVIDENCE_LLM,
+        check=no_action_repetition(_SCENARIO_BRIEF, evidence_turn=None),
+    ),
+    Element(
+        id="narration_no_invented_inner_states",
+        label="Narrator stays grounded in observable NPC behaviour without inventing inner states",
+        base_value=2,
+        kind=KIND_EVIDENCE_LLM,
+        check=no_invented_inner_states(_SCENARIO_BRIEF, evidence_turn=_THIRD_ASSAULT_TURN),
     ),
 )
