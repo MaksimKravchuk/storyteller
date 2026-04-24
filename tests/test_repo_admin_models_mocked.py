@@ -15,9 +15,9 @@ pytestmark = [
 ]
 
 
-@pytest.mark.asyncio
 @allure.story("fetch_session_models")
 @allure.title("fetch_session_models returns each (agent, model) row with its call count")
+@pytest.mark.asyncio
 async def test_fetch_session_models_maps_rows() -> None:
     session = AsyncMock()
     rows = [
@@ -34,9 +34,9 @@ async def test_fetch_session_models_maps_rows() -> None:
     session.execute.assert_awaited_once()
 
 
-@pytest.mark.asyncio
 @allure.story("fetch_session_models")
 @allure.title("fetch_session_models returns an empty list when the session has no AI calls")
+@pytest.mark.asyncio
 async def test_fetch_session_models_empty() -> None:
     session = AsyncMock()
     mapping_result = MagicMock()

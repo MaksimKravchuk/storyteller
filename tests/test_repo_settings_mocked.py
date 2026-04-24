@@ -69,50 +69,35 @@ async def test_set_model_issues_statement() -> None:
 
     session.execute.assert_awaited_once()
     stmt = session.execute.await_args.args[0]
-    # Compiled form is PostgreSQL; we just check the table is right.
     assert stmt.table.name == "admin_settings"
 
 
-@allure.story("set_model")
-@allure.title("set_model rejects an unknown role before touching the session")
-@pytest.mark.asyncio
-async def test_set_model_rejects_unknown_role() -> None:
-    session = AsyncMock()
-    store = AdminSettingsStore(session)
-    with pytest.raises(ValueError, match="unknown role"):
-        await store.set_model("mastermind", "openai", "gpt-5.4")
-    session.execute.assert_not_awaited()
+_OVERLONG_MODEL_ID = "x" * 201
+
+_INVALID_PAYLOADS = (
+    ("unknown role", ("mastermind", "openai", "gpt-5.4"), "unknown role"),
+    ("unknown provider", ("narrator", "cohere", "command-r"), "unknown provider"),
+    ("empty model_id", ("narrator", "openai", ""), "model_id"),
+    ("overlong model_id", ("narrator", "openai", _OVERLONG_MODEL_ID), "model_id"),
+)
 
 
 @allure.story("set_model")
-@allure.title("set_model rejects an unknown provider before touching the session")
+@allure.title("set_model rejects invalid inputs with ValueError before touching the session")
 @pytest.mark.asyncio
-async def test_set_model_rejects_unknown_provider() -> None:
+@pytest.mark.parametrize(
+    ("role", "provider", "model_id", "expected_match"),
+    [(args[0], args[1], args[2], err) for _label, args, err in _INVALID_PAYLOADS],
+    ids=[label for label, _args, _err in _INVALID_PAYLOADS],
+)
+async def test_set_model_rejects_invalid_input(
+    role: str,
+    provider: str,
+    model_id: str,
+    expected_match: str,
+) -> None:
     session = AsyncMock()
     store = AdminSettingsStore(session)
-    with pytest.raises(ValueError, match="unknown provider"):
-        await store.set_model("narrator", "cohere", "command-r")
-    session.execute.assert_not_awaited()
-
-
-@allure.story("set_model")
-@allure.title("set_model rejects an empty model_id before touching the session")
-@pytest.mark.asyncio
-async def test_set_model_rejects_empty_model_id() -> None:
-    session = AsyncMock()
-    store = AdminSettingsStore(session)
-    with pytest.raises(ValueError, match="model_id"):
-        await store.set_model("narrator", "openai", "")
-    session.execute.assert_not_awaited()
-
-
-@allure.story("set_model")
-@allure.title("set_model rejects a model_id longer than the stored column's max length")
-@pytest.mark.asyncio
-async def test_set_model_rejects_overlong_model_id() -> None:
-    session = AsyncMock()
-    store = AdminSettingsStore(session)
-    too_long = "x" * 201
-    with pytest.raises(ValueError, match="model_id"):
-        await store.set_model("narrator", "openai", too_long)
+    with pytest.raises(ValueError, match=expected_match):
+        await store.set_model(role, provider, model_id)
     session.execute.assert_not_awaited()

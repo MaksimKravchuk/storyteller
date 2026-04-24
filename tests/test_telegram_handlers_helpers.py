@@ -16,9 +16,9 @@ pytestmark = [
 ]
 
 
-@pytest.mark.asyncio
 @allure.story("recover_from_start_failure")
 @allure.title("recover_from_start_failure rolls back, notifies the user, and returns the session to idle")
+@pytest.mark.asyncio
 async def test_recover_runs_the_full_sequence() -> None:
     repo = AsyncMock()
     update = SimpleNamespace(message=AsyncMock())
