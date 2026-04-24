@@ -98,6 +98,7 @@ class Actor(BasePerformer):
         if context.get("is_npc_turn"):
             return await self._act_npc_turn(input_data)
 
+        self._system_prompt_vars.pop("output_mode_action", None)
         self.set_context(output_mode_dialogue="1")
         envelope = await self._produce_envelope(input_data)
 
@@ -125,7 +126,13 @@ class Actor(BasePerformer):
         do not mutate ``npc.current_mood`` / ``npc.physical_status``. Those
         stay calibrated from the next dialogue turn. ``NPCTurnResolver``
         parses the returned ``ActorReply.text`` as the action JSON.
+
+        ``output_mode_dialogue`` is cleared before setting ``output_mode_action``
+        so a preceding dialogue turn does not leave both gate vars in the
+        cumulative ``_system_prompt_vars`` dict, which would render both
+        output-format sections and confuse the LLM into emitting envelope JSON.
         """
+        self._system_prompt_vars.pop("output_mode_dialogue", None)
         self.set_context(output_mode_action="1")
         raw = await self._send(input_data, conversation=[])
         return ActorReply(text=raw.strip(), revealed_names=())
