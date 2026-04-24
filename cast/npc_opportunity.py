@@ -41,43 +41,46 @@ RELATIONSHIP_HOSTILITY_KEYWORDS: frozenset[str] = frozenset(
 )
 KNOWLEDGE_VIOLENCE_KEYWORDS: frozenset[str] = frozenset(("kill", "murder", "harm", "wound"))
 
-OPPORTUNITY_CLAUSE = (
-    "OPPORTUNITY: The scene gives you a rare opening toward a standing personal goal. "
-    "Inaction is itself a choice to let the moment pass. Decide in character — "
-    "do not force a confrontation that is not yours, but do not pretend the "
-    "opening is not there either."
+_OPPORTUNITY_TEMPLATE = (
+    "OPPORTUNITY: {target} — the target of your standing hostile intent — "
+    "is right here, right now. Every turn you wait is a turn you let this "
+    "moment slip. Decide what THIS character, in THIS mood, with THIS "
+    "equipment would do: ATTACK directly, approach under STEALTH first, "
+    "or IDLE only if there is a concrete obstacle (witnesses, lack of "
+    "weapon, personal code) that makes acting right now impossible. "
+    "Name that obstacle in your action description if you choose to wait."
 )
 
 
-def _compile_keyword_re(keywords: frozenset[str]) -> re.Pattern[str]:
-    r"""Compile a keyword set into a full-token match regex.
+# Full-token boundary pattern: uses [^a-zA-Z] instead of \b so that
+# "kill" fires on "murderous_enemy" (underscore-separated tokens) while
+# still rejecting "skillful" and "pharmacist" (alphabetic neighbours).
+_FULL_TOKEN_RE = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)"
 
-    Uses ``[^a-zA-Z]`` instead of Python's default ``\b`` because ``\b``
-    treats ``_`` as a word character — so ``\bkill\b`` fails to match
-    inside a label like ``"murderous_enemy"`` even though ``kill`` is a
-    full token separated by non-alphabetic characters. The alphabetic-
-    neighbour rejection still keeps ``"skillful"`` from firing on
-    ``"kill"`` and ``"pharmacist"`` from firing on ``"harm"``.
+_RELATIONSHIP_KEYWORD_RE = re.compile(_FULL_TOKEN_RE.format("|".join(RELATIONSHIP_HOSTILITY_KEYWORDS)), re.IGNORECASE)
+_KNOWLEDGE_KEYWORD_RE = re.compile(_FULL_TOKEN_RE.format("|".join(KNOWLEDGE_VIOLENCE_KEYWORDS)), re.IGNORECASE)
+
+
+def get_opportunity_clause(npc: NPCCard, game_state: GameState) -> str | None:
+    """Return a directive OPPORTUNITY clause naming the hostile target, or None.
+
+    When a hostile co-located target is found — via relationship label or
+    violent knowledge fact — the returned string names that target and
+    instructs the Actor LLM to choose ATTACK, STEALTH, or IDLE with a
+    named obstacle. Returns ``None`` when no gate fires (routine turn).
     """
-    pattern = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)".format("|".join(keywords))
-    return re.compile(pattern, re.IGNORECASE)
-
-
-_RELATIONSHIP_KEYWORD_RE = _compile_keyword_re(RELATIONSHIP_HOSTILITY_KEYWORDS)
-_KNOWLEDGE_KEYWORD_RE = _compile_keyword_re(KNOWLEDGE_VIOLENCE_KEYWORDS)
-
-
-def detect_opportunity(npc: NPCCard, game_state: GameState) -> bool:
-    """Return True when the opportunity-window gate fires for *npc* this scene."""
     scene = game_state.current_scene
     if scene is None:
-        return False
+        return None
     co_located = _co_located_npc_uuids(scene, npc)
     if not co_located:
-        return False
-    if _has_hostile_relationship_co_located(npc, co_located):
-        return True
-    return _has_violent_knowledge_mentioning_co_located(npc, co_located, game_state)
+        return None
+    target_name = _name_from_relationship(npc, co_located, game_state) or _name_from_knowledge(
+        npc, co_located, game_state
+    )
+    if target_name is None:
+        return None
+    return _OPPORTUNITY_TEMPLATE.format(target=target_name)
 
 
 def _co_located_npc_uuids(scene: Scene, self_npc: NPCCard) -> list[str]:
@@ -88,27 +91,59 @@ def _co_located_npc_uuids(scene: Scene, self_npc: NPCCard) -> list[str]:
     return uuids
 
 
-def _has_hostile_relationship_co_located(npc: NPCCard, co_located_uuids: list[str]) -> bool:
-    co_located_set = set(co_located_uuids)
-    for target_uuid, label in npc.relationships.items():
-        if target_uuid in co_located_set and _RELATIONSHIP_KEYWORD_RE.search(label or ""):
-            return True
-    return False
-
-
-def _has_violent_knowledge_mentioning_co_located(
+def _name_from_relationship(
     npc: NPCCard,
     co_located_uuids: list[str],
     game_state: GameState,
-) -> bool:
+) -> str | None:
+    co_located_set = set(co_located_uuids)
+    for target_uuid, label in npc.relationships.items():
+        name = _resolve_hostile_rel(target_uuid, label, co_located_set, game_state)
+        if name is not None:
+            return name
+    return None
+
+
+def _resolve_hostile_rel(
+    target_uuid: str,
+    label: str | None,
+    co_located_set: set[str],
+    game_state: GameState,
+) -> str | None:
+    if target_uuid not in co_located_set:
+        return None
+    if not _RELATIONSHIP_KEYWORD_RE.search(label or ""):
+        return None
+    target_npc = game_state.npcs.get(target_uuid)
+    if target_npc is None:
+        return None
+    return target_npc.name
+
+
+def _name_from_knowledge(
+    npc: NPCCard,
+    co_located_uuids: list[str],
+    game_state: GameState,
+) -> str | None:
     co_located_names = _co_located_display_names(co_located_uuids, game_state)
     if not co_located_names:
-        return False
-    knowledge_text = _load_knowledge_text(npc, game_state)
+        return None
+    query_engine = KnowledgeQueryEngine(game_state.knowledge_graph)
+    knowledge_text = query_engine.get_context_for_npc(npc, topic_tags=None)
     if not knowledge_text or not _KNOWLEDGE_KEYWORD_RE.search(knowledge_text):
-        return False
-    lowered = knowledge_text.lower()
-    return any(name and name.lower() in lowered for name in co_located_names)
+        return None
+    return _names_in_text(co_located_names, knowledge_text)
+
+
+def _names_in_text(names: list[str], text: str) -> str | None:
+    """Return the first name from *names* that appears as a full token in *text*, or None."""
+    for candidate in names:
+        if not candidate:
+            continue
+        pattern = _FULL_TOKEN_RE.format(re.escape(candidate))
+        if re.search(pattern, text, re.IGNORECASE):
+            return candidate
+    return None
 
 
 def _co_located_display_names(co_located_uuids: list[str], game_state: GameState) -> list[str]:
@@ -119,8 +154,3 @@ def _co_located_display_names(co_located_uuids: list[str], game_state: GameState
         if npc is not None:
             names.append(npc.name)
     return names
-
-
-def _load_knowledge_text(npc: NPCCard, game_state: GameState) -> str:
-    query_engine = KnowledgeQueryEngine(game_state.knowledge_graph)
-    return query_engine.get_context_for_npc(npc, topic_tags=None)
