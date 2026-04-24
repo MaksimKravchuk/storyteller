@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
@@ -232,3 +232,30 @@ class TestChroniclerResponseSchemaDefaults:
         draft = WorldThreadDraft(description="something", category="cultural")
         assert draft.involved_locations == []
         assert draft.involved_npcs == []
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("World Chronicler")
+class TestChroniclerFencedResponse:
+    @allure.story("Markdown fence recovery")
+    @allure.title(
+        "WorldChronicler parses a ChroniclerResponse wrapped in markdown fences "
+        "when the Anthropic client falls back to the prompt path",
+    )
+    @pytest.mark.asyncio
+    async def test_fenced_json_parses_correctly(self):
+        fenced = (
+            '```json\n{"new_threads": [], "thread_updates": [], "scheduled_events": [], "world_mood": "ominous"}\n```'
+        )
+        chronicler = WorldChronicler(llm_client=MagicMock())
+        gs = _make_game_state()
+
+        with patch("cast.base_performer_class._send_json_strict", side_effect=NotImplementedError):
+            with patch.object(chronicler, "_send", new=AsyncMock(return_value=fenced)):
+                response = await chronicler.act(
+                    input_data=TurnOutputs(scene=gs.current_scene),
+                    context={"game_state": gs, "player_action": "explore"},
+                )
+
+        assert isinstance(response, ChroniclerResponse)
+        assert response.world_mood == "ominous"

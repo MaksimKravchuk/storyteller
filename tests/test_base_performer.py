@@ -5,6 +5,7 @@ from __future__ import annotations
 import allure
 import pytest
 
+from cast._performer_retry import _strip_markdown_fence
 from cast.base_performer_class import BasePerformer
 from llm.call_logger import reset_buffer
 from tests.base_performer_helpers import (
@@ -115,3 +116,35 @@ class TestBasePerformerExecuteNested:
         ctx_holder = {}
         await ContextRawCapture(holder=ctx_holder).execute("x")
         assert not ctx_holder["ctx"]
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("BasePerformer JSON send")
+class TestStripMarkdownFence:
+    @allure.story("Markdown fence stripping")
+    @allure.title("_strip_markdown_fence returns bare JSON unchanged")
+    def test_bare_json_unchanged(self):
+        assert _strip_markdown_fence('{"key": "value"}') == '{"key": "value"}'
+
+    @allure.story("Markdown fence stripping")
+    @allure.title("_strip_markdown_fence strips ```json fences")
+    def test_strips_json_fenced(self):
+        result = _strip_markdown_fence('```json\n{"key": "value"}\n```')
+        assert result == '{"key": "value"}'
+
+    @allure.story("Markdown fence stripping")
+    @allure.title("_strip_markdown_fence strips plain fences without language tag")
+    def test_strips_plain_fence(self):
+        result = _strip_markdown_fence('```\n{"key": "value"}\n```')
+        assert result == '{"key": "value"}'
+
+    @allure.story("Markdown fence stripping")
+    @allure.title("_strip_markdown_fence strips leading and trailing whitespace")
+    def test_strips_whitespace(self):
+        result = _strip_markdown_fence('  {"key": "value"}  ')
+        assert result == '{"key": "value"}'
+
+    @allure.story("Markdown fence stripping")
+    @allure.title("_strip_markdown_fence returns prose as-is when no fence is present")
+    def test_prose_returned_as_is(self):
+        assert _strip_markdown_fence("not json at all") == "not json at all"

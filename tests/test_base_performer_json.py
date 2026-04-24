@@ -83,5 +83,17 @@ class TestSendJson:
             with pytest.raises(UnicodeDecodeError):
                 await performer._send_json(_PROMPT, retries=0)
 
+    @allure.story("Markdown fence recovery")
+    @allure.title(
+        "BasePerformer._send_json parses JSON wrapped in markdown fences on the fallback path",
+    )
+    @pytest.mark.asyncio
+    async def test_fenced_json_parses_correctly(self):
+        performer = self._make()
+        fenced = '```json\n{"key": "val"}\n```'
+        with patch.object(performer, _SEND_METHOD, new=AsyncMock(return_value=fenced)):
+            output = await performer._send_json(_PROMPT)
+        assert output == {"key": "val"}
+
     def _make(self) -> _JsonPerformer:
         return _JsonPerformer(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
