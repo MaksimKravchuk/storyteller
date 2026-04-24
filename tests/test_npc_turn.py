@@ -14,9 +14,16 @@ from cast.npc_turn import NPCAction, NPCTurnResolver
 from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
-from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
+from models import (
+    game_state as gs_mod,
+    location as location_mod,
+    npc_card as npc_card_mod,
+    scene as scene_mod,
+    setting as setting_mod,
+)
 
 GameState = gs_mod.GameState
+Location = location_mod.Location
 NPCCard = npc_card_mod.NPCCard
 Scene = scene_mod.Scene
 SceneNPC = scene_mod.SceneNPC
@@ -591,3 +598,91 @@ class TestNPCActionDataclass:
         assert action.action_type == "IDLE"
         assert action.target is None
         assert action.contest_roll is None
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
+class TestNPCTurnSceneMutationLocation:
+    @allure.story("Scene mutation")
+    @allure.title("An NPC MOVE also removes the NPC from location.npcs_present")
+    @pytest.mark.asyncio
+    async def test_move_action_removes_npc_from_location(self):
+        gs = _make_gs()
+        npc = _make_npc(_NPC_UUID_A, _MERCHANT)
+        gs.npcs[_NPC_UUID_A] = npc
+
+        location = Location(name="Forum", description="The Forum.")
+        location.add_npc(_NPC_UUID_A)
+        gs.locations["forum"] = location
+
+        scene = Scene(
+            location_id="forum",
+            description="The bustling Forum.",
+            npcs_present=[SceneNPC(role="npc", uuid=_NPC_UUID_A)],
+        )
+        gs.current_scene = scene
+
+        actor = _make_actor(_move_response())
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
+
+        await resolver.resolve_npc_turns("Player waited.")
+
+        assert _NPC_UUID_A not in gs.locations["forum"].npcs_present
+
+    @allure.story("Scene mutation")
+    @allure.title("An NPC IDLE action does not remove the NPC from location.npcs_present")
+    @pytest.mark.asyncio
+    async def test_idle_action_does_not_remove_npc_from_location(self):
+        gs = _make_gs()
+        npc = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = npc
+
+        location = Location(name="Forum", description="The Forum.")
+        location.add_npc(_NPC_UUID_A)
+        gs.locations["forum"] = location
+
+        scene = Scene(
+            location_id="forum",
+            description="The bustling Forum.",
+            npcs_present=[SceneNPC(role="npc", uuid=_NPC_UUID_A)],
+        )
+        gs.current_scene = scene
+
+        actor = _make_actor(_idle_response())
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
+
+        await resolver.resolve_npc_turns("Player waited.")
+
+        assert _NPC_UUID_A in gs.locations["forum"].npcs_present
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC autonomous turn — hostile tactical choice")
+class TestBuildTurnPromptTacticalClause:
+    @allure.story("Tactical hostile clause")
+    @allure.title("Hostile opportunity fires both OPPORTUNITY and TACTICAL CHOICE clauses")
+    def test_tactical_clause_present_when_opportunity_fires(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        _place_both(gs, brutus, marcus)
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "TACTICAL CHOICE:" in prompt
+        assert "STEALTH" in prompt
+        assert "ATTACK" in prompt
+
+    @allure.story("Tactical hostile clause")
+    @allure.title("Peaceful peer sees no TACTICAL CHOICE clause")
+    def test_tactical_clause_absent_on_peaceful_peer(self):
+        gs = _make_gs()
+        cook = _make_npc(_NPC_UUID_A, "Cook")
+        carpenter = _make_npc(_NPC_UUID_B, "Carpenter")
+        cook.relationships[_NPC_UUID_B] = "acquaintance"
+        _place_both(gs, cook, carpenter)
+
+        prompt = npc_turn_mod._build_turn_prompt(cook, "Player waits.", gs)
+
+        assert "TACTICAL CHOICE:" not in prompt

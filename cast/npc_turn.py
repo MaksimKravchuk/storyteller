@@ -21,7 +21,7 @@ from cast.dice import (
     roll_contest,
 )
 from cast.director_witness import WitnessedAggression, is_guard_occupation
-from cast.npc_opportunity import get_opportunity_clause
+from cast.npc_opportunity import TACTICAL_HOSTILE_CLAUSE, get_opportunity_clause
 from cast.wait_detection import INCAPACITATING_STATES
 from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
@@ -151,7 +151,7 @@ def _apply_scene_mutation(
     action_target: str | None,
     game_state: GameState,
 ) -> None:
-    """Mutate the scene based on the NPC's action."""
+    """Mutate the scene and location when an NPC moves away."""
     if action_type != "MOVE":
         return
     scene = game_state.current_scene
@@ -160,6 +160,9 @@ def _apply_scene_mutation(
     if _is_targeting_scene_npc(action_target, npc_uuid, scene, game_state):
         return
     scene.npcs_present = [snpc for snpc in scene.npcs_present if snpc.uuid != npc_uuid]
+    location = game_state.locations.get(scene.location_id)
+    if location is not None:
+        location.remove_npc(npc_uuid)
 
 
 def _is_targeting_scene_npc(
@@ -435,6 +438,7 @@ def _build_turn_prompt(
         clauses.append(_format_incident_clause(npc, incident))
     if opportunity_clause is not None:
         clauses.append(opportunity_clause)
+        clauses.append(TACTICAL_HOSTILE_CLAUSE)
     return "\n\n".join(clauses)
 
 
