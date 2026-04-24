@@ -17,6 +17,30 @@ _NULLABLE_LIST_FIELDS = (
 )
 
 
+class SettingPerson(BaseModel):
+    """Historical person the Data Miner surfaces for the setting."""
+
+    name: str = ""
+    role: str = ""
+    description: str = ""
+
+
+class SettingEvent(BaseModel):
+    """Historical event the Data Miner surfaces for the setting."""
+
+    name: str = ""
+    date: str = ""
+    description: str = ""
+
+
+class SettingLocation(BaseModel):
+    """Notable place the Data Miner surfaces for the setting."""
+
+    name: str = ""
+    type: str = ""
+    description: str = ""
+
+
 class SearchTermsResponse(BaseModel):
     """Typed view of the Data Miner search-term extraction response."""
 
@@ -24,15 +48,22 @@ class SearchTermsResponse(BaseModel):
 
 
 class SettingResponse(BaseModel):
-    """Typed view of the Data Miner synthesised-setting response."""
+    """Typed view of the Data Miner synthesised-setting response.
+
+    The three nested lists use typed sub-models rather than
+    ``list[dict[str, str]]`` so the emitted JSON Schema has concrete
+    ``properties`` on every object node — without that, OpenAI strict
+    mode rejects the schema because free-form-dict objects carry
+    ``additionalProperties: {...}`` instead of ``false``.
+    """
 
     name: str = "Unknown"
     time_period: str = ""
     region: str = ""
     summary: str = ""
-    key_persons: list[dict[str, str]] = Field(default_factory=list)
-    key_events: list[dict[str, str]] = Field(default_factory=list)
-    locations: list[dict[str, str]] = Field(default_factory=list)
+    key_persons: list[SettingPerson] = Field(default_factory=list)
+    key_events: list[SettingEvent] = Field(default_factory=list)
+    locations: list[SettingLocation] = Field(default_factory=list)
     traditions: list[str] = Field(default_factory=list)
     technologies: list[str] = Field(default_factory=list)
     social_structure: str = ""

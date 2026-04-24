@@ -8,23 +8,24 @@ from pydantic import BaseModel, Field
 class NPCAttributes(BaseModel):
     """Fixed-key NPC skill/stat block the LLM fills in.
 
-    OpenAI strict-mode structured outputs reject free-form ``dict[str, int]``
-    (a JSON-Schema ``type: object`` with ``additionalProperties: {...}`` and
-    no ``properties``). Enumerating the keys as typed fields emits a schema
-    with ``additionalProperties: false`` and passes validation. The set of
-    keys mirrors the NPC-generator prompt.
+    Strict-mode structured outputs reject free-form ``dict[str, int]``
+    because ``_StrictSchemaNormalizer`` only anchors
+    ``additionalProperties: false`` onto nodes that expose explicit
+    ``properties``. Enumerating the keys as typed fields gives the
+    normalizer something to clamp; the set mirrors the NPC-generator
+    prompt, which specifies a 0-10 scale.
     """
 
-    education: int = 0
-    social_status: int = 0
-    friendliness: int = 0
-    suspicion: int = 0
-    combat_skill: int = 0
-    persuasion_skill: int = 0
-    deception_skill: int = 0
-    intimidation_skill: int = 0
-    perception_skill: int = 0
-    stealth_skill: int = 0
+    education: int = Field(default=0, ge=0, le=10)
+    social_status: int = Field(default=0, ge=0, le=10)
+    friendliness: int = Field(default=0, ge=0, le=10)
+    suspicion: int = Field(default=0, ge=0, le=10)
+    combat_skill: int = Field(default=0, ge=0, le=10)
+    persuasion_skill: int = Field(default=0, ge=0, le=10)
+    deception_skill: int = Field(default=0, ge=0, le=10)
+    intimidation_skill: int = Field(default=0, ge=0, le=10)
+    perception_skill: int = Field(default=0, ge=0, le=10)
+    stealth_skill: int = Field(default=0, ge=0, le=10)
 
 
 class NPCResponse(BaseModel):

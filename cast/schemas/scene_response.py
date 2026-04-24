@@ -11,8 +11,9 @@ class PointOfInterestResponse(BaseModel):
     The union branch exists so scene-response JSON can carry
     ``{"names": [...]}`` dicts alongside bare strings. A free-form
     ``dict[str, Any]`` branch would emit a JSON-Schema ``type: object``
-    with unconstrained ``additionalProperties``, which OpenAI strict
-    mode rejects — an explicit model emits ``additionalProperties: false``.
+    with unconstrained ``additionalProperties`` — strict mode rejects
+    that because ``_StrictSchemaNormalizer`` can only clamp nodes that
+    expose explicit ``properties``.
     """
 
     names: list[str] = Field(default_factory=list)
