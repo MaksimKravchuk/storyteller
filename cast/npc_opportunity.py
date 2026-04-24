@@ -136,10 +136,12 @@ def _name_from_knowledge(
 
 
 def _names_in_text(names: list[str], text: str) -> str | None:
-    """Return the first name from *names* that appears in *text*, or None."""
-    lowered = text.lower()
+    """Return the first name from *names* that appears as a full token in *text*, or None."""
     for candidate in names:
-        if candidate and candidate.lower() in lowered:
+        if not candidate:
+            continue
+        pattern = _FULL_TOKEN_RE.format(re.escape(candidate))
+        if re.search(pattern, text, re.IGNORECASE):
             return candidate
     return None
 

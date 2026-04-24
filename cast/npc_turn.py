@@ -172,6 +172,8 @@ def _is_targeting_scene_npc(
     if not target:
         return False
     lower_target = target.lower()
+    if lower_target == "player":
+        return True
     for snpc in scene.npcs_present:
         if snpc.uuid == self_uuid:
             continue
@@ -355,15 +357,10 @@ class NPCTurnResolver:
         peer_actions: list[tuple[str, str]] | None = None,
     ) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
+        prompt = _build_turn_prompt(npc, player_action_summary, self._gs, witnessed_events, peer_actions)
         try:
             reply = await actor.execute(
-                input_data=_build_turn_prompt(
-                    npc,
-                    player_action_summary,
-                    self._gs,
-                    witnessed_events,
-                    peer_actions,
-                ),
+                input_data=prompt,
                 context={"npc": npc, "game_state": self._gs, "is_npc_turn": True},
             )
         except Exception:

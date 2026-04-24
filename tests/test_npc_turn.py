@@ -312,6 +312,65 @@ class TestNPCTurnSceneMutation:
         scene_uuids = [snpc.uuid for snpc in gs.current_scene.npcs_present]
         assert _NPC_UUID_A in scene_uuids
 
+    @allure.story("Scene mutation")
+    @allure.title("MOVE targeting co-located NPC with different case still treats it as repositioning")
+    @pytest.mark.asyncio
+    async def test_move_targeting_scene_npc_case_insensitive(self):
+        gs = _make_gs()
+        guard = _make_npc(_NPC_UUID_A, _GUARD)
+        merchant = _make_npc(_NPC_UUID_B, _MERCHANT)
+        gs.npcs[_NPC_UUID_A] = guard
+        gs.npcs[_NPC_UUID_B] = merchant
+        gs.current_scene = _make_scene(_NPC_UUID_A, _NPC_UUID_B)
+
+        actor_a = _make_actor(_move_response_targeting(_MERCHANT.lower()))
+        actor_b = _make_actor(_idle_response(_MERCHANT))
+        resolver = NPCTurnResolver(
+            game_state=gs,
+            actors={_NPC_UUID_A: actor_a, _NPC_UUID_B: actor_b},
+        )
+
+        await resolver.resolve_npc_turns("Player waited.")
+
+        scene_uuids = [snpc.uuid for snpc in gs.current_scene.npcs_present]
+        assert _NPC_UUID_A in scene_uuids
+
+    @allure.story("Scene mutation")
+    @allure.title("MOVE targeting a registered NPC not present in this scene is treated as departure")
+    @pytest.mark.asyncio
+    async def test_move_targeting_absent_registered_npc_evicts(self):
+        gs = _make_gs()
+        guard = _make_npc(_NPC_UUID_A, _GUARD)
+        absent = _make_npc("npc-absent", "Caesar")
+        gs.npcs[_NPC_UUID_A] = guard
+        gs.npcs["npc-absent"] = absent
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+
+        actor_a = _make_actor(_move_response_targeting("Caesar"))
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor_a})
+
+        await resolver.resolve_npc_turns("Player waited.")
+
+        scene_uuids = [snpc.uuid for snpc in gs.current_scene.npcs_present]
+        assert _NPC_UUID_A not in scene_uuids
+
+    @allure.story("Scene mutation")
+    @allure.title("MOVE targeting the player sentinel is treated as repositioning, not departure")
+    @pytest.mark.asyncio
+    async def test_move_targeting_player_keeps_npc_in_scene(self):
+        gs = _make_gs()
+        guard = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = guard
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+
+        actor = _make_actor(_move_response_targeting("player"))
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
+
+        await resolver.resolve_npc_turns("Player waited.")
+
+        scene_uuids = [snpc.uuid for snpc in gs.current_scene.npcs_present]
+        assert _NPC_UUID_A in scene_uuids
+
 
 @allure.epic("NPC Interaction")
 @allure.feature("NPC turn resolution")
@@ -411,6 +470,7 @@ class TestBuildTurnPromptOpportunityWindow:
 
         assert "OPPORTUNITY:" in prompt
         assert "Most turns are routine" not in prompt
+        assert "Marcus" in prompt
 
     @allure.story("Opportunity window")
     @allure.title("Violent knowledge naming an absent NPC does not fire the clause")
