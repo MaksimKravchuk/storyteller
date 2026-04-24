@@ -127,6 +127,7 @@ async def main() -> None:
 
     admin = AdminServer(
         session_factory,
+        cfg,
         port=_ADMIN_PORT,
         token=os.getenv("ADMIN_TOKEN"),
     )

@@ -27,6 +27,7 @@ def _make_config() -> MagicMock:
     cfg.dramaturge_enabled = False
     cfg.openai_api_key = "openai-key"
     cfg.anthropic_api_key = "anthropic-key"
+    cfg.openrouter_api_key = "openrouter-key"
     return cfg
 
 
@@ -47,7 +48,11 @@ def test_create_engine_returns_game_engine_with_defaults() -> None:
     assert isinstance(engine, GameEngine)
     # Private attrs are part of this test's contract since factory is a narrow wrapper.
     assert engine._language == "English"
-    assert engine._api_keys == {"openai": "openai-key", "anthropic": "anthropic-key"}
+    assert engine._api_keys == {
+        "openai": "openai-key",
+        "anthropic": "anthropic-key",
+        "openrouter": "openrouter-key",
+    }
     assert engine._models.director is AI_MODELS.gpt5_4_mini
     assert engine._models.agent is AI_MODELS.gpt5_4_nano
     assert engine._models.narrator is AI_MODELS.gpt5_4_mini
@@ -117,3 +122,55 @@ async def test_create_engine_from_state_calls_restore(simple_setting) -> None:
 
     assert isinstance(engine, GameEngine)
     restore_mock.assert_awaited_once_with(saved_state, graph, [])
+
+
+@allure.story("create_engine")
+@allure.title("create_engine applies DB overrides and skips resolve_model_config for overridden roles")
+def test_create_engine_applies_overrides() -> None:
+    """When overrides are supplied, overridden roles bypass resolve_model_config."""
+    cfg = _make_config()
+    overrides = {
+        "narrator": AI_MODELS.claude_sonnet,
+        "director": AI_MODELS.claude_opus,
+    }
+    with patch(
+        "engine.factory.resolve_model_config",
+        side_effect=_resolver_side_effect,
+    ) as resolver:
+        engine = create_engine(cfg, overrides=overrides)
+
+    # Overridden roles come from the override dict directly.
+    assert engine._models.director is AI_MODELS.claude_opus
+    assert engine._models.narrator is AI_MODELS.claude_sonnet
+    # Unoverridden role still uses the resolver.
+    assert engine._models.agent is AI_MODELS.gpt5_4_nano
+    # Only the agent role called resolve_model_config.
+    assert resolver.call_count == 1
+    assert resolver.call_args_list[0].args[0] == "gpt-5.4-nano"
+
+
+@allure.story("create_engine_from_state")
+@allure.title("create_engine_from_state ignores the overrides pathway — restored games keep originals")
+@pytest.mark.asyncio
+async def test_create_engine_from_state_does_not_apply_overrides(simple_setting) -> None:
+    """Restore path must resolve from env only, never from overrides."""
+    cfg = _make_config()
+    graph = KnowledgeGraph()
+    from models.game_state import GameState
+
+    saved_state = GameState(setting=simple_setting, knowledge_graph=graph)
+
+    restore_mock = AsyncMock()
+    with (
+        patch(
+            "engine.factory.resolve_model_config",
+            side_effect=_resolver_side_effect,
+        ) as resolver,
+        patch.object(GameEngine, "restore_session", restore_mock),
+    ):
+        engine = await create_engine_from_state(cfg, saved_state, graph, [])
+
+    # Resolver called for every role (no overrides applied).
+    assert resolver.call_count == 3
+    assert engine._models.director is AI_MODELS.gpt5_4_mini
+    assert engine._models.narrator is AI_MODELS.gpt5_4_mini

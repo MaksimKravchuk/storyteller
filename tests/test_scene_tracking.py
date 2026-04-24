@@ -129,7 +129,7 @@ class TestAdminScenesRoute:
     def test_scenes_route_registered(self):
         from interfaces.admin import AdminServer
 
-        server = AdminServer(MagicMock(), port=0)
+        server = AdminServer(MagicMock(), MagicMock(), port=0)
         route_paths = []
         for route in server._app.router.routes():
             if hasattr(route, "resource"):

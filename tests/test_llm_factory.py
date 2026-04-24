@@ -9,6 +9,7 @@ from defaults.models import ModelConfig
 from llm.anthropic_client import AnthropicClient
 from llm.factory import create_llm_client
 from llm.openai_client import OpenAIClient
+from llm.openrouter_client import OpenRouterClient
 
 _DUMMY_KEY = "dummy"
 
@@ -75,3 +76,19 @@ class TestCreateLLMClient:
         config = ModelConfig(provider="openai", model_id="gpt-4")
         client = create_llm_client(config)
         assert client.temperature == pytest.approx(0.7)
+
+    @allure.story("Provider routing")
+    @allure.title("create_llm_client returns an OpenRouterClient when the provider is openrouter")
+    def test_openrouter_provider(self, _sdk_env: None) -> None:
+        config = ModelConfig(
+            provider="openrouter",
+            model_id="deepseek/deepseek-chat-v3.1",
+            temperature=0.4,
+            max_tokens=1024,
+        )
+        client = create_llm_client(config, api_key="or-key")
+        assert isinstance(client, OpenRouterClient)
+        assert client.model == "deepseek/deepseek-chat-v3.1"
+        assert client.api_key == "or-key"
+        assert client.temperature == pytest.approx(0.4)
+        assert client.max_tokens == 1024

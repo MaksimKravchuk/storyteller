@@ -10,12 +10,18 @@ from typing import Any, AsyncIterator
 
 from aiohttp import web
 
+from config import Config
 from db.engine import get_db
 from db.repository import GameRepository
 
 _HTTP_NOT_FOUND = 404
 _SESSION_ID_PARAM = "id"
 _DASHBOARD_HTML = Path(__file__).parent / "admin_dashboard.html"
+
+
+def get_cfg(request: web.Request) -> Config:
+    """Return the ``Config`` object stored on the admin app."""
+    return request.app["_cfg"]
 
 
 def _json_serial(unknown: Any) -> Any:
