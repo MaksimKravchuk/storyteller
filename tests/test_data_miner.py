@@ -9,7 +9,13 @@ import allure
 import pytest
 
 from cast.data_miner import DataMiner
-from cast.schemas.setting_response import SearchTermsResponse, SettingResponse
+from cast.schemas.setting_response import (
+    SearchTermsResponse,
+    SettingEvent,
+    SettingLocation,
+    SettingPerson,
+    SettingResponse,
+)
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeScope, KnowledgeSource
 from models.setting import Setting
@@ -41,9 +47,9 @@ def _full_setting_payload() -> SettingResponse:
         time_period="1480s",
         region="Tuscany",
         summary="The cradle of the Renaissance.",
-        key_persons=[{"name": "Lorenzo", "role": "ruler"}],
-        key_events=[{"name": "Pazzi conspiracy"}],
-        locations=[{"name": "Palazzo"}],
+        key_persons=[SettingPerson(name="Lorenzo", role="ruler")],
+        key_events=[SettingEvent(name="Pazzi conspiracy")],
+        locations=[SettingLocation(name="Palazzo")],
         traditions=["patronage"],
         technologies=["movable type"],
         social_structure="merchant republic",

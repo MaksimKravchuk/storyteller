@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from cast.npc_generator import NPCGenerator
-from cast.schemas.npc_response import NPCResponse
+from cast.schemas.npc_response import NPCAttributes, NPCResponse
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 
@@ -28,7 +28,7 @@ def _full_npc_payload(name: str) -> NPCResponse:
         personality_traits=["stern"],
         speech_style="gruff",
         knowledge_scope="city",
-        attributes={"strength": 7},
+        attributes=NPCAttributes(combat_skill=7),
         inventory=["sword"],
     )
 
@@ -64,7 +64,7 @@ class TestNPCGenerator:
         assert card.personality_traits == []
         assert card.speech_style == "neutral"
         assert card.knowledge_scope == "local"
-        assert card.attributes == {}
+        assert card.attributes == NPCAttributes().model_dump()
         assert card.inventory == []
 
     @allure.story("Location propagation")

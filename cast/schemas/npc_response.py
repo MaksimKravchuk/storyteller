@@ -5,6 +5,29 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
+class NPCAttributes(BaseModel):
+    """Fixed-key NPC skill/stat block the LLM fills in.
+
+    Strict-mode structured outputs reject free-form ``dict[str, int]``
+    because ``_StrictSchemaNormalizer`` only anchors
+    ``additionalProperties: false`` onto nodes that expose explicit
+    ``properties``. Enumerating the keys as typed fields gives the
+    normalizer something to clamp; the set mirrors the NPC-generator
+    prompt, which specifies a 0-10 scale.
+    """
+
+    education: int = Field(default=0, ge=0, le=10)
+    social_status: int = Field(default=0, ge=0, le=10)
+    friendliness: int = Field(default=0, ge=0, le=10)
+    suspicion: int = Field(default=0, ge=0, le=10)
+    combat_skill: int = Field(default=0, ge=0, le=10)
+    persuasion_skill: int = Field(default=0, ge=0, le=10)
+    deception_skill: int = Field(default=0, ge=0, le=10)
+    intimidation_skill: int = Field(default=0, ge=0, le=10)
+    perception_skill: int = Field(default=0, ge=0, le=10)
+    stealth_skill: int = Field(default=0, ge=0, le=10)
+
+
 class NPCResponse(BaseModel):
     """Typed view of the fields the LLM produces for a single NPC card.
 
@@ -22,5 +45,5 @@ class NPCResponse(BaseModel):
     personality_traits: list[str] = Field(default_factory=list)
     speech_style: str = "neutral"
     knowledge_scope: str = "local"
-    attributes: dict[str, int] = Field(default_factory=dict)
+    attributes: NPCAttributes = Field(default_factory=NPCAttributes)
     inventory: list[str] = Field(default_factory=list)
