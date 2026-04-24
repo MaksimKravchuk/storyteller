@@ -51,6 +51,14 @@ _OPPORTUNITY_TEMPLATE = (
     "Name that obstacle in your action description if you choose to wait."
 )
 
+TACTICAL_HOSTILE_CLAUSE = (
+    "TACTICAL CHOICE: You have a hostile goal. Pick your approach deliberately:\n"
+    "  STEALTH — close in unseen; use this when your target is not watching you.\n"
+    "  MOVE    — reposition to a better angle or closer range before committing.\n"
+    "  ATTACK  — direct strike; use this only when you have a clear opening.\n"
+    "Commit to one action. Do not hedge."
+)
+
 
 # Full-token boundary pattern: uses [^a-zA-Z] instead of \b so that
 # "kill" fires on "murderous_enemy" (underscore-separated tokens) while
