@@ -37,10 +37,23 @@ NPC_GENERATOR_SYSTEM = PromptTemplate(
                 "Fill every human-readable text field (name, biography, appearance, "
                 "short_descriptor, occupation, personality_traits, speech_style, "
                 "inventory) in {language}. Keep the JSON keys and enum values "
-                "(knowledge_scope, attributes dict keys) in English — they are "
-                "machine-read."
+                "(knowledge_scope, attributes dict keys, goal.kind) in English — "
+                "they are machine-read."
             ),
             required_vars=["language"],
+        ),
+        PromptSection(
+            name="standing_intent",
+            template=(
+                "Most people do not walk around with a standing vendetta or a "
+                "mission. Default to ``goal: null``. Only attach a goal block "
+                "when the biography you just wrote contains BOTH (a) a named "
+                "antagonist or ward who is already in the registered NPC list, "
+                "and (b) an active intent verb — vow of vengeance, sworn duty "
+                "to protect, hunt for a debtor. Do not invent a target who is "
+                "not in the candidate list. Do not turn every hard-luck "
+                "backstory into a vendetta — most hard luck just is."
+            ),
         ),
     ]
 )
@@ -80,7 +93,14 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 '    "perception_skill": 0-10, // 0=oblivious, 5=average, 10=nothing escapes them\n'
                 '    "stealth_skill": 0-10     // 0=clumsy, 5=average, 10=shadow\n'
                 "  }},\n"
-                '  "inventory": ["items they carry or sell"]\n'
+                '  "inventory": ["items they carry or sell"],\n'
+                '  "goal": null\n'
+                "  // OR a standing-intent block — see system prompt restraint clause:\n"
+                '  // "goal": {{\n'
+                '  //   "kind": "kill|pursue|protect",\n'
+                '  //   "description": "1 sentence of standing intent",\n'
+                '  //   "target_name": "Existing NPC Name"\n'
+                "  // }}\n"
                 "}}"
             ),
             required_vars=["npc_request"],
@@ -93,6 +113,15 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 "{forbidden_names}"
             ),
             required_vars=["forbidden_names"],
+        ),
+        PromptSection(
+            name="candidate_targets",
+            template=(
+                "If — and only if — you attach a goal block, ``target_name`` MUST exactly "
+                "match one of these registered NPCs (case-insensitive). A target outside "
+                "this list will be silently dropped:\n{candidate_targets}"
+            ),
+            required_vars=["candidate_targets"],
         ),
     ]
 )
