@@ -28,24 +28,30 @@ def from_aggregate(payload: dict, engine_models: dict[str, str]) -> SetScore:
 
     ``engine_models`` is passed in because aggregate files do not carry it
     today (only per-iteration JSONs do); callers source it from a sibling
-    iter file when available.
+    iter file when available. Required payload keys (``iteration_totals``,
+    ``total_base``) raise :class:`KeyError` if missing — silently
+    substituting zero would mask a malformed archive as a bad score.
     """
-    totals = tuple(payload.get("iteration_totals", []))
+    totals = tuple(payload["iteration_totals"])
     return SetScore(
         iterations=payload.get("iterations", len(totals)),
-        total_base=payload.get("total_base", 0),
+        total_base=payload["total_base"],
         iteration_totals=totals,
         engine_models=engine_models,
     )
 
 
 def from_iters(iter_payloads: list[dict]) -> SetScore:
-    """Build a :class:`SetScore` from one or more per-iteration JSON payloads."""
-    totals = tuple(payload.get("total_awarded", 0) for payload in iter_payloads)
+    """Build a :class:`SetScore` from one or more per-iteration JSON payloads.
+
+    Required keys (``total_awarded`` per iter, ``total_base`` on the head)
+    raise :class:`KeyError` rather than silently scoring 0.
+    """
+    totals = tuple(payload["total_awarded"] for payload in iter_payloads)
     head = iter_payloads[0]
     return SetScore(
         iterations=len(iter_payloads),
-        total_base=head.get("total_base", 0),
+        total_base=head["total_base"],
         iteration_totals=totals,
         engine_models=head.get("engine_models", {}),
     )
