@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import os
 
+from cast._npc_active_goal import select_active_goal
 from knowledge.node import KnowledgeNode
 from loguru import logger
-from models.goal import Goal, GoalStatus
+from models.goal import Goal
 from models.npc_card import NPCCard
 
 _MEMORY_TEXT_MAX_CHARS = 200
@@ -67,12 +68,13 @@ def _goal_section_vars(goal: Goal, target_name: str | None) -> dict[str, str]:
 def goal_prompt_vars(npc: NPCCard, target_name: str | None) -> dict[str, str] | None:
     """Return Actor-prompt vars for the NPC's active goal, or ``None``.
 
-    Returns ``None`` when the NPC has no goal or its goal isn't active —
-    callers skip ``set_context`` in that case so the optional goal
-    PromptSection is omitted from the rendered system prompt.
+    Tactical goal preferred over life — see :func:`select_active_goal`.
+    Returns ``None`` when neither tier has an ACTIVE goal so the
+    optional goal PromptSection is omitted from the rendered system
+    prompt.
     """
-    goal = npc.current_goal
-    if goal is None or goal.status is not GoalStatus.ACTIVE:
+    goal = select_active_goal(npc)
+    if goal is None:
         return None
     return _goal_section_vars(goal, target_name)
 

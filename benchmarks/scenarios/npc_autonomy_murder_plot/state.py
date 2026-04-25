@@ -63,7 +63,7 @@ def _make_npcs() -> tuple[NPCCard, NPCCard]:
     )
     brutus.uuid = BRUTUS_UUID
     brutus.relationships[MARCUS_UUID] = "murderous_enemy"
-    brutus.current_goal = Goal(
+    brutus.life_goal = Goal(
         kind=GoalKind.KILL,
         description="Avenge brother by killing Marcus today, before he leaves the taberna.",
         target_uuid=MARCUS_UUID,

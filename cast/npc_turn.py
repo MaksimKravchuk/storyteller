@@ -22,7 +22,7 @@ from cast.dice import (
     roll_contest,
 )
 from cast.director_witness import WitnessedAggression, is_guard_occupation
-from cast.npc_goal_resolution import resolve_actions_aftermath
+from cast.npc_goal_resolution import resolve_actions_aftermath, resolve_goal_target_name
 from cast.npc_opportunity import TACTICAL_HOSTILE_CLAUSE, get_opportunity_clause
 from cast.wait_detection import INCAPACITATING_STATES
 from models.game_state import GameState
@@ -113,19 +113,6 @@ def _roll_npc_contest(
 
     record_npc_contest_event(contest_roll, npc, action_type, target_name)
     return contest_roll
-
-
-def _resolve_goal_target_name(npc: Any, game_state: GameState) -> str | None:
-    """Resolve an NPC's standing goal target UUID to its display name.
-
-    Returned name flows into the Actor's context so the prompt can
-    address the target by name (the goal stores only a UUID).
-    """
-    goal = getattr(npc, "current_goal", None)
-    if goal is None or not goal.target_uuid:
-        return None
-    target_npc = game_state.npcs.get(goal.target_uuid)
-    return target_npc.name if target_npc else None
 
 
 def _apply_scene_mutation(
@@ -372,7 +359,7 @@ class NPCTurnResolver:
                     "npc": npc,
                     "game_state": self._gs,
                     "is_npc_turn": True,
-                    "goal_target_name": _resolve_goal_target_name(npc, self._gs),
+                    "goal_target_name": resolve_goal_target_name(npc, self._gs),
                 },
             )
         except Exception:

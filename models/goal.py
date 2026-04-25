@@ -1,9 +1,12 @@
-"""An NPC's persistent autonomous goal.
+"""An NPC's autonomous goal — life-tier or tactical-tier.
 
-NPCs that hold a ``Goal`` carry it across turns: the Actor sees its
-description and progress, ``cast.npc_turn`` updates ``turns_pursued``
-and ``last_attempted_action`` after each tick, and goal completion
-flips both this object's status and the matching ``WorldThread``.
+NPCs carry up to two goals: a long-lived ``life_goal`` driven by
+biography or world events (vengeance, ambition) and an ephemeral
+``tactical_goal`` reacting to immediate stimuli (defend, eat, errand).
+Both are :class:`Goal` instances differing only in :class:`GoalScope`.
+The Actor sees the active goal in its prompt; ``cast.npc_turn`` advances
+``turns_pursued`` and ``last_attempted_action`` after each tick; goal
+completion flips both status and any matching ``WorldThread``.
 
 Shape: pydantic ``BaseModel`` with string enums so values round-trip
 through JSON for persistence.
@@ -18,22 +21,49 @@ from pydantic import BaseModel, Field
 _PROGRESS_NOTE_LIMIT = 6
 
 
+class GoalScope(str, Enum):
+    """Whether a goal is value-driven (life) or situation-driven (tactical).
+
+    ``LIFE`` goals persist across many scenes and are mutated only by
+    completion or by the World Chronicler. ``TACTICAL`` goals live a
+    handful of turns: a deterministic Director hook spawns them in
+    response to player actions or when an NPC encounters their
+    life-goal target, and a TTL retires them.
+    """
+
+    LIFE = "life"
+    TACTICAL = "tactical"
+
+
 class GoalKind(str, Enum):
-    """Coarse classification of what the NPC is trying to do."""
+    """Coarse classification of what the NPC is trying to do.
+
+    The first five kinds (KILL, PURSUE, ACQUIRE, PROTECT, FLEE) are the
+    historical life-tier set; the rest are tactical-tier additions used
+    by the deterministic generator and may also be assigned by an Actor
+    as a per-turn intent.
+    """
 
     KILL = "kill"
     PURSUE = "pursue"
     ACQUIRE = "acquire"
     PROTECT = "protect"
     FLEE = "flee"
+    DEFEND = "defend"
+    EAT = "eat"
+    ERRAND = "errand"
+    REST = "rest"
+    FLEE_SCENE = "flee_scene"
 
 
 class GoalStatus(str, Enum):
     """Lifecycle states of an NPC goal.
 
-    ``BLOCKED`` is reserved for future Actor-driven goal mutation; this
-    module never sets it. ``ABANDONED`` is set externally when a target
-    becomes unreachable (e.g. the actor moves to another city).
+    ``BLOCKED`` is set when a pursuer cannot physically reach the target
+    (jail, exile). ``ABANDONED`` is set when circumstances make the goal
+    moot (target left the city, reconciled). The World Chronicler emits
+    both via ``GoalUpdate``; tactical goals also auto-ABANDON when their
+    TTL expires.
     """
 
     ACTIVE = "active"
@@ -50,6 +80,7 @@ class Goal(BaseModel):
     the oldest, so the prompt budget stays predictable on long sessions.
     """
 
+    scope: GoalScope = GoalScope.LIFE
     kind: GoalKind
     description: str
     target_uuid: str | None = None

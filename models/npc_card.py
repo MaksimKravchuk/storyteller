@@ -55,7 +55,8 @@ class NPCCard(Character):
     physical_status: str = "healthy"
     hostility_level: int = 0
     recent_hostile_actions: list[dict[str, str]] = []
-    current_goal: Goal | None = None
+    life_goal: Goal | None = None
+    tactical_goal: Goal | None = None
 
     def label_for_player(self, game_state: GameState, role_fallback: str) -> str:
         """Return the primary label the player should see for this NPC.

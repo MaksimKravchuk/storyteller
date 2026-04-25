@@ -43,13 +43,13 @@ class TestGoalProgress:
         actor = NPCCard(
             name="Brutus",
             occupation="legionary",
-            current_goal=Goal(kind=GoalKind.KILL, description="x", target_uuid="t"),
+            life_goal=Goal(kind=GoalKind.KILL, description="x", target_uuid="t"),
         )
         update_goal_progress(actor, "STEALTH", "moved to the shadows")
-        assert actor.current_goal is not None
-        assert actor.current_goal.turns_pursued == 1
-        assert actor.current_goal.last_attempted_action == "STEALTH"
-        assert "STEALTH: moved to the shadows" in actor.current_goal.progress_notes
+        assert actor.life_goal is not None
+        assert actor.life_goal.turns_pursued == 1
+        assert actor.life_goal.last_attempted_action == "STEALTH"
+        assert "STEALTH: moved to the shadows" in actor.life_goal.progress_notes
 
     @allure.story("Goal progression")
     @allure.title("Goal-less or completed NPC sees update_goal_progress as a no-op")
@@ -57,7 +57,7 @@ class TestGoalProgress:
         actor = NPCCard(
             name="Brutus",
             occupation="legionary",
-            current_goal=Goal(
+            life_goal=Goal(
                 kind=GoalKind.KILL,
                 description="x",
                 target_uuid="t",
@@ -65,32 +65,32 @@ class TestGoalProgress:
             ),
         )
         update_goal_progress(actor, "ATTACK", "stabbed")
-        assert actor.current_goal is not None
-        assert actor.current_goal.turns_pursued == 0
+        assert actor.life_goal is not None
+        assert actor.life_goal.turns_pursued == 0
 
     @allure.story("Goal completion")
     @allure.title("KILL goal flips to COMPLETED and matching thread to resolved when target dies")
     def test_kill_goal_completes_when_target_dies(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         seed_kill_thread(state, actor, target)
         target.physical_status = "dead"
 
         maybe_complete_kill_goal(actor, target, state)
 
-        assert actor.current_goal.status is GoalStatus.COMPLETED
+        assert actor.life_goal.status is GoalStatus.COMPLETED
         assert state.world_state.threads[0].status == "resolved"
 
     @allure.story("Goal completion")
     @allure.title("Live target leaves KILL goal active and matching thread open")
     def test_kill_goal_stays_active_when_target_alive(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         seed_kill_thread(state, actor, target)
 
         maybe_complete_kill_goal(actor, target, state)
 
-        assert actor.current_goal.status is GoalStatus.ACTIVE
+        assert actor.life_goal.status is GoalStatus.ACTIVE
         assert state.world_state.threads[0].status == "open"
 
 
@@ -104,7 +104,7 @@ class TestResolveActionsAftermath:
     @allure.title("Lethal ATTACK kills target, persists memory, completes goal, closes thread")
     async def test_lethal_attack_full_pipeline(self) -> None:
         state, actor, target, location = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         seed_kill_thread(state, actor, target)
         memory = RecordingMemoryManager()
 
@@ -124,7 +124,7 @@ class TestResolveActionsAftermath:
         )
 
         assert target.physical_status == "dead"
-        assert actor.current_goal.status is GoalStatus.COMPLETED
+        assert actor.life_goal.status is GoalStatus.COMPLETED
         assert state.world_state.threads[0].status == "resolved"
         assert len(memory.calls) == 1
         recorded = memory.calls[0]
@@ -139,7 +139,7 @@ class TestResolveActionsAftermath:
     @allure.title("STEALTH does not wound the target but still records goal progress")
     async def test_stealth_records_progress_only(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         memory = RecordingMemoryManager()
 
         stealth_roll = ContestRoll(
@@ -167,8 +167,8 @@ class TestResolveActionsAftermath:
         )
 
         assert target.physical_status == "healthy"
-        assert actor.current_goal.status is GoalStatus.ACTIVE
-        assert actor.current_goal.last_attempted_action == "STEALTH"
+        assert actor.life_goal.status is GoalStatus.ACTIVE
+        assert actor.life_goal.last_attempted_action == "STEALTH"
         assert memory.calls == []
 
     @pytest.mark.asyncio
@@ -176,7 +176,7 @@ class TestResolveActionsAftermath:
     @allure.title("ActionAftermath bundles all fields and an empty-target run still ticks goal progress")
     async def test_aftermath_dataclass_fields_round_trip(self) -> None:
         state, actor, _, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid="missing")
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid="missing")
         memory = RecordingMemoryManager()
 
         await resolve_actions_aftermath(
@@ -194,8 +194,8 @@ class TestResolveActionsAftermath:
             memory,
         )
 
-        assert actor.current_goal.turns_pursued == 1
-        assert actor.current_goal.last_attempted_action == "IDLE"
+        assert actor.life_goal.turns_pursued == 1
+        assert actor.life_goal.last_attempted_action == "IDLE"
         assert memory.calls == []
 
         bundle = ActionAftermath(

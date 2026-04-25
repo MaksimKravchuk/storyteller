@@ -1,9 +1,13 @@
-"""Off-scene goal progression — the world breathes when the player isn't watching.
+"""Off-scene life-goal progression — the world breathes when the player isn't watching.
 
 When the game clock advances by a meaningful amount (>= ``_MIN_HOURS``),
 :class:`NPCBackgroundTicker` walks every NPC with an active
-:class:`~models.goal.Goal` who is **not** present in the current scene.
-For each:
+:class:`~models.goal.Goal` of scope ``LIFE`` who is **not** present in
+the current scene. Tactical goals are intentionally skipped — they live
+only a handful of turns and exist to drive in-scene reactions, so
+ticking them between scenes would be both noisy and out of character
+(a "DEFEND" goal makes no sense across an off-scene hour). For each
+eligible NPC:
 
 - If their target is co-located with them at their off-scene location,
   one contest is rolled and the outcome is applied via the same
@@ -55,14 +59,14 @@ def _is_eligible(npc: NPCCard, present_uuids: set[str]) -> bool:
         return False
     if (npc.physical_status or "").lower() in _NPC_SKIP_STATUSES:
         return False
-    goal = npc.current_goal
+    goal = npc.life_goal
     if goal is None or goal.status is not GoalStatus.ACTIVE:
         return False
     return goal.kind in _GOAL_KIND_TO_CONTEST
 
 
 def _co_located_target(npc: NPCCard, game_state: GameState) -> NPCCard | None:
-    goal = npc.current_goal
+    goal = npc.life_goal
     if goal is None or not goal.target_uuid:
         return None
     target = game_state.npcs.get(goal.target_uuid)
@@ -83,7 +87,7 @@ def _roll_offscreen_contest(actor: NPCCard, target: NPCCard, contest_type: Conte
 
 
 def _record_offscreen_progress(npc: NPCCard, hours_advanced: float, note_suffix: str) -> None:
-    goal = npc.current_goal
+    goal = npc.life_goal
     if goal is None:
         return
     goal.turns_pursued += 1
@@ -108,7 +112,7 @@ class NPCBackgroundTicker:
         """
         if hours_advanced < _MIN_HOURS:
             return
-        if not any(npc.current_goal for npc in self._gs.npcs.values()):
+        if not any(npc.life_goal for npc in self._gs.npcs.values()):
             return
         present = _scene_present_uuids(self._gs)
         eligible = [npc for npc in self._gs.npcs.values() if _is_eligible(npc, present)]
@@ -128,7 +132,7 @@ class NPCBackgroundTicker:
         await self._resolve_offscreen_contest(actor, target, hours_advanced)
 
     async def _resolve_offscreen_contest(self, actor: NPCCard, target: NPCCard, hours_advanced: float) -> None:
-        goal = actor.current_goal
+        goal = actor.life_goal
         if goal is None:
             return
         contest_type = _GOAL_KIND_TO_CONTEST.get(goal.kind)

@@ -43,13 +43,13 @@ class TestNPCBackgroundTicker:
     @allure.title("Tick is a no-op when the clock barely moved")
     async def test_short_advance_no_op(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         memory = RecordingMemoryManager()
 
         ticker = NPCBackgroundTicker(state, memory)
         await ticker.tick(hours_advanced=0.5)
 
-        assert actor.current_goal.turns_pursued == 0
+        assert actor.life_goal.turns_pursued == 0
         assert memory.calls == []
 
     @pytest.mark.asyncio
@@ -57,7 +57,7 @@ class TestNPCBackgroundTicker:
     @allure.title("Tick skips a dead goal-holder so corpses don't keep stalking off-scene")
     async def test_dead_actor_skipped(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         _move_actor_offscene(state, actor, target)
         actor.physical_status = "dead"
         memory = RecordingMemoryManager()
@@ -66,7 +66,7 @@ class TestNPCBackgroundTicker:
         await ticker.tick(hours_advanced=8.0)
 
         assert target.physical_status == "healthy"
-        assert actor.current_goal.turns_pursued == 0
+        assert actor.life_goal.turns_pursued == 0
         assert memory.calls == []
 
     @pytest.mark.asyncio
@@ -74,13 +74,13 @@ class TestNPCBackgroundTicker:
     @allure.title("Tick skips on-scene NPCs — they get their normal NPC turn instead")
     async def test_on_scene_npcs_skipped(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         memory = RecordingMemoryManager()
 
         ticker = NPCBackgroundTicker(state, memory)
         await ticker.tick(hours_advanced=8.0)
 
-        assert actor.current_goal.turns_pursued == 0
+        assert actor.life_goal.turns_pursued == 0
         assert memory.calls == []
 
     @pytest.mark.asyncio
@@ -88,7 +88,7 @@ class TestNPCBackgroundTicker:
     @allure.title("Off-scene actor with co-located target rolls a contest and persists the outcome")
     async def test_co_located_off_scene_pair_resolves(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         seed_kill_thread(state, actor, target)
         backroom = _move_actor_offscene(state, actor, target)
         memory = RecordingMemoryManager()
@@ -106,7 +106,7 @@ class TestNPCBackgroundTicker:
             await ticker.tick(hours_advanced=8.0)
 
         assert target.physical_status == "dead"
-        assert actor.current_goal.status is GoalStatus.COMPLETED
+        assert actor.life_goal.status is GoalStatus.COMPLETED
         assert state.world_state.threads[0].status == "resolved"
         assert len(memory.calls) == 1
         assert memory.calls[0]["location_id"] == backroom.uuid
@@ -116,7 +116,7 @@ class TestNPCBackgroundTicker:
     @allure.title("Off-scene actor without target nearby just records progress and ticks turns")
     async def test_no_target_nearby_records_progress(self) -> None:
         state, actor, target, _ = make_actor_target_state()
-        actor.current_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=target.uuid)
         far_off = Location(name="Docks", description="", location_type="building")
         state.locations[far_off.uuid] = far_off
         actor.location_id = far_off.uuid
@@ -132,7 +132,7 @@ class TestNPCBackgroundTicker:
         ticker = NPCBackgroundTicker(state, memory)
         await ticker.tick(hours_advanced=8.0)
 
-        assert actor.current_goal.turns_pursued == 1
-        assert any("offscreen wait" in note for note in actor.current_goal.progress_notes)
+        assert actor.life_goal.turns_pursued == 1
+        assert any("offscreen wait" in note for note in actor.life_goal.progress_notes)
         assert target.physical_status == "healthy"
         assert memory.calls == []
