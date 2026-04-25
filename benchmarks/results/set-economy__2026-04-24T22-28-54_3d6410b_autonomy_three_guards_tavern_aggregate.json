@@ -1,0 +1,45 @@
+{
+  "element_pass_rates": [
+    {
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "iterations": 3,
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "passes": 3
+    },
+    {
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "iterations": 3,
+      "label": "Aulus dialogue carries a contest roll",
+      "passes": 3
+    },
+    {
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "iterations": 3,
+      "label": "Bystander moods shift from neutral",
+      "passes": 3
+    },
+    {
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "iterations": 3,
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "passes": 3
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "iteration_totals": [
+    9,
+    10,
+    10
+  ],
+  "iterations": 3,
+  "max_awarded": 10,
+  "mean_awarded": 9.666666666666666,
+  "min_awarded": 9,
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "total_base": 10
+}

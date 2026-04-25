@@ -46,6 +46,8 @@ def _engine_model_summary(cfg: Config) -> dict[str, str]:
         "director_model": cfg.director_model,
         "agent_model": cfg.agent_model,
         "narrator_model": cfg.narrator_model,
+        "dramaturge_model": cfg.dramaturge_model,
+        "dramaturge_enabled": str(cfg.dramaturge_enabled).lower(),
     }
 
 

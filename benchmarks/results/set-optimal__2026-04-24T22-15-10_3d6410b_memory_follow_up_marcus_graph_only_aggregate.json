@@ -1,0 +1,59 @@
+{
+  "element_pass_rates": [
+    {
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn1",
+      "iterations": 3,
+      "label": "Marcus replies on recall turn (loaf)",
+      "passes": 3
+    },
+    {
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn2",
+      "iterations": 3,
+      "label": "Marcus replies on recall turn (suspect)",
+      "passes": 3
+    },
+    {
+      "base_value": 3,
+      "element_id": "marcus_recalls_stolen_loaf",
+      "iterations": 3,
+      "label": "Marcus's reply references the stolen loaf",
+      "passes": 3
+    },
+    {
+      "base_value": 3,
+      "element_id": "marcus_names_suspect",
+      "iterations": 3,
+      "label": "Marcus names or clearly implies Gaius as the suspect",
+      "passes": 3
+    },
+    {
+      "base_value": 1,
+      "element_id": "game_clock_advanced",
+      "iterations": 3,
+      "label": "Game clock advances across the session",
+      "passes": 3
+    },
+    {
+      "base_value": 1,
+      "element_id": "marcus_history_grew",
+      "iterations": 3,
+      "label": "Marcus's conversation history grew",
+      "passes": 3
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "iteration_totals": [
+    10,
+    10,
+    10
+  ],
+  "iterations": 3,
+  "max_awarded": 10,
+  "mean_awarded": 10.0,
+  "min_awarded": 10,
+  "scenario_id": "memory_follow_up_marcus_graph_only",
+  "scenario_label": "Memory follow-up — Marcus recalls via graph only (no conversation_history seed)",
+  "total_base": 10
+}

@@ -1,0 +1,248 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 29819,
+      "index": 0,
+      "narration": "You let your gaze wander across the common room. **Aulus** is already scanning the space with a practiced eye, registering the quiet patrons and your companions gathered by the fire. **Bassus** does the same, his attention shifting between the doors and the scattered drinkers while he keeps an ear on the ongoing conversation. Near the shadows, **Cato** rests a hand casually on his sword pommel, studying the dim corners with slow deliberation.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Scanning the room with practiced eyes, noting the quiet patrons and my comrades by the fire.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Scan the room with a practiced eye, noting the patrons and exits while keeping an ear on my comrades' conversation.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Scan the dim corners of the common room, hand resting casually on the pommel of my sword.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 45039,
+      "index": 1,
+      "narration": "",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 8+0 vs target 9+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "*Catches your fist mid-swing, twisting your arm sharply as you stagger off-balance.* You dare strike a soldier of Rome? *Slams you face-first against the tavern wall, grinding your cheek into the rough timber with an armored forearm at your neck.*"
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Backhands the player across the face with a gauntleted hand, then shoves them hard against the wall, pinning them with an iron grip on their tunic.",
+            "action_type": "ATTACK",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Draws my short sword in a swift, practiced motion, stepping forward to flank the player while keeping my blade low and ready. 'Stand down, fool. Drop to your knees, now, or I'll put steel in your belly.'",
+            "action_type": "ATTACK",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Steps forward to block the tavern door, hand resting on the pommel of my short sword while keeping a watchful eye on the player's movements. 'You're not leaving this room until we're done with you.'",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "e9796398-bac0-4aae-b09b-d1b552240f3a",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 78.65297512500547,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus [ATTACK] and Cato [INTIMIDATE] both acted",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 8+0 vs target 9+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → threatened",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3586,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus [ATTACK]: Draws my short sword in a swift, practiced motion, stepping forward to flank the player while keeping my blade low and ready.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws his sword and flanks the player in a threatening combat stance, and Cato physically blocks the exit with hand on weapon, both constituting physical intervention beyond mere shouting.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2648,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus [ATTACK]: Draws my short sword in a swift, practiced motion, stepping forward to flank the player while keeping my blade low and ready. 'Stand down, fool. Drop to your knees, now, or I'll put steel in your belly.'",
+          "quote_verified": true,
+          "reasoning": "Bassus draws his sword and threatens to attack the player, while Cato blocks the exit and threatens detention.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1089,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Draws my short sword in a swift, practiced motion, stepping forward to flank the player while keeping my blade low and ready.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws a weapon (short sword) against the player and steps forward in a threatening combat stance, which constitutes physical intervention beyond mere shouting.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1432,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus [ATTACK]: Draws my short sword in a swift, practiced motion, stepping forward to flank the player while keeping my blade low and ready.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws a weapon against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1054,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus [ATTACK]: Draws my short sword in a swift, practiced motion, stepping forward to flank the player while keeping my blade low and ready.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws a sword and steps forward to flank the player, which is physical intervention.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1284,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus [ATTACK]: Draws my short sword in a swift, practiced motion, stepping forward to flank the player while keeping my blade low and ready.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws a short sword and steps forward to flank the player with the blade ready, which is genuine physical intervention beyond shouting.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:45:56.486079+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}

@@ -1,0 +1,253 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 25877,
+      "index": 0,
+      "narration": "You let your gaze travel across the tavern. Your three comrades are doing the same — each with a practiced eye. Aulus grunts and turns back to the group. Bassus marks the patrons and exits while he keeps an ear on the conversation. Cato’s attention lingers on the shadowed",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Scan the room with a practiced eye, noting the patrons and exits, then turn back to my comrades with a grunt.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Scan the room with a practiced eye, noting the patrons and exits while keeping an ear on my comrades' conversation.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Scans the room, eyes lingering on shadowed corners and unfamiliar faces while keeping half an ear on my comrades' conversation.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 54054,
+      "index": 1,
+      "narration": "",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 12+0 vs target 2+5 → actor_succeeds",
+            "npc_name": "Aulus",
+            "response": "*Staggering back from the unexpected blow, clutching a bleeding nose* You'll regret that, you bastard!"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*Steps into the punch, catching your wrist and twisting it aside* Think you can assault a legionary and walk away? *Drives a knee toward your gut*"
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Staggering back with a snarl, I draw my short sword and shout to my comrades: 'Seize this madman! Assaulting an officer!'",
+            "action_type": "ATTACK",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I take two quick steps sideways to flank the player, drawing my own gladius in a smooth motion and pointing it at their chest, my voice low and dangerous: 'Drop to your knees. Now. Or you'll bleed out on this floor.' My eyes flick to Aulus, checking his position, ready to coordinate.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I slam my wine cup down on the nearest table and draw my short sword, moving to cut off the player's retreat toward the door while keeping my blade low and ready.",
+            "action_type": "ATTACK",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "5fde9398-6e66-4c71-99ea-7742122cebf5",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 82.85602145898156,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus [INTIMIDATE] and Cato [ATTACK] both acted",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 12+0 vs target 2+5 → actor_succeeds",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → hostile",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2882,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus [INTIMIDATE]: I take two quick steps sideways to flank the player, drawing my own gladius in a smooth motion and pointing it at their chest",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato physically intervene: Bassus draws his gladius and flanks the player, while Cato physically restrains the player's wrist and attacks, then draws his sword to cut off retreat.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2266,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Steps into the punch, catching your wrist and twisting it aside",
+          "quote_verified": true,
+          "reasoning": "Both guards take physical intervention actions including drawing weapons, attempting restraint, and positioning to detain the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1991,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Cato says: *Steps into the punch, catching your wrist and twisting it aside* Think you can assault a legionary and walk away? *Drives a knee toward your gut*\nAulus [ATTACK]: Staggering back with a snarl, I draw my short sword and shout to my comrades: 'Seize this madman! Assaulting an officer!'\nBassus [INTIMIDATE]: I take two quick steps sideways to flank the player, drawing my own gladius in a smooth motion and pointing it at their chest",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Cato catches and twists the player's wrist while driving a knee toward their gut, and Bassus draws his gladius and points it at the player's chest while positioning to flank them.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1966,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Cato says: *Steps into the punch, catching your wrist and twisting it aside* Think you can assault a legionary and walk away? *Drives a knee toward your gut*",
+          "quote_verified": true,
+          "reasoning": "Both bystanders physically intervene and draw weapons against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1216,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus [INTIMIDATE]: I take two quick steps sideways to flank the player, drawing my own gladius in a smooth motion and pointing it at their chest, my voice low and dangerous: 'Drop to your knees. Now. Or you'll bleed out on this floor.'",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both physically intervene by drawing weapons and moving to restrain or cut off the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2292,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Cato says: *Steps into the punch, catching your wrist and twisting it aside* Think you can assault a legionary and walk away? *Drives a knee toward your gut*",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both take physical hostile actions against the player, including drawing weapons and attacking/controlling movement.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 1,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:47:15.141916+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}

@@ -1,0 +1,45 @@
+{
+  "element_pass_rates": [
+    {
+      "base_value": 3,
+      "element_id": "clash_occurred",
+      "iterations": 3,
+      "label": "Brutus autonomously clashes with Marcus (attempt, any outcome)",
+      "passes": 0
+    },
+    {
+      "base_value": 3,
+      "element_id": "outcome_recorded_in_world_facts",
+      "iterations": 3,
+      "label": "Clash outcome lands in the knowledge graph",
+      "passes": 0
+    },
+    {
+      "base_value": 2,
+      "element_id": "marcus_killed",
+      "iterations": 3,
+      "label": "Marcus is killed (lethal resolution bonus)",
+      "passes": 0
+    },
+    {
+      "base_value": 2,
+      "element_id": "narration_describes_clash",
+      "iterations": 3,
+      "label": "Narration describes Brutus clashing with Marcus (any outcome)",
+      "passes": 0
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "iteration_totals": [
+    0,
+    0,
+    0
+  ],
+  "iterations": 3,
+  "max_awarded": 0,
+  "mean_awarded": 0.0,
+  "min_awarded": 0,
+  "scenario_id": "npc_autonomy_murder_plot",
+  "scenario_label": "NPC autonomy — Brutus plots to murder Marcus while the player waits",
+  "total_base": 10
+}

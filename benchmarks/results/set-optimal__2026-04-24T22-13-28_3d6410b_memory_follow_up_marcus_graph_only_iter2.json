@@ -1,0 +1,347 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 26416,
+      "index": 0,
+      "narration": "You offer Marcus a warm greeting. He looks up with a tired smile and wipes floured hands across his apron, releasing a weary sigh.\n\n\"Ah, hello there. Not the best day, I'm afraid. Someone made off with a loaf from my stall yesterday.\" He dusts off his apron. \"Business is... well, it's been better, truth be told.\"",
+      "player_action": "greet Marcus warmly",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*Wipes flour-covered hands on apron with a weary sigh* Ah, hello there. Not the best day, I'm afraid. Someone made off with a loaf from my stall yesterday."
+          }
+        ],
+        "intent": "The player wants to greet Marcus warmly.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Looks up with a tired smile, dusting flour from my apron. 'Ah, good day to you. Business is... well, it's been better, truth be told.'",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 38630,
+      "index": 1,
+      "narration": "You ask Marcus about the stolen bread he mentioned yesterday.\n\nMarcus looks up from arranging the loaves, his expression worried, and wipes floury hands on his apron. He shifts uncomfortably, glancing toward the fountain. \"Well... I was measuring flour, and when I turned back, it was gone. Just vanished. I... I have my suspicions about that Gaius, the one with the scar who always hangs about. But I've no proof",
+      "player_action": "ask Marcus about the stolen bread he told me about yesterday",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 11+0 vs target 8+0 → actor_succeeds",
+            "npc_name": "Marcus",
+            "response": "*Shifts weight uncomfortably, glancing toward the fountain* Well... I was measuring flour, and when I turned back, it was gone. Just vanished. I... I have my suspicions about that Gaius, the one with the scar who always hangs about. But I've no proof, and accusing a man without it... *trails off, muttering* Bad for business, bad for business."
+          }
+        ],
+        "intent": "Ask Marcus about the stolen bread he mentioned yesterday.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Looks up from arranging loaves with a worried expression, wiping floury hands on apron",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 30582,
+      "index": 2,
+      "narration": "\"Who do you think did it?\" you ask.\n\nMarcus wipes his floured hands across his apron and glances toward the fountain. He lowers his voice.\n\n\"That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain, never buying anything. Saw him eyeing my bread yesterday...\" He shifts uncomfortably and gives a small shake of his head. \"But I shouldn't accuse without proof. Could've been anyone.\"",
+      "player_action": "ask Marcus who he suspects stole it",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*Nervously glances toward the fountain, lowering voice* That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain, never buying anything. Saw him eyeing my bread yesterday... but I can't be certain. Could've been anyone."
+          }
+        ],
+        "intent": "Ask Marcus who he suspects stole the bread.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I glance nervously toward the fountain, lowering my voice as I shuffle a loaf on the counter. 'Well... there's Gaius, the fellow with the scar by the fountain. Always loitering there, and he was nearby when it went missing. But I shouldn't accuse without proof...'",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 101.19965733308345,
+  "element_scores": [
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn1",
+      "evidence_quote": "*Shifts weight uncomfortably, glancing toward the fountain* Well... I was measuring flour, and when I turned back, it wa",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (loaf)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 1",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn2",
+      "evidence_quote": "*Nervously glances toward the fountain, lowering voice* That fellow Gaius—the one with the scar across his cheek. Always",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (suspect)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 2",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_recalls_stolen_loaf",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus's reply references the stolen loaf",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2914,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "when I turned back, it was gone. Just vanished.",
+          "quote_verified": true,
+          "reasoning": "Marcus implicitly references the stolen loaf by saying 'it was gone. Just vanished,' and the narration explicitly frames the conversation as being about 'the stolen bread he mentioned yesterday.'",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1876,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "when I turned back, it was gone. Just vanished.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly refers to the stolen item when he says 'it was gone. Just vanished.'",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1318,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "I was measuring flour, and when I turned back, it was gone. Just vanished. I... I have my suspicions about that Gaius, the one with the scar who always hangs about.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen bread by describing how 'it was gone. Just vanished' and mentions his suspicion about Gaius with the scar, directly recalling the theft he mentioned yesterday.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 3289,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "when I turned back, it was gone. Just vanished.",
+          "quote_verified": true,
+          "reasoning": "Marcus refers to the missing item by saying it disappeared.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 972,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "I was measuring flour, and when I turned back, it was gone. Just vanished.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly refers to the missing loaf/bread as gone and vanished.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1299,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "when I turned back, it was gone. Just vanished.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly describes the bread being gone/vanished, referencing the stolen bread from yesterday.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_names_suspect",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus names or clearly implies Gaius as the suspect",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2195,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain, never buying anything.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred man by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1980,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain, never buying anything.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred man by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1238,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain",
+          "quote_verified": true,
+          "reasoning": "Marcus specifically names Gaius and describes him as 'the one with the scar across his cheek' who loiters by the fountain, directly matching the scarred man he previously suspected.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1431,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and identifies him as the scarred man by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 962,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain, never buying anything.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred man by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1968,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "That fellow Gaius—the one with the scar across his cheek. Always loitering by the fountain",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred man by the fountain.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "game_clock_advanced",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Game clock advances across the session",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "game clock advanced 10.00h → 10.15h",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_history_grew",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus's conversation history grew",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus's conversation history grew by 6 entries",
+      "votes": []
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "memory_follow_up_marcus_graph_only",
+  "scenario_label": "Memory follow-up — Marcus recalls via graph only (no conversation_history seed)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:13:28.976975+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}

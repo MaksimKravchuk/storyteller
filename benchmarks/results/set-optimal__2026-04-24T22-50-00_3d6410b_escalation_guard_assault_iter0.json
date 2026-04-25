@@ -1,0 +1,584 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 36547,
+      "index": 0,
+      "narration": "",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 2+0 vs target 8+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*Twisting aside with drilled speed, you catch the fist mid-swing, locking the attacker's arm. A sharp blow from the pommel of your gladius strikes their temple.* That’s assault on a legionary. You’re coming with me."
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Stagger back a step from the blow, then immediately drop into a combat stance with pilum leveled at the attacker's chest, shouting 'Traitor! Assault on a legionary!' while keeping my eyes locked on the threat.",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "c961738b-2c69-4fce-b015-6bf33bd01fac",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 36692,
+      "index": 1,
+      "narration": "Your heel drives down onto Quintus’s sandaled left foot, the swollen flesh giving way under the force. A brief, sharp crack cuts the night air. Quintus roars with pain and rage, lurching his weight onto his good leg. The point of his pilum rises at once, steady and aimed at your throat.",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "stomp on the sentry's foot",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Roars in pain and rage as my foot is crushed, immediately shifting weight to my good leg while bringing my pilum up into a defensive stance aimed at the player's throat",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [
+          "The player's foot impacts the sentry's sandaled foot with downward force. The sentry's foot is compressed, and a brief cracking sound is heard as bones may fracture."
+        ],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked the sentry.",
+            "kind": "npc_attack",
+            "location_id": "c961738b-2c69-4fce-b015-6bf33bd01fac",
+            "target": "the sentry"
+          },
+          {
+            "description": "stomp on the sentry's foot. The sentry's left foot is now swollen and bruised, with possible minor fractures.",
+            "kind": "object_smash",
+            "location_id": "c961738b-2c69-4fce-b015-6bf33bd01fac",
+            "target": "the sentry"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 40260,
+      "index": 2,
+      "narration": "",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 20+0 vs target 3+5 → actor_dominates",
+            "npc_name": "Quintus",
+            "response": "*Gasps sharply as the knee connects, staggering back against the gatehouse wall. A rib cracks audibly. Eyes watering, I fumble for my whistle to summon reinforcements.* You'll hang for this, you mad dog!"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*With a pained roar, I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut—one for every breath you just cost me.*"
+          }
+        ],
+        "intent": "drive a knee into the sentry's ribs",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Stagger back against the archway, gasping in agony, but my training drives my hand to the cornu hanging at my belt. I raise it to my lips and sound a single, sharp blast — the alarm for immediate assistance.",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "c961738b-2c69-4fce-b015-6bf33bd01fac",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 128.70457137492485,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level did not strictly increase: [0, 2, 2, 4]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'hostile' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2068,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut",
+          "quote_verified": true,
+          "reasoning": "Quintus narrates driving his shoulder into the attacker's chest and following with a heavy punch, which constitutes striking/attacking the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2617,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "With a pained roar, I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut—one for every breath you just cost me.",
+          "quote_verified": true,
+          "reasoning": "Quintus drives his shoulder into the attacker's chest and follows with a heavy punch to the gut.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1321,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "With a pained roar, I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut—one for every breath you just cost me.",
+          "quote_verified": true,
+          "reasoning": "Quintus drives his shoulder into the attacker's chest and follows with a heavy punch to the gut, which constitutes striking/attacking the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1709,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut",
+          "quote_verified": true,
+          "reasoning": "The turn explicitly describes Quintus physically attacking the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1234,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut",
+          "quote_verified": true,
+          "reasoning": "Quintus physically counters by shoving and punching the attacker.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1777,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut—one for every breath you just cost me.",
+          "quote_verified": true,
+          "reasoning": "Quintus physically attacks the player and draws a weapon (cornu) to sound an alarm.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_cliches",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids cinematic action-movie clichés on the climax turn",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2016,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The prose uses specific, concrete details (cracking rib, fumbling for whistle, cornu blast) without resorting to recognisable cinematic stock phrases like 'heart pounding', 'adrenaline surged', etc. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2212,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The text uses specific, concrete descriptions like 'rib cracks audibly' and 'driving my shoulder into the attacker's chest' without relying on overused action clichés. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1237,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The prose uses specific, concrete details (rib cracks audibly, fumbles for whistle, shoulder shove, heavy punch, cornu at belt) without relying on recognizable clichéd stock phrases. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1993,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "\"\"",
+          "quote_verified": false,
+          "reasoning": "No recognisable cinematic stock phrase appears in the turn text. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1159,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration contains no stock cinematic cliché phrase. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1055,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "gasping in agony",
+          "quote_verified": true,
+          "reasoning": "The narration uses a recognizable stock phrase about being in agony.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "narration_no_purple_prose",
+      "evidence_quote": null,
+      "k_yes": 4,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids overwrought or melodramatic language on the climax turn",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2415,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Gasps sharply as the knee connects, staggering back against the gatehouse wall. A rib cracks audibly. Eyes watering, I fumble for my whistle to summon reinforcements.",
+          "quote_verified": true,
+          "reasoning": "The writing is direct and action-focused, using concrete physical details (cracking rib, whistle, shoulder shove) without melodramatic or ornate flourishes.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 3253,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Gasps sharply as the knee connects, staggering back against the gatehouse wall. A rib cracks audibly.",
+          "quote_verified": true,
+          "reasoning": "The writing is direct and action-focused without excessive ornamentation or melodramatic flourishes.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1305,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Gasps sharply as the knee connects, staggering back against the gatehouse wall. A rib cracks audibly.",
+          "quote_verified": true,
+          "reasoning": "The narration uses direct, physical language grounded in immediate action and sensory detail without ornate flourishes or melodramatic embellishment.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1680,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "*Gasps sharply as the knee connects, staggering back against the gatehouse wall. A rib cracks audibly. Eyes watering, I fumble for my whistle to summon reinforcements.*",
+          "quote_verified": true,
+          "reasoning": "The turn uses direct, action-focused language without ornate or self-consciously florid phrasing.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1292,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "With a pained roar, I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone.",
+          "quote_verified": true,
+          "reasoning": "The narration includes melodramatic, ornate phrasing rather than staying grounded.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2200,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "You'll hang for this, you mad dog!",
+          "quote_verified": true,
+          "reasoning": "The narration uses melodramatic, self-attentive phrasing like “mad dog” and “pained roar” that calls attention to itself.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_repetition",
+      "evidence_quote": null,
+      "k_yes": 1,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids repeating phrases or cadence patterns across assault turns",
+      "majority_verdict": "NO",
+      "n_total": 5,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3814,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Stagger back a step from the blow",
+          "quote_verified": true,
+          "reasoning": "The phrase 'roars...pain and rage' in Turn 1 and 'pained roar' in Turn 2 recur near-verbatim, and 'stagger back' appears in Turn 0, Turn 1 (shifting weight), and twice in Turn 2's action lines.",
+          "verdict": "NO"
+        },
+        {
+          "error": "parse error: Expecting ',' delimiter: line 1 column 163 (char 162)",
+          "latency_ms": 2725,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "",
+          "verdict": "ERROR"
+        },
+        {
+          "error": null,
+          "latency_ms": 1537,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Stagger back",
+          "quote_verified": true,
+          "reasoning": "The phrase 'Stagger back' appears verbatim in both Turn 1 ('Roars in pain and rage as my foot is crushed, immediately shifting weight to my good leg while bringing my pilum up into a defensive stance') and Turn 2 ('Stagger back against the archway'), and the pattern of Quintus responding with immediate physical counter-action repeats across all three turns without significant variation in structure.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1723,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Stagger back",
+          "quote_verified": true,
+          "reasoning": "A sentence-opening/action pattern repeats across turns with the same opening verb phrase.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1287,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Twisting aside with drilled speed, you catch the fist mid-swing, locking the attacker's arm.",
+          "quote_verified": true,
+          "reasoning": "The narration shows varied action phrasing and sentence openings across turns rather than repeating the same pattern.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1198,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Quintus roars with pain and rage, lurching his weight onto his good leg.",
+          "quote_verified": true,
+          "reasoning": "The narration repeats the same sentence-opening pattern and action-cadence across turns.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "narration_no_invented_inner_states",
+      "evidence_quote": null,
+      "k_yes": 3,
+      "kind": "evidence_llm",
+      "label": "Narrator stays grounded in observable NPC behaviour without inventing inner states",
+      "majority_verdict": "SPLIT",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2914,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Stagger back against the archway, gasping in agony, but my training drives my hand to the cornu hanging at my belt.",
+          "quote_verified": true,
+          "reasoning": "There is no narration text present in this turn to attribute any inner states; the turn's content consists entirely of dialogue and action lines from Quintus, which describe observable behavior.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2348,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration section is completely empty, containing no text that could attribute inner states or thoughts. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2109,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Gasps sharply as the knee connects, staggering back against the gatehouse wall. A rib cracks audibly.",
+          "quote_verified": true,
+          "reasoning": "The narration describes only observable physical actions and dialogue—gasping, staggering, fumbling, shoving, punching, reaching for the cornu, and sounding the alarm—without attributing unverified inner thoughts or emotions.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2046,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "but my training drives my hand to the cornu hanging at my belt",
+          "quote_verified": true,
+          "reasoning": "The turn includes narration that states an internal motive rather than only observable behavior.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1271,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "*With a pained roar, I shove off the wall, driving my shoulder into the attacker's chest to slam them against the stone. I follow with a heavy punch to the gut—one for every breath you just cost me.*",
+          "quote_verified": true,
+          "reasoning": "The narration stays on observable actions and dialogue without inner motives.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1381,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "my training drives my hand to the cornu hanging at my belt",
+          "quote_verified": true,
+          "reasoning": "The narration attributes an unverified inner motive/state to the NPC (\"my training drives my hand\").",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:50:00.829157+00:00",
+  "total_awarded": 10,
+  "total_base": 19
+}

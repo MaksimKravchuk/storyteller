@@ -1,0 +1,347 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 141507,
+      "index": 0,
+      "narration": "You greet Marcus warmly.\n\nHe looks up briefly, a tight smile settling on his face as his hands continue fussing with the loaves. *Brushing flour from his apron with a heavy sigh*, he says, “Oh, hello there. Another day, another loaf missing if I don’t keep both eyes open...” His attention drifts back to the bread almost at once.",
+      "player_action": "greet Marcus warmly",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*brushes flour from apron with a heavy sigh* Oh, hello there. Another day, another loaf missing if I don't keep both eyes open..."
+          }
+        ],
+        "intent": "greet Marcus warmly",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "{\"action\": \"Looks up briefly with a tight smile, hands still fussing with the loaves\", \"type\": \"T",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 33249,
+      "index": 1,
+      "narration": "You ask Marcus about the stolen bread.\n\nHe looks up from the loaves, a tight smile settling on his face as his flour-dusted hands wring together. \"It's eating at me, I tell you. Yesterday, right when I turned to measure more flour — poof! A whole wheat loaf gone.\" He sighs, brushing at his apron. \"I'm certain it was that no-good Gaius by the fountain — always lurking, that one.\"",
+      "player_action": "ask Marcus about the stolen bread he told me about yesterday",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*wrings floury hands* It's eating at me, I tell you. Yesterday, right when I turned to measure more flour—poof! A whole wheat loaf gone. I've got my eye on that Gaius by the fountain... always lurking, that one."
+          }
+        ],
+        "intent": "Ask Marcus about the stolen bread he mentioned yesterday.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Looks up from the bread with a weary sigh, wiping flour-dusted hands on my apron. 'Ah, that thief... took my finest wheat loaf yesterday while my back was turned. I'm certain it was that no-good Gaius by the fountain — always skulking about.'",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 20791,
+      "index": 2,
+      "narration": "Marcus leans in, his voice dropping to a mutter. \"That scarred fellow, Gaius—you see him over by the fountain?\" He clutches a loaf tightly, glancing toward the fountain. \"He's always there, watching. Always. He took my bread, I'm sure of it.\"",
+      "player_action": "ask Marcus who he suspects stole it",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*leans in, voice dropping to a mutter* That scarred fellow, Gaius—you see him over by the fountain? He's always there, watching. Always. He took my bread, I'm sure of it."
+          }
+        ],
+        "intent": "ask Marcus who he suspects stole the bread",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Clutches a loaf tightly while glancing toward the fountain, voice dropping to a mutter",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 201.5654816669412,
+  "element_scores": [
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn1",
+      "evidence_quote": "*wrings floury hands* It's eating at me, I tell you. Yesterday, right when I turned to measure more flour—poof! A whole ",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (loaf)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 1",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn2",
+      "evidence_quote": "*leans in, voice dropping to a mutter* That scarred fellow, Gaius—you see him over by the fountain? He's always there, w",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (suspect)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 2",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_recalls_stolen_loaf",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus's reply references the stolen loaf",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1885,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "A whole wheat loaf gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen wheat loaf from yesterday in his reply.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2259,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Yesterday, right when I turned to measure more flour—poof! A whole wheat loaf gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the stolen wheat loaf from yesterday multiple times in his response.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1157,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Yesterday, right when I turned to measure more flour—poof! A whole wheat loaf gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen wheat loaf by describing how it disappeared yesterday while he was measuring flour.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1568,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Yesterday, right when I turned to measure more flour — poof! A whole wheat loaf gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the loaf being gone yesterday.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1174,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Yesterday, right when I turned to measure more flour — poof! A whole wheat loaf gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen wheat loaf from yesterday.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1820,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Yesterday, right when I turned to measure more flour—poof! A whole wheat loaf gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions that a whole wheat loaf was taken yesterday while his back was turned.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_names_suspect",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus names or clearly implies Gaius as the suspect",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3688,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "That scarred fellow, Gaius—you see him over by the fountain?",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred fellow by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2033,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "That scarred fellow, Gaius—you see him over by the fountain?",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and refers to him as the scarred fellow by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1053,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "That scarred fellow, Gaius—you see him over by the fountain?",
+          "quote_verified": true,
+          "reasoning": "Marcus names Gaius specifically and clearly refers to him as 'that scarred fellow' by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1506,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "That scarred fellow, Gaius—you see him over by the fountain?",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and identifies him as the scarred fellow by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1184,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "That scarred fellow, Gaius—you see him over by the fountain?",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and refers to him as the scarred fellow by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1199,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "That scarred fellow, Gaius—you see him over by the fountain?",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and ties him to the scarred man by the fountain.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "game_clock_advanced",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Game clock advances across the session",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "game clock advanced 10.00h → 10.15h",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_history_grew",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus's conversation history grew",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus's conversation history grew by 6 entries",
+      "votes": []
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 1,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "memory_follow_up_marcus",
+  "scenario_label": "Memory follow-up — Marcus recalls prior conversation",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:05:15.324721+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}
