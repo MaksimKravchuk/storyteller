@@ -62,6 +62,31 @@ ACTOR_SYSTEM = PromptTemplate(
             required_vars=["hostility_level", "recent_hostile_actions_summary"],
         ),
         PromptSection(
+            name="goal",
+            template=(
+                "STANDING GOAL — this is your driving objective right now, carried "
+                "across turns:\n"
+                "  Kind: {goal_kind} • Target: {goal_target} • Turns pursued: {goal_turns_pursued}\n"
+                "  Description: {goal_description}\n"
+                "  Last attempted action: {goal_last_action}\n"
+                "  Recent progress notes:\n{goal_progress_notes}\n"
+                "Read your last attempted action: if you have been STEALTH-ing or "
+                "positioning for several turns and the moment is open (target alone, "
+                "no witnesses named in the scene), commit to ATTACK now. Repeating "
+                "STEALTH every turn is failing — escalate, retreat, or change tactic. "
+                "Inaction is a real choice but only when an obstacle is concrete and "
+                "named in your action description."
+            ),
+            required_vars=[
+                "goal_kind",
+                "goal_target",
+                "goal_turns_pursued",
+                "goal_description",
+                "goal_last_action",
+                "goal_progress_notes",
+            ],
+        ),
+        PromptSection(
             name="constraints",
             template=(
                 "Rules:\n"

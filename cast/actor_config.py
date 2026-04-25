@@ -3,6 +3,7 @@
 * ``ENVELOPE_MODE_DEFAULT`` — the ``ACTOR_ENVELOPE_MODE`` prod rollback
   lever, evaluated once at module import.
 * ``format_past_memories`` — prompt-safe memory renderer.
+* ``goal_prompt_vars`` — gated render of the standing-goal prompt section.
 
 Extracted from ``cast.actor`` so those concerns don't contribute to that
 module's import or member count.
@@ -14,9 +15,15 @@ import os
 
 from knowledge.node import KnowledgeNode
 from loguru import logger
+from models.goal import Goal, GoalStatus
+from models.npc_card import NPCCard
 
 _MEMORY_TEXT_MAX_CHARS = 200
 _FALSY_ENV_VALUES = frozenset(("false", "0", "no", "off"))
+
+_GOAL_NO_LAST_ACTION = "(none yet)"
+_GOAL_NO_PROGRESS = "  (no notes yet — this is your first turn pursuing this goal)"
+_GOAL_UNKNOWN_TARGET = "(unspecified)"
 
 
 def _read_envelope_mode_env() -> bool:
@@ -38,6 +45,36 @@ def format_past_memories(memories: list[KnowledgeNode]) -> str:
             text = "{0}...".format(text[: _MEMORY_TEXT_MAX_CHARS - 3])
         lines.append("- {0}".format(text))
     return "\n".join(lines)
+
+
+def _format_goal_progress(notes: list[str]) -> str:
+    if not notes:
+        return _GOAL_NO_PROGRESS
+    return "\n".join("  - {0}".format(note) for note in notes)
+
+
+def _goal_section_vars(goal: Goal, target_name: str | None) -> dict[str, str]:
+    return {
+        "goal_kind": goal.kind.value,
+        "goal_target": target_name or _GOAL_UNKNOWN_TARGET,
+        "goal_turns_pursued": str(goal.turns_pursued),
+        "goal_description": goal.description,
+        "goal_last_action": goal.last_attempted_action or _GOAL_NO_LAST_ACTION,
+        "goal_progress_notes": _format_goal_progress(goal.progress_notes),
+    }
+
+
+def goal_prompt_vars(npc: NPCCard, target_name: str | None) -> dict[str, str] | None:
+    """Return Actor-prompt vars for the NPC's active goal, or ``None``.
+
+    Returns ``None`` when the NPC has no goal or its goal isn't active —
+    callers skip ``set_context`` in that case so the optional goal
+    PromptSection is omitted from the rendered system prompt.
+    """
+    goal = npc.current_goal
+    if goal is None or goal.status is not GoalStatus.ACTIVE:
+        return None
+    return _goal_section_vars(goal, target_name)
 
 
 # Prod rollback lever: set ACTOR_ENVELOPE_MODE=false/0/no/off in the deploy

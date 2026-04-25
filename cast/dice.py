@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from llm.turn_event_logger import record_turn_event
+
 
 _D20 = 20
 
@@ -143,6 +145,25 @@ class ContestRoll:
     def description(self) -> str:
         """Human-readable description of the outcome for prompt injection."""
         return _get_descriptions(self.contest_type)[self.outcome]
+
+
+@dataclass(frozen=True)
+class NPCAction:
+    """Result of an NPC's autonomous turn — wraps an optional :class:`ContestRoll`.
+
+    ``action_type`` stays a plain ``str`` (not a ``Literal``) because the
+    upstream value comes from LLM JSON: the Actor schema declares the
+    canonical vocabulary (ATTACK / TALK / MOVE / IDLE / STEALTH /
+    PERSUADE / DECEIVE / INTIMIDATE) but a malformed response can yield
+    anything. Validation happens at the ``cast.npc_turn`` boundary.
+    """
+
+    npc_uuid: str
+    npc_name: str
+    action_description: str
+    action_type: str
+    target: str | None
+    contest_roll: ContestRoll | None
 
 
 # ---------------------------------------------------------------------------
@@ -315,3 +336,22 @@ def aggression_roll_to_dict(roll: AggressionRoll) -> dict[str, Any]:
         "threshold": roll.threshold,
         "mood": roll.mood,
     }
+
+
+def record_npc_contest_event(
+    contest_roll: ContestRoll,
+    npc: Any,
+    action_type: str,
+    target_name: str,
+) -> None:
+    """Emit a ``dice_contest`` turn event for an NPC-initiated contest."""
+    record_turn_event(
+        "dice_contest",
+        {
+            **contest_roll_to_dict(contest_roll),
+            "actor_npc_name": npc.name,
+            "action_type": action_type,
+            "target_name": target_name,
+        },
+        npc_id=getattr(npc, "uuid", None),
+    )

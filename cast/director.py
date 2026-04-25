@@ -10,6 +10,7 @@ from cast import director_context, director_dialogue, director_events
 from cast import director_execution, director_retaliation, director_routing
 from cast.director_tools import RouteResult
 from cast.known_npcs import mark_player_text_introductions
+from cast import npc_background_tick
 from cast.npc_ticker import NPCTicker
 from cast.npc_turn import NPCTurnResolver
 from cast.schemas.action_plan import ClarificationRequest, WaitPlan
@@ -82,6 +83,7 @@ class Director(BasePerformer):
         self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors, deps.memory_manager)
         self._retaliation = director_retaliation.RetaliationHandler(deps.game_state, self._actors)
         self._npc_turns = NPCTurnResolver(deps.game_state, self._actors)
+        self._background_ticker = npc_background_tick.NPCBackgroundTicker(deps.game_state, deps.memory_manager)
         self._npc_ticker = NPCTicker(deps.game_state)
         agents = director_execution._Agents(
             events=self._events,
@@ -112,7 +114,7 @@ class Director(BasePerformer):
         self._deps.game_state.pending_clarification = None
         mark_player_text_introductions(input_data, self._deps.game_state)
         action_type = plan.action_type
-        completed = self._events.advance_and_resolve(action_type, plan.time_cost_override)
+        completed = await self._advance_clock_and_tick_background(action_type, plan.time_cost_override)
         narrated = await self._executor.execute_plan(plan, input_data, completed)
 
         self._ctx.append_turn_logs(input_data, narrated, action_type)
@@ -129,6 +131,16 @@ class Director(BasePerformer):
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------
+
+    async def _advance_clock_and_tick_background(
+        self,
+        action_type: str,
+        time_override: float | None,
+    ) -> list[event_mod.GameEvent]:
+        """Advance the clock, run the off-scene NPC goal tick, and return completed events."""
+        completed, hours_advanced = self._events.advance_and_resolve(action_type, time_override)
+        await self._background_ticker.tick(hours_advanced)
+        return completed
 
     def _check_forced_wait(self, input_data: str) -> WaitPlan | None:
         """Short-circuit to WAIT if player is incapacitated or typed a wait keyword."""

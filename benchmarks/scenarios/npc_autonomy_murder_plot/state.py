@@ -12,6 +12,7 @@ from benchmarks.harness.types._scenarios import ScenarioState
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.game_state import GameState, PlayerState
+from models.goal import Goal, GoalKind
 from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import PointOfInterest, Scene, SceneNPC
@@ -62,6 +63,11 @@ def _make_npcs() -> tuple[NPCCard, NPCCard]:
     )
     brutus.uuid = BRUTUS_UUID
     brutus.relationships[MARCUS_UUID] = "murderous_enemy"
+    brutus.current_goal = Goal(
+        kind=GoalKind.KILL,
+        description="Avenge brother by killing Marcus today, before he leaves the taberna.",
+        target_uuid=MARCUS_UUID,
+    )
 
     marcus = NPCCard(
         name=MARCUS_NAME,

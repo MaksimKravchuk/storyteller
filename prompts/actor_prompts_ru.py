@@ -62,6 +62,31 @@ ACTOR_SYSTEM_RU = PromptTemplate(
             required_vars=["hostility_level", "recent_hostile_actions_summary"],
         ),
         PromptSection(
+            name="goal",
+            template=(
+                "СТОЯЩАЯ ЦЕЛЬ — твоя главная задача прямо сейчас, переходящая "
+                "из хода в ход:\n"
+                "  Тип: {goal_kind} • Цель: {goal_target} • Ходов в погоне: {goal_turns_pursued}\n"
+                "  Описание: {goal_description}\n"
+                "  Последнее действие: {goal_last_action}\n"
+                "  Заметки о прогрессе:\n{goal_progress_notes}\n"
+                "Перечитай своё последнее действие: если ты несколько ходов "
+                "STEALTH-ишь или занимаешь позицию, а момент открыт (цель одна, "
+                "свидетелей в сцене не названо) — переходи в ATTACK. Повтор "
+                "STEALTH каждый ход — это провал; меняй приём, отступай или "
+                "бей. Бездействие — это тоже выбор, но только когда препятствие "
+                "конкретно и названо в твоём описании действия."
+            ),
+            required_vars=[
+                "goal_kind",
+                "goal_target",
+                "goal_turns_pursued",
+                "goal_description",
+                "goal_last_action",
+                "goal_progress_notes",
+            ],
+        ),
+        PromptSection(
             name="constraints",
             template=(
                 "Правила:\n"

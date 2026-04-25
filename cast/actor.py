@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from cast.actor_config import ENVELOPE_MODE_DEFAULT, format_past_memories
+from cast.actor_config import ENVELOPE_MODE_DEFAULT, format_past_memories, goal_prompt_vars
 from cast.actor_tags import strip_trailing_tags
 from cast.base_performer_class import BasePerformer, LLMJSONError
 from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
@@ -77,23 +77,7 @@ class Actor(BasePerformer):
             physical_status=self.npc.physical_status,
         )
 
-        # Inject recent long-term memories about the player, when any exist.
-        # We deliberately avoid calling set_context(past_memories="") when there
-        # are none — the PromptTemplate skips optional sections only when their
-        # required vars are MISSING from kwargs, not when they are empty strings.
-        past_memories = self.knowledge_query.get_memories_about(self.npc.uuid, limit=_MEMORY_LIMIT)
-        if past_memories:
-            self.set_context(past_memories=format_past_memories(past_memories))
-
-        # Inject hostility context only when the NPC is actually inflamed, so
-        # peaceful dialogue does not carry a spurious "you are in conflict" banner.
-        if self.npc.hostility_level > 0 or self.npc.recent_hostile_actions:
-            self.set_context(
-                hostility_level=str(self.npc.hostility_level),
-                recent_hostile_actions_summary=format_hostile_actions_summary(
-                    self.npc.recent_hostile_actions,
-                ),
-            )
+        _apply_optional_sections(self, context)
 
         if context.get("is_npc_turn"):
             return await self._act_npc_turn(input_data)
@@ -174,3 +158,27 @@ class Actor(BasePerformer):
             status=parsed.status,
             revealed_names=parsed.revealed,
         )
+
+
+def _apply_optional_sections(actor: Actor, context: dict) -> None:
+    """Wire context vars for the optional Actor prompt sections.
+
+    Each section (past memories, hostility banner, standing goal) is
+    gated so peaceful, goal-less NPCs see no spurious banners — the
+    PromptTemplate omits optional sections whose required vars were
+    not set on the context.
+
+    Lives outside the :class:`Actor` class so it does not contribute
+    to that class's method count budget.
+    """
+    past_memories = actor.knowledge_query.get_memories_about(actor.npc.uuid, limit=_MEMORY_LIMIT)
+    if past_memories:
+        actor.set_context(past_memories=format_past_memories(past_memories))
+    if actor.npc.hostility_level > 0 or actor.npc.recent_hostile_actions:
+        actor.set_context(
+            hostility_level=str(actor.npc.hostility_level),
+            recent_hostile_actions_summary=format_hostile_actions_summary(actor.npc.recent_hostile_actions),
+        )
+    goal_vars = goal_prompt_vars(actor.npc, context.get("goal_target_name"))
+    if goal_vars is not None:
+        actor.set_context(**goal_vars)

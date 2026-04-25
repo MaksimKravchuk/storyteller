@@ -170,3 +170,17 @@ class TestActorPromptOutputModes:
         rendered = render_actor_system(mode="none")
         assert '"narration"' not in rendered
         assert "ATTACK|TALK|MOVE" not in rendered
+
+    @allure.story("Goal section parity")
+    @allure.title("English and Russian Actor templates declare the same goal vars")
+    def test_goal_section_parity(self):
+        goal_vars = {
+            "goal_kind",
+            "goal_target",
+            "goal_turns_pursued",
+            "goal_description",
+            "goal_last_action",
+            "goal_progress_notes",
+        }
+        assert goal_vars.issubset(set(ACTOR_SYSTEM.required_vars))
+        assert goal_vars.issubset(set(ACTOR_SYSTEM_RU.required_vars))

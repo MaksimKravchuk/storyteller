@@ -482,6 +482,7 @@ class PlanExecutor:
             witnessed_events=raw_outputs.witnessed_events,
             is_aggressive=is_aggressive,
         )
+        await self._agents.npc_turns.apply_goal_aftermath(npc_actions, self._agents.memory_manager)
         if npc_actions:
             raw_outputs.npc_turns = [
                 turn_outputs.NPCTurnEntry(
