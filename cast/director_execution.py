@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from cast import (
+    _chronicler_goals as chronicler_goals,
     _npc_tactical_goal as tactical_mod,
-    director_dialogue,
     director_events,
     director_hostility,
     director_object_interaction as doi_mod,
@@ -134,7 +134,7 @@ class _Agents:
 
     events: director_events.EventProcessor
     event_manager: EventManager
-    dialogue: director_dialogue.DialogueHandler
+    dialogue: Any  # cast.director_dialogue.DialogueHandler — typed loosely to keep the import budget in check.
     retaliation: director_retaliation.RetaliationHandler
     npc_turns: Any  # cast.npc_turn.NPCTurnResolver — typed loosely to keep the import budget in check.
     npc_ticker: npc_ticker_mod.NPCTicker
@@ -347,6 +347,11 @@ class PlanExecutor:
                 ),
             )
         _apply_thread_updates(state, response.thread_updates, scene_number)
+        # Apply Chronicler-emitted life-goal drafts/updates after threads
+        # so a draft's ``source_thread_uuid`` references a thread that
+        # already exists on ``state``.
+        chronicler_goals.apply_goal_drafts(self._gs.npcs, response.goal_drafts)
+        chronicler_goals.apply_goal_updates(self._gs.npcs, response.goal_updates)
         if response.world_mood is not None:
             state.world_mood = response.world_mood
         state.last_chronicled_scene = scene_number

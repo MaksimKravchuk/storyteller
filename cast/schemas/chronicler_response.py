@@ -3,9 +3,10 @@
 The World Chronicler is deliberately conservative: most scenes it
 should return an empty ``ChroniclerResponse`` (defaults), and the
 applier in :mod:`cast.director_execution` treats every field as
-optional. All string identifiers (``thread_uuid``, ``location_id``)
-reference existing UUIDs on :class:`models.game_state.GameState` —
-the Chronicler never invents entities from scratch.
+optional. All string identifiers (``thread_uuid``, ``location_id``,
+``npc_uuid``, ``target_uuid``) reference existing UUIDs on
+:class:`models.game_state.GameState` — the Chronicler never invents
+entities from scratch.
 """
 
 from __future__ import annotations
@@ -13,6 +14,8 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, Field
+
+from models.goal import GoalKind
 
 
 class WorldThreadDraft(BaseModel):
@@ -54,6 +57,37 @@ class ScheduledEventDraft(BaseModel):
     on_complete_description: str = ""
 
 
+class GoalDraft(BaseModel):
+    """A new life-tier :class:`~models.goal.Goal` proposed by the Chronicler.
+
+    Always references an existing NPC by ``npc_uuid``; ``target_uuid``
+    is optional but, when present, must also reference an existing NPC.
+    The applier in :mod:`cast.director_execution` rejects drafts that
+    point at unknown UUIDs and refuses to overwrite an NPC's existing
+    ACTIVE life goal — the Chronicler never erases a vendetta in
+    progress; only the actor's death or a paired ``GoalUpdate`` does.
+    """
+
+    npc_uuid: str
+    kind: GoalKind
+    description: str
+    target_uuid: str | None = None
+    source_thread_uuid: str | None = None
+
+
+class GoalUpdate(BaseModel):
+    """A status change on an existing life-tier goal.
+
+    Only ABANDONED or BLOCKED are emittable here — COMPLETED is the
+    engine's call (e.g. when a KILL goal's target dies). ``reason`` is
+    appended to the goal's progress notes for traceability.
+    """
+
+    npc_uuid: str
+    status: Literal["abandoned", "blocked"]
+    reason: str | None = None
+
+
 class ChroniclerResponse(BaseModel):
     """Typed envelope for the Chronicler's per-scene updates.
 
@@ -65,4 +99,6 @@ class ChroniclerResponse(BaseModel):
     new_threads: list[WorldThreadDraft] = Field(default_factory=list)
     thread_updates: list[WorldThreadUpdate] = Field(default_factory=list)
     scheduled_events: list[ScheduledEventDraft] = Field(default_factory=list)
+    goal_drafts: list[GoalDraft] = Field(default_factory=list)
+    goal_updates: list[GoalUpdate] = Field(default_factory=list)
     world_mood: str | None = None
