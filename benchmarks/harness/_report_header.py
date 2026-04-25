@@ -41,10 +41,12 @@ def _base_header(report: ScenarioReport) -> list[str]:
         "- Iteration: {0}".format(report.iteration),
         "- Started at: {0}".format(report.started_at),
         "- Engine SHA: `{0}`".format(report.engine_git_sha or "(unset)"),
-        "- Engine models: director=`{0}` agent=`{1}` narrator=`{2}`".format(
+        "- Engine models: director=`{0}` agent=`{1}` narrator=`{2}` dramaturge=`{3}` (enabled={4})".format(
             models.get("director_model", ""),
             models.get("agent_model", ""),
             models.get("narrator_model", ""),
+            models.get("dramaturge_model", ""),
+            models.get("dramaturge_enabled", ""),
         ),
         "- Judge panel ({0}): {1}{2}".format(
             len(report.panel),

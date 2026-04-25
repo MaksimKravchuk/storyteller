@@ -1,0 +1,253 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 23105,
+      "index": 0,
+      "narration": "You scan the common room methodically, your eyes moving from the entrance across the handful of patrons slumped at their tables. The three guards share a cup of wine among themselves, each taking measured sips before passing it along.\n\n**Aulus** accepts the cup, takes a small sip, and passes it on. \"Quiet night. See that it stays that way.\"\n\nBassus takes his turn with the wine, grunting his agreement. \"Quiet night.\"\n\n**Cato's** gaze sweeps the room one final time before he addresses his companions. \"Quiet. Keep your eyes open.\"",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "Look around the tavern carefully.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"My eyes methodically scan the half-empty common room, pausing on the entrance before sweeping over the handful of slumped patrons. I accept the shared wine cup, take a small, measured sip, and pass it on. 'Quiet night. See that it stays that way.'\",\n  \"type\": \"TALK\",\n  \"target\": null\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"I take a slow sip from the shared cup of wine, my eyes scanning the few patrons and the entrance. I pass the cup to the next man. \\\"Quiet night,\\\" I grunt.\",\n  \"type\": \"TALK\",\n  \"target\": \"null\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"My gaze sweeps the room one last time before settling on the two guards with me. 'Quiet. Keep your eyes open.'\",\n  \"type\": \"TALK\",\n  \"target\": \"other guards\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 97793,
+      "index": 1,
+      "narration": "Your fist connects with Aulus's jaw just below the rim of his galea with a dull thud. His head snaps back, and he stumbles a step, blood appearing at the corner of his mouth.\n\n\"You'll die for that, scum!\" Aulus snarls, his hand flying to his gladius. The short sword rasps from its scabbard as his vision clears, fury replacing pain. With a guttural roar, he lunges forward, bringing the blade up in a vicious thrust aimed at your gut.\n\n\"You strike a legionary? You'll pay for that with your life!\" Bassus shouts, his own gladius flashing out. He lunges at you with a thrust aimed straight for your gut, but you sidestep his attack. As he stumbles past, you land a vicious blow against the side of his head. Stars explode behind his eyes, his sword clatters to the floorboards, and he falls to one knee. Grimacing from his wounds, he bellows with rage and kicks a stool aside, lunging toward the hearth. His hand closes around the **heavy iron fire poker**, and he turns on you, brandishing it like a club. \"Assault a legionary? You'll die for that!\"\n\n\"Idiot,\" Cato growls, his gladius already in hand. He circles to your side, opposite Aulus, blade held low and ready for a gutting thrust to box you in.",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 17+0 vs target 10+5 → actor_succeeds",
+            "npc_name": "Aulus",
+            "response": "*The punch connects with a dull thud against my jaw, just below the rim of my galea. My head snaps back, vision swimming for a second as I stumble a step. I taste blood.* You'll die for that, scum! *My hand flies to the hilt of my gladius, drawing the short sword with a sharp rasp of steel.*"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "You strike a legionary? You'll pay for that with your life! *My own gladius is out of its scabbard in a flash. I lunge forward, a thrust aimed straight for your gut. But you're quicker than you look. You sidestep my lunge, and as I stumble past, a vicious blow crashes against the side of my head. Stars explode behind my eyes, my sword clatters to the floorboards, and I fall to one knee, vision swimming.*"
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"My vision clears, fury replacing the pain. With a guttural roar, I lunge forward, bringing my gladius up in a vicious thrust aimed at your gut.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"Grimacing from my wounds, I bellow with rage and kick a stool aside, lunging towards the hearth. My hand closes around the heavy iron fire poker, and I turn on you, brandishing it like a club. 'Assault a legionary? You'll die for that!'\",\n  \"type\": \"INTIMIDATE\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"\\\"Idiot.\\\" The word is a low growl. My gladius is already in my hand, the motion practiced and swift. I circle to your side, opposite Aulus, blade held low and ready for a gutting thrust to box you in.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "ca3e8563-20cc-40c8-8384-d099684e6228",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 124.01538512506522,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "neither Bassus nor Cato produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 17+0 vs target 10+5 → actor_succeeds",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → hostile; Cato: neutral → threatened",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3079,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus shouts, his own gladius flashing out. He lunges at you with a thrust aimed straight for your gut",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato physically intervene: Bassus draws his gladius and lunges at the player, then grabs a fire poker; Cato draws his gladius and circles to box the player in with his blade ready for a thrust.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2441,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus shouts, his own gladius flashing out. He lunges at you with a thrust aimed straight for your gut",
+          "quote_verified": true,
+          "reasoning": "Both guards draw weapons and take attacking positions against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1951,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus shouts, his own gladius flashing out. He lunges at you with a thrust aimed straight for your gut... His hand closes around the heavy iron fire poker, and he turns on you, brandishing it like a club... Cato growls, his gladius already in hand. He circles to your side, opposite Aulus, blade held low and ready for a gutting thrust to box you in.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical attacks: Bassus lunges with his gladius and later brandishes a fire poker as a weapon, while Cato draws his gladius and circles to perform a gutting thrust.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1582,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus shouts, his own gladius flashing out. He lunges at you with a thrust aimed straight for your gut",
+          "quote_verified": true,
+          "reasoning": "Bassus attacks and Cato draws his weapon and moves to box the player in.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1210,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus says: You strike a legionary? You'll pay for that with your life! *My own gladius is out of its scabbard in a flash. I lunge forward, a thrust aimed straight for your gut.",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both take armed physical action against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1156,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "My own gladius is out of its scabbard in a flash. I lunge forward, a thrust aimed straight for your gut.",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both take physical combat actions against the player, including drawing weapons and attacking with thrusts and a club.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "google/gemini-2.5-pro",
+    "director_model": "gpt-5.4",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4",
+    "narrator_model": "claude-sonnet-4-20250514"
+  },
+  "iteration": 1,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T21:36:16.072244+00:00",
+  "total_awarded": 7,
+  "total_base": 10
+}

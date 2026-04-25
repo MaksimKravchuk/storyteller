@@ -1,0 +1,347 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 19500,
+      "index": 0,
+      "narration": "You greet Marcus warmly. He glances up briefly, a tight smile on his face, and continues to nervously rearrange the same loaf for the third time, wiping flour from his apron with a distracted air. \"Hello there. Can't say it's been a good morning, I'm still missing a loaf from yesterday.\"",
+      "player_action": "greet Marcus warmly",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*wiping flour from his apron with a distracted air* Hello there. Can't say it's been a good morning, I'm still missing a loaf from yesterday."
+          }
+        ],
+        "intent": "Greet Marcus warmly.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Glances up briefly with a tight smile, continuing to nervously rearrange the same loaf for the third time.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 21626,
+      "index": 1,
+      "narration": "You ask Marcus about the stolen bread he told you about yesterday. He sighs heavily, rubbing his forehead. \"You remembered that, eh? A whole wheat loaf, gone while my back was turned. I was just measuring flour and—poof—vanished. Barely makes a profit as it is without thieves helping themselves.\" He looks up from arranging loaves. \"Ah, you're back. Still thinking about that missing loaf—can't focus on anything else. Saw **Gaius** lurking near the fountain again this morning. That scarred rascal... I just know he took it.\" Marcus mumbles under his breath while dusting flour off his apron.",
+      "player_action": "ask Marcus about the stolen bread he told me about yesterday",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*sighs heavily, rubbing his forehead* You remembered that, eh? A whole wheat loaf, gone while my back was turned. I was just measuring flour and—poof—vanished. Barely makes a profit as it is without thieves helping themselves."
+          }
+        ],
+        "intent": "Ask Marcus about the stolen bread he told me about yesterday.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Looks up from arranging loaves with a heavy sigh. 'Ah, you're back. Still thinking about that missing loaf—can't focus on anything else. Saw Gaius lurking near the fountain again this morning. That scarred rascal... I just know he took it.' Mumbles under breath while dusting flour off my apron.",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 15527,
+      "index": 2,
+      "narration": "You ask Marcus who he suspects stole the bread. Marcus glances nervously toward the fountain before leaning in closer, his voice dropping to a hushed tone. He says, *“That Gaius, the scarred one who always lurks by the fountain. Saw him eyeing my stall right before it went missing. Never trust a man who spends more time loitering than working.”*",
+      "player_action": "ask Marcus who he suspects stole it",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*Leans in conspiratorially, voice dropping to a mutter* That Gaius, the scarred one who always lurks by the fountain. Saw him eyeing my stall right before it went missing. Never trust a man who spends more time loitering than working."
+          }
+        ],
+        "intent": "Ask Marcus who he suspects stole the bread that was stolen yesterday.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Glances nervously toward the fountain before leaning in closer, voice dropping to a hushed tone",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 62.79288404202089,
+  "element_scores": [
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn1",
+      "evidence_quote": "*sighs heavily, rubbing his forehead* You remembered that, eh? A whole wheat loaf, gone while my back was turned. I was ",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (loaf)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 1",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn2",
+      "evidence_quote": "*Leans in conspiratorially, voice dropping to a mutter* That Gaius, the scarred one who always lurks by the fountain. Sa",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (suspect)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 2",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_recalls_stolen_loaf",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus's reply references the stolen loaf",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2627,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "A whole wheat loaf, gone while my back was turned.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen loaf multiple times in his reply.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2472,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "A whole wheat loaf, gone while my back was turned",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the stolen wheat loaf and refers to it as 'missing loaf' multiple times.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1545,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "A whole wheat loaf, gone while my back was turned.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen wheat loaf multiple times, describing it as 'gone while my back was turned' and 'that missing loaf'.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2645,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "A whole wheat loaf, gone while my back was turned.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the missing loaf in his reply.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 995,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "A whole wheat loaf, gone while my back was turned.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the missing loaf and stolen bread.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1504,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Still thinking about that missing loaf—can't focus on anything else.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the missing whole wheat loaf from yesterday.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_names_suspect",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus names or clearly implies Gaius as the suspect",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2282,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "That Gaius, the scarred one who always lurks by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as 'the scarred one who always lurks by the fountain.'",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1993,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "That Gaius, the scarred one who always lurks by the fountain",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred one by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 938,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "That Gaius, the scarred one who always lurks by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus names Gaius specifically and clearly refers to him as 'the scarred one who always lurks by the fountain.'",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 3097,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "That Gaius, the scarred one who always lurks by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and identifies him as the scarred one by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1305,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "That Gaius, the scarred one who always lurks by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred one by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1198,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "That Gaius, the scarred one who always lurks by the fountain.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as the scarred man who lurks by the fountain.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "game_clock_advanced",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Game clock advances across the session",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "game clock advanced 10.00h → 10.15h",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_history_grew",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus's conversation history grew",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus's conversation history grew by 6 entries",
+      "votes": []
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-nano",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "google/gemini-2.5-flash"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "memory_follow_up_marcus",
+  "scenario_label": "Memory follow-up — Marcus recalls prior conversation",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:20:09.673600+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}

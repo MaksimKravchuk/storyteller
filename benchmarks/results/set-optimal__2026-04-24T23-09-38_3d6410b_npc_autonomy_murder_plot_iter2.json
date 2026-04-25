@@ -1,0 +1,596 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 31055,
+      "index": 0,
+      "narration": "You settle into a shadowed corner of the taberna and let your gaze drift.\n\nThe **former legionary** nearby nurses his wine with a soldier’s economy, each sip measured, his",
+      "player_action": "I find a quiet corner of the taberna and wait, watching the hours drift past.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player finds a quiet corner of the taberna and waits, watching the hours drift past.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Rise silently and begin moving along the shadowed wall, keeping Marcus in my sight while avoiding his direct line of vision.",
+            "action_type": "STEALTH",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "I rise from my table, stretch contentedly, and begin to stroll casually toward the bar as if to order another drink, keeping my path wide and my gaze unfocused, giving no hint I've noticed Brutus.",
+            "action_type": "STEALTH",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 116628,
+      "index": 1,
+      "narration": "",
+      "player_action": "I keep waiting through the night. I do nothing and speak to no one.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I keep waiting through the night, doing nothing and speaking to no one.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Wipe down the counter, straighten the empty cups, and keep an eye on the doorway while the lamp burns low.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Vipsanius"
+          },
+          {
+            "action": "I stay hunched at the table, tracing the rim of my clay cup and watching the doorway without speaking.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Aelius"
+          },
+          {
+            "action": "I stand by the doorway a while longer, watching the room and the street beyond, then shift my weight and keep my post.",
+            "action_type": "IDLE",
+            "npc_name": "Quintus Horatius"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The low murmur of distant voices and occasional cart wheels on stone fades as night deepens. The scent of stale wine, old wood, and extinguished oil lamps hangs thick. A lone cricket chirps outside, and the occasional rustle of a rat in the shadows reminds you the city never fully sleeps.",
+          "description": "The taberna is dimly lit by a single guttering oil lamp on the counter, casting long shadows across the worn wooden tables and stools. Empty clay cups and a half-eaten loaf of bread litter the counter. Through the open doorway, the moonlit flagstones of the Forum are visible, deserted save for a patrolling vigile's distant torch.",
+          "location_id": "forum_taberna_night",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "taberna owner dozing behind counter",
+              "uuid": "35440b69-27e7-41b6-96c1-e0d6653c2f9b"
+            },
+            {
+              "role": "lean man in grey tunic (Brutus) still nursing his cup",
+              "uuid": "2f9a3bf6-bd75-4745-aa2a-69fbae412031"
+            },
+            {
+              "role": "vigile passing outside with torch",
+              "uuid": "53c75235-ae3c-4936-9bfc-d304f5b186fa"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a worn wooden counter with empty cups and stale bread",
+                "counter",
+                "bar"
+              ],
+              "uuid": "1781419a-3814-483d-9f17-c5301dc58f9c"
+            },
+            {
+              "names": [
+                "the open doorway looking onto the moonlit Forum",
+                "doorway",
+                "entrance"
+              ],
+              "uuid": "a2566223-ff66-4d66-85b7-38d4480e3f3f"
+            },
+            {
+              "names": [
+                "a single guttering oil lamp on the counter",
+                "oil lamp",
+                "lamp"
+              ],
+              "uuid": "d1dd9899-0a63-45e7-8db3-753e7483b158"
+            },
+            {
+              "names": [
+                "Brutus's nearly empty clay wine cup",
+                "clay cup",
+                "cup"
+              ],
+              "uuid": "0a9cd11d-e45c-4e6d-a3fd-e3387b25cd89"
+            },
+            {
+              "names": [
+                "a shadowed alcove with stacked amphorae",
+                "alcove",
+                "storage nook"
+              ],
+              "uuid": "0dd9aa10-6e96-4bdd-a389-e7ac1e361c88"
+            },
+            {
+              "names": [
+                "a small brazier with cold ashes near the doorway",
+                "brazier",
+                "fire basin"
+              ],
+              "uuid": "24badb23-582e-465a-ae65-12aa53a25c1a"
+            }
+          ],
+          "time_of_day": "evening",
+          "uuid": "79839448-4db3-49bd-9fdc-1c92647c6a45"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 159486,
+      "index": 2,
+      "narration": "",
+      "player_action": "I wait another full day here, doing nothing at all.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait another full day here, doing nothing at all.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I wipe the counter once, slow and methodical, then set the stale cups aside and glance out at the empty forum before settling back behind the bar.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Vipsanius"
+          },
+          {
+            "action": "I stay put, lean on the counter, and watch the empty doorway while the lamp burns low.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Salvius"
+          },
+          {
+            "action": "I sit in the same place, staring into the dregs of my cup, and let the day pass without moving.",
+            "action_type": "IDLE",
+            "npc_name": "Decimus Aelius"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The quiet murmur of a city settling into night. The faint smell of woodsmoke and roasting meat drifts from nearby insulae, mixed with the lingering scent of spilled wine and old wood from the taberna itself. Distant, rhythmic footsteps of a vigile on patrol echo off the flagstones.",
+          "description": "The scene is unchanged from the previous evening, as if time itself has stood still in this quiet corner of the Forum. The same guttering oil lamp on the counter casts the same long, dancing shadows across the worn wooden tables and stools. The same empty clay cups and the now-stale half-eaten loaf of bread still litter the countertop. The open doorway still frames a view of the moonlit flagstones outside, deserted save for the same distant, bobbing torch of the patrolling vigile. A thin layer of dust seems to have settled over everything during the day's idleness.",
+          "location_id": "forum_taberna",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "taberna keeper",
+              "uuid": "6984fc90-9315-4aa5-aa9d-790b6ace22a9"
+            },
+            {
+              "role": "off-duty vigile",
+              "uuid": "a17269df-0190-40d7-b888-096ebe8739d0"
+            },
+            {
+              "role": "solitary drinker",
+              "uuid": "5ace46ff-5364-4954-a1af-519100600be7"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a guttering oil lamp on the wooden counter",
+                "oil lamp",
+                "lamp"
+              ],
+              "uuid": "f313d9f0-4eba-46f6-954c-ec4932a172bd"
+            },
+            {
+              "names": [
+                "the open doorway looking out onto the Forum",
+                "doorway",
+                "entrance"
+              ],
+              "uuid": "45b98257-86ec-4152-8b3e-cacf724a0ece"
+            },
+            {
+              "names": [
+                "a scattering of empty clay cups on the counter",
+                "clay cups",
+                "cups"
+              ],
+              "uuid": "9740fa59-b8e5-4430-8e38-5e13f36b60a8"
+            },
+            {
+              "names": [
+                "a stale, half-eaten loaf of bread",
+                "loaf of bread",
+                "bread"
+              ],
+              "uuid": "7dc3f2dc-0837-4fe9-a2d7-ae22b29ee2ce"
+            },
+            {
+              "names": [
+                "a heavy wooden keg behind the counter",
+                "keg",
+                "wine keg"
+              ],
+              "uuid": "cd26a65e-6094-4f34-b07d-990b850640c7"
+            },
+            {
+              "names": [
+                "a worn leather money pouch on the keeper's belt",
+                "money pouch",
+                "pouch"
+              ],
+              "uuid": "b2870605-fe02-448a-81bf-93dde8a42963"
+            }
+          ],
+          "time_of_day": "evening",
+          "uuid": "fec0dff1-3d1e-4b0f-be47-5bb9eda83603"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 42424,
+      "index": 3,
+      "narration": "The booth is unchanged, suspended in the same hollow quiet you settled into long ago. The single **oil lamp** on the worn wooden counter gutters, its flame shrinking into a tiny, unsteady tongue of light. The sputtering hiss it makes is the only sound close by, a thin, irregular whisper that makes the shadows of the stools and low table sway more sluggishly with every failing flicker. The cluster of clay cups and the stale half-loaf of bread sit untouched, exactly where they were, their outlines softened by a fine, undisturbed layer of dust that has visibly thickened on every surface.\n\nThrough the open doorway, the moonlit flagstones of the Forum stretch away in an expanse of pale, silent stone. Nothing moves out there. The air that drifts in is still and cool, carrying the faint, stale smell of old bread and settled dust. From somewhere far beyond the doorway, an occasional footstep echoes on stone—muted, solitary, never drawing nearer. A single distant torch wavers in the darkness, a bobbing point of light that marks the slow circuit of a patrolling vigile.\n\nThe lamp’s flame dips again, almost extinguishing, and the shadows lean in for a long moment before it recovers. The profound, watchful silence presses back in behind it, unbroken.",
+      "player_action": "I continue to wait. More time passes, and still I do nothing.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player wants to continue waiting and do nothing while more time passes.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The only sound is the faint, irregular hiss of the guttering lamp flame. The air is still, cool, and carries the faint, stale smell of old bread and dust. From far beyond the doorway comes the occasional, muted echo of a footstep on stone, but nothing draws nearer. A profound, watchful silence hangs over the place.",
+          "description": "The small, open-fronted booth in a forgotten corner of the Forum remains exactly as it was. The single oil lamp on the dusty wooden counter sputters in its last dregs of fuel, making the long shadows of the stools and tables dance more slowly. The clay cups and stale, half-eaten loaf are untouched. The view through the open doorway shows the same expanse of moonlit flagstones, still and empty. A fine layer of undisturbed dust has visibly thickened on every surface, glinting faintly in the lamplight.",
+          "location_id": "forum_booth_abandoned",
+          "narrated_text": "",
+          "npcs_present": [],
+          "points_of_interest": [
+            {
+              "names": [
+                "a sputtering oil lamp on the worn wooden counter",
+                "oil lamp",
+                "lamp"
+              ],
+              "uuid": "bf4574ff-5afd-4380-bc87-eefcee966b05"
+            },
+            {
+              "names": [
+                "a cluster of empty clay cups and a stale half-loaf of bread",
+                "clay cups and stale loaf",
+                "cups and bread"
+              ],
+              "uuid": "0e0d7ea7-4d08-4134-838e-f6bd09d2d1a3"
+            },
+            {
+              "names": [
+                "the open doorway framing the moonlit Forum flagstones",
+                "open doorway",
+                "doorway"
+              ],
+              "uuid": "5f2addd2-91a6-4872-8ac6-5ff8f4af88d8"
+            },
+            {
+              "names": [
+                "a distant, bobbing torch carried by a patrolling vigile",
+                "distant torch",
+                "vigile's torch"
+              ],
+              "uuid": "60a7651c-7f7b-4df2-a12c-30ccf512462c"
+            },
+            {
+              "names": [
+                "the worn wooden counter covered in a layer of dust",
+                "dusty counter",
+                "counter"
+              ],
+              "uuid": "3e33db13-c969-4141-aa77-76cf8e7888b4"
+            },
+            {
+              "names": [
+                "several simple wooden stools and a low table",
+                "wooden stools and table",
+                "stools"
+              ],
+              "uuid": "56c55d90-404b-491b-840f-cf753c13c30a"
+            }
+          ],
+          "time_of_day": "night",
+          "uuid": "50f11e81-10c8-4695-ba23-30fae0711d55"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 23980,
+      "index": 4,
+      "narration": "You wait. The booth remains unchanged, suspended in the hollow quiet that settled long ago. The **oil lamp** on the worn wooden counter gutters, its flame a tiny, unsteady tongue of light.\n\nNearby, the former legionary walks a slow circuit, sandals scraping the cobbles in a steady rhythm. The cloth merchant folds bolts of fabric at an unhurried pace, the soft rustle of linen marking each passing minute.",
+      "player_action": "I wait.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player waits.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 23590,
+      "index": 5,
+      "narration": "Another day slips by in the small booth, and the night returns unchanged.\n\nThe oil lamp on the dusty wooden counter has burned out, leaving a dark smear and a stale, smoky scent that hangs in the still air. Your footprints are the only marks in the thick layer of dust that coats every surface — a single trail leading in and back out. On the counter, the half-eaten loaf has hardened to a husk, and the clay cups sit exactly as you left them.\n\nMoonlight slices through the open doorway, framing the vast moonlit flagstones outside. Motes of dust hang motionless in the beam. From somewhere in the darkness beyond comes the faint, rhythmic drip of a distant water source, and the rustle of a stray cat picking through debris. The silence is oppressive, broken only by those small sounds and the cold weight of stone and stale oil pressing in from all sides.",
+      "player_action": "I wait for one more day before considering my next move.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait for one more day before considering my next move.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The oppressive silence of the Forum at night, broken only by the faint, rhythmic dripping of a distant water source and the rustle of a stray cat moving through debris. The air carries the lingering scent of stale oil, dust, and cold stone.",
+          "description": "The small booth remains unchanged, its open front facing the vast expanse of moonlit flagstones. The single oil lamp has burned out, leaving only a faint smoky smell and a dark smear on the counter. Dust lies thick on every surface, undisturbed except for a single set of your own footprints leading in and out. A half-eaten loaf on the counter has hardened, and clay cups sit exactly as left. Moonlight slices through the doorway, illuminating motes of dust hanging motionless in the air.",
+          "location_id": "forgotten_forum_booth",
+          "narrated_text": "",
+          "npcs_present": [],
+          "points_of_interest": [
+            {
+              "names": [
+                "a dusty wooden counter with an extinguished oil lamp",
+                "counter",
+                "wooden counter"
+              ],
+              "uuid": "d0753077-6305-4ffa-a38e-8cfe5a5e65d6"
+            },
+            {
+              "names": [
+                "a stale half-eaten loaf of bread on the counter",
+                "loaf",
+                "stale bread"
+              ],
+              "uuid": "429de661-82dc-4ec3-872a-28b08ea5d690"
+            },
+            {
+              "names": [
+                "a set of clay cups left untouched",
+                "clay cups",
+                "cups"
+              ],
+              "uuid": "971ac6bd-dabe-4399-891b-68009d595af1"
+            },
+            {
+              "names": [
+                "the open doorway framing the moonlit Forum",
+                "doorway",
+                "open front"
+              ],
+              "uuid": "9c616b72-3f8e-4bb0-b532-08230c86ec10"
+            },
+            {
+              "names": [
+                "a layer of thick undisturbed dust coating all surfaces",
+                "dust",
+                "thick dust"
+              ],
+              "uuid": "a473c349-9b49-4176-9be1-45da0f29b0ee"
+            }
+          ],
+          "time_of_day": "night",
+          "uuid": "bc720f62-ab54-4d67-90bf-61a4b1f1297b"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 399.9392591670621,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "clash_occurred",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Brutus autonomously clashes with Marcus (attempt, any outcome)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no Brutus-vs-Marcus attack, contest, or injury signal found",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "outcome_recorded_in_world_facts",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Clash outcome lands in the knowledge graph",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no clash outcome recorded in the knowledge graph",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "marcus_killed",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus is killed (lethal resolution bonus)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus still alive (physical_status='healthy')",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_describes_clash",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narration describes Brutus clashing with Marcus (any outcome)",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2725,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration never describes Brutus attacking, clashing with, or attempting to kill Marcus; it only shows generic ambient waiting, with Brutus and Marcus mentioned only as background figures doing routine actions.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2129,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The text only describes generic ambient activities like walking circuits and folding fabric, with no mention of any attack or clash.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1382,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration describes only ambient waiting, idle movements, and atmospheric details; there is no description of Brutus attacking, clashing with, or attempting to kill Marcus.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1482,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turns only show waiting and nearby movement, not an attack or clash.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1204,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turns only show waiting and idle movement, with no attack or attempt to kill Marcus described.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1617,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "I find a quiet corner of the taberna and wait, watching the hours drift past.",
+          "quote_verified": true,
+          "reasoning": "The turns describe waiting and ambient actions, with no narration of Brutus attacking, clashing with, or attempting to kill Marcus.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "npc_autonomy_murder_plot",
+  "scenario_label": "NPC autonomy — Brutus plots to murder Marcus while the player waits",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T23:09:38.674508+00:00",
+  "total_awarded": 0,
+  "total_base": 10
+}

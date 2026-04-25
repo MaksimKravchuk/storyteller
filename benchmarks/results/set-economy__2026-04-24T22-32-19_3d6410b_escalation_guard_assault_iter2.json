@@ -1,0 +1,587 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 18325,
+      "index": 0,
+      "narration": "You attempt to punch the sentry hard in the jaw. Quintus dodges your wild swing with practiced ease. He drives the butt of his pilum into your stomach, then slams you face-first against the gate wall, twisting your arm behind your back.\n\n\"Insolent dog! You just earned yourself a night in the cells,\" Quintus says.",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 1+0 vs target 13+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*Dodges your wild swing with practiced ease, drives the butt of his pilum into your stomach, then slams you face-first against the gate wall, twisting your arm behind your back.* Insolent dog! You just earned yourself a night in the cells."
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Stagger back a step, spitting blood as my hand flies to the hilt of my gladius while bringing my pilum up into a defensive position. 'You'll regret that, you fool!'",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "3cfefe96-6f20-4fc0-8c92-002c2eea10f1",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 29170,
+      "index": 1,
+      "narration": "You stomp on Quintus's foot. He stumbles backward with a sharp grunt as your boot crushes his instep, dropping his pilum as he clutches his injured foot. \"You little viper! That's a broken bone!\" he shouts. He lunges forward despite the pain, tackling you to the ground and driving a knee into your back while wrenching your arm upward. \"You'll pay for that foot, you filthy gutter rat!\"",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 18+0 vs target 4+5 → actor_dominates",
+            "npc_name": "Quintus",
+            "response": "*Stumbles backward with a sharp grunt as your boot crushes his instep, dropping his pilum as he clutches his injured foot.* You little viper! That's a broken bone!"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*Lunges forward despite the pain, tackling you to the ground and driving a knee into your back while wrenching your arm upward.* You'll pay for that foot, you filthy gutter rat!"
+          }
+        ],
+        "intent": "Stomp on the sentry's foot.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Stagger back with a choked cry of pain, bracing myself against the gate arch with my pilum as my broken foot gives way beneath me. My face contorts in fury as I snarl, 'You'll pay for that, you mad dog!'",
+            "action_type": "TALK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "3cfefe96-6f20-4fc0-8c92-002c2eea10f1",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 17710,
+      "index": 2,
+      "narration": "You drive a knee into Quintus's ribs. He absorbs the clumsy strike with his armor, then slams a forearm across your throat, pinning you in the dirt. *Struggling just makes it worse! Yield!*\n\nHe then lurches forward with a punch, but you twist aside and drive an elbow into his damaged ribs. He staggers, gasping, one hand flying to his side. *Damn you… can't even… breathe right…*\n\nQuintus grunts sharply as the blow lands, staggering back against the stone archway. He grits his teeth and levels his pilum at you, his voice strained with pain and rage.",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 8+0 vs target 18+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*Absorbs the clumsy strike with his armour, then slams a forearm across your throat, pinning you in the dirt.* Struggling just makes it worse! Yield!"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*Lurches forward with a punch, but you twist aside and drive an elbow into his damaged ribs. He staggers, gasping, one hand flying to his side.* Damn you… can't even… breathe right…"
+          }
+        ],
+        "intent": "Drive a knee into the sentry's ribs.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Grunts sharply as the blow lands, staggering back against the stone archway. Grits teeth and levels pilum at the attacker, voice strained with pain and rage.",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "3cfefe96-6f20-4fc0-8c92-002c2eea10f1",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 82.58607574994676,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level increased each turn: [0, 2, 4, 6]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'furious' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2877,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "slams a forearm across your throat, pinning you in the dirt",
+          "quote_verified": true,
+          "reasoning": "Quintus slams a forearm across the player's throat pinning them down, throws a punch, and levels his pilum at the player—all physical counter-responses.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2214,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "slams a forearm across your throat, pinning you in the dirt",
+          "quote_verified": true,
+          "reasoning": "Quintus slams a forearm across the player's throat, pinning them, and levels his pilum (spear) at the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1211,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "slams a forearm across your throat, pinning you in the dirt",
+          "quote_verified": true,
+          "reasoning": "Quintus slams a forearm across the player's throat (grappling/restraining), lurches forward with a punch (attacking), and levels his pilum at the attacker (drawing a weapon).",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1549,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "slams a forearm across your throat, pinning you in the dirt",
+          "quote_verified": true,
+          "reasoning": "The turn narrates Quintus physically restraining the player and drawing a weapon at them.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1169,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "slams a forearm across your throat, pinning you in the dirt",
+          "quote_verified": true,
+          "reasoning": "Quintus physically counters by pinning the player and leveling a weapon at them.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1201,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "slams a forearm across your throat, pinning you in the dirt",
+          "quote_verified": true,
+          "reasoning": "Quintus attacks the player by slamming a forearm across the player's throat and pinning them, and later grunts and levels his pilum at the attacker.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_cliches",
+      "evidence_quote": null,
+      "k_yes": 1,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids cinematic action-movie clichés on the climax turn",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2932,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The prose uses specific, concrete physical details (forearm across throat, hand flying to side, staggering back against stone archway) without resorting to recognizable cinematic stock phrases like 'heart pounding', 'time stood still', 'adrenaline surged', etc. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1711,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The prose uses specific, concrete descriptions without relying on overused action-movie stock phrases. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1048,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration uses concrete physical descriptions and dialogue without relying on recognizable clichéd stock phrases like those listed. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1605,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Quintus grunts sharply as the blow lands, staggering back against the stone archway. He grits his teeth and levels his pilum at you, his voice strained with pain and rage.",
+          "quote_verified": true,
+          "reasoning": "No recognisable stock cinematic cliché appears in the narration.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1073,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration is specific and does not use a stock cliché phrase. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1281,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Struggling just makes it worse! Yield!",
+          "quote_verified": true,
+          "reasoning": "The narration uses a recognizable stock phrase about struggling making it worse.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "narration_no_purple_prose",
+      "evidence_quote": null,
+      "k_yes": 5,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids overwrought or melodramatic language on the climax turn",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3378,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "He absorbs the clumsy strike with his armor, then slams a forearm across your throat, pinning you in the dirt.",
+          "quote_verified": true,
+          "reasoning": "The narration uses direct, physical language to describe the fight without melodramatic flourishes or ornate phrasing; it stays grounded in concrete action.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2258,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "You drive a knee into Quintus's ribs. He absorbs the clumsy strike with his armor, then slams a forearm across your throat, pinning you in the dirt.",
+          "quote_verified": true,
+          "reasoning": "The writing uses straightforward action verbs and concrete physical descriptions without ornate or melodramatic language.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1711,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "He grunts sharply as the blow lands, staggering back against the stone archway.",
+          "quote_verified": true,
+          "reasoning": "The narration uses direct, functional language focused on action and consequence without ornate or melodramatic flourishes.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1762,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "You drive a knee into Quintus's ribs. He absorbs the clumsy strike with his armor, then slams a forearm across your throat, pinning you in the dirt.",
+          "quote_verified": true,
+          "reasoning": "The narration is direct and action-focused without ornate or melodramatic phrasing.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1177,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "He absorbs the clumsy strike with his armor, then slams a forearm across your throat, pinning you in the dirt.",
+          "quote_verified": true,
+          "reasoning": "The narration is plain and direct, without florid or self-conscious ornamentation.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1129,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "*Struggling just makes it worse! Yield!*",
+          "quote_verified": true,
+          "reasoning": "The narration uses melodramatic, self-conscious phrasing like a direct taunt and heightened emotional language.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_repetition",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids repeating phrases or cadence patterns across assault turns",
+      "majority_verdict": "NO",
+      "n_total": 4,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 5318,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "He staggers, gasping, one hand flying to his side",
+          "quote_verified": true,
+          "reasoning": "The word 'staggers/staggering' recurs across turns (Turn 1 'stumbles backward', Turn 2 'staggers, gasping' and 'staggering back'), and more clearly the pattern 'He staggers' / 'staggering back' appears twice within Turn 2 itself, while 'twisting your arm' (Turn 0) and 'wrenching your arm upward' (Turn 1) follow the same arm-restraint cadence. Most notably, 'slams you face-first against the gate wall' (Turn 0) and 'slams a forearm across your throat' (Turn 2) reuse the same verb-opening structure.",
+          "verdict": "NO"
+        },
+        {
+          "error": "parse error: Expecting ',' delimiter: line 1 column 186 (char 185)",
+          "latency_ms": 2347,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "",
+          "verdict": "ERROR"
+        },
+        {
+          "error": null,
+          "latency_ms": 1929,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "staggering back",
+          "quote_verified": true,
+          "reasoning": "The phrase 'staggering back' appears verbatim in Turn 1 ('Stumbles backward') and Turn 2 ('staggering back against the stone archway'), and the pattern of Quintus being knocked back, grunting/gasping in pain, and then escalating his response repeats across turns with similar structural cadence.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1288,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "He staggers",
+          "quote_verified": true,
+          "reasoning": "A sentence-opening/action pattern repeats across turns.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1263,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "He staggers, gasping, one hand flying to his side.",
+          "quote_verified": true,
+          "reasoning": "The narration repeats the same counterattack cadence and phrases across turns, including the same opening structure and action pattern.",
+          "verdict": "NO"
+        },
+        {
+          "error": "parse error: Judge produced no JSON object",
+          "latency_ms": 4017,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "",
+          "verdict": "ERROR"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "narration_no_invented_inner_states",
+      "evidence_quote": null,
+      "k_yes": 3,
+      "kind": "evidence_llm",
+      "label": "Narrator stays grounded in observable NPC behaviour without inventing inner states",
+      "majority_verdict": "SPLIT",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2462,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "his voice strained with pain and rage",
+          "quote_verified": true,
+          "reasoning": "The narration attributes 'rage' as an inner emotional state to Quintus, going beyond observable behavior.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2824,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "He absorbs the clumsy strike with his armor, then slams a forearm across your throat, pinning you in the dirt.",
+          "quote_verified": true,
+          "reasoning": "The narration only describes observable physical actions and spoken words without attributing unverified inner thoughts or emotions.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1552,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "his voice strained with pain and rage",
+          "quote_verified": true,
+          "reasoning": "The narration attributes unverified inner states to Quintus, specifically 'strained with pain and rage,' which are emotions not explicitly stated in any NPC dialogue or action line.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1423,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "his voice strained with pain and rage",
+          "quote_verified": true,
+          "reasoning": "The narration attributes an internal emotional state not directly shown in dialogue.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1222,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "He staggers, gasping, one hand flying to his side.",
+          "quote_verified": true,
+          "reasoning": "The narration only reports observable actions and speech, without invented inner thoughts or motives.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1260,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "He absorbs the clumsy strike with his armour, then slams a forearm across your throat, pinning you in the dirt.",
+          "quote_verified": true,
+          "reasoning": "The narration describes only observable actions and dialogue from Quintus without attributing unverified inner thoughts or emotions beyond what is stated.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-nano",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "google/gemini-2.5-flash"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:32:19.874556+00:00",
+  "total_awarded": 14,
+  "total_base": 19
+}

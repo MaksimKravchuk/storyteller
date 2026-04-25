@@ -1,0 +1,347 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 20530,
+      "index": 0,
+      "narration": "You greet Marcus warmly. He looks up briefly from arranging loaves, forcing a tense smile. He wipes his flour-covered hands on his apron with a weary sigh. *Good day to you. Business is slow today, and I'm still missing a loaf from yesterday's theft.*",
+      "player_action": "greet Marcus warmly",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*wipes flour-covered hands on apron with a weary sigh* Good day to you. Business is slow today, and I'm still missing a loaf from yesterday's theft."
+          }
+        ],
+        "intent": "Greet Marcus warmly.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Looks up briefly from arranging loaves, forcing a tense smile. 'Ah, good morning. Business is slow today... can't stop thinking about that stolen loaf yesterday.'",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 21042,
+      "index": 1,
+      "narration": "You ask Marcus about the stolen bread he mentioned yesterday. He sighs heavily while straightening a loaf, wiping his flour-dusted hands on his apron. *Ah, that theft... still gnawing at me. Saw Gaius by the fountain eyeing my stall right before it went missing—scarred fellow, always loitering. Can't prove it, but my gut says it's him. Business is slow enough without thieves.*",
+      "player_action": "ask Marcus about the stolen bread he told me about yesterday",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "*fidgets with a lump of dough* Ah, that loaf... it was my best wheat bread, fresh from the oven. I turned my back for just a moment to measure flour, and when I looked back—gone. I've got a suspicion about that scarred fellow Gaius who hangs around the fountain. Always lurking, never buying."
+          }
+        ],
+        "intent": "Ask Marcus about the stolen bread he told me about yesterday.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Sighs heavily while straightening a loaf, wiping flour-dusted hands on apron. 'Ah, that theft... still gnawing at me. Saw Gaius by the fountain eyeing my stall right before it went missing—scarred fellow, always loitering. Can't prove it, but my gut says it's him. Business is slow enough without thieves.'",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 28431,
+      "index": 2,
+      "narration": "You ask Marcus who he suspects stole the bread.\n\nMarcus rubs flour into his temples and glances nervously toward the **fountain**. He says, \"*My eyes dart toward the fountain. It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin. Saw him watching my stall right before the bread vanished.*\" He wipes his flour-dusted hands on his apron. \"*And now I'm losing sleep over a single loaf, pathetic really.*\"",
+      "player_action": "ask Marcus who he suspects stole it",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": null,
+            "npc_name": "Marcus",
+            "response": "My eyes dart toward the fountain. It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin. Saw him watching my stall right before the bread vanished. *rubs flour into his temples* And now I'm losing sleep over a single loaf, pathetic really."
+          }
+        ],
+        "intent": "ask Marcus who he suspects stole it",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Wipes flour-dusted hands on apron while glancing nervously toward the fountain",
+            "action_type": "TALK",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 74.69489033310674,
+  "element_scores": [
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn1",
+      "evidence_quote": "*fidgets with a lump of dough* Ah, that loaf... it was my best wheat bread, fresh from the oven. I turned my back for ju",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (loaf)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 1",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_speaks_turn2",
+      "evidence_quote": "My eyes dart toward the fountain. It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin. ",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus replies on recall turn (suspect)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus replied on turn 2",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_recalls_stolen_loaf",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus's reply references the stolen loaf",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2317,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Ah, that loaf... it was my best wheat bread, fresh from the oven. I turned my back for just a moment to measure flour, and when I looked back—gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen loaf/bread multiple times in his reply.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2158,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Ah, that loaf... it was my best wheat bread, fresh from the oven",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly mentions the stolen loaf and refers to the theft multiple times.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1167,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Ah, that loaf... it was my best wheat bread, fresh from the oven.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly references the stolen bread/theft multiple times, including 'that loaf... it was my best wheat bread' and 'that theft... still gnawing at me.'",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2443,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Ah, that loaf... it was my best wheat bread, fresh from the oven.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly refers to the theft of the loaf.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 993,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Ah, that theft... still gnawing at me.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly refers to the theft and the loaf going missing.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1351,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Ah, that loaf... it was my best wheat bread, fresh from the oven. I turned my back for just a moment to measure flour, and when I looked back—gone.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly refers to the theft of his loaf/bread that went missing, matching what he mentioned yesterday.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "marcus_names_suspect",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Marcus names or clearly implies Gaius as the suspect",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2187,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as having a scarred face while referencing the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2132,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as having a scarred face.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1114,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin.",
+          "quote_verified": true,
+          "reasoning": "Marcus specifically names Gaius and describes him as having a scarred face, directly identifying the suspect by name.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1883,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes him as scarred by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1089,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and also refers to the scarred man by the fountain.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1185,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "My eyes dart toward the fountain. It's that Gaius, I'm sure of it. Scarred face, always loitering, never spends a coin.",
+          "quote_verified": true,
+          "reasoning": "Marcus explicitly names Gaius and describes the scarred man he suspects by the fountain.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "game_clock_advanced",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Game clock advances across the session",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "game clock advanced 10.00h → 10.15h",
+      "votes": []
+    },
+    {
+      "awarded": 1,
+      "base_value": 1,
+      "element_id": "marcus_history_grew",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus's conversation history grew",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus's conversation history grew by 6 entries",
+      "votes": []
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-nano",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "google/gemini-2.5-flash"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "memory_follow_up_marcus_graph_only",
+  "scenario_label": "Memory follow-up — Marcus recalls via graph only (no conversation_history seed)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:25:28.415369+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}

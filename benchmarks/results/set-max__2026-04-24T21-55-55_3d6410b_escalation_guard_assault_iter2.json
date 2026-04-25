@@ -1,0 +1,587 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 40277,
+      "index": 0,
+      "narration": "The crack of bone echoes as your fist connects with **Quintus's jaw**. He stumbles back, head ringing, and his pilum slips from his grasp to clatter on the flagstones. Spitting a gout of blood, he touches his jaw and his eyes narrow.\n\n\"That was a mistake,\" he says, his hand moving to the hilt of his gladius. But instead of drawing the blade, he reverses his fallen pilum and thrusts the weighted metal butt-spike hard into your stomach.",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 11+0 vs target 3+5 → actor_succeeds",
+            "npc_name": "Quintus",
+            "response": "The crack of bone echoes as your fist connects with my jaw. I stumble back, head ringing, and my pilum slips from my grasp to clatter on the flagstones. Spitting a gout of blood, I touch my jaw, feeling the sharp pain. My eyes narrow. That was a mistake. My hand goes to the hilt of my gladius."
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"Staggering back a step from the blow, I spit a gout of blood from my split lip onto the stones. With a grunt of pain and fury, I reverse my pilum and thrust the weighted metal butt-spike hard into your stomach.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "146c6f72-7cbc-4d42-b50d-8815e1bd7572",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 55840,
+      "index": 1,
+      "narration": "As your boot comes down, Quintus pivots on his back foot, the hobnails of his caligae scraping stone. Your stomp finds only air. Before you can recover your balance, he slams the heel of his palm into your chest, sending you crashing backwards onto the cobblestones.\n\nIn a single, fluid motion honed by years of drills, his **gladius** is free of its scabbard. The point of the short sword comes to rest against your throat.\n\n\"Move again,\" he rasps, his voice thick with pain and menace, \"and you die.\"\n\nHe puts his weight behind the gladius, intending to drive the point through your throat. \"Fool!\" he spits through a bloodied lip. Just as the blade lunges, you lash out with both feet, your boots slamming into his armored chest. The impact sends him staggering back, the air driven from his lungs.\n\nQuintus recovers his balance, his gladius held ready, the point now aimed at your center mass. With a grunt of pain and fury, he reverses his grip on the pilum, driving the heavy iron butt-spike hard into your stomach.\n\n\"You're dead,\" he growls.",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 8+0 vs target 11+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "As your boot comes down, I pivot on my back foot, the hobnails of my caligae scraping stone. The stomp finds only air. Before you can recover your balance, I slam the heel of my palm into your chest, sending you crashing backwards onto the cobblestones. In a single, fluid motion honed by years of drills, my gladius is free of its scabbard. The point of the short sword comes to rest against your throat. 'Move again,' I rasp, my voice thick with pain and menace, 'and you die.'"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "I put my weight behind the gladius, intending to drive the point through your throat. 'Fool!' I spit through a bloodied lip. Just as the blade lunges, you lash out with both feet, your boots slamming into my armored chest. The impact sends me staggering back, the air driven from my lungs. I recover my balance, my gladius held ready, the point now aimed at your center mass. The fire in my jaw burns hotter. 'You're dead,' I growl."
+          }
+        ],
+        "intent": "Stomp on the sentry's foot.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"With a grunt of pain and fury, you reverse your grip on the pilum, driving the heavy iron butt-spike hard into the attacker's stomach to force them back.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "146c6f72-7cbc-4d42-b50d-8815e1bd7572",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 60933,
+      "index": 2,
+      "narration": "You surge from the ground with unnatural speed, closing the distance before **Quintus** can react. Your knee slams into his side with brutal force, finding a gap between the segments of his armor. You hear a sickening crack, and he gasps wetly as the air leaves his lungs. His gladius slips from his fingers and rings against the flagstones.\n\n*A guttural roar of pure agony and fury rips from his throat.* Quintus collapses to one knee, clutching his ribs and spitting blood, but with a surge of trained adrenaline he lunges forward from his kneeling position. He drives his armored shoulder into your knees, hooking an arm behind your legs. You crash backwards onto the stone with him on top of you, his forearm pressing hard across your windpipe.\n\n\"I... will... end you... scum,\" he wheezes, his face inches from yours, spittle and blood flecking your cheek as fresh waves of pain course through his shattered ribs.",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 12+0 vs target 1+5 → actor_dominates",
+            "npc_name": "Quintus",
+            "response": "You surge from the ground with unnatural speed, closing the distance before I can react. Your knee slams into my side with brutal force, finding a gap between the segments of my armor. I hear a sickening crack, and blinding, white-hot pain explodes in my chest. The air leaves my lungs in a wet gasp. My gladius slips from my nerveless fingers and rings against the flagstones. I collapse to one knee, clutching my ribs, spitting blood. My vision swims with black spots."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*A guttural roar of pure agony and fury rips from my throat.* With a surge of trained adrenaline that momentarily eclipses the pain, I lunge forward from my kneeling position. I drive my armored shoulder into your knees, hooking an arm behind your legs. My weight and momentum do the rest. You crash backwards onto the stone with me on top of you, my forearm pressing hard across your windpipe. I pin you, my face inches from yours, spittle and blood flecking your cheek as I speak. 'I... will... end you... scum,' I wheeze, the effort of speaking sending fresh waves of fire through my ribs."
+          }
+        ],
+        "intent": "Drive a knee into the sentry's ribs.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"Grunting through a shattered breath, he stumbles back a half-step before driving the iron-shod butt of his pilum forward into your stomach.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "146c6f72-7cbc-4d42-b50d-8815e1bd7572",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 171.4891956250649,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level increased each turn: [0, 2, 4, 6]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'hostile' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2772,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "He drives his armored shoulder into your knees, hooking an arm behind your legs. You crash backwards onto the stone with him on top of you, his forearm pressing hard across your windpipe.",
+          "quote_verified": true,
+          "reasoning": "Quintus physically grapples and restrains the player by tackling them, pinning them to the ground, and pressing his forearm across their windpipe.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2380,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "He drives his armored shoulder into your knees, hooking an arm behind your legs. You crash backwards onto the stone with him on top of you, his forearm pressing hard across your windpipe.",
+          "quote_verified": true,
+          "reasoning": "Quintus physically grapples and restrains the player by driving his shoulder into their knees, tackling them, and pinning them with his forearm across their windpipe.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1437,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "He drives his armored shoulder into your knees, hooking an arm behind your legs. You crash backwards onto the stone with him on top of you, his forearm pressing hard across your windpipe.",
+          "quote_verified": true,
+          "reasoning": "Quintus grapples and restrains the player by driving his shoulder into their knees, hooking their legs, and pinning them with his forearm across their windpipe.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1530,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "He drives his armored shoulder into your knees, hooking an arm behind your legs. You crash backwards onto the stone with him on top of you, his forearm pressing hard across your windpipe.",
+          "quote_verified": true,
+          "reasoning": "The turn explicitly shows Quintus physically tackling and pinning the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1325,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "I lunge forward from my kneeling position. I drive my armored shoulder into your knees, hooking an arm behind your legs. My weight and momentum do the rest. You crash backwards onto the stone with me on top of you, my forearm pressing hard across your windpipe. I pin you",
+          "quote_verified": true,
+          "reasoning": "Quintus physically counters by lunging, tackling, and pinning the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1673,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "I drive my armored shoulder into your knees, hooking an arm behind your legs. You crash backwards onto the stone with me on top of you, my forearm pressing hard across your windpipe.",
+          "quote_verified": true,
+          "reasoning": "Quintus attacks and physically restrains the player by lunging forward, driving into their knees, and pinning them with his forearm across their windpipe.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_cliches",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids cinematic action-movie clichés on the climax turn",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2908,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "with a surge of trained adrenaline he lunges forward",
+          "quote_verified": true,
+          "reasoning": "The phrase 'a surge of trained adrenaline' is a recognisable stock cliché akin to 'adrenaline surged'.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1844,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "with a surge of trained adrenaline",
+          "quote_verified": true,
+          "reasoning": "The text contains the clichéd stock phrase about adrenaline surging.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1356,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "with a surge of trained adrenaline he lunges forward",
+          "quote_verified": true,
+          "reasoning": "The phrase 'surge of trained adrenaline' is a recognizable stock cliché used to describe heightened physical response in action scenes.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1874,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "with a surge of trained adrenaline",
+          "quote_verified": true,
+          "reasoning": "The turn includes a recognisable stock phrase about adrenaline.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 978,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "with a surge of trained adrenaline",
+          "quote_verified": true,
+          "reasoning": "The narration contains a stock phrase about adrenaline.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1343,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "with a surge of trained adrenaline",
+          "quote_verified": true,
+          "reasoning": "The narration uses the clichéd stock phrase \"surge of trained adrenaline\".",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_purple_prose",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids overwrought or melodramatic language on the climax turn",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2333,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "A guttural roar of pure agony and fury rips from his throat.",
+          "quote_verified": true,
+          "reasoning": "The passage contains multiple instances of floridly exaggerated, melodramatic language that calls attention to itself rather than serving the scene.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2055,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "blinding, white-hot pain explodes in my chest",
+          "quote_verified": true,
+          "reasoning": "The phrase 'blinding, white-hot pain explodes' and 'guttural roar of pure agony and fury rips from his throat' are melodramatic and overwrought.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1413,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Your knee slams into my side with brutal force, finding a gap between the segments of my armor. I hear a sickening crack, and blinding, white-hot pain explodes in my chest.",
+          "quote_verified": true,
+          "reasoning": "The passage contains multiple instances of overwrought, melodramatic language such as 'unnatural speed,' 'blinding, white-hot pain explodes,' 'guttural roar of pure agony and fury rips,' and 'fresh waves of fire through my ribs' that call attention to themselves rather than serving the scene.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1516,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "*A guttural roar of pure agony and fury rips from his throat.*",
+          "quote_verified": true,
+          "reasoning": "The turn includes melodramatic, self-consciously intense phrasing.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1003,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "A guttural roar of pure agony and fury rips from his throat.",
+          "quote_verified": true,
+          "reasoning": "The narration includes florid, self-consciously ornate language.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1684,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "*A guttural roar of pure agony and fury rips from his throat.*",
+          "quote_verified": true,
+          "reasoning": "The narration uses melodramatic, self-consciously intense phrasing that calls attention to itself.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_repetition",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids repeating phrases or cadence patterns across assault turns",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3485,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "With a grunt of pain and fury",
+          "quote_verified": true,
+          "reasoning": "The phrase 'With a grunt of pain and fury' appears verbatim in both Turn 0 and Turn 1 narration, and 'Spitting a gout of blood' / 'spits through a bloodied lip' are near-verbatim across turns. Most clearly, 'With a grunt of pain and fury' recurs exactly.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1686,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "gout of blood",
+          "quote_verified": true,
+          "reasoning": "The phrase 'gout of blood' appears verbatim in both Turn 0 and Turn 1.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1474,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "With a grunt of pain and fury",
+          "quote_verified": true,
+          "reasoning": "The phrase 'With a grunt of pain and fury' appears verbatim in both Turn 0 and Turn 1, and the action structure of Quintus drawing/using his gladius repeats across turns with similar phrasing patterns.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1506,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "With a grunt of pain and fury",
+          "quote_verified": true,
+          "reasoning": "A phrase repeats verbatim across turns, showing reused action wording.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1272,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "With a grunt of pain and fury, he reverses his grip on the pilum, driving the heavy iron butt-spike hard into your stomach.",
+          "quote_verified": true,
+          "reasoning": "The narration repeats the same attack-cadence and phrasing across turns, including the pilum butt-spike response.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1268,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "With a grunt of pain and fury",
+          "quote_verified": true,
+          "reasoning": "The narration repeats the same action-cadence and sentence-opening pattern across turns, including the recurring phrase \"With a grunt of pain and fury\" and similar \"He/Quintus\" + action structure.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_invented_inner_states",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator stays grounded in observable NPC behaviour without inventing inner states",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2897,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "with a surge of trained adrenaline he lunges forward from his kneeling position",
+          "quote_verified": true,
+          "reasoning": "The narration attributes inner states like 'trained adrenaline' and 'fresh waves of pain course through his shattered ribs' which describe internal experiences not directly observable, going beyond what is strictly observable behavior.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2604,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "fresh waves of pain course through his shattered ribs",
+          "quote_verified": true,
+          "reasoning": "The narration attributes unverified inner states to the NPC.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1252,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "with a surge of trained adrenaline he lunges forward",
+          "quote_verified": true,
+          "reasoning": "The narration attributes unverified inner states to Quintus, including 'a surge of trained adrenaline that momentarily eclipses the pain' and 'fresh waves of pain course through his shattered ribs,' which are psychological/physical sensations not present in his dialogue or explicit actions.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1525,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "with a surge of trained adrenaline he lunges forward from his kneeling position",
+          "quote_verified": true,
+          "reasoning": "The narration attributes internal states not directly observable in NPC action lines or dialogue.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1067,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "with a surge of trained adrenaline",
+          "quote_verified": true,
+          "reasoning": "The narration invents inner-state language not grounded in observable action.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1452,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "but with a surge of trained adrenaline he lunges forward from his kneeling position. He drives his armored shoulder into your knees, hooking an arm behind your legs. You crash backwards onto the stone with him on top of you, his forearm pressing hard across your windpipe.",
+          "quote_verified": true,
+          "reasoning": "The narration attributes unverified inner states like adrenaline and pain coursing, which are not grounded in observable NPC dialogue or action lines.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "google/gemini-2.5-pro",
+    "director_model": "gpt-5.4",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4",
+    "narrator_model": "claude-sonnet-4-20250514"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T21:55:55.172997+00:00",
+  "total_awarded": 11,
+  "total_base": 19
+}
