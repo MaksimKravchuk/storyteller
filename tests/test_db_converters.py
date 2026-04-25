@@ -21,6 +21,7 @@ from db.converters import (
 )
 from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models import game_state, location, npc_card, scene, setting
+from models.goal import Goal, GoalKind, GoalScope, GoalStatus
 from timeline import event as timeline_event
 
 GAME_STATE_ID = "gs-1"
@@ -181,6 +182,59 @@ class TestNPCConverter:
 
         restored = npc_conv.row_to_npc(row)
         assert restored.short_descriptor == ""
+
+    @allure.story("Round-trip")
+    @allure.title("life_goal and tactical_goal Goal objects survive a domain→row→domain round-trip")
+    def test_goal_round_trip(self):
+        npc = npc_card.NPCCard(name="Marcus")
+        npc.life_goal = Goal(
+            scope=GoalScope.LIFE,
+            kind=GoalKind.KILL,
+            description="Avenge brother",
+            target_uuid="npc-9",
+            progress_notes=["spotted target near the bridge"],
+        )
+        npc.tactical_goal = Goal(
+            scope=GoalScope.TACTICAL,
+            kind=GoalKind.FLEE_SCENE,
+            description="Escape the city watch",
+            status=GoalStatus.ACTIVE,
+            turns_pursued=2,
+            created_on_turn=14,
+        )
+
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        assert row["life_goal"]["kind"] == "kill"
+        assert row["life_goal"]["scope"] == "life"
+        assert row["tactical_goal"]["scope"] == "tactical"
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.life_goal == npc.life_goal
+        assert restored.tactical_goal == npc.tactical_goal
+
+    @allure.story("Round-trip")
+    @allure.title("NPCs with no goals round-trip with life_goal and tactical_goal as None")
+    def test_goal_none_round_trip(self):
+        npc = npc_card.NPCCard(name="No-goal")
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        assert row["life_goal"] is None
+        assert row["tactical_goal"] is None
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.life_goal is None
+        assert restored.tactical_goal is None
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_npc defaults goal columns to None on legacy rows lacking those columns")
+    def test_goal_defaults_on_legacy_row(self):
+        npc = npc_card.NPCCard(name="Legacy")
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        row.pop("life_goal")
+        row.pop("tactical_goal")
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.life_goal is None
+        assert restored.tactical_goal is None
 
 
 @allure.epic("Persistence")

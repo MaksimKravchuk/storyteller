@@ -138,6 +138,7 @@ async def _retry_after_validation_failure(
         retries=ctx.retries,
         attempt=ctx.attempt + 1,
         response_model=ctx.response_model,
+        max_tokens=ctx.max_tokens,
     )
     return await _send_json_prompt_fallback(performer, retry_ctx)
 
@@ -153,6 +154,7 @@ async def _send_json_prompt_fallback(performer: BasePerformer, ctx: _RetryContex
         ctx.user_message,
         conversation=ctx.conversation,
         response_format={"type": "json_object"},
+        max_tokens=ctx.max_tokens,
     )
     cleaned = _strip_markdown_fence(raw)
     try:
@@ -178,6 +180,7 @@ async def _send_json_strict(
     user_message: str,
     conversation: list[Message] | None,
     response_model: type[BaseModelT],
+    max_tokens: int | None = None,
 ) -> BaseModelT:
     """Run the strict structured-outputs path and validate the response.
 
@@ -191,11 +194,13 @@ async def _send_json_strict(
         schema=response_model.model_json_schema(),
         schema_name=response_model.__name__,
     )
+    overrides = None if max_tokens is None else {"max_tokens": max_tokens}
     response = await _call_llm(
         performer,
         user_message=user_message,
         conversation=conversation,
         output_format=output_format,
+        overrides=overrides,
     )
     raw = response.body
     try:
@@ -400,9 +405,9 @@ class BasePerformer(ABC):
         user_message: str,
         conversation: list[Message] | None = ...,
         retries: int = ...,
-        _attempt: int = ...,
         *,
         response_model: type[BaseModelT],
+        max_tokens: int | None = ...,
     ) -> BaseModelT: ...
 
     @overload
@@ -411,8 +416,8 @@ class BasePerformer(ABC):
         user_message: str,
         conversation: list[Message] | None = ...,
         retries: int = ...,
-        _attempt: int = ...,
         response_model: None = ...,
+        max_tokens: int | None = ...,
     ) -> dict: ...
 
     async def _send_json(
@@ -420,8 +425,8 @@ class BasePerformer(ABC):
         user_message: str,
         conversation: list[Message] | None = None,
         retries: int = 2,
-        _attempt: int = 0,
         response_model: type[BaseModelT] | None = None,
+        max_tokens: int | None = None,
     ) -> dict | BaseModelT:
         """Send a message expecting JSON back, preferring strict structured outputs.
 
@@ -441,7 +446,13 @@ class BasePerformer(ABC):
         """
         if response_model is not None:
             try:
-                return await _send_json_strict(self, user_message, conversation, response_model)
+                return await _send_json_strict(
+                    self,
+                    user_message,
+                    conversation,
+                    response_model,
+                    max_tokens=max_tokens,
+                )
             except NotImplementedError:
                 logger.info(
                     "Strict structured outputs unavailable for {}; falling back to prompt-based JSON",
@@ -452,7 +463,8 @@ class BasePerformer(ABC):
             user_message=user_message,
             conversation=conversation,
             retries=retries,
-            attempt=_attempt,
+            attempt=0,
             response_model=response_model,
+            max_tokens=max_tokens,
         )
         return await _send_json_prompt_fallback(self, ctx)

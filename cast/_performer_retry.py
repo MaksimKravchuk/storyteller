@@ -38,6 +38,7 @@ class RetryContext:
     retries: int
     attempt: int
     response_model: type["BaseModel"] | None
+    max_tokens: int | None = None
 
     @property
     def total_attempts(self) -> int:

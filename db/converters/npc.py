@@ -10,7 +10,22 @@ from db.converters._columns import (
     COL_LOCATION_ID,
     COL_NAME,
 )
+from models.goal import Goal
 from models.npc_card import NPCCard
+
+
+def _goal_to_row(goal: Goal | None) -> dict | None:
+    """Serialize a ``Goal`` into a JSON-safe dict, or ``None`` when unset."""
+    if goal is None:
+        return None
+    return goal.model_dump(mode="json")
+
+
+def _row_to_goal(payload: dict | None) -> Goal | None:
+    """Restore a ``Goal`` from a JSON dict; ``None`` / falsy stays ``None``."""
+    if not payload:
+        return None
+    return Goal.model_validate(payload)
 
 
 def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
@@ -34,6 +49,8 @@ def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
         "physical_status": npc.physical_status,
         "hostility_level": npc.hostility_level,
         "recent_hostile_actions": npc.recent_hostile_actions,
+        "life_goal": _goal_to_row(npc.life_goal),
+        "tactical_goal": _goal_to_row(npc.tactical_goal),
     }
 
 
@@ -57,4 +74,6 @@ def row_to_npc(row) -> NPCCard:
         physical_status=row.get("physical_status", "healthy"),
         hostility_level=row.get("hostility_level", 0),
         recent_hostile_actions=row.get("recent_hostile_actions", []),
+        life_goal=_row_to_goal(row.get("life_goal")),
+        tactical_goal=_row_to_goal(row.get("tactical_goal")),
     )
