@@ -16,6 +16,7 @@ from cast.npc_ticker import (
 from cast.schemas.turn_outputs import TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
+from models.goal import Goal, GoalKind, GoalScope
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
@@ -182,6 +183,24 @@ class TestNPCTickerEvictions:
     def test_guard_present_in_morning(self):
         gs = _make_game_state(game_time="morning")
         _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        scene = _set_scene(gs, _GUARD_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert outputs.npc_departures == []
+        assert [snpc.uuid for snpc in scene.npcs_present] == [_GUARD_UUID]
+
+    @allure.story("Eviction")
+    @allure.title("NPC with active tactical goal is shielded from schedule eviction")
+    def test_active_tactical_goal_shields_from_eviction(self):
+        gs = _make_game_state(game_time="night")
+        guard = _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        guard.tactical_goal = Goal(
+            scope=GoalScope.TACTICAL,
+            kind=GoalKind.DEFEND,
+            description="hold ground against the player",
+        )
         scene = _set_scene(gs, _GUARD_UUID)
 
         outputs = TurnOutputs()

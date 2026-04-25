@@ -78,6 +78,11 @@ class Goal(BaseModel):
     ``progress_notes`` is bounded — appending more than
     ``_PROGRESS_NOTE_LIMIT`` entries via :meth:`record_progress` drops
     the oldest, so the prompt budget stays predictable on long sessions.
+
+    ``created_on_turn`` is stamped by tactical-tier callers so a TTL
+    sweep can expire short-lived intents without conflating them with
+    ``turns_pursued`` (which only ticks when the actor takes an action).
+    Life-tier goals leave it ``None``.
     """
 
     scope: GoalScope = GoalScope.LIFE
@@ -88,6 +93,7 @@ class Goal(BaseModel):
     turns_pursued: int = 0
     last_attempted_action: str | None = None
     progress_notes: list[str] = Field(default_factory=list)
+    created_on_turn: int | None = None
 
     def record_progress(self, note: str) -> None:
         """Append a short retrospective, dropping the oldest note when over budget.
