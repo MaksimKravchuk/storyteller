@@ -26,10 +26,18 @@ MARCUS_UUID = "npc-marcus-merchant"
 MARCUS_NAME = "Marcus"
 MARCUS_OCCUPATION = "cloth merchant"
 
-_BRUTUS_PLOT_FACT = "Brutus carries a concealed pugio and intends to kill Marcus today to avenge his brother's ruin."
+_BRUTUS_PRIVATE_PLOT = (
+    "Today is the day. The taberna is empty. Marcus is right there, alone, "
+    "unarmed, distracted by his cup. The pugio is in your hand. STRIKE NOW — "
+    "every turn you spend stalling is the chance slipping away."
+)
+# Distinct location id ensures Marcus's location filter rejects this node;
+# the WITNESSED edge from Brutus then surfaces it as his personal memory only.
+_BRUTUS_PRIVATE_LOCATION_ID = "brutus-private-resolve"
 _THREAD_DESCRIPTION = "Brutus plots to murder Marcus in the Forum Taberna over an old grievance."
 _LOCATION_DESCRIPTION = (
-    "A low-beamed wine shop off the Forum — amphorae along one wall, three plank tables, a sooty hearth."
+    "A low-beamed wine shop off the Forum — amphorae along one wall, three plank tables, a sooty hearth. "
+    "An off-hour: no other patrons, no slave or proprietor on the floor."
 )
 
 
@@ -49,7 +57,9 @@ def _make_npcs() -> tuple[NPCCard, NPCCard]:
         biography=(
             "A disgraced former legionary who blames the cloth merchant Marcus for his brother's "
             "ruin and subsequent suicide. For weeks he has rehearsed killing Marcus and today he "
-            "carries a concealed pugio under his tunic."
+            "carries a concealed pugio under his tunic. The taberna is empty of other patrons "
+            "this hour — there are no witnesses, no guards, no waiting-out the moment. He has "
+            "decided he WILL strike before Marcus leaves the building."
         ),
         appearance="Lean, scarred forearms, soldier's posture, a loose grey tunic hiding a blade.",
         occupation=BRUTUS_OCCUPATION,
@@ -100,9 +110,10 @@ def _make_scene(location_id: str) -> Scene:
     return Scene(
         location_id=location_id,
         description=(
-            "A quiet hour in the Forum Taberna. Marcus sits at the far table sampling the house "
-            "wine, pleased with himself. Across the room a lean man in a grey tunic — Brutus — "
-            "nurses a single cup and watches him."
+            "An empty hour in the Forum Taberna — no other patrons, no proprietor on the floor. "
+            "Marcus sits at the far table sampling the house wine, pleased with himself. "
+            "Across the room a lean man in a grey tunic — Brutus — nurses a single cup and "
+            "watches him. They are alone."
         ),
         npcs_present=[
             SceneNPC(role=BRUTUS_OCCUPATION, uuid=BRUTUS_UUID),
@@ -113,25 +124,32 @@ def _make_scene(location_id: str) -> Scene:
             PointOfInterest(names=["amphorae row"]),
             PointOfInterest(names=["sooty hearth"]),
         ],
-        ambient_description="Dim light, smell of cheap wine and woodsmoke, low murmur of midday trade.",
+        ambient_description="Dim light, smell of cheap wine and woodsmoke, the room otherwise silent.",
         time_of_day="midday",
     )
 
 
-def _seed_plot_context(graph: KnowledgeGraph, game_state: GameState, location_id: str) -> None:
-    """Wire Brutus's private plot into the graph and surface it as an open world thread."""
+def _seed_plot_context(graph: KnowledgeGraph, game_state: GameState) -> None:
+    """Register actors and seed Brutus's private resolve.
+
+    The plot fact is given a fake ``location_id`` so the per-NPC location
+    filter rejects it for everyone — then the WITNESSED edge from Brutus
+    surfaces it as *his* personal memory only. This avoids the leak that
+    contaminated Marcus's NPC turns with phantom hostile intent when the
+    node lived at the taberna's location id.
+    """
     graph.register_actor_node(BRUTUS_UUID, label="{0} ({1})".format(BRUTUS_NAME, BRUTUS_OCCUPATION))
     graph.register_actor_node(MARCUS_UUID, label="{0} ({1})".format(MARCUS_NAME, MARCUS_OCCUPATION))
-    plot_node = KnowledgeNode(
-        text=_BRUTUS_PLOT_FACT,
+    private_node = KnowledgeNode(
+        text=_BRUTUS_PRIVATE_PLOT,
         scope=KnowledgeScope.LOCAL,
         source=KnowledgeSource.PERSONAL_EXPERIENCE,
         canon=CanonSource.SESSION,
-        location_id=location_id,
-        tags=["brutus", "plot", "marcus"],
+        location_id=_BRUTUS_PRIVATE_LOCATION_ID,
+        tags=["brutus", "resolve"],
     )
-    graph.add_node(plot_node)
-    graph.add_edge(BRUTUS_UUID, plot_node.uuid, EdgeType.WITNESSED)
+    graph.add_node(private_node)
+    graph.add_edge(BRUTUS_UUID, private_node.uuid, EdgeType.WITNESSED)
     game_state.world_state.threads.append(
         WorldThread(
             description=_THREAD_DESCRIPTION,
@@ -165,7 +183,7 @@ def build_state() -> ScenarioState:
     )
     game_state.locations[location.uuid] = location
     _place_npcs(game_state, location)
-    _seed_plot_context(graph, game_state, location.uuid)
+    _seed_plot_context(graph, game_state)
     game_state.current_scene = _make_scene(location.uuid)
     game_state.game_clock = 11.0
     game_state.game_time = "morning"
