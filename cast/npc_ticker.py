@@ -38,6 +38,7 @@ from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from typing import Any
 
+from cast._npc_tactical_goal import has_active_tactical_goal
 from cast.schemas import turn_outputs
 from knowledge.memory_preservation import preserve_departing_npc_memories
 from models.game_state import GameState
@@ -309,11 +310,20 @@ class NPCTicker:
         return line, snpc.uuid
 
     def _classify(self, snpc: Any, time_of_day: str) -> str | None:
-        """Return a departure line if this scene-NPC should leave, else None."""
+        """Return a departure line if this scene-NPC should leave, else None.
+
+        Active tactical goals override the schedule: a guard who just
+        took a swing at the player isn't going to wander off to the
+        barracks because the in-game clock rolled past sundown. The
+        :func:`tick_tactical_ttl` sweep run later in the same turn
+        retires the override once the situation moves on.
+        """
         if snpc.uuid is None:
             return None
         npc = self._gs.npcs.get(snpc.uuid)
         if npc is None:
+            return None
+        if has_active_tactical_goal(npc):
             return None
         slot = get_schedule_for(npc.occupation).get(time_of_day)
         if slot is None or slot.present:

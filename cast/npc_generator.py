@@ -6,8 +6,9 @@ from typing import Any
 
 from loguru import logger
 
+from cast._npc_generator_goals import build_life_goal, candidate_goal_targets
 from cast.base_performer_class import BasePerformer
-from cast.schemas.npc_response import NPCResponse
+from cast.schemas.npc_response import NPCGoalDraft, NPCResponse
 from models.npc_card import NPCCard
 from prompts.npc_generator_prompts import get_npc_generator_prompts
 
@@ -50,6 +51,42 @@ def _existing_scene_names(game_state: Any) -> set[str]:
     return taken
 
 
+def _render_vars_for(npc_request: str, game_state: Any, taken_names: set[str]) -> dict[str, str]:
+    """Build the dict the create-template's render expects, dropping empty optionals.
+
+    Pulled out of :meth:`NPCGenerator._generate_npc` to keep that method
+    inside its WPS210 local-variable budget.
+    """
+    render_vars: dict[str, str] = {"npc_request": npc_request}
+    if taken_names:
+        render_vars["forbidden_names"] = ", ".join(sorted(taken_names))
+    candidate_targets = candidate_goal_targets(game_state)
+    if candidate_targets:
+        render_vars["candidate_targets"] = ", ".join(candidate_targets)
+    return render_vars
+
+
+def _card_from_response(npc_data: NPCResponse, npc_request: str, game_state: Any) -> NPCCard:
+    """Project an :class:`NPCResponse` into a fresh :class:`NPCCard`.
+
+    Stamps ``location_id`` from the current scene (the LLM never produces
+    one). Same fallback semantics as the original inline construction.
+    """
+    return NPCCard(
+        name=npc_data.name or "Unknown",
+        biography=npc_data.biography,
+        appearance=npc_data.appearance,
+        short_descriptor=_sanitize_short_descriptor(npc_data.short_descriptor, npc_request),
+        occupation=npc_data.occupation or npc_request,
+        personality_traits=npc_data.personality_traits,
+        speech_style=npc_data.speech_style or "neutral",
+        knowledge_scope=npc_data.knowledge_scope or "local",
+        attributes=npc_data.attributes.model_dump(),
+        inventory=npc_data.inventory,
+        location_id=(game_state.current_scene.location_id if game_state.current_scene else None),
+    )
+
+
 def _disambiguate_name(name: str, occupation: str, taken: set[str]) -> str:
     """Return a name that does not collide with any name in ``taken``.
 
@@ -87,7 +124,9 @@ class NPCGenerator(BasePerformer):
         Returns a list of ``NPCCard`` objects. Generation is serial so each
         call can tell the LLM which names have already been handed out in
         this batch — otherwise two parallel roles with identical context
-        routinely mode-collapse onto the same name.
+        routinely mode-collapse onto the same name. At most one NPC per
+        batch is allowed to carry a life-tier goal so a single generation
+        pass cannot flood the world with vengeance arcs.
         """
         from models.game_state import GameState
 
@@ -103,22 +142,66 @@ class NPCGenerator(BasePerformer):
             social_structure=game_state.setting.social_structure[:_SOCIAL_STRUCTURE_MAX],
         )
 
-        taken_names = _existing_scene_names(game_state)
+        return await self._generate_batch(
+            list(input_data),
+            game_state,
+            _existing_scene_names(game_state),
+        )
+
+    async def _generate_batch(
+        self,
+        pending: list[str],
+        game_state: Any,
+        taken_names: set[str],
+    ) -> list[NPCCard]:
+        """Serially drain ``pending``, spending the per-batch goal budget at most once."""
+        goal_budget = 1
         cards: list[NPCCard] = []
-        pending = list(input_data)
         while pending:
-            cards.append(await self._generate_unique(pending.pop(0), game_state, taken_names))
+            card, goal_budget = await self._generate_with_goal_budget(
+                pending.pop(0),
+                game_state,
+                taken_names,
+                goal_budget,
+            )
+            cards.append(card)
         return cards
 
-    async def _generate_unique(self, npc_request: str, game_state: Any, taken_names: set[str]) -> NPCCard:
+    async def _generate_with_goal_budget(
+        self,
+        npc_request: str,
+        game_state: Any,
+        taken_names: set[str],
+        goal_budget: int,
+    ) -> tuple[NPCCard, int]:
+        """Generate one card; spend ``goal_budget`` to attach a life-goal at most once per batch."""
+        card, goal_draft = await self._generate_unique(npc_request, game_state, taken_names)
+        if goal_draft is None or goal_budget <= 0:
+            return card, goal_budget
+        life_goal = build_life_goal(goal_draft, game_state, npc_request)
+        if life_goal is None:
+            return card, goal_budget
+        card.life_goal = life_goal
+        return card, goal_budget - 1
+
+    async def _generate_unique(
+        self,
+        npc_request: str,
+        game_state: Any,
+        taken_names: set[str],
+    ) -> tuple[NPCCard, NPCGoalDraft | None]:
         """Generate one card and rename it if the LLM ignored ``forbidden_names``.
 
         The rename is logged at ``error`` because downstream name-matchers
         (dialogue targeting, interaction filters) compare ``npc.name.lower()``
         and will silently miss the suffixed form — a sustained rate of renames
         signals a prompt regression worth investigating.
+
+        Returns the card alongside the raw goal draft (if any) so the
+        caller can apply per-batch rate-limiting before turning the draft
+        into a :class:`Goal`.
         """
-        card = await self._generate_npc(npc_request, game_state, taken_names)
+        card, goal_draft = await self._generate_npc(npc_request, game_state, taken_names)
         if card.name in taken_names:
             disambiguated = _disambiguate_name(card.name, card.occupation, taken_names)
             logger.error(
@@ -129,26 +212,15 @@ class NPCGenerator(BasePerformer):
             )
             card.name = disambiguated
         taken_names.add(card.name)
-        return card
+        return card, goal_draft
 
-    async def _generate_npc(self, npc_request: str, game_state: Any, taken_names: set[str]) -> NPCCard:
+    async def _generate_npc(
+        self,
+        npc_request: str,
+        game_state: Any,
+        taken_names: set[str],
+    ) -> tuple[NPCCard, NPCGoalDraft | None]:
         """Generate a single NPC card from a role description."""
-        render_vars = {"npc_request": npc_request}
-        if taken_names:
-            render_vars["forbidden_names"] = ", ".join(sorted(taken_names))
-        prompt = self._create_template.render(**render_vars)
+        prompt = self._create_template.render(**_render_vars_for(npc_request, game_state, taken_names))
         npc_data = await self._send_json(prompt, response_model=NPCResponse)
-
-        return NPCCard(
-            name=npc_data.name or "Unknown",
-            biography=npc_data.biography,
-            appearance=npc_data.appearance,
-            short_descriptor=_sanitize_short_descriptor(npc_data.short_descriptor, npc_request),
-            occupation=npc_data.occupation or npc_request,
-            personality_traits=npc_data.personality_traits,
-            speech_style=npc_data.speech_style or "neutral",
-            knowledge_scope=npc_data.knowledge_scope or "local",
-            attributes=npc_data.attributes.model_dump(),
-            inventory=npc_data.inventory,
-            location_id=(game_state.current_scene.location_id if game_state.current_scene else None),
-        )
+        return _card_from_response(npc_data, npc_request, game_state), npc_data.goal

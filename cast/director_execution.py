@@ -7,14 +7,14 @@ from dataclasses import dataclass
 from typing import Any
 
 from cast import (
-    director_dialogue,
+    _chronicler_goals as chronicler_goals,
+    _npc_tactical_goal as tactical_mod,
     director_events,
     director_hostility,
     director_object_interaction as doi_mod,
     director_retaliation,
     director_witness,
     npc_ticker as npc_ticker_mod,
-    npc_turn,
 )
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from cast.schemas import (
@@ -134,9 +134,9 @@ class _Agents:
 
     events: director_events.EventProcessor
     event_manager: EventManager
-    dialogue: director_dialogue.DialogueHandler
+    dialogue: Any  # cast.director_dialogue.DialogueHandler — typed loosely to keep the import budget in check.
     retaliation: director_retaliation.RetaliationHandler
-    npc_turns: npc_turn.NPCTurnResolver
+    npc_turns: Any  # cast.npc_turn.NPCTurnResolver — typed loosely to keep the import budget in check.
     npc_ticker: npc_ticker_mod.NPCTicker
     memory_manager: Any
 
@@ -175,6 +175,11 @@ class PlanExecutor:
 
         await self._resolve_npc_turns(action_type, player_action, raw_outputs, is_aggressive)
         self._agents.npc_ticker.tick(raw_outputs, skip_uuids=new_uuids)
+        # Tactical TTL sweep follows the NPC ticker so any NPC the ticker
+        # just evicted is no longer in scene when expiry conditions are
+        # checked. Stale tactical goals would otherwise wedge a vengeful
+        # NPC's intent against a target who walked away three turns ago.
+        tactical_mod.tick_tactical_ttl(self._gs)
 
         if raw_outputs.scene is not None:
             await self._handle_scene_change(raw_outputs, player_action, completed_events)
@@ -342,6 +347,11 @@ class PlanExecutor:
                 ),
             )
         _apply_thread_updates(state, response.thread_updates, scene_number)
+        # Apply Chronicler-emitted life-goal drafts/updates after threads
+        # so a draft's ``source_thread_uuid`` references a thread that
+        # already exists on ``state``.
+        chronicler_goals.apply_goal_drafts(self._gs.npcs, response.goal_drafts)
+        chronicler_goals.apply_goal_updates(self._gs.npcs, response.goal_updates)
         if response.world_mood is not None:
             state.world_mood = response.world_mood
         state.last_chronicled_scene = scene_number
@@ -582,6 +592,11 @@ class PlanExecutor:
             self._register_npc,
             self._cast.item_generator,
         )
+        # Once every present NPC has a stable UUID, mirror any life-tier
+        # KILL/PURSUE into the tactical slot for on-sight engagement so
+        # the same-turn Actor pass sees an immediate intent. No-op when
+        # no co-located target exists.
+        tactical_mod.promote_life_goals_on_sight(self._gs)
         return {npc.uuid for npc in new_npcs if npc.uuid}
 
     async def _examine_items(self, targets: list[str], player_action: str) -> list[str]:
@@ -761,6 +776,11 @@ class PlanExecutor:
         )
         if is_aggressive and target_names:
             self._publish_npc_attack_witness(target_names, player_action, raw_outputs)
+            # Stamp a tactical DEFEND on every NPC that crossed the
+            # retaliation threshold so the immediate next-turn Actor pass
+            # has a concrete short-term intent to drive on, separate from
+            # any longer-lived life_goal the NPC may already carry.
+            tactical_mod.assign_defend_goals_from_aggression(self._gs, force_uuids, player_action)
 
         dialogue_entries, combat_engaged = await self._agents.dialogue.handle_dialogue(
             player_action,

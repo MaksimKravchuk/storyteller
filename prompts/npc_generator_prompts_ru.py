@@ -35,10 +35,23 @@ NPC_GENERATOR_SYSTEM_RU = PromptTemplate(
                 "Все текстовые поля (name, biography, appearance, short_descriptor, "
                 "occupation, personality_traits, speech_style, inventory) заполняй "
                 "на языке: {language}. Ключи JSON и значения-перечисления "
-                "(knowledge_scope, ключи attributes) оставляй на английском — они "
-                "читаются кодом."
+                "(knowledge_scope, ключи attributes, goal.kind) оставляй на "
+                "английском — они читаются кодом."
             ),
             required_vars=["language"],
+        ),
+        PromptSection(
+            name="standing_intent",
+            template=(
+                "У большинства людей нет постоянной вендетты или миссии. По умолчанию "
+                "ставь ``goal: null``. Прикрепляй блок goal только если в "
+                "написанной тобою биографии есть И (а) названный антагонист или "
+                "подопечный, который УЖЕ есть в списке зарегистрированных NPC, И "
+                "(б) активный глагол намерения — клятва мести, долг защитить, "
+                "охота за должником. Не выдумывай цель, которой нет в списке "
+                "candidate_targets. Не превращай каждую трудную судьбу в вендетту — "
+                "большинство трудных судеб ничем не оборачиваются."
+            ),
         ),
     ]
 )
@@ -86,7 +99,14 @@ NPC_GENERATOR_CREATE_RU = PromptTemplate(
                 '    "stealth_skill": 0-10     // 0=неуклюж, 5=средний, '
                 "10=тень\n"
                 "  }},\n"
-                '  "inventory": ["предметы, которые он носит или продаёт"]\n'
+                '  "inventory": ["предметы, которые он носит или продаёт"],\n'
+                '  "goal": null\n'
+                "  // ИЛИ блок standing-intent — см. clause restraint в системном промпте:\n"
+                '  // "goal": {{\n'
+                '  //   "kind": "kill|pursue|protect",\n'
+                '  //   "description": "1 фраза о постоянном намерении",\n'
+                '  //   "target_name": "Имя существующего NPC"\n'
+                "  // }}\n"
                 "}}"
             ),
             required_vars=["npc_request"],
@@ -99,6 +119,16 @@ NPC_GENERATOR_CREATE_RU = PromptTemplate(
                 "этого NPC:\n{forbidden_names}"
             ),
             required_vars=["forbidden_names"],
+        ),
+        PromptSection(
+            name="candidate_targets",
+            template=(
+                "Если — и только если — ты прикрепляешь блок goal, ``target_name`` "
+                "ОБЯЗАН точно совпадать (без учёта регистра) с одним из этих "
+                "зарегистрированных NPC. Цель вне списка будет молча отброшена:\n"
+                "{candidate_targets}"
+            ),
+            required_vars=["candidate_targets"],
         ),
     ]
 )

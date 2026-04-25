@@ -12,6 +12,11 @@ happen so the world stays coherent:
 3. The actor's :class:`~models.goal.Goal` must advance — turns_pursued
    bumps, last_attempted_action records the choice, and on a kill the
    matching :class:`~models.world_state.WorldThread` flips to resolved.
+   When both tactical and life KILL goals target the same victim they
+   both flip together so neither tier keeps ticking.
+
+The sequential per-action chain lives in :mod:`cast._npc_aftermath_chain`
+to keep this module's public surface small.
 """
 
 from __future__ import annotations
@@ -19,11 +24,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from cast._npc_combat_memory import CombatEvent, persist_combat_memory
-from cast._npc_outcome import commit_outcome, predict_contest_outcome, resolve_target_npc
+from cast._npc_active_goal import kill_goals_targeting, select_active_goal
+from cast._npc_aftermath_chain import build_aftermath, resolve_aftermath_chain
 from cast.dice import ContestRoll, NPCAction
 from models.game_state import GameState
-from models.goal import GoalKind, GoalStatus
+from models.goal import GoalStatus
 from models.npc_card import NPCCard
 from models.world_state import ThreadStatus
 
@@ -44,9 +49,14 @@ class ActionAftermath:
 
 
 def update_goal_progress(actor: NPCCard, action_type: str, action_description: str) -> None:
-    """Advance the actor's goal counter and record what was tried this turn."""
-    goal = actor.current_goal
-    if goal is None or goal.status is not GoalStatus.ACTIVE:
+    """Advance the actor's active-tier goal counter and record this turn's choice.
+
+    Operates on whichever tier :func:`select_active_goal` returns —
+    tactical preferred over life — so a tactical DEFEND doesn't
+    accidentally bump a long-running KILL's ``turns_pursued``.
+    """
+    goal = select_active_goal(actor)
+    if goal is None:
         return
     goal.turns_pursued += 1
     goal.last_attempted_action = action_type
@@ -54,13 +64,19 @@ def update_goal_progress(actor: NPCCard, action_type: str, action_description: s
 
 
 def maybe_complete_kill_goal(actor: NPCCard, target: NPCCard, game_state: GameState) -> None:
-    """Flip a KILL goal + matching open thread when ``target`` ends up dead."""
-    goal = actor.current_goal
-    if goal is None or goal.kind is not GoalKind.KILL:
-        return
+    """Flip every matching KILL goal + open thread when ``target`` ends up dead.
+
+    Both tiers are inspected via :func:`kill_goals_targeting`: a
+    co-targeting tactical and life KILL flip together so the off-scene
+    ticker and the Actor prompt agree that the vendetta is over.
+    """
     if (target.physical_status or "").lower() != _STATUS_DEAD:
         return
-    goal.status = GoalStatus.COMPLETED
+    matched = kill_goals_targeting(actor, target.uuid)
+    if not matched:
+        return
+    for goal in matched:
+        goal.status = GoalStatus.COMPLETED
     if not (actor.uuid and target.uuid):
         return
     for thread in game_state.world_state.threads:
@@ -69,38 +85,19 @@ def maybe_complete_kill_goal(actor: NPCCard, target: NPCCard, game_state: GameSt
             thread.status = _THREAD_RESOLVED
 
 
-async def _resolve_one_aftermath(
-    aftermath: ActionAftermath,
-    game_state: GameState,
-    memory_manager: Any,
-) -> None:
-    """Predict outcome, persist memory, commit outcome, advance goal.
+def resolve_goal_target_name(npc: Any, game_state: GameState) -> str | None:
+    """Resolve an NPC's active-goal target UUID to its display name.
 
-    Order matters and is now atomic: the dice are read in a pure
-    prediction, the memory record is persisted *before* the target's
-    state mutates, and only then does the commit + goal update run.
-    A memory-write failure thus leaves the target untouched and the
-    goal unadvanced — the player sees the engine error and the world
-    stays consistent (no dead body without a memory of the kill).
+    Returned name flows into the Actor's context so the prompt can
+    address the target by name (the goal stores only a UUID). Tactical
+    preferred over life via :func:`select_active_goal`, so the resolved
+    name and the rendered goal block always reference the same tier.
     """
-    target = resolve_target_npc(aftermath.target_name, game_state)
-    predicted = predict_contest_outcome(aftermath.contest_roll)
-    if predicted is not None and target is not None and memory_manager is not None:
-        await persist_combat_memory(
-            memory_manager,
-            CombatEvent(
-                actor=aftermath.actor,
-                target=target,
-                new_value=predicted.new_value,
-                kind=predicted.kind,
-            ),
-            game_state,
-        )
-    if predicted is not None and target is not None:
-        commit_outcome(target, predicted)
-    update_goal_progress(aftermath.actor, aftermath.action_type, aftermath.action_description)
-    if target is not None:
-        maybe_complete_kill_goal(aftermath.actor, target, game_state)
+    goal = select_active_goal(npc)
+    if goal is None or not goal.target_uuid:
+        return None
+    target_npc = game_state.npcs.get(goal.target_uuid)
+    return target_npc.name if target_npc else None
 
 
 async def resolve_actions_aftermath(
@@ -115,31 +112,6 @@ async def resolve_actions_aftermath(
     across an ``await`` point — the second resumed coroutine could
     stomp the first's lethal outcome with a non-lethal one.
     """
-    optional_aftermaths = [_build_aftermath(action, game_state) for action in actions]
+    optional_aftermaths = [build_aftermath(action, game_state) for action in actions]
     aftermaths = [aftermath for aftermath in optional_aftermaths if aftermath is not None]
-    await _resolve_aftermath_chain(aftermaths, game_state, memory_manager)
-
-
-def _build_aftermath(action: NPCAction, game_state: GameState) -> ActionAftermath | None:
-    actor = game_state.npcs.get(action.npc_uuid)
-    if actor is None:
-        return None
-    return ActionAftermath(
-        actor=actor,
-        action_type=action.action_type,
-        action_description=action.action_description,
-        target_name=action.target,
-        contest_roll=action.contest_roll,
-    )
-
-
-async def _resolve_aftermath_chain(
-    remaining: list[ActionAftermath],
-    game_state: GameState,
-    memory_manager: Any,
-) -> None:
-    """Async-recursion sequential await — see :func:`resolve_actions_aftermath`."""
-    if not remaining:
-        return
-    await _resolve_one_aftermath(remaining[0], game_state, memory_manager)
-    await _resolve_aftermath_chain(remaining[1:], game_state, memory_manager)
+    await resolve_aftermath_chain(aftermaths, game_state, memory_manager)

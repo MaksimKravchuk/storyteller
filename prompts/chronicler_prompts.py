@@ -44,9 +44,27 @@ CHRONICLER_SYSTEM = PromptTemplate(
                 "- 2 thread updates\n"
                 "- 1 scheduled offscreen event\n"
                 "- 1 world_mood hint\n"
+                "- 1 new NPC life-goal (goal_drafts)\n"
+                "- 2 life-goal status updates (goal_updates)\n"
                 "Prefer advancing or resolving existing threads over inventing new ones. "
                 "Only emit a thread when the player's action or the turn outcome "
                 "genuinely shifts the world. Otherwise leave every field empty."
+            ),
+        ),
+        PromptSection(
+            name="goal_emission",
+            template=(
+                "goal_drafts: emit ONLY when the same response creates or updates "
+                "a thread that explicitly attributes a directional intent (vow of "
+                "vengeance, sworn protection, oath of pursuit) to a specific NPC. "
+                "kind must be one of kill | pursue | protect. ``npc_uuid`` AND "
+                "``target_uuid`` must reference NPCs already registered in the "
+                "game state. Do NOT invent NPCs. Do NOT overwrite an NPC's "
+                "existing active life goal — the engine will skip such drafts.\n"
+                "goal_updates: emit ABANDONED when circumstances make a goal "
+                "moot (target reconciled, target left the city for good); BLOCKED "
+                "when the pursuer cannot physically reach the target (jail, "
+                "exile). Both are status flips on an existing ACTIVE goal."
             ),
         ),
         PromptSection(
@@ -54,6 +72,7 @@ CHRONICLER_SYSTEM = PromptTemplate(
             template=(
                 "Thread categories: personal, political, natural, economic, social, cultural. "
                 "Thread statuses: open, resolved, abandoned. "
+                "Goal kinds (life-tier): kill, pursue, protect. "
                 "Reference existing locations and NPCs by their UUIDs; do not invent new entities."
             ),
         ),
@@ -100,6 +119,18 @@ CHRONICLER_ADVANCE = PromptTemplate(
                 '      "scope": "local|remote",\n'
                 '      "on_complete_description": "what happens when it resolves"\n'
                 "    }}\n"
+                "  ],\n"
+                '  "goal_drafts": [\n'
+                "    {{\n"
+                '      "npc_uuid": "uuid of the NPC who now carries the intent",\n'
+                '      "kind": "kill|pursue|protect",\n'
+                '      "description": "one-sentence standing intent",\n'
+                '      "target_uuid": "uuid of the NPC the intent is directed at, or null",\n'
+                '      "source_thread_uuid": "uuid of the thread justifying the goal, or null"\n'
+                "    }}\n"
+                "  ],\n"
+                '  "goal_updates": [\n'
+                '    {{"npc_uuid": "uuid", "status": "abandoned|blocked", "reason": "short justification"}}\n'
                 "  ],\n"
                 '  "world_mood": "short atmospheric hint or null"\n'
                 "}}\n"

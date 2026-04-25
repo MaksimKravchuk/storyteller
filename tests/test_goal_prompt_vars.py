@@ -13,7 +13,7 @@ def _kill_marcus(npc_name: str = "Brutus") -> NPCCard:
     return NPCCard(
         name=npc_name,
         occupation="former legionary",
-        current_goal=Goal(
+        life_goal=Goal(
             kind=GoalKind.KILL,
             description="Avenge brother by killing Marcus",
             target_uuid="npc-marcus",
@@ -36,17 +36,17 @@ class TestGoalPromptVars:
     @allure.title("Returns None when the goal exists but is no longer ACTIVE")
     def test_completed_goal_returns_none(self) -> None:
         npc = _kill_marcus()
-        assert npc.current_goal is not None
-        npc.current_goal.status = GoalStatus.COMPLETED
+        assert npc.life_goal is not None
+        npc.life_goal.status = GoalStatus.COMPLETED
         assert goal_prompt_vars(npc, target_name="Marcus") is None
 
     @allure.story("Active goal rendering")
     @allure.title("Active goal returns the full var bundle the prompt section expects")
     def test_active_goal_returns_full_vars(self) -> None:
         npc = _kill_marcus()
-        assert npc.current_goal is not None
-        npc.current_goal.last_attempted_action = "STEALTH"
-        npc.current_goal.record_progress("approached the table from the shadows")
+        assert npc.life_goal is not None
+        npc.life_goal.last_attempted_action = "STEALTH"
+        npc.life_goal.record_progress("approached the table from the shadows")
 
         rendered = goal_prompt_vars(npc, target_name="Marcus")
 

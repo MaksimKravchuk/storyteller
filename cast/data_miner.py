@@ -15,6 +15,12 @@ from models.setting import Setting
 from prompts.data_miner_prompts import get_data_miner_prompts
 from research.wikipedia_client import WikipediaClient
 
+# The synthesised ``Setting`` JSON (key persons, events, locations, traditions,
+# technologies, plus prose summary) routinely exceeds the global 2048 default
+# and gets truncated mid-stream, breaking JSON parsing. 8000 leaves headroom
+# for non-trivial real-world settings without paying for unbounded output.
+_RESEARCH_MAX_TOKENS = 8000
+
 
 class DataMiner(BasePerformer):
     """Researches historical / geographical data via Wikipedia and synthesises
@@ -60,7 +66,11 @@ class DataMiner(BasePerformer):
             setting_request=input_data,
             raw_research=json.dumps(raw_articles, indent=2, ensure_ascii=False),
         )
-        setting_data = await self._send_json(research_prompt, response_model=SettingResponse)
+        setting_data = await self._send_json(
+            research_prompt,
+            response_model=SettingResponse,
+            max_tokens=_RESEARCH_MAX_TOKENS,
+        )
 
         # Build the Setting model
         return Setting(
