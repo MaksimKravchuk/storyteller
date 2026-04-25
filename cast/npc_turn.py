@@ -7,8 +7,8 @@ as structured ``NPCAction`` results.
 
 import asyncio
 import json as _json
-import types
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from loguru import logger
@@ -17,13 +17,14 @@ from cast.dice import (
     CONTEST_SKILL_MAP,
     ContestRoll,
     ContestType,
-    contest_roll_to_dict,
+    NPCAction,
+    record_npc_contest_event,
     roll_contest,
 )
 from cast.director_witness import WitnessedAggression, is_guard_occupation
+from cast.npc_goal_resolution import resolve_actions_aftermath
 from cast.npc_opportunity import TACTICAL_HOSTILE_CLAUSE, get_opportunity_clause
 from cast.wait_detection import INCAPACITATING_STATES
-from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
 # NPC action types that trigger a contest when targeting another character.
@@ -38,7 +39,7 @@ _CONTESTABLE_ACTIONS: frozenset[str] = frozenset(
 )
 
 # Maps NPC action type → ContestType for dice rolls.
-_ACTION_TO_CONTEST: types.MappingProxyType[str, ContestType] = types.MappingProxyType(
+_ACTION_TO_CONTEST: MappingProxyType[str, ContestType] = MappingProxyType(
     {
         "ATTACK": ContestType.COMBAT,
         "STEALTH": ContestType.STEALTH,
@@ -52,18 +53,6 @@ _ACTION_TO_CONTEST: types.MappingProxyType[str, ContestType] = types.MappingProx
 _NPC_SKIP_STATUSES: frozenset[str] = INCAPACITATING_STATES | frozenset(("dead",))
 
 _MAX_RAW_PREVIEW = 200
-
-
-@dataclass(frozen=True)
-class NPCAction:
-    """Result of an NPC's autonomous turn."""
-
-    npc_uuid: str
-    npc_name: str
-    action_description: str
-    action_type: str
-    target: str | None
-    contest_roll: ContestRoll | None
 
 
 def _parse_npc_response(raw: str) -> dict:
@@ -122,27 +111,21 @@ def _roll_npc_contest(
             return None
         contest_roll = roll_contest(contest_type, actor_skill, target_npc.get_attribute(skill_pair[1], 0))
 
-    _record_npc_contest_event(contest_roll, npc, action_type, target_name)
+    record_npc_contest_event(contest_roll, npc, action_type, target_name)
     return contest_roll
 
 
-def _record_npc_contest_event(
-    contest_roll: ContestRoll,
-    npc: Any,
-    action_type: str,
-    target_name: str,
-) -> None:
-    """Emit a ``dice_contest`` turn event for an NPC-initiated contest."""
-    record_turn_event(
-        "dice_contest",
-        {
-            **contest_roll_to_dict(contest_roll),
-            "actor_npc_name": npc.name,
-            "action_type": action_type,
-            "target_name": target_name,
-        },
-        npc_id=getattr(npc, "uuid", None),
-    )
+def _resolve_goal_target_name(npc: Any, game_state: GameState) -> str | None:
+    """Resolve an NPC's standing goal target UUID to its display name.
+
+    Returned name flows into the Actor's context so the prompt can
+    address the target by name (the goal stores only a UUID).
+    """
+    goal = getattr(npc, "current_goal", None)
+    if goal is None or not goal.target_uuid:
+        return None
+    target_npc = game_state.npcs.get(goal.target_uuid)
+    return target_npc.name if target_npc else None
 
 
 def _apply_scene_mutation(
@@ -276,9 +259,22 @@ def _build_resolve_coros(
 class NPCTurnResolver:
     """Resolves NPC autonomous actions during their turn in a round."""
 
-    def __init__(self, game_state: GameState, actors: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        game_state: GameState,
+        actors: dict[str, Any],
+    ) -> None:
         self._gs = game_state
         self._actors = actors
+
+    async def apply_goal_aftermath(self, actions: list[NPCAction], memory_manager: Any) -> None:
+        """Run the goal/contest aftermath pipeline once per resolved action.
+
+        Applies dice outcomes to targets, persists combat events as
+        knowledge nodes, advances each actor's :class:`~models.goal.Goal`,
+        and flips matching world threads on goal completion.
+        """
+        await resolve_actions_aftermath(actions, self._gs, memory_manager)
 
     async def resolve_npc_turns(
         self,
@@ -372,7 +368,12 @@ class NPCTurnResolver:
         try:
             reply = await actor.execute(
                 input_data=prompt,
-                context={"npc": npc, "game_state": self._gs, "is_npc_turn": True},
+                context={
+                    "npc": npc,
+                    "game_state": self._gs,
+                    "is_npc_turn": True,
+                    "goal_target_name": _resolve_goal_target_name(npc, self._gs),
+                },
             )
         except Exception:
             logger.exception("LLM call failed for NPC {}", npc.name)

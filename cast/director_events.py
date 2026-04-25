@@ -26,10 +26,10 @@ class EventProcessor:
         self._event_mgr = event_manager
         self._memory_mgr = memory_manager
 
-    def advance_and_resolve(self, action_type: str, time_override: float | None) -> list[GameEvent]:
-        """Advance the game clock and return completed events."""
+    def advance_and_resolve(self, action_type: str, time_override: float | None) -> tuple[list[GameEvent], float]:
+        """Advance the game clock and return ``(completed_events, hours_advanced)``."""
         hours = resolve_time_cost(action_type, time_override)
-        return self._event_mgr.advance_time(hours)
+        return self._event_mgr.advance_time(hours), hours
 
     def schedule_drafts(self, drafts: list[ScheduledEventDraft], now: float) -> list[str]:
         """Turn Chronicler-produced drafts into real :class:`GameEvent`s.

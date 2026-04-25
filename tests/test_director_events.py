@@ -44,10 +44,11 @@ class TestAdvanceAndResolve:
         gs = _make_state()
         processor = _make_processor(gs)
 
-        events = processor.advance_and_resolve("EXPLORE", time_override=None)
+        events, hours = processor.advance_and_resolve("EXPLORE", time_override=None)
 
         assert events == []  # no scheduled events
         assert gs.game_clock > 0
+        assert hours > 0
 
     @allure.story("Time advance")
     @allure.title("advance_and_resolve() honors an explicit time override when provided")
@@ -55,9 +56,10 @@ class TestAdvanceAndResolve:
         gs = _make_state()
         processor = _make_processor(gs)
 
-        processor.advance_and_resolve("EXPLORE", time_override=4.5)
+        _events, hours = processor.advance_and_resolve("EXPLORE", time_override=4.5)
 
         assert gs.game_clock == pytest.approx(4.5)
+        assert hours == pytest.approx(4.5)
 
 
 @allure.epic("Game Timeline")
