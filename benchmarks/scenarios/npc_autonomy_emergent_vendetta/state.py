@@ -36,8 +36,7 @@ MARCUS_NAME = "Marcus"
 MARCUS_OCCUPATION = "cloth merchant"
 
 _BRUTUS_PLOT_FACT = (
-    "Brutus carries a concealed pugio and broods on Marcus across the room — "
-    "his brother's ruin still rankles."
+    "Brutus carries a concealed pugio and broods on Marcus across the room — his brother's ruin still rankles."
 )
 _THREAD_DESCRIPTION = (
     "Word in the Forum holds that Brutus has sworn vengeance on the cloth merchant Marcus over an old contract dispute."
