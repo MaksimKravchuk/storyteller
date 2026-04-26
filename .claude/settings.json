@@ -28,6 +28,11 @@
             "type": "command",
             "if": "Bash(gh pr create *)",
             "command": ".claude/hooks/require-skill.sh pr-review-toolkit_review-pr \"Run /pr-review-toolkit:review-pr to do a comprehensive PR review with the specialized agents before opening this PR.\" \"gh pr create\""
+          },
+          {
+            "type": "command",
+            "if": "Bash(git push *)",
+            "command": ".claude/hooks/check-git-push.sh"
           }
         ]
       }
