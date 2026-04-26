@@ -19,21 +19,30 @@ def _format_scene_entry(entry: dict) -> str:
     return f"- Player: {action} -> {action_type}"
 
 
-def _npc_label(npc: Any) -> str:
-    """Format an NPC's name, appending physical status when not healthy."""
+def _npc_disambiguation_line(npc: Any) -> str:
+    """Format an NPC as ``"- name (status) — appearance"`` for the prompt.
+
+    Including appearance lets the Director resolve player references like
+    "guy in the helmet" instead of clarifying which NPC was meant.
+    """
     if npc.physical_status and npc.physical_status != "healthy":
-        return "{0} ({1})".format(npc.name, npc.physical_status)
-    return npc.name
+        label = "{0} ({1})".format(npc.name, npc.physical_status)
+    else:
+        label = npc.name
+    appearance = npc.appearance.strip()
+    if appearance:
+        return "- {0} — {1}".format(label, appearance)
+    return "- {0}".format(label)
 
 
 def format_npcs_present(scene: Any, game_state: GameState) -> str:
-    """Format NPC names for the system prompt."""
+    """Format NPCs for the system prompt as bullet lines with appearance."""
     if not scene:
         return "None"
     all_npcs = game_state.npcs
     present = [snpc for snpc in scene.npcs_present if snpc.uuid and snpc.uuid in all_npcs]
-    names = [_npc_label(all_npcs[snpc.uuid]) for snpc in present]
-    return ", ".join(names) or "None"
+    lines = [_npc_disambiguation_line(all_npcs[snpc.uuid]) for snpc in present]
+    return "\n".join(lines) or "None"
 
 
 def format_pois(scene: Any) -> str:
