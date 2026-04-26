@@ -31,6 +31,7 @@
           },
           {
             "type": "command",
+            "if": "Bash(git push *)",
             "command": ".claude/hooks/check-git-push.sh"
           }
         ]
