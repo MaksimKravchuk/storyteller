@@ -53,7 +53,7 @@ DIRECTOR_SYSTEM_RU = PromptTemplate(
             name="scene_context",
             template=(
                 "Текущая сцена: {scene_description}\n"
-                "Присутствующие NPC: {npcs_present}\n"
+                "Присутствующие NPC:\n{npcs_present}\n"
                 "Точки интереса: {points_of_interest}\n"
                 "Игровое время: {game_time} (час {game_clock})"
             ),

@@ -54,7 +54,7 @@ DIRECTOR_SYSTEM = PromptTemplate(
             name="scene_context",
             template=(
                 "Current scene: {scene_description}\n"
-                "NPCs present: {npcs_present}\n"
+                "NPCs present:\n{npcs_present}\n"
                 "Points of interest: {points_of_interest}\n"
                 "Game time: {game_time} (hour {game_clock})"
             ),

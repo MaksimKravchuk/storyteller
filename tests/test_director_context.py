@@ -98,6 +98,31 @@ class TestFormatNpcsPresent:
         assert "Crassus — Broad-shouldered, segmented armour, helmet, gladius at the hip" in formatted
         assert "Tertius — Gaunt, ragged tunic, dirty cloak" in formatted
 
+    @allure.title("A wounded NPC with appearance renders as '- Name (status) — appearance'")
+    def test_wounded_with_appearance(self):
+        npc = NPCCard(
+            name="Crassus",
+            occupation=_GUARD,
+            physical_status="wounded left arm",
+            appearance="Broad-shouldered, segmented armour, helmet",
+        )
+        gs = _make_game_state_with_npcs([npc])
+        scene = Scene(
+            location_id=_LOC,
+            npcs_present=[SceneNPC(role=_GUARD, uuid=npc.uuid)],
+        )
+        formatted = format_npcs_present(scene, gs)
+        assert formatted == "- Crassus (wounded left arm) — Broad-shouldered, segmented armour, helmet"
+
+    @allure.title("When every SceneNPC's UUID is unknown, the formatter falls back to 'None'")
+    def test_unregistered_npcs_return_none(self):
+        gs = _make_game_state_with_npcs([])
+        scene = Scene(
+            location_id=_LOC,
+            npcs_present=[SceneNPC(role=_GUARD, uuid="ghost-uuid")],
+        )
+        assert format_npcs_present(scene, gs) == "None"
+
     @allure.title("When the scene is None, the NPC-present formatter returns the literal string 'None'")
     def test_no_scene_returns_none(self):
         gs = _make_game_state_with_npcs([])

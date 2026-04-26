@@ -36,7 +36,7 @@ def _npc_disambiguation_line(npc: Any) -> str:
 
 
 def format_npcs_present(scene: Any, game_state: GameState) -> str:
-    """Format NPCs for the system prompt as bullet lines with appearance."""
+    """Multi-line so each NPC carries its own disambiguation context."""
     if not scene:
         return "None"
     all_npcs = game_state.npcs
