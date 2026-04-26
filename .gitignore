@@ -14,3 +14,7 @@ tests/e2e/.last-narrative-report.md
 .coverage
 coverage.json
 coverage.xml
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
