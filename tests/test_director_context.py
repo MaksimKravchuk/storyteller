@@ -31,7 +31,7 @@ def _make_game_state_with_npcs(npc_list: list[NPCCard]) -> GameState:
 @allure.feature("Director context formatting")
 @allure.story("NPC label formatting")
 class TestFormatNpcsPresent:
-    @allure.title("A healthy NPC in the scene renders as just the NPC's name with no status suffix")
+    @allure.title("A healthy NPC with no appearance renders as a bare bullet line")
     def test_healthy_npc_shows_name_only(self):
         npc = NPCCard(name=_GUARD_NAME, occupation=_GUARD, physical_status="healthy")
         gs = _make_game_state_with_npcs([npc])
@@ -40,9 +40,9 @@ class TestFormatNpcsPresent:
             npcs_present=[SceneNPC(role=_GUARD, uuid=npc.uuid)],
         )
         formatted = format_npcs_present(scene, gs)
-        assert formatted == _GUARD_NAME
+        assert formatted == "- {0}".format(_GUARD_NAME)
 
-    @allure.title("A wounded NPC renders as 'Name (wounded left arm)' in the scene label string")
+    @allure.title("A wounded NPC renders the physical status suffix in its bullet line")
     def test_wounded_npc_shows_status(self):
         npc = NPCCard(name=_GUARD_NAME, occupation=_GUARD, physical_status="wounded left arm")
         gs = _make_game_state_with_npcs([npc])
@@ -51,9 +51,9 @@ class TestFormatNpcsPresent:
             npcs_present=[SceneNPC(role=_GUARD, uuid=npc.uuid)],
         )
         formatted = format_npcs_present(scene, gs)
-        assert formatted == "{0} (wounded left arm)".format(_GUARD_NAME)
+        assert formatted == "- {0} (wounded left arm)".format(_GUARD_NAME)
 
-    @allure.title("A scene with mixed healthy and wounded NPCs only appends status to the wounded ones")
+    @allure.title("Each NPC renders on its own bullet line so the Director can disambiguate them")
     def test_mixed_healthy_and_wounded(self):
         guard = NPCCard(name=_GUARD_NAME, occupation=_GUARD, physical_status="barely standing")
         merchant = NPCCard(name="Merchant", occupation="merchant", physical_status="healthy")
@@ -66,9 +66,62 @@ class TestFormatNpcsPresent:
             ],
         )
         formatted = format_npcs_present(scene, gs)
-        assert "{0} (barely standing)".format(_GUARD_NAME) in formatted
-        assert "Merchant" in formatted
-        assert "(healthy)" not in formatted
+        lines = formatted.split("\n")
+        assert lines == [
+            "- {0} (barely standing)".format(_GUARD_NAME),
+            "- Merchant",
+        ]
+
+    @allure.title("Appearance is appended after an em-dash so player references like 'guy in helmet' resolve")
+    def test_appearance_included_in_line(self):
+        guard = NPCCard(
+            name="Crassus",
+            occupation=_GUARD,
+            physical_status="healthy",
+            appearance="Broad-shouldered, segmented armour, helmet, gladius at the hip",
+        )
+        beggar = NPCCard(
+            name="Tertius",
+            occupation="beggar",
+            physical_status="healthy",
+            appearance="Gaunt, ragged tunic, dirty cloak",
+        )
+        gs = _make_game_state_with_npcs([guard, beggar])
+        scene = Scene(
+            location_id=_LOC,
+            npcs_present=[
+                SceneNPC(role=_GUARD, uuid=guard.uuid),
+                SceneNPC(role="beggar", uuid=beggar.uuid),
+            ],
+        )
+        formatted = format_npcs_present(scene, gs)
+        assert "Crassus — Broad-shouldered, segmented armour, helmet, gladius at the hip" in formatted
+        assert "Tertius — Gaunt, ragged tunic, dirty cloak" in formatted
+
+    @allure.title("A wounded NPC with appearance renders as '- Name (status) — appearance'")
+    def test_wounded_with_appearance(self):
+        npc = NPCCard(
+            name="Crassus",
+            occupation=_GUARD,
+            physical_status="wounded left arm",
+            appearance="Broad-shouldered, segmented armour, helmet",
+        )
+        gs = _make_game_state_with_npcs([npc])
+        scene = Scene(
+            location_id=_LOC,
+            npcs_present=[SceneNPC(role=_GUARD, uuid=npc.uuid)],
+        )
+        formatted = format_npcs_present(scene, gs)
+        assert formatted == "- Crassus (wounded left arm) — Broad-shouldered, segmented armour, helmet"
+
+    @allure.title("When every SceneNPC's UUID is unknown, the formatter falls back to 'None'")
+    def test_unregistered_npcs_return_none(self):
+        gs = _make_game_state_with_npcs([])
+        scene = Scene(
+            location_id=_LOC,
+            npcs_present=[SceneNPC(role=_GUARD, uuid="ghost-uuid")],
+        )
+        assert format_npcs_present(scene, gs) == "None"
 
     @allure.title("When the scene is None, the NPC-present formatter returns the literal string 'None'")
     def test_no_scene_returns_none(self):

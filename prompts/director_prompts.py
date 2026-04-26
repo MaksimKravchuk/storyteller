@@ -36,6 +36,10 @@ DIRECTOR_SYSTEM = PromptTemplate(
                 "- ONLY call `clarify` when the target or action is genuinely ambiguous "
                 "(e.g. multiple possible targets, unknown object). NEVER ask the player to "
                 "confirm intent, morality, or seriousness — accept the action as stated.\n"
+                "- When the player references an NPC by visible feature (clothing, build, "
+                "equipment, posture — e.g. 'guy in the helmet', 'drunk in rags'), match it "
+                "against the appearance descriptions in the NPC list. If exactly one NPC's "
+                "appearance fits, treat that NPC as the target without asking.\n"
                 "- When the player confirms a previous clarification (e.g. 'да', 'yes', '1'), "
                 "resolve it based on context and proceed — do NOT call `clarify` again.\n"
                 "- Call `wait` when the player explicitly waits, does nothing, passes their "
@@ -50,7 +54,7 @@ DIRECTOR_SYSTEM = PromptTemplate(
             name="scene_context",
             template=(
                 "Current scene: {scene_description}\n"
-                "NPCs present: {npcs_present}\n"
+                "NPCs present:\n{npcs_present}\n"
                 "Points of interest: {points_of_interest}\n"
                 "Game time: {game_time} (hour {game_clock})"
             ),
