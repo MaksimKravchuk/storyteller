@@ -36,6 +36,8 @@ _CATALOG_ATTRIBUTES: tuple[str, ...] = (
     "gemini_pro",
     "gemini_flash",
     "grok_fast",
+    "deepseek_native_chat",
+    "deepseek_native_reasoner",
 )
 
 

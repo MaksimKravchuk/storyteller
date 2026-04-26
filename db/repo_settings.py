@@ -13,11 +13,16 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
-from defaults.models import PROVIDER_ANTHROPIC, PROVIDER_OPENAI, PROVIDER_OPENROUTER
+from defaults.models import (
+    PROVIDER_ANTHROPIC,
+    PROVIDER_DEEPSEEK,
+    PROVIDER_OPENAI,
+    PROVIDER_OPENROUTER,
+)
 
 ALLOWED_ROLES: frozenset[str] = frozenset(("director", "agent", "narrator", "dramaturge"))
 ALLOWED_PROVIDERS: frozenset[str] = frozenset(
-    (PROVIDER_OPENAI, PROVIDER_ANTHROPIC, PROVIDER_OPENROUTER),
+    (PROVIDER_OPENAI, PROVIDER_ANTHROPIC, PROVIDER_OPENROUTER, PROVIDER_DEEPSEEK),
 )
 
 _MODEL_KEY_PREFIX = "model."

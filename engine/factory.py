@@ -5,7 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from config import Config, resolve_model_config
-from defaults.models import ModelConfig
+from defaults.models import (
+    PROVIDER_ANTHROPIC,
+    PROVIDER_DEEPSEEK,
+    PROVIDER_OPENAI,
+    PROVIDER_OPENROUTER,
+    ModelConfig,
+)
 from engine.game_engine import EngineModels, GameEngine
 
 if TYPE_CHECKING:
@@ -96,9 +102,10 @@ def _build_engine(
     overrides: dict[str, ModelConfig] | None,
 ) -> GameEngine:
     api_keys = {
-        "openai": cfg.openai_api_key,
-        "anthropic": cfg.anthropic_api_key,
-        "openrouter": cfg.openrouter_api_key,
+        PROVIDER_OPENAI: cfg.openai_api_key,
+        PROVIDER_ANTHROPIC: cfg.anthropic_api_key,
+        PROVIDER_OPENROUTER: cfg.openrouter_api_key,
+        PROVIDER_DEEPSEEK: cfg.deepseek_api_key,
     }
     return GameEngine(
         models=_assemble_models(cfg, overrides),

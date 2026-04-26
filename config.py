@@ -7,7 +7,13 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from defaults.models import PROVIDER_ANTHROPIC, PROVIDER_OPENAI, PROVIDER_OPENROUTER, ModelConfig
+from defaults.models import (
+    PROVIDER_ANTHROPIC,
+    PROVIDER_DEEPSEEK,
+    PROVIDER_OPENAI,
+    PROVIDER_OPENROUTER,
+    ModelConfig,
+)
 
 _GPT5_4_MINI = "gpt-5.4-mini"
 _GPT5_4_NANO = "gpt-5.4-nano"
@@ -54,6 +60,7 @@ class Config(BaseSettings):
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
     openrouter_api_key: str | None = None
+    deepseek_api_key: str | None = None
 
     # Model selection per agent role
     director_model: str = _GPT5_4_MINI
@@ -103,6 +110,8 @@ def _detect_provider(model_id: str, fallback: str) -> str:
     model_lower = model_id.lower()
     if any(model_lower.startswith(prefix) for prefix in _OPENROUTER_PREFIXES):
         return PROVIDER_OPENROUTER
+    if model_lower.startswith("deepseek-"):
+        return PROVIDER_DEEPSEEK
     if model_lower.startswith(("gpt-", "o1", "o3", "o4")):
         return PROVIDER_OPENAI
     if model_lower.startswith(("claude", "claude-")):
@@ -133,6 +142,8 @@ def get_api_key_for_provider(provider: str, config: Config) -> str | None:
         return config.anthropic_api_key
     if provider == PROVIDER_OPENROUTER:
         return config.openrouter_api_key
+    if provider == PROVIDER_DEEPSEEK:
+        return config.deepseek_api_key
     return None
 
 
@@ -142,4 +153,5 @@ def list_api_key_status(config: Config) -> dict[str, bool]:
         PROVIDER_OPENAI: bool(config.openai_api_key),
         PROVIDER_ANTHROPIC: bool(config.anthropic_api_key),
         PROVIDER_OPENROUTER: bool(config.openrouter_api_key),
+        PROVIDER_DEEPSEEK: bool(config.deepseek_api_key),
     }

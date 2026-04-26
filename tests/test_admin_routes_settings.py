@@ -32,11 +32,13 @@ def _make_cfg(
     openai: str | None = "sk-o",
     anthropic: str | None = "sk-a",
     openrouter: str | None = "sk-r",
+    deepseek: str | None = "sk-d",
 ) -> MagicMock:
     cfg = MagicMock()
     cfg.openai_api_key = openai
     cfg.anthropic_api_key = anthropic
     cfg.openrouter_api_key = openrouter
+    cfg.deepseek_api_key = deepseek
     cfg.director_model = "gpt-5.4-mini"
     cfg.agent_model = "gpt-5.4-nano"
     cfg.narrator_model = "gpt-5.4-mini"
@@ -56,13 +58,18 @@ def _prime_get_db(mock_get_db) -> None:
 @allure.title("GET /api/settings/keys reports per-provider configured/missing booleans")
 @pytest.mark.asyncio
 async def test_keys_route_reports_booleans() -> None:
-    cfg = _make_cfg(openai="sk-o", anthropic=None, openrouter="or-key")
+    cfg = _make_cfg(openai="sk-o", anthropic=None, openrouter="or-key", deepseek=None)
     async with TestClient(TestServer(_make_app_with_cfg(cfg))) as client:
         resp = await client.get(_API_KEYS)
         status = resp.status
         body = await resp.json()
     assert status == _HTTP_OK
-    assert body == {"openai": True, "anthropic": False, "openrouter": True}
+    assert body == {
+        "openai": True,
+        "anthropic": False,
+        "openrouter": True,
+        "deepseek": False,
+    }
 
 
 @allure.story("Model overrides")

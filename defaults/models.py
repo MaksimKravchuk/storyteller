@@ -5,6 +5,7 @@ from dataclasses import dataclass
 PROVIDER_OPENAI = "openai"
 PROVIDER_ANTHROPIC = "anthropic"
 PROVIDER_OPENROUTER = "openrouter"
+PROVIDER_DEEPSEEK = "deepseek"
 
 
 @dataclass(frozen=True)
@@ -32,3 +33,6 @@ class AI_MODELS:
     gemini_pro = ModelConfig(provider=PROVIDER_OPENROUTER, model_id="google/gemini-2.5-pro")
     gemini_flash = ModelConfig(provider=PROVIDER_OPENROUTER, model_id="google/gemini-2.5-flash")
     grok_fast = ModelConfig(provider=PROVIDER_OPENROUTER, model_id="x-ai/grok-4-fast")
+    # Native DeepSeek models (api.deepseek.com, requires DEEPSEEK_API_KEY)
+    deepseek_native_chat = ModelConfig(provider=PROVIDER_DEEPSEEK, model_id="deepseek-chat")
+    deepseek_native_reasoner = ModelConfig(provider=PROVIDER_DEEPSEEK, model_id="deepseek-reasoner")

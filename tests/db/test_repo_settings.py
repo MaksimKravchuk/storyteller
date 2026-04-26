@@ -51,6 +51,16 @@ async def test_set_model_roundtrip_openrouter(repo) -> None:
     assert result == {"director": ("openrouter", "deepseek/deepseek-chat-v3.1")}
 
 
+@allure.story("Upsert")
+@allure.title("set_model stores native DeepSeek model ids round-trip")
+@pytest.mark.asyncio
+async def test_set_model_roundtrip_deepseek(repo) -> None:
+    await repo.settings.set_model("director", "deepseek", "deepseek-chat")
+
+    result = await repo.settings.get_model_overrides()
+    assert result == {"director": ("deepseek", "deepseek-chat")}
+
+
 @allure.story("Validation")
 @allure.title("set_model rejects unknown role with ValueError")
 @pytest.mark.asyncio
