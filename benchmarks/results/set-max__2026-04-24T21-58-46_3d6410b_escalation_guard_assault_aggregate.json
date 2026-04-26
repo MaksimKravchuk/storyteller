@@ -1,0 +1,73 @@
+{
+  "element_pass_rates": [
+    {
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "iterations": 3,
+      "label": "hostility_level increases on every assault turn",
+      "passes": 3
+    },
+    {
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "iterations": 3,
+      "label": "Final sentry mood is one that can roll aggression",
+      "passes": 3
+    },
+    {
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "iterations": 3,
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "passes": 3
+    },
+    {
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "iterations": 3,
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "passes": 3
+    },
+    {
+      "base_value": 2,
+      "element_id": "narration_no_cliches",
+      "iterations": 3,
+      "label": "Narrator avoids cinematic action-movie clichés on the climax turn",
+      "passes": 1
+    },
+    {
+      "base_value": 2,
+      "element_id": "narration_no_purple_prose",
+      "iterations": 3,
+      "label": "Narrator avoids overwrought or melodramatic language on the climax turn",
+      "passes": 0
+    },
+    {
+      "base_value": 2,
+      "element_id": "narration_no_repetition",
+      "iterations": 3,
+      "label": "Narrator avoids repeating phrases or cadence patterns across assault turns",
+      "passes": 0
+    },
+    {
+      "base_value": 2,
+      "element_id": "narration_no_invented_inner_states",
+      "iterations": 3,
+      "label": "Narrator stays grounded in observable NPC behaviour without inventing inner states",
+      "passes": 1
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "iteration_totals": [
+    14,
+    11,
+    11
+  ],
+  "iterations": 3,
+  "max_awarded": 14,
+  "mean_awarded": 12.0,
+  "min_awarded": 11,
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "total_base": 19
+}

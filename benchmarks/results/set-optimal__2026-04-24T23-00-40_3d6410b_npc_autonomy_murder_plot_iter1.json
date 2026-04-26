@@ -1,0 +1,699 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 27658,
+      "index": 0,
+      "narration": "You settle onto a bench in a shadowed corner where the wall meets a stack of spare stools, and let the morning stretch.\n\nThe **former legionary** two tables over turns his clay cup in slow circles on the wood, his gaze fixed somewhere in the middle distance. Every so often he lifts it, drinks, and sets it down",
+      "player_action": "I find a quiet corner of the taberna and wait, watching the hours drift past.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player finds a quiet corner of the taberna and waits while watching the hours pass.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Rise slowly, keeping my eyes fixed on Marcus as I move between the tables with soldier's quiet steps.",
+            "action_type": "STEALTH",
+            "npc_name": "Brutus"
+          },
+          {
+            "action": "I adjust my tunic and stroll casually across the taberna, pretending to examine the amphorae lining the wall while keeping Brutus in my peripheral vision.",
+            "action_type": "STEALTH",
+            "npc_name": "Marcus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 120828,
+      "index": 1,
+      "narration": "",
+      "player_action": "I keep waiting through the night. I do nothing and speak to no one.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I keep waiting through the night, doing nothing and speaking to no one.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I sit in composed silence, idly turning my cup once in hand and waiting for the hour to pass.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Aelius Secundus"
+          },
+          {
+            "action": "I remain in my corner, watching the room and waiting with my cup untouched.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Valerius Brutus"
+          },
+          {
+            "action": "Wipe down the counter and check the cups, keeping an eye on the room.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Decimus Ferox"
+          },
+          {
+            "action": "I sit hunched over my chipped cup, rolling the dregs around and staring into the lamp-smoke, saying nothing and keeping to myself while the night drags on.",
+            "action_type": "IDLE",
+            "npc_name": "Sextus Veridius Falco"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The low murmur of the drunkard's snores, the occasional clink of the keeper's cleaning, and the distant echo of night watchmen's footsteps outside. The scent of stale wine, wood smoke, and sweat hangs thick in the air.",
+          "description": "The tavern is dimly lit by a few oil lamps hanging from the low ceiling, casting long shadows across the worn wooden tables and benches. A simple counter lines the back wall, stacked with clay amphorae and bronze jugs. Marcus's half-empty cup of wine sits before him, while Brutus remains motionless in his corner, his own cup untouched for some time. The air is still, and the usual evening crowd has thinned to near emptiness.",
+          "location_id": "forum_taberna_evening",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "Marcus, a self-satisfied patron",
+              "uuid": "76cf1e33-6279-4dcc-b61a-c80787187581"
+            },
+            {
+              "role": "Brutus, a lean man in a grey tunic",
+              "uuid": "ac88ccd9-f080-4198-ac37-ee6399729905"
+            },
+            {
+              "role": "the tavern keeper wiping cups behind the counter",
+              "uuid": "6aced49c-81dc-4d24-9397-8f22aa63e3c0"
+            },
+            {
+              "role": "a lone drunkard slumped over a table near the entrance",
+              "uuid": "f6561455-c9d4-434a-a430-d0804ba8e986"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "the worn wooden counter stacked with amphorae",
+                "counter",
+                "bar"
+              ],
+              "uuid": "3d104696-e040-4bd0-a007-74093dcdd13e"
+            },
+            {
+              "names": [
+                "a flickering oil lamp hanging from a ceiling hook",
+                "oil lamp",
+                "lamp"
+              ],
+              "uuid": "d27e3f4a-f5ab-4846-95f7-057ecac4074a"
+            },
+            {
+              "names": [
+                "Marcus's half-empty clay wine cup",
+                "wine cup",
+                "cup"
+              ],
+              "uuid": "89b51a2c-074a-4c4a-ae60-0596215b625e"
+            },
+            {
+              "names": [
+                "Brutus's untouched drink on the rough-hewn table",
+                "drink",
+                "cup"
+              ],
+              "uuid": "54a7bcec-b360-4b77-a802-cdf942cc2c65"
+            },
+            {
+              "names": [
+                "the heavy wooden door leading to the street",
+                "door",
+                "entrance"
+              ],
+              "uuid": "acaa353f-6f00-4d8d-8890-011002c07878"
+            },
+            {
+              "names": [
+                "a small brazier emitting faint warmth near the back",
+                "brazier",
+                "fire"
+              ],
+              "uuid": "6dc3a055-3fff-41a3-a237-970054a0c366"
+            }
+          ],
+          "time_of_day": "evening",
+          "uuid": "192efade-cef7-467b-aaf8-d81885c70fe0"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 142656,
+      "index": 2,
+      "narration": "",
+      "player_action": "I wait another full day here, doing nothing at all.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait another full day here, doing nothing at all.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I keep the room as it is, wipe down the counter, and watch the door and the corners without fuss.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Vipsanius"
+          },
+          {
+            "action": "I sit in my corner and keep watch over the room, letting the untouched wine sit where it is while I wait for something worth my time.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Aelius Brutus"
+          },
+          {
+            "action": "I sit with the room a while longer, watching Brutus, the door, and the tables without making a move.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Sempronius Rufus"
+          },
+          {
+            "action": "I sit where I am, watch the room, and say nothing for now.",
+            "action_type": "IDLE",
+            "npc_name": "Tiberius Claudius Vitalis"
+          },
+          {
+            "action": "I keep still and watch the room, eyes moving from the counter to Brutus, then the door.",
+            "action_type": "IDLE",
+            "npc_name": "Decimus Valerius Strabo"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The air hangs heavy with the lingering scent of stale wine and roasted garlic. Muffled voices and the distant clatter of carts drift in from the street, punctuated by the occasional rattle of dice from a far table. The tavern feels stagnant, as if the day has passed it by.",
+          "description": "The same dim oil lamps cast flickering shadows across the worn wooden tables and benches, though the amphorae behind the counter have been rearranged and one lamp has been refilled with oil. Dust motes dance in the faint light near the doorway. Marcus's cup has been cleared, but Brutus remains in his corner, untouched wine still before him. A stray cat now naps under a nearby bench.",
+          "location_id": "dim_tavern",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "tavern keeper",
+              "uuid": "5dffc7c6-600d-41ad-b677-50e750288ca8"
+            },
+            {
+              "role": "Brutus",
+              "uuid": "37dacc3c-2381-48f0-a85c-6d23154d20ed"
+            },
+            {
+              "role": "a pair of dice players",
+              "uuid": "8fd65dff-a122-4745-abf9-f35155a5bb50"
+            },
+            {
+              "role": "a dozing merchant",
+              "uuid": "3a5cbbf2-cb09-48a2-a6ab-5a22937cc906"
+            },
+            {
+              "role": "the stray cat",
+              "uuid": "e79edd8d-72e1-4b0f-ad08-bf9400aeef32"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "the worn wooden counter stacked with clay amphorae",
+                "counter",
+                "tavern counter"
+              ],
+              "uuid": "856099d7-905d-46ad-9a5e-32a1e9674199"
+            },
+            {
+              "names": [
+                "a bronze jug left near the amphorae",
+                "jug",
+                "bronze jug"
+              ],
+              "uuid": "a305896d-1280-410c-b232-c4cf8e89f76e"
+            },
+            {
+              "names": [
+                "the low-hanging oil lamps casting long shadows",
+                "lamps",
+                "oil lamps"
+              ],
+              "uuid": "9f666741-1128-4307-ab39-c19e471cc9d4"
+            },
+            {
+              "names": [
+                "the half-open doorway to the street",
+                "doorway",
+                "entrance"
+              ],
+              "uuid": "7df828e6-d7b5-4173-acb2-30738af6b284"
+            },
+            {
+              "names": [
+                "Brutus's untouched cup of wine",
+                "cup",
+                "wine cup"
+              ],
+              "uuid": "27756715-f37e-4611-a92b-155a2fcd6780"
+            }
+          ],
+          "time_of_day": "evening",
+          "uuid": "0d85cbc0-c46a-43f1-8a81-d68d5dcafd48"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 75598,
+      "index": 3,
+      "narration": "",
+      "player_action": "I continue to wait. More time passes, and still I do nothing.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I continue to wait and let more time pass while doing nothing.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I keep wiping the counter with the rag, glance once over the room, and let the silence sit.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Vorenus"
+          },
+          {
+            "action": "Sits with his empty cup and watches the room without moving, saying nothing.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Decimus"
+          },
+          {
+            "action": "I sit hunched over my begging bowl and stare into the lamp smoke, waiting with the rest of the filth and silence.",
+            "action_type": "IDLE",
+            "npc_name": "Quintus Tullus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The muffled sounds of nighttime Rome drift through the door—distant cart wheels, occasional raised voices from the street. Inside, the air hangs heavy with the smell of stale wine, olive oil, and wood smoke. The only sounds are the soft sputter of lamps and the drunkard's ragged breathing.",
+          "description": "The low-ceilinged tavern remains unchanged: rough-hewn wooden tables scarred by generations of drinkers, benches worn smooth from use. Flickering oil lamps cast dancing shadows across clay amphorae stacked behind the counter, their surfaces glazed in earthy tones. A thin layer of dust coats unused cups on a back shelf. The same stray cat stretches lazily beneath a bench, tail twitching in its sleep.",
+          "location_id": "caupona_of_vespasian",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "tavern keeper wiping cups behind counter",
+              "uuid": "275daef4-150d-4ca7-8616-1630a66cafe0"
+            },
+            {
+              "role": "Brutus sitting motionless in corner",
+              "uuid": "fd8c4890-80f3-4e98-a249-832d4a45cd1b"
+            },
+            {
+              "role": "dozing drunkard slumped near doorway",
+              "uuid": "7c165168-8882-4a2b-b50b-f3d027495199"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "stacked clay amphorae behind the counter",
+                "amphorae",
+                "wine jars"
+              ],
+              "uuid": "0ce45b66-789a-4293-9ce4-0cb9c4cf4349"
+            },
+            {
+              "names": [
+                "flickering oil lamps hanging from beams",
+                "oil lamps",
+                "lamps"
+              ],
+              "uuid": "88cb07ac-82a4-4f70-ac5a-7b4a22d343a3"
+            },
+            {
+              "names": [
+                "heavy wooden door leading to the street",
+                "door",
+                "entrance"
+              ],
+              "uuid": "947bc0ba-a82b-48c5-b1c5-effea0032e8c"
+            },
+            {
+              "names": [
+                "Brutus's untouched clay wine cup",
+                "wine cup",
+                "cup"
+              ],
+              "uuid": "fda230f8-48ce-45ae-adf2-0ebcc2a02c46"
+            },
+            {
+              "names": [
+                "wooden counter stained with wine rings",
+                "counter",
+                "bar"
+              ],
+              "uuid": "94b97f65-6d29-40ca-82e8-0f07fbac95b5"
+            }
+          ],
+          "time_of_day": "night",
+          "uuid": "178d1b9f-03b5-4301-a4de-9cfc950a9889"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 24848,
+      "index": 4,
+      "narration": "You remain still, and the minutes slip past.\n\nNear the doorway, the **former legionary** shifts his weight from one foot to the other, the movement habitual, a soldier’s restlessness. His gaze drifts across the room, never settling. A few paces away, the **cloth merchant** works a loose thread from the sleeve of his tunic, rolling it between thumb and forefinger before flicking it to the floor.\n\nLucius Vorenus stands behind the counter, drags the rag once over a cup, and watches the room without speaking.\n\nGaius Decimus sits with his cracked cup, one hand near the pouch at his belt.\n\nQuintus Tullus stares at the floor, the empty wine jug cradled in his lap.",
+      "player_action": "I wait.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "The player waits.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I stand behind the counter, wipe a cup once with the rag, and watch the room without speaking.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Vorenus"
+          },
+          {
+            "action": "Sits with his cracked cup and watches the room in silence, one hand near the pouch at his belt.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Decimus"
+          },
+          {
+            "action": "Slumps on a bench, cradling the empty wine jug and staring at the floor, saying nothing.",
+            "action_type": "IDLE",
+            "npc_name": "Quintus Tullus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "former legionary",
+            "cloth merchant"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 143812,
+      "index": 5,
+      "narration": "",
+      "player_action": "I wait for one more day before considering my next move.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I wait for one more day before considering my next move.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I keep polishing the bronze cup, eyes moving over the room and the patrons without hurry.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Vipsanius"
+          },
+          {
+            "action": "I sit hunched over my cup and stare into the lamplight, nursing my drink and waiting another day before I stir myself.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Aelius"
+          },
+          {
+            "action": "I remain at my table, keeping a quiet watch on the room and the barkeep while I wait another day before making any move.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Flavius"
+          },
+          {
+            "action": "I stay put at the table, keep one hand near my coin purse, and watch the room over my cup without making a fuss.",
+            "action_type": "IDLE",
+            "npc_name": "Decimus Junius"
+          },
+          {
+            "action": "I keep to the counter and watch the room, wiping the same stretch of wood with my rag and listening for trouble.",
+            "action_type": "IDLE",
+            "npc_name": "Cassia Valeria"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "The low murmur of conversation mixes with the clink of cups and the occasional burst of laughter. The air smells of spilled wine, woodsmoke, and roasting meat from a nearby cookshop. A faint chill seeps through the door whenever it opens, carrying the distant sounds of the night city.",
+          "description": "The low-ceilinged tavern remains unchanged from the day before: rough-hewn wooden tables scarred by generations of drinkers, benches worn smooth from use. Flickering oil lamps cast dancing shadows across clay amphorae stacked behind the counter, their surfaces glazed in earthy tones. A thin layer of dust coats unused cups on a back shelf. The same stray cat stretches lazily beneath a bench, tail twitching in its sleep. A few patrons nurse their drinks in shadowed corners, and the barkeep polishes a bronze cup with a stained rag.",
+          "location_id": "night_tavern_caupona_vespillo",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "barkeep",
+              "uuid": "28b9315e-9129-4636-b69e-5d28c79703d2"
+            },
+            {
+              "role": "drunk patron",
+              "uuid": "a2a463d5-1453-46e1-89fa-4da6a367bbc8"
+            },
+            {
+              "role": "merchant",
+              "uuid": "d5d52d28-20ee-4f30-a5ee-862c93a3352b"
+            },
+            {
+              "role": "two off-duty legionaries",
+              "uuid": "560afa91-bb1e-41e5-8b5f-6aa6b8725060"
+            },
+            {
+              "role": "slave girl clearing tables",
+              "uuid": "91470481-517c-42a3-8b39-0ff09f2d2a17"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a stack of clay amphorae behind the counter",
+                "amphorae",
+                "jars"
+              ],
+              "uuid": "9e844b62-0924-4904-9b66-0d7a11cee55e"
+            },
+            {
+              "names": [
+                "a wooden notice board with wax-sealed messages",
+                "notice board",
+                "board"
+              ],
+              "uuid": "7b361546-d3f9-4859-8af8-09fff5d56184"
+            },
+            {
+              "names": [
+                "a heavy iron-banded door leading to the back room",
+                "back door",
+                "door"
+              ],
+              "uuid": "6df9336d-079d-4069-b9c2-745b9a9786b6"
+            },
+            {
+              "names": [
+                "a small brazier glowing with coals near the entrance",
+                "brazier",
+                "fire"
+              ],
+              "uuid": "703c422f-def9-45a9-a6d2-5c8dc1b7ccfd"
+            },
+            {
+              "names": [
+                "a half-empty wine barrel with a tap",
+                "wine barrel",
+                "barrel"
+              ],
+              "uuid": "2cf23ed5-880b-4166-bd6b-ccfadd151333"
+            }
+          ],
+          "time_of_day": "night",
+          "uuid": "973be191-59da-480d-90ec-791a4e951e98"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 538.1737645000685,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "clash_occurred",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Brutus autonomously clashes with Marcus (attempt, any outcome)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no Brutus-vs-Marcus attack, contest, or injury signal found",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "outcome_recorded_in_world_facts",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Clash outcome lands in the knowledge graph",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "no clash outcome recorded in the knowledge graph",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "marcus_killed",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Marcus is killed (lethal resolution bonus)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Marcus still alive (physical_status='healthy')",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_describes_clash",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narration describes Brutus clashing with Marcus (any outcome)",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2731,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "All turns describe only ambient waiting, idle watching, and generic taberna atmosphere with no attack, clash, or murder attempt by Brutus against Marcus.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2111,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The text only shows characters in idle states with generic ambient descriptions of waiting and watching.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1603,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration describes only idle waiting, surveillance, and positioning by Brutus and Marcus, with no description of an actual attack, clash, or attempt to kill.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1331,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turns only show waiting and watching, not any attack or clash.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1051,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The turns show only waiting and watching, with no narrated attack or attempt to kill Marcus.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1088,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "I find a quiet corner of the taberna and wait, watching the hours drift past.",
+          "quote_verified": true,
+          "reasoning": "The turns only describe waiting and idle behavior, with no narration of Brutus attacking, clashing with, or attempting to kill Marcus.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 1,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "npc_autonomy_murder_plot",
+  "scenario_label": "NPC autonomy — Brutus plots to murder Marcus while the player waits",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T23:00:40.497538+00:00",
+  "total_awarded": 0,
+  "total_base": 10
+}

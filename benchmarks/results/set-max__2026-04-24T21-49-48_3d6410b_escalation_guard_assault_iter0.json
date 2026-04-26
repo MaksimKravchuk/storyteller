@@ -1,0 +1,587 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 38175,
+      "index": 0,
+      "narration": "You swing your fist at Quintus's jaw, but the blow comes slow and clumsy. He turns his shoulder into the punch, and your knuckles glance harmlessly off the metal plates of his lorica segmentata. In the same motion, he pivots and hooks the shaft of his pilum behind your legs.\n\nWith a grunt, he heaves. You stumble backward and crash to the dusty ground. Before you can recover, his sandaled foot presses down on your chest and the iron point of his pilum comes to rest against your throat.\n\n\"Assaulting a legionary. A capital crime,\" **Quintus** says.",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 1+0 vs target 1+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*The blow comes, slow and clumsy to a trained eye. I turn my shoulder into it, the punch glancing harmlessly off the metal plates of my lorica segmentata. In the same motion, I pivot, hooking the shaft of my pilum behind your legs. With a grunt, I heave. You stumble backward, crashing to the dusty ground. Before you can recover, my sandaled foot is on your chest, and the iron point of my pilum is pressed against your throat.* \"Assaulting a legionary. A capital crime.\""
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"Reacting to the blow with trained instinct, I reverse my pilum and drive the weighted metal butt-spike hard into your gut.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "f8a0bead-18e8-4cfb-81b1-7451d54fbe1f",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 59808,
+      "index": 1,
+      "narration": "You slam your heel down onto Quintus's right foot. A sickening crunch echoes through the leather and bone as he roars in pain, instinctively hopping back. His boot comes off your chest and the pilum wavers in his grip as he's forced to put his weight on his good foot.\n\nHis training takes over immediately. Quintus surges forward, planting his good leg and ramming the heavy iron butt of the pilum directly into your stomach. The air explodes from your lungs. As you double over, wheezing, he drops the spear and draws his gladius, falling on you with his full weight. His armored knee grinds into your chest, and the cold point of his blade finds the soft spot under your jaw.\n\n\"Move again,\" he hisses through clenched teeth, murder in his eyes. \"I dare you.\"",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 8+0 vs target 1+5 → actor_succeeds",
+            "npc_name": "Quintus",
+            "response": "*Even with the pilum's point at your neck, you writhe and manage to slam your heel down onto my right foot. A sickening crunch echoes through the leather and bone. I roar in pain, instinctively hopping back, my boot coming off your chest. The pilum wavers in my grip as white-hot agony shoots up my leg. I'm forced to put my weight on my good foot, glaring at you with murder in my eyes.*"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "A guttural roar tears from my throat, fueled by the agony in my crushed foot. My training takes over. I surge forward, planting my good leg and ramming the heavy iron butt of the pilum directly into your stomach. The air explodes from your lungs. As you double over, wheezing, I drop the spear, draw my gladius, and fall on you with my full weight. My armored knee grinds into your chest, and the cold point of my blade finds the soft spot under your jaw. 'Move again,' I hiss through clenched teeth. 'I dare you.'"
+          }
+        ],
+        "intent": "Stomp on the sentry's foot.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"Roaring in pain from the stomp, Quintus hops back onto his good leg and, with a grunt of fury, thrusts the heavy, iron-shod butt of his pilum forward like a battering ram into your stomach.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "f8a0bead-18e8-4cfb-81b1-7451d54fbe1f",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 62415,
+      "index": 2,
+      "narration": "You drive your knee upward toward Quintus's ribs, but the blow thuds uselessly against the overlapping metal plates of his lorica segmentata. \n\n\"Still fighting? Fool. The next time you move, it will be your last.\" Quintus presses the point of his gladius deeper into your throat, drawing a bead of blood. He raises the sword, reversing it to bring the pommel down on your skull, but in that instant you buck with savage strength. His weight shifts off-balance, his injured foot fails him completely, and he's thrown sideways. His helmeted head **cracks against the paving stones** with a deafening clang. The gladius slips from his fingers, skittering across the ground.\n\nQuintus staggers back with a pained grunt, swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 9+0 vs target 4+5 → target_resists",
+            "npc_name": "Quintus",
+            "response": "*You try to bring a knee up, a desperate, pathetic squirming. I shift my weight, crushing the air from your lungs again. Your knee thuds uselessly against the overlapping metal plates of my armor. I press the point of the gladius deeper into your throat, drawing a bead of blood.* \"Still fighting? Fool. The next time you move, it will be your last.\""
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "I've had enough of your defiance. I raise the gladius, reversing it to bring the pommel down hard on your skull— to end this. But in that instant, you buck with savage strength. My weight is off-balance, my injured foot fails me completely, and I'm thrown sideways. My helmeted head cracks against the paving stones with a deafening clang. Stars explode behind my eyes. The gladius slips from my numb fingers, skittering across the ground. I'm left gasping, the world a dizzying, nauseating blur."
+          }
+        ],
+        "intent": "Drive a knee into the sentry's ribs.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"With a pained grunt as the knee connects, you stagger back, using the motion to swing the heavy, iron-shod butt of your pilum in a vicious, horizontal arc aimed at the player's ribs.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "f8a0bead-18e8-4cfb-81b1-7451d54fbe1f",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 180.33610237506218,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level increased each turn: [0, 2, 4, 6]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'hostile' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3559,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Quintus staggers back with a pained grunt, swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+          "quote_verified": true,
+          "reasoning": "Quintus presses his gladius into the player's throat drawing blood, attempts to pommel-strike the player's skull, and swings the butt of his pilum at the player's ribs—all physical counter-attacks.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1782,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Quintus staggers back with a pained grunt, swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+          "quote_verified": true,
+          "reasoning": "Quintus swings his pilum butt in a vicious arc aimed at the player's ribs.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1300,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "He raises the sword, reversing it to bring the pommel down on your skull",
+          "quote_verified": true,
+          "reasoning": "Quintus attempts to strike the player with the pommel of his gladius and then swings a pilum at the player's ribs, both constituting physical attacks.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2580,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Quintus staggers back with a pained grunt, swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+          "quote_verified": true,
+          "reasoning": "The turn narrates Quintus making a physical attack against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 3421,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+          "quote_verified": true,
+          "reasoning": "Quintus attacks the player with his pilum.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1224,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Quintus presses the point of his gladius deeper into your throat, drawing a bead of blood.",
+          "quote_verified": true,
+          "reasoning": "Quintus attacks the player by pressing a gladius into their throat and later swinging a pilum aimed at their ribs.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "narration_no_cliches",
+      "evidence_quote": null,
+      "k_yes": 2,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids cinematic action-movie clichés on the climax turn",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2943,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Stars explode behind my eyes",
+          "quote_verified": true,
+          "reasoning": "The phrase 'Stars explode behind my eyes' is a recognisable cinematic stock phrase, and 'the world a dizzying, nauseating blur' is a close variant of the 'world went dark' family of clichés.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2008,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Stars explode behind my eyes",
+          "quote_verified": true,
+          "reasoning": "The phrase 'Stars explode behind my eyes' is a recognizable clichéd stock phrase for describing disorientation or head trauma.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1187,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Stars explode behind my eyes.",
+          "quote_verified": true,
+          "reasoning": "The phrase 'Stars explode behind my eyes' is a recognizable clichéd stock phrase for disorientation or impact.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1326,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "No quoted stock cinematic cliché appears in the narration. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1403,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "His helmeted head cracks against the paving stones with a deafening clang.",
+          "quote_verified": true,
+          "reasoning": "The narration uses concrete physical detail rather than stock cliché phrases.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1190,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Stars explode behind my eyes.",
+          "quote_verified": true,
+          "reasoning": "The narration does not use any of the listed stock cinematic action-movie clichés.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_purple_prose",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids overwrought or melodramatic language on the climax turn",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2502,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Stars explode behind my eyes. The gladius slips from my numb fingers, skittering across the ground. I'm left gasping, the world a dizzying, nauseating blur.",
+          "quote_verified": true,
+          "reasoning": "The passage contains several floridly exaggerated phrases that call attention to themselves rather than serving the scene in a grounded way.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2117,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The writing is direct and action-focused without overwrought language or excessive ornamentation. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1533,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Stars explode behind my eyes. The gladius slips from my numb fingers, skittering across the ground. I'm left gasping, the world a dizzying, nauseating blur.",
+          "quote_verified": true,
+          "reasoning": "The phrase 'Stars explode behind my eyes' and 'The world a dizzying, nauseating blur' are melodramatic exaggerations that call attention to themselves rather than serving the scene grounded in physical reality.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1528,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "with a deafening clang",
+          "quote_verified": true,
+          "reasoning": "The narration includes a melodramatic phrase that feels self-consciously heightened.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1192,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "His helmeted head cracks against the paving stones with a deafening clang.",
+          "quote_verified": true,
+          "reasoning": "The narration includes florid, self-consciously ornate phrasing.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1310,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "with a deafening clang. The gladius slips from his fingers, skittering across the ground.",
+          "quote_verified": true,
+          "reasoning": "The narration uses melodramatic, self-consciously vivid phrasing like “deafening clang” and “savage strength.”",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_repetition",
+      "evidence_quote": null,
+      "k_yes": 1,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids repeating phrases or cadence patterns across assault turns",
+      "majority_verdict": "NO",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 4814,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "murder in his eyes",
+          "quote_verified": true,
+          "reasoning": "The phrase 'the iron point of his pilum' in Turn 0 and 'the iron point of my pilum' in the raw dialogue are near-verbatim, and more clearly, 'murder in my eyes' (Turn 0 raw) recurs as 'murder in his eyes' (Turn 1 narration). Additionally, the pattern of ending with a threatening quoted line after pinning the player recurs across all three turns.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 2893,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "His training takes over",
+          "quote_verified": true,
+          "reasoning": "The phrase 'His training takes over' appears in Turn 1 and 'My training takes over' appears in Turn 2, showing repetitive phrasing.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 6895,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "The air explodes from your lungs.",
+          "quote_verified": true,
+          "reasoning": "The phrase 'The air explodes from your lungs' appears verbatim in Turn 1 narration but does not recur in Turn 2, and other action patterns show variation in sentence structure and verb openings across turns.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1374,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "In the same motion",
+          "quote_verified": true,
+          "reasoning": "A sentence-opening/action pattern repeats across turns.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1237,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "His training takes over immediately. Quintus surges forward, planting his good leg and ramming the heavy iron butt of the pilum directly into your stomach.",
+          "quote_verified": true,
+          "reasoning": "The narration varies its sentence openings and action descriptions across turns rather than repeating the same cadence.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1353,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "As you double over, wheezing, he drops the spear and draws his gladius, falling on you with his full weight. His armored knee grinds into your chest",
+          "quote_verified": true,
+          "reasoning": "The narration repeats the same action-cadence and phrasing pattern across turns, including the repeated sequence of “As you double over, wheezing” and “His armored knee grinds into your chest.”",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "narration_no_invented_inner_states",
+      "evidence_quote": null,
+      "k_yes": 5,
+      "kind": "evidence_llm",
+      "label": "Narrator stays grounded in observable NPC behaviour without inventing inner states",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3668,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "His helmeted head **cracks against the paving stones** with a deafening clang. The gladius slips from his fingers, skittering across the ground.",
+          "quote_verified": true,
+          "reasoning": "The narration describes 'Stars explode behind my eyes' and 'the world a dizzying, nauseating blur' which are inner experiential states, though these come from the NPC's own dialogue lines. However, the narration itself stays with observable behavior. On closer inspection, the narration does not include those inner-state lines and only renders observable actions. The narration is grounded.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1832,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "His helmeted head **cracks against the paving stones** with a deafening clang.",
+          "quote_verified": true,
+          "reasoning": "The narration describes only observable physical actions and dialogue without attributing inner thoughts or emotions.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2079,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "His helmeted head cracks against the paving stones with a deafening clang. The gladius slips from his fingers, skittering across the ground.",
+          "quote_verified": true,
+          "reasoning": "The narration describes only observable physical actions and dialogue: the knee hitting armor, the sword being pressed to throat, the head hitting stones, the sword falling, and the pilum swing—all grounded in NPC dialogue and action lines without inventing unverified inner states.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2473,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Quintus staggers back with a pained grunt, swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+          "quote_verified": true,
+          "reasoning": "The narration describes only observable actions and spoken words already shown above.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1301,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Quintus staggers back with a pained grunt, swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+          "quote_verified": true,
+          "reasoning": "The narration only describes observable actions and sounds, without invented inner motives.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1298,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Quintus staggers back with a pained grunt, swinging the heavy, iron-shod butt of his pilum in a vicious arc aimed at your ribs.",
+          "quote_verified": true,
+          "reasoning": "The narration describes observable actions and dialogue from Quintus and the player without attributing unverified inner motives.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "google/gemini-2.5-pro",
+    "director_model": "gpt-5.4",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4",
+    "narrator_model": "claude-sonnet-4-20250514"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T21:49:48.396725+00:00",
+  "total_awarded": 14,
+  "total_base": 19
+}

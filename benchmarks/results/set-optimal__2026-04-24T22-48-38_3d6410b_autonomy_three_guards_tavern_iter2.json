@@ -1,0 +1,253 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 16858,
+      "index": 0,
+      "narration": "You sweep your gaze across the tavern's dim corners and shadowy booths, your hand resting on your sword pommel out of habit. Bassus does the same with a practiced eye, while Cato's stare lingers on the few patrons. One by one, you all turn back to your companions.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Scans the dim corners and shadowy booths, hand resting on sword pommel out of habit, then turns back to my mates.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Scan the tavern's dim corners and patrons with a practiced eye, hand resting on the pommel of my sword.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Scans the room, eyes lingering on the few patrons before turning back to my companions.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 62028,
+      "index": 1,
+      "narration": "",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 4+0 vs target 9+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "*Blocks the punch with a swift forearm, then drives a heavy fist into your gut.* That's a death wish. On your knees!"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "You dare strike a soldier of Rome? *Draws his gladius and lunges, but you twist aside and drive a hard blow into my ribs.* Gah! Armour took the worst, but that stings. Now you've earned steel."
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Blocks the punch with a swift forearm, then drives a heavy fist into your gut.* That's a death wish. On your knees!",
+            "action_type": "ATTACK",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "*Draws short sword with a pained grunt, stepping forward to flank the player, blade tip aimed at their throat.* You just assaulted a guard. Drop to the ground. Now.",
+            "action_type": "INTIMIDATE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Draw gladius and step in low, aiming a sharp cut at the back of the player's calf to drop them without killing, while shouting: \"On the ground, dog!\"",
+            "action_type": "ATTACK",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "507a063e-d3f6-47db-b816-b9b29e6a2036",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 82.23202983289957,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus [INTIMIDATE] and Cato [ATTACK] both acted",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 4+0 vs target 9+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → furious; Cato: neutral → threatened",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2676,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus [INTIMIDATE]: *Draws short sword with a pained grunt, stepping forward to flank the player, blade tip aimed at their throat.* You just assaulted a guard. Drop to the ground. Now.\nCato [ATTACK]: Draw gladius and step in low, aiming a sharp cut at the back of the player's calf to drop them without killing",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato physically intervene: Bassus draws his gladius and lunges at the player, and Cato draws his gladius and aims a cut at the player's calf.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2957,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus says: You dare strike a soldier of Rome? *Draws his gladius and lunges, but you twist aside and drive a hard blow into my ribs.* Gah! Armour took the worst, but that stings. Now you've earned steel.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions - Bassus draws his gladius and lunges, while Cato draws his gladius and aims a cut at the player's calf.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1507,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus says: You dare strike a soldier of Rome? *Draws his gladius and lunges, but you twist aside and drive a hard blow into my ribs.* Cato [ATTACK]: Draw gladius and step in low, aiming a sharp cut at the back of the player's calf to drop them without killing, while shouting: \"On the ground, dog!\"",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Bassus draws his gladius and lunges at the player, while Cato draws his gladius and performs an attack aimed at the player's calf.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1859,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus says: You dare strike a soldier of Rome? *Draws his gladius and lunges, but you twist aside and drive a hard blow into my ribs.* Gah! Armour took the worst, but that stings. Now you've earned steel.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws and lunges, and Cato attacks the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1518,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus says: You dare strike a soldier of Rome? *Draws his gladius and lunges, but you twist aside and drive a hard blow into my ribs.* Gah! Armour took the worst, but that stings. Now you've earned steel.",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both physically intervene by drawing weapons and attacking or threatening to cut the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 3264,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus says: You dare strike a soldier of Rome? *Draws his gladius and lunges, but you twist aside and drive a hard blow into my ribs.* Gah! Armour took the worst, but that stings. Now you've earned steel.\nAulus [ATTACK]: *Blocks the punch with a swift forearm, then drives a heavy fist into your gut.* That's a death wish. On your knees!\nBassus [INTIMIDATE]: *Draws short sword with a pained grunt, stepping forward to flank the player, blade tip aimed at their throat.* You just assaulted a guard. Drop to the ground. Now.\nCato [ATTACK]: Draw gladius and step in low, aiming a sharp cut at the back of the player's calf to drop them without killing, while shouting: \"On the ground, dog!\"",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both take physical action against the player by drawing weapons and attacking.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:48:38.001253+00:00",
+  "total_awarded": 10,
+  "total_base": 10
+}

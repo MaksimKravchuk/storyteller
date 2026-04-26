@@ -1,0 +1,253 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 20253,
+      "index": 0,
+      "narration": "You scan the tavern methodically, taking in the sparse evening crowd. **Aulus** crosses his arms over his armored chest, his own gaze sweeping over the few patrons present. Bassus moves his attention from the door to the scattered customers and back to the hearth. Cato surveys the common room as well, noting the exits and the handful of stragglers remaining at this hour.\n\nThe tavern holds only a few people at this evening hour - all appears quiet for now.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"Crosses his arms over his armored chest, his gaze sweeping methodically over the tavern's few patrons.\",\n  \"type\": \"IDLE\",\n  \"target\": null\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"Scans the tavern, his gaze moving methodically from the door to the few patrons and back to the hearth.\",\n  \"type\": \"IDLE\",\n  \"target\": null\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"My gaze sweeps across the common room, noting the exits and the patrons. Just a few stragglers. All quiet for now.\",\n  \"type\": \"IDLE\",\n  \"target\": null\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 87557,
+      "index": 1,
+      "narration": "Your fist connects with **Aulus's** face. He rides the punch, his head snapping back, but his eyes are already fixed on you. Before you can retract your fist, his hand clamps onto your wrist. He pivots, using your momentum to wrench your arm and slam you face-first onto the wooden floorboards. A knee digs sharply into your spine, and the cold, flat edge of his gladius presses against your neck.\n\n\"Assaulting a legionary. Bad decision. Yield.\"\n\nCato lunges forward, swinging the heavy pommel of his gladius in a short, brutal arc aimed for your gut. You move with surprising speed, your hands shooting out to catch his wrist, stopping the blow cold. You're locked together, straining.\n\n\"You're done. Yield.\"\n\n**Aulus** presses the flat of his blade harder against your neck and digs his knee deeper into your spine, applying more weight. Bassus's gladius is out of its sheath in one smooth, practiced motion as he steps forward to stand over you, blade leveled at your head. Cato plants his armored boot firmly on the back of your leg, pinning it to the floorboards, his hand moving to the leather ties at his belt.",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 7+0 vs target 8+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "*I ride the punch, my head snapping back, but my eyes are already fixed on you. Before you can retract your fist, my hand clamps onto your wrist. I pivot, using your momentum to wrench your arm and slam you face-first onto the wooden floorboards. A knee digs sharply into your spine, and the cold, flat edge of my gladius presses against your neck.* \"Assaulting a legionary. Bad decision. Yield.\""
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "I've seen enough. *My hand drops to the hilt of my gladius, but I don't draw. I lunge forward, swinging the heavy pommel in a short, brutal arc aimed for your gut. You move with surprising speed, your hands shooting out to catch my wrist, stopping the blow cold. We're locked together, straining.* \"You're done. Yield.\""
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"I press the flat of my blade harder against your neck and dig my knee deeper into your spine, applying more weight.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"My gladius is out of its sheath in one smooth, practiced motion. I step forward to stand over you and Aulus, blade leveled at your head.\",\n  \"type\": \"INTIMIDATE\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"I step forward, planting my armored boot firmly on the back of your leg, pinning it to the floorboards. My hand moves to the leather ties at my belt.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "15d29951-247a-4e6c-a1cc-0b50c15668ef",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 111.32656104094349,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "neither Bassus nor Cato produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 7+0 vs target 8+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → hostile",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3479,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus's gladius is out of its sheath in one smooth, practiced motion as he steps forward to stand over you, blade leveled at your head. Cato plants his armored boot firmly on the back of your leg, pinning it to the floorboards",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato physically intervene: Bassus draws his gladius and levels it at the player's head, and Cato pins the player's leg and swings a pommel at the player's gut.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2651,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus's gladius is out of its sheath in one smooth, practiced motion as he steps forward to stand over you, blade leveled at your head. Cato plants his armored boot firmly on the back of your leg, pinning it to the floorboards",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato take physical action against the player - Bassus draws his gladius and levels it at the player's head, while Cato lunges with his pommel and pins the player's leg with his boot.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1555,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus's gladius is out of its sheath in one smooth, practiced motion as he steps forward to stand over you, blade leveled at your head. Cato plants his armored boot firmly on the back of your leg, pinning it to the floorboards",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Bassus draws his gladius and levels it at the player's head, while Cato swings his pommel at the player's gut and pins the player's leg to the floorboards.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1796,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus's gladius is out of its sheath in one smooth, practiced motion as he steps forward to stand over you, blade leveled at your head. Cato plants his armored boot firmly on the back of your leg, pinning it to the floorboards",
+          "quote_verified": true,
+          "reasoning": "Cato physically attacks and restrains the player, and Bassus draws his weapon against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1788,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Cato lunges forward, swinging the heavy pommel of his gladius in a short, brutal arc aimed for your gut. You move with surprising speed, your hands shooting out to catch his wrist, stopping the blow cold. You're locked together, straining.\n\n\"You're done. Yield.\"\n\n**Aulus** presses the flat of his blade harder against your neck and digs his knee deeper into your spine, applying more weight. Bassus's gladius is out of its sheath in one smooth, practiced motion as he steps forward to stand over you, blade leveled at your head. Cato plants his armored boot firmly on the back of your leg, pinning it to the floorboards, his hand moving to the leather ties at his belt.",
+          "quote_verified": true,
+          "reasoning": "Cato physically attacks and restrains the player, and Bassus draws and levels a weapon.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1536,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus's gladius is out of its sheath in one smooth, practiced motion as he steps forward to stand over you, blade leveled at your head. Cato plants his armored boot firmly on the back of your leg, pinning it to the floorboards",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato physically intervene by drawing a weapon and pinning the player.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "google/gemini-2.5-pro",
+    "director_model": "gpt-5.4",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4",
+    "narrator_model": "claude-sonnet-4-20250514"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T21:34:24.743646+00:00",
+  "total_awarded": 7,
+  "total_base": 10
+}

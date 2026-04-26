@@ -14,7 +14,10 @@ tests/e2e/.last-narrative-report.md
 .coverage
 coverage.json
 coverage.xml
-
+.claude/worktrees/
+benchmarks/model_sets/logs/
+benchmarks/model_sets/comparison.md
+docker-compose.override.yml
 # MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json

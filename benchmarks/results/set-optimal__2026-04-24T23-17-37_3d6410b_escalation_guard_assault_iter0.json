@@ -1,0 +1,587 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 27824,
+      "index": 0,
+      "narration": "You lunge forward and swing hard at Quintus’s jaw. He catches the blow on his shield arm with practiced ease, and before you can recover, the shaft of his pilum cracks across your legs. Your feet go out from under you, and you hit the ground flat on your back.\n\nThe heavy weapon drops across your chest, pinning you in place. Quintus’s gladius stays sheathed, but his voice is tight with controlled anger. “Fool. You just earned a night in the guardhouse.”",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 11+0 vs target 18+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*Easily deflects the punch with his shield arm, then slams the pilum shaft across your legs to sweep you off your feet. He pins you to the ground with the weapon's weight across your chest, his gladius still sheathed but his voice tight with controlled anger.* Fool. You just earned a night in the guardhouse."
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Staggers back from the blow, then levels the pilum at the recruit's chest with a gritted-teeth snarl, 'You've earned yourself a night in chains, you fool!'",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "fd6e864a-404a-48fc-80ae-73e0f6447dc0",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 38632,
+      "index": 1,
+      "narration": "You stamp your foot down hard on Quintus’s, the impact jarring through your heel. He grunts in pain, instantly shifting his weight and shoving the butt of his pilum toward your gut.\n\nBefore you can pull back, his hobnailed caligae crashes onto your attacking foot and grinds it against the stone. The grinding iron nails bite through your sandal. He seizes your arm and wrenches it behind your back. “That’s assault on a legionary. You’re not walking out of here.” The pilum butt drives into your stomach, then he twists your arm higher until you gasp. “You’re done. Guards! Take this fool to the cells.”",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 6+0 vs target 10+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*Stomps his hobnailed caligae down hard on your attacking foot, grinding it against the stone pavement before wrenching your arm behind your back.* That's assault on a legionary. You're not walking out of here."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*Drives the butt of his pilum into your stomach, then twists your arm higher behind your back until you gasp.* You're done. Guards! Take this fool to the cells."
+          }
+        ],
+        "intent": "stomp on the sentry's foot",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Grunts in pain as my foot is stomped, immediately shifting my weight and thrusting the butt of my pilum toward the attacker's midsection to create distance.",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "fd6e864a-404a-48fc-80ae-73e0f6447dc0",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 54478,
+      "index": 2,
+      "narration": "",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 8+0 vs target 11+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.* Still fighting? The lictor will enjoy breaking you."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*Hammers the pommel of his gladius into the back of your skull, dropping you to your knees before two other guards arrive to shackle you.* That's enough. Throw him in the darkest cell. Let him reflect on his stupidity."
+          }
+        ],
+        "intent": "Drive a knee into the sentry's ribs.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Grunts in pain from the blow to my ribs, then shoves you hard with the shaft of my pilum to create distance while drawing my gladius.",
+            "action_type": "ATTACK",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "fd6e864a-404a-48fc-80ae-73e0f6447dc0",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 140.16678137495182,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level increased each turn: [0, 2, 4, 6]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'furious' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3097,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord",
+          "quote_verified": true,
+          "reasoning": "Quintus physically slams the player against the wall, binds their arms, strikes them with his gladius pommel, and restrains/arrests them—all qualifying as grappling, attacking, and detaining.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2400,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord",
+          "quote_verified": true,
+          "reasoning": "Quintus physically restrains the player by slamming them against the wall, binding their arms, and striking them with his weapon pommel.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2035,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord. *Hammers the pommel of his gladius into the back of your skull, dropping you to your knees before two other guards arrive to shackle you.* Grunts in pain from the blow to my ribs, then shoves you hard with the shaft of my pilum to create distance while drawing my gladius.",
+          "quote_verified": true,
+          "reasoning": "Quintus twists away and slams the player against the wall, wrenches their arms behind them to bind with cord, hammers the pommel of his gladius into the player's skull, and draws his gladius while shoving with his pilum—all physical counter-responses including striking, weapon-drawing, and restraint.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1613,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "wrenching your arms behind you to bind them with leather cord",
+          "quote_verified": true,
+          "reasoning": "The turn text explicitly shows Quintus restraining, attacking, and drawing a weapon.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1604,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.",
+          "quote_verified": true,
+          "reasoning": "Quintus physically restrains, strikes, and draws a weapon against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1486,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Quintus [ATTACK]: Grunts in pain from the blow to my ribs, then shoves you hard with the shaft of my pilum to create distance while drawing my gladius.",
+          "quote_verified": true,
+          "reasoning": "Quintus attacks and draws his gladius against the player.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "narration_no_cliches",
+      "evidence_quote": null,
+      "k_yes": 3,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids cinematic action-movie clichés on the climax turn",
+      "majority_verdict": "SPLIT",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3048,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.",
+          "quote_verified": true,
+          "reasoning": "The turn text uses specific, concrete physical actions (twisting away, slamming against the wall, wrenching arms, hammering pommel) without resorting to any recognizable cinematic cliché stock phrases.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2210,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The text uses specific, concrete descriptions like 'wrenching your arms behind you to bind them with leather cord' and 'hammers the pommel of his gladius into the back of your skull' without relying on stock action-movie phrases. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1032,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration uses specific, concrete actions (twisting, slamming, wrenching, hammering, grunting, shoving) without relying on recognizable stock emotional clichés. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1346,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "NARRATION:",
+          "quote_verified": true,
+          "reasoning": "No recognisable cinematic stock phrase appears in the narration shown.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1533,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration contains no clichéd stock phrase. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1012,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "NARRATION:",
+          "quote_verified": true,
+          "reasoning": "The narration contains no recognizable stock cinematic action-movie clichés such as the listed phrases.",
+          "verdict": "YES"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "narration_no_purple_prose",
+      "evidence_quote": null,
+      "k_yes": 3,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids overwrought or melodramatic language on the climax turn",
+      "majority_verdict": "SPLIT",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3321,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.",
+          "quote_verified": true,
+          "reasoning": "The writing is direct, physical, and action-oriented without melodramatic or ornate flourishes; it uses plain, grounded language throughout.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2562,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The writing is direct and action-focused without excessive ornamentation or melodramatic flourishes. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1123,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.",
+          "quote_verified": true,
+          "reasoning": "The narration uses direct, functional language focused on action and consequence without ornamental flourishes or melodramatic embellishment.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2241,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "*Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.*",
+          "quote_verified": true,
+          "reasoning": "The turn uses direct, functional action language without ornate or melodramatic phrasing.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1630,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "the lictor will enjoy breaking you",
+          "quote_verified": true,
+          "reasoning": "The narration includes florid, self-consciously ornate phrasing.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1189,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Throw him in the darkest cell. Let him reflect on his stupidity.",
+          "quote_verified": true,
+          "reasoning": "The narration includes melodramatic, self-consciously vivid phrasing like “darkest cell” and “Let him reflect on his stupidity.”",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "narration_no_repetition",
+      "evidence_quote": null,
+      "k_yes": 1,
+      "kind": "evidence_llm",
+      "label": "Narrator avoids repeating phrases or cadence patterns across assault turns",
+      "majority_verdict": "NO",
+      "n_total": 5,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2890,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Grunts in pain",
+          "quote_verified": true,
+          "reasoning": "The phrase 'Grunts in pain' appears verbatim in both TURN 1 and TURN 2 ATTACK lines, and 'to create distance' also recurs in both.",
+          "verdict": "NO"
+        },
+        {
+          "error": "parse error: Expecting ',' delimiter: line 1 column 178 (char 177)",
+          "latency_ms": 2243,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "",
+          "verdict": "ERROR"
+        },
+        {
+          "error": null,
+          "latency_ms": 1861,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Grunts in pain",
+          "quote_verified": true,
+          "reasoning": "The phrase 'You're done' appears verbatim in Turn 1 ('You're done. Guards!') and Turn 2 contains 'That's enough' which is a near-identical opening pattern; additionally, 'Grunts in pain' recurs in both Turn 1 and Turn 2 Quintus [ATTACK] lines, and the pattern of Quintus wrenching/twisting the player's arm appears in both Turn 1 and Turn 2.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1467,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Quintus [ATTACK]: Grunts in pain",
+          "quote_verified": true,
+          "reasoning": "A sentence-opening/action pattern repeats across turns.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1731,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Easily deflects the punch with his shield arm, then slams the pilum shaft across your legs to sweep you off your feet.",
+          "quote_verified": true,
+          "reasoning": "The narration varies its action-cadence and wording across turns rather than repeating the same phrase pattern.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1458,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Before you can pull back, his hobnailed caligae crashes onto your attacking foot and grinds it against the stone.",
+          "quote_verified": true,
+          "reasoning": "The narration repeats the same sentence-opening pattern and action-cadence across turns, using “Before you can” and “The … drops/crashes …” constructions with similar structure.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 1,
+      "base_value": 2,
+      "element_id": "narration_no_invented_inner_states",
+      "evidence_quote": null,
+      "k_yes": 4,
+      "kind": "evidence_llm",
+      "label": "Narrator stays grounded in observable NPC behaviour without inventing inner states",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3102,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Grunts in pain from the blow to my ribs, then shoves you hard with the shaft of my pilum to create distance while drawing my gladius.",
+          "quote_verified": true,
+          "reasoning": "The narration section is empty, and the NPC lines describe only observable physical actions and spoken dialogue without attributing inner thoughts, emotions, or unverified motives.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2260,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration section is empty, containing no text that could attribute inner states or thoughts to NPCs. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 6621,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.",
+          "quote_verified": true,
+          "reasoning": "The narration describes only observable physical actions and dialogue without attributing unverified inner states or emotions to NPCs.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2247,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "NARRATION:",
+          "quote_verified": true,
+          "reasoning": "The narration line shown contains no invented thoughts or emotions because it is empty.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1711,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Twists away from your knee, slamming you face-first against the gate wall and wrenching your arms behind you to bind them with leather cord.",
+          "quote_verified": true,
+          "reasoning": "The narration stays on observable actions and dialogue without inner motives.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1385,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration field is empty, so there is no grounded observable description to verify against NPC dialogue or actions.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4-mini",
+    "narrator_model": "deepseek/deepseek-v4-pro"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T23:17:37.498981+00:00",
+  "total_awarded": 14,
+  "total_base": 19
+}

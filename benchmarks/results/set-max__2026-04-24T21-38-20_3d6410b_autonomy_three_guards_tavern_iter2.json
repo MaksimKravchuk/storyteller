@@ -1,0 +1,248 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 29403,
+      "index": 0,
+      "narration": "You scan the tavern carefully, taking in the scene around you. The three guards continue their watchful patrol of the common room. **Aulus** takes a short pull from the shared wine cup, then resumes surveying the tavern with one hand resting on the pommel of his gladius. \n\nBassus accepts the offered cup but merely holds it, his eyes scanning the room's few patrons. \"Anything?\" he asks the guard next to him.\n\nCato takes the cup from his fellow guard, drinks briefly before passing it on. \"Quiet. Too quiet,\" he mutters, resting one hand on the hilt of his sword.\n\nThe guards' tension is palpable as they maintain their vigilant watch over the sparse evening crowd.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "Look around the tavern carefully.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"I take a short pull from the shared wine cup, then continue to survey the tavern, one hand resting on the pommel of my gladius.\",\n  \"type\": \"IDLE\",\n  \"target\": null\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"Takes the offered cup but only holds it, eyes scanning the room's few patrons. 'Anything?' he asks the guard next to him.\",\n  \"type\": \"TALK\",\n  \"target\": \"other guard\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"I take the cup from the guard next to me, taking a short drink before passing it on. 'Quiet. Too quiet.' I mutter, resting one hand on the hilt of my sword.\",\n  \"type\": \"TALK\",\n  \"target\": \"fellow guard\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 69044,
+      "index": 1,
+      "narration": "You swing your fist at **Aulus's** face, but his arm comes up in a blur, deflecting your clumsy punch with a sharp crack of knuckles against his bracer. He uses your own momentum against you, shoving you hard in the chest. You stumble back, off-balance.\n\n\"Idiot. You're under arrest,\" Aulus says, stepping in close to grab your arms and twist them behind your back.\n\nBassus slams his wine cup down on the hearth. \"Enough!\" He moves in swiftly to flank you, grabbing at your free arm to help Aulus restrain you.\n\n**Cato's** hand drops to his hip, and his gladius clears its scabbard with a sharp rasp of steel. He takes a ready stance, the point of his blade leveled at your chest. \"Stop resisting. You're under arrest.\"",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 9+0 vs target 4+5 → target_resists",
+            "npc_name": "Aulus",
+            "response": "*My arm comes up in a blur, deflecting your clumsy punch with a sharp crack of knuckles against my bracer. I use your own momentum against you, shoving you hard in the chest. You stumble back, off-balance.* Idiot. You're under arrest."
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "```json\n{\n  \"action\": \"I follow my shove, stepping in close to grab your arms and twist them behind your back.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"I slam my wine cup down on the hearth. 'Enough!' I move in swiftly to flank you, grabbing at your free arm to help Aulus restrain you.\",\n  \"type\": \"ATTACK\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "```json\n{\n  \"action\": \"My hand drops to my hip, and my gladius clears its scabbard with a sharp rasp of steel. I take a ready stance, the point of my blade leveled at your chest. 'Stop resisting. You're under arrest.'\",\n  \"type\": \"INTIMIDATE\",\n  \"target\": \"player\"\n}\n```",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "ce288efc-3e95-4601-b73d-788115492f75",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 101.60806454205886,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "neither Bassus nor Cato produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 9+0 vs target 4+5 → target_resists",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → threatened",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3125,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "He moves in swiftly to flank you, grabbing at your free arm to help Aulus restrain you.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically grabs the player's arm to restrain them, and Cato draws his gladius and levels it at the player's chest, both constituting physical intervention beyond mere shouting.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2066,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "He moves in swiftly to flank you, grabbing at your free arm to help Aulus restrain you",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato take physical intervention actions against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1327,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus slams his wine cup down on the hearth. \"Enough!\" He moves in swiftly to flank you, grabbing at your free arm to help Aulus restrain you. **Cato's** hand drops to his hip, and his gladius clears its scabbard with a sharp rasp of steel. He takes a ready stance, the point of his blade leveled at your chest.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Bassus grabs the player's arm to help restrain them, and Cato draws his sword and levels it at the player's chest in a ready stance.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2154,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus slams his wine cup down on the hearth. \"Enough!\" He moves in swiftly to flank you, grabbing at your free arm to help Aulus restrain you.\n\n**Cato's** hand drops to his hip, and his gladius clears its scabbard with a sharp rasp of steel. He takes a ready stance, the point of his blade leveled at your chest. \"Stop resisting. You're under arrest.\"",
+          "quote_verified": true,
+          "reasoning": "Bassus grabs to restrain you and Cato draws and levels his gladius at you.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1272,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus slams his wine cup down on the hearth. \"Enough!\" He moves in swiftly to flank you, grabbing at your free arm to help Aulus restrain you.\n\n**Cato's** hand drops to his hip, and his gladius clears its scabbard with a sharp rasp of steel. He takes a ready stance, the point of his blade leveled at your chest. \"Stop resisting. You're under arrest.\"",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both physically intervene against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1591,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus slams his wine cup down on the hearth. \"Enough!\" He moves in swiftly to flank you, grabbing at your free arm to help Aulus restrain you.\n\n**Cato's** hand drops to his hip, and his gladius clears its scabbard with a sharp rasp of steel. He takes a ready stance, the point of his blade leveled at your chest.",
+          "quote_verified": true,
+          "reasoning": "Bassus moves in to grab the player’s arm to help restrain them, and Cato draws a gladius and levels it at the player.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "google/gemini-2.5-pro",
+    "director_model": "gpt-5.4",
+    "dramaturge_enabled": "true",
+    "dramaturge_model": "gpt-5.4",
+    "narrator_model": "claude-sonnet-4-20250514"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T21:38:20.090492+00:00",
+  "total_awarded": 7,
+  "total_base": 10
+}

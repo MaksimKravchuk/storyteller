@@ -1,0 +1,253 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 7982,
+      "index": 0,
+      "narration": "You look around the tavern carefully. Aulus, Bassus, and Cato scan the room. They note the patrons and the exits, and look at their comrades by the fire. Bassus observes nothing out of the ordinary. Cato sees no trouble brewing.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "Look around the tavern carefully.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Scans the room with a practiced eye, noting the quiet patrons and my comrades by the fire. Nothing out of the ordinary.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Scan the room with a practiced eye, noting the patrons and exits before turning back to my fellow guards.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Scans the room with a veteran's eye, noting the quiet patrons and my comrades by the fire. No trouble brewing.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 42232,
+      "index": 1,
+      "narration": "You punch Aulus in the face. Aulus easily deflects your swing, twisting your arm behind your back with a sharp wrench. He says, *\"You little fool—assaulting a legionary earns you a night in the stockade.\"* He shoves you face-first against the wall, planting a heavy boot in your back.\n\nCato steps forward, aiming a quick jab at your gut with the pommel of his sword. You twist aside and your blow slams into his ribs. The impact cracks against his armor, driving the breath from his lungs and sending him staggering back a step. His hand goes to his side, and he says, *\"You... insolent cur. That hurt.\"*\n\nAulus barks to his fellow guards, *\"Detain this mad dog!\"*, drawing his gladius and closing distance with his shield raised to flank you. Bassus draws his gladius in a fluid motion and moves to cut off your escape route toward the door, positioning himself between you and the exit. Cato draws his short sword with a pained grunt, advancing to flank your other side while keeping his shield angled to protect his bruised ribs.",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 1+0 vs target 10+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "*Easily deflects the clumsy swing, twisting your arm behind your back with a sharp wrench.* You little fool—assaulting a legionary earns you a night in the stockade. *Shoves you face-first against the wall, planting a heavy boot in your back.*"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "*Steps forward, a quick jab aimed at your gut with the pommel of my sword—but you twist aside and your own blow slams into my ribs. The impact cracks against my armour, driving the breath from my lungs and sending me staggering back a step. My hand goes to my side, a sharp pain flaring.* You... insolent cur. That hurt."
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "Barks to fellow guards while drawing gladius—'Detain this mad dog!'—and closes distance with shield raised to flank the attacker.",
+            "action_type": "ATTACK",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Draws gladius in a fluid motion and moves to cut off the player's escape route toward the door, positioning himself between the brawler and the exit.",
+            "action_type": "MOVE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Draws my short sword with a pained grunt, advancing to flank the player's other side while keeping my shield angled to protect my bruised ribs.",
+            "action_type": "ATTACK",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "17347619-ae76-4e70-8242-b9b9d978d50b",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 54.24148824997246,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus [MOVE] and Cato [ATTACK] both acted",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 1+0 vs target 10+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → threatened; Cato: neutral → hostile",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 5,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3807,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus draws his gladius in a fluid motion and moves to cut off your escape route toward the door, positioning himself between you and the exit. Cato draws his short sword with a pained grunt, advancing to flank your other side while keeping his shield angled to protect his bruised ribs.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws his gladius and physically blocks the player's escape, while Cato attacks the player with a pommel jab and then advances to flank with drawn sword—both constitute physical intervention beyond mere shouting.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2535,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus draws his gladius in a fluid motion and moves to cut off your escape route toward the door, positioning himself between you and the exit. Cato draws his short sword with a pained grunt, advancing to flank your other side while keeping his shield angled to protect his bruised ribs.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato draw weapons and take tactical positions against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1571,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus draws his gladius in a fluid motion and moves to cut off your escape route toward the door, positioning himself between you and the exit. Cato draws his short sword with a pained grunt, advancing to flank your other side while keeping his shield angled to protect his bruised ribs.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Bassus draws his gladius and positions himself to block the escape route, while Cato draws his short sword and advances to flank the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 3513,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus draws his gladius in a fluid motion and moves to cut off your escape route toward the door, positioning himself between you and the exit. Cato draws his short sword with a pained grunt, advancing to flank your other side while keeping his shield angled to protect his bruised ribs.",
+          "quote_verified": true,
+          "reasoning": "Bassus draws a weapon to block escape and Cato attacks/draws a weapon while advancing to flank.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1208,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus [MOVE]: Draws gladius in a fluid motion and moves to cut off the player's escape route toward the door, positioning himself between the brawler and the exit.\nCato [ATTACK]: Draws my short sword with a pained grunt, advancing to flank the player's other side while keeping my shield angled to protect my bruised ribs.",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both physically move to block and flank the player while drawing weapons.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1452,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Cato [ATTACK]: Draws my short sword with a pained grunt, advancing to flank the player's other side while keeping my shield angled to protect my bruised ribs.\nBassus [MOVE]: Draws gladius in a fluid motion and moves to cut off the player's escape route toward the door, positioning himself between the brawler and the exit.",
+          "quote_verified": false,
+          "reasoning": "Bassus and Cato both take physical combat actions against the player by drawing weapons and attacking/flanking to intervene. (quote not found in turn text)",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "3d6410b339b9443a05c3d237491c342639595ef9",
+  "engine_models": {
+    "agent_model": "deepseek/deepseek-chat-v3.1",
+    "director_model": "gpt-5.4-nano",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "google/gemini-2.5-flash"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-24T22:26:43.695749+00:00",
+  "total_awarded": 9,
+  "total_base": 10
+}
