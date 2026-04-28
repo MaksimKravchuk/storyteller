@@ -28,6 +28,7 @@ def _make_config() -> MagicMock:
     cfg.openai_api_key = "openai-key"
     cfg.anthropic_api_key = "anthropic-key"
     cfg.openrouter_api_key = "openrouter-key"
+    cfg.deepseek_api_key = "deepseek-key"
     return cfg
 
 
@@ -52,6 +53,7 @@ def test_create_engine_returns_game_engine_with_defaults() -> None:
         "openai": "openai-key",
         "anthropic": "anthropic-key",
         "openrouter": "openrouter-key",
+        "deepseek": "deepseek-key",
     }
     assert engine._models.director is AI_MODELS.gpt5_4_mini
     assert engine._models.agent is AI_MODELS.gpt5_4_nano

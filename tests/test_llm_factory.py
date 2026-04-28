@@ -7,6 +7,7 @@ import pytest
 
 from defaults.models import ModelConfig
 from llm.anthropic_client import AnthropicClient
+from llm.deepseek_client import DeepSeekClient
 from llm.factory import create_llm_client
 from llm.openai_client import OpenAIClient
 from llm.openrouter_client import OpenRouterClient
@@ -92,3 +93,19 @@ class TestCreateLLMClient:
         assert client.api_key == "or-key"
         assert client.temperature == pytest.approx(0.4)
         assert client.max_tokens == 1024
+
+    @allure.story("Provider routing")
+    @allure.title("create_llm_client returns a DeepSeekClient when the provider is deepseek")
+    def test_deepseek_provider(self, _sdk_env: None) -> None:
+        config = ModelConfig(
+            provider="deepseek",
+            model_id="deepseek-chat",
+            temperature=0.3,
+            max_tokens=512,
+        )
+        client = create_llm_client(config, api_key="ds-key")
+        assert isinstance(client, DeepSeekClient)
+        assert client.model == "deepseek-chat"
+        assert client.api_key == "ds-key"
+        assert client.temperature == pytest.approx(0.3)
+        assert client.max_tokens == 512

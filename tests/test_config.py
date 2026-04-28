@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import allure
 
+from config import Config, get_api_key_for_provider, list_api_key_status, resolve_model_config
 from defaults.models import AI_MODELS, ModelConfig
 
 _OPENAI = "openai"
@@ -50,8 +51,6 @@ class TestResolveModelConfig:
     @allure.story("Provider auto-detection")
     @allure.title("resolve_model_config routes any gpt-* model id to the openai provider")
     def test_gpt_model_resolves_to_openai(self):
-        from config import Config, resolve_model_config
-
         cfg = resolve_model_config(_GPT5_4_MINI, Config())
         assert cfg.provider == _OPENAI
         assert cfg.model_id == _GPT5_4_MINI
@@ -59,16 +58,12 @@ class TestResolveModelConfig:
     @allure.story("Provider auto-detection")
     @allure.title("resolve_model_config routes any claude-* model id to the anthropic provider")
     def test_claude_model_resolves_to_anthropic(self):
-        from config import Config, resolve_model_config
-
         cfg = resolve_model_config("claude-sonnet-4-20250514", Config())
         assert cfg.provider == "anthropic"
 
     @allure.story("Provider auto-detection")
     @allure.title("resolve_model_config falls back to the configured default_provider for unknown model ids")
     def test_unknown_model_uses_default_provider(self):
-        from config import Config, resolve_model_config
-
         cfg = resolve_model_config("llama-3", Config(default_provider="local"))
         assert cfg.provider == "local"
 
@@ -79,8 +74,6 @@ class TestOpenRouterDetection:
     @allure.story("Provider auto-detection")
     @allure.title("Model ids with OpenRouter-family prefixes resolve to the openrouter provider")
     def test_openrouter_prefixes_resolve_to_openrouter(self):
-        from config import Config, resolve_model_config
-
         openrouter_samples = [
             "deepseek/deepseek-chat-v3.1",
             "google/gemini-2.5-pro",
@@ -97,25 +90,54 @@ class TestOpenRouterDetection:
             assert resolved.model_id == model_id
 
     @allure.story("API-key status")
-    @allure.title("list_api_key_status reports all three providers based on Config values")
+    @allure.title("list_api_key_status reports all four providers based on Config values")
     def test_list_api_key_status_reflects_config(self):
-        from config import Config, list_api_key_status
-
-        cfg = Config(openai_api_key="sk-a", anthropic_api_key=None, openrouter_api_key="or-b")
+        cfg = Config(
+            openai_api_key="sk-a",
+            anthropic_api_key=None,
+            openrouter_api_key="or-b",
+            deepseek_api_key=None,
+        )
         status = list_api_key_status(cfg)
-        assert status == {"openai": True, "anthropic": False, "openrouter": True}
+        assert status == {
+            "openai": True,
+            "anthropic": False,
+            "openrouter": True,
+            "deepseek": False,
+        }
 
     @allure.story("API-key status")
     @allure.title("get_api_key_for_provider returns the OpenRouter key when requested")
     def test_get_api_key_returns_openrouter(self):
-        from config import Config, get_api_key_for_provider
-
         cfg = Config(openrouter_api_key="or-key-123")
         assert get_api_key_for_provider("openrouter", cfg) == "or-key-123"
 
     @allure.story("API-key status")
     @allure.title("get_api_key_for_provider returns None for unknown providers")
     def test_get_api_key_unknown_provider_returns_none(self):
-        from config import Config, get_api_key_for_provider
-
         assert get_api_key_for_provider("cohere", Config()) is None
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("DeepSeek provider")
+class TestDeepSeekDetection:
+    @allure.story("Provider auto-detection")
+    @allure.title("Bare deepseek-* model ids resolve to the native deepseek provider")
+    def test_native_deepseek_prefix_resolves_to_deepseek(self):
+        cfg = Config()
+        for model_id in ("deepseek-chat", "deepseek-reasoner"):
+            resolved = resolve_model_config(model_id, cfg)
+            assert resolved.provider == "deepseek", model_id
+            assert resolved.model_id == model_id
+
+    @allure.story("Provider auto-detection")
+    @allure.title("Slash-prefixed deepseek/<model> ids stay routed through OpenRouter")
+    def test_slash_prefixed_deepseek_stays_openrouter(self):
+        resolved = resolve_model_config("deepseek/deepseek-chat-v3.1", Config())
+        assert resolved.provider == "openrouter"
+
+    @allure.story("API-key status")
+    @allure.title("get_api_key_for_provider returns the DeepSeek key when requested")
+    def test_get_api_key_returns_deepseek(self):
+        cfg = Config(deepseek_api_key="ds-key-123")
+        assert get_api_key_for_provider("deepseek", cfg) == "ds-key-123"
