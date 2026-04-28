@@ -13,7 +13,6 @@ name: Fly Preview Deployments
 #                                 flyctl tokens create org <FLY_ORG>
 #                               The same secret is reused by ci.yml's
 #                               production deploy job.
-#   FLY_ORG                   - Fly organisation slug that owns preview apps
 #   FLY_PREVIEW_DATABASE_URL  - DATABASE_URL shared by all previews
 #                               (format: postgresql+asyncpg://user:pw@host/db)
 #   OPENAI_API_KEY            - optional; omit to run without OpenAI
@@ -54,12 +53,10 @@ jobs:
 
       - name: Verify required secrets
         env:
-          FLY_ORG: ${{ secrets.FLY_ORG }}
           FLY_PREVIEW_DATABASE_URL: ${{ secrets.FLY_PREVIEW_DATABASE_URL }}
         run: |
           missing=""
           [ -z "$FLY_API_TOKEN" ] && missing="$missing FLY_API_TOKEN"
-          [ -z "$FLY_ORG" ] && missing="$missing FLY_ORG"
           [ -z "$FLY_PREVIEW_DATABASE_URL" ] && missing="$missing FLY_PREVIEW_DATABASE_URL"
           if [ -n "$missing" ]; then
             echo "::error::Missing required secrets:$missing"
@@ -69,13 +66,34 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Resolve Fly org from token
+        # The org-scoped FLY_API_TOKEN can only see the org it was minted for,
+        # so `flyctl orgs list` returns exactly one entry. We extract the slug
+        # at runtime instead of carrying it as a separate secret.
+        run: |
+          orgs_json=$(flyctl orgs list --json)
+          org_count=$(echo "$orgs_json" | jq 'length')
+          if [ "$org_count" != "1" ]; then
+            echo "::error::Expected exactly 1 org from FLY_API_TOKEN, got $org_count. Use an org-scoped token (flyctl tokens create org <slug>)."
+            echo "$orgs_json"
+            exit 1
+          fi
+          fly_org=$(echo "$orgs_json" | jq -r '.[0].Slug // .[0].slug')
+          if [ -z "$fly_org" ] || [ "$fly_org" = "null" ]; then
+            echo "::error::Could not parse org slug from flyctl orgs list output."
+            echo "$orgs_json"
+            exit 1
+          fi
+          echo "Resolved Fly org: $fly_org"
+          echo "FLY_ORG=$fly_org" >> "$GITHUB_ENV"
+
       - name: Create Fly app if it does not exist
         run: |
           if flyctl status --app "$FLY_APP" >/dev/null 2>&1; then
             echo "App $FLY_APP already exists — reusing."
           else
             echo "Creating new Fly app: $FLY_APP"
-            flyctl apps create "$FLY_APP" --org "${{ secrets.FLY_ORG }}"
+            flyctl apps create "$FLY_APP" --org "$FLY_ORG"
           fi
 
       - name: Set app secrets
