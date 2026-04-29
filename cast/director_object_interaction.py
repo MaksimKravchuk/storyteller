@@ -124,33 +124,6 @@ def _persist_delta(
     location.record_object_state(object_key, delta_text)
 
 
-def _persist_and_record(
-    game_state: GameState,
-    object_targets: list[str],
-    player_action: str,
-    responses: list[ObjectInteractionResponse],
-) -> None:
-    """Write deltas to both persistence sinks *and* emit one turn event per target.
-
-    Extracted into its own function so the loop variable does not
-    leak into the enclosing scope — the enclosing coroutine later
-    issues an ``asyncio.gather`` over a comprehension with its own
-    ``delta`` name, which tripped WPS441 when both lived in the same
-    function body.
-    """
-    for object_key, resp in zip(object_targets, responses):
-        _persist_delta(game_state, object_key, resp.delta)
-        record_turn_event(
-            "object_interaction",
-            {
-                "object_name": object_key,
-                "player_action": player_action,
-                "narration": resp.narration,
-                "delta": resp.delta,
-            },
-        )
-
-
 async def _emit_witness_memories(
     memory_manager: MemoryManager,
     game_state: GameState,
@@ -204,7 +177,17 @@ async def apply_object_interactions(
         ),
     )
     deltas = [resp.delta for resp in responses]
-    _persist_and_record(game_state, object_targets, player_action, responses)
+    for object_key, resp in zip(object_targets, responses):
+        _persist_delta(game_state, object_key, resp.delta)
+        record_turn_event(
+            "object_interaction",
+            {
+                "object_name": object_key,
+                "player_action": player_action,
+                "narration": resp.narration,
+                "delta": resp.delta,
+            },
+        )
     await asyncio.gather(
         *(_emit_witness_memories(memory_manager, game_state, delta) for delta in deltas),
     )

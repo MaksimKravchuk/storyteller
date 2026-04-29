@@ -81,8 +81,6 @@ async def resolve_aftermath_chain(
     game_state: GameState,
     memory_manager: Any,
 ) -> None:
-    """Async-recursion sequential await — see :func:`resolve_actions_aftermath`."""
-    if not remaining:
-        return
-    await resolve_one_aftermath(remaining[0], game_state, memory_manager)
-    await resolve_aftermath_chain(remaining[1:], game_state, memory_manager)
+    """Sequential await per aftermath — see :func:`resolve_actions_aftermath`."""
+    for aftermath in remaining:
+        await resolve_one_aftermath(aftermath, game_state, memory_manager)

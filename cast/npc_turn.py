@@ -197,26 +197,17 @@ async def _resolve_tail(
     peer_actions: list[tuple[str, str]],
     ordered_actions: list[NPCAction],
 ) -> list[NPCAction]:
-    """Recursively resolve NPCs one-by-one, threading peer actions forward.
+    """Resolve NPCs one-by-one, threading peer actions forward.
 
-    Written as async recursion rather than a ``for`` loop so we do not
-    trip WPS476 (``await`` in loop). Each call resolves the head of
-    ``remaining`` via ``ctx.resolve_single``, appends the result to the
-    peer-action trail, and recurses on the tail. NPC counts per scene
-    are small (single digit), so Python stack depth is not a concern.
     Failures are logged and skipped — one NPC's LLM hiccup must not
     stall the rest of the round.
     """
-    if not remaining:
-        return ordered_actions
-    _, npc, actor = remaining[0]
-    action = await _resolve_one_or_log(ctx, npc, actor, peer_actions)
-    next_peers = peer_actions
-    next_ordered = ordered_actions
-    if action is not None:
-        next_peers = peer_actions + [(action.npc_name, action.action_description)]
-        next_ordered = ordered_actions + [action]
-    return await _resolve_tail(ctx, remaining[1:], next_peers, next_ordered)
+    for _, npc, actor in remaining:
+        action = await _resolve_one_or_log(ctx, npc, actor, peer_actions)
+        if action is not None:
+            peer_actions = peer_actions + [(action.npc_name, action.action_description)]
+            ordered_actions = ordered_actions + [action]
+    return ordered_actions
 
 
 async def _resolve_one_or_log(

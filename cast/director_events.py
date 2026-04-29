@@ -94,11 +94,7 @@ class EventProcessor:
 
 def _scope_from_string(scope_str: str) -> KnowledgeScope:
     """Convert a scope string to a KnowledgeScope enum."""
-    scope_map = {
-        "local": KnowledgeScope.LOCAL,
-        "city": KnowledgeScope.CITY,
-        "region": KnowledgeScope.REGION,
-        "country": KnowledgeScope.COUNTRY,
-        "world": KnowledgeScope.WORLD,
-    }
-    return scope_map.get(scope_str, KnowledgeScope.LOCAL)
+    try:
+        return KnowledgeScope(scope_str.lower())
+    except ValueError:
+        return KnowledgeScope.LOCAL

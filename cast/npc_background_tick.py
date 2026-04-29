@@ -105,10 +105,9 @@ class NPCBackgroundTicker:
         """Run one off-scene tick across every eligible NPC.
 
         Fast-path: scenarios without any goal-bearing NPC (the common
-        case) skip the eligibility walk entirely. Sequential await via
-        async recursion prevents two off-scene actors targeting the
-        same victim from racing on ``physical_status`` mutation across
-        the await point.
+        case) skip the eligibility walk entirely. Sequential await prevents
+        two off-scene actors targeting the same victim from racing on
+        ``physical_status`` mutation across the await point.
         """
         if hours_advanced < _MIN_HOURS:
             return
@@ -116,13 +115,8 @@ class NPCBackgroundTicker:
             return
         present = _scene_present_uuids(self._gs)
         eligible = [npc for npc in self._gs.npcs.values() if _is_eligible(npc, present)]
-        await self._tick_remaining(eligible, hours_advanced)
-
-    async def _tick_remaining(self, remaining: list[NPCCard], hours_advanced: float) -> None:
-        if not remaining:
-            return
-        await self._tick_one(remaining[0], hours_advanced)
-        await self._tick_remaining(remaining[1:], hours_advanced)
+        for npc in eligible:
+            await self._tick_one(npc, hours_advanced)
 
     async def _tick_one(self, actor: NPCCard, hours_advanced: float) -> None:
         target = _co_located_target(actor, self._gs)

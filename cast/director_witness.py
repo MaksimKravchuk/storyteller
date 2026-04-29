@@ -140,20 +140,6 @@ def build_npc_attack_witness(
     )
 
 
-def _eligible_for_bump(npc: object) -> bool:
-    """Return ``True`` when ``npc`` is a neutral-mood guard witness.
-
-    Extracted so :func:`bump_guard_moods` stays well under the WPS231
-    cognitive-complexity budget — the predicate is purely local to the
-    mood-bump decision and has no call sites elsewhere.
-    """
-    occupation = getattr(npc, "occupation", None)
-    if not is_guard_occupation(occupation):
-        return False
-    current = getattr(npc, "current_mood", "") or ""
-    return current.lower() == _NEUTRAL_MOOD
-
-
 def bump_guard_moods(
     game_state: GameState,
     witness_uuids: list[str],
@@ -172,7 +158,11 @@ def bump_guard_moods(
     bumped: list[str] = []
     for uuid in witness_uuids:
         npc = game_state.npcs.get(uuid)
-        if npc is None or not _eligible_for_bump(npc):
+        if npc is None:
+            continue
+        if not is_guard_occupation(npc.occupation):
+            continue
+        if (npc.current_mood or "").lower() != _NEUTRAL_MOOD:
             continue
         npc.current_mood = new_mood
         bumped.append(uuid)
