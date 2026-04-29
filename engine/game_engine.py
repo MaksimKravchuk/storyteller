@@ -113,18 +113,11 @@ class GameEngine:
             raise RuntimeError("Game not started. Call start_game() first.")
         return await self._director.execute(player_action)
 
-    @property
-    def game_state(self) -> GameState | None:
-        """Access the current game state for inspection."""
-        return self._game_state
-
-    @property
-    def knowledge_graph(self) -> KnowledgeGraph | None:
-        return self._knowledge_graph
-
-    @property
-    def event_manager(self) -> EventManager | None:
-        return self._event_manager
+    def assert_running(self) -> tuple[GameState, KnowledgeGraph, EventManager]:
+        """Return (game_state, knowledge_graph, event_manager), raising if not started."""
+        if self._game_state is None or self._knowledge_graph is None or self._event_manager is None:
+            raise RuntimeError("Game not started. Call start_game() first.")
+        return self._game_state, self._knowledge_graph, self._event_manager
 
     async def restore_session(
         self,

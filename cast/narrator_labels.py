@@ -16,10 +16,9 @@ unsupported locales.
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 
 @dataclass(frozen=True)
@@ -116,20 +115,9 @@ _RUSSIAN = NarratorLabels(
 )
 
 
-_LABEL_CATALOG: types.MappingProxyType[Locale, NarratorLabels] = types.MappingProxyType(
+get_narrator_labels = make_locale_lookup(
     {
         Locale.ENGLISH: _ENGLISH,
         Locale.RUSSIAN: _RUSSIAN,
     }
 )
-
-
-def get_narrator_labels(language: str | None) -> NarratorLabels:
-    """Return the :class:`NarratorLabels` bundle for *language*.
-
-    Unknown languages fall back to the English bundle (see
-    :func:`prompts.locales.resolve_locale`) so the Narrator never
-    breaks on an unsupported locale — it just keeps the existing
-    English labels.
-    """
-    return _LABEL_CATALOG[resolve_locale(language)]

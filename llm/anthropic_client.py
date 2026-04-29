@@ -27,14 +27,12 @@ _TYPE_AUTO = "auto"
 _TYPE_ANY = "any"
 _TYPE_NONE = "none"
 
-# Portable ``tool_choice`` keyword → Anthropic wire payload. Frozen so
-# it isn't rebuilt on every request and is safe as a module constant.
 _NAMED_CHOICE_MAP: types.MappingProxyType[str, dict[str, Any]] = types.MappingProxyType(
     {
         "auto": {_KEY_TYPE: _TYPE_AUTO},
         "required": {_KEY_TYPE: _TYPE_ANY},
         "none": {_KEY_TYPE: _TYPE_NONE},
-    },
+    }
 )
 
 # Short aliases so tool-translation signatures stay within the
@@ -146,8 +144,8 @@ class AnthropicClient(BaseLLMClient):
             max_tokens,
             output_format,
         )
-        if output_format is not None and output_format.is_strict:
-            response = await self._send_with_schema(kwargs, output_format.schema or {})
+        if output_format is not None and output_format.schema is not None:
+            response = await self._send_with_schema(kwargs, output_format.schema)
         else:
             response = await self._client.messages.create(**kwargs)
 
@@ -209,7 +207,7 @@ class AnthropicClient(BaseLLMClient):
         }
         if system_prompt:
             kwargs["system"] = system_prompt
-        if output_format is not None and output_format.has_tools:
+        if output_format is not None and output_format.tools:
             kwargs["tools"] = _build_tools(output_format.tools)
             wire_tool_choice = _build_tool_choice(output_format.tool_choice)
             if wire_tool_choice is not None:
