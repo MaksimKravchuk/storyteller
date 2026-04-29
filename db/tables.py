@@ -325,7 +325,6 @@ game_events = Table(
     Column(_COL_LOCATION_ID, Text, nullable=True),
     Column("scope", _TINY_STR, nullable=False, server_default="local"),
     Column("effects", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
-    Column("follow_up_events", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("on_complete_description", Text, nullable=False, server_default=""),
     Index("idx_events_game_state", _COL_GAME_STATE_ID),
 )

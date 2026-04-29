@@ -26,7 +26,6 @@ def game_event_to_row(event: GameEvent, game_state_id: str) -> dict:
             }
             for eff in event.effects
         ],
-        "follow_up_events": event.follow_up_events,
         "on_complete_description": event.on_complete_description,
     }
 
@@ -48,7 +47,6 @@ def row_to_game_event(row) -> GameEvent:
             )
             for eff in row["effects"]
         ],
-        follow_up_events=row["follow_up_events"],
         on_complete_description=row["on_complete_description"],
         completes_at=row["completes_at"],
         status=EventStatus(row["status"]),

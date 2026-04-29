@@ -404,7 +404,6 @@ class TestGameEventConverter:
             location_id="loc-1",
             scope="local",
             effects=[effect],
-            follow_up_events=[{"name": "shift change"}],
             on_complete_description="The guard arrives at the gate.",
         )
         event_obj.status = timeline_event.EventStatus.COMPLETED
@@ -429,7 +428,6 @@ class TestGameEventConverter:
         assert restored.effects[0].effect_type == "MOVE_NPC"
         assert restored.effects[0].target_id == "npc-1"
         assert restored.effects[0].effect_data == {"npc_id": "npc-1", "to_location_id": "loc-2"}
-        assert restored.follow_up_events == [{"name": "shift change"}]
         assert restored.on_complete_description == "The guard arrives at the gate."
 
     @allure.story("Backwards compatibility")

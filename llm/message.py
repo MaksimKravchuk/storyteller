@@ -19,7 +19,6 @@ class Message:
 
     role: Role
     body: str
-    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -66,7 +65,6 @@ class LLMResponse:
     """
 
     body: str
-    raw_response: Any = None
     usage: dict[str, int] = field(default_factory=dict)
     model: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)

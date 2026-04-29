@@ -3,16 +3,15 @@
 This module owns the **English** NPC-generator catalog and the
 locale-aware :func:`get_npc_generator_prompts` lookup. To add a new
 locale, create a sibling ``npc_generator_prompts_<lang>.py`` module and
-wire its bundle into :data:`_CATALOG` below.
+wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 from prompts.npc_generator_prompts_ru import NPC_GENERATOR_CREATE_RU, NPC_GENERATOR_SYSTEM_RU
 
 NPC_GENERATOR_SYSTEM = PromptTemplate(
@@ -141,19 +140,9 @@ class NPCGeneratorPrompts:
     create: PromptTemplate
 
 
-_CATALOG: types.MappingProxyType[Locale, NPCGeneratorPrompts] = types.MappingProxyType(
+get_npc_generator_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: NPCGeneratorPrompts(system=NPC_GENERATOR_SYSTEM, create=NPC_GENERATOR_CREATE),
         Locale.RUSSIAN: NPCGeneratorPrompts(system=NPC_GENERATOR_SYSTEM_RU, create=NPC_GENERATOR_CREATE_RU),
     }
 )
-
-
-def get_npc_generator_prompts(language: str | None) -> NPCGeneratorPrompts:
-    """Return the NPC-generator prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

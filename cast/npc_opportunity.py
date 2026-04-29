@@ -137,7 +137,7 @@ def _name_from_knowledge(
     if not co_located_names:
         return None
     query_engine = KnowledgeQueryEngine(game_state.knowledge_graph)
-    knowledge_text = query_engine.get_context_for_npc(npc, topic_tags=None)
+    knowledge_text = query_engine.get_context_for_npc(npc)
     if not knowledge_text or not _KNOWLEDGE_KEYWORD_RE.search(knowledge_text):
         return None
     return _names_in_text(co_located_names, knowledge_text)

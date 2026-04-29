@@ -1,7 +1,7 @@
 """drop required_social_status and confidence from knowledge_nodes
 
 Revision ID: a0c1e2f3b4d5
-Revises: 170425a1b2c3
+Revises: c4d5e6f7a8b9
 Create Date: 2026-04-29 18:00:00.000000
 
 Both fields were persisted but never used to gate behavior:
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "a0c1e2f3b4d5"
-down_revision: Union[str, None] = "170425a1b2c3"
+down_revision: Union[str, None] = "c4d5e6f7a8b9"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

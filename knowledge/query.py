@@ -7,7 +7,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from knowledge import query_filters
 
 if TYPE_CHECKING:
@@ -40,9 +40,6 @@ class KnowledgeFilter:
     max_scope: KnowledgeScope = KnowledgeScope.WORLD
     max_education_required: int = 10
     location_id: str | None = None
-    tags: list[str] | None = None
-    sources: list[KnowledgeSource] | None = None
-    canons: list[CanonSource] | None = None
     npc_id: str | None = None  # Include personal memories for this NPC
 
 
@@ -52,9 +49,6 @@ def _node_matches(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
         query_filters.passes_scope(node, filt.max_scope),
         query_filters.passes_education(node, filt.max_education_required),
         query_filters.passes_location(node, filt.location_id),
-        query_filters.passes_tags(node, filt.tags),
-        query_filters.passes_sources(node, filt.sources),
-        query_filters.passes_canon(node, filt.canons),
     )
     return all(checks)
 
@@ -108,20 +102,13 @@ class KnowledgeQueryEngine:
             npc_id=npc.uuid,
         )
 
-    def get_context_for_npc(
-        self,
-        npc: Character,
-        topic_tags: list[str] | None = None,
-    ) -> str:
+    def get_context_for_npc(self, npc: Character) -> str:
         """Return a formatted text block of knowledge accessible to this NPC.
 
         This string is injected into the Actor's system prompt so the NPC
         only knows what it should know.
         """
         npc_filter = self.build_npc_filter(npc)
-        if topic_tags:
-            npc_filter.tags = topic_tags
-
         nodes = self.query(npc_filter)
         if not nodes:
             return "You don't have any specific knowledge about this topic."

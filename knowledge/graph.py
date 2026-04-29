@@ -18,7 +18,6 @@ class KnowledgeGraph:
     optional metadata.  The graph lives in-memory during a session and
     can be serialised to / from a dict for save/load.
 
-    Query helpers live in ``knowledge.graph_queries``.
     Serialisation helpers live in ``knowledge.graph_serialization``.
     """
 

@@ -3,17 +3,16 @@
 This module owns the **English** Actor catalog and the locale-aware
 :func:`get_actor_prompts` lookup. To add a new locale, create a sibling
 ``actor_prompts_<lang>.py`` module and wire its bundle into
-:data:`_CATALOG` below.
+the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.actor_prompts_ru import ACTOR_SYSTEM_RU
 from prompts.base_template import PromptSection, PromptTemplate
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 ACTOR_SYSTEM = PromptTemplate(
     [
@@ -178,19 +177,9 @@ class ActorPrompts:
     system: PromptTemplate
 
 
-_CATALOG: types.MappingProxyType[Locale, ActorPrompts] = types.MappingProxyType(
+get_actor_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: ActorPrompts(system=ACTOR_SYSTEM),
         Locale.RUSSIAN: ActorPrompts(system=ACTOR_SYSTEM_RU),
     }
 )
-
-
-def get_actor_prompts(language: str | None) -> ActorPrompts:
-    """Return the Actor prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]
