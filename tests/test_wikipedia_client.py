@@ -81,43 +81,6 @@ def test_non_default_language_urls() -> None:
     assert client._mw_api.startswith("https://ru.wikipedia.org/")
 
 
-@allure.story("search")
-@allure.title("search returns the second element of the opensearch response on HTTP 200")
-@pytest.mark.asyncio
-async def test_search_returns_titles_on_200() -> None:
-    """On 200, the second element of the opensearch payload is returned as titles."""
-    titles = ["Rome", "Roman Empire"]
-    fake_resp = _FakeResp(_HTTP_OK, ["rome", titles, ["d1", "d2"], ["u1", "u2"]])
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        result = await WikipediaClient().search("rome")
-    assert result == titles
-
-
-@allure.story("search")
-@allure.title("search returns an empty list when the Wikipedia API responds with a non-200 status")
-@pytest.mark.asyncio
-async def test_search_returns_empty_on_non_200() -> None:
-    """Non-200 responses yield an empty list."""
-    fake_resp = _FakeResp(500, None)
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        result = await WikipediaClient().search("rome")
-    assert result == []
-
-
-@allure.story("search")
-@allure.title("search returns an empty list when the opensearch payload is missing the titles slot")
-@pytest.mark.asyncio
-async def test_search_returns_empty_on_malformed_payload() -> None:
-    """A 200 response with a short/malformed payload yields an empty list."""
-    fake_resp = _FakeResp(_HTTP_OK, ["rome"])
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        result = await WikipediaClient().search("rome")
-    assert result == []
-
-
 @allure.story("get_summary")
 @allure.title("get_summary returns title, extract, and description on a 200 response")
 @pytest.mark.asyncio

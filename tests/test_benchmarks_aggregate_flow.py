@@ -28,20 +28,12 @@ def _report(scenario_id: str, iteration: int) -> ScenarioReport:
     )
 
 
-class _FakeWriter:
-    def __init__(self) -> None:
-        self.lines: list[str] = []
-
-    def __call__(self, line: str) -> None:
-        self.lines.append(line)
-
-
 @allure.epic("Engine & LLM Infrastructure")
 @allure.feature("Benchmark harness")
 class TestFinaliseAggregates:
     @allure.story("Run orchestration")
     @allure.title("interleaved scenarios group back into per-scenario aggregates in first-seen order")
-    def test_interleaved_scenarios(self, tmp_path, monkeypatch):
+    def test_interleaved_scenarios(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr("benchmarks.harness.archive.results_dir", lambda: tmp_path)
         reports = [
             _report("s1", 0),
@@ -49,22 +41,20 @@ class TestFinaliseAggregates:
             dataclasses.replace(_report("s1", 1), total_awarded=5),
             dataclasses.replace(_report("s2", 1), total_awarded=1),
         ]
-        writer = _FakeWriter()
 
-        aggregates = finalise_aggregates(reports, sha="cafe123", writer=writer)
+        aggregates = finalise_aggregates(reports, sha="cafe123")
 
         assert [agg.scenario_id for agg in aggregates] == ["s1", "s2"]
         assert all(agg.iterations == 2 for agg in aggregates)
-        aggregate_lines = [line for line in writer.lines if "aggregate over" in line]
-        assert len(aggregate_lines) == 2
+        out = capsys.readouterr().out
+        assert out.count("aggregate over") == 2
 
     @allure.story("Run orchestration")
-    @allure.title("empty input produces no aggregates and no writer output")
-    def test_no_reports(self, tmp_path, monkeypatch):
+    @allure.title("empty input produces no aggregates and no output")
+    def test_no_reports(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr("benchmarks.harness.archive.results_dir", lambda: tmp_path)
-        writer = _FakeWriter()
 
-        aggregates = finalise_aggregates([], sha="cafe123", writer=writer)
+        aggregates = finalise_aggregates([], sha="cafe123")
 
         assert aggregates == []
-        assert writer.lines == []
+        assert capsys.readouterr().out == ""

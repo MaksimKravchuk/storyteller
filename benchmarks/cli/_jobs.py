@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 
-from benchmarks.cli._args import resolve_iterations
 from benchmarks.harness.archive import current_git_sha
 from benchmarks.harness.types._scenarios import Scenario
 from benchmarks.scenarios._registry import ALL_SCENARIOS, get_scenario
@@ -48,5 +47,5 @@ def build_context(args: argparse.Namespace) -> RunContext:
 
 def expand_jobs(args: argparse.Namespace) -> list[tuple[Scenario, int]]:
     """Expand scenarios × iterations into a flat job list."""
-    iterations = resolve_iterations(args)
+    iterations = args.iterations
     return [(scenario, iteration) for scenario in _scenarios_for(args) for iteration in range(iterations)]

@@ -57,7 +57,7 @@ def _entry_from_override(stored: tuple[str, str]) -> dict[str, str]:
 
 
 def _entry_from_env(role: str, cfg: Config) -> dict[str, str]:
-    env_model = resolve_model_config(getattr(cfg, _ROLE_TO_ENV_FIELD[role]), cfg)
+    env_model = resolve_model_config(getattr(cfg, _ROLE_TO_ENV_FIELD[role]))
     return {
         FIELD_PROVIDER: env_model.provider,
         FIELD_MODEL_ID: env_model.model_id,

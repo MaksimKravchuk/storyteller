@@ -78,7 +78,7 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
         _reset_turn_buffers()
         from engine.model_overrides import load_role_overrides
 
-        overrides = await load_role_overrides(ctx.repo, ctx.cfg)
+        overrides = await load_role_overrides(ctx.repo)
         engine = create_engine(ctx.cfg, language=ctx.language, overrides=overrides)
         try:
             await start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)

@@ -43,9 +43,6 @@ def _make_cfg(
     cfg.agent_model = "gpt-5.4-nano"
     cfg.narrator_model = "gpt-5.4-mini"
     cfg.dramaturge_model = "gpt-5.4-nano"
-    cfg.temperature = 0.7
-    cfg.max_tokens = 2048
-    cfg.default_provider = "openai"
     return cfg
 
 

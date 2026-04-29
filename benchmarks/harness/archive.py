@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any
 
@@ -49,11 +48,3 @@ def current_git_sha() -> str:
     if not head_file.is_file():
         return ""
     return read_head_sha(head_file)
-
-
-def environment_signature() -> dict[str, str]:
-    """Return minimal machine-identifying metadata for the run artefact."""
-    return {
-        "cwd": os.getcwd(),
-        "python_version": os.environ.get("PYTHON_VERSION", ""),
-    }

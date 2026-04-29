@@ -26,9 +26,6 @@ class TestLoadConfig:
         monkeypatch.setenv("DIRECTOR_MODEL", "gpt-custom")
         monkeypatch.setenv("AGENT_MODEL", "gpt-mini")
         monkeypatch.setenv("NARRATOR_MODEL", "gpt-narr")
-        monkeypatch.setenv("DEFAULT_PROVIDER", "local")
-        monkeypatch.setenv("TEMPERATURE", "0.2")
-        monkeypatch.setenv("MAX_TOKENS", "512")
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "tg-token")
 
         cfg = load_config()
@@ -38,9 +35,6 @@ class TestLoadConfig:
         assert cfg.director_model == "gpt-custom"
         assert cfg.agent_model == "gpt-mini"
         assert cfg.narrator_model == "gpt-narr"
-        assert cfg.default_provider == "local"
-        assert cfg.temperature == pytest.approx(0.2)
-        assert cfg.max_tokens == 512
         assert cfg.telegram_bot_token == "tg-token"
 
 

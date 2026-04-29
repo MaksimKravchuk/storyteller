@@ -14,28 +14,20 @@ from typing import TYPE_CHECKING
 from defaults.models import ModelConfig
 
 if TYPE_CHECKING:
-    from config import Config
     from db.repository import GameRepository
 
 
 async def load_role_overrides(
     repo: "GameRepository",
-    cfg: "Config",
 ) -> dict[str, ModelConfig]:
     """Read DB role overrides and wrap them into ``ModelConfig`` objects.
 
     Returns a dict keyed by role (``director``/``agent``/``narrator``/
     ``dramaturge``); missing rows mean no override (caller falls back to
-    ``cfg.<role>_model``). ``temperature`` and ``max_tokens`` come from
-    ``Config`` since the override table only stores provider + model_id.
+    ``cfg.<role>_model``). Temperature and max_tokens use ``ModelConfig`` defaults.
     """
     stored = await repo.settings.get_model_overrides()
-    return {
-        role: ModelConfig(
-            provider=provider,
-            model_id=model_id,
-            temperature=cfg.temperature,
-            max_tokens=cfg.max_tokens,
-        )
-        for role, (provider, model_id) in stored.items()
-    }
+    overrides: dict[str, ModelConfig] = {}
+    for role, (provider, model_id) in stored.items():
+        overrides[role] = ModelConfig(provider=provider, model_id=model_id)
+    return overrides

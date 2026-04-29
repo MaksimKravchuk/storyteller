@@ -51,21 +51,21 @@ class TestResolveModelConfig:
     @allure.story("Provider auto-detection")
     @allure.title("resolve_model_config routes any gpt-* model id to the openai provider")
     def test_gpt_model_resolves_to_openai(self):
-        cfg = resolve_model_config(_GPT5_4_MINI, Config())
+        cfg = resolve_model_config(_GPT5_4_MINI)
         assert cfg.provider == _OPENAI
         assert cfg.model_id == _GPT5_4_MINI
 
     @allure.story("Provider auto-detection")
     @allure.title("resolve_model_config routes any claude-* model id to the anthropic provider")
     def test_claude_model_resolves_to_anthropic(self):
-        cfg = resolve_model_config("claude-sonnet-4-20250514", Config())
+        cfg = resolve_model_config("claude-sonnet-4-20250514")
         assert cfg.provider == "anthropic"
 
     @allure.story("Provider auto-detection")
-    @allure.title("resolve_model_config falls back to the configured default_provider for unknown model ids")
-    def test_unknown_model_uses_default_provider(self):
-        cfg = resolve_model_config("llama-3", Config(default_provider="local"))
-        assert cfg.provider == "local"
+    @allure.title("resolve_model_config falls back to openai for unknown model id prefixes")
+    def test_unknown_model_uses_openai_fallback(self):
+        cfg = resolve_model_config("llama-3")
+        assert cfg.provider == "openai"
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -83,9 +83,8 @@ class TestOpenRouterDetection:
             "meta-llama/llama-3.3-70b-instruct",
             "mistralai/mistral-large",
         ]
-        cfg = Config()
         for model_id in openrouter_samples:
-            resolved = resolve_model_config(model_id, cfg)
+            resolved = resolve_model_config(model_id)
             assert resolved.provider == "openrouter", model_id
             assert resolved.model_id == model_id
 
@@ -124,16 +123,15 @@ class TestDeepSeekDetection:
     @allure.story("Provider auto-detection")
     @allure.title("Bare deepseek-* model ids resolve to the native deepseek provider")
     def test_native_deepseek_prefix_resolves_to_deepseek(self):
-        cfg = Config()
         for model_id in ("deepseek-chat", "deepseek-reasoner"):
-            resolved = resolve_model_config(model_id, cfg)
+            resolved = resolve_model_config(model_id)
             assert resolved.provider == "deepseek", model_id
             assert resolved.model_id == model_id
 
     @allure.story("Provider auto-detection")
     @allure.title("Slash-prefixed deepseek/<model> ids stay routed through OpenRouter")
     def test_slash_prefixed_deepseek_stays_openrouter(self):
-        resolved = resolve_model_config("deepseek/deepseek-chat-v3.1", Config())
+        resolved = resolve_model_config("deepseek/deepseek-chat-v3.1")
         assert resolved.provider == "openrouter"
 
     @allure.story("API-key status")

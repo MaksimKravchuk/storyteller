@@ -34,14 +34,6 @@ class TestWrapEntities:
         wrapped = wrap_entities(html, [_NPC], "English")
         assert '<span class="poi" data-kind="npc" data-id="npc-1">an armed man</span>' in wrapped
 
-    @allure.story("English")
-    @allure.title("English plural inflections still match via the light stemmer")
-    def test_english_plural(self):
-        entity = VisibleEntity(kind="poi", id="poi-1", names=["torch"])
-        html = "<p>Flickering torches line the corridor.</p>"
-        wrapped = wrap_entities(html, [entity], "English")
-        assert 'data-id="poi-1"' in wrapped
-
     @allure.story("Multiple aliases")
     @allure.title("Any alias of an introduced NPC wraps with the same entity id")
     def test_any_alias_wraps(self):

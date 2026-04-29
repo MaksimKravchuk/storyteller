@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import sys
 from collections import OrderedDict
 
-from benchmarks.cli._writer import Writer
 from benchmarks.harness.aggregate import aggregate_reports
 from benchmarks.harness.aggregate_archive import write_aggregate
 from benchmarks.harness.types._aggregates import ScenarioAggregate
@@ -24,14 +24,13 @@ def _group_by_scenario(reports: list[ScenarioReport]) -> OrderedDict[str, list[S
 def finalise_aggregates(
     reports: list[ScenarioReport],
     sha: str,
-    writer: Writer,
 ) -> list[ScenarioAggregate]:
     """Aggregate per-scenario, archive the aggregates, and return them in order."""
     aggregates: list[ScenarioAggregate] = []
     for scenario_id, scenario_reports in _group_by_scenario(reports).items():
         aggregate = aggregate_reports(scenario_reports)
         _, md_path = write_aggregate(aggregate, sha)
-        writer(
+        sys.stdout.write(
             _AGGREGATE_LINE.format(
                 scenario_id,
                 aggregate.iterations,
@@ -39,7 +38,8 @@ def finalise_aggregates(
                 aggregate.min_awarded,
                 aggregate.max_awarded,
                 md_path,
-            ),
+            )
+            + "\n"
         )
         aggregates.append(aggregate)
     return aggregates

@@ -28,12 +28,6 @@ _OPENROUTER_PREFIXES = (
     "mistralai/",
 )
 
-_DEFAULT_TEMPERATURE = 0.7
-_TEMPERATURE_MIN = float(0)
-_TEMPERATURE_MAX = 2.0
-_DEFAULT_MAX_TOKENS = 2048
-
-_DEFAULT_WEB_HOST = "127.0.0.1"
 _DEFAULT_WEB_PORT = 8070
 _WEB_PORT_MIN = 1
 _WEB_PORT_MAX = 65535
@@ -77,35 +71,19 @@ class Config(BaseSettings):
     # Telegram
     telegram_bot_token: str | None = None
 
-    # Defaults
-    default_provider: str = PROVIDER_OPENAI
-    temperature: float = Field(default=_DEFAULT_TEMPERATURE, ge=_TEMPERATURE_MIN, le=_TEMPERATURE_MAX)
-    max_tokens: int = Field(default=_DEFAULT_MAX_TOKENS, gt=0)
-
     # Web UI server
-    web_host: str = _DEFAULT_WEB_HOST
     web_port: int = Field(default=_DEFAULT_WEB_PORT, ge=_WEB_PORT_MIN, le=_WEB_PORT_MAX)
 
 
-def load_config(env_path: str | None = None) -> Config:
+def load_config() -> Config:
     """Load configuration from a ``.env`` file and/or environment variables.
 
     Precedence: explicit env vars > ``.env`` file > defaults.
-
-    Raises:
-        FileNotFoundError: if ``env_path`` is provided but does not exist.
     """
-    if env_path is not None:
-        if not Path(env_path).is_file():
-            raise FileNotFoundError(
-                "Config env file not found: {0}. Pass an existing path or omit env_path.".format(env_path),
-            )
-        # ``_env_file`` is injected at runtime by pydantic-settings; mypy can't see it.
-        return Config(_env_file=env_path)  # type: ignore[call-arg]
     return Config()
 
 
-def _detect_provider(model_id: str, fallback: str) -> str:
+def _detect_provider(model_id: str) -> str:
     """Guess the provider from the model name."""
     model_lower = model_id.lower()
     if any(model_lower.startswith(prefix) for prefix in _OPENROUTER_PREFIXES):
@@ -116,22 +94,17 @@ def _detect_provider(model_id: str, fallback: str) -> str:
         return PROVIDER_OPENAI
     if model_lower.startswith(("claude", "claude-")):
         return PROVIDER_ANTHROPIC
-    return fallback
+    return PROVIDER_OPENAI
 
 
-def resolve_model_config(model_id: str, config: Config) -> ModelConfig:
-    """Build a ``ModelConfig`` from a model name string + global config.
+def resolve_model_config(model_id: str) -> ModelConfig:
+    """Build a ``ModelConfig`` from a model name string.
 
     Provider is auto-detected from the model name (``gpt-*`` → openai,
-    ``claude-*`` → anthropic), falling back to ``config.default_provider``.
+    ``claude-*`` → anthropic), defaulting to openai for unknown prefixes.
+    Temperature and max_tokens use ``ModelConfig`` defaults.
     """
-    provider = _detect_provider(model_id, config.default_provider)
-    return ModelConfig(
-        provider=provider,
-        model_id=model_id,
-        temperature=config.temperature,
-        max_tokens=config.max_tokens,
-    )
+    return ModelConfig(provider=_detect_provider(model_id), model_id=model_id)
 
 
 def get_api_key_for_provider(provider: str, config: Config) -> str | None:
