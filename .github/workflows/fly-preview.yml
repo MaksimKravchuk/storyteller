@@ -76,6 +76,21 @@ jobs:
             flyctl apps create "$FLY_APP" --org "$FLY_ORG"
           fi
 
+      - name: Allocate public IPs if missing
+        # `flyctl apps create` does not auto-allocate IPs the way
+        # `flyctl launch` does, so a freshly-created app has no
+        # routable address even after `deploy`. The jq guards are
+        # required: `allocate-v6` is not idempotent and would allocate
+        # an additional dedicated v6 (and bill for it) on every re-run.
+        run: |
+          ips=$(flyctl ips list --app "$FLY_APP" --json)
+          if ! echo "$ips" | jq -e 'any(.[]; .Type == "shared_v4")' >/dev/null; then
+            flyctl ips allocate-v4 --shared --app "$FLY_APP"
+          fi
+          if ! echo "$ips" | jq -e 'any(.[]; .Type == "v6")' >/dev/null; then
+            flyctl ips allocate-v6 --app "$FLY_APP"
+          fi
+
       - name: Attach preview database
         # `postgres attach` creates a per-app role + database on the
         # shared cluster and writes DATABASE_URL onto the preview app.
