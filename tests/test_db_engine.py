@@ -110,6 +110,27 @@ class TestAdaptUrlForAsyncpg:
         _, args = _real_engine._adapt_url_for_asyncpg(url)
         assert args[_SSL_KEY] is False
 
+    @allure.story("Engine creation")
+    @allure.title("postgres:// scheme (libpq style) is rewritten to postgresql+asyncpg://")
+    def test_postgres_scheme_normalized(self):
+        url = "postgres://u:p@host/db"
+        clean, _ = _real_engine._adapt_url_for_asyncpg(url)
+        assert clean.startswith("postgresql+asyncpg://")
+
+    @allure.story("Engine creation")
+    @allure.title("postgresql:// scheme (no driver) is rewritten to postgresql+asyncpg://")
+    def test_postgresql_scheme_normalized(self):
+        url = "postgresql://u:p@host/db"
+        clean, _ = _real_engine._adapt_url_for_asyncpg(url)
+        assert clean.startswith("postgresql+asyncpg://")
+
+    @allure.story("Engine creation")
+    @allure.title("postgresql+asyncpg:// scheme is left unchanged")
+    def test_asyncpg_scheme_unchanged(self):
+        url = "postgresql+asyncpg://u:p@host/db"
+        clean, _ = _real_engine._adapt_url_for_asyncpg(url)
+        assert clean == url
+
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Database engine")

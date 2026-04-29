@@ -3,21 +3,21 @@ name: Fly Preview Deployments
 # Spin up a per-PR Fly.io app at `storyteller-quest-pr-<PR>.fly.dev` when a
 # pull request is opened or updated, and tear it down when the PR is closed.
 #
+# Each preview gets its own logical database on the shared
+# `storyteller-preview-db` Postgres cluster via `flyctl postgres attach`,
+# which generates per-app credentials and writes DATABASE_URL onto the app.
+# `flyctl postgres detach` reverses both on PR close.
+#
 # Required repository secrets:
-#   FLY_API_TOKEN             - Fly.io token with **org-level** access. The
-#                               app-scoped deploy token used by ci.yml's
-#                               production deploy will NOT work: it cannot
-#                               run `apps create` and fails with
-#                               "Not authorized to deploy this app". Create
-#                               an org-scoped token with:
-#                                 flyctl tokens create org <FLY_ORG>
-#                               The same secret is reused by ci.yml's
-#                               production deploy job.
-#   FLY_ORG                   - Fly organisation slug that owns preview apps
-#   FLY_PREVIEW_DATABASE_URL  - DATABASE_URL shared by all previews
-#                               (format: postgresql+asyncpg://user:pw@host/db)
-#   OPENAI_API_KEY            - optional; omit to run without OpenAI
-#   ANTHROPIC_API_KEY         - optional; omit to run without Anthropic
+#   FLY_API_TOKEN     - **Org-scoped** Fly token (must allow `apps create`).
+#                       Mint with `flyctl tokens create org <slug>`. Reused
+#                       by the production deploy in `ci.yml`.
+#   FLY_ORG           - Fly organisation slug that owns preview apps.
+#   OPENAI_API_KEY    - optional; omit to run without OpenAI.
+#   ANTHROPIC_API_KEY - optional; omit to run without Anthropic.
+#
+# Required Fly infra (provisioned out-of-band, once per environment):
+#   - A Postgres cluster named `storyteller-preview-db` in the same org.
 #
 # PRs from forks are intentionally skipped — GitHub does not expose secrets
 # to fork workflows, so a deploy would always fail. Collaborators should
@@ -36,6 +36,7 @@ concurrency:
 
 env:
   FLY_APP: storyteller-quest-pr-${{ github.event.pull_request.number }}
+  PREVIEW_DB_CLUSTER: storyteller-preview-db
 
 jobs:
   deploy:
@@ -49,18 +50,15 @@ jobs:
       pull-requests: write
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_ORG: ${{ secrets.FLY_ORG }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Verify required secrets
-        env:
-          FLY_ORG: ${{ secrets.FLY_ORG }}
-          FLY_PREVIEW_DATABASE_URL: ${{ secrets.FLY_PREVIEW_DATABASE_URL }}
         run: |
           missing=""
           [ -z "$FLY_API_TOKEN" ] && missing="$missing FLY_API_TOKEN"
           [ -z "$FLY_ORG" ] && missing="$missing FLY_ORG"
-          [ -z "$FLY_PREVIEW_DATABASE_URL" ] && missing="$missing FLY_PREVIEW_DATABASE_URL"
           if [ -n "$missing" ]; then
             echo "::error::Missing required secrets:$missing"
             echo "See README.md → 'Per-PR preview deployments' for setup."
@@ -75,7 +73,24 @@ jobs:
             echo "App $FLY_APP already exists — reusing."
           else
             echo "Creating new Fly app: $FLY_APP"
-            flyctl apps create "$FLY_APP" --org "${{ secrets.FLY_ORG }}"
+            flyctl apps create "$FLY_APP" --org "$FLY_ORG"
+          fi
+
+      - name: Attach preview database
+        # `postgres attach` creates a per-app role + database on the
+        # shared cluster and writes DATABASE_URL onto the preview app.
+        # If DATABASE_URL is already set we assume a previous run already
+        # attached this app and skip — `attach` is not idempotent and will
+        # error on re-run.
+        run: |
+          if flyctl secrets list --app "$FLY_APP" 2>/dev/null | grep -q '^DATABASE_URL'; then
+            echo "DATABASE_URL already set on $FLY_APP — reusing existing attachment."
+          else
+            echo "Attaching $FLY_APP to $PREVIEW_DB_CLUSTER"
+            flyctl postgres attach "$PREVIEW_DB_CLUSTER" \
+              --app "$FLY_APP" \
+              --variable-name DATABASE_URL \
+              --yes
           fi
 
       - name: Set app secrets
@@ -83,7 +98,6 @@ jobs:
           # --stage writes secrets without triggering a release; the next
           # `flyctl deploy` will pick them up atomically.
           flyctl secrets set --app "$FLY_APP" --stage \
-            DATABASE_URL="${{ secrets.FLY_PREVIEW_DATABASE_URL }}" \
             OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
             ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
 
@@ -123,6 +137,20 @@ jobs:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Detach preview database
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "FLY_API_TOKEN not set — skipping detach."
+            exit 0
+          fi
+          if flyctl status --app "$FLY_APP" >/dev/null 2>&1; then
+            # `postgres detach` drops the per-app role + database on the
+            # cluster. Failure is non-fatal — we still want to destroy the
+            # app even if detach has already run or the cluster is gone.
+            flyctl postgres detach "$PREVIEW_DB_CLUSTER" --app "$FLY_APP" --yes || \
+              echo "Detach failed or already done — continuing."
+          fi
 
       - name: Destroy Fly app (if present)
         run: |

@@ -32,14 +32,27 @@ def _strip_sslmode(url_string: str) -> Tuple[str, str | None]:
     ), sslmode
 
 
+def _normalize_scheme(url_string: str) -> str:
+    """Coerce ``postgres://`` / ``postgresql://`` URLs to ``postgresql+asyncpg://``.
+
+    `flyctl postgres attach` and most managed providers hand out a libpq-style
+    URL without a SQLAlchemy driver suffix; SQLAlchemy's async engine needs
+    the explicit ``+asyncpg`` driver to pick the right dialect.
+    """
+    parsed = urlparse(url_string)
+    if parsed.scheme in {"postgres", "postgresql"}:
+        return urlunparse(parsed._replace(scheme="postgresql+asyncpg"))
+    return url_string
+
+
 def _adapt_url_for_asyncpg(database_url: str) -> Tuple[str, dict]:
-    """Strip ``sslmode`` query param and return ``(clean_url, connect_args)``.
+    """Normalize scheme, strip ``sslmode``, and return ``(clean_url, connect_args)``.
 
     asyncpg does not accept the libpq ``sslmode`` query parameter — it uses
     the ``ssl`` keyword instead.  This converts URLs produced by managed
     Postgres providers (Fly, Supabase, etc.) so they work with asyncpg.
     """
-    clean_url, sslmode = _strip_sslmode(database_url)
+    clean_url, sslmode = _strip_sslmode(_normalize_scheme(database_url))
     connect_args: dict = {}
     if sslmode in _SSL_ENABLED_MODES:
         connect_args["ssl"] = _ssl.create_default_context()

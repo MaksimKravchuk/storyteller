@@ -84,13 +84,19 @@ Production runs on Fly.io at [storyteller-quest.fly.dev](https://storyteller-que
 
 Every pull request gets its own disposable Fly.io app at `storyteller-quest-pr-<PR>.fly.dev` via `.github/workflows/fly-preview.yml`. The app is created on PR open, redeployed on every push, and destroyed when the PR is closed. Config lives in `fly.preview.toml` (machines auto-stop to keep costs near zero).
 
+Each PR also gets its own logical database on a shared `storyteller-preview-db` Postgres cluster — the workflow runs `flyctl postgres attach` on open (which generates per-app credentials and writes `DATABASE_URL` onto the app) and `flyctl postgres detach` on close. The cluster itself is provisioned once per environment with:
+
+```bash
+flyctl postgres create --name storyteller-preview-db --org <slug> --region <region> \
+  --vm-size shared-cpu-1x --volume-size 1 --initial-cluster-size 1
+```
+
 Required GitHub repository secrets:
 
 | Secret | Purpose |
 |---|---|
-| `FLY_API_TOKEN` | **Org-scoped** Fly token — must be able to create apps, not just deploy one. Create with `flyctl tokens create org <FLY_ORG>`. Reused by the production deploy in `ci.yml`. |
-| `FLY_ORG` | Fly organisation slug that owns preview apps |
-| `FLY_PREVIEW_DATABASE_URL` | Shared Postgres URL (`postgresql+asyncpg://...`) used by all previews |
+| `FLY_API_TOKEN` | **Org-scoped** Fly token — must be able to create apps, not just deploy one. Create with `flyctl tokens create org <slug>`. Reused by the production deploy in `ci.yml`. |
+| `FLY_ORG` | Fly organisation slug that owns preview apps and the shared DB cluster |
 | `OPENAI_API_KEY` | Forwarded to the preview app |
 | `ANTHROPIC_API_KEY` | Forwarded to the preview app |
 
