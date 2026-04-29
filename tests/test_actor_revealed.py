@@ -1,19 +1,13 @@
 """Tests for the Actor revealed-names envelope field.
 
-Covers three layers:
+Covers two layers:
 
 * ``Actor.act`` end-to-end on the envelope path — verifies the returned
   :class:`ActorReply` carries the revealed tokens from the JSON envelope
   and the spoken text is the ``narration`` field.
-* ``Actor.act`` on the legacy rollback path (``envelope_mode=False``) —
-  pins the trailing-tag parser so the ``ACTOR_ENVELOPE_MODE=false`` lever
-  can't silently rot.
 * The LLM-client integration boundary — exercises the real
   ``_send_json`` decode/validate/retry chain end-to-end, which the
   ``AsyncMock(_send_json)`` tests below intentionally bypass.
-
-Pure regex-unit tests for the legacy tag extractor live in
-``tests/test_legacy_actor_tags.py``.
 """
 
 from __future__ import annotations
@@ -34,13 +28,12 @@ from prompts.actor_prompts import ACTOR_SYSTEM_DIALOGUE
 _LOC_KEY = "location_name"
 
 
-def _make_actor(*, envelope_mode: bool = True) -> tuple[Actor, NPCCard]:
+def _make_actor() -> tuple[Actor, NPCCard]:
     npc = NPCCard(name="Marcus", occupation="legionary")
     actor = Actor(
         llm_client=AsyncMock(),
         npc=npc,
         knowledge_query=KnowledgeQueryEngine(KnowledgeGraph()),
-        envelope_mode=envelope_mode,
     )
     return actor, npc
 
@@ -240,49 +233,6 @@ class TestActorPromptDescribesEnvelope:
 
 
 @allure.epic("NPC Interaction")
-@allure.feature("Legacy rollback path")
-class TestActorActLegacyModeIntegration:
-    """``envelope_mode=False`` routes the Actor through the legacy parser.
-
-    The rollback lever (``ACTOR_ENVELOPE_MODE=false`` in prod) is
-    load-bearing — if the legacy adapter at ``cast.actor._act_legacy``
-    silently bit-rots after a future field rename, the operator's only
-    way to recover from an envelope outage becomes a no-op. These tests
-    pin the end-to-end mapping.
-    """
-
-    @allure.story("Legacy path dispatch")
-    @allure.title("envelope_mode=False drives _send (not _send_json) and parses trailing MOOD/STATUS/REVEALED tags")
-    @pytest.mark.asyncio
-    async def test_legacy_mode_parses_tags_end_to_end(self):
-        actor, npc = _make_actor(envelope_mode=False)
-        actor._send = AsyncMock(  # type: ignore[method-assign]
-            return_value="*winces*\n[STATUS: wounded left arm]\n[REVEALED: self, Cassia]\n[MOOD: hostile]",
-        )
-
-        reply = await actor.act("who are you?", {_LOC_KEY: "forum"})
-
-        assert reply.text == "*winces*"
-        assert reply.revealed_names == ("self", "Cassia")
-        assert npc.physical_status == "wounded left arm"
-        assert npc.current_mood == "hostile"
-
-    @allure.story("Legacy path dispatch")
-    @allure.title("envelope_mode=False stores only the tag-stripped narration in conversation history")
-    @pytest.mark.asyncio
-    async def test_legacy_mode_conversation_history_is_clean(self):
-        actor, _ = _make_actor(envelope_mode=False)
-        actor._send = AsyncMock(  # type: ignore[method-assign]
-            return_value="Hail.\n[MOOD: calm]",
-        )
-
-        await actor.act("greet him", {_LOC_KEY: "forum"})
-
-        assert "[MOOD:" not in actor._conversation[1].body
-        assert actor._conversation[1].body.strip() == "Hail."
-
-
-@allure.epic("NPC Interaction")
 @allure.feature("LLM integration boundary")
 class TestActorEnvelopeIntegrationWithLLMClient:
     """Drive ``Actor.act`` through the real ``_send_json`` path.
@@ -299,7 +249,7 @@ class TestActorEnvelopeIntegrationWithLLMClient:
     @allure.title("Three consecutive bad JSON responses yield a placeholder ActorReply instead of a 500")
     @pytest.mark.asyncio
     async def test_exhausted_retries_fall_back_to_placeholder(self):
-        actor, _ = _make_actor(envelope_mode=True)
+        actor, _ = _make_actor()
         actor.llm_client.send_message = AsyncMock(  # type: ignore[method-assign]
             return_value=_llm_body("still not json"),
         )
@@ -315,7 +265,7 @@ class TestActorEnvelopeIntegrationWithLLMClient:
     @allure.title("Empty-body LLM responses after exhaustion fall back to the '...' placeholder narration")
     @pytest.mark.asyncio
     async def test_empty_response_falls_back_to_placeholder(self):
-        actor, _ = _make_actor(envelope_mode=True)
+        actor, _ = _make_actor()
         actor.llm_client.send_message = AsyncMock(  # type: ignore[method-assign]
             return_value=_llm_body(""),
         )

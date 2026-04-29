@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from contextlib import asynccontextmanager
-from functools import partial
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -87,27 +85,6 @@ def _install_beta_sdk_mock(
     sdk_instance.beta.messages.create = beta_create
     sdk_class.return_value = sdk_instance
     return sdk_class, beta_create
-
-
-async def _text_gen(chunks: list[str]):
-    for chunk in chunks:
-        yield chunk
-
-
-@asynccontextmanager
-async def _fake_stream_cm(state, **kwargs):
-    state["captured"].append(kwargs)
-    yield SimpleNamespace(text_stream=_text_gen(state["chunks"]))
-
-
-def _install_streaming_mock(chunks: list[str]) -> tuple[MagicMock, list[dict]]:
-    """Install an AsyncAnthropic mock whose messages.stream() is an async context manager."""
-    state: dict = {"captured": [], "chunks": chunks}
-    sdk_class = MagicMock()
-    sdk_instance = MagicMock()
-    sdk_instance.messages.stream = partial(_fake_stream_cm, state)
-    sdk_class.return_value = sdk_instance
-    return sdk_class, state["captured"]
 
 
 def _user_msg(body: str = "hi") -> msg.Message:
@@ -309,33 +286,6 @@ class TestAnthropicClient:
                         schema_name="Widget",
                     ),
                 )
-
-    @allure.story("Streaming")
-    @allure.title("AnthropicClient.send_message_streaming yields text chunks from the SDK stream context manager")
-    @pytest.mark.asyncio
-    async def test_streaming_yields_chunks(self) -> None:
-        sdk_class, captured = _install_streaming_mock(["foo", "bar", "baz"])
-        with patch(_ANTHROPIC_CTOR, sdk_class):
-            client = AnthropicClient(model=_MODEL, api_key="k")
-            received: list[str] = []
-            async for chunk in client.send_message_streaming(
-                messages=[_user_msg()],
-                system_prompt="sys",
-            ):
-                received.append(chunk)
-        assert received == ["foo", "bar", "baz"]
-        assert captured[0]["system"] == "sys"
-
-    @allure.story("Streaming")
-    @allure.title("AnthropicClient.send_message_streaming omits the system kwarg when the system_prompt is empty")
-    @pytest.mark.asyncio
-    async def test_streaming_omits_empty_system(self) -> None:
-        sdk_class, captured = _install_streaming_mock(["x"])
-        with patch(_ANTHROPIC_CTOR, sdk_class):
-            client = AnthropicClient(model=_MODEL, api_key="k")
-            received = [chunk async for chunk in client.send_message_streaming(messages=[_user_msg()])]
-        assert received == ["x"]
-        assert "system" not in captured[0]
 
     @allure.story("Message formatting")
     @allure.title("AnthropicClient._format_messages maps Role.USER to 'user' and Role.ASSISTANT to 'assistant'")

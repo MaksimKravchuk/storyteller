@@ -3,17 +3,16 @@
 This module owns the **English** World Chronicler catalog and the
 locale-aware :func:`get_chronicler_prompts` lookup. To add a new
 locale, create a sibling ``chronicler_prompts_<lang>.py`` module and
-wire its bundle into :data:`_CATALOG` below.
+wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
 from prompts.chronicler_prompts_ru import CHRONICLER_ADVANCE_RU, CHRONICLER_SYSTEM_RU
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 CHRONICLER_SYSTEM = PromptTemplate(
     [
@@ -142,19 +141,9 @@ class ChroniclerPrompts:
     advance: str
 
 
-_CATALOG: types.MappingProxyType[Locale, ChroniclerPrompts] = types.MappingProxyType(
+get_chronicler_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: ChroniclerPrompts(system=CHRONICLER_SYSTEM, advance=CHRONICLER_ADVANCE),
         Locale.RUSSIAN: ChroniclerPrompts(system=CHRONICLER_SYSTEM_RU, advance=CHRONICLER_ADVANCE_RU),
     }
 )
-
-
-def get_chronicler_prompts(language: str | None) -> ChroniclerPrompts:
-    """Return the World Chronicler prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

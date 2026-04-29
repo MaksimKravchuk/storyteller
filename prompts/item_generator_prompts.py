@@ -3,12 +3,11 @@
 This module owns the **English** Item Generator catalog and the
 locale-aware :func:`get_item_generator_prompts` lookup. To add a new
 locale, create a sibling ``item_generator_prompts_<lang>.py`` module
-and wire its bundle into :data:`_CATALOG` below.
+and wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
@@ -18,7 +17,7 @@ from prompts.item_generator_prompts_ru import (
     ITEM_GENERATOR_INTERACT_RU,
     ITEM_GENERATOR_SYSTEM_RU,
 )
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 ITEM_GENERATOR_SYSTEM = PromptTemplate(
     [
@@ -113,7 +112,7 @@ class ItemGeneratorPrompts:
     interact: str
 
 
-_CATALOG: types.MappingProxyType[Locale, ItemGeneratorPrompts] = types.MappingProxyType(
+get_item_generator_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: ItemGeneratorPrompts(
             system=ITEM_GENERATOR_SYSTEM,
@@ -129,13 +128,3 @@ _CATALOG: types.MappingProxyType[Locale, ItemGeneratorPrompts] = types.MappingPr
         ),
     }
 )
-
-
-def get_item_generator_prompts(language: str | None) -> ItemGeneratorPrompts:
-    """Return the Item Generator prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

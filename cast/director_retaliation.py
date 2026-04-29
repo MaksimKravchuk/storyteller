@@ -6,12 +6,13 @@ import asyncio
 from typing import Any, NamedTuple
 
 from cast.dice import (
-    CombatOutcome,
-    CombatRoll,
+    ContestOutcome,
+    ContestRoll,
+    ContestType,
     aggression_roll_to_dict,
-    combat_roll_to_dict,
+    contest_roll_to_dict,
     roll_aggression,
-    roll_combat,
+    roll_contest,
 )
 from cast.director_context import get_location_name
 from cast.known_npcs import apply_revealed_reply
@@ -28,7 +29,7 @@ class RetaliationWork(NamedTuple):
     actor: Any
     retaliation_input: str
     aggression: Any
-    combat_roll: CombatRoll
+    contest_roll: ContestRoll
 
 
 class _RetaliationGates(NamedTuple):
@@ -136,19 +137,19 @@ def _build_retaliation_work(
         return None
     gates.retaliated_names.add(npc.name.lower())
 
-    combat_roll = roll_combat(npc.get_attribute("combat_skill", 3))
+    contest_roll = roll_contest(ContestType.COMBAT, 0, npc.get_attribute("combat_skill", 3))
     record_turn_event(
         "dice_combat",
-        {**combat_roll_to_dict(combat_roll), "npc_name": npc.name},
+        {**contest_roll_to_dict(contest_roll), "npc_name": npc.name},
         npc_id=npc_uuid,
     )
-    return RetaliationWork(npc, actor, _format_retaliation_input(npc.name, combat_roll), aggression, combat_roll)
+    return RetaliationWork(npc, actor, _format_retaliation_input(npc.name, contest_roll), aggression, contest_roll)
 
 
-def _format_retaliation_input(npc_name: str, combat_roll: CombatRoll) -> str:
+def _format_retaliation_input(npc_name: str, contest_roll: ContestRoll) -> str:
     """Build the Actor prompt text for an NPC retaliation."""
     status_hint = ""
-    if combat_roll.outcome in (CombatOutcome.ACTOR_SUCCEEDS, CombatOutcome.ACTOR_DOMINATES):
+    if contest_roll.outcome in (ContestOutcome.ACTOR_SUCCEEDS, ContestOutcome.ACTOR_DOMINATES):
         status_hint = (
             "\nThe NPC is injured. Update their physical status to reflect the injury. "
             "Append [STATUS: <description>] at the end of your response."
@@ -162,10 +163,10 @@ def _format_retaliation_input(npc_name: str, combat_roll: CombatRoll) -> str:
         "they are the aggressor now. Do NOT override the dice result.{5}"
     ).format(
         npc_name,
-        combat_roll.player_roll,
-        combat_roll.npc_roll,
-        combat_roll.npc_bonus,
-        combat_roll.description,
+        contest_roll.actor_roll,
+        contest_roll.target_roll,
+        contest_roll.target_bonus,
+        contest_roll.description,
         status_hint,
     )
 
@@ -198,9 +199,9 @@ async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> 
             work.aggression.mood,
         ),
         "combat_roll": "d20: player {0} vs NPC {1}+{2} → {3}".format(
-            work.combat_roll.player_roll,
-            work.combat_roll.npc_roll,
-            work.combat_roll.npc_bonus,
-            work.combat_roll.outcome.value,
+            work.contest_roll.actor_roll,
+            work.contest_roll.target_roll,
+            work.contest_roll.target_bonus,
+            work.contest_roll.outcome.value,
         ),
     }

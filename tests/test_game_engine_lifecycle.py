@@ -80,10 +80,10 @@ async def test_start_game_populates_internal_state(simple_setting) -> None:
         harness.director.execute.assert_awaited_once()
 
     assert opening == _OPENING_NARRATION
-    assert engine.game_state is not None
-    assert isinstance(engine.knowledge_graph, KnowledgeGraph)
-    assert engine.event_manager is not None
-    assert engine.game_state.setting is simple_setting
+    game_state, knowledge_graph, event_manager = engine.assert_running()
+    assert isinstance(knowledge_graph, KnowledgeGraph)
+    assert event_manager is not None
+    assert game_state.setting is simple_setting
 
 
 @allure.story("start_game wiring")
@@ -145,20 +145,21 @@ async def test_process_action_delegates_to_director(simple_setting) -> None:
     assert reply == _PLAYER_ACTION_REPLY
 
 
-@allure.story("Property getters")
-@allure.title("knowledge_graph and event_manager properties expose None before start and live objects after")
+@allure.story("assert_running")
+@allure.title("assert_running raises before start and returns live objects after start")
 @pytest.mark.asyncio
-async def test_property_getters_cover_both_states(simple_setting) -> None:
-    """Cover the property getter bodies in both the pre-start and post-start states."""
+async def test_assert_running_covers_both_states(simple_setting) -> None:
+    """assert_running raises when the engine is not started and returns the state triple after start."""
     engine = GameEngine()
-    assert engine.knowledge_graph is None
-    assert engine.event_manager is None
+    with pytest.raises(RuntimeError, match="Game not started"):
+        engine.assert_running()
 
     with _StartGameHarness(simple_setting):
         await engine.start_game("setting")
 
-    assert isinstance(engine.knowledge_graph, KnowledgeGraph)
-    assert engine.event_manager is not None
+    _, knowledge_graph, event_manager = engine.assert_running()
+    assert isinstance(knowledge_graph, KnowledgeGraph)
+    assert event_manager is not None
 
 
 @allure.story("restore_session")
@@ -190,7 +191,8 @@ async def test_restore_session_wires_director_and_restores_actors(simple_setting
         assert restore_args[3] is clients.agent
         assert restore_args[4] == "French"
 
-    assert engine.game_state is saved_state
-    assert engine.knowledge_graph is graph
-    assert engine.event_manager is not None
-    assert engine.event_manager.all_events == []
+    game_state, knowledge_graph, event_manager = engine.assert_running()
+    assert game_state is saved_state
+    assert knowledge_graph is graph
+    assert event_manager is not None
+    assert event_manager.all_events == []

@@ -113,13 +113,13 @@ async def _retry_after_validation_failure(
     logger.warning(
         "LLM JSON failed schema validation on attempt {}/{}: {}",
         ctx.attempt + 1,
-        ctx.total_attempts,
+        ctx.retries + 1,
         errors_preview,
     )
-    if not ctx.can_retry:
+    if ctx.attempt >= ctx.retries:
         raise LLMJSONError(
             "Agent failed schema validation after {0} attempts. Errors: {1}".format(
-                ctx.total_attempts,
+                ctx.retries + 1,
                 errors_preview,
             ),
             raw_response=assistant_text,
@@ -375,7 +375,6 @@ class BasePerformer(ABC):
         user_message: str,
         tools: list[Tool],
         conversation: list[Message] | None = None,
-        tool_choice: str = "required",
     ) -> ToolCall:
         """Send a message and expect the LLM to invoke one of the provided tools.
 
@@ -385,7 +384,7 @@ class BasePerformer(ABC):
         caller can surface the failure the same way other routing
         miscommunications are handled.
         """
-        output_format = OutputFormat(tools=tuple(tools), tool_choice=tool_choice)
+        output_format = OutputFormat(tools=tuple(tools), tool_choice="required")
         response = await _call_llm(
             self,
             user_message=user_message,

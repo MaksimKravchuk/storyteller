@@ -217,7 +217,8 @@ class TestDialogueHandlerLongTermMemory:
 
         assert dialogue_entries == []
         assert combat_engaged == set()
-        memory_manager.summarize_interaction.assert_not_called()
+        pairs = memory_manager.summarize_interactions_batch.call_args[0][0]
+        assert pairs == []
 
     @allure.story("Memory summarisation hook")
     @allure.title(

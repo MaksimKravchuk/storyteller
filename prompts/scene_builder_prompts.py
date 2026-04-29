@@ -3,16 +3,15 @@
 This module owns the **English** Scene Builder catalog and the
 locale-aware :func:`get_scene_builder_prompts` lookup. To add a new
 locale, create a sibling ``scene_builder_prompts_<lang>.py`` module
-and wire its bundle into :data:`_CATALOG` below.
+and wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 from prompts.scene_builder_prompts_ru import SCENE_BUILDER_GENERATE_RU, SCENE_BUILDER_SYSTEM_RU
 
 SCENE_BUILDER_SYSTEM = PromptTemplate(
@@ -105,19 +104,9 @@ class SceneBuilderPrompts:
     generate: str
 
 
-_CATALOG: types.MappingProxyType[Locale, SceneBuilderPrompts] = types.MappingProxyType(
+get_scene_builder_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: SceneBuilderPrompts(system=SCENE_BUILDER_SYSTEM, generate=SCENE_BUILDER_GENERATE),
         Locale.RUSSIAN: SceneBuilderPrompts(system=SCENE_BUILDER_SYSTEM_RU, generate=SCENE_BUILDER_GENERATE_RU),
     }
 )
-
-
-def get_scene_builder_prompts(language: str | None) -> SceneBuilderPrompts:
-    """Return the Scene Builder prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

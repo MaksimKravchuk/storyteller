@@ -347,7 +347,7 @@ class TestSceneConverter:
 @allure.feature("Domain↔row converters")
 class TestKnowledgeConverter:
     @allure.story("Round-trip")
-    @allure.title("KnowledgeNode round-trips preserving scope, source, canon, and gating fields")
+    @allure.title("KnowledgeNode round-trips preserving scope, source, canon, and education")
     def test_round_trip(self):
         node = KnowledgeNode(
             text="The king was poisoned",
@@ -355,11 +355,9 @@ class TestKnowledgeConverter:
             source=KnowledgeSource.RUMOR,
             canon=CanonSource.SESSION,
             required_education=5,
-            required_social_status=3,
             tags=["politics", "scandal"],
             location_id="loc-court",
             timestamp=12.5,
-            confidence=0.6,
         )
         row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
@@ -372,11 +370,9 @@ class TestKnowledgeConverter:
         assert restored.source == KnowledgeSource.RUMOR
         assert restored.canon == CanonSource.SESSION
         assert restored.required_education == 5
-        assert restored.required_social_status == 3
         assert restored.tags == ["politics", "scandal"]
         assert restored.location_id == "loc-court"
         assert restored.timestamp == pytest.approx(12.5)
-        assert restored.confidence == pytest.approx(0.6)
 
     @allure.story("Backwards compatibility")
     @allure.title("row_to_knowledge_node defaults canon to HISTORICAL on legacy rows missing the column")
@@ -408,7 +404,6 @@ class TestGameEventConverter:
             location_id="loc-1",
             scope="local",
             effects=[effect],
-            follow_up_events=[{"name": "shift change"}],
             on_complete_description="The guard arrives at the gate.",
         )
         event_obj.status = timeline_event.EventStatus.COMPLETED
@@ -433,7 +428,6 @@ class TestGameEventConverter:
         assert restored.effects[0].effect_type == "MOVE_NPC"
         assert restored.effects[0].target_id == "npc-1"
         assert restored.effects[0].effect_data == {"npc_id": "npc-1", "to_location_id": "loc-2"}
-        assert restored.follow_up_events == [{"name": "shift change"}]
         assert restored.on_complete_description == "The guard arrives at the gate."
 
     @allure.story("Backwards compatibility")
