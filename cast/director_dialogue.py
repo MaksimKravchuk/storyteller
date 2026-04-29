@@ -198,7 +198,7 @@ class DialogueHandler:
         scene = self._gs.current_scene
         if not scene:
             return []
-        uninit = [snpc for snpc in scene.npcs_present if snpc.need_init]
+        uninit = [snpc for snpc in scene.npcs_present if snpc.uuid is None]
         if not uninit:
             return []
         new_cards = await npc_generator.execute(

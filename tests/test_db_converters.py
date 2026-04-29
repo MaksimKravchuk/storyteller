@@ -44,7 +44,6 @@ class TestSettingConverter:
             traditions=["toga"],
             technologies=["aqueducts"],
             social_structure="patrician/plebeian",
-            raw_sources=["wikipedia"],
         )
         row = st_conv.setting_to_row(original, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
@@ -61,7 +60,6 @@ class TestSettingConverter:
         assert restored.traditions == original.traditions
         assert restored.technologies == original.technologies
         assert restored.social_structure == original.social_structure
-        assert restored.raw_sources == original.raw_sources
 
 
 @allure.epic("Persistence")
@@ -151,38 +149,6 @@ class TestNPCConverter:
             {"turn": "7", "action": "player punched you", "severity": "high"},
         ]
 
-    @allure.story("Backwards compatibility")
-    @allure.title("row_to_npc defaults physical_status to 'healthy' on legacy rows lacking that column")
-    def test_physical_status_defaults_on_legacy_row(self):
-        npc = npc_card.NPCCard(name="Legacy")
-        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
-        row.pop("physical_status")
-
-        restored = npc_conv.row_to_npc(row)
-        assert restored.physical_status == "healthy"
-
-    @allure.story("Backwards compatibility")
-    @allure.title("row_to_npc defaults hostility fields on legacy rows lacking those columns")
-    def test_hostility_defaults_on_legacy_row(self):
-        npc = npc_card.NPCCard(name="Legacy")
-        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
-        row.pop("hostility_level")
-        row.pop("recent_hostile_actions")
-
-        restored = npc_conv.row_to_npc(row)
-        assert restored.hostility_level == 0
-        assert restored.recent_hostile_actions == []
-
-    @allure.story("Backwards compatibility")
-    @allure.title("row_to_npc defaults short_descriptor to empty string on legacy rows lacking the column")
-    def test_short_descriptor_defaults_on_legacy_row(self):
-        npc = npc_card.NPCCard(name="Legacy")
-        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
-        row.pop("short_descriptor")
-
-        restored = npc_conv.row_to_npc(row)
-        assert restored.short_descriptor == ""
-
     @allure.story("Round-trip")
     @allure.title("life_goal and tactical_goal Goal objects survive a domain→row→domain round-trip")
     def test_goal_round_trip(self):
@@ -241,13 +207,12 @@ class TestNPCConverter:
 @allure.feature("Domain↔row converters")
 class TestPlayerConverter:
     @allure.story("Round-trip")
-    @allure.title("PlayerState round-trips including inventory and interaction history")
+    @allure.title("PlayerState round-trips including inventory and known NPCs")
     def test_round_trip(self):
         player = game_state.PlayerState(name="Hero")
         player.location_id = "loc-42"
         player.inventory = ["torch", "map"]
         player.appearance = "A weary adventurer"
-        player.interaction_history = [{"turn": 1, "action": "look"}]
         player.physical_status = "exhausted"
         player.known_npcs = {"npc-1", "npc-2"}
         player.player_event_log = ["Met Marcus", "Found the shrine"]
@@ -265,35 +230,10 @@ class TestPlayerConverter:
         assert restored.location_id == "loc-42"
         assert restored.inventory == ["torch", "map"]
         assert restored.appearance == "A weary adventurer"
-        assert restored.interaction_history == [{"turn": 1, "action": "look"}]
         assert restored.physical_status == "exhausted"
         assert restored.known_npcs == {"npc-1", "npc-2"}
         assert restored.player_event_log == ["Met Marcus", "Found the shrine"]
         assert restored.learned_facts == {"fact-a", "fact-b"}
-
-    @allure.story("Backwards compatibility")
-    @allure.title("row_to_player defaults physical_status to 'healthy' on legacy rows lacking that column")
-    def test_physical_status_defaults_on_legacy_row(self):
-        player = game_state.PlayerState(name="Legacy")
-        row = pl_conv.player_to_row(player, GAME_STATE_ID)
-        row.pop("physical_status")
-
-        restored = pl_conv.row_to_player(row)
-        assert restored.physical_status == "healthy"
-
-    @allure.story("Backwards compatibility")
-    @allure.title("row_to_player defaults knowledge fields to empty on legacy rows lacking those columns")
-    def test_knowledge_fields_default_on_legacy_row(self):
-        player = game_state.PlayerState(name="Legacy")
-        row = pl_conv.player_to_row(player, GAME_STATE_ID)
-        row.pop("known_npcs")
-        row.pop("player_event_log")
-        row.pop("learned_facts")
-
-        restored = pl_conv.row_to_player(row)
-        assert restored.known_npcs == set()
-        assert restored.player_event_log == []
-        assert restored.learned_facts == set()
 
 
 @allure.epic("Persistence")

@@ -20,7 +20,6 @@ def setting_to_row(setting: Setting, game_state_id: str) -> dict:
         "traditions": setting.traditions,
         "technologies": setting.technologies,
         "social_structure": setting.social_structure,
-        "raw_sources": setting.raw_sources,
     }
 
 
@@ -37,5 +36,4 @@ def row_to_setting(row) -> Setting:
         traditions=row["traditions"],
         technologies=row["technologies"],
         social_structure=row["social_structure"],
-        raw_sources=row["raw_sources"],
     )

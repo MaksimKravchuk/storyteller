@@ -114,7 +114,6 @@ settings = Table(
     Column("traditions", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("technologies", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("social_structure", Text, nullable=False, server_default=""),
-    Column("raw_sources", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
 )
 
 players = Table(
@@ -132,7 +131,6 @@ players = Table(
     Column(_COL_LOCATION_ID, Text, nullable=True),
     Column("inventory", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("appearance", Text, nullable=False, server_default=""),
-    Column("interaction_history", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("physical_status", String(_LEN_LONG), nullable=False, server_default="healthy"),
     Column("known_npcs", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column("player_event_log", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),

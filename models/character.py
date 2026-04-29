@@ -24,11 +24,6 @@ class Character(StorytellerBase):
     knowledge_scope: str = "local"
     location_id: str | None = None
 
-    # --- Relationship helpers ---
-
-    def add_relationship(self, other_character_id: str, relationship_type: str) -> None:
-        self.relationships[other_character_id] = relationship_type
-
     # --- Attribute helpers ---
 
     def update_attribute(self, attribute: str, attribute_value: int) -> None:
@@ -47,6 +42,3 @@ class Character(StorytellerBase):
             self.inventory.remove(inventory_item)
         else:
             raise ValueError(f"Item '{inventory_item}' not found in inventory.")
-
-    def talk(self) -> str:
-        return f"{self.name} says: Hello!"

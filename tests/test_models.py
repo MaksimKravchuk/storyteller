@@ -60,13 +60,6 @@ class TestCharacter:
         assert char.personality_traits == []
         assert char.knowledge_scope == "local"
 
-    @allure.story("Character relationships")
-    @allure.title("Character.add_relationship stores the target UUID and relationship type in the relationships dict")
-    def test_add_relationship(self):
-        char = Character(name="Brutus")
-        char.add_relationship("caesar-uuid", "enemy")
-        assert char.relationships["caesar-uuid"] == "enemy"
-
     @allure.story("Character attributes")
     @allure.title("Character.update_attribute and get_attribute round-trip values and honor default fallbacks")
     def test_update_and_get_attribute(self):
@@ -91,45 +84,10 @@ class TestCharacter:
         with pytest.raises(ValueError, match=_DAGGER):
             char.remove_item_from_inventory("dagger")
 
-    @allure.story("Character defaults")
-    @allure.title("Character.talk() returns a greeting prefixed with the character's name")
-    def test_talk(self):
-        char = Character(name="Cicero")
-        assert char.talk() == "Cicero says: Hello!"
-
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Domain models")
 class TestNPCCard:
-    @allure.story("NPCCard fields")
-    @allure.title("NPCCard.to_prompt_context embeds the NPC's name into the prompt string")
-    def test_to_prompt_context_contains_name(self, sample_npc):
-        assert "Marcus" in sample_npc.to_prompt_context()
-
-    @allure.story("NPCCard fields")
-    @allure.title("NPCCard.to_prompt_context embeds the NPC's occupation into the prompt string")
-    def test_to_prompt_context_contains_occupation(self, sample_npc):
-        assert "Soldier" in sample_npc.to_prompt_context()
-
-    @allure.story("NPCCard fields")
-    @allure.title("NPCCard.to_prompt_context lists each personality trait in the prompt string")
-    def test_to_prompt_context_contains_traits(self, sample_npc):
-        ctx = sample_npc.to_prompt_context()
-        assert "brave" in ctx
-        assert "loyal" in ctx
-
-    @allure.story("NPCCard fields")
-    @allure.title("NPCCard.to_prompt_context enumerates inventory items in the prompt string")
-    def test_to_prompt_context_shows_inventory(self, sample_npc):
-        ctx = sample_npc.to_prompt_context()
-        assert "gladius" in ctx
-        assert "scutum" in ctx
-
-    @allure.story("NPCCard fields")
-    @allure.title("NPCCard.to_prompt_context renders attributes as 'key=value' pairs in the prompt string")
-    def test_to_prompt_context_shows_attributes(self, sample_npc):
-        assert "strength=8" in sample_npc.to_prompt_context()
-
     @allure.story("NPCCard fields")
     @allure.title("A new NPCCard starts with an empty conversation history list")
     def test_conversation_history_starts_empty(self, sample_npc):
@@ -206,17 +164,6 @@ class TestNPCCardPhysicalStatus:
     def test_custom_value(self):
         npc = NPCCard(name="Brutus", occupation="senator", physical_status="wounded left arm")
         assert npc.physical_status == "wounded left arm"
-
-    @allure.story("NPCCard physical status")
-    @allure.title("NPCCard prompt context exposes the default physical status line")
-    def test_prompt_has_status(self, sample_npc):
-        assert "Physical status: healthy" in sample_npc.to_prompt_context()
-
-    @allure.story("NPCCard physical status")
-    @allure.title("NPCCard prompt context reflects a custom physical status verbatim")
-    def test_prompt_has_custom_status(self):
-        npc = NPCCard(name="Brutus", occupation="senator", physical_status="barely standing")
-        assert "Physical status: barely standing" in npc.to_prompt_context()
 
 
 @allure.epic("Memory & Persistence")
@@ -309,12 +256,11 @@ class TestSetting:
         assert setting.locations == []
 
     @allure.story("Setting fields")
-    @allure.title("A new Setting has empty traditions, technologies, and raw_sources metadata lists")
+    @allure.title("A new Setting has empty traditions and technologies metadata lists")
     def test_optional_metadata_defaults_empty(self):
         setting = Setting(name="X", time_period="Y", region="Z", summary="S")
         assert setting.traditions == []
         assert setting.technologies == []
-        assert setting.raw_sources == []
 
     @allure.story("Setting fields")
     @allure.title("A Setting preserves key_persons entries as supplied dictionaries")

@@ -57,11 +57,6 @@ class SceneNPC(BaseModel):
     role: str  # Short role from LLM, e.g. "guard", "merchant"
     uuid: str | None = None  # Set after NPCCard generation
 
-    @property
-    def need_init(self) -> bool:
-        """``True`` while no ``NPCCard`` has been generated for this entry."""
-        return self.uuid is None
-
 
 def coerce_point_of_interest(entry: Any) -> PointOfInterest:
     """Convert one heterogeneous POI entry to a ``PointOfInterest`` instance.
