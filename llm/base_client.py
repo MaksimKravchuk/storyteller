@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any
 
-from llm.message import Message, LLMResponse, Tool
+from llm.message import LLMResponse, Message, OutputFormat
 
 
 class LLMJSONError(ValueError):
@@ -17,32 +15,6 @@ class LLMJSONError(ValueError):
     def __init__(self, message: str, raw_response: str):
         super().__init__(message)
         self.raw_response = raw_response
-
-
-@dataclass(frozen=True)
-class OutputFormat:
-    """Output-shape controls for a single LLM call.
-
-    Three modes are mutually exclusive at the response-shape level:
-
-    - ``response_format`` — legacy provider-specific dict (e.g.
-      ``{"type": "json_object"}`` for OpenAI's JSON mode).
-    - ``schema`` / ``schema_name`` — strict structured outputs (Pydantic
-      ``model_json_schema()`` compatible). When set, the provider MUST
-      honor it or raise ``NotImplementedError``.
-
-    ``tools`` / ``tool_choice`` are orthogonal: a tool-use call normally
-    leaves ``response_format`` / ``schema`` unset since the model's output
-    arrives on :attr:`llm.message.LLMResponse.tool_calls`. ``tool_choice``
-    accepts ``"auto"`` (model picks), ``"required"`` (model must call any
-    tool), or a tool name (model must call that specific tool).
-    """
-
-    response_format: dict[str, Any] | None = None
-    schema: dict[str, Any] | None = None
-    schema_name: str | None = None
-    tools: tuple[Tool, ...] | None = None
-    tool_choice: str | None = None
 
 
 class BaseLLMClient(ABC):
@@ -58,11 +30,13 @@ class BaseLLMClient(ABC):
         api_key: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
+        supports_structured_output: bool = True,
     ):
         self.model = model
         self.api_key = api_key
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.supports_structured_output = supports_structured_output
 
     @abstractmethod
     async def send_message(

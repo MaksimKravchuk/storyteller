@@ -17,28 +17,6 @@ _ANTHROPIC_CTOR = "anthropic.AsyncAnthropic"
 _MODEL = "claude-sonnet-4-20250514"
 
 
-class _FakeBadRequest(Exception):
-    """Stand-in for ``anthropic.BadRequestError`` used in unit tests.
-
-    Lets us exercise the 400-to-NotImplementedError translation path without
-    importing the Anthropic SDK's exception class (and the ``httpx`` objects
-    its constructor requires) just for a unit test.
-    """
-
-    def __init__(self, message: str, body: dict) -> None:
-        super().__init__(message)
-        self.body = body
-
-
-def _reject_400(client: AnthropicClient) -> None:
-    """Wire the client to match ``_FakeBadRequest`` in its ``except`` clause."""
-    # mypy sees ``_bad_request_error`` as ``type[BadRequestError]``; the stand-in
-    # Exception subclass is only used in-process inside the test, so we patch the
-    # attribute via ``setattr`` to avoid a type-ignore and let the client's
-    # ``except self._bad_request_error`` match our fake.
-    client.__dict__["_bad_request_error"] = _FakeBadRequest
-
-
 def _text_block(text: str) -> SimpleNamespace:
     return SimpleNamespace(type="text", text=text)
 
@@ -235,23 +213,14 @@ class TestAnthropicClient:
 
     @allure.story("Strict structured outputs")
     @allure.title(
-        "AnthropicClient.send_message translates an unsupported-feature 400 into NotImplementedError naming the model",
+        "AnthropicClient.send_message raises NotImplementedError immediately "
+        "when supports_structured_output is False, without calling the API",
     )
     @pytest.mark.asyncio
-    async def test_send_message_json_schema_unsupported_translates_to_notimplemented(self) -> None:
-        rejection = _FakeBadRequest(
-            "400 Bad Request",
-            body={
-                "error": {
-                    "message": "structured outputs are not supported on this model",
-                    "type": "invalid_request_error",
-                },
-            },
-        )
-        sdk_class, _ = _install_beta_sdk_mock(side_effect=rejection)
+    async def test_send_message_json_schema_unsupported_flag_raises_immediately(self) -> None:
+        sdk_class, beta_create = _install_beta_sdk_mock()
         with patch(_ANTHROPIC_CTOR, sdk_class):
-            client = AnthropicClient(model=_MODEL, api_key="k")
-            _reject_400(client)
+            client = AnthropicClient(model=_MODEL, api_key="k", supports_structured_output=False)
             with pytest.raises(NotImplementedError, match=_MODEL):
                 await client.send_message(
                     messages=[_user_msg()],
@@ -260,25 +229,17 @@ class TestAnthropicClient:
                         schema_name="Widget",
                     ),
                 )
+        beta_create.assert_not_called()
 
     @allure.story("Strict structured outputs")
-    @allure.title("AnthropicClient.send_message lets unrelated 400 errors propagate without translation")
+    @allure.title("AnthropicClient.send_message lets beta API errors propagate without translation")
     @pytest.mark.asyncio
-    async def test_send_message_json_schema_unrelated_400_propagates_unchanged(self) -> None:
-        rejection = _FakeBadRequest(
-            "400 Bad Request",
-            body={
-                "error": {
-                    "message": "rate limit exceeded",
-                    "type": "invalid_request_error",
-                },
-            },
-        )
-        sdk_class, _ = _install_beta_sdk_mock(side_effect=rejection)
+    async def test_send_message_json_schema_api_error_propagates_unchanged(self) -> None:
+        error = RuntimeError("upstream failure")
+        sdk_class, _ = _install_beta_sdk_mock(side_effect=error)
         with patch(_ANTHROPIC_CTOR, sdk_class):
             client = AnthropicClient(model=_MODEL, api_key="k")
-            _reject_400(client)
-            with pytest.raises(_FakeBadRequest):
+            with pytest.raises(RuntimeError, match="upstream failure"):
                 await client.send_message(
                     messages=[_user_msg()],
                     output_format=OutputFormat(
