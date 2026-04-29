@@ -154,7 +154,7 @@ class SceneBuilder(BasePerformer):
         game_state: GameState = context["game_state"]
         self._prime_context(game_state)
 
-        prompt = self._generate_template.render(
+        prompt = self._generate_template.format(
             player_action=input_data,
             time_of_day=game_state.game_time,
         )

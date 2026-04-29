@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import dataclasses
-
 import allure
 
-from cast.director import DirectorCast
 from tests.director_helpers import make_director, make_game_state
+
+_CAST_AGENT_ATTRS = ("scene_builder", "narrator", "npc_generator", "data_miner", "item_generator")
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -16,20 +15,17 @@ class TestDirectorPrivateAttrs:
     """Director stores deps/cast as private attrs, not public."""
 
     @allure.story("Private attribute encapsulation")
-    @allure.title(
-        "Director does not expose game_state as a public attribute but keeps it on the private deps container"
-    )
+    @allure.title("Director does not expose game_state as a public attribute")
     def test_no_public_game_state(self):
         director = make_director()
         assert not hasattr(director, "game_state")
-        assert director._deps.game_state is not None
+        assert director._game_state is not None
 
     @allure.story("Private attribute encapsulation")
-    @allure.title("None of the DirectorCast fields leak onto the Director as public attributes")
+    @allure.title("Cast agent names do not leak onto the Director as public attributes")
     def test_no_public_cast_attrs(self):
         director = make_director()
-        cast_fields = [field.name for field in dataclasses.fields(DirectorCast)]
-        for attr in cast_fields:
+        for attr in _CAST_AGENT_ATTRS:
             assert not hasattr(director, attr), "Director should not have public attr {0}".format(attr)
 
     @allure.story("Private attribute encapsulation")

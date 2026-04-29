@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-from cast.director import Director, DirectorCast, DirectorDeps
+from cast.director import Director
 from cast.schemas import action_plan as plan_mod
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryManager
@@ -55,24 +55,24 @@ def make_mock_agent(return_value: object = None) -> AsyncMock:
     return mock
 
 
-def make_cast(narrator_response: str = "Narrated result.") -> DirectorCast:
-    """Build a DirectorCast with mocked agents."""
+def make_cast(narrator_response: str = "Narrated result.") -> dict[str, Any]:
+    """Build a dict of mocked agents for Director construction."""
     item_gen = AsyncMock()
     item_gen.act = AsyncMock(side_effect=default_item_generator_execute)
     item_gen.execute = AsyncMock(side_effect=default_item_generator_execute)
-    return DirectorCast(
-        scene_builder=make_mock_agent(
+    return {
+        "scene_builder": make_mock_agent(
             Scene(
                 location_id="new-loc",
                 description="A new place.",
                 npcs_present=[SceneNPC(role="merchant")],
             )
         ),
-        narrator=make_mock_agent(narrator_response),
-        npc_generator=make_mock_agent([]),
-        data_miner=AsyncMock(),
-        item_generator=item_gen,
-    )
+        "narrator": make_mock_agent(narrator_response),
+        "npc_generator": make_mock_agent([]),
+        "data_miner": AsyncMock(),
+        "item_generator": item_gen,
+    }
 
 
 def _coerce_route_response(
@@ -143,14 +143,17 @@ def make_director(
     keep working). When ``None`` the router is left un-mocked.
     """
     gs = game_state or make_game_state()
+    cast = make_cast(narrator_response)
     the_director = Director(
         llm_client=AsyncMock(),
-        deps=DirectorDeps(
-            game_state=gs,
-            event_manager=EventManager(game_state=gs, knowledge_graph=gs.knowledge_graph),
-            memory_manager=MagicMock(spec=MemoryManager),
-        ),
-        cast=make_cast(narrator_response),
+        game_state=gs,
+        event_manager=EventManager(game_state=gs, knowledge_graph=gs.knowledge_graph),
+        memory_manager=MagicMock(spec=MemoryManager),
+        scene_builder=cast["scene_builder"],
+        narrator=cast["narrator"],
+        npc_generator=cast["npc_generator"],
+        data_miner=cast["data_miner"],
+        item_generator=cast["item_generator"],
         language="English",
     )
     if route_response is not None:

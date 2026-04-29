@@ -40,49 +40,33 @@ DATA_MINER_SYSTEM_RU = PromptTemplate(
 )
 
 
-DATA_MINER_SEARCH_TERMS_RU = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "Игрок хочет игровой сеттинг на основе:\n"
-                '"{setting_request}"\n\n'
-                "Сформируй JSON-список из 3-8 поисковых терминов Википедии, "
-                "которые дадут нам лучший исторический контекст для этого "
-                "сеттинга. Термины оставляй в том виде, в каком статьи "
-                "существуют в английской Википедии.\n"
-                "Выведи ТОЛЬКО JSON-объект: "
-                '{{"search_terms": ["term1", "term2", ...]}}'
-            ),
-            required_vars=["setting_request"],
-        ),
-    ]
+DATA_MINER_SEARCH_TERMS_RU = (
+    "Игрок хочет игровой сеттинг на основе:\n"
+    '"{setting_request}"\n\n'
+    "Сформируй JSON-список из 3-8 поисковых терминов Википедии, "
+    "которые дадут нам лучший исторический контекст для этого "
+    "сеттинга. Термины оставляй в том виде, в каком статьи "
+    "существуют в английской Википедии.\n"
+    "Выведи ТОЛЬКО JSON-объект: "
+    '{{"search_terms": ["term1", "term2", ...]}}'
 )
 
 
-DATA_MINER_RESEARCH_RU = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "Запрос сеттинга: {setting_request}\n\n"
-                "Сырая выдержка из Википедии:\n{raw_research}\n\n"
-                "Синтезируй это в структурированный игровой сеттинг. "
-                "Выведи ТОЛЬКО валидный JSON со следующими полями:\n"
-                "{{\n"
-                '  "name": "Название сеттинга",\n'
-                '  "time_period": "например, 1 век н.э.",\n'
-                '  "region": "например, Римская империя, Италия",\n'
-                '  "summary": "Обзор в 2-3 абзаца",\n'
-                '  "key_persons": [{{"name": "...", "role": "...", "description": "..."}}],\n'
-                '  "key_events": [{{"name": "...", "date": "...", "description": "..."}}],\n'
-                '  "locations": [{{"name": "...", "type": "...", "description": "..."}}],\n'
-                '  "traditions": ["..."],\n'
-                '  "technologies": ["..."],\n'
-                '  "social_structure": "Описание социальной иерархии"\n'
-                "}}"
-            ),
-            required_vars=["setting_request", "raw_research"],
-        ),
-    ]
+DATA_MINER_RESEARCH_RU = (
+    "Запрос сеттинга: {setting_request}\n\n"
+    "Сырая выдержка из Википедии:\n{raw_research}\n\n"
+    "Синтезируй это в структурированный игровой сеттинг. "
+    "Выведи ТОЛЬКО валидный JSON со следующими полями:\n"
+    "{{\n"
+    '  "name": "Название сеттинга",\n'
+    '  "time_period": "например, 1 век н.э.",\n'
+    '  "region": "например, Римская империя, Италия",\n'
+    '  "summary": "Обзор в 2-3 абзаца",\n'
+    '  "key_persons": [{{"name": "...", "role": "...", "description": "..."}}],\n'
+    '  "key_events": [{{"name": "...", "date": "...", "description": "..."}}],\n'
+    '  "locations": [{{"name": "...", "type": "...", "description": "..."}}],\n'
+    '  "traditions": ["..."],\n'
+    '  "technologies": ["..."],\n'
+    '  "social_structure": "Описание социальной иерархии"\n'
+    "}}"
 )

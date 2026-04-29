@@ -29,7 +29,7 @@ from knowledge.graph import KnowledgeGraph
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import LLMResponse
 from models.npc_card import NPCCard
-from prompts.actor_prompts import ACTOR_SYSTEM
+from prompts.actor_prompts import ACTOR_SYSTEM_DIALOGUE
 
 _LOC_KEY = "location_name"
 
@@ -86,7 +86,7 @@ class TestActorActNPCTurnMode:
         assert actor._conversation == []
 
     @allure.story("Action-mode dispatch")
-    @allure.title("Action-mode sets the output_mode_action gate var on the system-prompt context")
+    @allure.title("Action-mode swaps the system prompt template to the action template")
     @pytest.mark.asyncio
     async def test_npc_turn_sets_action_mode_gate_var(self):
         actor, _ = _make_actor()
@@ -96,30 +96,21 @@ class TestActorActNPCTurnMode:
 
         await actor.act("Turn advances.", {_LOC_KEY: "taberna", "is_npc_turn": True})
 
-        assert actor._system_prompt_vars.get("output_mode_action") == "1"
-        assert "output_mode_dialogue" not in actor._system_prompt_vars
-
-        rendered = ACTOR_SYSTEM.render(**actor._system_prompt_vars)
-        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" in rendered
-        assert '"narration"' not in rendered
-        assert '"revealed_names"' not in rendered
+        assert actor.system_prompt_template is actor._system_action
 
     @allure.story("Action-mode dispatch")
-    @allure.title("NPC-turn after dialogue does not render both output sections — only action schema appears")
+    @allure.title("NPC-turn after dialogue uses the action template, not the dialogue template")
     @pytest.mark.asyncio
     async def test_npc_turn_after_dialogue_clears_dialogue_gate(self):
-        """Regression: cumulative _system_prompt_vars kept output_mode_dialogue from the
-        preceding dialogue call, so both output sections rendered.  The LLM then followed
-        the dialogue schema and returned envelope JSON, parsed as IDLE by NPCTurnResolver."""
         actor, _ = _make_actor()
 
-        # Simulate a preceding dialogue turn (sets output_mode_dialogue="1")
+        # Simulate a preceding dialogue turn
         actor._send_json = AsyncMock(  # type: ignore[method-assign]
             return_value=ActorEnvelope(narration="Aye.", revealed_names=[]),
         )
         await actor.act("Tell me your name.", {_LOC_KEY: "taberna"})
 
-        assert "output_mode_dialogue" in actor._system_prompt_vars
+        assert actor.system_prompt_template is actor._system_dialogue
 
         # Now an NPC autonomous turn runs on the same Actor instance
         actor._send = AsyncMock(  # type: ignore[method-assign]
@@ -127,28 +118,21 @@ class TestActorActNPCTurnMode:
         )
         await actor.act("Turn advances.", {_LOC_KEY: "taberna", "is_npc_turn": True})
 
-        assert "output_mode_dialogue" not in actor._system_prompt_vars
-        assert actor._system_prompt_vars.get("output_mode_action") == "1"
-
-        rendered = ACTOR_SYSTEM.render(**actor._system_prompt_vars)
-        assert '"narration"' not in rendered
-        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" in rendered
+        assert actor.system_prompt_template is actor._system_action
 
     @allure.story("Action-mode dispatch")
-    @allure.title("Dialogue after NPC-turn does not render both output sections — only envelope schema appears")
+    @allure.title("Dialogue after NPC-turn uses the dialogue template, not the action template")
     @pytest.mark.asyncio
     async def test_dialogue_after_npc_turn_clears_action_gate(self):
-        """Reverse-direction regression: output_mode_action from a prior NPC-turn call
-        must be cleared when a subsequent dialogue call runs on the same Actor instance."""
         actor, _ = _make_actor()
 
-        # Simulate a preceding NPC autonomous turn (sets output_mode_action="1")
+        # Simulate a preceding NPC autonomous turn
         actor._send = AsyncMock(  # type: ignore[method-assign]
             return_value='{"action": "stands watch", "type": "IDLE", "target": null}',
         )
         await actor.act("Turn advances.", {_LOC_KEY: "taberna", "is_npc_turn": True})
 
-        assert "output_mode_action" in actor._system_prompt_vars
+        assert actor.system_prompt_template is actor._system_action
 
         # Now a dialogue turn runs on the same Actor instance
         actor._send_json = AsyncMock(  # type: ignore[method-assign]
@@ -156,12 +140,7 @@ class TestActorActNPCTurnMode:
         )
         await actor.act("Tell me your name.", {_LOC_KEY: "taberna"})
 
-        assert "output_mode_action" not in actor._system_prompt_vars
-        assert actor._system_prompt_vars.get("output_mode_dialogue") == "1"
-
-        rendered = ACTOR_SYSTEM.render(**actor._system_prompt_vars)
-        assert '"narration"' in rendered
-        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" not in rendered
+        assert actor.system_prompt_template is actor._system_dialogue
 
 
 @allure.epic("NPC Interaction")
@@ -242,7 +221,7 @@ class TestActorPromptDescribesEnvelope:
     @allure.story("Prompt instruction")
     @allure.title("The Actor system prompt instructs NPCs to populate revealed_names when uttering their own name")
     def test_prompt_describes_revealed_names_field(self):
-        rendered = ACTOR_SYSTEM.render(
+        rendered = ACTOR_SYSTEM_DIALOGUE.render(
             npc_name="Marcus",
             npc_occupation="legionary",
             location_name="forum",
@@ -255,7 +234,6 @@ class TestActorPromptDescribesEnvelope:
             current_mood="neutral",
             physical_status="healthy",
             language="English",
-            output_mode_dialogue="1",
         )
         assert "revealed_names" in rendered
         assert "self" in rendered

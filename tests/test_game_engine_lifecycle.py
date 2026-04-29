@@ -96,10 +96,10 @@ async def test_start_game_wires_director_with_data_miner(simple_setting) -> None
         await engine.start_game("Medieval Florence")
         assert harness.wire_mock is not None
         harness.wire_mock.assert_called_once()
-        positional = harness.wire_mock.call_args.args
-        assert positional[0] is harness.clients
-        assert positional[2] == "Italian"
-        assert positional[3] is harness.data_miner
+        call = harness.wire_mock.call_args
+        assert call.args[0] is harness.clients
+        assert call.args[4] == "Italian"
+        assert call.args[5] is harness.data_miner
 
 
 @allure.story("start_game wiring")
@@ -179,9 +179,9 @@ async def test_restore_session_wires_director_and_restores_actors(simple_setting
     ):
         await engine.restore_session(saved_state, graph, [])
         wire_mock.assert_called_once()
-        wire_positional = wire_mock.call_args.args
-        assert wire_positional[0] is clients
-        assert wire_positional[2] == "French"
+        wire_call = wire_mock.call_args
+        assert wire_call.args[0] is clients
+        assert wire_call.args[4] == "French"
         restore_mock.assert_called_once()
         restore_args = restore_mock.call_args.args
         assert restore_args[0] is director

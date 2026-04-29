@@ -2,41 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from cast.data_miner import DataMiner
 from cast.director import Director
 from defaults.models import AI_MODELS, ModelConfig
-from engine.engine_wiring import DirectorContext, create_llm_clients, restore_actors, wire_director
+from engine.engine_wiring import LLMClients, create_llm_clients, restore_actors, wire_director
 from engine.graph_populator import populate_graph_from_setting
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
-
-
-@dataclass(frozen=True)
-class EngineModels:
-    """Bundle of per-role LLM model configs for a :class:`GameEngine`.
-
-    The four roles (director, agent, narrator, dramaturge) always
-    travel together: every engine needs all four resolved from the
-    same :class:`Config` and threaded through the same
-    :func:`create_llm_clients` call. Bundling them here makes that
-    grouping explicit and keeps :meth:`GameEngine.__init__` within
-    its argument budget as a side benefit. ``dramaturge`` defaults
-    to ``None`` because the consistency-oracle feature flag is off
-    by default, so we do not resolve a model for it unless the
-    caller explicitly requests it.
-    """
-
-    director: ModelConfig = AI_MODELS.gpt5_4_mini
-    agent: ModelConfig = AI_MODELS.gpt5_4_nano
-    narrator: ModelConfig = AI_MODELS.gpt5_4_mini
-    dramaturge: ModelConfig | None = None
-
-
-_DEFAULT_MODELS = EngineModels()
 
 
 class GameEngine:
@@ -59,11 +33,17 @@ class GameEngine:
     def __init__(
         self,
         *,
-        models: EngineModels = _DEFAULT_MODELS,
+        director_model: ModelConfig = AI_MODELS.gpt5_4_mini,
+        agent_model: ModelConfig = AI_MODELS.gpt5_4_nano,
+        narrator_model: ModelConfig = AI_MODELS.gpt5_4_mini,
+        dramaturge_model: ModelConfig | None = None,
         api_keys: dict[str, str | None] | None = None,
         language: str = "English",
     ):
-        self._models = models
+        self._director_model = director_model
+        self._agent_model = agent_model
+        self._narrator_model = narrator_model
+        self._dramaturge_model = dramaturge_model
         self._api_keys: dict[str, str | None] = api_keys or {}
         self._language = language
 
@@ -87,13 +67,7 @@ class GameEngine:
 
         Returns the opening narration.
         """
-        clients = create_llm_clients(
-            self._models.director,
-            self._models.agent,
-            self._models.narrator,
-            self._api_keys,
-            dramaturge_model=self._models.dramaturge,
-        )
+        clients = self._make_clients()
 
         data_miner = DataMiner(llm_client=clients.agent, language=self._language)
         setting = await data_miner.execute(setting_description)
@@ -103,8 +77,14 @@ class GameEngine:
         self._game_state = GameState(setting=setting, knowledge_graph=self._knowledge_graph)
         self._event_manager = EventManager(game_state=self._game_state, knowledge_graph=self._knowledge_graph)
 
-        ctx = DirectorContext(self._game_state, self._event_manager, self._knowledge_graph)
-        self._director = wire_director(clients, ctx, self._language, data_miner)
+        self._director = wire_director(
+            clients,
+            self._game_state,
+            self._event_manager,
+            self._knowledge_graph,
+            self._language,
+            data_miner,
+        )
         return await self._director.execute("Look around and describe the starting scene")
 
     async def process_action(self, player_action: str) -> str:
@@ -142,13 +122,26 @@ class GameEngine:
         self._event_manager = EventManager(game_state=self._game_state, knowledge_graph=self._knowledge_graph)
         self._event_manager.all_events = events
 
-        clients = create_llm_clients(
-            self._models.director,
-            self._models.agent,
-            self._models.narrator,
-            self._api_keys,
-            dramaturge_model=self._models.dramaturge,
+        clients = self._make_clients()
+        self._director = wire_director(
+            clients,
+            self._game_state,
+            self._event_manager,
+            self._knowledge_graph,
+            self._language,
         )
-        ctx = DirectorContext(self._game_state, self._event_manager, self._knowledge_graph)
-        self._director = wire_director(clients, ctx, self._language)
         restore_actors(self._director, self._game_state, self._knowledge_graph, clients.agent, self._language)
+
+    # ------------------------------------------------------------------
+    # Internal
+    # ------------------------------------------------------------------
+
+    def _make_clients(self) -> LLMClients:
+        """Build LLM clients from stored model configs."""
+        return create_llm_clients(
+            self._director_model,
+            self._agent_model,
+            self._narrator_model,
+            self._api_keys,
+            dramaturge_model=self._dramaturge_model,
+        )

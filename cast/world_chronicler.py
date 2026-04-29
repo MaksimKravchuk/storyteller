@@ -111,7 +111,7 @@ class WorldChronicler(BasePerformer):
             current_location=current_location,
         )
 
-        prompt = self._advance_template.render(
+        prompt = self._advance_template.format(
             scene_number=str(game_state.scene_number),
             open_threads=_format_threads(game_state.world_state.threads),
             turn_summary=_summarize_turn(input_data),

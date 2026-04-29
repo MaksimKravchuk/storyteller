@@ -16,7 +16,6 @@ import allure
 import pytest
 
 from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
-from cast.director import DirectorCast
 from cast.schemas import chronicler_response as chronicler_schema
 from knowledge import graph as graph_mod, memory as memory_mod
 from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod, world_state as world_state_mod
@@ -35,15 +34,6 @@ def _make_plan_executor_pieces(*, with_chronicler: bool):
     retaliation = director_retaliation.RetaliationHandler(gs, actors)
     npc_turns = npc_turn.NPCTurnResolver(gs, actors)
     ticker = npc_ticker.NPCTicker(gs)
-    agents = director_execution._Agents(
-        events=events,
-        event_manager=event_mgr,
-        dialogue=dialogue,
-        retaliation=retaliation,
-        npc_turns=npc_turns,
-        npc_ticker=ticker,
-        memory_manager=mem_mgr,
-    )
 
     narrator = AsyncMock()
     narrator.execute = AsyncMock(return_value="Narrated.")
@@ -82,16 +72,23 @@ def _make_plan_executor_pieces(*, with_chronicler: bool):
             ),
         )
 
-    cast_obj = DirectorCast(
+    executor = director_execution.PlanExecutor(
+        game_state=gs,
+        events=events,
+        event_manager=event_mgr,
+        dialogue=dialogue,
+        retaliation=retaliation,
+        npc_turns=npc_turns,
+        npc_ticker=ticker,
+        memory_manager=mem_mgr,
         scene_builder=scene_builder,
         narrator=narrator,
         npc_generator=npc_generator,
         data_miner=AsyncMock(),
         item_generator=None,
         world_chronicler=chronicler,
+        register_npc_fn=lambda npc: None,
     )
-
-    executor = director_execution.PlanExecutor(gs, agents, cast_obj, register_npc_fn=lambda npc: None)
     return executor, gs, chronicler, event_mgr
 
 

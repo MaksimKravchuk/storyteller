@@ -86,19 +86,11 @@ DIRECTOR_SYSTEM = PromptTemplate(
 )
 
 
-DIRECTOR_ACTION_ROUTING = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                'Player action: "{player_action}"\n\n'
-                "Classify this action by calling exactly one of the provided tools. "
-                "Always set `intent` to a faithful one-sentence restatement of the "
-                "player's stated goal, not your interpretation of it."
-            ),
-            required_vars=["player_action"],
-        ),
-    ]
+DIRECTOR_ACTION_ROUTING = (
+    'Player action: "{player_action}"\n\n'
+    "Classify this action by calling exactly one of the provided tools. "
+    "Always set `intent` to a faithful one-sentence restatement of the "
+    "player's stated goal, not your interpretation of it."
 )
 
 
@@ -107,7 +99,7 @@ class DirectorPrompts:
     """Per-locale Director prompt bundle."""
 
     system: PromptTemplate
-    action_routing: PromptTemplate
+    action_routing: str
 
 
 _CATALOG: types.MappingProxyType[Locale, DirectorPrompts] = types.MappingProxyType(

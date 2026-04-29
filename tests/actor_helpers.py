@@ -6,13 +6,12 @@ import types
 from unittest.mock import AsyncMock
 
 from cast.schemas.actor_reply import ActorReply
-from prompts.actor_prompts import ACTOR_SYSTEM
-from prompts.base_template import PromptTemplate
+from prompts.actor_prompts import ACTOR_SYSTEM_ACTION, ACTOR_SYSTEM_DIALOGUE
 
 # Default Actor-prompt rendering kwargs. Tests across test_actor_prompt.py,
 # test_actor_revealed.py, and test_prompt_localization.py all need this shape;
 # exposing it here keeps their defaults in lockstep so adding a new required
-# var to ACTOR_SYSTEM only needs one test-side update.
+# var to ACTOR_SYSTEM_DIALOGUE only needs one test-side update.
 BASE_ACTOR_PROMPT_VARS: types.MappingProxyType[str, str] = types.MappingProxyType(
     {
         "npc_name": "Guard",
@@ -32,21 +31,15 @@ BASE_ACTOR_PROMPT_VARS: types.MappingProxyType[str, str] = types.MappingProxyTyp
 
 
 def render_actor_system(
-    template: PromptTemplate = ACTOR_SYSTEM,
     mode: str = "dialogue",
     **overrides: str,
 ) -> str:
-    """Render the Actor system prompt with mode-gated output rules.
+    """Render the Actor system prompt for the given output mode.
 
-    ``mode`` is ``"dialogue"``, ``"action"``, or ``"none"`` — "none" leaves
-    both gate vars unset so neither output section renders (defensive
-    assertion for the mutual-exclusion contract).
+    ``mode`` is ``"dialogue"`` or ``"action"``.
     """
     prompt_vars = {**BASE_ACTOR_PROMPT_VARS, **overrides}
-    if mode == "dialogue":
-        prompt_vars["output_mode_dialogue"] = "1"
-    elif mode == "action":
-        prompt_vars["output_mode_action"] = "1"
+    template = ACTOR_SYSTEM_ACTION if mode == "action" else ACTOR_SYSTEM_DIALOGUE
     return template.render(**prompt_vars)
 
 

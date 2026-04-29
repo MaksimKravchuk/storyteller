@@ -37,10 +37,13 @@ class Actor(BasePerformer):
         language: str = "English",
         envelope_mode: bool = ENVELOPE_MODE_DEFAULT,
     ):
+        prompts = get_actor_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=get_actor_prompts(language).system,
+            system_prompt_template=prompts.system_dialogue,
         )
+        self._system_dialogue = prompts.system_dialogue
+        self._system_action = prompts.system_action
         self.npc = npc
         self.knowledge_query = knowledge_query
         self._conversation: list[Message] = []
@@ -82,8 +85,7 @@ class Actor(BasePerformer):
         if context.get("is_npc_turn"):
             return await self._act_npc_turn(input_data)
 
-        self._system_prompt_vars.pop("output_mode_action", None)
-        self.set_context(output_mode_dialogue="1")
+        self.system_prompt_template = self._system_dialogue
         envelope = await self._produce_envelope(input_data)
 
         # Store only the prose narration so multi-turn dialogue context stays clean.
@@ -110,14 +112,8 @@ class Actor(BasePerformer):
         do not mutate ``npc.current_mood`` / ``npc.physical_status``. Those
         stay calibrated from the next dialogue turn. ``NPCTurnResolver``
         parses the returned ``ActorReply.text`` as the action JSON.
-
-        Each dispatch path clears the other's gate var before setting its own
-        (``_act_npc_turn`` pops ``output_mode_dialogue``; the dialogue path in
-        ``act()`` pops ``output_mode_action``), so exactly one output-format
-        section renders regardless of call order on the same Actor instance.
         """
-        self._system_prompt_vars.pop("output_mode_dialogue", None)
-        self.set_context(output_mode_action="1")
+        self.system_prompt_template = self._system_action
         raw = await self._send(input_data, conversation=[])
         return ActorReply(text=raw.strip(), revealed_names=())
 

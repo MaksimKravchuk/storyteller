@@ -16,7 +16,6 @@ import allure
 import pytest
 
 from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
-from cast.director import DirectorCast
 from knowledge import graph as knowledge_graph, memory as knowledge_memory
 from models.game_state import GameState
 from models.scene import Scene
@@ -39,15 +38,6 @@ def _make_plan_executor_pieces(*, with_dramaturge: bool):
     retaliation = director_retaliation.RetaliationHandler(gs, actors)
     npc_turns_resolver = npc_turn.NPCTurnResolver(gs, actors)
     ticker = npc_ticker.NPCTicker(gs)
-    agents = director_execution._Agents(
-        events=events,
-        event_manager=event_mgr,
-        dialogue=dialogue,
-        retaliation=retaliation,
-        npc_turns=npc_turns_resolver,
-        npc_ticker=ticker,
-        memory_manager=mem_mgr,
-    )
 
     narrator = AsyncMock()
     narrator.execute = AsyncMock(return_value="Raw narration.")
@@ -66,7 +56,15 @@ def _make_plan_executor_pieces(*, with_dramaturge: bool):
     if dramaturge is not None:
         dramaturge.execute = AsyncMock(return_value="Corrected narration.")
 
-    cast_obj = DirectorCast(
+    executor = director_execution.PlanExecutor(
+        game_state=gs,
+        events=events,
+        event_manager=event_mgr,
+        dialogue=dialogue,
+        retaliation=retaliation,
+        npc_turns=npc_turns_resolver,
+        npc_ticker=ticker,
+        memory_manager=mem_mgr,
         scene_builder=scene_builder,
         narrator=narrator,
         npc_generator=npc_generator,
@@ -74,9 +72,8 @@ def _make_plan_executor_pieces(*, with_dramaturge: bool):
         item_generator=None,
         world_chronicler=None,
         dramaturge=dramaturge,
+        register_npc_fn=lambda npc: None,
     )
-
-    executor = director_execution.PlanExecutor(gs, agents, cast_obj, register_npc_fn=lambda npc: None)
     return executor, gs, narrator, dramaturge
 
 

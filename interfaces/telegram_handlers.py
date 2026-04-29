@@ -7,7 +7,7 @@ from typing import Any
 from loguru import logger
 
 from db.repository import GameRepository
-from engine.factory import create_engine_from_state, create_engine_with_db_overrides
+from engine.factory import create_engine, create_engine_from_state
 from engine.game_engine import GameEngine
 from interfaces.telegram_handlers_helpers import recover_from_start_failure, _STATE_IDLE
 from formatting.markdown_render import render
@@ -86,7 +86,10 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
     with logger.contextualize(session_id=ctx.session_id):
         current_session_id.set(ctx.session_id)
         _reset_turn_buffers()
-        engine = await create_engine_with_db_overrides(ctx.repo, ctx.cfg, language=ctx.language)
+        from engine.model_overrides import load_role_overrides
+
+        overrides = await load_role_overrides(ctx.repo, ctx.cfg)
+        engine = create_engine(ctx.cfg, language=ctx.language, overrides=overrides)
         try:
             await start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:

@@ -9,7 +9,6 @@ import allure
 from cast.director import Director
 from defaults.models import ModelConfig
 from engine.engine_wiring import (
-    DirectorContext,
     LLMClients,
     create_llm_clients,
     restore_actors,
@@ -80,17 +79,16 @@ def _fake_llm_clients() -> LLMClients:
 @allure.story("wire_director")
 @allure.title("wire_director builds a Director bound to the supplied game_state and knowledge graph")
 def test_wire_director_builds_director_with_deps(game_state, populated_graph) -> None:
-    """wire_director must produce a Director whose deps reference the supplied graph/state."""
+    """wire_director must produce a Director whose attrs reference the supplied graph/state."""
     clients = _fake_llm_clients()
     event_manager = EventManager(game_state=game_state, knowledge_graph=populated_graph)
-    ctx = DirectorContext(game_state, event_manager, populated_graph)
 
-    director = wire_director(clients, ctx, "English")
+    director = wire_director(clients, game_state, event_manager, populated_graph, "English")
 
     assert isinstance(director, Director)
-    assert director._deps.game_state is game_state
-    assert director._deps.event_manager is event_manager
-    assert director._deps.memory_manager._graph is populated_graph
+    assert director._game_state is game_state
+    assert director._event_manager is event_manager
+    assert director._executor._memory_manager._graph is populated_graph
 
 
 @allure.story("wire_director")
@@ -99,12 +97,11 @@ def test_wire_director_uses_injected_data_miner(game_state, populated_graph) -> 
     """When a data_miner is passed in, wire_director must reuse it on the Director cast."""
     clients = _fake_llm_clients()
     event_manager = EventManager(game_state=game_state, knowledge_graph=populated_graph)
-    ctx = DirectorContext(game_state, event_manager, populated_graph)
     injected_miner = MagicMock(name="shared_miner")
 
-    director = wire_director(clients, ctx, "English", data_miner=injected_miner)
+    director = wire_director(clients, game_state, event_manager, populated_graph, "English", data_miner=injected_miner)
 
-    assert director._cast.data_miner is injected_miner
+    assert director._executor._data_miner is injected_miner
 
 
 class _ActorRecorder:

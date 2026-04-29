@@ -560,9 +560,9 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     engine.game_state.player.name = "Player"
     engine.game_state.npcs = {}
 
-    with patch(
-        "interfaces.web.service.create_engine_with_db_overrides",
-        new=AsyncMock(return_value=engine),
+    with (
+        patch("interfaces.web.service.create_engine", return_value=engine),
+        patch("engine.model_overrides.load_role_overrides", new=AsyncMock(return_value={})),
     ):
         await service.start_game_for_player(
             repo=repo,

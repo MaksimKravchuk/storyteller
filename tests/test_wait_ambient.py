@@ -93,7 +93,7 @@ def _last_user_message(narrator: Narrator) -> str:
 
 def _last_narrator_input(director) -> TurnOutputs:
     """Return the ``TurnOutputs`` most recently handed to the mocked Narrator."""
-    narrator_call = director._cast.narrator.execute.call_args
+    narrator_call = director._executor._narrator.execute.call_args
     return narrator_call.kwargs["input_data"]
 
 
@@ -119,8 +119,8 @@ class TestWaitContextPopulation:
         )
 
         director = make_director(game_state=gs, route_response=_wait_route())
-        director._cast.world_chronicler = _chronicler_mock()
-        director._deps.event_manager.schedule(
+        director._executor._world_chronicler = _chronicler_mock()
+        director._event_manager.schedule(
             GameEvent(
                 name="market bell rings",
                 scheduled_at=gs.game_clock,
@@ -153,7 +153,7 @@ class TestWaitContextPopulation:
         )
 
         director = make_director(game_state=gs, route_response=_wait_route())
-        director._cast.world_chronicler = _chronicler_mock()
+        director._executor._world_chronicler = _chronicler_mock()
 
         await director.act("wait")
 
@@ -171,7 +171,7 @@ class TestWaitContextPopulation:
 
         director = make_director(game_state=gs, route_response=_wait_route())
         chronicler = _chronicler_mock()
-        director._cast.world_chronicler = chronicler
+        director._executor._world_chronicler = chronicler
 
         await director.act("wait")
 
@@ -188,7 +188,7 @@ class TestWaitContextPopulation:
         setup_npc(gs, _NPC_MERCHANT, name="Marcus", occupation="merchant")
 
         director = make_director(game_state=gs, route_response=_wait_route())
-        director._cast.world_chronicler = _chronicler_mock()
+        director._executor._world_chronicler = _chronicler_mock()
 
         await director.act("wait")
 
@@ -221,7 +221,7 @@ class TestWaitContextPopulation:
         )
 
         director = make_director(game_state=gs, route_response=_wait_route())
-        director._cast.world_chronicler = _chronicler_mock()
+        director._executor._world_chronicler = _chronicler_mock()
 
         await director.act("wait")
 
