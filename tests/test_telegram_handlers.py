@@ -68,7 +68,7 @@ async def test_persist_engine_state_flushes_ai_logs() -> None:
     engine = _make_engine(with_state=True)
     logs = [{"call_id": "c1"}]
 
-    with patch("interfaces.telegram_handlers.get_and_clear_buffer", return_value=logs):
+    with patch("engine.session_ops.get_and_clear_buffer", return_value=logs):
         await handlers.persist_engine_state(ctx.repo, ctx.session_id, engine, turn_number=3)
 
     ctx.repo.save_game_state.assert_awaited_once()
@@ -82,7 +82,7 @@ async def test_persist_engine_state_skips_empty_ai_logs() -> None:
     ctx = _make_ctx()
     engine = _make_engine(with_state=True)
 
-    with patch("interfaces.telegram_handlers.get_and_clear_buffer", return_value=[]):
+    with patch("engine.session_ops.get_and_clear_buffer", return_value=[]):
         await handlers.persist_engine_state(ctx.repo, ctx.session_id, engine, turn_number=None)
 
     ctx.repo.save_game_state.assert_awaited_once()
@@ -108,9 +108,9 @@ async def test_handle_awaiting_setting_happy_path() -> None:
     engine = _make_engine(with_state=True)
 
     with (
-        patch("interfaces.telegram_handlers.create_engine", return_value=engine),
-        patch("engine.model_overrides.load_role_overrides", new=AsyncMock(return_value={})),
-        patch("interfaces.telegram_handlers.get_and_clear_buffer", return_value=[]),
+        patch("engine.session_ops.create_engine", return_value=engine),
+        patch("engine.session_ops.load_role_overrides", new=AsyncMock(return_value={})),
+        patch("engine.session_ops.get_and_clear_buffer", return_value=[]),
     ):
         await handlers.handle_awaiting_setting(ctx, chat_id=42)
 
@@ -132,8 +132,8 @@ async def test_handle_awaiting_setting_engine_exception_rolls_back() -> None:
     engine.start_game = AsyncMock(side_effect=RuntimeError("boom"))
 
     with (
-        patch("interfaces.telegram_handlers.create_engine", return_value=engine),
-        patch("engine.model_overrides.load_role_overrides", new=AsyncMock(return_value={})),
+        patch("engine.session_ops.create_engine", return_value=engine),
+        patch("engine.session_ops.load_role_overrides", new=AsyncMock(return_value={})),
     ):
         await handlers.handle_awaiting_setting(ctx, chat_id=42)
 
@@ -173,11 +173,11 @@ async def test_handle_playing_happy_path() -> None:
     create_mock = AsyncMock(return_value=engine)
     with (
         patch(
-            "interfaces.telegram_handlers.create_engine_from_state",
+            "engine.session_ops.create_engine_from_state",
             new=create_mock,
         ),
         patch(
-            "interfaces.telegram_handlers.get_and_clear_buffer",
+            "engine.session_ops.get_and_clear_buffer",
             return_value=[{"call_id": "c1"}],
         ),
     ):
@@ -201,7 +201,7 @@ async def test_handle_playing_process_action_exception() -> None:
     ctx.repo.load_game_state = AsyncMock(return_value=loaded)
 
     with patch(
-        "interfaces.telegram_handlers.create_engine_from_state",
+        "engine.session_ops.create_engine_from_state",
         new=AsyncMock(return_value=engine),
     ):
         await handlers.handle_playing(ctx)

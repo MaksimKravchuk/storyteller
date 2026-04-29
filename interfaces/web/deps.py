@@ -67,13 +67,9 @@ def get_player_id(request: Request) -> str:
 
     The middleware — not this dep — owns cookie minting and the Set-Cookie
     header, so the cookie is attached to every response (including 404s).
+    Tests that bypass the middleware override this dep directly.
     """
-    player_id = getattr(request.state, _STATE_PLAYER_ID, None)
-    if player_id is None:
-        # Fallback for edge cases (e.g. direct unit tests that don't route
-        # through the middleware). Production always runs the middleware.
-        return str(_uuid.uuid4())
-    return player_id
+    return getattr(request.state, _STATE_PLAYER_ID)
 
 
 def _stash_player_id(request: Request) -> None:
