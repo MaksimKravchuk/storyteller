@@ -43,7 +43,7 @@ def _report(**overrides) -> ScenarioReport:
         ],
         "engine_git_sha": "abc1234deadbeef",
         "engine_models": {"director_model": "a", "agent_model": "b", "narrator_model": "c"},
-        "started_at": "2025-01-02T03-04-05",
+        "started_at": "2025-01-02T03:04:05",
         "duration_seconds": 1.5,
     }
     defaults.update(overrides)

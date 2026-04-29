@@ -67,8 +67,7 @@ def _patch_session(resp: _FakeResp):
 @allure.title("WikipediaClient defaults to English Wikipedia URLs when language is not specified")
 def test_default_language_urls() -> None:
     """Without a language, URLs target en.wikipedia.org."""
-    with patch("research.wikipedia_client.aiohttp.ClientSession"):
-        client = WikipediaClient()
+    client = WikipediaClient()
     assert "en.wikipedia.org" in client._rest_base
     assert "en.wikipedia.org" in client._mw_api
 
@@ -77,8 +76,7 @@ def test_default_language_urls() -> None:
 @allure.title("WikipediaClient swaps the subdomain to match a non-English language code")
 def test_non_default_language_urls() -> None:
     """A non-default language must flow into both the REST and MW API URLs."""
-    with patch("research.wikipedia_client.aiohttp.ClientSession"):
-        client = WikipediaClient(language="ru")
+    client = WikipediaClient(language="ru")
     assert client._rest_base.startswith("https://ru.wikipedia.org/")
     assert client._mw_api.startswith("https://ru.wikipedia.org/")
 

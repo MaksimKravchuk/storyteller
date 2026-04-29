@@ -18,11 +18,12 @@ class WikipediaClient:
         self._lang = language
         self._rest_base = f"https://{language}.wikipedia.org/api/rest_v1"
         self._mw_api = f"https://{language}.wikipedia.org/w/api.php"
-        self._session = aiohttp.ClientSession()
+        self._session: aiohttp.ClientSession | None = None
 
     async def aclose(self) -> None:
-        """Close the underlying HTTP session."""
-        await self._session.close()
+        """Close the underlying HTTP session if it was opened."""
+        if self._session is not None:
+            await self._session.close()
 
     async def get_summary(self, title: str) -> dict[str, str]:
         """Fetch the summary (extract + description) for an article.
@@ -30,7 +31,7 @@ class WikipediaClient:
         Returns ``{"title": str, "extract": str, "description": str}``.
         """
         url = f"{self._rest_base}/page/summary/{title}"
-        async with self._session.get(url) as resp:
+        async with self._ensure_session().get(url) as resp:
             if resp.status == _HTTP_OK:
                 summary_json = await resp.json()
                 return {
@@ -49,7 +50,7 @@ class WikipediaClient:
 
         Uses the MediaWiki API ``extracts`` module.
         """
-        async with self._session.get(
+        async with self._ensure_session().get(
             self._mw_api,
             params={
                 "action": "query",
@@ -67,3 +68,8 @@ class WikipediaClient:
             if first_page is None:
                 return ""
             return first_page.get(_KEY_EXTRACT, "")[:max_chars]
+
+    def _ensure_session(self) -> aiohttp.ClientSession:
+        if self._session is None:
+            self._session = aiohttp.ClientSession()
+        return self._session
