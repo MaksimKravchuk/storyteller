@@ -489,19 +489,15 @@ async def test_process_turn_raises_when_no_game() -> None:
 
 @pytest.mark.asyncio
 @allure.story("Ownership enforcement")
-@allure.title("_act_and_persist raises RuntimeError when the engine has no game_state after the action")
+@allure.title("_act_and_persist raises RuntimeError when the engine is not started")
 async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
-    """Guards the invariant strengthened in the KER-30 refactor: the old
-    ``turn_number or 0`` fallback silently masked a broken engine that had no
-    ``game_state``. The raise now surfaces that as a 500 instead of assembling
-    an ActionResponse with turn_count=0.
-    """
+    """Guards the invariant: an un-started engine raises rather than silently returning 0."""
     repo = AsyncMock()
     engine = MagicMock()
-    engine.game_state = None
+    engine.assert_running = MagicMock(side_effect=RuntimeError("Game not started."))
     engine.process_action = AsyncMock(return_value="prose")
 
-    with pytest.raises(RuntimeError, match="engine.game_state is None"):
+    with pytest.raises(RuntimeError, match="Game not started"):
         await service._act_and_persist(repo, "sess-1", engine, "look", "English")
 
 
@@ -538,16 +534,13 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     repo.sessions.update = AsyncMock()
     repo.save_game_state.return_value = None
 
-    engine = MagicMock()
-    engine.start_game = AsyncMock()
-    engine.knowledge_graph = MagicMock()
-    engine.event_manager = MagicMock(all_events=[])
-    engine.game_state = MagicMock()
-    engine.game_state.uuid = "game-1"
-    engine.game_state.setting.name = "Rome"
-    engine.game_state.conversation_log = []
-    engine.game_state.turn_count = 0
-    engine.game_state.player = MagicMock(
+    game_state = MagicMock()
+    game_state.uuid = "game-1"
+    game_state.setting.name = "Rome"
+    game_state.conversation_log = []
+    game_state.turn_count = 0
+    game_state.scene_number = None
+    game_state.player = MagicMock(
         name="Player",
         appearance="",
         physical_status="healthy",
@@ -557,8 +550,12 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
         learned_facts=set(),
     )
     # MagicMock coerces the kwarg ``name`` to the mock's own name; re-set it explicitly.
-    engine.game_state.player.name = "Player"
-    engine.game_state.npcs = {}
+    game_state.player.name = "Player"
+    game_state.npcs = {}
+
+    engine = MagicMock()
+    engine.start_game = AsyncMock()
+    engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
 
     with patch(
         "interfaces.web.service.create_engine_with_db_overrides",

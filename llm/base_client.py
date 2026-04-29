@@ -45,16 +45,6 @@ class OutputFormat:
     tools: tuple[Tool, ...] | None = None
     tool_choice: str | None = None
 
-    @property
-    def is_strict(self) -> bool:
-        """True when this format requests strict, schema-validated output."""
-        return self.schema is not None
-
-    @property
-    def has_tools(self) -> bool:
-        """True when tool definitions are attached to this call."""
-        return bool(self.tools)
-
 
 class BaseLLMClient(ABC):
     """Provider-agnostic LLM interface.
@@ -89,8 +79,8 @@ class BaseLLMClient(ABC):
         ``output_format`` bundles three orthogonal concerns:
 
         - Legacy JSON mode (``response_format``) and strict structured
-          outputs (``schema`` / ``schema_name``): when ``output_format.is_strict``
-          is true the provider MUST honor the schema or raise
+          outputs (``schema`` / ``schema_name``): when ``output_format.schema``
+          is not None the provider MUST honor the schema or raise
           ``NotImplementedError`` so callers can fall back.
         - Tool calls (``tools`` / ``tool_choice``): when present, the
           provider exposes the tools and translates ``tool_choice`` to its

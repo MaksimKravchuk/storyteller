@@ -99,6 +99,6 @@ class TestBaseLLMClient:
         )
         await client.send_message(messages=[], output_format=of)
         captured = client.last_send_kwargs["output_format"]
-        assert captured.is_strict is True
+        assert captured.schema is not None
         assert captured.schema == {"type": "object", "properties": {}}
         assert captured.schema_name == "WidgetResponse"

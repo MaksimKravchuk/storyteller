@@ -113,13 +113,13 @@ async def _retry_after_validation_failure(
     logger.warning(
         "LLM JSON failed schema validation on attempt {}/{}: {}",
         ctx.attempt + 1,
-        ctx.total_attempts,
+        ctx.retries + 1,
         errors_preview,
     )
-    if not ctx.can_retry:
+    if ctx.attempt >= ctx.retries:
         raise LLMJSONError(
             "Agent failed schema validation after {0} attempts. Errors: {1}".format(
-                ctx.total_attempts,
+                ctx.retries + 1,
                 errors_preview,
             ),
             raw_response=assistant_text,

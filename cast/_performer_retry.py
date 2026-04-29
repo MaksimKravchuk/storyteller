@@ -39,11 +39,3 @@ class RetryContext:
     attempt: int
     response_model: type["BaseModel"] | None
     max_tokens: int | None = None
-
-    @property
-    def total_attempts(self) -> int:
-        return self.retries + 1
-
-    @property
-    def can_retry(self) -> bool:
-        return self.attempt < self.retries

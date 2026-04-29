@@ -96,9 +96,7 @@ async def _act_and_persist(
 ) -> ActionResponse:
     """Run a player action through the engine and persist the new state."""
     narration = await engine.process_action(action)
-    game_state = engine.game_state
-    if game_state is None:
-        raise RuntimeError("engine.game_state is None — engine did not initialise correctly")
+    game_state, _, _ = engine.assert_running()
     turn_number = game_state.turn_count
     await persist_engine(repo, session_id, engine, turn_number=turn_number)
     return ActionResponse(
@@ -132,7 +130,8 @@ async def process_turn_for_player(
     engine = await restore_engine(repo, cfg, session_row)
     if engine is None:
         raise GameNotFoundError(player_id)
-    if str(engine.game_state.uuid) != game_id:  # type: ignore[union-attr]
+    game_state, _, _ = engine.assert_running()
+    if str(game_state.uuid) != game_id:
         raise GameOwnershipError(player_id)
 
     current_session_id.set(session_id)
