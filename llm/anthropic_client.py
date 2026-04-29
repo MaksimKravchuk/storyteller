@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import types
-from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
 from llm.base_client import BaseLLMClient, OutputFormat
@@ -156,7 +155,6 @@ class AnthropicClient(BaseLLMClient):
 
         return LLMResponse(
             body=response_text,
-            raw_response=response,
             usage={
                 "prompt_tokens": response.usage.input_tokens,
                 "completion_tokens": response.usage.output_tokens,
@@ -164,26 +162,6 @@ class AnthropicClient(BaseLLMClient):
             model=response.model,
             tool_calls=_parse_tool_calls(response),
         )
-
-    async def send_message_streaming(
-        self,
-        messages: list[Message],
-        system_prompt: str = "",
-    ) -> AsyncIterator[str]:
-        formatted = self._format_messages(messages)
-
-        kwargs: dict[str, Any] = {
-            "model": self.model,
-            "messages": formatted,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-        }
-        if system_prompt:
-            kwargs["system"] = system_prompt
-
-        async with self._client.messages.stream(**kwargs) as stream:
-            async for text in stream.text_stream:
-                yield text
 
     def _build_request_kwargs(
         self,

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from contextlib import ExitStack
 from typing import Any
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
 
+from cast.dice import ContestOutcome, ContestRoll, ContestType
 from cast.director_retaliation import RetaliationHandler
 from models.npc_card import NPCCard
 from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_actor, setup_npc
@@ -33,27 +35,14 @@ def _aggressive_route():
 
 
 async def _run_patched(replacement, coro, combat_replacement=None):
-    """Run a coroutine with roll_aggression (and optionally roll_combat) patched."""
-    from cast import director_dialogue as dlg_module
+    """Run a coroutine with roll_aggression (and optionally roll_contest) patched."""
     from cast import director_retaliation as ret_module
 
-    original_roll = ret_module.roll_aggression
-    original_combat = ret_module.roll_combat if combat_replacement else None
-    original_dlg = getattr(dlg_module, "roll_combat", None) if combat_replacement else None
-    ret_module.roll_aggression = replacement  # type: ignore[assignment]
-    if combat_replacement:
-        ret_module.roll_combat = combat_replacement  # type: ignore[assignment]
-        dlg_module.roll_combat = combat_replacement  # type: ignore[assignment]
-    try:
-        return await coro
-    except Exception:
-        raise
-    finally:
-        ret_module.roll_aggression = original_roll
+    with ExitStack() as stack:
+        stack.enter_context(patch.object(ret_module, "roll_aggression", replacement))
         if combat_replacement:
-            ret_module.roll_combat = original_combat  # type: ignore[assignment]
-            if original_dlg is not None:
-                dlg_module.roll_combat = original_dlg  # type: ignore[assignment]
+            stack.enter_context(patch.object(ret_module, "roll_contest", combat_replacement))
+        return await coro
 
 
 def _make_aggression_stub(will_attack: bool) -> Any:
@@ -67,15 +56,15 @@ def _call_input(call: Any) -> str:
     return call.kwargs.get("input_data") or call.args[0]
 
 
-def _fixed_combat(combat_skill_val: int, _rng: Any = None) -> Any:
-    """roll_combat replacement with fixed outcome."""
-    from cast.dice import CombatOutcome, CombatRoll
-
-    return CombatRoll(
-        outcome=CombatOutcome.TARGET_DOMINATES,
-        npc_roll=_ATTACK_ROLL,
-        player_roll=5,
-        npc_bonus=combat_skill_val,
+def _fixed_combat(contest_type: ContestType, actor_skill: int, target_skill: int, _rng: Any = None) -> ContestRoll:
+    """roll_contest replacement with fixed TARGET_DOMINATES outcome."""
+    return ContestRoll(
+        contest_type=contest_type,
+        outcome=ContestOutcome.TARGET_DOMINATES,
+        actor_roll=5,
+        target_roll=_ATTACK_ROLL,
+        actor_bonus=actor_skill,
+        target_bonus=target_skill,
     )
 
 

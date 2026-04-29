@@ -55,7 +55,7 @@ def _make_performer(llm_client: Any | None = None) -> _JsonPerformer:
 
 
 def _llm_response(body: str) -> LLMResponse:
-    return LLMResponse(body=body, raw_response=None, usage={}, model="test-model")
+    return LLMResponse(body=body, usage={}, model="test-model")
 
 
 def _force_fallback() -> Any:
