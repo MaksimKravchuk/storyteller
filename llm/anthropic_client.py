@@ -2,22 +2,10 @@ from __future__ import annotations
 
 import types
 from collections.abc import AsyncIterator
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import LLMResponse, Message, Role, Tool, ToolCall
-
-if TYPE_CHECKING:
-    from anthropic import BadRequestError
-
-
-_STRUCTURED_OUTPUT_REJECTION_MARKERS = (
-    "structured output",
-    "structured outputs",
-    "json_schema",
-    "output_format",
-    "output_config",
-)
 
 # Centralised Anthropic payload keys so string literals don't repeat
 # through the translation helpers (flake8 WPS226 caps re-use at 3).
@@ -40,22 +28,6 @@ _NAMED_CHOICE_MAP: types.MappingProxyType[str, dict[str, Any]] = types.MappingPr
 # Short aliases so tool-translation signatures stay within the
 # line-complexity budget.
 _WireTools = list[dict[str, Any]]
-
-
-def _extract_error_message(exc: "BadRequestError") -> str:
-    """Return the human-readable message embedded in a BadRequestError body."""
-    body = getattr(exc, "body", None) or {}
-    if isinstance(body, dict):
-        error = body.get("error") or {}
-        if isinstance(error, dict):
-            return str(error.get("message", ""))
-    return ""
-
-
-def _is_structured_output_rejection(exc: "BadRequestError") -> bool:
-    """Return True when a 400 error indicates the model cannot honor the schema."""
-    haystack = (_extract_error_message(exc) or str(exc)).lower()
-    return any(marker in haystack for marker in _STRUCTURED_OUTPUT_REJECTION_MARKERS)
 
 
 def _build_tools(tools: tuple[Tool, ...] | None) -> _WireTools | None:
@@ -124,12 +96,9 @@ class AnthropicClient(BaseLLMClient):
     ):
         super().__init__(model=model, api_key=api_key, **kwargs)
         # Lazy import so anthropic is not required when using another provider
-        from anthropic import AsyncAnthropic, BadRequestError
+        from anthropic import AsyncAnthropic
 
         self._client = AsyncAnthropic(api_key=self.api_key)
-        # Stored as an instance attribute so ``except self._bad_request_error``
-        # works without a top-level import of ``anthropic``.
-        self._bad_request_error: type[BadRequestError] = BadRequestError
 
     async def send_message(
         self,
@@ -147,7 +116,12 @@ class AnthropicClient(BaseLLMClient):
             output_format,
         )
         if output_format is not None and output_format.is_strict:
-            response = await self._send_with_schema(kwargs, output_format.schema or {})
+            if not self.supports_structured_output:
+                raise NotImplementedError(
+                    "structured outputs not supported for model={0}".format(self.model),
+                )
+            kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": output_format.schema or {}}
+            response = await self._client.beta.messages.create(**kwargs)
         else:
             response = await self._client.messages.create(**kwargs)
 
@@ -215,27 +189,6 @@ class AnthropicClient(BaseLLMClient):
             if wire_tool_choice is not None:
                 kwargs["tool_choice"] = wire_tool_choice
         return kwargs
-
-    async def _send_with_schema(
-        self,
-        kwargs: dict[str, Any],
-        json_schema: dict[str, Any],
-    ) -> Any:
-        """Issue a structured-outputs beta call, translating unsupported errors.
-
-        Raises ``NotImplementedError`` when the API returns a 400 indicating
-        the model or endpoint does not support structured outputs, so callers
-        can degrade to the prompt-based JSON path.
-        """
-        kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": json_schema}
-        try:
-            return await self._client.beta.messages.create(**kwargs)
-        except self._bad_request_error as exc:
-            if _is_structured_output_rejection(exc):
-                raise NotImplementedError(
-                    "structured outputs not supported for model={0}".format(self.model),
-                ) from exc
-            raise
 
     def _format_messages(self, messages: list[Message]) -> list[dict[str, str]]:
         """Format messages for the Anthropic API.

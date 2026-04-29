@@ -17,8 +17,8 @@ from benchmarks.harness.types._elements import EvidencePromptSpec
 from benchmarks.harness.types._scores import JudgeVote, PanelMember
 from config import Config, get_api_key_for_provider
 from defaults.models import ModelConfig
-from llm.factory import create_llm_client, json_object_format
-from llm.message import Message, Role
+from llm.factory import create_llm_client
+from llm.message import Message, OutputFormat, Role
 
 _JUDGE_MAX_TOKENS = 400
 _JUDGE_TEMPERATURE: float = float(0)
@@ -75,7 +75,7 @@ async def _send_judge_prompt(
     response = await client.send_message(
         messages=[Message(role=Role.USER, body=user_body)],
         system_prompt=_SYSTEM_PROMPT,
-        output_format=json_object_format(),
+        output_format=OutputFormat(response_format={"type": "json_object"}),
         temperature=temperature,
         max_tokens=_JUDGE_MAX_TOKENS,
     )

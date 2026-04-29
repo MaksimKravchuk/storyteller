@@ -7,10 +7,8 @@ import pytest
 
 from defaults.models import ModelConfig
 from llm.anthropic_client import AnthropicClient
-from llm.deepseek_client import DeepSeekClient
 from llm.factory import create_llm_client
 from llm.openai_client import OpenAIClient
-from llm.openrouter_client import OpenRouterClient
 
 _DUMMY_KEY = "dummy"
 
@@ -79,7 +77,7 @@ class TestCreateLLMClient:
         assert client.temperature == pytest.approx(0.7)
 
     @allure.story("Provider routing")
-    @allure.title("create_llm_client returns an OpenRouterClient when the provider is openrouter")
+    @allure.title("create_llm_client returns an OpenAIClient for openrouter provider with correct model and params")
     def test_openrouter_provider(self, _sdk_env: None) -> None:
         config = ModelConfig(
             provider="openrouter",
@@ -88,14 +86,14 @@ class TestCreateLLMClient:
             max_tokens=1024,
         )
         client = create_llm_client(config, api_key="or-key")
-        assert isinstance(client, OpenRouterClient)
+        assert isinstance(client, OpenAIClient)
         assert client.model == "deepseek/deepseek-chat-v3.1"
         assert client.api_key == "or-key"
         assert client.temperature == pytest.approx(0.4)
         assert client.max_tokens == 1024
 
     @allure.story("Provider routing")
-    @allure.title("create_llm_client returns a DeepSeekClient when the provider is deepseek")
+    @allure.title("create_llm_client returns an OpenAIClient for deepseek provider with correct model and params")
     def test_deepseek_provider(self, _sdk_env: None) -> None:
         config = ModelConfig(
             provider="deepseek",
@@ -104,8 +102,20 @@ class TestCreateLLMClient:
             max_tokens=512,
         )
         client = create_llm_client(config, api_key="ds-key")
-        assert isinstance(client, DeepSeekClient)
+        assert isinstance(client, OpenAIClient)
         assert client.model == "deepseek-chat"
         assert client.api_key == "ds-key"
         assert client.temperature == pytest.approx(0.3)
         assert client.max_tokens == 512
+
+    @allure.story("supports_structured_output")
+    @allure.title("create_llm_client forwards supports_structured_output=False to AnthropicClient")
+    def test_anthropic_supports_structured_output_forwarded(self, _sdk_env: None) -> None:
+        config = ModelConfig(
+            provider="anthropic",
+            model_id="claude-sonnet-4-20250514",
+            supports_structured_output=False,
+        )
+        client = create_llm_client(config)
+        assert isinstance(client, AnthropicClient)
+        assert client.supports_structured_output is False

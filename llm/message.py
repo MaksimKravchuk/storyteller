@@ -55,6 +55,42 @@ class ToolCall:
     call_id: str | None = None
 
 
+@dataclass(frozen=True)
+class OutputFormat:
+    """Output-shape controls for a single LLM call.
+
+    Three modes are mutually exclusive at the response-shape level:
+
+    - ``response_format`` — legacy provider-specific dict (e.g.
+      ``{"type": "json_object"}`` for OpenAI's JSON mode).
+    - ``schema`` / ``schema_name`` — strict structured outputs (Pydantic
+      ``model_json_schema()`` compatible). When set, the provider MUST
+      honor it or raise ``NotImplementedError``.
+
+    ``tools`` / ``tool_choice`` are orthogonal: a tool-use call normally
+    leaves ``response_format`` / ``schema`` unset since the model's output
+    arrives on :attr:`llm.message.LLMResponse.tool_calls`. ``tool_choice``
+    accepts ``"auto"`` (model picks), ``"required"`` (model must call any
+    tool), or a tool name (model must call that specific tool).
+    """
+
+    response_format: dict[str, Any] | None = None
+    schema: dict[str, Any] | None = None
+    schema_name: str | None = None
+    tools: tuple[Tool, ...] | None = None
+    tool_choice: str | None = None
+
+    @property
+    def is_strict(self) -> bool:
+        """True when this format requests strict, schema-validated output."""
+        return self.schema is not None
+
+    @property
+    def has_tools(self) -> bool:
+        """True when tool definitions are attached to this call."""
+        return bool(self.tools)
+
+
 @dataclass
 class LLMResponse:
     """Response from an LLM provider.

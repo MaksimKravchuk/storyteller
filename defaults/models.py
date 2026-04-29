@@ -16,6 +16,7 @@ class ModelConfig:
     model_id: str  # "gpt-4", "claude-sonnet-4-20250514", etc.
     temperature: float = 0.7
     max_tokens: int = 2048
+    supports_structured_output: bool = True
 
 
 class AI_MODELS:
