@@ -11,8 +11,7 @@ from loguru import logger
 
 from config import Config
 from db.repository import GameRepository
-from engine.factory import create_engine_with_db_overrides
-from engine.game_engine import GameEngine
+from engine.factory import create_engine
 from interfaces.web.character import build_character_info
 from interfaces.web.schemas import ActionResponse, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
@@ -54,7 +53,7 @@ async def get_current_snapshot(
 async def _start_and_persist(
     repo: GameRepository,
     session_id: str,
-    engine: GameEngine,
+    engine,
     setting: str,
 ) -> None:
     """Run ``start_game`` and persist the resulting state in one call."""
@@ -76,7 +75,10 @@ async def start_game_for_player(
     current_session_id.set(session_id)
     reset_buffer()
     reset_events()
-    engine = await create_engine_with_db_overrides(repo, cfg, language=language)
+    from engine.model_overrides import load_role_overrides
+
+    overrides = await load_role_overrides(repo, cfg)
+    engine = create_engine(cfg, language=language, overrides=overrides)
     try:
         await _start_and_persist(repo, session_id, engine, setting)
     except Exception:
@@ -90,15 +92,13 @@ async def start_game_for_player(
 async def _act_and_persist(
     repo: GameRepository,
     session_id: str,
-    engine: GameEngine,
+    engine,
     action: str,
     language: str,
 ) -> ActionResponse:
     """Run a player action through the engine and persist the new state."""
     narration = await engine.process_action(action)
-    game_state = engine.game_state
-    if game_state is None:
-        raise RuntimeError("engine.game_state is None — engine did not initialise correctly")
+    game_state, _, _ = engine.assert_running()
     turn_number = game_state.turn_count
     await persist_engine(repo, session_id, engine, turn_number=turn_number)
     return ActionResponse(
@@ -132,7 +132,8 @@ async def process_turn_for_player(
     engine = await restore_engine(repo, cfg, session_row)
     if engine is None:
         raise GameNotFoundError(player_id)
-    if str(engine.game_state.uuid) != game_id:  # type: ignore[union-attr]
+    game_state, _, _ = engine.assert_running()
+    if str(game_state.uuid) != game_id:
         raise GameOwnershipError(player_id)
 
     current_session_id.set(session_id)

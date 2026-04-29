@@ -228,7 +228,7 @@ class TestNPCTurnsPassedToNarrator:
 
         await director.act("/wait")
 
-        narrator_call = director._cast.narrator.execute.call_args
+        narrator_call = director._executor._narrator.execute.call_args
         raw_outputs = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
         assert raw_outputs.npc_turns
         assert len(raw_outputs.npc_turns) == 1

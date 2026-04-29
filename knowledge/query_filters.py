@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.node import KnowledgeNode, KnowledgeScope
 
 
 def passes_scope(node: KnowledgeNode, max_scope: KnowledgeScope) -> bool:
@@ -15,11 +15,6 @@ def passes_education(node: KnowledgeNode, max_education_required: int) -> bool:
     return node.required_education <= max_education_required
 
 
-def passes_social_status(node: KnowledgeNode, max_social_status_required: int) -> bool:
-    """Return True if the node's social status requirement is within the limit."""
-    return node.required_social_status <= max_social_status_required
-
-
 def passes_location(
     node: KnowledgeNode,
     location_id: str | None,
@@ -30,24 +25,3 @@ def passes_location(
     if node.scope == KnowledgeScope.LOCAL:
         return node.location_id == location_id
     return True
-
-
-def passes_tags(node: KnowledgeNode, tags: list[str] | None) -> bool:
-    """Return True if the node has at least one of the requested tags."""
-    if not tags:
-        return True
-    return bool(set(tags) & set(node.tags))
-
-
-def passes_sources(node: KnowledgeNode, sources: list[KnowledgeSource] | None) -> bool:
-    """Return True if the node's source is in the allowed list."""
-    if not sources:
-        return True
-    return node.source in sources
-
-
-def passes_canon(node: KnowledgeNode, canons: list[CanonSource] | None) -> bool:
-    """Return True if the node's canon is in the allowed list."""
-    if not canons:
-        return True
-    return node.canon in canons

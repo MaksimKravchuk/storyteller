@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -31,30 +31,21 @@ def _build_response_format(output_format: OutputFormat | None) -> dict[str, Any]
     """Translate an ``OutputFormat`` into the OpenAI ``response_format`` payload.
 
     Returns ``None`` when the caller did not request any specific format.
-    Strict mode (``output_format.is_strict``) wins over the legacy dict.
+    Strict mode (``output_format.schema is not None``) wins over the legacy dict.
     """
     if output_format is None:
         return None
-    if output_format.is_strict:
+    if output_format.schema is not None:
         return _StrictSchemaNormalizer.wrap(
-            output_format.schema or {},
+            output_format.schema,
             output_format.schema_name or "Response",
         )
     return output_format.response_format
 
 
 def _extract_error_body(exc: Any) -> Any:
-    """Return the richest available payload from an OpenAI ``APIStatusError``.
-
-    Prefers the structured ``exc.body`` dict, falls back to the raw HTTP
-    response text, and finally ``str(exc)``.
-    """
-    body = getattr(exc, "body", None)
-    if body is not None:
-        return body
-    response = getattr(exc, "response", None)
-    text = getattr(response, "text", None)
-    return text or str(exc)
+    """Return the structured body from an OpenAI ``APIStatusError``, or str(exc)."""
+    return getattr(exc, "body", None) or str(exc)
 
 
 def _sanitize(text: str) -> str:
@@ -120,7 +111,6 @@ class OpenAIClient(BaseLLMClient):
 
         return LLMResponse(
             body=choice.message.content or "",
-            raw_response=response,
             usage={
                 "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
                 "completion_tokens": response.usage.completion_tokens if response.usage else 0,
@@ -128,26 +118,6 @@ class OpenAIClient(BaseLLMClient):
             model=response.model,
             tool_calls=_parse_response_tool_calls(choice),
         )
-
-    async def send_message_streaming(
-        self,
-        messages: list[Message],
-        system_prompt: str = "",
-    ) -> AsyncIterator[str]:
-        formatted = self._format_messages(messages, system_prompt)
-
-        stream = await self._client.chat.completions.create(
-            model=self.model,
-            messages=formatted,
-            temperature=self.temperature,
-            max_completion_tokens=self.max_tokens,
-            stream=True,
-        )
-
-        async for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta.content:
-                yield delta.content
 
     def _build_request_kwargs(
         self,
@@ -171,7 +141,7 @@ class OpenAIClient(BaseLLMClient):
         wire_response_format = _build_response_format(output_format)
         if wire_response_format is not None:
             kwargs["response_format"] = wire_response_format
-        if output_format is not None and output_format.has_tools:
+        if output_format is not None and output_format.tools:
             kwargs["tools"] = _build_wire_tools(output_format.tools)
             wire_tool_choice = _build_wire_tool_choice(output_format.tool_choice)
             if wire_tool_choice is not None:

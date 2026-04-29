@@ -17,7 +17,6 @@ import allure
 import pytest
 
 from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
-from cast.director import DirectorCast
 from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
 from knowledge import graph as graph_mod, memory as memory_mod
 from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
@@ -60,15 +59,6 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
     retaliation = director_retaliation.RetaliationHandler(gs, actors)
     npc_turns = npc_turn.NPCTurnResolver(gs, actors)
     ticker = npc_ticker.NPCTicker(gs)
-    agents = director_execution._Agents(
-        events=events,
-        event_manager=event_mgr,
-        dialogue=dialogue,
-        retaliation=retaliation,
-        npc_turns=npc_turns,
-        npc_ticker=ticker,
-        memory_manager=mem_mgr,
-    )
 
     narrator = AsyncMock()
     narrator.execute = AsyncMock(return_value="Narrated.")
@@ -82,18 +72,21 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
             return_value=chronicler_schema.ChroniclerResponse(),
         )
 
-    cast_obj = DirectorCast(
+    executor = director_execution.PlanExecutor(
+        game_state=gs,
+        events=events,
+        event_manager=event_mgr,
+        dialogue=dialogue,
+        retaliation=retaliation,
+        npc_turns=npc_turns,
+        npc_ticker=ticker,
+        memory_manager=mem_mgr,
         scene_builder=scene_builder,
         narrator=narrator,
         npc_generator=npc_generator,
         data_miner=AsyncMock(),
         item_generator=None,
         world_chronicler=chronicler,
-    )
-    executor = director_execution.PlanExecutor(
-        gs,
-        agents,
-        cast_obj,
         register_npc_fn=partial(_register_into, gs),
     )
     return executor, gs, narrator, chronicler
@@ -182,7 +175,7 @@ class TestPlanExecutorTickerGate:
         # existing guard still in it and running a MOVE action (MOVE is one of
         # the two action types that still trigger a scene rebuild post-KER-33).
         scene = _seed_tavern_scene(gs, _GUARD_UUID)
-        executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
+        executor._scene_builder.execute = AsyncMock(return_value=scene)
 
         await executor.execute_plan(
             plan=route_plan("MOVE", delegate=["scene_builder"], targets=[]),
@@ -216,9 +209,9 @@ class TestPlanExecutorSameTurnEvictionSkip:
             description="The Rusty Anchor, mid-morning.",
             npcs_present=[scene_mod.SceneNPC(role="bartender")],
         )
-        executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
+        executor._scene_builder.execute = AsyncMock(return_value=scene)
         marco = NPCCard(name="Marco", occupation="bartender")
-        executor._cast.npc_generator.execute = AsyncMock(return_value=[marco])
+        executor._npc_generator.execute = AsyncMock(return_value=[marco])
 
         await executor.execute_plan(
             plan=route_plan("EXPLORE", delegate=["scene_builder"], targets=[]),
@@ -258,9 +251,9 @@ class TestPlanExecutorSameTurnEvictionSkip:
                 scene_mod.SceneNPC(role="bartender"),
             ],
         )
-        executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
+        executor._scene_builder.execute = AsyncMock(return_value=scene)
         marco = NPCCard(name="Marco", occupation="bartender")
-        executor._cast.npc_generator.execute = AsyncMock(return_value=[marco])
+        executor._npc_generator.execute = AsyncMock(return_value=[marco])
 
         await executor.execute_plan(
             plan=route_plan("EXPLORE", delegate=["scene_builder"], targets=[]),
@@ -299,7 +292,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
             description="The Rusty Anchor at night.",
             npcs_present=[scene_mod.SceneNPC(role="guard")],
         )
-        executor._cast.scene_builder.execute = AsyncMock(return_value=scene)
+        executor._scene_builder.execute = AsyncMock(return_value=scene)
 
         # npc_generator is called twice this turn: once by
         # _prepare_scene's init pass (for the SceneBuilder shell →
@@ -309,14 +302,14 @@ class TestPlanExecutorSameTurnEvictionSkip:
         # both MUST land in skip_uuids to survive.
         lucia = NPCCard(name="Lucia", occupation="guard")
         bruno = NPCCard(name="Bruno", occupation="baker")
-        executor._cast.npc_generator.execute = AsyncMock(side_effect=[[lucia], [bruno]])
+        executor._npc_generator.execute = AsyncMock(side_effect=[[lucia], [bruno]])
 
         # Silence the dialogue/retaliation path — targets_match_scene_npcs
         # will be True once Bruno's shell is initialised, so
         # _run_interactions fires; the test only cares about who the
         # ticker keeps.
-        executor._agents.dialogue.handle_dialogue = AsyncMock(return_value=([], set()))
-        executor._agents.retaliation.check_retaliation = AsyncMock(return_value=[])
+        executor._dialogue.handle_dialogue = AsyncMock(return_value=([], set()))
+        executor._retaliation.check_retaliation = AsyncMock(return_value=[])
 
         await executor.execute_plan(
             plan=route_plan(

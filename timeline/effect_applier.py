@@ -41,7 +41,7 @@ def _apply_add_knowledge(graph: KnowledgeGraph, effect: EventEffect) -> None:
     if knowledge_text:
         node = KnowledgeNode(
             text=knowledge_text,
-            scope=KnowledgeScope(scope_str),
+            scope=KnowledgeScope[scope_str.upper()],
             source=KnowledgeSource.FACT,
             canon=CanonSource.SESSION,
             tags=tags,

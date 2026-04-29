@@ -38,11 +38,6 @@ class PromptTemplate:
         self._sections: list[PromptSection] = list(sections or [])
         self._separator = separator
 
-    def add_section(self, section: PromptSection) -> PromptTemplate:
-        """Append a section. Returns ``self`` for fluent chaining."""
-        self._sections.append(section)
-        return self
-
     def render(self, **kwargs: str) -> str:
         """Render all sections whose required vars are satisfied."""
         parts: list[str] = []
@@ -58,11 +53,6 @@ class PromptTemplate:
         for section in self._sections:
             all_vars.update(section.required_vars)
         return all_vars
-
-    @property
-    def sections(self) -> tuple[PromptSection, ...]:
-        """Read-only snapshot of the ordered section list for introspection."""
-        return tuple(self._sections)
 
     def __repr__(self) -> str:
         names = [section.name for section in self._sections]

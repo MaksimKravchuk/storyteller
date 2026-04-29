@@ -46,13 +46,12 @@ def _make_engine(with_state: bool = True) -> MagicMock:
     engine.start_game = AsyncMock(return_value="Once upon a time in Rome...")
     engine.process_action = AsyncMock(return_value="You walk through the forum.")
     if with_state:
-        engine.game_state = SimpleNamespace(turn_count=3)
-        engine.knowledge_graph = MagicMock()
-        engine.event_manager = SimpleNamespace(all_events=[])
+        game_state = SimpleNamespace(turn_count=3, scene_number=None)
+        engine.assert_running = MagicMock(
+            return_value=(game_state, MagicMock(), SimpleNamespace(all_events=[])),
+        )
     else:
-        engine.game_state = None
-        engine.knowledge_graph = None
-        engine.event_manager = None
+        engine.assert_running = MagicMock(side_effect=RuntimeError("Game not started."))
     return engine
 
 
@@ -91,13 +90,13 @@ async def test_persist_engine_state_skips_empty_ai_logs() -> None:
 
 
 @allure.story("persist_engine_state")
-@allure.title("persist_engine_state raises RuntimeError when engine.game_state is None")
+@allure.title("persist_engine_state raises RuntimeError when the engine is not started")
 @pytest.mark.asyncio
 async def test_persist_engine_state_raises_when_no_game_state() -> None:
     ctx = _make_ctx()
     engine = _make_engine(with_state=False)
 
-    with pytest.raises(RuntimeError, match="game_state is None"):
+    with pytest.raises(RuntimeError, match="Game not started"):
         await handlers.persist_engine_state(ctx.repo, ctx.session_id, engine, turn_number=None)
 
 
@@ -109,14 +108,9 @@ async def test_handle_awaiting_setting_happy_path() -> None:
     engine = _make_engine(with_state=True)
 
     with (
-        patch(
-            "interfaces.telegram_handlers.create_engine_with_db_overrides",
-            new=AsyncMock(return_value=engine),
-        ),
-        patch(
-            "interfaces.telegram_handlers.get_and_clear_buffer",
-            return_value=[],
-        ),
+        patch("interfaces.telegram_handlers.create_engine", return_value=engine),
+        patch("engine.model_overrides.load_role_overrides", new=AsyncMock(return_value={})),
+        patch("interfaces.telegram_handlers.get_and_clear_buffer", return_value=[]),
     ):
         await handlers.handle_awaiting_setting(ctx, chat_id=42)
 
@@ -137,9 +131,9 @@ async def test_handle_awaiting_setting_engine_exception_rolls_back() -> None:
     engine = _make_engine(with_state=True)
     engine.start_game = AsyncMock(side_effect=RuntimeError("boom"))
 
-    with patch(
-        "interfaces.telegram_handlers.create_engine_with_db_overrides",
-        new=AsyncMock(return_value=engine),
+    with (
+        patch("interfaces.telegram_handlers.create_engine", return_value=engine),
+        patch("engine.model_overrides.load_role_overrides", new=AsyncMock(return_value={})),
     ):
         await handlers.handle_awaiting_setting(ctx, chat_id=42)
 

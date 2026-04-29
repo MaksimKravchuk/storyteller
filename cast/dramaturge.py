@@ -21,7 +21,6 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from cast.schemas.dramaturge_response import DramaturgeResponse
 from knowledge.graph import KnowledgeGraph
-from knowledge.graph_queries import query_by_canon
 from knowledge.node import CanonSource, KnowledgeNode
 from loguru import logger
 from models.game_state import GameState
@@ -49,7 +48,7 @@ def _format_historical_facts(graph: KnowledgeGraph) -> str:
     placeholder instead of an empty string so the prompt section still
     renders (and the LLM does not wonder where the canon went).
     """
-    historical: list[KnowledgeNode] = query_by_canon(graph, CanonSource.HISTORICAL)
+    historical = [node for node in graph.all_nodes() if node.canon == CanonSource.HISTORICAL]
     if not historical:
         return _EMPTY_FACTS_PLACEHOLDER
     capped = historical[:_MAX_HISTORICAL_FACTS]
@@ -139,7 +138,7 @@ class Dramaturge(BasePerformer):
             scene_history=_format_scene_history(game_state.scene_conversation_log),
         )
         return await self._send_json(
-            self._review_template.render(narration=narration),
+            self._review_template.format(narration=narration),
             response_model=DramaturgeResponse,
         )
 

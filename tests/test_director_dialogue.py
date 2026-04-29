@@ -156,7 +156,7 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: ["npc_generator", _ACTOR, _NARRATOR],
             },
         )
-        director._cast.npc_generator = npc_gen
+        director._executor._npc_generator = npc_gen
         director.llm_client.send_message = AsyncMock(
             return_value=LLMResponse(body='{"narration": "I\'m the blacksmith!"}', model="test", usage={})
         )
@@ -183,7 +183,7 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: ["npc_generator", _ACTOR, _NARRATOR],
             },
         )
-        director._cast.npc_generator = npc_gen
+        director._executor._npc_generator = npc_gen
         mock_actor = make_mock_actor("Hello!")
         director._actors[_NPC_A] = mock_actor
         await director.act("talk to the guard")
@@ -209,7 +209,7 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: [_ACTOR, _NARRATOR],
             },
         )
-        director._cast.npc_generator = npc_gen
+        director._executor._npc_generator = npc_gen
         director._actors[_NPC_A] = make_mock_actor("*blocks*")
 
         await director.act("grab his sword")
@@ -241,12 +241,12 @@ class TestNPCGeneratorDeduplication:
                 _DELEGATE_TO: ["npc_generator", _NARRATOR],
             },
         )
-        director._cast.npc_generator = make_mock_agent([generated])
+        director._executor._npc_generator = make_mock_agent([generated])
         director.llm_client.send_message = AsyncMock(
             return_value=LLMResponse(body='{"narration": "Fine silks!"}', model="test", usage={})
         )
         await director.act("talk to the merchant")
-        narrator_call = director._cast.narrator.execute.call_args
+        narrator_call = director._executor._narrator.execute.call_args
         input_data = narrator_call.kwargs.get("input_data") or narrator_call.args[0]
         assert input_data.new_npcs
         assert any("bolt-laden stall" in desc for desc in input_data.new_npcs)
@@ -282,6 +282,6 @@ class TestMoveToExistingNPCNoSceneRebuild:
         await director.act("walk to the guard")
 
         # SceneBuilder must NOT be called — the target NPC is already here
-        director._cast.scene_builder.execute.assert_not_called()
+        director._executor._scene_builder.execute.assert_not_called()
         # NPCGenerator must NOT be called — no new NPCs needed
-        director._cast.npc_generator.execute.assert_not_called()
+        director._executor._npc_generator.execute.assert_not_called()

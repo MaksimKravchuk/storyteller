@@ -88,54 +88,46 @@ CHRONICLER_SYSTEM_RU = PromptTemplate(
 )
 
 
-CHRONICLER_ADVANCE_RU = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "Номер сцены: {scene_number}\n\n"
-                "Открытые сюжетные нити:\n{open_threads}\n\n"
-                "Сводка хода:\n{turn_summary}\n\n"
-                "Двигай живой мир. Выведи ТОЛЬКО валидный JSON по схеме:\n"
-                "{{\n"
-                '  "new_threads": [\n'
-                "    {{\n"
-                '      "description": "короткая фраза, описывающая ситуацию",\n'
-                '      "category": "personal|political|natural|economic|social|cultural",\n'
-                '      "involved_locations": ["location-uuid", ...],\n'
-                '      "involved_npcs": ["npc-uuid", ...]\n'
-                "    }}\n"
-                "  ],\n"
-                '  "thread_updates": [\n'
-                '    {{"thread_uuid": "uuid", "status": "open|resolved|abandoned"}}\n'
-                "  ],\n"
-                '  "scheduled_events": [\n'
-                "    {{\n"
-                '      "name": "короткое название события",\n'
-                '      "hours_from_now": 4.0,\n'
-                '      "location_id": "location-uuid или null",\n'
-                '      "scope": "local|remote",\n'
-                '      "on_complete_description": "что произойдёт, когда событие сработает"\n'
-                "    }}\n"
-                "  ],\n"
-                '  "goal_drafts": [\n'
-                "    {{\n"
-                '      "npc_uuid": "uuid NPC, который теперь несёт намерение",\n'
-                '      "kind": "kill|pursue|protect",\n'
-                '      "description": "одна фраза о постоянном намерении",\n'
-                '      "target_uuid": "uuid NPC, на которого направлено намерение, или null",\n'
-                '      "source_thread_uuid": "uuid нити, обосновывающей цель, или null"\n'
-                "    }}\n"
-                "  ],\n"
-                '  "goal_updates": [\n'
-                '    {{"npc_uuid": "uuid", "status": "abandoned|blocked", "reason": "краткое обоснование"}}\n'
-                "  ],\n"
-                '  "world_mood": "короткая атмосферная подсказка или null"\n'
-                "}}\n"
-                "Пустые массивы и null приветствуются — верни {{}}, если в мире "
-                "ничего не изменилось."
-            ),
-            required_vars=["scene_number", "open_threads", "turn_summary"],
-        ),
-    ]
+CHRONICLER_ADVANCE_RU = (
+    "Номер сцены: {scene_number}\n\n"
+    "Открытые сюжетные нити:\n{open_threads}\n\n"
+    "Сводка хода:\n{turn_summary}\n\n"
+    "Двигай живой мир. Выведи ТОЛЬКО валидный JSON по схеме:\n"
+    "{{\n"
+    '  "new_threads": [\n'
+    "    {{\n"
+    '      "description": "короткая фраза, описывающая ситуацию",\n'
+    '      "category": "personal|political|natural|economic|social|cultural",\n'
+    '      "involved_locations": ["location-uuid", ...],\n'
+    '      "involved_npcs": ["npc-uuid", ...]\n'
+    "    }}\n"
+    "  ],\n"
+    '  "thread_updates": [\n'
+    '    {{"thread_uuid": "uuid", "status": "open|resolved|abandoned"}}\n'
+    "  ],\n"
+    '  "scheduled_events": [\n'
+    "    {{\n"
+    '      "name": "короткое название события",\n'
+    '      "hours_from_now": 4.0,\n'
+    '      "location_id": "location-uuid или null",\n'
+    '      "scope": "local|remote",\n'
+    '      "on_complete_description": "что произойдёт, когда событие сработает"\n'
+    "    }}\n"
+    "  ],\n"
+    '  "goal_drafts": [\n'
+    "    {{\n"
+    '      "npc_uuid": "uuid NPC, который теперь несёт намерение",\n'
+    '      "kind": "kill|pursue|protect",\n'
+    '      "description": "одна фраза о постоянном намерении",\n'
+    '      "target_uuid": "uuid NPC, на которого направлено намерение, или null",\n'
+    '      "source_thread_uuid": "uuid нити, обосновывающей цель, или null"\n'
+    "    }}\n"
+    "  ],\n"
+    '  "goal_updates": [\n'
+    '    {{"npc_uuid": "uuid", "status": "abandoned|blocked", "reason": "краткое обоснование"}}\n'
+    "  ],\n"
+    '  "world_mood": "короткая атмосферная подсказка или null"\n'
+    "}}\n"
+    "Пустые массивы и null приветствуются — верни {{}}, если в мире "
+    "ничего не изменилось."
 )

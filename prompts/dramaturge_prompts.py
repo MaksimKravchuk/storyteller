@@ -3,17 +3,16 @@
 This module owns the **English** Dramaturge catalog and the
 locale-aware :func:`get_dramaturge_prompts` lookup. To add a new
 locale, create a sibling ``dramaturge_prompts_<lang>.py`` module and
-wire its bundle into :data:`_CATALOG` below.
+wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
 from prompts.dramaturge_prompts_ru import DRAMATURGE_REVIEW_RU, DRAMATURGE_SYSTEM_RU
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 DRAMATURGE_SYSTEM = PromptTemplate(
     [
@@ -69,41 +68,33 @@ DRAMATURGE_SYSTEM = PromptTemplate(
 )
 
 
-DRAMATURGE_REVIEW = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "Narrator output to review:\n"
-                "---\n"
-                "{narration}\n"
-                "---\n\n"
-                "Check every factual claim in the passage above against the "
-                "historical canon and the recent in-scene dialogue provided in "
-                "the system prompt. If any sentence contradicts a historical "
-                "fact OR contradicts something an NPC already said this scene, "
-                "rewrite ONLY that sentence so the contradiction is gone. "
-                "Preserve every other sentence byte-for-byte. If nothing is "
-                "wrong, copy the narration across verbatim.\n\n"
-                "Use `unknown_entities` only for bare proper nouns — names of "
-                'real-world people, places, or items (e.g. "Pantheon", '
-                '"Julius Caesar"). These strings are looked up on Wikipedia, '
-                "so do NOT put sentences, descriptions, or fix summaries there.\n\n"
-                "Output ONLY valid JSON with this schema:\n"
-                "{{\n"
-                '  "corrected_narration": "the full passage, with any contradicting sentences rewritten",\n'
-                '  "contradictions": [\n'
-                '    "short description of each contradiction you fixed (empty list if none)"\n'
-                "  ],\n"
-                '  "unknown_entities": [\n'
-                '    "bare title of any real-world person/place/item you mentioned '
-                'that is NOT in the historical canon provided (empty list if none)"\n'
-                "  ]\n"
-                "}}"
-            ),
-            required_vars=["narration"],
-        ),
-    ]
+DRAMATURGE_REVIEW = (
+    "Narrator output to review:\n"
+    "---\n"
+    "{narration}\n"
+    "---\n\n"
+    "Check every factual claim in the passage above against the "
+    "historical canon and the recent in-scene dialogue provided in "
+    "the system prompt. If any sentence contradicts a historical "
+    "fact OR contradicts something an NPC already said this scene, "
+    "rewrite ONLY that sentence so the contradiction is gone. "
+    "Preserve every other sentence byte-for-byte. If nothing is "
+    "wrong, copy the narration across verbatim.\n\n"
+    "Use `unknown_entities` only for bare proper nouns — names of "
+    'real-world people, places, or items (e.g. "Pantheon", '
+    '"Julius Caesar"). These strings are looked up on Wikipedia, '
+    "so do NOT put sentences, descriptions, or fix summaries there.\n\n"
+    "Output ONLY valid JSON with this schema:\n"
+    "{{\n"
+    '  "corrected_narration": "the full passage, with any contradicting sentences rewritten",\n'
+    '  "contradictions": [\n'
+    '    "short description of each contradiction you fixed (empty list if none)"\n'
+    "  ],\n"
+    '  "unknown_entities": [\n'
+    '    "bare title of any real-world person/place/item you mentioned '
+    'that is NOT in the historical canon provided (empty list if none)"\n'
+    "  ]\n"
+    "}}"
 )
 
 
@@ -112,22 +103,12 @@ class DramaturgePrompts:
     """Per-locale Dramaturge prompt bundle."""
 
     system: PromptTemplate
-    review: PromptTemplate
+    review: str
 
 
-_CATALOG: types.MappingProxyType[Locale, DramaturgePrompts] = types.MappingProxyType(
+get_dramaturge_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: DramaturgePrompts(system=DRAMATURGE_SYSTEM, review=DRAMATURGE_REVIEW),
         Locale.RUSSIAN: DramaturgePrompts(system=DRAMATURGE_SYSTEM_RU, review=DRAMATURGE_REVIEW_RU),
     }
 )
-
-
-def get_dramaturge_prompts(language: str | None) -> DramaturgePrompts:
-    """Return the Dramaturge prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

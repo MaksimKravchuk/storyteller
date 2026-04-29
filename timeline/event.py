@@ -55,7 +55,6 @@ class GameEvent(StorytellerBase):
     location_id: str | None = None
     scope: str = "local"
     effects: list[EventEffect] = []
-    follow_up_events: list[dict] = []
     on_complete_description: str = ""
     completes_at: float = float(0)
     status: EventStatus = EventStatus.PENDING

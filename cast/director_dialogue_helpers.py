@@ -9,12 +9,9 @@ from loguru import logger
 
 from cast import dice as dice_mod
 from cast.dice import (
-    CombatOutcome,
-    CombatRoll,
     ContestOutcome,
     ContestRoll,
     ContestType,
-    roll_combat,
     roll_contest,
 )
 from llm.turn_event_logger import record_turn_event
@@ -188,40 +185,3 @@ def append_conversation_history(
         npc = work_item[0]
         npc.conversation_history.append({"role": _ROLE_USER, "content": player_action})
         npc.conversation_history.append({"role": _ROLE_ASSISTANT, "content": entry.get("response", "")})
-
-
-def build_combat_action(
-    player_action: str,
-    npc: Any,
-    is_aggressive: bool,
-    _rng: random.Random | None = None,
-) -> tuple[str, CombatRoll | None]:
-    """Build action text and optional combat roll for an NPC interaction.
-
-    Deprecated — use ``build_contested_action`` instead.
-    Kept for backward compatibility.
-    """
-    if not is_aggressive:
-        return player_action, None
-    combat_roll = roll_combat(npc.get_attribute("combat_skill", 3), _rng=_rng)
-    status_hint = ""
-    if combat_roll.outcome in (CombatOutcome.ACTOR_SUCCEEDS, CombatOutcome.ACTOR_DOMINATES):
-        status_hint = (
-            "\nThe NPC is injured. Update their physical status to reflect the injury. "
-            "Append [STATUS: <description>] at the end of your response."
-        )
-    action_text = (
-        "{0}\n\n"
-        "[DICE ROLL: player {1} vs "
-        "NPC {2}+{3}]\n"
-        "OUTCOME: {4}\n"
-        "You MUST narrate this outcome. Do NOT override the dice result.{5}"
-    ).format(
-        player_action,
-        combat_roll.player_roll,
-        combat_roll.npc_roll,
-        combat_roll.npc_bonus,
-        combat_roll.description,
-        status_hint,
-    )
-    return action_text, combat_roll

@@ -47,7 +47,7 @@ class TestCombatDiceIntegration:
     async def test_combat_roll_included_in_dialogue_result(self):
         director, _ = self._build(is_aggressive=True)
         await director.act("attack guard")
-        narrator_call = director._cast.narrator.execute.call_args
+        narrator_call = director._executor._narrator.execute.call_args
         raw_input = narrator_call.kwargs.get(_INPUT_DATA) or narrator_call.args[0]
         dialogue = raw_input.dialogue
         assert len(dialogue) == 1
@@ -60,7 +60,7 @@ class TestCombatDiceIntegration:
         director, _ = self._build(is_aggressive=True, combat_skill=0)
         npc = NPCCard(name="Merchant", occupation="merchant")
         npc.uuid = _NPC_A
-        director._deps.game_state.npcs[_NPC_A] = npc
+        director._game_state.npcs[_NPC_A] = npc
         mock_actor = make_mock_actor("*cowers*")
         director._actors[_NPC_A] = mock_actor
         await director.act("punch the merchant")

@@ -26,28 +26,18 @@ async def persist_engine(
     turn_number: int | None,
 ) -> None:
     """Save game state and flush any buffered AI call logs."""
-    game_state = engine.game_state
-    if game_state is None:
-        raise RuntimeError("engine.game_state is None — engine did not initialise correctly")
-    if engine.knowledge_graph is None:
-        raise RuntimeError("engine.knowledge_graph is None — engine did not initialise correctly")
-    await repo.save_game_state(
-        session_id,
-        game_state,
-        engine.knowledge_graph,
-        engine.event_manager.all_events if engine.event_manager else [],
-    )
+    game_state, knowledge_graph, event_manager = engine.assert_running()
+    await repo.save_game_state(session_id, game_state, knowledge_graph, event_manager.all_events)
     ai_logs = get_and_clear_buffer()
     if ai_logs:
         await repo.ai_logs.save(ai_logs, turn_number=turn_number)
     turn_events = get_and_clear_events()
     if turn_events:
-        scene_number = game_state.scene_number if game_state else None
         await repo.turn_events.save(
             turn_events,
             session_id=session_id,
             turn_number=turn_number,
-            scene_number=scene_number,
+            scene_number=game_state.scene_number,
         )
 
 
@@ -57,9 +47,7 @@ def snapshot_from_engine(engine: GameEngine, language: str = _DEFAULT_LANGUAGE) 
     ``language`` is forwarded to ``build_transcript`` so history lines can
     be re-wrapped with language-appropriate entity lemmatisation.
     """
-    game_state = engine.game_state
-    if game_state is None:
-        raise RuntimeError("engine.game_state is None — cannot build snapshot")
+    game_state, _, _ = engine.assert_running()
     return GameSnapshot(
         game_id=str(game_state.uuid),
         setting=game_state.setting.name,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import types
-from collections.abc import AsyncIterator
 from typing import Any
 
 from llm.base_client import BaseLLMClient, OutputFormat
@@ -15,14 +14,12 @@ _TYPE_AUTO = "auto"
 _TYPE_ANY = "any"
 _TYPE_NONE = "none"
 
-# Portable ``tool_choice`` keyword → Anthropic wire payload. Frozen so
-# it isn't rebuilt on every request and is safe as a module constant.
 _NAMED_CHOICE_MAP: types.MappingProxyType[str, dict[str, Any]] = types.MappingProxyType(
     {
         "auto": {_KEY_TYPE: _TYPE_AUTO},
         "required": {_KEY_TYPE: _TYPE_ANY},
         "none": {_KEY_TYPE: _TYPE_NONE},
-    },
+    }
 )
 
 # Short aliases so tool-translation signatures stay within the
@@ -115,12 +112,12 @@ class AnthropicClient(BaseLLMClient):
             max_tokens,
             output_format,
         )
-        if output_format is not None and output_format.is_strict:
+        if output_format is not None and output_format.schema is not None:
             if not self.supports_structured_output:
                 raise NotImplementedError(
                     "structured outputs not supported for model={0}".format(self.model),
                 )
-            kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": output_format.schema or {}}
+            kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": output_format.schema}
             response = await self._client.beta.messages.create(**kwargs)
         else:
             response = await self._client.messages.create(**kwargs)
@@ -132,7 +129,6 @@ class AnthropicClient(BaseLLMClient):
 
         return LLMResponse(
             body=response_text,
-            raw_response=response,
             usage={
                 "prompt_tokens": response.usage.input_tokens,
                 "completion_tokens": response.usage.output_tokens,
@@ -140,26 +136,6 @@ class AnthropicClient(BaseLLMClient):
             model=response.model,
             tool_calls=_parse_tool_calls(response),
         )
-
-    async def send_message_streaming(
-        self,
-        messages: list[Message],
-        system_prompt: str = "",
-    ) -> AsyncIterator[str]:
-        formatted = self._format_messages(messages)
-
-        kwargs: dict[str, Any] = {
-            "model": self.model,
-            "messages": formatted,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-        }
-        if system_prompt:
-            kwargs["system"] = system_prompt
-
-        async with self._client.messages.stream(**kwargs) as stream:
-            async for text in stream.text_stream:
-                yield text
 
     def _build_request_kwargs(
         self,
@@ -183,7 +159,7 @@ class AnthropicClient(BaseLLMClient):
         }
         if system_prompt:
             kwargs["system"] = system_prompt
-        if output_format is not None and output_format.has_tools:
+        if output_format is not None and output_format.tools:
             kwargs["tools"] = _build_tools(output_format.tools)
             wire_tool_choice = _build_tool_choice(output_format.tool_choice)
             if wire_tool_choice is not None:

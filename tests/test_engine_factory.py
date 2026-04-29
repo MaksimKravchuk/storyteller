@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from defaults.models import AI_MODELS, ModelConfig
-from engine.factory import create_engine, create_engine_from_state, create_engine_with_db_overrides
+from engine.factory import create_engine, create_engine_from_state
 from engine.game_engine import GameEngine
 from knowledge.graph import KnowledgeGraph
 
@@ -55,11 +55,11 @@ def test_create_engine_returns_game_engine_with_defaults() -> None:
         "openrouter": "openrouter-key",
         "deepseek": "deepseek-key",
     }
-    assert engine._models.director is AI_MODELS.gpt5_4_mini
-    assert engine._models.agent is AI_MODELS.gpt5_4_nano
-    assert engine._models.narrator is AI_MODELS.gpt5_4_mini
+    assert engine._director_model is AI_MODELS.gpt5_4_mini
+    assert engine._agent_model is AI_MODELS.gpt5_4_nano
+    assert engine._narrator_model is AI_MODELS.gpt5_4_mini
     # Dramaturge is off by default — no model should be resolved for it.
-    assert engine._models.dramaturge is None
+    assert engine._dramaturge_model is None
 
 
 @allure.story("create_engine")
@@ -101,7 +101,7 @@ def test_create_engine_resolves_dramaturge_model_when_enabled() -> None:
         assert resolver.call_count == 4
         called_ids = [call.args[0] for call in resolver.call_args_list]
         assert called_ids == ["gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.4-mini", "gpt-5.4-nano"]
-    assert engine._models.dramaturge is AI_MODELS.gpt5_4_nano
+    assert engine._dramaturge_model is AI_MODELS.gpt5_4_nano
 
 
 @allure.story("create_engine_from_state")
@@ -142,34 +142,13 @@ def test_create_engine_applies_overrides() -> None:
         engine = create_engine(cfg, overrides=overrides)
 
     # Overridden roles come from the override dict directly.
-    assert engine._models.director is AI_MODELS.claude_opus
-    assert engine._models.narrator is AI_MODELS.claude_sonnet
+    assert engine._director_model is AI_MODELS.claude_opus
+    assert engine._narrator_model is AI_MODELS.claude_sonnet
     # Unoverridden role still uses the resolver.
-    assert engine._models.agent is AI_MODELS.gpt5_4_nano
+    assert engine._agent_model is AI_MODELS.gpt5_4_nano
     # Only the agent role called resolve_model_config.
     assert resolver.call_count == 1
     assert resolver.call_args_list[0].args[0] == "gpt-5.4-nano"
-
-
-@allure.story("create_engine_with_db_overrides")
-@allure.title("create_engine_with_db_overrides reads DB overrides and applies them to the built engine")
-@pytest.mark.asyncio
-async def test_create_engine_with_db_overrides_reads_repo_and_applies() -> None:
-    """The convenience wrapper must read role overrides from the repo and apply them."""
-    cfg = _make_config()
-    repo = AsyncMock()
-    repo.settings.get_model_overrides.return_value = {
-        "narrator": ("anthropic", "claude-opus-4-6"),
-    }
-    with patch("engine.factory.resolve_model_config", side_effect=_resolver_side_effect):
-        engine = await create_engine_with_db_overrides(repo, cfg, language="Russian")
-
-    repo.settings.get_model_overrides.assert_awaited_once()
-    assert engine._language == "Russian"
-    assert engine._models.narrator.provider == "anthropic"
-    assert engine._models.narrator.model_id == "claude-opus-4-6"
-    # Non-overridden roles still come from the env defaults.
-    assert engine._models.director is AI_MODELS.gpt5_4_mini
 
 
 @allure.story("create_engine_from_state")
@@ -195,5 +174,5 @@ async def test_create_engine_from_state_does_not_apply_overrides(simple_setting)
 
     # Resolver called for every role (no overrides applied).
     assert resolver.call_count == 3
-    assert engine._models.director is AI_MODELS.gpt5_4_mini
-    assert engine._models.narrator is AI_MODELS.gpt5_4_mini
+    assert engine._director_model is AI_MODELS.gpt5_4_mini
+    assert engine._narrator_model is AI_MODELS.gpt5_4_mini

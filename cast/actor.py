@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from cast.actor_config import ENVELOPE_MODE_DEFAULT, format_past_memories, goal_prompt_vars
-from cast.actor_tags import strip_trailing_tags
+from cast.actor_config import format_past_memories, goal_prompt_vars
 from cast.base_performer_class import BasePerformer, LLMJSONError
 from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
 from cast.schemas.actor_reply import ActorEnvelope, ActorReply
@@ -35,17 +34,18 @@ class Actor(BasePerformer):
         npc: NPCCard,
         knowledge_query: KnowledgeQueryEngine,
         language: str = "English",
-        envelope_mode: bool = ENVELOPE_MODE_DEFAULT,
     ):
+        prompts = get_actor_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=get_actor_prompts(language).system,
+            system_prompt_template=prompts.system_dialogue,
         )
+        self._system_dialogue = prompts.system_dialogue
+        self._system_action = prompts.system_action
         self.npc = npc
         self.knowledge_query = knowledge_query
         self._conversation: list[Message] = []
         self.set_context(language=language)
-        self._envelope_mode = envelope_mode
 
     async def act(self, input_data: str, context: dict) -> ActorReply:
         """Respond to a player interaction in character.
@@ -61,7 +61,7 @@ class Actor(BasePerformer):
         carries no name-reveal signal.
         """
         # Build knowledge context for this NPC
-        accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc, topic_tags=None)
+        accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc)
 
         self.set_context(
             npc_name=self.npc.name,
@@ -82,8 +82,7 @@ class Actor(BasePerformer):
         if context.get("is_npc_turn"):
             return await self._act_npc_turn(input_data)
 
-        self._system_prompt_vars.pop("output_mode_action", None)
-        self.set_context(output_mode_dialogue="1")
+        self.system_prompt_template = self._system_dialogue
         envelope = await self._produce_envelope(input_data)
 
         # Store only the prose narration so multi-turn dialogue context stays clean.
@@ -110,28 +109,25 @@ class Actor(BasePerformer):
         do not mutate ``npc.current_mood`` / ``npc.physical_status``. Those
         stay calibrated from the next dialogue turn. ``NPCTurnResolver``
         parses the returned ``ActorReply.text`` as the action JSON.
-
-        Each dispatch path clears the other's gate var before setting its own
-        (``_act_npc_turn`` pops ``output_mode_dialogue``; the dialogue path in
-        ``act()`` pops ``output_mode_action``), so exactly one output-format
-        section renders regardless of call order on the same Actor instance.
         """
-        self._system_prompt_vars.pop("output_mode_dialogue", None)
-        self.set_context(output_mode_action="1")
+        self.system_prompt_template = self._system_action
         raw = await self._send(input_data, conversation=[])
         return ActorReply(text=raw.strip(), revealed_names=())
 
     async def _produce_envelope(self, input_data: str) -> ActorEnvelope:
-        """Call the envelope or legacy path, with a graceful fallback on LLM JSON failure.
+        """Call the LLM envelope path, with a graceful fallback on JSON failure.
 
         Without this fallback, three consecutive malformed LLM responses
         bubble an :class:`LLMJSONError` all the way to the web/telegram
         interface and surface as an opaque 500 — killing the scene on one
         bad batch of tokens.
         """
-        dispatch = self._act_envelope if self._envelope_mode else self._act_legacy
         try:
-            return await dispatch(input_data)
+            return await self._send_json(
+                input_data,
+                conversation=self._conversation,
+                response_model=ActorEnvelope,
+            )
         except LLMJSONError as exc:
             logger.warning(
                 "Actor envelope parse failed for NPC {} ({}): {}",
@@ -141,23 +137,6 @@ class Actor(BasePerformer):
             )
             salvaged = (exc.raw_response or "").strip()[:_SALVAGE_NARRATION_MAX]
             return ActorEnvelope(narration=salvaged or _FALLBACK_NARRATION)
-
-    async def _act_envelope(self, input_data: str) -> ActorEnvelope:
-        return await self._send_json(
-            input_data,
-            conversation=self._conversation,
-            response_model=ActorEnvelope,
-        )
-
-    async def _act_legacy(self, input_data: str) -> ActorEnvelope:
-        raw = await self._send(input_data, conversation=self._conversation)
-        parsed = strip_trailing_tags(raw)
-        return ActorEnvelope(
-            narration=parsed.text,
-            mood=parsed.mood,
-            status=parsed.status,
-            revealed_names=parsed.revealed,
-        )
 
 
 def _apply_optional_sections(actor: Actor, context: dict) -> None:

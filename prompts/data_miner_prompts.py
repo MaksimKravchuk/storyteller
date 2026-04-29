@@ -3,12 +3,11 @@
 This module owns the **English** Data Miner catalog and the
 locale-aware :func:`get_data_miner_prompts` lookup. To add a new
 locale, create a sibling ``data_miner_prompts_<lang>.py`` module and
-wire its bundle into :data:`_CATALOG` below.
+wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
@@ -17,7 +16,7 @@ from prompts.data_miner_prompts_ru import (
     DATA_MINER_SEARCH_TERMS_RU,
     DATA_MINER_SYSTEM_RU,
 )
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 DATA_MINER_SYSTEM = PromptTemplate(
     [
@@ -45,49 +44,33 @@ DATA_MINER_SYSTEM = PromptTemplate(
 )
 
 
-DATA_MINER_SEARCH_TERMS = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "The player wants a game setting based on:\n"
-                '"{setting_request}"\n\n'
-                "Generate a JSON list of 3-8 Wikipedia search terms that would "
-                "give us the best historical context for this setting.\n"
-                "Output ONLY a JSON object: "
-                '{{"search_terms": ["term1", "term2", ...]}}'
-            ),
-            required_vars=["setting_request"],
-        ),
-    ]
+DATA_MINER_SEARCH_TERMS = (
+    "The player wants a game setting based on:\n"
+    '"{setting_request}"\n\n'
+    "Generate a JSON list of 3-8 Wikipedia search terms that would "
+    "give us the best historical context for this setting.\n"
+    "Output ONLY a JSON object: "
+    '{{"search_terms": ["term1", "term2", ...]}}'
 )
 
 
-DATA_MINER_RESEARCH = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "Setting request: {setting_request}\n\n"
-                "Raw Wikipedia research:\n{raw_research}\n\n"
-                "Synthesise this into a structured game setting. "
-                "Output ONLY valid JSON with these fields:\n"
-                "{{\n"
-                '  "name": "Setting name",\n'
-                '  "time_period": "e.g. 1st century AD",\n'
-                '  "region": "e.g. Roman Empire, Italia",\n'
-                '  "summary": "2-3 paragraph overview",\n'
-                '  "key_persons": [{{"name": "...", "role": "...", "description": "..."}}],\n'
-                '  "key_events": [{{"name": "...", "date": "...", "description": "..."}}],\n'
-                '  "locations": [{{"name": "...", "type": "...", "description": "..."}}],\n'
-                '  "traditions": ["..."],\n'
-                '  "technologies": ["..."],\n'
-                '  "social_structure": "Description of social hierarchy"\n'
-                "}}"
-            ),
-            required_vars=["setting_request", "raw_research"],
-        ),
-    ]
+DATA_MINER_RESEARCH = (
+    "Setting request: {setting_request}\n\n"
+    "Raw Wikipedia research:\n{raw_research}\n\n"
+    "Synthesise this into a structured game setting. "
+    "Output ONLY valid JSON with these fields:\n"
+    "{{\n"
+    '  "name": "Setting name",\n'
+    '  "time_period": "e.g. 1st century AD",\n'
+    '  "region": "e.g. Roman Empire, Italia",\n'
+    '  "summary": "2-3 paragraph overview",\n'
+    '  "key_persons": [{{"name": "...", "role": "...", "description": "..."}}],\n'
+    '  "key_events": [{{"name": "...", "date": "...", "description": "..."}}],\n'
+    '  "locations": [{{"name": "...", "type": "...", "description": "..."}}],\n'
+    '  "traditions": ["..."],\n'
+    '  "technologies": ["..."],\n'
+    '  "social_structure": "Description of social hierarchy"\n'
+    "}}"
 )
 
 
@@ -96,11 +79,11 @@ class DataMinerPrompts:
     """Per-locale Data Miner prompt bundle."""
 
     system: PromptTemplate
-    search_terms: PromptTemplate
-    research: PromptTemplate
+    search_terms: str
+    research: str
 
 
-_CATALOG: types.MappingProxyType[Locale, DataMinerPrompts] = types.MappingProxyType(
+get_data_miner_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: DataMinerPrompts(
             system=DATA_MINER_SYSTEM,
@@ -114,13 +97,3 @@ _CATALOG: types.MappingProxyType[Locale, DataMinerPrompts] = types.MappingProxyT
         ),
     }
 )
-
-
-def get_data_miner_prompts(language: str | None) -> DataMinerPrompts:
-    """Return the Data Miner prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

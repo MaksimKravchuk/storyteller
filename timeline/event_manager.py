@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from timeline.effect_applier import EffectApplier
-from timeline.event import EventEffect, EventStatus, GameEvent
+from timeline.event import EventStatus, GameEvent
 
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
@@ -28,28 +28,11 @@ def _collect_completed(
     return completed
 
 
-def _resolve_completed(completed: list[GameEvent], applier: EffectApplier, schedule_fn) -> None:
-    """Apply effects and schedule follow-ups for each completed event."""
+def _resolve_completed(completed: list[GameEvent], applier: EffectApplier) -> None:
+    """Apply effects for each completed event."""
     for ev in completed:
         for effect in ev.effects:
             applier.apply(effect)
-        for follow_up_data in ev.follow_up_events:
-            schedule_fn(_build_follow_up(ev, follow_up_data))
-
-
-def _build_follow_up(event: GameEvent, follow_up_data: dict) -> GameEvent:
-    """Build a follow-up GameEvent from serialised data."""
-    return GameEvent(
-        name=follow_up_data.get("name", "Follow-up event"),
-        scheduled_at=event.completes_at,
-        duration=follow_up_data.get("duration", 1.0),
-        owner_id=follow_up_data.get("owner_id", event.owner_id),
-        location_id=follow_up_data.get("location_id", event.location_id),
-        scope=follow_up_data.get("scope", event.scope),
-        effects=[EventEffect(**eff) for eff in follow_up_data.get("effects", [])],
-        follow_up_events=follow_up_data.get("follow_up_events", []),
-        on_complete_description=follow_up_data.get("on_complete_description", ""),
-    )
 
 
 class EventManager:
@@ -110,13 +93,9 @@ class EventManager:
         clock_before = self._game_state.game_clock
         self._game_state.advance_clock(hours)
         completed = _collect_completed(self._events, clock_before, self._game_state.game_clock)
-        _resolve_completed(completed, self._applier, self.schedule)
+        _resolve_completed(completed, self._applier)
         return completed
 
-    def get_pending_events(self, owner_id: str | None = None) -> list[GameEvent]:
-        """Return pending events, optionally filtered by owner NPC."""
-        return [
-            ev
-            for ev in self._events
-            if ev.status == EventStatus.PENDING and (owner_id is None or ev.owner_id == owner_id)
-        ]
+    def get_pending_events(self) -> list[GameEvent]:
+        """Return all pending events."""
+        return [ev for ev in self._events if ev.status == EventStatus.PENDING]

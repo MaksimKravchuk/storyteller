@@ -55,7 +55,7 @@ def _make_performer(llm_client: Any | None = None) -> _JsonPerformer:
 
 
 def _llm_response(body: str) -> LLMResponse:
-    return LLMResponse(body=body, raw_response=None, usage={}, model="test-model")
+    return LLMResponse(body=body, usage={}, model="test-model")
 
 
 def _force_fallback() -> Any:
@@ -159,7 +159,7 @@ class TestSendJsonStrictMode:
         assert result.count == 7
         assert llm.send_message.call_count == 1
         output_format = llm.send_message.call_args.kwargs["output_format"]
-        assert output_format.is_strict is True
+        assert output_format.schema is not None
         assert output_format.schema == _WidgetResponse.model_json_schema()
         assert output_format.schema_name == "_WidgetResponse"
 
@@ -189,8 +189,8 @@ class TestSendJsonStrictMode:
         call_history = llm.send_message.call_args_list
         first_output = call_history[0].kwargs["output_format"]
         second_output = call_history[1].kwargs["output_format"]
-        assert first_output.is_strict is True
-        assert second_output.is_strict is False
+        assert first_output.schema is not None
+        assert second_output.schema is None
         assert second_output.response_format == {"type": "json_object"}
 
     @allure.story("Strict path failure")
@@ -238,5 +238,5 @@ class TestSendJsonStrictMode:
         # All calls after the first must be on the prompt-fallback path.
         for call in llm.send_message.call_args_list[1:]:
             output_format = call.kwargs["output_format"]
-            assert output_format.is_strict is False
+            assert output_format.schema is None
             assert output_format.response_format == {"type": "json_object"}

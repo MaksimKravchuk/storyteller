@@ -3,17 +3,16 @@
 This module owns the **English** World Chronicler catalog and the
 locale-aware :func:`get_chronicler_prompts` lookup. To add a new
 locale, create a sibling ``chronicler_prompts_<lang>.py`` module and
-wire its bundle into :data:`_CATALOG` below.
+wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
 from prompts.chronicler_prompts_ru import CHRONICLER_ADVANCE_RU, CHRONICLER_SYSTEM_RU
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 CHRONICLER_SYSTEM = PromptTemplate(
     [
@@ -90,55 +89,47 @@ CHRONICLER_SYSTEM = PromptTemplate(
 )
 
 
-CHRONICLER_ADVANCE = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "Scene number: {scene_number}\n\n"
-                "Open world threads:\n{open_threads}\n\n"
-                "Turn summary:\n{turn_summary}\n\n"
-                "Advance the living world. Output ONLY valid JSON matching this schema:\n"
-                "{{\n"
-                '  "new_threads": [\n'
-                "    {{\n"
-                '      "description": "short clause describing the situation",\n'
-                '      "category": "personal|political|natural|economic|social|cultural",\n'
-                '      "involved_locations": ["location-uuid", ...],\n'
-                '      "involved_npcs": ["npc-uuid", ...]\n'
-                "    }}\n"
-                "  ],\n"
-                '  "thread_updates": [\n'
-                '    {{"thread_uuid": "uuid", "status": "open|resolved|abandoned"}}\n'
-                "  ],\n"
-                '  "scheduled_events": [\n'
-                "    {{\n"
-                '      "name": "short event name",\n'
-                '      "hours_from_now": 4.0,\n'
-                '      "location_id": "location-uuid or null",\n'
-                '      "scope": "local|remote",\n'
-                '      "on_complete_description": "what happens when it resolves"\n'
-                "    }}\n"
-                "  ],\n"
-                '  "goal_drafts": [\n'
-                "    {{\n"
-                '      "npc_uuid": "uuid of the NPC who now carries the intent",\n'
-                '      "kind": "kill|pursue|protect",\n'
-                '      "description": "one-sentence standing intent",\n'
-                '      "target_uuid": "uuid of the NPC the intent is directed at, or null",\n'
-                '      "source_thread_uuid": "uuid of the thread justifying the goal, or null"\n'
-                "    }}\n"
-                "  ],\n"
-                '  "goal_updates": [\n'
-                '    {{"npc_uuid": "uuid", "status": "abandoned|blocked", "reason": "short justification"}}\n'
-                "  ],\n"
-                '  "world_mood": "short atmospheric hint or null"\n'
-                "}}\n"
-                "Empty arrays and null fields are encouraged — return {{}} if nothing in the world changed."
-            ),
-            required_vars=["scene_number", "open_threads", "turn_summary"],
-        ),
-    ]
+CHRONICLER_ADVANCE = (
+    "Scene number: {scene_number}\n\n"
+    "Open world threads:\n{open_threads}\n\n"
+    "Turn summary:\n{turn_summary}\n\n"
+    "Advance the living world. Output ONLY valid JSON matching this schema:\n"
+    "{{\n"
+    '  "new_threads": [\n'
+    "    {{\n"
+    '      "description": "short clause describing the situation",\n'
+    '      "category": "personal|political|natural|economic|social|cultural",\n'
+    '      "involved_locations": ["location-uuid", ...],\n'
+    '      "involved_npcs": ["npc-uuid", ...]\n'
+    "    }}\n"
+    "  ],\n"
+    '  "thread_updates": [\n'
+    '    {{"thread_uuid": "uuid", "status": "open|resolved|abandoned"}}\n'
+    "  ],\n"
+    '  "scheduled_events": [\n'
+    "    {{\n"
+    '      "name": "short event name",\n'
+    '      "hours_from_now": 4.0,\n'
+    '      "location_id": "location-uuid or null",\n'
+    '      "scope": "local|remote",\n'
+    '      "on_complete_description": "what happens when it resolves"\n'
+    "    }}\n"
+    "  ],\n"
+    '  "goal_drafts": [\n'
+    "    {{\n"
+    '      "npc_uuid": "uuid of the NPC who now carries the intent",\n'
+    '      "kind": "kill|pursue|protect",\n'
+    '      "description": "one-sentence standing intent",\n'
+    '      "target_uuid": "uuid of the NPC the intent is directed at, or null",\n'
+    '      "source_thread_uuid": "uuid of the thread justifying the goal, or null"\n'
+    "    }}\n"
+    "  ],\n"
+    '  "goal_updates": [\n'
+    '    {{"npc_uuid": "uuid", "status": "abandoned|blocked", "reason": "short justification"}}\n'
+    "  ],\n"
+    '  "world_mood": "short atmospheric hint or null"\n'
+    "}}\n"
+    "Empty arrays and null fields are encouraged — return {{}} if nothing in the world changed."
 )
 
 
@@ -147,22 +138,12 @@ class ChroniclerPrompts:
     """Per-locale World Chronicler prompt bundle."""
 
     system: PromptTemplate
-    advance: PromptTemplate
+    advance: str
 
 
-_CATALOG: types.MappingProxyType[Locale, ChroniclerPrompts] = types.MappingProxyType(
+get_chronicler_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: ChroniclerPrompts(system=CHRONICLER_SYSTEM, advance=CHRONICLER_ADVANCE),
         Locale.RUSSIAN: ChroniclerPrompts(system=CHRONICLER_SYSTEM_RU, advance=CHRONICLER_ADVANCE_RU),
     }
 )
-
-
-def get_chronicler_prompts(language: str | None) -> ChroniclerPrompts:
-    """Return the World Chronicler prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

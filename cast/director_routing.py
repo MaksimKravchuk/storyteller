@@ -16,7 +16,6 @@ from cast.director_tools import ACTION_TOOLS, RouteResult, parse_tool_call
 from cast.schemas import action_plan as plan_schemas
 from llm.message import Message, Role, Tool, ToolCall
 from models.game_state import GameState
-from prompts.base_template import PromptTemplate
 
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
@@ -40,7 +39,7 @@ class ActionRouter:
         self,
         game_state: GameState,
         send_tool_fn: Callable[..., Awaitable[ToolCall]],
-        action_routing_template: PromptTemplate,
+        action_routing_template: str,
         tools: list[Tool] | None = None,
     ) -> None:
         self._gs = game_state
@@ -68,7 +67,7 @@ class ActionRouter:
                 conversation=scene_history + history,
             )
         else:
-            prompt = self._action_routing_template.render(player_action=player_action)
+            prompt = self._action_routing_template.format(player_action=player_action)
             call = await self._send_tool(
                 prompt,
                 tools=self._tools,
@@ -86,7 +85,7 @@ class ActionRouter:
         The persisted shape is a JSON-encoded dict so existing saved
         sessions keep deserialising cleanly.
         """
-        prompt = self._action_routing_template.render(player_action=player_action)
+        prompt = self._action_routing_template.format(player_action=player_action)
         self._gs.pending_clarification = [
             {"role": "user", "content": prompt},
             {

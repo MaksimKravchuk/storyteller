@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from typing import Any
 
 from cast import (
@@ -115,45 +114,44 @@ def _ensure_npc_targets_in_scene(
     dlg.ensure_targets_in_scene(npc_targets)
 
 
-@dataclass
-class _Agents:
-    """Bundle of sub-agents used by PlanExecutor.
-
-    ``memory_manager`` is typed as :class:`typing.Any` rather than
-    :class:`knowledge.memory.MemoryManager` to keep the module-level
-    import count of this file under the WPS201 budget. The field is
-    only handed off to other modules; no method-dispatch against it
-    happens inside this module.
-
-    ``event_manager`` is bundled alongside the :class:`EventProcessor`
-    so the WAIT ambience refresh (KER-20) can query pending timeline
-    events without forcing a new passthrough method on
-    :class:`EventProcessor` — that module is already at its WPS214
-    method budget.
-    """
-
-    events: director_events.EventProcessor
-    event_manager: EventManager
-    dialogue: Any  # cast.director_dialogue.DialogueHandler — typed loosely to keep the import budget in check.
-    retaliation: director_retaliation.RetaliationHandler
-    npc_turns: Any  # cast.npc_turn.NPCTurnResolver — typed loosely to keep the import budget in check.
-    npc_ticker: npc_ticker_mod.NPCTicker
-    memory_manager: Any
-
-
 class PlanExecutor:
     """Executes a routing plan by coordinating sub-agents."""
 
     def __init__(
         self,
+        *,
         game_state: GameState,
-        agents: _Agents,
-        cast: Any,
-        register_npc_fn: Any,
+        events: director_events.EventProcessor,
+        event_manager: EventManager,
+        dialogue: Any,
+        retaliation: director_retaliation.RetaliationHandler,
+        npc_turns: Any,
+        npc_ticker: npc_ticker_mod.NPCTicker,
+        memory_manager: Any,
+        scene_builder: Any,
+        narrator: Any,
+        npc_generator: Any,
+        data_miner: Any,
+        item_generator: Any,
+        world_chronicler: Any | None = None,
+        dramaturge: Any | None = None,
+        register_npc_fn: Any = None,
     ) -> None:
         self._gs = game_state
-        self._agents = agents
-        self._cast = cast
+        self._events = events
+        self._event_manager = event_manager
+        self._dialogue = dialogue
+        self._retaliation = retaliation
+        self._npc_turns = npc_turns
+        self._npc_ticker = npc_ticker
+        self._memory_manager = memory_manager
+        self._scene_builder = scene_builder
+        self._narrator = narrator
+        self._npc_generator = npc_generator
+        self._data_miner = data_miner
+        self._item_generator = item_generator
+        self._world_chronicler = world_chronicler
+        self._dramaturge = dramaturge
         self._register_npc = register_npc_fn
 
     async def execute_plan(
@@ -174,7 +172,7 @@ class PlanExecutor:
             raw_outputs.completed_events = [ev.on_complete_description or ev.name for ev in local_events]
 
         await self._resolve_npc_turns(action_type, player_action, raw_outputs, is_aggressive)
-        self._agents.npc_ticker.tick(raw_outputs, skip_uuids=new_uuids)
+        self._npc_ticker.tick(raw_outputs, skip_uuids=new_uuids)
         # Tactical TTL sweep follows the NPC ticker so any NPC the ticker
         # just evicted is no longer in scene when expiry conditions are
         # checked. Stale tactical goals would otherwise wedge a vengeful
@@ -268,8 +266,8 @@ class PlanExecutor:
         Both side effects share a single scene-change boundary check
         with the narration path inside ``execute_plan``.
         """
-        self._agents.events.propagate_rumors_for_turn(completed_events)
-        if self._cast.world_chronicler is not None:
+        self._events.propagate_rumors_for_turn(completed_events)
+        if self._world_chronicler is not None:
             await self._advance_world_state(raw_outputs, player_action)
 
     async def _narrate_and_review(
@@ -290,7 +288,7 @@ class PlanExecutor:
         fallback, so this wrap is belt-and-braces against future
         changes that might let an exception escape ``act()``.
         """
-        narration = await self._cast.narrator.execute(
+        narration = await self._narrator.execute(
             input_data=raw_outputs,
             context={
                 _KEY_PLAYER_ACTION: player_action,
@@ -298,15 +296,15 @@ class PlanExecutor:
                 "scene_history": self._gs.scene_conversation_log[-5:],
             },
         )
-        if self._cast.dramaturge is None or raw_outputs.scene is None:
+        if self._dramaturge is None or raw_outputs.scene is None:
             return narration
         try:
-            return await self._cast.dramaturge.execute(
+            return await self._dramaturge.execute(
                 input_data=narration,
                 context={
                     _KEY_PLAYER_ACTION: player_action,
                     _KEY_GAME_STATE: self._gs,
-                    "data_miner": self._cast.data_miner,
+                    "data_miner": self._data_miner,
                 },
             )
         except asyncio.CancelledError:
@@ -329,7 +327,8 @@ class PlanExecutor:
         :meth:`EventProcessor.schedule_drafts` so the timeline boundary
         stays inside :mod:`cast.director_events`.
         """
-        response: chronicler_schema.ChroniclerResponse = await self._cast.world_chronicler.execute(
+        assert self._world_chronicler is not None
+        response: chronicler_schema.ChroniclerResponse = await self._world_chronicler.execute(
             input_data=raw_outputs,
             context={_KEY_PLAYER_ACTION: player_action, _KEY_GAME_STATE: self._gs},
         )
@@ -357,7 +356,7 @@ class PlanExecutor:
         state.last_chronicled_scene = scene_number
 
         if response.scheduled_events:
-            self._agents.events.schedule_drafts(
+            self._events.schedule_drafts(
                 response.scheduled_events,
                 now=self._gs.game_clock,
             )
@@ -388,7 +387,7 @@ class PlanExecutor:
         :meth:`Director.act` before this code path, so ``completed_events``
         is populated for the imminent-events collector.
         """
-        if self._cast.world_chronicler is not None:
+        if self._world_chronicler is not None:
             await self._advance_world_state(raw_outputs, player_action)
 
         location_id = self._gs.player.location_id
@@ -457,7 +456,7 @@ class PlanExecutor:
         """
         lines = [ev.on_complete_description or ev.name for ev in completed_events]
         lookahead = self._gs.game_clock + _WAIT_EVENT_LOOKAHEAD_HOURS
-        for pending in self._agents.event_manager.get_pending_events():
+        for pending in self._event_manager.get_pending_events():
             if pending.location_id == location_id and pending.completes_at <= lookahead:
                 lines.append(pending.on_complete_description or pending.name)
         return lines
@@ -487,12 +486,12 @@ class PlanExecutor:
         """
         if action_type not in TURN_COUNTING_ACTIONS and not is_aggressive:
             return
-        npc_actions = await self._agents.npc_turns.resolve_npc_turns(
+        npc_actions = await self._npc_turns.resolve_npc_turns(
             player_action,
             witnessed_events=raw_outputs.witnessed_events,
             is_aggressive=is_aggressive,
         )
-        await self._agents.npc_turns.apply_goal_aftermath(npc_actions, self._agents.memory_manager)
+        await self._npc_turns.apply_goal_aftermath(npc_actions, self._memory_manager)
         if npc_actions:
             raw_outputs.npc_turns = [
                 turn_outputs.NPCTurnEntry(
@@ -505,9 +504,9 @@ class PlanExecutor:
 
     async def _process_events(self, completed_events: list[GameEvent]) -> list[GameEvent]:
         """Partition events, process remote ones, return local events."""
-        local, remote = self._agents.events.partition_events(completed_events)
+        local, remote = self._events.partition_events(completed_events)
         if remote:
-            await self._agents.events.process_remote_events(remote)
+            await self._events.process_remote_events(remote)
         return local
 
     async def _process_target_npcs(
@@ -524,15 +523,15 @@ class PlanExecutor:
         the ticker never evicts an NPC that did not exist before this
         very turn.
         """
-        dlg = self._agents.dialogue
+        dlg = self._dialogue
         target_names = plan_access.targets(plan)
         new_uuids: set[str] = set()
         if target_names:
             _ensure_npc_targets_in_scene(plan, target_names, self._gs, dlg)
             new_npcs = await dlg.init_scene_npcs(
-                self._cast.npc_generator,
+                self._npc_generator,
                 self._register_npc,
-                self._cast.item_generator,
+                self._item_generator,
             )
             if new_npcs:
                 raw_outputs.new_npcs = [npc.label_for_player(self._gs, npc.occupation) for npc in new_npcs]
@@ -578,7 +577,7 @@ class PlanExecutor:
             if len(known) == len(targets):
                 needs_rebuild = False
         if needs_rebuild:
-            scene = await self._cast.scene_builder.execute(
+            scene = await self._scene_builder.execute(
                 input_data=player_action,
                 context={_KEY_GAME_STATE: self._gs},
             )
@@ -587,10 +586,10 @@ class PlanExecutor:
             self._gs.scene_number += 1
             self._gs.scene_conversation_log = []
 
-        new_npcs = await self._agents.dialogue.init_scene_npcs(
-            self._cast.npc_generator,
+        new_npcs = await self._dialogue.init_scene_npcs(
+            self._npc_generator,
             self._register_npc,
-            self._cast.item_generator,
+            self._item_generator,
         )
         # Once every present NPC has a stable UUID, mirror any life-tier
         # KILL/PURSUE into the tactical slot for on-sight engagement so
@@ -602,7 +601,7 @@ class PlanExecutor:
     async def _examine_items(self, targets: list[str], player_action: str) -> list[str]:
         """Examine items from scene or NPC inventories via the ItemGenerator."""
         item_targets = _filter_item_targets(targets, self._gs.npcs)
-        if not item_targets or not self._cast.item_generator:
+        if not item_targets or not self._item_generator:
             return []
 
         scene = self._gs.current_scene
@@ -611,7 +610,7 @@ class PlanExecutor:
         return list(
             await asyncio.gather(
                 *(
-                    self._cast.item_generator.execute(
+                    self._item_generator.execute(
                         input_data=name,
                         context={"mode": "examine", _KEY_GAME_STATE: self._gs, "context_hint": hint},
                     )
@@ -649,11 +648,11 @@ class PlanExecutor:
         if not object_targets:
             return
         interaction = await doi_mod.apply_object_interactions(
-            self._cast.item_generator,
+            self._item_generator,
             object_targets,
             player_action,
             self._gs,
-            self._agents.memory_manager,
+            self._memory_manager,
         )
         if interaction.narrations:
             raw_outputs.object_interactions = interaction.narrations
@@ -782,7 +781,7 @@ class PlanExecutor:
             # any longer-lived life_goal the NPC may already carry.
             tactical_mod.assign_defend_goals_from_aggression(self._gs, force_uuids, player_action)
 
-        dialogue_entries, combat_engaged = await self._agents.dialogue.handle_dialogue(
+        dialogue_entries, combat_engaged = await self._dialogue.handle_dialogue(
             player_action,
             target_names,
             is_aggressive=is_aggressive,
@@ -791,11 +790,11 @@ class PlanExecutor:
         if dialogue_entries:
             raw_outputs.dialogue = [turn_outputs.DialogueEntry(**entry) for entry in dialogue_entries]
 
-        retaliation_entries = await self._agents.retaliation.check_retaliation(
+        retaliation_entries = await self._retaliation.check_retaliation(
             mood_snapshot,
             skip_uuids=combat_engaged - force_uuids,
             force_uuids=force_uuids,
         )
         if retaliation_entries:
-            await self._agents.dialogue.summarize_retaliations(retaliation_entries, player_action)
+            await self._dialogue.summarize_retaliations(retaliation_entries, player_action)
             raw_outputs.dialogue.extend(turn_outputs.DialogueEntry(**entry) for entry in retaliation_entries)

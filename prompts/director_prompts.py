@@ -3,17 +3,16 @@
 This module owns the **English** Director catalog and the locale-aware
 :func:`get_director_prompts` lookup. To add a new locale, create a
 sibling ``director_prompts_<lang>.py`` module and wire its bundle into
-:data:`_CATALOG` below.
+the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
 from prompts.director_prompts_ru import DIRECTOR_ACTION_ROUTING_RU, DIRECTOR_SYSTEM_RU
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 
 DIRECTOR_SYSTEM = PromptTemplate(
     [
@@ -86,19 +85,11 @@ DIRECTOR_SYSTEM = PromptTemplate(
 )
 
 
-DIRECTOR_ACTION_ROUTING = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                'Player action: "{player_action}"\n\n'
-                "Classify this action by calling exactly one of the provided tools. "
-                "Always set `intent` to a faithful one-sentence restatement of the "
-                "player's stated goal, not your interpretation of it."
-            ),
-            required_vars=["player_action"],
-        ),
-    ]
+DIRECTOR_ACTION_ROUTING = (
+    'Player action: "{player_action}"\n\n'
+    "Classify this action by calling exactly one of the provided tools. "
+    "Always set `intent` to a faithful one-sentence restatement of the "
+    "player's stated goal, not your interpretation of it."
 )
 
 
@@ -107,22 +98,12 @@ class DirectorPrompts:
     """Per-locale Director prompt bundle."""
 
     system: PromptTemplate
-    action_routing: PromptTemplate
+    action_routing: str
 
 
-_CATALOG: types.MappingProxyType[Locale, DirectorPrompts] = types.MappingProxyType(
+get_director_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: DirectorPrompts(system=DIRECTOR_SYSTEM, action_routing=DIRECTOR_ACTION_ROUTING),
         Locale.RUSSIAN: DirectorPrompts(system=DIRECTOR_SYSTEM_RU, action_routing=DIRECTOR_ACTION_ROUTING_RU),
     }
 )
-
-
-def get_director_prompts(language: str | None) -> DirectorPrompts:
-    """Return the Director prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

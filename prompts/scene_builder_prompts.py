@@ -3,16 +3,15 @@
 This module owns the **English** Scene Builder catalog and the
 locale-aware :func:`get_scene_builder_prompts` lookup. To add a new
 locale, create a sibling ``scene_builder_prompts_<lang>.py`` module
-and wire its bundle into :data:`_CATALOG` below.
+and wire its bundle into the ``make_locale_lookup`` call below.
 """
 
 from __future__ import annotations
 
-import types
 from dataclasses import dataclass
 
 from prompts.base_template import PromptSection, PromptTemplate
-from prompts.locales import Locale, resolve_locale
+from prompts.locales import Locale, make_locale_lookup
 from prompts.scene_builder_prompts_ru import SCENE_BUILDER_GENERATE_RU, SCENE_BUILDER_SYSTEM_RU
 
 SCENE_BUILDER_SYSTEM = PromptTemplate(
@@ -67,41 +66,33 @@ SCENE_BUILDER_SYSTEM = PromptTemplate(
 )
 
 
-SCENE_BUILDER_GENERATE = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                'Player action: "{player_action}"\n\n'
-                "Generate a scene. Output ONLY valid JSON:\n"
-                "{{\n"
-                '  "location_id": "a short snake_case id for this location",\n'
-                '  "description": "Detailed visual description of the scene (what you see, architecture, objects)",\n'
-                '  "npcs_present": ["EVERY person/character visible in the scene — guards, merchants,'
-                ' beggars, passers-by, etc. Use role descriptions like: guard, merchant, beggar, scribe"],\n'
-                '  "points_of_interest": [{{"names": ["full descriptive phrase",'
-                ' "short head noun", "alt short head"]}}, ...],\n'
-                '    // 3 to 7 items. Each entry is an object with a "names" list.\n'
-                "    // names[0] is the primary descriptive phrase the Narrator can use in"
-                " prose (e.g. 'a wooden notice board with wax-sealed scrolls'). names[1..]"
-                " are 1-3 SHORT head-noun synonyms the Narrator is likely to use on"
-                " second mention (e.g. 'notice board', 'board'). The short heads are what"
-                " make inline highlighting robust — without them the post-match can't wrap"
-                " abbreviated references. Include EVERY story-bearing object you expect the"
-                " Narrator to describe prominently in prose: information carriers (boards,"
-                " notices, signs, inscriptions, altars), movement gates (doors, gates,"
-                " stairs, ladders), containers (chests, barrels, crates, strongboxes), and"
-                " state-bearing fixtures (locks, torches, braziers, levers, fires). SKIP"
-                " purely decorative architecture (plain niches, rings, mouldings, plinths,"
-                " gutters) unless it hides a secret or has a use. NEVER put people here;"
-                " people go in npcs_present.\n"
-                '  "ambient_description": "Sounds, smells, atmosphere",\n'
-                '  "time_of_day": "{time_of_day}"\n'
-                "}}"
-            ),
-            required_vars=["player_action", "time_of_day"],
-        ),
-    ]
+SCENE_BUILDER_GENERATE = (
+    'Player action: "{player_action}"\n\n'
+    "Generate a scene. Output ONLY valid JSON:\n"
+    "{{\n"
+    '  "location_id": "a short snake_case id for this location",\n'
+    '  "description": "Detailed visual description of the scene (what you see, architecture, objects)",\n'
+    '  "npcs_present": ["EVERY person/character visible in the scene — guards, merchants,'
+    ' beggars, passers-by, etc. Use role descriptions like: guard, merchant, beggar, scribe"],\n'
+    '  "points_of_interest": [{{"names": ["full descriptive phrase",'
+    ' "short head noun", "alt short head"]}}, ...],\n'
+    '    // 3 to 7 items. Each entry is an object with a "names" list.\n'
+    "    // names[0] is the primary descriptive phrase the Narrator can use in"
+    " prose (e.g. 'a wooden notice board with wax-sealed scrolls'). names[1..]"
+    " are 1-3 SHORT head-noun synonyms the Narrator is likely to use on"
+    " second mention (e.g. 'notice board', 'board'). The short heads are what"
+    " make inline highlighting robust — without them the post-match can't wrap"
+    " abbreviated references. Include EVERY story-bearing object you expect the"
+    " Narrator to describe prominently in prose: information carriers (boards,"
+    " notices, signs, inscriptions, altars), movement gates (doors, gates,"
+    " stairs, ladders), containers (chests, barrels, crates, strongboxes), and"
+    " state-bearing fixtures (locks, torches, braziers, levers, fires). SKIP"
+    " purely decorative architecture (plain niches, rings, mouldings, plinths,"
+    " gutters) unless it hides a secret or has a use. NEVER put people here;"
+    " people go in npcs_present.\n"
+    '  "ambient_description": "Sounds, smells, atmosphere",\n'
+    '  "time_of_day": "{time_of_day}"\n'
+    "}}"
 )
 
 
@@ -110,22 +101,12 @@ class SceneBuilderPrompts:
     """Per-locale Scene Builder prompt bundle."""
 
     system: PromptTemplate
-    generate: PromptTemplate
+    generate: str
 
 
-_CATALOG: types.MappingProxyType[Locale, SceneBuilderPrompts] = types.MappingProxyType(
+get_scene_builder_prompts = make_locale_lookup(
     {
         Locale.ENGLISH: SceneBuilderPrompts(system=SCENE_BUILDER_SYSTEM, generate=SCENE_BUILDER_GENERATE),
         Locale.RUSSIAN: SceneBuilderPrompts(system=SCENE_BUILDER_SYSTEM_RU, generate=SCENE_BUILDER_GENERATE_RU),
     }
 )
-
-
-def get_scene_builder_prompts(language: str | None) -> SceneBuilderPrompts:
-    """Return the Scene Builder prompt bundle for *language*.
-
-    Unrecognised languages transparently fall back to the English
-    catalog (see :func:`prompts.locales.resolve_locale`). The returned
-    bundle is a module-level singleton — callers must not mutate it.
-    """
-    return _CATALOG[resolve_locale(language)]

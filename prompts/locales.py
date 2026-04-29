@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import enum
 import types
+from typing import Generic, TypeVar
 
 
 class Locale(str, enum.Enum):
@@ -51,6 +52,32 @@ _LOCALE_ALIASES: types.MappingProxyType[str, Locale] = types.MappingProxyType(
         "русский язык": Locale.RUSSIAN,
     }
 )
+
+
+_LT = TypeVar("_LT")
+
+
+class _LocaleLookup(Generic[_LT]):
+    """Callable mapping a language string to its per-locale catalog entry."""
+
+    def __init__(self, catalog: dict[Locale, _LT]) -> None:
+        self._catalog: types.MappingProxyType[Locale, _LT] = types.MappingProxyType(catalog)
+
+    def __call__(self, language: str | None) -> _LT:
+        return self._catalog[resolve_locale(language)]
+
+
+def make_locale_lookup(catalog: dict[Locale, _LT]) -> "_LocaleLookup[_LT]":
+    """Return a callable that maps a language string to *catalog* entry.
+
+    Usage::
+
+        get_foo_prompts = make_locale_lookup({
+            Locale.ENGLISH: FooPrompts(...),
+            Locale.RUSSIAN: FooPrompts(...),
+        })
+    """
+    return _LocaleLookup(catalog)
 
 
 def resolve_locale(language: str | None) -> Locale:

@@ -19,7 +19,6 @@ class Message:
 
     role: Role
     body: str
-    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -80,16 +79,6 @@ class OutputFormat:
     tools: tuple[Tool, ...] | None = None
     tool_choice: str | None = None
 
-    @property
-    def is_strict(self) -> bool:
-        """True when this format requests strict, schema-validated output."""
-        return self.schema is not None
-
-    @property
-    def has_tools(self) -> bool:
-        """True when tool definitions are attached to this call."""
-        return bool(self.tools)
-
 
 @dataclass
 class LLMResponse:
@@ -102,7 +91,6 @@ class LLMResponse:
     """
 
     body: str
-    raw_response: Any = None
     usage: dict[str, int] = field(default_factory=dict)
     model: str = ""
     tool_calls: list[ToolCall] = field(default_factory=list)

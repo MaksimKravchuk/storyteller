@@ -48,13 +48,6 @@ def _install_sdk_mock(response: SimpleNamespace | None = None) -> tuple[MagicMoc
     return sdk_class, create_mock
 
 
-async def _stream_gen():
-    yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="foo"))])
-    yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None))])
-    yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=""))])
-    yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content="bar"))])
-
-
 def _user_msg(body: str = "hi") -> msg.Message:
     return msg.Message(role=msg.Role.USER, body=body)
 
@@ -276,24 +269,6 @@ class TestOpenAIClient:
             result = await client.send_message(messages=[_user_msg("x")])
         assert result.body == ""
         assert result.usage == {"prompt_tokens": 0, "completion_tokens": 0}
-
-    @allure.story("Streaming")
-    @allure.title("OpenAIClient.send_message_streaming yields non-empty delta chunks and skips empty ones")
-    @pytest.mark.asyncio
-    async def test_send_message_streaming(self) -> None:
-        sdk_class = MagicMock()
-        sdk_instance = MagicMock()
-        sdk_instance.chat.completions.create = AsyncMock(return_value=_stream_gen())
-        sdk_class.return_value = sdk_instance
-        with patch(_OPENAI_CTOR, sdk_class):
-            client = OpenAIClient(model=_MODEL, api_key="k")
-            received: list[str] = []
-            async for chunk in client.send_message_streaming(
-                messages=[_user_msg()],
-                system_prompt="sys",
-            ):
-                received.append(chunk)
-        assert received == ["foo", "bar"]
 
     @allure.story("Message formatting")
     @allure.title("OpenAIClient._format_messages omits the system role when the system_prompt is empty")

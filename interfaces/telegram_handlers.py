@@ -7,7 +7,7 @@ from typing import Any
 from loguru import logger
 
 from db.repository import GameRepository
-from engine.factory import create_engine_from_state, create_engine_with_db_overrides
+from engine.factory import create_engine, create_engine_from_state
 from engine.game_engine import GameEngine
 from interfaces.telegram_handlers_helpers import recover_from_start_failure, _STATE_IDLE
 from formatting.markdown_render import render
@@ -31,28 +31,18 @@ async def persist_engine_state(
     turn_number: int | None,
 ) -> None:
     """Save game state and flush any buffered AI call logs."""
-    game_state = engine.game_state
-    if game_state is None:
-        raise RuntimeError("engine.game_state is None after act — engine did not initialise correctly")
-    if engine.knowledge_graph is None:
-        raise RuntimeError("engine.knowledge_graph is None after act — engine did not initialise correctly")
-    await repo.save_game_state(
-        session_id,
-        game_state,
-        engine.knowledge_graph,
-        engine.event_manager.all_events if engine.event_manager else [],
-    )
+    game_state, knowledge_graph, event_manager = engine.assert_running()
+    await repo.save_game_state(session_id, game_state, knowledge_graph, event_manager.all_events)
     ai_logs = get_and_clear_buffer()
     if ai_logs:
         await repo.ai_logs.save(ai_logs, turn_number=turn_number)
     turn_events = get_and_clear_events()
     if turn_events:
-        scene_number = game_state.scene_number if game_state else None
         await repo.turn_events.save(
             turn_events,
             session_id=session_id,
             turn_number=turn_number,
-            scene_number=scene_number,
+            scene_number=game_state.scene_number,
         )
 
 
@@ -70,8 +60,8 @@ async def start_new_game(engine: Any, repo: Any, session_id: str, update: Any, t
 async def process_player_action(engine: Any, repo: Any, session_id: str, update: Any, text: str) -> None:
     """Run process_action and persist. Extracted to keep try-body short."""
     response = await engine.process_action(text)
-    turn_number = engine.game_state.turn_count if engine.game_state else None
-    await persist_engine_state(repo, session_id, engine, turn_number=turn_number)
+    game_state, _, _ = engine.assert_running()
+    await persist_engine_state(repo, session_id, engine, turn_number=game_state.turn_count)
     await update.message.reply_text(
         render(response, ClientPlatform.TELEGRAM_HTML),
         parse_mode=_TELEGRAM_PARSE_MODE,
@@ -86,7 +76,10 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
     with logger.contextualize(session_id=ctx.session_id):
         current_session_id.set(ctx.session_id)
         _reset_turn_buffers()
-        engine = await create_engine_with_db_overrides(ctx.repo, ctx.cfg, language=ctx.language)
+        from engine.model_overrides import load_role_overrides
+
+        overrides = await load_role_overrides(ctx.repo, ctx.cfg)
+        engine = create_engine(ctx.cfg, language=ctx.language, overrides=overrides)
         try:
             await start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:

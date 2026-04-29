@@ -186,11 +186,11 @@ class TestInteractWithObjectsWitnessPublication:
         gs = make_game_state()
         _seed_guard(gs)
         director = make_director(game_state=gs)
-        director._cast.item_generator = _stub_item_generator(
+        director._executor._item_generator = _stub_item_generator(
             "Wood splinters fly across the paving stones.",
             "The front shutter hangs splintered and broken.",
         )
-        director._executor._agents.memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
+        director._executor._memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         raw_outputs = to_mod.TurnOutputs()
 
         await director._executor._interact_with_objects(
@@ -215,11 +215,11 @@ class TestInteractWithObjectsWitnessPublication:
         _seed_guard(gs)
         _seed_tailor(gs)
         director = make_director(game_state=gs)
-        director._cast.item_generator = _stub_item_generator(
+        director._executor._item_generator = _stub_item_generator(
             "Wood splinters fly across the paving stones.",
             "The front shutter hangs splintered and broken.",
         )
-        director._executor._agents.memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
+        director._executor._memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         raw_outputs = to_mod.TurnOutputs()
 
         await director._executor._interact_with_objects(
@@ -239,11 +239,11 @@ class TestInteractWithObjectsWitnessPublication:
         gs = make_game_state()
         _seed_guard(gs)
         director = make_director(game_state=gs)
-        director._cast.item_generator = _stub_item_generator(
+        director._executor._item_generator = _stub_item_generator(
             "You rattle the shutter; it does not yield.",
             "The shutter is slightly loose on its hinges.",
         )
-        director._executor._agents.memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
+        director._executor._memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         raw_outputs = to_mod.TurnOutputs()
 
         await director._executor._interact_with_objects(
@@ -263,11 +263,11 @@ class TestInteractWithObjectsWitnessPublication:
         gs = make_game_state()
         _seed_guard(gs)
         director = make_director(game_state=gs)
-        director._cast.item_generator = _stub_item_generator(
+        director._executor._item_generator = _stub_item_generator(
             "Your fist glances off the stone wall.",
             "",
         )
-        director._executor._agents.memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
+        director._executor._memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         raw_outputs = to_mod.TurnOutputs()
 
         await director._executor._interact_with_objects(
@@ -393,11 +393,11 @@ class TestShutterSmashRegression:
             "delegate_to": [],
         }
         director = make_director(game_state=gs, route_response=route_response)
-        director._cast.item_generator = _stub_item_generator(
+        director._executor._item_generator = _stub_item_generator(
             "Wood splinters fly across the paving stones.",
             "The front shutter hangs splintered and broken.",
         )
-        director._executor._agents.memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
+        director._executor._memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         guard_actor = make_mock_actor(
             '{"action": "The guard raises the alarm and rushes toward the player.", '
             '"type": "INTIMIDATE", "target": "player"}',
