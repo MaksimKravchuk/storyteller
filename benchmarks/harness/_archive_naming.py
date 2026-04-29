@@ -24,15 +24,6 @@ def sanitise_filename(component: str) -> str:
     return "".join(_safe_char(char) for char in component)
 
 
-def _parse_timestamp(started_at: str) -> str:
-    """Format the archive timestamp, falling back to now on parse failure."""
-    try:
-        started = datetime.fromisoformat(started_at)
-    except ValueError:
-        started = datetime.now(timezone.utc)
-    return started.strftime(_TIMESTAMP_FORMAT)
-
-
 def current_timestamp() -> str:
     """Return ``now`` formatted to match the archive filename timestamp style."""
     return datetime.now(timezone.utc).strftime(_TIMESTAMP_FORMAT)
@@ -46,7 +37,7 @@ def sha_fragment(sha: str) -> str:
 def file_stem(report: ScenarioReport) -> str:
     """Build the ``<timestamp>_<sha>_<scenario>_iterN`` stem."""
     return "{0}_{1}_{2}_iter{3}".format(
-        _parse_timestamp(report.started_at),
+        datetime.fromisoformat(report.started_at).strftime(_TIMESTAMP_FORMAT),
         sha_fragment(report.engine_git_sha),
         sanitise_filename(report.scenario_id),
         report.iteration,

@@ -18,12 +18,6 @@ def mood_of(snap: GameState, npc_uuid: str) -> str | None:
     return npc.current_mood if npc else None
 
 
-def physical_status_of(snap: GameState, npc_uuid: str) -> str | None:
-    """Return an NPC's ``physical_status`` in a snapshot, or ``None`` when absent."""
-    npc = snap.npcs.get(npc_uuid)
-    return npc.physical_status if npc else None
-
-
 def hostility_level_of(snap: GameState, npc_uuid: str) -> int:
     """Return an NPC's ``hostility_level`` in a snapshot, or ``0`` when absent."""
     npc = snap.npcs.get(npc_uuid)

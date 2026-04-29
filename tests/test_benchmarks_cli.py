@@ -8,20 +8,10 @@ import json
 import allure
 import pytest
 
-from benchmarks.cli._args import parse_args, resolve_iterations
+from benchmarks.cli._args import parse_args
 from benchmarks.cli._compare import compare_command
 from benchmarks.cli._compare_classify import PassRatePair, classify_pass_rate, classify_range
 from benchmarks.cli._jobs import _parse_judge_overrides
-
-
-class _FakeWriter:
-    """Accumulates stdout lines for assertion."""
-
-    def __init__(self) -> None:
-        self.lines: list[str] = []
-
-    def __call__(self, line: str) -> None:
-        self.lines.append(line)
 
 
 def _aggregate_payload(*, scenario_id="memory", mean=7.0, low=6, high=8, element_pass_rates=None):
@@ -78,22 +68,10 @@ class TestParseJudgeOverrides:
 @allure.feature("Benchmark harness")
 class TestRunArgs:
     @allure.story("CLI parsing")
-    @allure.title("run defaults to 3 iterations when neither --quick nor --iterations is given")
+    @allure.title("run defaults to 3 iterations when --iterations is not given")
     def test_default_iterations_is_three(self):
         args = parse_args(["run"])
-        assert resolve_iterations(args) == 3
-
-    @allure.story("CLI parsing")
-    @allure.title("--quick forces a single iteration regardless of the default")
-    def test_quick_forces_single_iteration(self):
-        args = parse_args(["run", "--quick"])
-        assert resolve_iterations(args) == 1
-
-    @allure.story("CLI parsing")
-    @allure.title("--quick and --iterations are mutually exclusive so intent is always unambiguous")
-    def test_quick_and_iterations_are_mutually_exclusive(self):
-        with pytest.raises(SystemExit):
-            parse_args(["run", "--quick", "--iterations", "5"])
+        assert args.iterations == 3
 
     @allure.story("CLI parsing")
     @allure.title("--iterations rejects zero and negative counts at the argparse layer")
@@ -158,7 +136,7 @@ class TestClassifyPassRate:
 class TestCompareCommand:
     @allure.story("Compare command")
     @allure.title("compare_command prints baseline/current headers and a per-element pass-rate table")
-    def test_happy_path_prints_table(self, tmp_path):
+    def test_happy_path_prints_table(self, tmp_path, capsys):
         baseline = tmp_path / "baseline.json"
         current = tmp_path / "current.json"
         _write_aggregate(
@@ -180,31 +158,29 @@ class TestCompareCommand:
             ],
         )
         args = argparse.Namespace(baseline=str(baseline), current=str(current))
-        writer = _FakeWriter()
 
-        exit_code = compare_command(args, writer=writer)
+        exit_code = compare_command(args)
+        out = capsys.readouterr().out
 
         assert exit_code == 0
-        assert any("Baseline:" in line for line in writer.lines)
-        assert any("Current" in line for line in writer.lines)
-        assert any("regression" in line for line in writer.lines)
-        element_rows = [line for line in writer.lines if "recall" in line]
-        assert element_rows
-        assert "3/3 → 0/3" in element_rows[0]
+        assert "Baseline:" in out
+        assert "Current" in out
+        assert "regression" in out
+        assert "recall" in out
+        assert "3/3 → 0/3" in out
 
     @allure.story("Compare command")
     @allure.title("overlapping scenario ranges render as noise in the scenario verdict")
-    def test_scenario_verdict_noise_on_overlap(self, tmp_path):
+    def test_scenario_verdict_noise_on_overlap(self, tmp_path, capsys):
         baseline = tmp_path / "baseline.json"
         current = tmp_path / "current.json"
         _write_aggregate(baseline, mean=7.0, low=6, high=8)
         _write_aggregate(current, mean=7.5, low=7, high=9)
         args = argparse.Namespace(baseline=str(baseline), current=str(current))
-        writer = _FakeWriter()
 
-        compare_command(args, writer=writer)
+        compare_command(args)
 
-        assert any("noise" in line for line in writer.lines)
+        assert "noise" in capsys.readouterr().out
 
     @allure.story("Compare command")
     @allure.title("compare_command raises FileNotFoundError when a report path does not exist")
@@ -215,7 +191,7 @@ class TestCompareCommand:
         )
 
         with pytest.raises(FileNotFoundError, match="not found"):
-            compare_command(args, writer=_FakeWriter())
+            compare_command(args)
 
     @allure.story("Compare command")
     @allure.title("compare_command raises ValueError with file context when a report is not valid JSON")
@@ -227,7 +203,7 @@ class TestCompareCommand:
         args = argparse.Namespace(baseline=str(broken), current=str(good))
 
         with pytest.raises(ValueError, match="not valid JSON"):
-            compare_command(args, writer=_FakeWriter())
+            compare_command(args)
 
     @allure.story("Compare command")
     @allure.title("compare_command rejects per-iteration reports with a clear error")
@@ -242,4 +218,4 @@ class TestCompareCommand:
         args = argparse.Namespace(baseline=str(per_iter), current=str(good))
 
         with pytest.raises(ValueError, match="per-iteration"):
-            compare_command(args, writer=_FakeWriter())
+            compare_command(args)

@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import os
-import subprocess
 import sys
 
 from loguru import logger
@@ -61,20 +60,10 @@ logging.basicConfig(handlers=[_InterceptHandler()], level=0, force=True)
 
 def _run_migrations() -> None:
     """Apply pending Alembic migrations before starting."""
+    from alembic.config import main as alembic_main
+
     logger.info("Running database migrations...")
-    proc = subprocess.run(  # noqa: S603,S607
-        ["uv", "run", "alembic", "upgrade", "head"],
-        capture_output=True,
-        text=True,
-    )
-    if proc.returncode != 0:
-        logger.error(
-            "Migration failed (exit code {}).\nstdout:\n{}\nstderr:\n{}",
-            proc.returncode,
-            proc.stdout or "(empty)",
-            proc.stderr or "(empty)",
-        )
-        sys.exit(1)
+    alembic_main(argv=["upgrade", "head"])
     logger.info("Migrations complete.")
 
 

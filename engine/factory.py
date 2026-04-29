@@ -31,7 +31,7 @@ def _resolve_model(
         pinned = overrides.get(role)
         if pinned is not None:
             return pinned
-    return resolve_model_config(env_model_id, cfg)
+    return resolve_model_config(env_model_id)
 
 
 def create_engine(

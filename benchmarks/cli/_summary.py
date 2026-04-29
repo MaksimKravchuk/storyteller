@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
-from benchmarks.cli._writer import Writer
+import sys
+
 from benchmarks.harness.types._aggregates import ElementPassRate, ScenarioAggregate
 
 _LABEL_COL_WIDTH = 40
 _HEADER_FMT = "{0:<40} {1:>5} {2:>8} {3:>10}"
 _ROW_FMT = "{0:<40} {1:>5} {2:>8} {3:>10}"
+
+
+def _write(line: str) -> None:
+    sys.stdout.write("{0}\n".format(line))
 
 
 def _percent(awarded: float, base: int) -> int:
@@ -52,16 +57,16 @@ def _format_element_line(scenario_id: str, pass_rate: ElementPassRate) -> str:
     )
 
 
-def print_summary_table(aggregates: list[ScenarioAggregate], writer: Writer) -> None:
+def print_summary_table(aggregates: list[ScenarioAggregate]) -> None:
     """Print the run summary as a compact aggregate table."""
     if not aggregates:
-        writer("(no scenarios run)")
+        _write("(no scenarios run)")
         return
-    writer("\n=== Summary (mean over N iterations) ===")
-    writer(_HEADER_FMT.format("scenario", "iters", "range", "mean"))
+    _write("\n=== Summary (mean over N iterations) ===")
+    _write(_HEADER_FMT.format("scenario", "iters", "range", "mean"))
     for aggregate in aggregates:
-        writer(_format_aggregate_row(aggregate))
-    writer("\n=== Per-element pass rates ===")
+        _write(_format_aggregate_row(aggregate))
+    _write("\n=== Per-element pass rates ===")
     for aggregate in aggregates:
         for pass_rate in aggregate.element_pass_rates:
-            writer(_format_element_line(aggregate.scenario_id, pass_rate))
+            _write(_format_element_line(aggregate.scenario_id, pass_rate))

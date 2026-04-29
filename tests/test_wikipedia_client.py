@@ -67,7 +67,8 @@ def _patch_session(resp: _FakeResp):
 @allure.title("WikipediaClient defaults to English Wikipedia URLs when language is not specified")
 def test_default_language_urls() -> None:
     """Without a language, URLs target en.wikipedia.org."""
-    client = WikipediaClient()
+    with patch("research.wikipedia_client.aiohttp.ClientSession"):
+        client = WikipediaClient()
     assert "en.wikipedia.org" in client._rest_base
     assert "en.wikipedia.org" in client._mw_api
 
@@ -76,46 +77,10 @@ def test_default_language_urls() -> None:
 @allure.title("WikipediaClient swaps the subdomain to match a non-English language code")
 def test_non_default_language_urls() -> None:
     """A non-default language must flow into both the REST and MW API URLs."""
-    client = WikipediaClient(language="ru")
+    with patch("research.wikipedia_client.aiohttp.ClientSession"):
+        client = WikipediaClient(language="ru")
     assert client._rest_base.startswith("https://ru.wikipedia.org/")
     assert client._mw_api.startswith("https://ru.wikipedia.org/")
-
-
-@allure.story("search")
-@allure.title("search returns the second element of the opensearch response on HTTP 200")
-@pytest.mark.asyncio
-async def test_search_returns_titles_on_200() -> None:
-    """On 200, the second element of the opensearch payload is returned as titles."""
-    titles = ["Rome", "Roman Empire"]
-    fake_resp = _FakeResp(_HTTP_OK, ["rome", titles, ["d1", "d2"], ["u1", "u2"]])
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        result = await WikipediaClient().search("rome")
-    assert result == titles
-
-
-@allure.story("search")
-@allure.title("search returns an empty list when the Wikipedia API responds with a non-200 status")
-@pytest.mark.asyncio
-async def test_search_returns_empty_on_non_200() -> None:
-    """Non-200 responses yield an empty list."""
-    fake_resp = _FakeResp(500, None)
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        result = await WikipediaClient().search("rome")
-    assert result == []
-
-
-@allure.story("search")
-@allure.title("search returns an empty list when the opensearch payload is missing the titles slot")
-@pytest.mark.asyncio
-async def test_search_returns_empty_on_malformed_payload() -> None:
-    """A 200 response with a short/malformed payload yields an empty list."""
-    fake_resp = _FakeResp(_HTTP_OK, ["rome"])
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        result = await WikipediaClient().search("rome")
-    assert result == []
 
 
 @allure.story("get_summary")

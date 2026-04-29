@@ -77,7 +77,7 @@ async def start_game_for_player(
     reset_events()
     from engine.model_overrides import load_role_overrides
 
-    overrides = await load_role_overrides(repo, cfg)
+    overrides = await load_role_overrides(repo)
     engine = create_engine(cfg, language=language, overrides=overrides)
     try:
         await _start_and_persist(repo, session_id, engine, setting)

@@ -1,12 +1,10 @@
 """Language-aware lemmatization helpers for entity markup.
 
-Russian uses pymorphy3 for full inflection coverage; English uses a
-tiny suffix stemmer. Languages unknown to ``prompts.locales.Locale``
-fall back to the English stemmer (callers get lowercase + light
-suffix trimming). If pymorphy3 is missing or its dictionary fails to
-load — which should not happen in production since pymorphy3 is a
-required dependency — the Russian path degrades to case-insensitive
-exact match and is logged loudly so operators can trace the break.
+Russian uses pymorphy3 for full inflection coverage; other languages fall back
+to case-insensitive exact match. If pymorphy3 is missing or its dictionary
+fails to load — which should not happen in production since pymorphy3 is a
+required dependency — the Russian path degrades to case-insensitive exact match
+and is logged loudly so operators can trace the break.
 """
 
 from __future__ import annotations
@@ -18,9 +16,6 @@ from loguru import logger
 
 from prompts.locales import Locale, resolve_locale
 
-_ENGLISH_SUFFIXES = ("ing", "ed", "es", "s")
-_MIN_STEM_LEN = 3
-
 Lemmatizer = Callable[[str], str]
 
 
@@ -29,29 +24,11 @@ def pick_lemmatizer(language: str) -> Lemmatizer:
     locale = resolve_locale(language)
     if locale is Locale.RUSSIAN:
         return _russian_lemmatizer()
-    return english_lemmatizer
-
-
-def english_lemmatizer(token: str) -> str:
-    stem = token.lower()
-    suffix = _first_strippable_suffix(stem)
-    if suffix is None:
-        return stem
-    return stem[: -len(suffix)]
+    return exact_lowercase
 
 
 def exact_lowercase(token: str) -> str:
     return token.lower()
-
-
-def _first_strippable_suffix(stem: str) -> str | None:
-    threshold = _MIN_STEM_LEN
-    for suffix in _ENGLISH_SUFFIXES:
-        if not stem.endswith(suffix):
-            continue
-        if len(stem) > len(suffix) + threshold:
-            return suffix
-    return None
 
 
 class _PymorphyLemmatizer:

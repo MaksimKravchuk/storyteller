@@ -32,7 +32,7 @@ def _make_config() -> MagicMock:
     return cfg
 
 
-def _resolver_side_effect(model_id: str, _cfg) -> ModelConfig:
+def _resolver_side_effect(model_id: str) -> ModelConfig:
     if model_id == "gpt-5.4-nano":
         return AI_MODELS.gpt5_4_nano
     return AI_MODELS.gpt5_4_mini

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from benchmarks.cli._compare_format import (
@@ -12,7 +13,6 @@ from benchmarks.cli._compare_format import (
     format_scenario_classification,
     format_table_header,
 )
-from benchmarks.cli._writer import Writer, default_writer
 
 
 def _load_report_payload(path: str) -> dict:
@@ -35,21 +35,25 @@ def _as_aggregate(payload: dict, path: str) -> dict:
     return payload
 
 
-def _print_compare_table(baseline: dict, current: dict, writer: Writer) -> None:
+def _write(line: str) -> None:
+    sys.stdout.write("{0}\n".format(line))
+
+
+def _print_compare_table(baseline: dict, current: dict) -> None:
     """Print the per-element pass-rate table."""
-    writer(format_table_header())
+    _write(format_table_header())
     baseline_index = {rate["element_id"]: rate for rate in baseline["element_pass_rates"]}
     for current_rate in current["element_pass_rates"]:
         baseline_rate = baseline_index.get(current_rate["element_id"], {})
-        writer(format_element_row(baseline_rate, current_rate))
+        _write(format_element_row(baseline_rate, current_rate))
 
 
-def compare_command(args: argparse.Namespace, writer: Writer = default_writer) -> int:
+def compare_command(args: argparse.Namespace) -> int:
     """Execute the ``compare`` subcommand."""
     baseline = _as_aggregate(_load_report_payload(args.baseline), args.baseline)
     current = _as_aggregate(_load_report_payload(args.current), args.current)
-    writer(format_header("Baseline", baseline))
-    writer(format_header("Current ", current))
-    writer(format_scenario_classification(baseline, current))
-    _print_compare_table(baseline, current, writer)
+    _write(format_header("Baseline", baseline))
+    _write(format_header("Current ", current))
+    _write(format_scenario_classification(baseline, current))
+    _print_compare_table(baseline, current)
     return 0
