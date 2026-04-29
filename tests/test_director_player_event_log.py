@@ -22,10 +22,21 @@ pytestmark = [
 def _build_plan_executor() -> tuple[director_execution.PlanExecutor, GameState]:
     setting = Setting(name="Rome", time_period="1 AD", region="Italy", summary="")
     gs = GameState(setting=setting, knowledge_graph=KnowledgeGraph())
+    mock = MagicMock()
     executor = director_execution.PlanExecutor(
-        gs,
-        agents=MagicMock(),
-        cast=MagicMock(),
+        game_state=gs,
+        events=mock,
+        event_manager=mock,
+        dialogue=mock,
+        retaliation=mock,
+        npc_turns=mock,
+        npc_ticker=mock,
+        memory_manager=mock,
+        scene_builder=mock,
+        narrator=mock,
+        npc_generator=mock,
+        data_miner=mock,
+        item_generator=mock,
         register_npc_fn=lambda _card: None,
     )
     return executor, gs

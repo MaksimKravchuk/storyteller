@@ -68,41 +68,33 @@ DRAMATURGE_SYSTEM = PromptTemplate(
 )
 
 
-DRAMATURGE_REVIEW = PromptTemplate(
-    [
-        PromptSection(
-            name="task",
-            template=(
-                "Narrator output to review:\n"
-                "---\n"
-                "{narration}\n"
-                "---\n\n"
-                "Check every factual claim in the passage above against the "
-                "historical canon and the recent in-scene dialogue provided in "
-                "the system prompt. If any sentence contradicts a historical "
-                "fact OR contradicts something an NPC already said this scene, "
-                "rewrite ONLY that sentence so the contradiction is gone. "
-                "Preserve every other sentence byte-for-byte. If nothing is "
-                "wrong, copy the narration across verbatim.\n\n"
-                "Use `unknown_entities` only for bare proper nouns — names of "
-                'real-world people, places, or items (e.g. "Pantheon", '
-                '"Julius Caesar"). These strings are looked up on Wikipedia, '
-                "so do NOT put sentences, descriptions, or fix summaries there.\n\n"
-                "Output ONLY valid JSON with this schema:\n"
-                "{{\n"
-                '  "corrected_narration": "the full passage, with any contradicting sentences rewritten",\n'
-                '  "contradictions": [\n'
-                '    "short description of each contradiction you fixed (empty list if none)"\n'
-                "  ],\n"
-                '  "unknown_entities": [\n'
-                '    "bare title of any real-world person/place/item you mentioned '
-                'that is NOT in the historical canon provided (empty list if none)"\n'
-                "  ]\n"
-                "}}"
-            ),
-            required_vars=["narration"],
-        ),
-    ]
+DRAMATURGE_REVIEW = (
+    "Narrator output to review:\n"
+    "---\n"
+    "{narration}\n"
+    "---\n\n"
+    "Check every factual claim in the passage above against the "
+    "historical canon and the recent in-scene dialogue provided in "
+    "the system prompt. If any sentence contradicts a historical "
+    "fact OR contradicts something an NPC already said this scene, "
+    "rewrite ONLY that sentence so the contradiction is gone. "
+    "Preserve every other sentence byte-for-byte. If nothing is "
+    "wrong, copy the narration across verbatim.\n\n"
+    "Use `unknown_entities` only for bare proper nouns — names of "
+    'real-world people, places, or items (e.g. "Pantheon", '
+    '"Julius Caesar"). These strings are looked up on Wikipedia, '
+    "so do NOT put sentences, descriptions, or fix summaries there.\n\n"
+    "Output ONLY valid JSON with this schema:\n"
+    "{{\n"
+    '  "corrected_narration": "the full passage, with any contradicting sentences rewritten",\n'
+    '  "contradictions": [\n'
+    '    "short description of each contradiction you fixed (empty list if none)"\n'
+    "  ],\n"
+    '  "unknown_entities": [\n'
+    '    "bare title of any real-world person/place/item you mentioned '
+    'that is NOT in the historical canon provided (empty list if none)"\n'
+    "  ]\n"
+    "}}"
 )
 
 
@@ -111,7 +103,7 @@ class DramaturgePrompts:
     """Per-locale Dramaturge prompt bundle."""
 
     system: PromptTemplate
-    review: PromptTemplate
+    review: str
 
 
 get_dramaturge_prompts = make_locale_lookup(

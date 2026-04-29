@@ -62,7 +62,7 @@ class DataMiner(BasePerformer):
         raw_articles: dict[str, dict] = dict(zip(search_terms, summaries))
 
         # Step 3: Synthesise into a Setting via LLM
-        research_prompt = self._research_template.render(
+        research_prompt = self._research_template.format(
             setting_request=input_data,
             raw_research=json.dumps(raw_articles, indent=2, ensure_ascii=False),
         )
@@ -138,6 +138,6 @@ class DataMiner(BasePerformer):
 
     async def _extract_search_terms(self, description: str) -> list[str]:
         """Ask the LLM to generate Wikipedia search terms."""
-        prompt = self._search_terms_template.render(setting_request=description)
+        prompt = self._search_terms_template.format(setting_request=description)
         search_json = await self._send_json(prompt, response_model=SearchTermsResponse)
         return search_json.search_terms or [description]

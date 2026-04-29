@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import allure
 
-from prompts.actor_prompts import ACTOR_SYSTEM
-from prompts.actor_prompts_ru import ACTOR_SYSTEM_RU
+from prompts.actor_prompts import ACTOR_SYSTEM_ACTION, ACTOR_SYSTEM_DIALOGUE
+from prompts.actor_prompts_ru import ACTOR_SYSTEM_DIALOGUE_RU
 from tests.actor_helpers import render_actor_system
 
 
@@ -15,7 +15,7 @@ class TestActorPromptPhysicalStatus:
     @allure.story("Physical status tag")
     @allure.title("Actor prompt template declares physical_status as a required variable")
     def test_physical_status_in_required_vars(self):
-        assert "physical_status" in ACTOR_SYSTEM.required_vars
+        assert "physical_status" in ACTOR_SYSTEM_DIALOGUE.required_vars
 
     @allure.story("Physical status tag")
     @allure.title("Actor prompt interpolates the NPC's physical status into the rendered system prompt")
@@ -95,7 +95,7 @@ class TestActorPromptSituationalRegister:
         lowered = rendered.lower()
         # The old clamp was "Keep responses concise — 1-3 sentences typically."
         assert "1-3 sentences" not in lowered
-        assert "1\u20133 sentences" not in lowered
+        assert "1–3 sentences" not in lowered
 
     @allure.story("Situational register")
     @allure.title("Actor constraints tie response length to the situation, not a fixed quota")
@@ -121,11 +121,11 @@ class TestActorPromptSituationalRegister:
 @allure.epic("NPC Interaction")
 @allure.feature("Actor prompt template")
 class TestActorPromptOutputModes:
-    """The Actor system prompt carries mode-gated output rules.
+    """The Actor system prompt uses two distinct templates for two output modes.
 
     Dialogue mode keeps the narration/mood/status/revealed_names envelope.
     Action mode (NPC autonomous turn) emits the action/type/target schema
-    instead — the two sections are mutually exclusive so the LLM is never
+    instead — the two templates are mutually exclusive so the LLM is never
     asked to satisfy both envelopes at once.
     """
 
@@ -158,18 +158,32 @@ class TestActorPromptOutputModes:
     @allure.story("Output mode gating")
     @allure.title("Russian catalog mirrors the output-mode split")
     def test_russian_catalog_action_mode(self):
-        rendered = render_actor_system(template=ACTOR_SYSTEM_RU, mode="action")
-        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" in rendered
-        assert '"narration"' not in rendered
+        rendered = ACTOR_SYSTEM_DIALOGUE_RU.render(
+            npc_name="Guard",
+            npc_occupation="city guard",
+            location_name="forum",
+            npc_biography="A loyal soldier.",
+            personality_traits="brave, stern",
+            speech_style="curt",
+            npc_appearance="tall, armored",
+            npc_inventory="spear, shield",
+            accessible_knowledge="The forum closes at dusk.",
+            current_mood="neutral",
+            physical_status="healthy",
+            language="English",
+        )
+        assert '"narration"' in rendered
+        assert "ATTACK|TALK|MOVE|IDLE|STEALTH|PERSUADE|DECEIVE|INTIMIDATE" not in rendered
 
     @allure.story("Output mode gating")
-    @allure.title("Neither output section renders when no output_mode var is set")
-    def test_no_output_section_when_mode_unset(self):
-        # Defensive assertion: callers always set one gate var, but a
-        # forgotten call must degrade to no schema rather than double-rendering.
-        rendered = render_actor_system(mode="none")
-        assert '"narration"' not in rendered
-        assert "ATTACK|TALK|MOVE" not in rendered
+    @allure.title("Dialogue and action templates are mutually exclusive — each has exactly one output section")
+    def test_dialogue_and_action_templates_are_mutually_exclusive(self):
+        dialogue_section_names = {section.name for section in ACTOR_SYSTEM_DIALOGUE._sections}
+        action_section_names = {section.name for section in ACTOR_SYSTEM_ACTION._sections}
+        assert "output_dialogue" in dialogue_section_names
+        assert "output_action" not in dialogue_section_names
+        assert "output_action" in action_section_names
+        assert "output_dialogue" not in action_section_names
 
     @allure.story("Goal section parity")
     @allure.title("English and Russian Actor templates declare the same goal vars")
@@ -182,5 +196,5 @@ class TestActorPromptOutputModes:
             "goal_last_action",
             "goal_progress_notes",
         }
-        assert goal_vars.issubset(set(ACTOR_SYSTEM.required_vars))
-        assert goal_vars.issubset(set(ACTOR_SYSTEM_RU.required_vars))
+        assert goal_vars.issubset(set(ACTOR_SYSTEM_DIALOGUE.required_vars))
+        assert goal_vars.issubset(set(ACTOR_SYSTEM_DIALOGUE_RU.required_vars))

@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any
-
 import allure
 import pytest
 
@@ -23,14 +20,9 @@ class _StubNarrator:
         return "narration-{0}".format(len(self.calls))
 
 
-@dataclass
-class _StubCast:
-    narrator: Any
-
-
 class _StubDirector:
     def __init__(self, narrator: _StubNarrator) -> None:
-        self._cast = _StubCast(narrator=narrator)
+        self._narrator = narrator
 
 
 class _StubEngine:

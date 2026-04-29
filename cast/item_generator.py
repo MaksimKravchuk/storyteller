@@ -83,7 +83,7 @@ class ItemGenerator(BasePerformer):
         self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
 
         formatted_list = "\n".join("- {0}".format(entry) for entry in inventory)
-        prompt = self._batch_template.render(owner_context=owner_context, item_list=formatted_list)
+        prompt = self._batch_template.format(owner_context=owner_context, item_list=formatted_list)
         response = await self._send_json(prompt, response_model=ItemListResponse)
         record_turn_event(
             "item_list",
@@ -108,7 +108,7 @@ class ItemGenerator(BasePerformer):
         """Generate a detailed physical examination of a single item."""
         self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
 
-        prompt = self._examine_template.render(item_name=item_name, context_hint=context_hint)
+        prompt = self._examine_template.format(item_name=item_name, context_hint=context_hint)
         response = await self._send_json(prompt, response_model=ItemExamineResponse)
         record_turn_event(
             "item_examine",
@@ -137,7 +137,7 @@ class ItemGenerator(BasePerformer):
         """
         self.set_context(setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX])
 
-        prompt = self._interact_template.render(
+        prompt = self._interact_template.format(
             player_action=player_action,
             object_name=object_name,
             context_hint=context_hint,

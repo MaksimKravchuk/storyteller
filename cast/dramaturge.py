@@ -138,7 +138,7 @@ class Dramaturge(BasePerformer):
             scene_history=_format_scene_history(game_state.scene_conversation_log),
         )
         return await self._send_json(
-            self._review_template.render(narration=narration),
+            self._review_template.format(narration=narration),
             response_model=DramaturgeResponse,
         )
 

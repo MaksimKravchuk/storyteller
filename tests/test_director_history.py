@@ -182,7 +182,7 @@ class TestDelegation:
     async def test_narrator_called_via_execute(self):
         director = make_director(route_response=route_plan("OTHER"))
         await director.act("look around")
-        director._cast.narrator.execute.assert_called_once()
+        director._executor._narrator.execute.assert_called_once()
 
     @allure.story("Call chain delegation")
     @allure.title("Director delegates to the SceneBuilder via execute() so the call chain is recorded")
@@ -190,7 +190,7 @@ class TestDelegation:
     async def test_scene_builder_called_via_execute(self):
         director = make_director(route_response=route_plan("MOVE", delegate=["scene_builder"]))
         await director.act("walk to the ruins")
-        director._cast.scene_builder.execute.assert_called_once()
+        director._executor._scene_builder.execute.assert_called_once()
 
     @allure.story("Call chain delegation")
     @allure.title("Director passes the accumulated scene_history list into the Narrator's execution context")
@@ -203,7 +203,7 @@ class TestDelegation:
         director = make_director(game_state=gs, route_response=route_plan(_INTERACT))
         await director.act("attack again")
 
-        narrator_call = director._cast.narrator.execute.call_args
+        narrator_call = director._executor._narrator.execute.call_args
         context = narrator_call.kwargs.get("context") or narrator_call.args[1]
         assert "scene_history" in context
         assert len(context["scene_history"]) == 1

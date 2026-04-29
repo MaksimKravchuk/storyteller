@@ -50,24 +50,18 @@ def create_llm_clients(
     )
 
 
-class DirectorContext(typing.NamedTuple):
-    """Runtime context required to build a Director."""
-
-    game_state: gs_mod.GameState
-    event_manager: event_manager_mod.EventManager
-    knowledge_graph: graph_mod.KnowledgeGraph
-
-
 def wire_director(
     clients: LLMClients,
-    ctx: DirectorContext,
+    game_state: gs_mod.GameState,
+    event_manager: event_manager_mod.EventManager,
+    knowledge_graph: graph_mod.KnowledgeGraph,
     language: str,
     data_miner: typing.Any | None = None,
 ) -> director_mod.Director:
     """Create the Director with all its agent dependencies.
 
     When ``clients.dramaturge`` is set, a :class:`Dramaturge` consistency
-    oracle is added to the cast; otherwise the cast field stays ``None``
+    oracle is added to the cast; otherwise the dramaturge stays ``None``
     and the PlanExecutor skips the post-Narrator review pass entirely.
     """
     dramaturge: typing.Any | None = None
@@ -75,23 +69,19 @@ def wire_director(
         dramaturge = dramaturge_mod.Dramaturge(llm_client=clients.dramaturge, language=language)
     return director_mod.Director(
         llm_client=clients.director,
-        deps=director_mod.DirectorDeps(
-            game_state=ctx.game_state,
-            event_manager=ctx.event_manager,
-            memory_manager=memory_mod.MemoryManager(
-                graph=ctx.knowledge_graph,
-                llm_client=clients.agent,
-            ),
+        game_state=game_state,
+        event_manager=event_manager,
+        memory_manager=memory_mod.MemoryManager(
+            graph=knowledge_graph,
+            llm_client=clients.agent,
         ),
-        cast=director_mod.DirectorCast(
-            scene_builder=scene_builder_mod.SceneBuilder(llm_client=clients.agent, language=language),
-            narrator=narrator_mod.Narrator(llm_client=clients.narrator, language=language),
-            npc_generator=npc_gen_mod.NPCGenerator(llm_client=clients.agent, language=language),
-            data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent, language=language),
-            item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent, language=language),
-            world_chronicler=world_chronicler_mod.WorldChronicler(llm_client=clients.agent, language=language),
-            dramaturge=dramaturge,
-        ),
+        scene_builder=scene_builder_mod.SceneBuilder(llm_client=clients.agent, language=language),
+        narrator=narrator_mod.Narrator(llm_client=clients.narrator, language=language),
+        npc_generator=npc_gen_mod.NPCGenerator(llm_client=clients.agent, language=language),
+        data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent, language=language),
+        item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent, language=language),
+        world_chronicler=world_chronicler_mod.WorldChronicler(llm_client=clients.agent, language=language),
+        dramaturge=dramaturge,
         language=language,
     )
 

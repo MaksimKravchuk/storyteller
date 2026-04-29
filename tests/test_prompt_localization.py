@@ -242,10 +242,17 @@ def _assert_section_parity(english_bundle, russian_bundle, template_attrs: list[
     Drop-in replaceability inside the agent is the point of keeping the
     shapes aligned — if this drifts, the agent will call ``set_context``
     with variables one locale needs and the other silently drops.
+    Plain-string templates (single-section, converted from PromptTemplate)
+    are checked only for non-emptiness.
     """
     for attr in template_attrs:
-        english_sections = getattr(english_bundle, attr).sections
-        russian_sections = getattr(russian_bundle, attr).sections
+        en = getattr(english_bundle, attr)
+        ru = getattr(russian_bundle, attr)
+        if isinstance(en, str):
+            assert en and ru
+            continue
+        english_sections = en._sections
+        russian_sections = ru._sections
         assert len(english_sections) == len(russian_sections)
         for english_section, russian_section in zip(english_sections, russian_sections):
             assert english_section.name == russian_section.name
@@ -290,14 +297,14 @@ class TestActorPromptCatalog:
     def test_bundles_distinct_and_fallback(self) -> None:
         english = get_actor_prompts("English")
         russian = get_actor_prompts("Russian")
-        _assert_distinct_bundles(english, russian, ["system"])
-        _assert_section_parity(english, russian, ["system"])
+        _assert_distinct_bundles(english, russian, ["system_dialogue", "system_action"])
+        _assert_section_parity(english, russian, ["system_dialogue", "system_action"])
         assert get_actor_prompts("Klingon") is english
 
     @allure.story("Catalog lookup")
     @allure.title("Russian Actor system prompt keeps JSON envelope field names in English")
     def test_machine_parsed_tags_stay_english(self) -> None:
-        rendered = get_actor_prompts("Russian").system.render(
+        rendered = get_actor_prompts("Russian").system_dialogue.render(
             npc_name="Марк",
             npc_occupation="стражник",
             location_name="ворота",
@@ -310,7 +317,6 @@ class TestActorPromptCatalog:
             current_mood="подозрительное",
             physical_status="здоров",
             language="русском",
-            output_mode_dialogue="1",
         )
         assert '"narration"' in rendered
         assert '"mood"' in rendered
@@ -340,7 +346,7 @@ class TestDramaturgePromptCatalog:
     @allure.story("Catalog lookup")
     @allure.title("Russian Dramaturge review prompt is Russian and keeps JSON keys English")
     def test_review_prompt_is_russian(self) -> None:
-        rendered = get_dramaturge_prompts("Russian").review.render(narration="Туман над Невой.")
+        rendered = get_dramaturge_prompts("Russian").review.format(narration="Туман над Невой.")
         assert "Вывод Рассказчика" in rendered
         assert '"corrected_narration"' in rendered
         assert '"unknown_entities"' in rendered
@@ -361,7 +367,7 @@ class TestSceneBuilderPromptCatalog:
     @allure.story("Catalog lookup")
     @allure.title("Russian Scene Builder prompt renders Cyrillic with English JSON keys")
     def test_prompt_is_russian(self) -> None:
-        rendered = get_scene_builder_prompts("Russian").generate.render(
+        rendered = get_scene_builder_prompts("Russian").generate.format(
             player_action="осмотреться",
             time_of_day="утро",
         )
@@ -386,7 +392,7 @@ class TestItemGeneratorPromptCatalog:
     @allure.story("Catalog lookup")
     @allure.title("Russian Item Generator examine prompt is Russian with English JSON keys")
     def test_examine_prompt_is_russian(self) -> None:
-        rendered = get_item_generator_prompts("Russian").examine.render(
+        rendered = get_item_generator_prompts("Russian").examine.format(
             item_name="меч",
             context_hint="на столе",
         )
@@ -409,7 +415,7 @@ class TestWorldChroniclerPromptCatalog:
     @allure.story("Catalog lookup")
     @allure.title("Russian Chronicler advance prompt preserves category / status / scope enum values in English")
     def test_enum_values_stay_english(self) -> None:
-        rendered = get_chronicler_prompts("Russian").advance.render(
+        rendered = get_chronicler_prompts("Russian").advance.format(
             scene_number="5",
             open_threads="(нет открытых нитей)",
             turn_summary="Игрок осмотрелся.",
@@ -436,7 +442,7 @@ class TestDataMinerPromptCatalog:
     @allure.story("Catalog lookup")
     @allure.title("Russian Data Miner search-terms prompt keeps JSON key 'search_terms' in English")
     def test_search_terms_key_english(self) -> None:
-        rendered = get_data_miner_prompts("Russian").search_terms.render(
+        rendered = get_data_miner_prompts("Russian").search_terms.format(
             setting_request="Флоренция эпохи Медичи",
         )
         assert '"search_terms"' in rendered
@@ -458,7 +464,7 @@ class TestDirectorPromptCatalog:
     @allure.story("Catalog lookup")
     @allure.title("Russian Director routing prompt renders the player action header in Russian")
     def test_russian_routing_prompt_uses_russian_header(self) -> None:
-        rendered = get_director_prompts("Russian").action_routing.render(
+        rendered = get_director_prompts("Russian").action_routing.format(
             player_action="пойти на рынок",
         )
         assert "Действие игрока" in rendered

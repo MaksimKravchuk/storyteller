@@ -11,8 +11,7 @@ from loguru import logger
 
 from config import Config
 from db.repository import GameRepository
-from engine.factory import create_engine_with_db_overrides
-from engine.game_engine import GameEngine
+from engine.factory import create_engine
 from interfaces.web.character import build_character_info
 from interfaces.web.schemas import ActionResponse, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
@@ -54,7 +53,7 @@ async def get_current_snapshot(
 async def _start_and_persist(
     repo: GameRepository,
     session_id: str,
-    engine: GameEngine,
+    engine,
     setting: str,
 ) -> None:
     """Run ``start_game`` and persist the resulting state in one call."""
@@ -76,7 +75,10 @@ async def start_game_for_player(
     current_session_id.set(session_id)
     reset_buffer()
     reset_events()
-    engine = await create_engine_with_db_overrides(repo, cfg, language=language)
+    from engine.model_overrides import load_role_overrides
+
+    overrides = await load_role_overrides(repo, cfg)
+    engine = create_engine(cfg, language=language, overrides=overrides)
     try:
         await _start_and_persist(repo, session_id, engine, setting)
     except Exception:
@@ -90,7 +92,7 @@ async def start_game_for_player(
 async def _act_and_persist(
     repo: GameRepository,
     session_id: str,
-    engine: GameEngine,
+    engine,
     action: str,
     language: str,
 ) -> ActionResponse:

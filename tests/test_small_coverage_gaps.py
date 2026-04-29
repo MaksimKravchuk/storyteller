@@ -102,14 +102,11 @@ class TestPromptTemplateBuilder:
             section.render()
 
     @allure.story("Section building")
-    @allure.title("PromptTemplate.add_section returns self and appends the section to the render pipeline")
-    def test_add_section_returns_self_and_appends(self):
-        template = PromptTemplate()
+    @allure.title("PromptTemplate renders all sections whose required vars are satisfied")
+    def test_template_renders_satisfied_sections(self):
         section = PromptSection(name="greeting", template="Hello, {name}!", required_vars=["name"])
+        template = PromptTemplate([section])
 
-        returned = template.add_section(section)
-
-        assert returned is template
         assert template.render(name="world") == "Hello, world!"
 
 

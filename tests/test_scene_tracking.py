@@ -37,7 +37,7 @@ class TestSceneNumberInConversationLog:
     async def test_scene_number_in_log_entry(self):
         director = make_director(route_response=_route(_TALK))
         await director.act("hello")
-        log = director._deps.game_state.conversation_log
+        log = director._game_state.conversation_log
         assert len(log) == 1
         assert _SCENE_NUM in log[0]
         assert log[0][_SCENE_NUM] == 0

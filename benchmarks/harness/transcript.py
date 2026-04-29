@@ -6,7 +6,6 @@ from typing import Any, Callable
 
 from cast.schemas.turn_outputs import TurnOutputs
 from engine.game_engine import GameEngine
-from engine.narrator_middleware import install_narrator_middleware
 
 
 class NarratorCapture:
@@ -18,7 +17,11 @@ class NarratorCapture:
 
     def attach(self, engine: GameEngine) -> None:
         """Install this capture as a narrator middleware on ``engine``."""
-        install_narrator_middleware(engine, self._wrap)
+        director = engine._director
+        if director is None:
+            raise RuntimeError("NarratorCapture.attach requires a running engine")
+        narrator = director._narrator
+        narrator.execute = self._wrap(narrator.execute)
 
     def pop_next(self) -> TurnOutputs:
         """Return the next buffered payload (FIFO). Empty buffer raises loudly."""

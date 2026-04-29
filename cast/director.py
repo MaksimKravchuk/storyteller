@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Any
 
 from cast.base_performer_class import BasePerformer
@@ -23,29 +22,6 @@ from timeline import event as event_mod, event_manager as event_manager_mod
 _DEFAULT_CLARIFICATION = "Could you be more specific about what you want to do?"
 
 
-@dataclasses.dataclass
-class DirectorDeps:
-    """Runtime dependencies the Director needs to orchestrate the game."""
-
-    game_state: gs_mod.GameState
-    event_manager: event_manager_mod.EventManager
-    memory_manager: memory_mod.MemoryManager
-
-
-@dataclasses.dataclass
-class DirectorCast:
-    """The ensemble of specialist agents the Director delegates to."""
-
-    scene_builder: Any
-    narrator: Any
-    npc_generator: Any
-    data_miner: Any
-    item_generator: Any
-    world_chronicler: Any | None = None
-    dramaturge: Any | None = None
-    actors: dict[str, Any] = dataclasses.field(default_factory=dict)
-
-
 class Director(BasePerformer):
     """Central orchestrator.
 
@@ -58,8 +34,17 @@ class Director(BasePerformer):
         self,
         *,
         llm_client: Any,
-        deps: DirectorDeps,
-        cast: DirectorCast,
+        game_state: gs_mod.GameState,
+        event_manager: event_manager_mod.EventManager,
+        memory_manager: memory_mod.MemoryManager,
+        scene_builder: Any,
+        narrator: Any,
+        npc_generator: Any,
+        data_miner: Any,
+        item_generator: Any,
+        world_chronicler: Any | None = None,
+        dramaturge: Any | None = None,
+        actors: dict[str, Any] | None = None,
         language: str = "English",
     ):
         prompts = get_director_prompts(language)
@@ -67,34 +52,43 @@ class Director(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
-        self._deps = deps
-        self._cast = cast
-        self._actors: dict[str, Any] = dict(cast.actors)
+        self._game_state = game_state
+        self._event_manager = event_manager
+        self._actors: dict[str, Any] = dict(actors or {})
         self._language = language
         self.set_context(language=language)
 
-        self._ctx = director_context.ContextFormatter(deps.game_state)
+        self._ctx = director_context.ContextFormatter(game_state)
         self._router = director_routing.ActionRouter(
-            deps.game_state,
+            game_state,
             self._send_tool,
             prompts.action_routing,
         )
-        self._events = director_events.EventProcessor(deps.game_state, deps.event_manager, deps.memory_manager)
-        self._dialogue = director_dialogue.DialogueHandler(deps.game_state, self._actors, deps.memory_manager)
-        self._retaliation = director_retaliation.RetaliationHandler(deps.game_state, self._actors)
-        self._npc_turns = NPCTurnResolver(deps.game_state, self._actors)
-        self._background_ticker = npc_background_tick.NPCBackgroundTicker(deps.game_state, deps.memory_manager)
-        self._npc_ticker = NPCTicker(deps.game_state)
-        agents = director_execution._Agents(
+        self._events = director_events.EventProcessor(game_state, event_manager, memory_manager)
+        self._dialogue = director_dialogue.DialogueHandler(game_state, self._actors, memory_manager)
+        self._retaliation = director_retaliation.RetaliationHandler(game_state, self._actors)
+        self._npc_turns = NPCTurnResolver(game_state, self._actors)
+        self._background_ticker = npc_background_tick.NPCBackgroundTicker(game_state, memory_manager)
+        self._npc_ticker = NPCTicker(game_state)
+        self._executor = director_execution.PlanExecutor(
+            game_state=game_state,
             events=self._events,
-            event_manager=deps.event_manager,
+            event_manager=event_manager,
             dialogue=self._dialogue,
             retaliation=self._retaliation,
             npc_turns=self._npc_turns,
             npc_ticker=self._npc_ticker,
-            memory_manager=deps.memory_manager,
+            memory_manager=memory_manager,
+            scene_builder=scene_builder,
+            narrator=narrator,
+            npc_generator=npc_generator,
+            data_miner=data_miner,
+            item_generator=item_generator,
+            world_chronicler=world_chronicler,
+            dramaturge=dramaturge,
+            register_npc_fn=self._register_new_npc,
         )
-        self._executor = director_execution.PlanExecutor(deps.game_state, agents, cast, self._register_new_npc)
+        self._narrator = narrator
 
     # ------------------------------------------------------------------
     # Public API
@@ -111,8 +105,8 @@ class Director(BasePerformer):
             self._router.save_pending_clarification(input_data, plan)
             return plan.question or _DEFAULT_CLARIFICATION
 
-        self._deps.game_state.pending_clarification = None
-        mark_player_text_introductions(input_data, self._deps.game_state)
+        self._game_state.pending_clarification = None
+        mark_player_text_introductions(input_data, self._game_state)
         action_type = plan.action_type
         completed = await self._advance_clock_and_tick_background(action_type, plan.time_cost_override)
         narrated = await self._executor.execute_plan(plan, input_data, completed)
@@ -126,7 +120,7 @@ class Director(BasePerformer):
 
     def schedule_event(self, event: event_mod.GameEvent) -> str:
         """Convenience wrapper to schedule an event."""
-        return self._deps.event_manager.schedule(event)
+        return self._event_manager.schedule(event)
 
     # ------------------------------------------------------------------
     # Internal
@@ -144,7 +138,7 @@ class Director(BasePerformer):
 
     def _check_forced_wait(self, input_data: str) -> WaitPlan | None:
         """Short-circuit to WAIT if player is incapacitated or typed a wait keyword."""
-        player_status = self._deps.game_state.player.physical_status
+        player_status = self._game_state.player.physical_status
         if is_incapacitated(player_status):
             return build_forced_wait_plan(player_status)
         if detect_wait_intent(input_data, self._language):
@@ -156,15 +150,15 @@ class Director(BasePerformer):
         from cast.actor import Actor
         from knowledge.query import KnowledgeQueryEngine
 
-        self._deps.game_state.npcs[npc.uuid] = npc
+        self._game_state.npcs[npc.uuid] = npc
 
-        locations = self._deps.game_state.locations
+        locations = self._game_state.locations
         if npc.location_id and npc.location_id in locations:
             locations[npc.location_id].add_npc(npc.uuid)
 
         # Register the NPC as a graph node so MemoryManager.summarize_interaction
         # can attach WITNESSED edges from the NPC to personal-memory nodes.
-        self._deps.game_state.knowledge_graph.register_actor_node(
+        self._game_state.knowledge_graph.register_actor_node(
             npc.uuid,
             label="{0} ({1})".format(npc.name, npc.occupation),
         )
@@ -172,7 +166,7 @@ class Director(BasePerformer):
         actor = Actor(
             llm_client=self.llm_client,
             npc=npc,
-            knowledge_query=KnowledgeQueryEngine(self._deps.game_state.knowledge_graph),
+            knowledge_query=KnowledgeQueryEngine(self._game_state.knowledge_graph),
             language=self._language,
         )
         self.register_actor(npc.uuid, actor)

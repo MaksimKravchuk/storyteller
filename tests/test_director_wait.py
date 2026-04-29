@@ -19,7 +19,7 @@ _FORUM = "forum"
 
 def _last_narrator_input(director):
     """Return the ``TurnOutputs`` most recently handed to the mocked Narrator."""
-    narrator_call = director._cast.narrator.execute.call_args
+    narrator_call = director._executor._narrator.execute.call_args
     return narrator_call.kwargs["input_data"]
 
 
@@ -67,7 +67,7 @@ class TestWaitSkipsDialogue:
         scene_before = gs.current_scene
         await director.act("wait")
 
-        director._cast.scene_builder.execute.assert_not_called()
+        director._executor._scene_builder.execute.assert_not_called()
         assert gs.current_scene is scene_before
 
 
@@ -116,7 +116,7 @@ class TestForcedWaitFromIncapacitation:
 
         # The LLM router should NOT have been called (short-circuited)
         # and the narrator should have been called with wait content
-        narrator_call = director._cast.narrator.execute.call_args
+        narrator_call = director._executor._narrator.execute.call_args
         assert narrator_call is not None
 
     @allure.story("Forced wait")
@@ -129,7 +129,7 @@ class TestForcedWaitFromIncapacitation:
 
         await director.act("look around")
 
-        narrator_call = director._cast.narrator.execute.call_args
+        narrator_call = director._executor._narrator.execute.call_args
         assert narrator_call is not None
 
     @allure.story("Forced wait")
@@ -183,7 +183,7 @@ class TestWaitSurfacesAmbientMaterial:
             ),
         )
         director = make_director(game_state=gs, route_response=_wait_route())
-        director._cast.world_chronicler = make_mock_agent(ChroniclerResponse())
+        director._executor._world_chronicler = make_mock_agent(ChroniclerResponse())
 
         await director.act("wait")
 
@@ -207,4 +207,4 @@ class TestWaitKeywordShortCircuit:
         await director.act("/wait")
 
         # Narrator was called (game produced output)
-        director._cast.narrator.execute.assert_called_once()
+        director._executor._narrator.execute.assert_called_once()

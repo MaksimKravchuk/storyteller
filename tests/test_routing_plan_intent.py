@@ -26,7 +26,7 @@ class TestRoutingPlanIntent:
     @allure.story("Turn intent")
     @allure.title("Director routing prompt instructs the LLM to restate player intent")
     def test_routing_prompt_mentions_intent(self):
-        rendered = DIRECTOR_ACTION_ROUTING.render(player_action="go back to the forum")
+        rendered = DIRECTOR_ACTION_ROUTING.format(player_action="go back to the forum")
         assert "intent" in rendered.lower()
         assert "faithful" in rendered.lower()
 
@@ -51,6 +51,6 @@ class TestRoutingPlanIntent:
 
         await director.act("go back to the forum and speak to the guard")
 
-        narrator_call = director._cast.narrator.execute.call_args
+        narrator_call = director._executor._narrator.execute.call_args
         raw_outputs: TurnOutputs = narrator_call.kwargs["input_data"]
         assert raw_outputs.intent == _INTENT
