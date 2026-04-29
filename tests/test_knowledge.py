@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import allure
-import pytest
 
 from knowledge.graph import KnowledgeGraph
 from knowledge import graph_serialization
@@ -22,7 +21,6 @@ from models.character import Character
 # ---------------------------------------------------------------------------
 
 _POLITICS = "politics"
-_CONFIDENCE = 0.6
 
 
 # ---------------------------------------------------------------------------
@@ -72,24 +70,22 @@ class TestKnowledgeScopeOrdering:
 @allure.feature("Knowledge graph")
 class TestKnowledgeNode:
     @allure.story("Node defaults")
-    @allure.title("A KnowledgeNode defaults to LOCAL scope, FACT source, zero requirements, and no tags")
+    @allure.title("A KnowledgeNode defaults to LOCAL scope, FACT source, zero education, and no tags")
     def test_defaults(self):
         node = KnowledgeNode(text="Test fact")
         assert node.scope == KnowledgeScope.LOCAL
         assert node.source == KnowledgeSource.FACT
         assert node.required_education == 0
-        assert node.required_social_status == 0
         assert node.tags == []
 
     @allure.story("Node defaults")
-    @allure.title("A KnowledgeNode defaults to full confidence 1.0 and gets a UUID string assigned")
-    def test_default_confidence_and_uuid(self):
+    @allure.title("A KnowledgeNode gets a UUID string assigned on init")
+    def test_default_uuid(self):
         node = KnowledgeNode(text="Test fact")
-        assert node.confidence == pytest.approx(1.0)
         assert isinstance(node.uuid, str)
 
     @allure.story("Node defaults")
-    @allure.title("A KnowledgeNode accepts custom scope, source, education, tags, and confidence on init")
+    @allure.title("A KnowledgeNode accepts custom scope, source, education, and tags on init")
     def test_custom_fields(self):
         node = KnowledgeNode(
             text="Secret",
@@ -97,13 +93,11 @@ class TestKnowledgeNode:
             source=KnowledgeSource.RUMOR,
             required_education=5,
             tags=[_POLITICS],
-            confidence=_CONFIDENCE,
         )
         assert node.scope == KnowledgeScope.COUNTRY
         assert node.source == KnowledgeSource.RUMOR
         assert node.required_education == 5
         assert node.tags == [_POLITICS]
-        assert node.confidence == pytest.approx(_CONFIDENCE)
 
     @allure.story("Canon source")
     @allure.title("A KnowledgeNode defaults its canon to HISTORICAL")
@@ -173,13 +167,13 @@ class TestKnowledgeGraphNodes:
 @allure.feature("Knowledge graph")
 class TestKnowledgeGraphEdges:
     @allure.story("Edge CRUD")
-    @allure.title("Adding a RELATED_TO edge between two nodes increments the edge count to 1")
+    @allure.title("Adding a WITNESSED edge between two nodes increments the edge count to 1")
     def test_add_edge_and_edge_count(self, empty_graph):
         n1 = KnowledgeNode(text="A")
         n2 = KnowledgeNode(text="B")
         empty_graph.add_node(n1)
         empty_graph.add_node(n2)
-        empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.RELATED_TO)
+        empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.WITNESSED)
         assert graph_serialization.edge_count(empty_graph) == 1
 
     @allure.story("Edge CRUD")
@@ -189,12 +183,12 @@ class TestKnowledgeGraphEdges:
         n2 = KnowledgeNode(text="B")
         empty_graph.add_node(n1)
         empty_graph.add_node(n2)
-        empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.KNOWS_ABOUT)
+        empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.TOLD_BY)
         edges = empty_graph.get_edges_from(n1.uuid)
         assert len(edges) == 1
         target_id, edge_type = edges[0]
         assert target_id == n2.uuid
-        assert edge_type == EdgeType.KNOWS_ABOUT
+        assert edge_type == EdgeType.TOLD_BY
 
     @allure.story("Edge CRUD")
     @allure.title("get_edges_from returns an empty list for a node id that does not exist in the graph")
@@ -268,19 +262,18 @@ class TestQueryEngineFilters:
 @allure.feature("Knowledge graph")
 class TestQueryEngineNpcContext:
     @allure.story("NPC context building")
-    @allure.title("build_npc_filter maps the Character's knowledge_scope, education, and social_status into the filter")
+    @allure.title("build_npc_filter maps the Character's knowledge_scope and education into the filter")
     def test_build_npc_filter_maps_scope(self):
         npc = Character(
             name="Scholar",
             knowledge_scope="region",
-            attributes={"education": 6, "social_status": 4},
+            attributes={"education": 6},
         )
         graph = KnowledgeGraph()
         engine = KnowledgeQueryEngine(graph)
         filt = engine.build_npc_filter(npc)
         assert filt.max_scope == KnowledgeScope.REGION
         assert filt.max_education_required == 6
-        assert filt.max_social_status_required == 4
 
     @allure.story("NPC context building")
     @allure.title("An unknown knowledge_scope string on a Character falls back to LOCAL scope in the filter")

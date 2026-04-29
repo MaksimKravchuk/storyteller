@@ -47,24 +47,23 @@ def _seed_npc_node(graph: KnowledgeGraph) -> str:
     return graph.add_node(npc_node)
 
 
-@allure.story("summarize_interaction")
-@allure.title("summarize_interaction creates a memory node and links it to an existing NPC with WITNESSED")
+@allure.story("summarize_interactions_batch")
+@allure.title("summarize_interactions_batch creates a memory node and links it to an existing NPC with WITNESSED")
 @pytest.mark.asyncio
-async def test_summarize_interaction_links_to_existing_npc() -> None:
+async def test_summarize_batch_links_to_existing_npc() -> None:
     """When the NPC is already in the graph, a WITNESSED edge is added from NPC to the memory."""
     manager, graph, llm = _make_manager()
     npc_id = _seed_npc_node(graph)
 
-    node = await manager.summarize_interaction(
-        interaction_log="player: hi\nnpc: hello",
-        npc_id=npc_id,
-    )
+    await manager.summarize_interactions_batch([(npc_id, "player: hi\nnpc: hello")])
 
+    memory_nodes = [n for n in graph.all_nodes() if n.source == KnowledgeSource.PERSONAL_EXPERIENCE]
+    assert len(memory_nodes) == 1
+    node = memory_nodes[0]
     assert node.text == _SUMMARY_TEXT
     assert node.scope == KnowledgeScope.LOCAL
     assert node.source == KnowledgeSource.PERSONAL_EXPERIENCE
     assert node.canon == CanonSource.SESSION
-    # Edge from npc to new memory exists and is WITNESSED
     edges = graph.get_edges_from(npc_id)
     assert len(edges) == 1
     target_id, edge_type = edges[0]
@@ -73,43 +72,38 @@ async def test_summarize_interaction_links_to_existing_npc() -> None:
     llm.send_message.assert_awaited_once()
 
 
-@allure.story("summarize_interaction")
-@allure.title("summarize_interaction still creates a node when the npc_id is missing from the graph")
+@allure.story("summarize_interactions_batch")
+@allure.title("summarize_interactions_batch still creates a node when the npc_id is missing from the graph")
 @pytest.mark.asyncio
-async def test_summarize_interaction_no_edge_when_npc_missing() -> None:
+async def test_summarize_batch_no_edge_when_npc_missing() -> None:
     """With an unknown npc_id, the node is added but no edge is created."""
     manager, graph, _ = _make_manager()
-    node = await manager.summarize_interaction(
-        interaction_log="whatever",
-        npc_id="unknown-npc-uuid",
-    )
-    assert graph.get_node(node.uuid) is not None
+    await manager.summarize_interactions_batch([("unknown-npc-uuid", "whatever")])
+    nodes = graph.all_nodes()
+    assert len(nodes) == 1
     assert graph.get_edges_from("unknown-npc-uuid") == []
 
 
-@allure.story("summarize_interaction")
-@allure.title("summarize_interaction creates a WITNESSED edge that is queryable via get_memories_about")
+@allure.story("summarize_interactions_batch")
+@allure.title("summarize_interactions_batch creates a WITNESSED edge that is queryable via get_memories_about")
 @pytest.mark.asyncio
-async def test_summarize_interaction_creates_witnessed_edge_and_is_queryable() -> None:
+async def test_summarize_batch_creates_witnessed_edge_and_is_queryable() -> None:
     """Register an NPC via register_actor_node, summarise an interaction, then query it back."""
     manager, graph, _ = _make_manager()
     npc_id = "npc-marcus"
     graph.register_actor_node(npc_id, label="Marcus (legionary)")
 
-    node = await manager.summarize_interaction(
-        interaction_log="Player: greetings\nMarcus: hail",
-        npc_id=npc_id,
-        game_time=3.0,
-    )
+    await manager.summarize_interactions_batch([(npc_id, "Player: greetings\nMarcus: hail")], game_time=3.0)
 
     edges = graph.get_edges_from(npc_id)
     assert len(edges) == 1
-    assert edges[0] == (node.uuid, EdgeType.WITNESSED)
+    node_id, edge_type = edges[0]
+    assert edge_type == EdgeType.WITNESSED
 
     engine = KnowledgeQueryEngine(graph)
     memories = engine.get_memories_about(npc_id)
     assert len(memories) == 1
-    assert memories[0].uuid == node.uuid
+    assert memories[0].uuid == node_id
     assert memories[0].text == _SUMMARY_TEXT
 
 

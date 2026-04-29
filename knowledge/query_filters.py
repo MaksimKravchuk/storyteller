@@ -15,11 +15,6 @@ def passes_education(node: KnowledgeNode, max_education_required: int) -> bool:
     return node.required_education <= max_education_required
 
 
-def passes_social_status(node: KnowledgeNode, max_social_status_required: int) -> bool:
-    """Return True if the node's social status requirement is within the limit."""
-    return node.required_social_status <= max_social_status_required
-
-
 def passes_location(
     node: KnowledgeNode,
     location_id: str | None,
