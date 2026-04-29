@@ -254,7 +254,7 @@ _KG_NODE_SPECS = (
     ("Something witnessed in the square.", "LOCAL", "PERSONAL_EXPERIENCE"),
 )
 _KG_EDGE_SPECS = (
-    (0, 3, "RELATED_TO"),
+    (0, 3, "TOLD_BY"),
     (2, 0, "TOLD_BY"),
     (4, 1, "WITNESSED"),
 )

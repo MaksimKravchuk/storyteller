@@ -49,47 +49,6 @@ class MemoryManager:
         self._graph = graph
         self._llm = llm_client
 
-    async def summarize_interaction(
-        self,
-        interaction_log: str,
-        npc_id: str,
-        game_time: float = INITIAL_GAME_CLOCK,
-    ) -> KnowledgeNode:
-        """Summarise an interaction into a memory node linked to an NPC.
-
-        The LLM extracts: what the NPC learned, emotional impression,
-        and key facts exchanged.
-        """
-        from llm.message import Message, Role
-
-        prompt = (
-            "Summarise the following conversation from the NPC's perspective "
-            "in 1-2 sentences. Focus on: what did the NPC learn? "
-            "What is their impression of the player?\n\n"
-            f"{interaction_log}"
-        )
-        response = await self._llm.send_message(
-            messages=[Message(role=Role.USER, body=prompt)],
-            system_prompt="You are a memory summariser for a text adventure game. "
-            "Output only the summary, nothing else.",
-            max_tokens=_SUMMARY_MAX_TOKENS,
-        )
-
-        node = KnowledgeNode(
-            text=response.body.strip(),
-            scope=KnowledgeScope.LOCAL,
-            source=KnowledgeSource.PERSONAL_EXPERIENCE,
-            canon=CanonSource.SESSION,
-            timestamp=game_time,
-        )
-        node_id = self._graph.add_node(node)
-
-        # Link the memory to the NPC
-        if npc_id in [node_id for node_id in self._graph.digraph.nodes]:
-            self._graph.add_edge(npc_id, node_id, EdgeType.WITNESSED)
-
-        return node
-
     async def summarize_interactions_batch(
         self,
         pairs: list[tuple[str, str]],
@@ -106,7 +65,7 @@ class MemoryManager:
             return
         await asyncio.gather(
             *(
-                self.summarize_interaction(
+                self._summarize_one(
                     interaction_log=log,
                     npc_id=npc_id,
                     game_time=game_time,
@@ -180,3 +139,37 @@ class MemoryManager:
                 created_ids.append(personal_id)
 
         return created_ids
+
+    async def _summarize_one(
+        self,
+        interaction_log: str,
+        npc_id: str,
+        game_time: float,
+    ) -> None:
+        """Summarise a single interaction into a memory node linked to an NPC."""
+        from llm.message import Message, Role
+
+        prompt = (
+            "Summarise the following conversation from the NPC's perspective "
+            "in 1-2 sentences. Focus on: what did the NPC learn? "
+            "What is their impression of the player?\n\n"
+            f"{interaction_log}"
+        )
+        response = await self._llm.send_message(
+            messages=[Message(role=Role.USER, body=prompt)],
+            system_prompt="You are a memory summariser for a text adventure game. "
+            "Output only the summary, nothing else.",
+            max_tokens=_SUMMARY_MAX_TOKENS,
+        )
+
+        node = KnowledgeNode(
+            text=response.body.strip(),
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            canon=CanonSource.SESSION,
+            timestamp=game_time,
+        )
+        node_id = self._graph.add_node(node)
+
+        if npc_id in self._graph.digraph:
+            self._graph.add_edge(npc_id, node_id, EdgeType.WITNESSED)

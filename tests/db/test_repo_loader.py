@@ -112,6 +112,6 @@ class TestLoadKnowledgeGraph:
         for node in reloaded_nodes:
             for _target, edge_type in reloaded.get_edges_from(node.uuid):
                 edge_types.add(edge_type)
-        assert EdgeType.RELATED_TO in edge_types
+        assert EdgeType.TOLD_BY in edge_types
         assert EdgeType.TOLD_BY in edge_types
         assert EdgeType.WITNESSED in edge_types

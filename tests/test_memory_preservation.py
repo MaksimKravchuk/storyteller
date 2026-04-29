@@ -360,7 +360,7 @@ def test_non_witnessed_edges_ignored() -> None:
         canon=CanonSource.HISTORICAL,
     )
     graph.add_node(other)
-    graph.add_edge(_BARTENDER_ID, other.uuid, EdgeType.KNOWS_ABOUT)
+    graph.add_edge(_BARTENDER_ID, other.uuid, EdgeType.TOLD_BY)
     session_memory = _add_session_memory(graph, _BARTENDER_ID)
 
     created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)

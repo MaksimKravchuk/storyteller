@@ -84,6 +84,6 @@ class KnowledgeGraph:
         if node_id not in self.digraph:
             return []
         return [
-            (target, edge_attrs.get("edge_type", EdgeType.RELATED_TO))
+            (target, edge_attrs.get("edge_type", EdgeType.WITNESSED))
             for _, target, edge_attrs in self.digraph.out_edges(node_id, data=True)
         ]
