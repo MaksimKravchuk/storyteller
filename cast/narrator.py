@@ -16,7 +16,7 @@ from models.scene import Scene
 from prompts.narrator_prompts import get_narrator_prompts
 
 _HISTORY_PREVIEW_CHARS = 200
-_NARRATION_MAX_TOKENS = 800
+_NARRATION_MAX_TOKENS = 450
 _KEY_COMPLETED_EVENTS = "completed_events"
 _KEY_WAIT_CONTEXT_LINES = "wait_context_lines"
 _KEY_HOURS_WAITED = "hours_waited"
