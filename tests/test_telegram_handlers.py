@@ -12,7 +12,7 @@ from tests._telegram_helpers import make_text_update
 
 pytest.importorskip("telegram")
 
-from engine import persistence  # noqa: E402
+from engine import session_ops  # noqa: E402
 from interfaces import telegram_handlers as handlers  # noqa: E402
 
 pytestmark = [
@@ -61,44 +61,44 @@ def _last_reply(ctx: SimpleNamespace) -> str:
     return reply_mock.call_args_list[-1].args[0]
 
 
-@allure.story("persist_engine")
-@allure.title("persist_engine saves game state and flushes buffered AI call logs")
+@allure.story("persist_engine_state")
+@allure.title("persist_engine_state saves game state and flushes buffered AI call logs")
 @pytest.mark.asyncio
-async def test_persist_engine_flushes_ai_logs() -> None:
+async def test_persist_engine_state_flushes_ai_logs() -> None:
     ctx = _make_ctx()
     engine = _make_engine(with_state=True)
     logs = [{"call_id": "c1"}]
 
-    with patch("engine.persistence.get_and_clear_buffer", return_value=logs):
-        await persistence.persist_engine(ctx.repo, ctx.session_id, engine, turn_number=3)
+    with patch("engine.session_ops.get_and_clear_buffer", return_value=logs):
+        await session_ops.persist_engine_state(ctx.repo, ctx.session_id, engine, turn_number=3)
 
     ctx.repo.save_game_state.assert_awaited_once()
     ctx.repo.ai_logs.save.assert_awaited_once_with(logs, turn_number=3)
 
 
-@allure.story("persist_engine")
-@allure.title("persist_engine skips ai_logs.save when the buffer is empty")
+@allure.story("persist_engine_state")
+@allure.title("persist_engine_state skips ai_logs.save when the buffer is empty")
 @pytest.mark.asyncio
-async def test_persist_engine_skips_empty_ai_logs() -> None:
+async def test_persist_engine_state_skips_empty_ai_logs() -> None:
     ctx = _make_ctx()
     engine = _make_engine(with_state=True)
 
-    with patch("engine.persistence.get_and_clear_buffer", return_value=[]):
-        await persistence.persist_engine(ctx.repo, ctx.session_id, engine, turn_number=None)
+    with patch("engine.session_ops.get_and_clear_buffer", return_value=[]):
+        await session_ops.persist_engine_state(ctx.repo, ctx.session_id, engine, turn_number=None)
 
     ctx.repo.save_game_state.assert_awaited_once()
     ctx.repo.ai_logs.save.assert_not_awaited()
 
 
-@allure.story("persist_engine")
-@allure.title("persist_engine raises RuntimeError when the engine is not started")
+@allure.story("persist_engine_state")
+@allure.title("persist_engine_state raises RuntimeError when the engine is not started")
 @pytest.mark.asyncio
-async def test_persist_engine_raises_when_no_game_state() -> None:
+async def test_persist_engine_state_raises_when_no_game_state() -> None:
     ctx = _make_ctx()
     engine = _make_engine(with_state=False)
 
     with pytest.raises(RuntimeError, match="Game not started"):
-        await persistence.persist_engine(ctx.repo, ctx.session_id, engine, turn_number=None)
+        await session_ops.persist_engine_state(ctx.repo, ctx.session_id, engine, turn_number=None)
 
 
 @allure.story("handle_awaiting_setting")
@@ -110,7 +110,7 @@ async def test_handle_awaiting_setting_happy_path() -> None:
 
     with (
         patch("interfaces.telegram_handlers.begin_session", new=AsyncMock(return_value=engine)),
-        patch("engine.persistence.get_and_clear_buffer", return_value=[]),
+        patch("engine.session_ops.get_and_clear_buffer", return_value=[]),
     ):
         await handlers.handle_awaiting_setting(ctx, chat_id=42)
 
@@ -165,7 +165,7 @@ async def test_handle_playing_happy_path() -> None:
 
     with (
         patch("interfaces.telegram_handlers.resume_session", new=AsyncMock(return_value=engine)),
-        patch("engine.persistence.get_and_clear_buffer", return_value=[{"call_id": "c1"}]),
+        patch("engine.session_ops.get_and_clear_buffer", return_value=[{"call_id": "c1"}]),
     ):
         await handlers.handle_playing(ctx)
 

@@ -11,8 +11,7 @@ from loguru import logger
 
 from config import Config
 from db.repository import GameRepository
-from engine.persistence import persist_engine
-from engine.session import begin_session, resume_session
+from engine.session_ops import begin_session, persist_engine_state, resume_session
 from interfaces.web.character import build_character_info
 from interfaces.web.schemas import ActionResponse, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
@@ -57,7 +56,7 @@ async def _start_and_persist(
 ) -> None:
     """Run ``start_game`` and persist the resulting state in one call."""
     await engine.start_game(setting)
-    await persist_engine(repo, session_id, engine, turn_number=None)
+    await persist_engine_state(repo, session_id, engine, turn_number=None)
 
 
 async def start_game_for_player(
@@ -93,7 +92,7 @@ async def _act_and_persist(
     narration = await engine.process_action(action)
     game_state, _, _ = engine.assert_running()
     turn_number = game_state.turn_count
-    await persist_engine(repo, session_id, engine, turn_number=turn_number)
+    await persist_engine_state(repo, session_id, engine, turn_number=turn_number)
     return ActionResponse(
         narration=narration,
         narration_html=render_narrator_html(

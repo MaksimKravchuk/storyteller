@@ -6,8 +6,7 @@ from typing import Any
 
 from loguru import logger
 
-from engine.persistence import persist_engine
-from engine.session import begin_session, resume_session
+from engine.session_ops import begin_session, persist_engine_state, resume_session
 from interfaces.telegram_handlers_helpers import recover_from_start_failure, _STATE_IDLE
 from formatting.markdown_render import render
 from formatting.platform import ClientPlatform
@@ -18,7 +17,7 @@ _TELEGRAM_PARSE_MODE = "HTML"
 async def start_new_game(engine: Any, repo: Any, session_id: str, update: Any, text: str) -> None:
     """Run start_game and persist. Extracted to keep try-body short."""
     opening = await engine.start_game(text)
-    await persist_engine(repo, session_id, engine, turn_number=None)
+    await persist_engine_state(repo, session_id, engine, turn_number=None)
     await repo.sessions.update(session_id, state="playing")
     await update.message.reply_text(
         render(opening, ClientPlatform.TELEGRAM_HTML),
@@ -30,7 +29,7 @@ async def process_player_action(engine: Any, repo: Any, session_id: str, update:
     """Run process_action and persist. Extracted to keep try-body short."""
     response = await engine.process_action(text)
     game_state, _, _ = engine.assert_running()
-    await persist_engine(repo, session_id, engine, turn_number=game_state.turn_count)
+    await persist_engine_state(repo, session_id, engine, turn_number=game_state.turn_count)
     await update.message.reply_text(
         render(response, ClientPlatform.TELEGRAM_HTML),
         parse_mode=_TELEGRAM_PARSE_MODE,
