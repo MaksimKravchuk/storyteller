@@ -84,7 +84,6 @@ class DataMiner(BasePerformer):
             traditions=setting_data.traditions,
             technologies=setting_data.technologies,
             social_structure=setting_data.social_structure,
-            raw_sources=list(raw_articles.keys()),
         )
 
     async def ensure_fact(

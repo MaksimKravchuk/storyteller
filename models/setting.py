@@ -19,4 +19,3 @@ class Setting(StorytellerBase):
     traditions: list[str] = []
     technologies: list[str] = []
     social_structure: str = ""
-    raw_sources: list[str] = []

@@ -26,13 +26,6 @@ class TestWorldStateDefaults:
         assert state.world_mood is None
         assert state.last_chronicled_scene == 0
 
-    @allure.story("Defaults")
-    @allure.title("A new WorldState receives a UUID from BaseModel automatically")
-    def test_uuid_assigned(self):
-        state = WorldState()
-        assert isinstance(state.uuid, str)
-        assert state.uuid
-
 
 @allure.epic("Memory & Persistence")
 @allure.feature("WorldState model")
@@ -127,7 +120,6 @@ class TestWorldStateConverter:
         assert len(payload["threads"]) == 2
 
         restored = conv_world_state.dict_to_world_state(payload)
-        assert restored.uuid == original.uuid
         assert restored.world_mood == "uneasy and watchful"
         assert restored.last_chronicled_scene == 4
         assert len(restored.threads) == 2
@@ -146,7 +138,6 @@ class TestWorldStateConverter:
         original = WorldState()
         payload = conv_world_state.world_state_to_dict(original)
         restored = conv_world_state.dict_to_world_state(payload)
-        assert restored.uuid == original.uuid
         assert restored.threads == []
         assert restored.world_mood is None
         assert restored.last_chronicled_scene == 0
@@ -185,3 +176,36 @@ class TestWorldStateConverter:
             assert "dramatic" in str(exc)
         else:
             raise AssertionError("expected ValueError for unknown category")
+
+    @allure.story("Validation")
+    @allure.title("dict_to_world_state raises ValueError on an unknown thread status")
+    def test_invalid_status_rejected(self):
+        bad = {
+            "threads": [
+                {
+                    "description": "invalid",
+                    "category": "political",
+                    "introduced_scene": 1,
+                    "status": "pending",
+                },
+            ],
+        }
+        try:
+            conv_world_state.dict_to_world_state(bad)
+        except ValueError as exc:
+            assert "pending" in str(exc)
+        else:
+            raise AssertionError("expected ValueError for unknown status")
+
+    @allure.story("Backwards compatibility")
+    @allure.title("dict_to_world_state accepts legacy payloads carrying a top-level uuid key")
+    def test_legacy_uuid_key_ignored(self):
+        legacy = {
+            "uuid": "legacy-world-state-id",
+            "threads": [],
+            "world_mood": None,
+            "last_chronicled_scene": 0,
+        }
+        state = conv_world_state.dict_to_world_state(legacy)
+        assert isinstance(state, WorldState)
+        assert not hasattr(state, "uuid")

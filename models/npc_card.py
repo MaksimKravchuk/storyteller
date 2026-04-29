@@ -9,10 +9,6 @@ if TYPE_CHECKING:
     from models.game_state import GameState
 
 
-def _format_attr(attr_name: str, attr_val: object) -> str:
-    return "{0}={1}".format(attr_name, attr_val)
-
-
 def _dedup_preserving_order(names: list[str]) -> list[str]:
     """Drop empty/whitespace entries and duplicates while keeping order."""
     seen: set[str] = set()
@@ -46,8 +42,8 @@ def _introduced_aliases(name: str, occupation: str) -> list[str]:
 class NPCCard(Character):
     """Extended character profile created by the NPC Generator.
 
-    Adds runtime fields for conversation state, mood, and a method
-    to serialise the card into a string for prompt injection.
+    Adds runtime fields for conversation state, mood, hostility, and
+    long/short term goals.
     """
 
     conversation_history: list[dict[str, str]] = []
@@ -89,24 +85,3 @@ class NPCCard(Character):
         if descriptor:
             return [descriptor]
         return [role_fallback]
-
-    def to_prompt_context(self) -> str:
-        """Serialise this NPC card into text for injection into a system prompt."""
-        lines = [
-            f"Name: {self.name}",
-            f"Occupation: {self.occupation}",
-            f"Appearance: {self.appearance}",
-            f"Biography: {self.biography}",
-            "Personality: {0}".format(", ".join(self.personality_traits)),
-            f"Speech style: {self.speech_style}",
-            f"Knowledge scope: {self.knowledge_scope}",
-            f"Current mood: {self.current_mood}",
-            f"Physical status: {self.physical_status}",
-        ]
-        if self.inventory:
-            lines.append("Inventory: {0}".format(", ".join(self.inventory)))
-        if self.attributes:
-            attr_strs = [_format_attr(attr_name, attr_val) for attr_name, attr_val in self.attributes.items()]
-            attrs = ", ".join(attr_strs)
-            lines.append(f"Attributes: {attrs}")
-        return "\n".join(lines)

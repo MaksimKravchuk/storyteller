@@ -1,4 +1,4 @@
-"""WorldState and supporting dataclasses for the living-world sandbox.
+"""WorldState and supporting models for the living-world sandbox.
 
 ``WorldState`` tracks ongoing situations (``WorldThread``), a persistent
 ``world_mood`` hint for the Narrator, and the last scene the World
@@ -9,17 +9,17 @@ world evolves whether or not there is a plot.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Literal
 
-from models.base_model import BaseModel
+from pydantic import BaseModel, ConfigDict
+
+from models.base_model import StorytellerBase
 
 ThreadCategory = Literal["personal", "political", "natural", "economic", "social", "cultural"]
 ThreadStatus = Literal["open", "resolved", "abandoned"]
 
 
-@dataclass(kw_only=True)
-class WorldThread(BaseModel):
+class WorldThread(StorytellerBase):
     """An ongoing situation in the world, player-aware or not.
 
     ``category`` classifies what kind of thread it is so the Chronicler
@@ -33,13 +33,12 @@ class WorldThread(BaseModel):
     description: str
     category: ThreadCategory
     introduced_scene: int
-    involved_locations: list[str] = field(default_factory=list)
-    involved_npcs: list[str] = field(default_factory=list)
+    involved_locations: list[str] = []
+    involved_npcs: list[str] = []
     status: ThreadStatus = "open"
     last_advanced_scene: int = 0
 
 
-@dataclass(kw_only=True)
 class WorldState(BaseModel):
     """Living-world state. NOT plot structure.
 
@@ -47,8 +46,13 @@ class WorldState(BaseModel):
     ``world_mood`` is a short atmospheric hint the Narrator reads each
     turn. ``last_chronicled_scene`` records the last scene number the
     Chronicler ran so the agent can decide whether it owes a new update.
+
+    ``extra="ignore"`` lets legacy JSONB rows that still carry a
+    ``uuid`` key deserialize cleanly after the field was dropped.
     """
 
-    threads: list[WorldThread] = field(default_factory=list)
+    model_config = ConfigDict(extra="ignore")
+
+    threads: list[WorldThread] = []
     world_mood: str | None = None
     last_chronicled_scene: int = 0
