@@ -67,14 +67,10 @@ NARRATOR_SYSTEM = PromptTemplate(
         PromptSection(
             name="formatting",
             template=(
-                "Format your output using this small Markdown subset:\n"
-                "- **bold** — at most one salient element per paragraph, only "
-                "when it materially aids readability. Do not bold every NPC "
-                "name or object on first mention.\n"
-                "- *italic* — short atmospheric cues or inner thoughts that are "
-                "present in the raw material.\n"
-                "- `code` for short written text the player reads (signs, "
-                "letters, inscriptions).\n"
+                "Format with this minimal Markdown subset:\n"
+                "- **bold** — at most one salient element per paragraph.\n"
+                "- *italic* — short inner thoughts.\n"
+                "- `code` — short written text the player reads (signs, letters, inscriptions).\n"
                 "- Separate paragraphs with a blank line.\n"
                 "Do not use headings, lists, links, HTML tags, or any other Markdown feature."
             ),
@@ -94,9 +90,7 @@ NARRATOR_SYSTEM = PromptTemplate(
                 "naturally. Do not paraphrase or invent new names — a "
                 "near-miss reads fine but breaks downstream entity lookup.\n"
                 "- Do not give a proper name ('Tony', 'Marcus') to any NPC "
-                "whose card the player has not met.\n"
-                "- Ambient detail (sound, smell, light) is fine when grounded "
-                "in something the raw material already implies."
+                "whose card the player has not met."
             ),
             required_vars=[],
         ),
