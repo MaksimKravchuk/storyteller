@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from typing import Any
 
 import allure
@@ -10,11 +9,6 @@ import pytest
 
 from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import LLMResponse, Message
-
-
-async def _empty_stream() -> AsyncIterator[str]:
-    for token in ["__never__"][1:]:
-        yield token
 
 
 class _StubClient(BaseLLMClient):
@@ -40,13 +34,6 @@ class _StubClient(BaseLLMClient):
             "output_format": output_format,
         }
         return LLMResponse(body="")
-
-    async def send_message_streaming(
-        self,
-        messages: list[Message],
-        system_prompt: str = "",
-    ) -> AsyncIterator[str]:
-        return _empty_stream()
 
 
 @allure.epic("Engine & LLM Infrastructure")

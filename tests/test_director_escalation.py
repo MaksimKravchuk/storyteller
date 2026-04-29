@@ -19,10 +19,11 @@ import allure
 import pytest
 
 from cast import director_dialogue, director_hostility, director_retaliation, hostility
-from cast.dice import AggressionRoll, CombatOutcome, CombatRoll
+from cast.dice import AggressionRoll
 from models.npc_card import NPCCard
 from models.scene import SceneNPC
 from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_actor, setup_npc
+from tests.test_director_retaliation import _fixed_combat
 
 _NPC_A = "npc-1"
 _GUARD = "guard"
@@ -50,21 +51,12 @@ def _force_attack(mood: str, _rng: Any = None) -> AggressionRoll:
     )
 
 
-def _fixed_combat(combat_skill_val: int, _rng: Any = None) -> CombatRoll:
-    return CombatRoll(
-        outcome=CombatOutcome.TARGET_DOMINATES,
-        npc_roll=_ATTACK_ROLL,
-        player_roll=5,
-        npc_bonus=combat_skill_val,
-    )
-
-
 @pytest.fixture
 def force_attack_rolls(monkeypatch):
     """Pin aggression + combat rolls so the retaliation phase is deterministic."""
     monkeypatch.setattr(director_retaliation, "roll_aggression", _force_attack)
-    monkeypatch.setattr(director_retaliation, "roll_combat", _fixed_combat)
-    monkeypatch.setattr(director_dialogue, "roll_combat", _fixed_combat, raising=False)
+    monkeypatch.setattr(director_retaliation, "roll_contest", _fixed_combat)
+    monkeypatch.setattr(director_dialogue, "roll_contest", _fixed_combat, raising=False)
 
 
 def _make_actor_returning(*responses: str) -> AsyncMock:

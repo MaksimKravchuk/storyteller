@@ -375,7 +375,6 @@ class BasePerformer(ABC):
         user_message: str,
         tools: list[Tool],
         conversation: list[Message] | None = None,
-        tool_choice: str = "required",
     ) -> ToolCall:
         """Send a message and expect the LLM to invoke one of the provided tools.
 
@@ -385,7 +384,7 @@ class BasePerformer(ABC):
         caller can surface the failure the same way other routing
         miscommunications are handled.
         """
-        output_format = OutputFormat(tools=tuple(tools), tool_choice=tool_choice)
+        output_format = OutputFormat(tools=tuple(tools), tool_choice="required")
         response = await _call_llm(
             self,
             user_message=user_message,

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import copy
 import json
-from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -295,7 +294,6 @@ class OpenAIClient(BaseLLMClient):
 
         return LLMResponse(
             body=choice.message.content or "",
-            raw_response=response,
             usage={
                 "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
                 "completion_tokens": response.usage.completion_tokens if response.usage else 0,
@@ -303,26 +301,6 @@ class OpenAIClient(BaseLLMClient):
             model=response.model,
             tool_calls=_ToolWire.parse_calls(choice),
         )
-
-    async def send_message_streaming(
-        self,
-        messages: list[Message],
-        system_prompt: str = "",
-    ) -> AsyncIterator[str]:
-        formatted = self._format_messages(messages, system_prompt)
-
-        stream = await self._client.chat.completions.create(
-            model=self.model,
-            messages=formatted,
-            temperature=self.temperature,
-            max_completion_tokens=self.max_tokens,
-            stream=True,
-        )
-
-        async for chunk in stream:
-            delta = chunk.choices[0].delta
-            if delta.content:
-                yield delta.content
 
     def _build_request_kwargs(
         self,

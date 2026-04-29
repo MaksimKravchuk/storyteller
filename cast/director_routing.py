@@ -41,12 +41,11 @@ class ActionRouter:
         game_state: GameState,
         send_tool_fn: Callable[..., Awaitable[ToolCall]],
         action_routing_template: PromptTemplate,
-        tools: list[Tool] | None = None,
     ) -> None:
         self._gs = game_state
         self._send_tool = send_tool_fn
         self._action_routing_template = action_routing_template
-        self._tools: list[Tool] = list(ACTION_TOOLS) if tools is None else list(tools)
+        self._tools: list[Tool] = list(ACTION_TOOLS)
 
     async def route_action(self, player_action: str) -> RouteResult:
         """Use the LLM to classify the action and return a typed plan.

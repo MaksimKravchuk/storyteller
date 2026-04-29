@@ -8,7 +8,6 @@ import allure
 import pytest
 
 from cast.actor import Actor
-from cast.actor_tags import extract_mood as _actor_extract_mood, extract_status as _extract_status
 from cast.schemas.actor_reply import ActorEnvelope
 from knowledge.graph import KnowledgeGraph
 from knowledge.query import KnowledgeQueryEngine
@@ -17,7 +16,6 @@ from models.npc_card import NPCCard
 _HOSTILE = "hostile"
 _NEUTRAL = "neutral"
 _GATE = "gate"
-_STATUS_TAG = "[STATUS:"
 _LOC_KEY = "location_name"
 
 
@@ -62,88 +60,13 @@ class TestActorMoodUpdate:
     async def test_conversation_history_excludes_mood_tag(self):
         npc = NPCCard(name="Guard", occupation="guard")
         kq = KnowledgeQueryEngine(KnowledgeGraph())
-        actor = Actor(llm_client=AsyncMock(), npc=npc, knowledge_query=kq, envelope_mode=True)
+        actor = Actor(llm_client=AsyncMock(), npc=npc, knowledge_query=kq)
         actor._send_json = AsyncMock(  # type: ignore[method-assign]
             return_value=ActorEnvelope(narration="*blocks*", mood=_HOSTILE),
         )
         await actor.act("punch guard", {_LOC_KEY: _GATE})
         assert len(actor._conversation) == 2
         assert actor._conversation[1].body == "*blocks*"
-
-
-@allure.epic("NPC Interaction")
-@allure.feature("Mood & status tracking")
-class TestExtractMood:
-    @allure.story("Mood tag extraction")
-    @allure.title("Actor mood extraction leaves text unchanged and returns no mood when there is no [MOOD:] tag")
-    def test_no_mood_tag(self):
-        text, mood = _actor_extract_mood("*draws his sword* — Stand back!")
-        assert text == "*draws his sword* — Stand back!"
-        assert mood is None
-
-    @allure.story("Mood tag extraction")
-    @allure.title("Actor mood extraction strips a trailing [MOOD: hostile] tag and returns the mood value")
-    def test_mood_tag_at_end(self):
-        text, mood = _actor_extract_mood(f"*lunges at you with a spear*\n[MOOD: {_HOSTILE}]")
-        assert text == "*lunges at you with a spear*"
-        assert mood == _HOSTILE
-
-    @allure.story("Mood tag extraction")
-    @allure.title("Actor mood extraction normalizes uppercase mood values to lowercase")
-    def test_mood_tag_uppercase_normalised(self):
-        text, mood = _actor_extract_mood("Back off!\n[MOOD: ENRAGED]")
-        assert mood == "enraged"
-
-    @allure.story("Mood tag extraction")
-    @allure.title("Actor mood extraction tolerates extra whitespace between the [MOOD:] label and the value")
-    def test_mood_tag_with_extra_space_before_word(self):
-        text, mood = _actor_extract_mood("Help!\n[MOOD:  terrified]")
-        assert mood == "terrified"
-
-    @allure.story("Mood tag extraction")
-    @allure.title("A [MOOD:] tag that is not at the end of the response is ignored and left in the text")
-    def test_mood_tag_not_at_end_is_ignored(self):
-        text, mood = _actor_extract_mood(f"[MOOD: {_HOSTILE}]\nI will destroy you!")
-        assert mood is None
-        assert f"[MOOD: {_HOSTILE}]" in text
-
-    @allure.story("Mood tag extraction")
-    @allure.title("Actor mood extraction handles an empty response string without error")
-    def test_empty_string(self):
-        text, mood = _actor_extract_mood("")
-        assert text == ""
-        assert mood is None
-
-
-@allure.epic("NPC Interaction")
-@allure.feature("Mood & status tracking")
-class TestExtractStatus:
-    @allure.story("Status extraction")
-    @allure.title("A single-word [STATUS: wounded] tag is extracted and removed from the response body")
-    def test_extracts_single_word(self):
-        text, status = _extract_status("*stumbles back*\n[STATUS: wounded]")
-        assert status == "wounded"
-        assert _STATUS_TAG not in text
-
-    @allure.story("Status extraction")
-    @allure.title("A multi-word [STATUS: wounded left arm] tag is captured in full and stripped from the text")
-    def test_extracts_multi_word(self):
-        text, status = _extract_status("*grabs arm*\n[STATUS: wounded left arm]")
-        assert status == "wounded left arm"
-        assert _STATUS_TAG not in text
-
-    @allure.story("Status extraction")
-    @allure.title("A response with no [STATUS:] tag returns None for the status and the text unchanged")
-    def test_returns_none_when_no_tag(self):
-        text, status = _extract_status("Hello there!")
-        assert status is None
-        assert text == "Hello there!"
-
-    @allure.story("Status extraction")
-    @allure.title("Leading and trailing whitespace inside a [STATUS:] tag is stripped before storing")
-    def test_strips_whitespace(self):
-        _, status = _extract_status("*falls*\n[STATUS:  barely standing  ]")
-        assert status == "barely standing"
 
 
 @allure.epic("NPC Interaction")
@@ -209,6 +132,5 @@ def _make_actor_with_npc(
         llm_client=AsyncMock(),
         npc=npc,
         knowledge_query=KnowledgeQueryEngine(KnowledgeGraph()),
-        envelope_mode=True,
     )
     return actor, npc

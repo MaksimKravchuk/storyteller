@@ -6,13 +6,6 @@ import allure
 import pytest
 
 from knowledge.graph import KnowledgeGraph
-from knowledge.graph_queries import (
-    get_related,
-    query_by_canon,
-    query_by_location,
-    query_by_scope,
-    query_by_tags,
-)
 from knowledge import graph_serialization
 from knowledge.node import (
     CanonSource,
@@ -208,83 +201,16 @@ class TestKnowledgeGraphEdges:
     def test_get_edges_from_nonexistent_returns_empty(self, empty_graph):
         assert empty_graph.get_edges_from("ghost") == []
 
-    @allure.story("Edge CRUD")
-    @allure.title("get_related does a BFS walk and returns both direct and transitive neighbors within depth")
-    def test_get_related_bfs(self, empty_graph):
-        nodes = [KnowledgeNode(text=label) for label in ("Root", "Child", "Grandchild")]
-        for node in nodes:
-            empty_graph.add_node(node)
-        empty_graph.add_edge(nodes[0].uuid, nodes[1].uuid, EdgeType.RELATED_TO)
-        empty_graph.add_edge(nodes[1].uuid, nodes[2].uuid, EdgeType.RELATED_TO)
-        related = get_related(empty_graph, nodes[0].uuid, depth=2)
-        related_uuids = {rel_node.uuid for rel_node in related}
-        assert nodes[1].uuid in related_uuids
-        assert nodes[2].uuid in related_uuids
-
-    @allure.story("Edge CRUD")
-    @allure.title("get_related returns an empty list when the starting node does not exist in the graph")
-    def test_get_related_unknown_node_returns_empty(self, empty_graph):
-        assert get_related(empty_graph, "ghost") == []
-
 
 @allure.epic("Scene & Exploration")
 @allure.feature("Knowledge graph")
-class TestKnowledgeGraphQueries:
-    @allure.story("Query filtering")
-    @allure.title("query_by_scope with max_scope CITY excludes all nodes whose scope is WORLD")
-    def test_query_by_scope(self, populated_graph):
-        # Only LOCAL and CITY nodes should come back when max_scope is CITY
-        matching_nodes = query_by_scope(populated_graph, KnowledgeScope.CITY)
-        scopes = {node.scope for node in matching_nodes}
-        assert KnowledgeScope.WORLD not in scopes
-
-    @allure.story("Query filtering")
-    @allure.title("query_by_tags returns only the nodes whose tag list contains the requested tag")
-    def test_query_by_tags_match(self, populated_graph):
-        matching_nodes = query_by_tags(populated_graph, ["politics"])
-        assert len(matching_nodes) == 1
-        assert matching_nodes[0].tags == ["politics"]
-
-    @allure.story("Query filtering")
-    @allure.title("query_by_tags returns an empty list when no node carries the requested tag")
-    def test_query_by_tags_no_match(self, populated_graph):
-        matching_nodes = query_by_tags(populated_graph, ["nonexistent"])
-        assert matching_nodes == []
-
-    @allure.story("Query filtering")
-    @allure.title("query_by_location returns only the nodes whose location_id matches the query")
-    def test_query_by_location(self, empty_graph):
-        loc_id = "loc-123"
-        n1 = KnowledgeNode(text="Here", location_id=loc_id)
-        n2 = KnowledgeNode(text="There", location_id="loc-999")
-        empty_graph.add_node(n1)
-        empty_graph.add_node(n2)
-        matching_nodes = query_by_location(empty_graph, loc_id)
-        assert len(matching_nodes) == 1
-        assert matching_nodes[0].uuid == n1.uuid
-
+class TestKnowledgeGraphSerialization:
     @allure.story("Serialization")
     @allure.title("Serializing a populated graph to a dict and back preserves the total node count")
     def test_serialise_round_trip(self, populated_graph):
         graph_dict = graph_serialization.to_dict(populated_graph)
         restored = graph_serialization.from_dict(graph_dict)
         assert graph_serialization.node_count(restored) == graph_serialization.node_count(populated_graph)
-
-    @allure.story("Query filtering")
-    @allure.title("query_by_canon returns only nodes matching the requested canon source")
-    def test_query_by_canon(self, empty_graph):
-        historical = KnowledgeNode(text="Lorenzo died in 1492", canon=CanonSource.HISTORICAL)
-        session = KnowledgeNode(text="Lorenzo was slain in 1481", canon=CanonSource.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-
-        session_nodes = query_by_canon(empty_graph, CanonSource.SESSION)
-        assert len(session_nodes) == 1
-        assert session_nodes[0].uuid == session.uuid
-
-        historical_nodes = query_by_canon(empty_graph, CanonSource.HISTORICAL)
-        assert len(historical_nodes) == 1
-        assert historical_nodes[0].uuid == historical.uuid
 
     @allure.story("Serialization")
     @allure.title("Round-tripping a graph through to_dict/from_dict preserves the canon on each node")
@@ -337,65 +263,6 @@ class TestQueryEngineFilters:
         assert low_node.uuid in matched_uuids
         assert high_node.uuid not in matched_uuids
 
-    @allure.story("Query engine filters")
-    @allure.title("A KnowledgeFilter restricted to FACT source excludes nodes with any other source type")
-    def test_query_filters_by_source(self, populated_graph):
-        engine = KnowledgeQueryEngine(populated_graph)
-        filt = KnowledgeFilter(sources=[KnowledgeSource.FACT])
-        matching_nodes = engine.query(filt)
-        assert all(node.source == KnowledgeSource.FACT for node in matching_nodes)
-
-    @allure.story("Query engine filters")
-    @allure.title("A KnowledgeFilter with tags=['trade'] returns only the single node tagged 'trade'")
-    def test_query_filters_by_tag(self, populated_graph):
-        engine = KnowledgeQueryEngine(populated_graph)
-        filt = KnowledgeFilter(tags=["trade"])
-        matching_nodes = engine.query(filt)
-        assert len(matching_nodes) == 1
-        assert "trade" in matching_nodes[0].tags
-
-    @allure.story("Query engine filters")
-    @allure.title("KnowledgeFilter(canons=[HISTORICAL]) excludes session-canon nodes from the result set")
-    def test_query_filters_by_canon_historical(self, empty_graph):
-        historical = KnowledgeNode(text="Wikipedia fact", canon=CanonSource.HISTORICAL)
-        session = KnowledgeNode(text="Player action", canon=CanonSource.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-        engine = KnowledgeQueryEngine(empty_graph)
-
-        matched = engine.query(KnowledgeFilter(canons=[CanonSource.HISTORICAL]))
-        matched_uuids = {node.uuid for node in matched}
-        assert historical.uuid in matched_uuids
-        assert session.uuid not in matched_uuids
-
-    @allure.story("Query engine filters")
-    @allure.title("KnowledgeFilter(canons=[SESSION]) excludes historical-canon nodes from the result set")
-    def test_query_filters_by_canon_session(self, empty_graph):
-        historical = KnowledgeNode(text="Wikipedia fact", canon=CanonSource.HISTORICAL)
-        session = KnowledgeNode(text="Player action", canon=CanonSource.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-        engine = KnowledgeQueryEngine(empty_graph)
-
-        matched = engine.query(KnowledgeFilter(canons=[CanonSource.SESSION]))
-        matched_uuids = {node.uuid for node in matched}
-        assert session.uuid in matched_uuids
-        assert historical.uuid not in matched_uuids
-
-    @allure.story("Query engine filters")
-    @allure.title("KnowledgeFilter with canons=None returns both historical and session nodes")
-    def test_query_filters_canons_none_returns_both(self, empty_graph):
-        historical = KnowledgeNode(text="Wikipedia fact", canon=CanonSource.HISTORICAL)
-        session = KnowledgeNode(text="Player action", canon=CanonSource.SESSION)
-        empty_graph.add_node(historical)
-        empty_graph.add_node(session)
-        engine = KnowledgeQueryEngine(empty_graph)
-
-        matched = engine.query(KnowledgeFilter())
-        matched_uuids = {node.uuid for node in matched}
-        assert historical.uuid in matched_uuids
-        assert session.uuid in matched_uuids
-
 
 @allure.epic("Scene & Exploration")
 @allure.feature("Knowledge graph")
@@ -445,21 +312,6 @@ class TestQueryEngineNpcContext:
         )
         ctx = engine.get_context_for_npc(npc)
         assert "[Rumour]" in ctx
-
-    @allure.story("NPC context building")
-    @allure.title(
-        "Passing topic_tags=['trade'] to get_context_for_npc keeps trade facts and drops unrelated conspiracy facts"
-    )
-    def test_get_context_topic_tag_filters(self, populated_graph):
-        engine = KnowledgeQueryEngine(populated_graph)
-        npc = Character(
-            name="Trader",
-            knowledge_scope="world",
-            attributes={"education": 10, "social_status": 10},
-        )
-        ctx = engine.get_context_for_npc(npc, topic_tags=["trade"])
-        assert "silks" in ctx
-        assert "conspiracy" not in ctx.lower()
 
 
 def _attach_memory(

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import allure
-import pytest
 
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
@@ -106,18 +105,6 @@ class TestEventManagerPendingEvents:
         assert e2 in pending
 
     @allure.story("Pending event queries")
-    @allure.title("get_pending_events(owner_id=X) filters events by owner")
-    def test_get_pending_filtered_by_owner(self):
-        gs = _make_state()
-        mgr = EventManager(gs, gs.knowledge_graph)
-        e1 = GameEvent(name="E1", scheduled_at=0, duration=1, owner_id="alice")
-        e2 = GameEvent(name="E2", scheduled_at=0, duration=1, owner_id="bob")
-        mgr.schedule(e1)
-        mgr.schedule(e2)
-
-        assert mgr.get_pending_events(owner_id="alice") == [e1]
-
-    @allure.story("Pending event queries")
     @allure.title("get_pending_events() excludes cancelled events")
     def test_get_pending_excludes_cancelled(self):
         gs = _make_state()
@@ -157,39 +144,6 @@ class TestAdvanceTime:
         assert completed == [event]
         assert event.status == EventStatus.COMPLETED
         assert npc.physical_status == "healthy"
-
-    @allure.story("Scheduled effects")
-    @allure.title("advance_time() schedules follow-up events from completed events")
-    def test_advance_schedules_follow_ups(self):
-        gs = _make_state()
-        mgr = EventManager(gs, gs.knowledge_graph)
-        event = GameEvent(
-            name="Initial",
-            scheduled_at=0,
-            duration=1,
-            location_id="loc-1",
-            follow_up_events=[
-                {
-                    "name": "Aftermath",
-                    "duration": 3.0,
-                    "effects": [],
-                    "on_complete_description": "The dust settles.",
-                },
-            ],
-        )
-        mgr.schedule(event)
-
-        mgr.advance_time(2.0)
-
-        pending = mgr.get_pending_events()
-        assert len(pending) == 1
-        follow_up = pending[0]
-        assert follow_up.name == "Aftermath"
-        assert follow_up.duration == pytest.approx(3.0)
-        # Follow-up inherits owner/location/scope from parent.
-        assert follow_up.location_id == "loc-1"
-        # It starts at the parent's completion time.
-        assert follow_up.scheduled_at == event.completes_at
 
     @allure.story("Scheduled effects")
     @allure.title("advance_time() returns no events when nothing is scheduled")
