@@ -11,28 +11,27 @@ from loguru import logger
 
 from config import Config
 from db.repository import GameRepository
-from engine.factory import create_engine
+from engine.persistence import persist_engine
+from engine.session import begin_session, resume_session
 from interfaces.web.character import build_character_info
 from interfaces.web.schemas import ActionResponse, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
-    persist_engine,
     restore_engine,
     session_language,
     snapshot_from_engine,
 )
-from llm.call_logger import current_session_id, reset_buffer
-from llm.turn_event_logger import reset_events
 
 _STATE_PLAYING = "playing"
 
 
-class GameNotFoundError(Exception):
-    """Raised when a web player has no active game (or an unknown game_id)."""
+class GameLookupError(Exception):
+    """Raised when a player's game cannot be served.
 
-
-class GameOwnershipError(Exception):
-    """Raised when a player attempts to act on a game that is not theirs."""
+    Covers both "no active game" and "supplied ``game_id`` doesn't match the
+    saved one" — the route layer maps both branches to a 404 with the same
+    body so existence is never leaked.
+    """
 
 
 async def get_current_snapshot(
@@ -72,13 +71,7 @@ async def start_game_for_player(
     session_row = await repo.sessions.create_web(player_id)
     session_id = session_row["id"]
 
-    current_session_id.set(session_id)
-    reset_buffer()
-    reset_events()
-    from engine.model_overrides import load_role_overrides
-
-    overrides = await load_role_overrides(repo)
-    engine = create_engine(cfg, language=language, overrides=overrides)
+    engine = await begin_session(repo, cfg, session_id, language)
     try:
         await _start_and_persist(repo, session_id, engine, setting)
     except Exception:
@@ -122,21 +115,19 @@ async def process_turn_for_player(
 ) -> ActionResponse:
     """Process a player action on an existing game.
 
-    Raises ``GameNotFoundError`` if the player has no game and
-    ``GameOwnershipError`` if the supplied ``game_id`` doesn't match.
+    Raises ``GameLookupError`` when no game exists for this player or when
+    the supplied ``game_id`` does not match the saved game.
     """
     session_row = await repo.sessions.get_latest_web(player_id)
     if session_row is None:
-        raise GameNotFoundError(player_id)
+        raise GameLookupError(player_id)
     session_id = session_row["id"]
-    engine = await restore_engine(repo, cfg, session_row)
+    language = session_language(session_row)
+    engine = await resume_session(repo, cfg, session_id, language)
     if engine is None:
-        raise GameNotFoundError(player_id)
+        raise GameLookupError(player_id)
     game_state, _, _ = engine.assert_running()
     if str(game_state.uuid) != game_id:
-        raise GameOwnershipError(player_id)
+        raise GameLookupError(player_id)
 
-    current_session_id.set(session_id)
-    reset_buffer()
-    reset_events()
-    return await _act_and_persist(repo, session_id, engine, action, session_language(session_row))
+    return await _act_and_persist(repo, session_id, engine, action, language)

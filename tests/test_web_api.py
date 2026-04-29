@@ -360,11 +360,11 @@ def test_post_action_returns_404_when_no_game(client: TestClient) -> None:
     with patch.object(
         service,
         "process_turn_for_player",
-        new=AsyncMock(side_effect=service.GameNotFoundError(_FIXED_PLAYER_ID)),
+        new=AsyncMock(side_effect=service.GameLookupError(_FIXED_PLAYER_ID)),
     ):
         response = client.post("/api/games/game-abc/actions", json={"action": "look"})
     assert response.status_code == _HTTP_NOT_FOUND
-    assert response.json()["detail"] == "No active game"
+    assert response.json()["detail"] == "Game not found"
 
 
 @allure.story("Submit action")
@@ -373,7 +373,7 @@ def test_post_action_hides_ownership_violations(client: TestClient) -> None:
     with patch.object(
         service,
         "process_turn_for_player",
-        new=AsyncMock(side_effect=service.GameOwnershipError(_FIXED_PLAYER_ID)),
+        new=AsyncMock(side_effect=service.GameLookupError(_FIXED_PLAYER_ID)),
     ):
         response = client.post("/api/games/other-game/actions", json={"action": "look"})
     assert response.status_code == _HTTP_NOT_FOUND
@@ -448,7 +448,7 @@ def _hit_two_clients_once() -> None:
 
 @pytest.mark.asyncio
 @allure.story("Ownership enforcement")
-@allure.title("process_turn_for_player raises GameOwnershipError when game_id does not match the loaded game")
+@allure.title("process_turn_for_player raises GameLookupError when game_id does not match the loaded game")
 async def test_process_turn_enforces_ownership() -> None:
     repo = AsyncMock()
     repo.sessions = MagicMock()
@@ -458,7 +458,7 @@ async def test_process_turn_enforces_ownership() -> None:
     loaded_state.uuid = "real-game-id"
     repo.load_game_state.return_value = (loaded_state, MagicMock(), [])
 
-    with pytest.raises(service.GameOwnershipError):
+    with pytest.raises(service.GameLookupError):
         await service.process_turn_for_player(
             repo=repo,
             cfg=MagicMock(),
@@ -470,14 +470,14 @@ async def test_process_turn_enforces_ownership() -> None:
 
 @pytest.mark.asyncio
 @allure.story("Ownership enforcement")
-@allure.title("process_turn_for_player raises GameNotFoundError when the player has no saved game")
+@allure.title("process_turn_for_player raises GameLookupError when the player has no saved game")
 async def test_process_turn_raises_when_no_game() -> None:
     repo = AsyncMock()
     repo.sessions = MagicMock()
     repo.sessions.get_latest_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
     repo.load_game_state.return_value = None
 
-    with pytest.raises(service.GameNotFoundError):
+    with pytest.raises(service.GameLookupError):
         await service.process_turn_for_player(
             repo=repo,
             cfg=MagicMock(),
@@ -503,13 +503,13 @@ async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
 
 @pytest.mark.asyncio
 @allure.story("Ownership enforcement")
-@allure.title("process_turn_for_player raises GameNotFoundError when the player has no session row at all")
+@allure.title("process_turn_for_player raises GameLookupError when the player has no session row at all")
 async def test_process_turn_raises_when_no_session() -> None:
     repo = AsyncMock()
     repo.sessions = MagicMock()
     repo.sessions.get_latest_web = AsyncMock(return_value=None)
 
-    with pytest.raises(service.GameNotFoundError):
+    with pytest.raises(service.GameLookupError):
         await service.process_turn_for_player(
             repo=repo,
             cfg=MagicMock(),
@@ -557,10 +557,7 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     engine.start_game = AsyncMock()
     engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
 
-    with (
-        patch("interfaces.web.service.create_engine", return_value=engine),
-        patch("engine.model_overrides.load_role_overrides", new=AsyncMock(return_value={})),
-    ):
+    with patch("interfaces.web.service.begin_session", new=AsyncMock(return_value=engine)):
         await service.start_game_for_player(
             repo=repo,
             cfg=MagicMock(),

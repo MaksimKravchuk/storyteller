@@ -96,13 +96,8 @@ async def post_action(
             game_id,
             body.action,
         )
-    except service.GameNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No active game",
-        ) from exc
-    except service.GameOwnershipError as exc:
-        # Don't leak existence — return 404 rather than 403.
+    except service.GameLookupError as exc:
+        # Don't leak existence — return 404 for both missing and mismatched games.
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Game not found",

@@ -24,31 +24,19 @@ _SOURCE_DB = "db"
 
 _KEY_SOURCE = "source"
 
-_CATALOG_ATTRIBUTES: tuple[str, ...] = (
-    "gpt5_4",
-    "gpt5_4_mini",
-    "gpt5_4_nano",
-    "claude_opus",
-    "claude_sonnet",
-    "claude_haiku",
-    "deepseek_chat",
-    "deepseek_v4_pro",
-    "gemini_pro",
-    "gemini_flash",
-    "grok_fast",
-    "deepseek_native_chat",
-    "deepseek_native_reasoner",
-)
-
 
 def build_catalog() -> list[dict[str, str]]:
-    """Serialize :data:`AI_MODELS` into a UI-friendly catalog list (stable order)."""
-    catalog: list[dict[str, str]] = []
-    for attr in _CATALOG_ATTRIBUTES:
-        entry = getattr(AI_MODELS, attr, None)
-        if isinstance(entry, ModelConfig):
-            catalog.append({FIELD_PROVIDER: entry.provider, FIELD_MODEL_ID: entry.model_id})
-    return catalog
+    """Serialize :data:`AI_MODELS` into a UI-friendly catalog list.
+
+    Class body order is preserved (Python 3.7+), so adding a new model to
+    :class:`AI_MODELS` automatically surfaces it without a parallel list to
+    keep in sync.
+    """
+    return [
+        {FIELD_PROVIDER: entry.provider, FIELD_MODEL_ID: entry.model_id}
+        for entry in AI_MODELS.__dict__.values()
+        if isinstance(entry, ModelConfig)
+    ]
 
 
 def _entry_from_override(stored: tuple[str, str]) -> dict[str, str]:
