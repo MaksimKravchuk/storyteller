@@ -1,0 +1,256 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 6023,
+      "index": 0,
+      "narration": "You look around the tavern carefully, but the scene does not change.\n\nAulus shifts his weight near the fireplace, keeps his short sword where it belongs, and watches the room over the rim of his cup. His eyes sweep the half-empty tavern and the bar.\n\nBassus keeps his place by the fireplace, shoulders squared, and eyes the room in slow sweeps. He takes a measured sip of wine with the other guards.\n\nCato scans the room from the knot by the hearth, then shifts his weight and keeps watch on the door and exits. There is no trouble, only quiet. He taps his short sword’s hilt once, then settles back to the guards’ side.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Aulus shifts his weight near the fireplace, keeps his short sword where it belongs, and watches the room over the rim of his cup, eyes sweeping the half-empty tavern and the bar.*",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I keep my place by the fireplace, shoulders squared, and eye the room in slow sweeps—then take a measured sip of wine with the other guards.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I scan the room from the knot by the hearth, then shift my weight and keep watch on the door and exits—no trouble, just quiet. *Taps my short sword’s hilt once, then settles back to the guards’ side.*",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 15408,
+      "index": 1,
+      "narration": "You punch Aulus in the face.\n\nAulus takes the hit, staggers a half-step, and then snaps back. He drives an elbow in close, catches your wrist as he overpowers you, and hauls you into the loose knot of guards. He pins you hard with a knee to the hip and his weight to your chest.\n\n*Stay down. You don’t get to swing at city watch in my sight.*\n\nBassus lunges in with his short sword half-drawn, but you seize his arm and drive him back into the loose knot of guards. He is pinned hard, breath knocked from his chest.\n\n*Put your hands off the guard. If you swing again in this tavern, I’m calling the watch and you’ll be hauled out in irons.*\n\nCato steps in to stop you, but you are on him before he can set his stance. You drive through him and force him down hard in the loose knot of guards, pinned tight with his breath knocked out.\n\n*Keep away. You don’t strike watch in here.*\n\nAulus keeps you pinned, then jerks his chin toward the other guards. He slides his hand to the hilt at his hip and leans close.\n\n*Hold—don’t let him up. You hit a man on watch. Next swing costs you, understand?*",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 12+0 vs target 17+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "*Aulus takes the hit to the face, staggers a half-step, and then snaps back—driving an elbow in close and catching the wrist as he’s overpowered. He hauls you into the loose knot of guards, pinning you hard with a knee to the hip and his weight to your chest.* Stay down. You don’t get to swing at city watch in my sight."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Bassus",
+            "response": "I lunge in—short sword half-drawn—when the player comes too close. They’re stronger; my strike falls wide as they seize my arm and drive me back into the loose knot of guards, pinning me hard with weight and a knee—breath knocked from my chest. Stay down. City watch answers to the law, not fists."
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Cato",
+            "response": "I step in to stop you from pushing it, but you’re on me faster than I can set my stance—your weight drives through, and I’m forced down hard in the loose knot of guards, pinned tight with my breath knocked out. My hand scrabbles for leverage near my sword hilt, but you’ve got the advantage—stay back and keep your hands to yourself."
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Aulus keeps you pinned, jaw tight, then jerks his chin toward the other guards.* Hold—don’t let him up. *His hand slides to the hilt at his hip while he leans close, low and sharp.* You hit a man on watch. Next swing costs you, understand?",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Pinned and winded, I force my voice over the knot of bodies—eyes on the player. Put your hands off the guard. If you swing again in this tavern, I’m calling the watch and you’ll be hauled out in irons.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "Pinned and gasping, I bite out a warning through clenched teeth—then I twist my trapped arm, trying to get my short sword free enough to point the blade at the player’s chest, not to stab. Keep away. You don’t strike watch in here.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "c696901b-8fd4-4515-ae9f-d6f30ca3600a",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 23.85051241586916,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "neither Bassus nor Cato produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 12+0 vs target 17+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → hostile; Cato: neutral → hostile",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2397,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus lunges in with his short sword half-drawn, but you seize his arm and drive him back into the loose knot of guards.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato physically intervene: Bassus lunges in with his short sword half-drawn, and Cato steps in to physically stop the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2150,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus lunges in with his short sword half-drawn",
+          "quote_verified": true,
+          "reasoning": "Bassus lunges in with his short sword half-drawn and Cato tries to get his short sword free to point at the player's chest.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1728,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus lunges in with his short sword half-drawn, but you seize his arm and drive him back into the loose knot of guards. He is pinned hard, breath knocked from his chest. Cato steps in to stop you, but you are on him before he can set his stance. You drive through him and force him down hard in the loose knot of guards, pinned tight with his breath knocked out.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform genuine physical interventions: Bassus lunges with his short sword half-drawn and attempts to strike, while Cato steps in and physically engages, both being pinned down in the struggle.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1737,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus lunges in with his short sword half-drawn",
+          "quote_verified": true,
+          "reasoning": "Bassus lunges in with a half-drawn sword, which is a physical intervention.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 984,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus says: I lunge in—short sword half-drawn—when the player comes too close.",
+          "quote_verified": true,
+          "reasoning": "Bassus lunges in with a half-drawn sword, and Cato steps in to stop the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1869,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus says: I lunge in—short sword half-drawn—when the player comes too close. They’re stronger; my strike falls wide as they seize my arm and drive me back into the loose knot of guards, pinning me hard with weight and a knee—breath knocked from my chest. Stay down.",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both physically intervene by lunging/attempting to draw a short sword and by stepping in to stop the player and forcing them down/pinning them.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "e40b0887f3758e1899dfe78e494c9334deb9469a",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-22T09:40:31.345283+00:00",
+  "total_awarded": 7,
+  "total_base": 10
+}

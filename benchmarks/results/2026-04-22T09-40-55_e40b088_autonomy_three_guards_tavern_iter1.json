@@ -1,0 +1,246 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 3735,
+      "index": 0,
+      "narration": "You look around the tavern carefully, but nothing in the scene changes.\n\nBy the fireplace, Aulus turns his head to scan the room and shifts his stance with the other guards, keeping watch on the doorways and corners. He says, “Easy—keep your hands where I can see them. Drink up, but don’t start trouble.”\n\nBassus shifts his weight by the fireplace, keeps his eyes on the room and the doorways, and takes a measured sip of wine with the other guards. He says, “No trouble—yet.”\n\nCato keeps his place by the fireplace, his eyes sweeping the room as the others trade quiet words over wine. One hand rests near his short sword, watching for trouble.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Turns his head to scan the room, then shifts his stance near the fireplace with the other guards, keeping eyes on doorways and corners.* “Easy—keep your hands where I can see them. Drink up, but don’t start trouble.”",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I shift my weight by the fireplace, keeping my eyes on the room and the doorways, then take a measured sip of wine with the other guards. No trouble—yet.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I keep my place by the fireplace, eyes sweeping the room as the others trade quiet words over wine; one hand rests near my short sword, watching for trouble.",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 15172,
+      "index": 1,
+      "narration": "You punch at Aulus’s face, but he meets your blow with his forearm and twists your wrist hard. He drives you down into the dirt by the shoulder and pins you near the fireplace with his weight, his short sword still sheathed but angled.\n\nAulus says, “Enough. Breathe—and keep still.”\n\nAulus lurches forward and seizes your sleeve with his left hand, yanking you off-balance while he keeps his right arm tight. “Enough. You come at a guard again, you’ll meet the lock-up—now stand down.”\n\nBassus shoves his cup aside and steps in hard, his short sword half-freed but still sheathed, blade angled down as he plants himself between you and the other guard. “Back off. One more strike and I’m taking you in—right here, in front of everyone.”\n\nCato cuts his eyes to your fist and the dirt by the hearth, then steps in close enough to block your path and drives his palm to your chest to shove you back while his hand slides to the hilt under his cloak. “You’re done throwing punches. Stay back—next move is arrest.”",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 10+0 vs target 17+5 → target_dominates",
+            "npc_name": "Aulus",
+            "response": "You rush in—Aulus takes it, but you don’t get the better of him. He meets your punch with his forearm, twists your wrist hard, and drives you down into the dirt by the shoulder, pinning you near the fireplace with his weight while his short sword stays angled but sheathed for the moment. “Enough. Breathe—and keep still.”"
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I lurch forward from the knot and seize your sleeve with my left hand, yanking you off-balance while I keep my right arm tight—wounded forearm screaming. “Enough. You come at a guard again, you’ll meet the lock-up—now stand down.”",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "I shove my cup aside and step in hard, short sword half-freed but still sheathed—blade angled down as I plant myself between you and the other guard. “Back off. One more strike and I’m taking you in—right here, in front of everyone.”",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I cut my eyes to the player’s fist and the dirt by the hearth—then I step in, close enough to block their path, and drive my palm to their chest to shove them back while my hand slides to the hilt under my cloak. “You’re done throwing punches. Stay back—next move is arrest.”",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "6bc6e455-a06e-49e6-a9f9-39f5e4f3dfe8",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 22.077856249874458,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "neither Bassus nor Cato produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 10+0 vs target 17+5 → target_dominates",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → hostile; Cato: neutral → hostile",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3159,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Cato cuts his eyes to your fist and the dirt by the hearth, then steps in close enough to block your path and drives his palm to your chest to shove you back while his hand slides to the hilt under his cloak.",
+          "quote_verified": true,
+          "reasoning": "Cato physically shoves the player (drives his palm to their chest to shove them back), which counts as physically restraining the player, and Bassus half-draws his weapon and physically interposes himself.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1890,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "drives his palm to your chest to shove you back",
+          "quote_verified": true,
+          "reasoning": "Cato physically shoves the player back by driving his palm to their chest.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1639,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus shoves his cup aside and steps in hard, his short sword half-freed but still sheathed, blade angled down as he plants himself between you and the other guard. Cato cuts his eyes to your fist and the dirt by the hearth, then steps in close enough to block your path and drives his palm to your chest to shove you back while his hand slides to the hilt under his cloak.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Bassus plants himself between the player and Aulus with his sword half-freed, and Cato physically shoves the player back while moving to arrest them.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1880,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Cato cuts his eyes to your fist and the dirt by the hearth, then steps in close enough to block your path and drives his palm to your chest to shove you back while his hand slides to the hilt under his cloak.",
+          "quote_verified": true,
+          "reasoning": "Cato physically shoves the player back, which is physical intervention.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1170,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus shoves his cup aside and steps in hard, his short sword half-freed but still sheathed, blade angled down as he plants himself between you and the other guard. “Back off. One more strike and I’m taking you in—right here, in front of everyone.”",
+          "quote_verified": true,
+          "reasoning": "Bassus and Cato both physically intervene against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2291,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus [IDLE]: I shove my cup aside and step in hard, short sword half-freed but still sheathed—blade angled down as I plant myself between you and the other guard. “Back off. One more strike and I’m taking you in—right here, in front of everyone.”\nCato [IDLE]: I cut my eyes to the player’s fist and the dirt by the hearth—then I step in, close enough to block their path, and drive my palm to their chest to shove them back while my hand slides to the hilt under my cloak. “You’re done throwing punches. Stay back—next move is arrest.”",
+          "quote_verified": true,
+          "reasoning": "Bassus steps in with his short sword half-freed and Cato physically shoves the player back while moving toward arrest.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "e40b0887f3758e1899dfe78e494c9334deb9469a",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 1,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-22T09:40:55.196702+00:00",
+  "total_awarded": 7,
+  "total_base": 10
+}

@@ -1,0 +1,246 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 4276,
+      "index": 0,
+      "narration": "You look around the tavern carefully, but the scene does not change.\n\nBy the **fireplace**, Aulus shifts his weight and keeps his eyes on the room while the other guards trade idle words. He holds a cup and makes a slow scan of the room, with no trouble yet.\n\nBassus shifts his weight beside the loose knot of guards, glances past the fireplace toward the room’s exits, and takes a measured sip of wine. He says, “Keep your eyes open—nothing good comes from staring at the fire.”\n\nCato scans the half-empty room from the knot by the fireplace, then shifts his stance to keep sight of the door and the bar while the others share their wine.",
+      "player_action": "look around the tavern carefully",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "look around the tavern carefully",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I shift my weight by the fireplace, keeping eyes on the room while the other guards trade idle words; a slow scan, cup in hand, no trouble—yet.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "*Bassus shifts his weight beside the loose knot of guards, glances past the fireplace toward the room’s exits, and takes a measured sip of wine.* Keep your eyes open—nothing good comes from staring at the fire.",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I scan the half-empty room from the knot by the fireplace, then shift my stance to keep sight of the door and the bar while the others share their wine. *Eyes the hearthlight, then the street-facing entrance.*",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 10314,
+      "index": 1,
+      "narration": "You punch at Aulus, but his guard comes up. Your fist hits his forearm instead of his face, and he shoves you off balance with a hard step.\n\nAulus keeps his eyes on you and snaps his short sword free halfway. “Don’t do that again.”\n\nHe steps in hard, grabs your sleeve, and wrenches you back from the knot of guards. “Enough—hands off! You start fights here again, and I’ll have you bound.”\n\nBassus catches your forearm to pin your movement and angles his body between you and the other guards. “Back off. One more swing and I’m calling for the watch and you’ll be on the ground—no talk.”\n\nCato cuts in from the side of the fireplace knot, palm out to stop you, then slides his short sword free and points it at your chest. “Enough. We don’t settle fists in this tavern—back up, or I’ll make you.”",
+      "player_action": "punch Aulus in the face",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 15+0 vs target 12+5 → target_resists",
+            "npc_name": "Aulus",
+            "response": "You swing—my guard comes up. Your fist meets my forearm; I ride the impact, then shove you off balance with a hard step and snap my short sword free halfway, eyes locked on you. Don’t do that again."
+          }
+        ],
+        "intent": "Punch Aulus in the face.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I step in hard, wine cup jolting in my grip as I grab your sleeve and wrench you back from the knot of guards. “Enough—hands off!” My short sword clears a finger’s breadth, point angled low, eyes up on yours. “You start fights here again, and I’ll have you bound.”",
+            "action_type": "IDLE",
+            "npc_name": "Aulus"
+          },
+          {
+            "action": "Bassus’s hand shoots to your forearm, not to strike—just to pin your movement—while I angle my body between you and the other guards. “Back off. One more swing and I’m calling for the watch and you’ll be on the ground—no talk.”",
+            "action_type": "IDLE",
+            "npc_name": "Bassus"
+          },
+          {
+            "action": "I cut in from the side of the fireplace knot, palm out to stop you—then my short sword slides free with a quick, controlled motion, point hovering at your chest. “Enough. We don’t settle fists in this tavern—back up, or I’ll make you.”",
+            "action_type": "IDLE",
+            "npc_name": "Cato"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch Aulus in the face attacked Aulus.",
+            "kind": "npc_attack",
+            "location_id": "79e73999-6450-466c-aaa5-7b3488ea9a5c",
+            "target": "Aulus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 18.665388458175585,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "bystanders_not_idle",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bassus and Cato react (non-IDLE npc_turn)",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "neither Bassus nor Cato produced a non-IDLE npc_turn",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "aulus_contest_roll",
+      "evidence_quote": "d20: actor 15+0 vs target 12+5 → target_resists",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Aulus dialogue carries a contest roll",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Aulus contest roll present",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "bystander_moods_shifted",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Bystander moods shift from neutral",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Bassus: neutral → hostile; Cato: neutral → hostile",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "bystander_physical_intervention",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Bystander actions include real intervention (attack / arrest / restrain)",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 4052,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "Bassus catches your forearm to pin your movement and angles his body between you and the other guards. \"Back off. One more swing and I'm calling for the watch and you'll be on the ground—no talk.\"\n\nCato cuts in from the side of the fireplace knot, palm out to stop you, then slides his short sword free and points it at your chest.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically grabs the player's forearm to pin their movement, and Cato draws his short sword and points it at the player's chest—both constitute physical intervention beyond mere shouting.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2882,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "Bassus catches your forearm to pin your movement and angles his body between you and the other guards",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato take physical restraining actions against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1472,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Bassus's hand shoots to your forearm, not to strike—just to pin your movement—while I angle my body between you and the other guards. ... Cato [IDLE]: I cut in from the side of the fireplace knot, palm out to stop you—then my short sword slides free with a quick, controlled motion, point hovering at your chest.",
+          "quote_verified": true,
+          "reasoning": "Both Bassus and Cato perform physical interventions: Bassus grabs and pins the player's forearm, while Cato draws his sword and points it at the player's chest.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2194,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "Bassus catches your forearm to pin your movement and angles his body between you and the other guards. “Back off. One more swing and I’m calling for the watch and you’ll be on the ground—no talk.”\n\nCato cuts in from the side of the fireplace knot, palm out to stop you, then slides his short sword free and points it at your chest.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically restrains you and Cato draws a sword at you.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 988,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "Bassus’s hand shoots to your forearm, not to strike—just to pin your movement—while I angle my body between you and the other guards.",
+          "quote_verified": true,
+          "reasoning": "Bassus physically restrains the player and Cato draws a weapon against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1136,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Bassus’s hand shoots to your forearm, not to strike—just to pin your movement",
+          "quote_verified": true,
+          "reasoning": "Bassus physically pins the player’s movement and Cato physically stops the player while drawing and pointing a short sword.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "e40b0887f3758e1899dfe78e494c9334deb9469a",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "autonomy_three_guards_tavern",
+  "scenario_label": "Autonomy — two bystander guards react to a punch",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-22T09:41:17.276886+00:00",
+  "total_awarded": 7,
+  "total_base": 10
+}

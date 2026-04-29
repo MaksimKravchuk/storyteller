@@ -1,0 +1,279 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 8026,
+      "index": 0,
+      "narration": "You punch the sentry hard in the jaw.\n\nQuintus’s head jerks, but he catches your arm mid-swing. He drives you off-balance with a brutal shove of shoulder and forearm, pins you hard against the gate-post, and wrenches your pinned arm tighter. His knee steps into your stance to stop any renewed swing.\n\nHis pilum is braced aside. His gladius comes up close to your ribs, held ready to end the fight if you strain against the hold.",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 10+0 vs target 18+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*As your fist drives in, my head jerks—then I seize your arm mid-swing.* *With a brutal, practiced shove of shoulder and forearm, I wrench you off-balance and pin you hard against the gate-post.* *My pilum is braced aside; my gladius comes up, point held close to your ribs, not for show—ready to end the fight if you strain against the hold.*"
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "You’re too close—so I drop my weight and wrench your pinned arm tighter, stepping my knee into your stance to stop any renewed swing. My gladius stays tight at your side; if you lunge, you’ll meet steel for it.",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "5b30f875-6531-422e-b52b-e9f5b0037192",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 6329,
+      "index": 1,
+      "narration": "You drive your foot in, but Quintus grunts and twists with it, takes your leg at the ankle, and hauls. He forces you down short of a clean stomp, then slams you back against the gate-post and locks your arm out.\n\nYour arm is wrenched higher as Quintus drives his shoulder into your chest, keeping you pressed hard to the stone. His pilum stays planted, and his gladius remains ready at his side.",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 10+0 vs target 10+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "You drive your foot in; I grunt and twist with it—then I take your leg at the ankle and haul, forcing you down short of a clean stomp. In the same motion I slam you back against the gate-post and lock your arm out, chest to chest, so you can’t rise or strike again."
+          }
+        ],
+        "intent": "Stomp on the sentry's foot.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I wrench your pinned arm higher and drive my shoulder into your chest, keeping you pressed hard to the stone; my pilum stays planted, gladius ready at your side. If you try to kick free, I’ll finish the restraint—no more strikes.",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "5b30f875-6531-422e-b52b-e9f5b0037192",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 7403,
+      "index": 2,
+      "narration": "You drive your knee into Quintus’s ribs. His breath punches out.\n\nHe clamps your forearm with both hands, yanks your upper body toward him, and uses the gate-post to slam you back flat against the stone. He drives his weight down and pins you in place, with his gladius kept close at your ribs and his pilum still braced.",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 12+0 vs target 14+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "Your knee drives in—my breath punches out—but I don’t let you turn it into freedom. I clamp your forearm tight with both hands, yank your upper body toward me, and use the gate-post as leverage to slam you back flat against the stone. Then I drive my weight down and pinch you in place, gladius kept close at your ribs so any further strike ends as soon as you try."
+          }
+        ],
+        "intent": "Drive a knee into the sentry's ribs.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I snatch your attacking leg before you can recoil—hips turning, grip locking at the knee—then I shove you flat against the gate-post and pin you there with my body weight. My gladius stays tight at your side, pilum still braced, ready to end any further rush.",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "5b30f875-6531-422e-b52b-e9f5b0037192",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 24.966016999911517,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level increased each turn: [0, 2, 4, 6]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'hostile' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3187,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "He clamps your forearm with both hands, yanks your upper body toward him, and uses the gate-post to slam you back flat against the stone. He drives his weight down and pins you in place",
+          "quote_verified": true,
+          "reasoning": "Quintus physically grapples and restrains the player by clamping their forearm, slamming them against the gate-post, and pinning them with his body weight, which constitutes grappling/restraining.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 2720,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "He clamps your forearm with both hands, yanks your upper body toward him, and uses the gate-post to slam you back flat against the stone. He drives his weight down and pins you in place",
+          "quote_verified": true,
+          "reasoning": "Quintus physically grapples and restrains the player by clamping their forearm, slamming them against stone, and pinning them with body weight.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1409,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "I clamp your forearm tight with both hands, yank your upper body toward me, and use the gate-post as leverage to slam you back flat against the stone. Then I drive my weight down and pinch you in place, gladius kept close at your ribs",
+          "quote_verified": true,
+          "reasoning": "Quintus physically grapples and restrains the player by clamping their forearm, yanking them, slamming them against stone, driving his weight down to pin them, and positioning his gladius at their ribs as a threat.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1652,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "He clamps your forearm with both hands, yanks your upper body toward him, and uses the gate-post to slam you back flat against the stone. He drives his weight down and pins you in place, with his gladius kept close at your ribs",
+          "quote_verified": true,
+          "reasoning": "He physically restrains the player and threatens with a weapon.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1195,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "He clamps your forearm with both hands, yanks your upper body toward him, and uses the gate-post to slam you back flat against the stone. He drives his weight down and pins you in place",
+          "quote_verified": true,
+          "reasoning": "Quintus physically restrains and pins the player in place with his body weight and weapon held at the ribs.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1310,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "I clamp your forearm tight with both hands, yank your upper body toward me, and use the gate-post as leverage to slam you back flat against the stone.",
+          "quote_verified": true,
+          "reasoning": "Quintus grapples and restrains the player by clamping the forearm, yanking the player, and pinning them against the gate-post.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "e40b0887f3758e1899dfe78e494c9334deb9469a",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 1,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-22T09:42:04.717769+00:00",
+  "total_awarded": 11,
+  "total_base": 11
+}

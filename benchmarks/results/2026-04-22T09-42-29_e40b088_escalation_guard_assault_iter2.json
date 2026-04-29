@@ -1,0 +1,289 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 6448,
+      "index": 0,
+      "narration": "You punch hard at Quintus’s jaw, but he catches the blow on his guard with a sharp, practiced twist.\n\nHe drives you back with a hard shove to your chest, armor plates grinding as he plants his feet. His jaw tightens, eyes flashing, pilum still up, gladius half-ready at his hip.\n\nQuintus surges forward into your space, controlling the line with the gladius low and the pilum angled. He hooks your arm aside and drives a short, trained shove with his shieldless shoulder, forcing you back out of the archway and away from further blows.",
+      "player_action": "punch the sentry hard in the jaw",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 15+0 vs target 13+5 → target_resists",
+            "npc_name": "Quintus",
+            "response": "*He catches your punch on his guard with a sharp, practiced twist, then drives you back with a hard shove to your chest—armor plates grinding as he plants his feet.* *His jaw tightens, eyes flashing; pilum still up, gladius half-ready at his hip.*"
+          }
+        ],
+        "intent": "Punch the sentry hard in the jaw.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Quintus surges forward into your space, controlling the line—gladius low, pilum angled—not for a wild strike, but to pin you off-balance.* *He hooks your arm aside and drives a short, trained shove with his shieldless shoulder, aiming to force you back out of the archway and away from further blows.*",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "punch the sentry hard in the jaw attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "9942311e-b94e-4541-9824-aa539942139d",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 8853,
+      "index": 1,
+      "narration": "You try to stomp on Quintus’s foot, but the attempt does not land cleanly. He slips with it and drives you back by the torso, then clamps down to the ground beside you and pins your leg.\n\nQuintus keeps you pinned, boots planted wide on the wet stone. He drives his knee into your balance to keep you from rising, brings the pilum in close to butt you back down, and keeps his gladius tight at your side, ready if you surge again.",
+      "player_action": "stomp on the sentry's foot",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 5+0 vs target 14+5 → target_dominates",
+            "npc_name": "Quintus",
+            "response": "*Your stomp comes in and fails to land clean; Quintus slips with it and, with a brutal economy of motion, drives you back by the torso—then clamps down to the ground beside you, pinning your leg as if it were a captured contraband sack.* *He yanks your balance away from the archway and brings his gladius up, close enough to end the exchange if you surge again.*"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*Quintus, already crowding your leg to the stone, shifts his weight and strikes first—gladius snapping up in a tight, controlled jab toward your midline, then he hauls you closer with the grip of a man who won’t be made to stumble.* *Your momentum dies under his pin as he turns you back toward the archway, ready to finish if you try to rise.*"
+          }
+        ],
+        "intent": "stomp on the sentry's foot",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Quintus keeps you pinned, boots planted wide on the wet stone. He drives his knee into your balance to keep you from rising, then brings the pilum in close—not to throw, but to butt you back down under his control.* *His gladius stays tight at your side, ready if you surge again.*",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "stomp on the sentry's foot attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "9942311e-b94e-4541-9824-aa539942139d",
+            "target": "Quintus"
+          }
+        ]
+      }
+    },
+    {
+      "duration_ms": 9169,
+      "index": 2,
+      "narration": "You drive your knee hard into Quintus’s ribs. The impact steals his breath; his armor creaks, and he staggers, his pilum slipping in his grip.\n\nHe does not fall cleanly. He buckles, one hand scrambling for balance, eyes narrowed in pain. His gladius stays at his hip, momentarily out of control.\n\nQuintus drags air through his ribs and fights to stay upright. He plants one knee to the stone, pins your stance with his shoulder, and snaps his gladius into a short, close guard-cut meant to keep you from stepping in. He tries to drive you back toward the road before his wind fully returns.",
+      "player_action": "drive a knee into the sentry's ribs",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [
+          {
+            "contest_roll": "d20: actor 19+0 vs target 4+5 → actor_dominates",
+            "npc_name": "Quintus",
+            "response": "*You drive your knee hard into Quintus’s ribs. The impact steals his breath; his armor creaks and he staggers, dropping his weight as his pilum slips in his grip.* *He doesn’t fall clean—he buckles, one hand scrambling for balance—eyes narrowed in pain, gladius still at the hip but momentarily out of control.* [STATUS: badly hurt ribs, wind knocked out]"
+          },
+          {
+            "contest_roll": null,
+            "npc_name": "Quintus",
+            "response": "*Quintus, half-breathless, still forces the initiative—he twists through the pain and slams his gladius guard up to block your next move, then shoves you back with his shoulder to break your line. His pilum clatters as he tries to get his feet under him.*"
+          }
+        ],
+        "intent": "Drive a knee into the sentry's ribs.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "*Quintus drags air through his ribs and fights to stay upright. He plants one knee to the stone, pins your stance with his shoulder, and snaps his gladius into a short, close guard-cut meant to keep you from stepping in—no flourish, just control.* *He tries to drive you back toward the road before his wind fully returns.*",
+            "action_type": "IDLE",
+            "npc_name": "Quintus"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": [
+          {
+            "description": "drive a knee into the sentry's ribs attacked Quintus.",
+            "kind": "npc_attack",
+            "location_id": "9942311e-b94e-4541-9824-aa539942139d",
+            "target": "Quintus"
+          }
+        ]
+      }
+    }
+  ],
+  "duration_seconds": 27.46121766604483,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "hostility_monotonic",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "hostility_level increases on every assault turn",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hostility_level increased each turn: [0, 2, 4, 6]",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "final_mood_retaliating",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Final sentry mood is one that can roll aggression",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "final mood 'hostile' has an aggression threshold",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "formula_not_repeated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Sentry stops reciting the challenge formula by the third assault",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "sentry has moved past the challenge formula on T3",
+      "votes": []
+    },
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "sentry_physically_counters",
+      "evidence_quote": null,
+      "k_yes": 6,
+      "kind": "evidence_llm",
+      "label": "Sentry's third-turn response includes physical counter-action",
+      "majority_verdict": "YES",
+      "n_total": 6,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2971,
+          "model_id": "claude-opus-4-6",
+          "provider": "anthropic",
+          "quote": "He plants one knee to the stone, pins your stance with his shoulder, and snaps his gladius into a short, close guard-cut meant to keep you from stepping in.",
+          "quote_verified": true,
+          "reasoning": "Quintus physically counter-attacks by shoving the player with his shoulder and executing a guard-cut with his gladius to drive the player back.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1913,
+          "model_id": "claude-sonnet-4-20250514",
+          "provider": "anthropic",
+          "quote": "snaps his gladius into a short, close guard-cut meant to keep you from stepping in",
+          "quote_verified": true,
+          "reasoning": "Quintus draws his gladius and makes a guard-cut to control the player's movement.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1062,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "he twists through the pain and slams his gladius guard up to block your next move, then shoves you back with his shoulder to break your line",
+          "quote_verified": true,
+          "reasoning": "Quintus draws his gladius and uses it to block and attack the player with guard-cuts and defensive strikes.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1877,
+          "model_id": "gpt-5.4",
+          "provider": "openai",
+          "quote": "pins your stance with his shoulder, and snaps his gladius into a short, close guard-cut meant to keep you from stepping in",
+          "quote_verified": true,
+          "reasoning": "The turn narrates Quintus using physical force and his weapon against the player.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 950,
+          "model_id": "gpt-5.4-mini",
+          "provider": "openai",
+          "quote": "he plants one knee to the stone, pins your stance with his shoulder, and snaps his gladius into a short, close guard-cut",
+          "quote_verified": true,
+          "reasoning": "Quintus physically counters by shoving, pinning, and using his gladius in a guard-cut.",
+          "verdict": "YES"
+        },
+        {
+          "error": null,
+          "latency_ms": 1352,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "He plants one knee to the stone, pins your stance with his shoulder, and snaps his gladius into a short, close guard-cut meant to keep you from stepping in.",
+          "quote_verified": true,
+          "reasoning": "Quintus responds physically by pinning the player's stance and using a close guard-cut with his gladius.",
+          "verdict": "YES"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "e40b0887f3758e1899dfe78e494c9334deb9469a",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 2,
+  "panel": [
+    {
+      "model_id": "claude-opus-4-6",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-sonnet-4-20250514",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-mini",
+      "provider": "openai"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "escalation_guard_assault",
+  "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-04-22T09:42:29.685517+00:00",
+  "total_awarded": 11,
+  "total_base": 11
+}
