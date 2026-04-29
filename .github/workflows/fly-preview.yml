@@ -83,7 +83,8 @@ jobs:
         # attached this app and skip — `attach` is not idempotent and will
         # error on re-run.
         run: |
-          if flyctl secrets list --app "$FLY_APP" 2>/dev/null | grep -q '^DATABASE_URL'; then
+          if flyctl secrets list --app "$FLY_APP" --json 2>/dev/null \
+            | jq -e 'any(.[]; .name == "DATABASE_URL")' >/dev/null; then
             echo "DATABASE_URL already set on $FLY_APP — reusing existing attachment."
           else
             echo "Attaching $FLY_APP to $PREVIEW_DB_CLUSTER"
