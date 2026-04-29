@@ -11,28 +11,21 @@ from loguru import logger
 
 from config import Config
 from db.repository import GameRepository
-from engine.factory import create_engine
+from engine.session_ops import begin_session, persist_engine_state, resume_session
 from interfaces.web.character import build_character_info
 from interfaces.web.schemas import ActionResponse, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
-    persist_engine,
     restore_engine,
     session_language,
     snapshot_from_engine,
 )
-from llm.call_logger import current_session_id, reset_buffer
-from llm.turn_event_logger import reset_events
 
 _STATE_PLAYING = "playing"
 
 
 class GameNotFoundError(Exception):
     """Raised when a web player has no active game (or an unknown game_id)."""
-
-
-class GameOwnershipError(Exception):
-    """Raised when a player attempts to act on a game that is not theirs."""
 
 
 async def get_current_snapshot(
@@ -58,7 +51,7 @@ async def _start_and_persist(
 ) -> None:
     """Run ``start_game`` and persist the resulting state in one call."""
     await engine.start_game(setting)
-    await persist_engine(repo, session_id, engine, turn_number=None)
+    await persist_engine_state(repo, session_id, engine, turn_number=None)
 
 
 async def start_game_for_player(
@@ -72,13 +65,7 @@ async def start_game_for_player(
     session_row = await repo.sessions.create_web(player_id)
     session_id = session_row["id"]
 
-    current_session_id.set(session_id)
-    reset_buffer()
-    reset_events()
-    from engine.model_overrides import load_role_overrides
-
-    overrides = await load_role_overrides(repo)
-    engine = create_engine(cfg, language=language, overrides=overrides)
+    engine = await begin_session(repo, cfg, session_id, language)
     try:
         await _start_and_persist(repo, session_id, engine, setting)
     except Exception:
@@ -100,7 +87,7 @@ async def _act_and_persist(
     narration = await engine.process_action(action)
     game_state, _, _ = engine.assert_running()
     turn_number = game_state.turn_count
-    await persist_engine(repo, session_id, engine, turn_number=turn_number)
+    await persist_engine_state(repo, session_id, engine, turn_number=turn_number)
     return ActionResponse(
         narration=narration,
         narration_html=render_narrator_html(
@@ -122,21 +109,19 @@ async def process_turn_for_player(
 ) -> ActionResponse:
     """Process a player action on an existing game.
 
-    Raises ``GameNotFoundError`` if the player has no game and
-    ``GameOwnershipError`` if the supplied ``game_id`` doesn't match.
+    Raises ``GameNotFoundError`` if the player has no game or the supplied
+    ``game_id`` doesn't match — both yield 404 to avoid leaking existence.
     """
     session_row = await repo.sessions.get_latest_web(player_id)
     if session_row is None:
         raise GameNotFoundError(player_id)
     session_id = session_row["id"]
-    engine = await restore_engine(repo, cfg, session_row)
+    language = session_language(session_row)
+    engine = await resume_session(repo, cfg, session_id, language)
     if engine is None:
         raise GameNotFoundError(player_id)
     game_state, _, _ = engine.assert_running()
     if str(game_state.uuid) != game_id:
-        raise GameOwnershipError(player_id)
+        raise GameNotFoundError(player_id)
 
-    current_session_id.set(session_id)
-    reset_buffer()
-    reset_events()
-    return await _act_and_persist(repo, session_id, engine, action, session_language(session_row))
+    return await _act_and_persist(repo, session_id, engine, action, language)

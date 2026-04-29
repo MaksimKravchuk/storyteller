@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from types import MappingProxyType
 from typing import Mapping
 
@@ -24,31 +25,16 @@ _SOURCE_DB = "db"
 
 _KEY_SOURCE = "source"
 
-_CATALOG_ATTRIBUTES: tuple[str, ...] = (
-    "gpt5_4",
-    "gpt5_4_mini",
-    "gpt5_4_nano",
-    "claude_opus",
-    "claude_sonnet",
-    "claude_haiku",
-    "deepseek_chat",
-    "deepseek_v4_pro",
-    "gemini_pro",
-    "gemini_flash",
-    "grok_fast",
-    "deepseek_native_chat",
-    "deepseek_native_reasoner",
-)
-
 
 def build_catalog() -> list[dict[str, str]]:
-    """Serialize :data:`AI_MODELS` into a UI-friendly catalog list (stable order)."""
-    catalog: list[dict[str, str]] = []
-    for attr in _CATALOG_ATTRIBUTES:
-        entry = getattr(AI_MODELS, attr, None)
-        if isinstance(entry, ModelConfig):
-            catalog.append({FIELD_PROVIDER: entry.provider, FIELD_MODEL_ID: entry.model_id})
-    return catalog
+    """Serialize :data:`AI_MODELS` into a UI-friendly catalog list.
+
+    Auto-discovers every ``ModelConfig`` declared on :class:`AI_MODELS` so
+    new entries appear in the admin UI without a parallel update here.
+    Order is alphabetical (``inspect.getmembers``).
+    """
+    members = inspect.getmembers(AI_MODELS, predicate=lambda member: isinstance(member, ModelConfig))
+    return [{FIELD_PROVIDER: entry.provider, FIELD_MODEL_ID: entry.model_id} for _, entry in members]
 
 
 def _entry_from_override(stored: tuple[str, str]) -> dict[str, str]:

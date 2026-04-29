@@ -6,44 +6,12 @@ from typing import Any
 
 from loguru import logger
 
-from db.repository import GameRepository
-from engine.factory import create_engine, create_engine_from_state
-from engine.game_engine import GameEngine
-from interfaces.telegram_handlers_helpers import recover_from_start_failure, _STATE_IDLE
+from engine.session_ops import begin_session, persist_engine_state, resume_session
 from formatting.markdown_render import render
 from formatting.platform import ClientPlatform
-from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
-from llm.turn_event_logger import get_and_clear_events, reset_events
+from interfaces.telegram_handlers_helpers import recover_from_start_failure, _STATE_IDLE
 
 _TELEGRAM_PARSE_MODE = "HTML"
-
-
-def _reset_turn_buffers() -> None:
-    """Reset both the AI-call-log buffer and the structured turn-event buffer."""
-    reset_buffer()
-    reset_events()
-
-
-async def persist_engine_state(
-    repo: GameRepository,
-    session_id: str,
-    engine: GameEngine,
-    turn_number: int | None,
-) -> None:
-    """Save game state and flush any buffered AI call logs."""
-    game_state, knowledge_graph, event_manager = engine.assert_running()
-    await repo.save_game_state(session_id, game_state, knowledge_graph, event_manager.all_events)
-    ai_logs = get_and_clear_buffer()
-    if ai_logs:
-        await repo.ai_logs.save(ai_logs, turn_number=turn_number)
-    turn_events = get_and_clear_events()
-    if turn_events:
-        await repo.turn_events.save(
-            turn_events,
-            session_id=session_id,
-            turn_number=turn_number,
-            scene_number=game_state.scene_number,
-        )
 
 
 async def start_new_game(engine: Any, repo: Any, session_id: str, update: Any, text: str) -> None:
@@ -74,12 +42,7 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
         "Researching setting and generating opening scene... (this may take a minute)",
     )
     with logger.contextualize(session_id=ctx.session_id):
-        current_session_id.set(ctx.session_id)
-        _reset_turn_buffers()
-        from engine.model_overrides import load_role_overrides
-
-        overrides = await load_role_overrides(ctx.repo)
-        engine = create_engine(ctx.cfg, language=ctx.language, overrides=overrides)
+        engine = await begin_session(ctx.repo, ctx.cfg, ctx.session_id, ctx.language)
         try:
             await start_new_game(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:
@@ -88,31 +51,15 @@ async def handle_awaiting_setting(ctx: Any, chat_id: int) -> None:
 
 async def handle_playing(ctx: Any) -> None:
     """Handle the 'playing' state: load game, process action, persist."""
-    loaded = await load_game_or_reset(ctx.repo, ctx.session_id, ctx.update)
-    if loaded is None:
+    engine = await resume_session(ctx.repo, ctx.cfg, ctx.session_id, ctx.language)
+    if engine is None:
+        await ctx.update.message.reply_text("No game found. Send /start to begin.")
+        await ctx.repo.sessions.update(ctx.session_id, state=_STATE_IDLE)
         return
 
-    game_state, kg, events = loaded
-    engine = await create_engine_from_state(ctx.cfg, game_state, kg, events, language=ctx.language)
-
     with logger.contextualize(session_id=ctx.session_id):
-        current_session_id.set(ctx.session_id)
-        _reset_turn_buffers()
         try:
             await process_player_action(engine, ctx.repo, ctx.session_id, ctx.update, ctx.text)
         except Exception:
             logger.exception("Error processing action for session {}", ctx.session_id)
             await ctx.update.message.reply_text("Something went wrong processing your action. Try again.")
-
-
-async def load_game_or_reset(
-    repo: GameRepository,
-    session_id: str,
-    update: Any,
-) -> tuple | None:
-    """Load game state; if missing, notify user and reset session."""
-    loaded = await repo.load_game_state(session_id)
-    if loaded is None:
-        await update.message.reply_text("No game found. Send /start to begin.")
-        await repo.sessions.update(session_id, state=_STATE_IDLE)
-    return loaded
