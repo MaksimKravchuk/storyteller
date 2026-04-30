@@ -267,7 +267,7 @@ class TestNarratorRendersWaitContext:
         assert "market bell" in user_msg
         assert "0.1 hours" in user_msg
         # The new prompt section must have fired.
-        assert "Do NOT write 'nothing happens'" in user_msg
+        assert "Do not write 'nothing happens'" in user_msg
 
     @allure.title("Narrator still produces the stub wait line when wait_context is None")
     @pytest.mark.asyncio

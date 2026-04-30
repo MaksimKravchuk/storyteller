@@ -213,7 +213,7 @@ class TestRussianPromptFaithfulnessRules:
         [
             "Правила достоверности",
             "не сериализуй",
-            "КОМПИЛИРОВАТЬ",
+            "Лимит длины",
         ],
     )
     @allure.story("Localization")
