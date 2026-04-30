@@ -60,6 +60,24 @@ def _build_tool_choice(tool_choice: str | None) -> dict[str, Any] | None:
     return {_KEY_TYPE: _TYPE_TOOL, "name": tool_choice}
 
 
+def _stamp_no_additional_properties(node: Any) -> Any:
+    """Recursively add ``additionalProperties: false`` to every object node.
+
+    Anthropic's structured-output beta rejects ``"type": "object"`` schemas
+    that omit ``additionalProperties``; pydantic's ``model_json_schema()``
+    does not emit it by default. The walk returns a fresh structure so
+    caller-owned schema dicts are not mutated.
+    """
+    if isinstance(node, dict):
+        walked = {key: _stamp_no_additional_properties(child) for key, child in node.items()}
+        if walked.get(_KEY_TYPE) == "object" and "additionalProperties" not in walked:
+            walked["additionalProperties"] = False
+        return walked
+    if isinstance(node, list):
+        return [_stamp_no_additional_properties(child) for child in node]
+    return node
+
+
 def _parse_tool_calls(response: Any) -> list[ToolCall]:
     """Extract ``ToolCall`` objects from an Anthropic ``Message`` response.
 
@@ -117,7 +135,8 @@ class AnthropicClient(BaseLLMClient):
                 raise NotImplementedError(
                     "structured outputs not supported for model={0}".format(self.model),
                 )
-            kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": output_format.schema}
+            hardened_schema = _stamp_no_additional_properties(output_format.schema)
+            kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": hardened_schema}
             response = await self._client.beta.messages.create(**kwargs)
         else:
             response = await self._client.messages.create(**kwargs)

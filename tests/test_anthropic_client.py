@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
@@ -208,8 +209,64 @@ class TestAnthropicClient:
                 output_format=OutputFormat(schema=widget_schema, schema_name="Widget"),
             )
         kwargs = beta_create.call_args.kwargs
-        assert kwargs["output_format"] == {"type": "json_schema", "schema": widget_schema}
+        wired_schema = kwargs["output_format"]["schema"]
+        assert kwargs["output_format"]["type"] == "json_schema"
+        assert wired_schema["additionalProperties"] is False
+        assert wired_schema["properties"] == widget_schema["properties"]
         assert kwargs["model"] == _MODEL
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "AnthropicClient.send_message stamps additionalProperties: false on nested object schemas "
+        "without mutating the caller's dict",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_hardens_nested_objects(self) -> None:
+        sdk_class, beta_create = _install_beta_sdk_mock()
+        nested_node: dict[str, Any] = {"type": "object", "properties": {"k": {"type": "string"}}}
+        original_schema: dict[str, Any] = {
+            "type": "object",
+            "properties": {
+                "nested": nested_node,
+                "items": {"type": "array", "items": {"type": "object", "properties": {}}},
+            },
+            "$defs": {
+                "Inner": {"type": "object", "properties": {"x": {"type": "integer"}}},
+            },
+        }
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema=original_schema, schema_name="Nested"),
+            )
+        wired_schema = beta_create.call_args.kwargs["output_format"]["schema"]
+        assert wired_schema["additionalProperties"] is False
+        assert wired_schema["properties"]["nested"]["additionalProperties"] is False
+        assert wired_schema["properties"]["items"]["items"]["additionalProperties"] is False
+        assert wired_schema["$defs"]["Inner"]["additionalProperties"] is False
+        # Caller's dicts must remain untouched.
+        assert "additionalProperties" not in original_schema
+        assert "additionalProperties" not in nested_node
+
+    @allure.story("Strict structured outputs")
+    @allure.title("AnthropicClient.send_message preserves an explicit additionalProperties: true setting")
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_preserves_explicit_additional_properties(self) -> None:
+        sdk_class, beta_create = _install_beta_sdk_mock()
+        permissive_schema = {
+            "type": "object",
+            "properties": {"x": {"type": "string"}},
+            "additionalProperties": True,
+        }
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema=permissive_schema, schema_name="Permissive"),
+            )
+        wired_schema = beta_create.call_args.kwargs["output_format"]["schema"]
+        assert wired_schema["additionalProperties"] is True
 
     @allure.story("Strict structured outputs")
     @allure.title(
