@@ -48,6 +48,39 @@ main {
   margin: 0 auto;
 }
 
+#character-fields {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px solid #444;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+#character-fields legend {
+  padding: 0 0.4rem;
+  color: #c8c0a8;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
+#character-fields .hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: #9a937f;
+}
+
+#use-template-btn {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: #e8e4d8;
+  border: 1px solid #666;
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+#use-template-btn:hover { border-color: #e8e4d8; }
+
 h2 {
   font-weight: normal;
   letter-spacing: 0.03em;

@@ -13,6 +13,10 @@
     settingInput: $("setting-input"),
     languageSelect: $("language-select"),
     settingStatus: $("setting-status"),
+    charName: $("char-name"),
+    charAppearance: $("char-appearance"),
+    charInventory: $("char-inventory"),
+    useTemplateBtn: $("use-template-btn"),
     gamePanel: $("game-panel"),
     log: $("log"),
     actionForm: $("action-form"),
@@ -216,11 +220,43 @@
     }
   }
 
+  function gatherCharacter() {
+    const name = els.charName ? els.charName.value.trim() : "";
+    const appearance = els.charAppearance ? els.charAppearance.value.trim() : "";
+    const rawInventory = els.charInventory ? els.charInventory.value : "";
+    const inventory = rawInventory
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (!name && !appearance && inventory.length === 0) {
+      return null;
+    }
+    return { name, appearance, inventory };
+  }
+
+  async function onUseTemplate() {
+    setStatus(els.settingStatus, "Loading template…", "info");
+    try {
+      const response = await fetch("/api/character-template");
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+      const tpl = await response.json();
+      if (els.charName) els.charName.value = tpl.name || "";
+      if (els.charAppearance) els.charAppearance.value = tpl.appearance || "";
+      if (els.charInventory) els.charInventory.value = (tpl.inventory || []).join(", ");
+      setStatus(els.settingStatus, "");
+    } catch (err) {
+      setStatus(els.settingStatus, "Could not load template: " + err.message);
+    }
+  }
+
   async function onStartGame(event) {
     event.preventDefault();
     const setting = els.settingInput.value.trim();
     if (!setting) return;
     const language = els.languageSelect ? els.languageSelect.value : "English";
+    const character = gatherCharacter();
     setStatus(els.settingStatus, "Researching setting and generating opening scene… (may take a minute)", "info");
     const button = els.settingForm.querySelector("button[type=submit]");
     button.disabled = true;
@@ -228,7 +264,7 @@
       const response = await fetch("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ setting, language }),
+        body: JSON.stringify({ setting, language, character }),
       });
       if (!response.ok) {
         throw new Error(await parseError(response));
@@ -300,6 +336,9 @@
   els.settingForm.addEventListener("submit", onStartGame);
   els.actionForm.addEventListener("submit", onSubmitAction);
   els.newGameBtn.addEventListener("click", onNewGame);
+  if (els.useTemplateBtn) {
+    els.useTemplateBtn.addEventListener("click", onUseTemplate);
+  }
 
   initFoldableSections();
   loadCurrent();

@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from cast.narrator import Narrator
+from cast.narrator import Narrator, _build_narrator_context_kwargs
 from cast.schemas.turn_outputs import DialogueEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
@@ -238,6 +238,48 @@ class TestNarratorSystemPrompt:
             time_period="Now",
             time_of_day="morning",
             language="English",
+            player_appearance="unremarkable",
+            player_inventory="nothing of note",
         )
         assert "NEW SCENE" in rendered
         assert "CONTINUATION" in rendered
+
+    @allure.story("System prompt")
+    @allure.title("Narrator system prompt renders player appearance and inventory when both are present")
+    def test_system_prompt_renders_player_character_section(self):
+        rendered = NARRATOR_SYSTEM.render(
+            setting_name="Test",
+            time_period="Now",
+            time_of_day="morning",
+            language="English",
+            player_appearance="grey hoodie",
+            player_inventory="phone, keys",
+        )
+        assert "grey hoodie" in rendered
+        assert "phone, keys" in rendered
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
+class TestNarratorContextKwargs:
+    @allure.story("Player character context")
+    @allure.title("_build_narrator_context_kwargs always supplies player_appearance and player_inventory")
+    def test_context_kwargs_include_player_vars(self):
+        gs = _make_game_state()
+        gs.player.appearance = "grey hoodie"
+        gs.player.inventory = ["phone", "keys"]
+
+        kwargs = _build_narrator_context_kwargs(gs, language="English", is_new_scene=False)
+
+        assert kwargs["player_appearance"] == "grey hoodie"
+        assert kwargs["player_inventory"] == "phone, keys"
+
+    @allure.story("Player character context")
+    @allure.title("_build_narrator_context_kwargs falls back to neutral defaults when the player is anonymous")
+    def test_context_kwargs_player_vars_default(self):
+        gs = _make_game_state()
+
+        kwargs = _build_narrator_context_kwargs(gs, language="English", is_new_scene=False)
+
+        assert kwargs["player_appearance"] == "unremarkable"
+        assert kwargs["player_inventory"] == "nothing of note"

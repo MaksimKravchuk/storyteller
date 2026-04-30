@@ -52,6 +52,15 @@ NARRATOR_SYSTEM = PromptTemplate(
             required_vars=["time_of_day"],
         ),
         PromptSection(
+            name="player_character",
+            template=(
+                "Player character — appearance: {player_appearance}; "
+                'carrying: {player_inventory}. Address "you" as this person; '
+                "weave appearance and visible items into the prose when relevant."
+            ),
+            required_vars=["player_appearance", "player_inventory"],
+        ),
+        PromptSection(
             name="world_mood",
             template=(
                 "Current world mood: {world_mood}. Weave this atmosphere into your descriptions "

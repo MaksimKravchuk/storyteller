@@ -6,15 +6,27 @@ Split out to keep the public service module under wemake's
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from config import Config
 from db.repository import GameRepository
 from engine.factory import create_engine_from_state
 from engine.game_engine import GameEngine
 from interfaces.web.character import build_character_info
-from interfaces.web.schemas import GameSnapshot
+from interfaces.web.schemas import CharacterCreationInput, GameSnapshot
 from interfaces.web.transcript import build_transcript
 
 _DEFAULT_LANGUAGE = "English"
+
+
+@dataclass(frozen=True)
+class StartGameParams:
+    """Bundle of parameters for ``service.start_game_for_player``."""
+
+    player_id: str
+    setting: str
+    language: str
+    character: CharacterCreationInput | None = None
 
 
 def snapshot_from_engine(engine: GameEngine, language: str = _DEFAULT_LANGUAGE) -> GameSnapshot:

@@ -47,6 +47,15 @@ NARRATOR_SYSTEM_RU = PromptTemplate(
             required_vars=["time_of_day"],
         ),
         PromptSection(
+            name="player_character",
+            template=(
+                "Персонаж игрока — внешность: {player_appearance}; "
+                "при себе: {player_inventory}. Обращайся «ты» к этому человеку; "
+                "вплетай внешность и видимые предметы в прозу, когда это уместно."
+            ),
+            required_vars=["player_appearance", "player_inventory"],
+        ),
+        PromptSection(
             name="world_mood",
             template=(
                 "Текущее настроение мира: {world_mood}. Вплетай эту атмосферу "

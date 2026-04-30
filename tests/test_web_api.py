@@ -285,6 +285,13 @@ def test_current_game_returns_snapshot(client: TestClient) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _params_from_call(start_mock: AsyncMock) -> service.StartGameParams:
+    """Extract the ``StartGameParams`` argument from a patched start_game_for_player call."""
+    await_args = start_mock.await_args
+    assert await_args is not None
+    return next(arg for arg in await_args.args if isinstance(arg, service.StartGameParams))
+
+
 @allure.story("Start game")
 @allure.title("POST /api/games returns 201 with the opening snapshot on success")
 def test_start_game_happy_path(client: TestClient) -> None:
@@ -295,12 +302,11 @@ def test_start_game_happy_path(client: TestClient) -> None:
     assert response.status_code == _HTTP_CREATED
     assert response.json()["game_id"] == snapshot.game_id
     start_mock.assert_awaited_once()
-    # The service received the player id from the overridden dep.
-    await_args = start_mock.await_args
-    assert await_args is not None
-    assert _FIXED_PLAYER_ID in await_args.args
-    # The chosen language flowed through to the service call.
-    assert "Russian" in await_args.args
+    params = _params_from_call(start_mock)
+    assert params.player_id == _FIXED_PLAYER_ID
+    assert params.language == "Russian"
+    assert params.setting == "Rome"
+    assert params.character is None
 
 
 @allure.story("Start game")
@@ -311,9 +317,56 @@ def test_start_game_defaults_language_to_english(client: TestClient) -> None:
     with patch.object(service, "start_game_for_player", new=start_mock):
         response = client.post("/api/games", json={"setting": "Rome"})
     assert response.status_code == _HTTP_CREATED
-    await_args = start_mock.await_args
-    assert await_args is not None
-    assert "English" in await_args.args
+    params = _params_from_call(start_mock)
+    assert params.language == "English"
+
+
+@allure.story("Start game")
+@allure.title("POST /api/games forwards the character payload through StartGameParams to the service")
+def test_start_game_forwards_character_payload(client: TestClient) -> None:
+    snapshot = _sample_snapshot()
+    start_mock = AsyncMock(return_value=snapshot)
+    payload = {
+        "setting": "Rome",
+        "character": {
+            "name": "Alex",
+            "appearance": "grey hoodie",
+            "inventory": ["phone", " keys ", ""],
+        },
+    }
+    with patch.object(service, "start_game_for_player", new=start_mock):
+        response = client.post("/api/games", json=payload)
+    assert response.status_code == _HTTP_CREATED
+    params = _params_from_call(start_mock)
+    assert params.character is not None
+    assert params.character.name == "Alex"
+    assert params.character.appearance == "grey hoodie"
+    # Validator trims whitespace and drops empty items.
+    assert params.character.inventory == ["phone", "keys"]
+
+
+@allure.story("Start game")
+@allure.title("GET /api/character-template returns the canned template character")
+def test_get_character_template(client: TestClient) -> None:
+    response = client.get("/api/character-template")
+    assert response.status_code == _HTTP_OK
+    body = response.json()
+    assert "appearance" in body
+    assert "inventory" in body
+    assert body["appearance"]
+    assert isinstance(body["inventory"], list)
+    assert body["inventory"]
+
+
+@allure.story("Start game")
+@allure.title("POST /api/games rejects an inventory item longer than the per-item cap")
+def test_start_game_rejects_oversize_inventory_item(client: TestClient) -> None:
+    payload = {
+        "setting": "Rome",
+        "character": {"inventory": ["x" * 65]},
+    }
+    response = client.post("/api/games", json=payload)
+    assert response.status_code == _HTTP_UNPROCESSABLE
 
 
 @allure.story("Start game")
@@ -557,24 +610,17 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     engine.start_game = AsyncMock()
     engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
 
+    start_request = service.StartGameParams(
+        player_id=_FIXED_PLAYER_ID,
+        setting="Rome",
+        language="English",
+    )
     with (
         patch("engine.session_ops.create_engine", return_value=engine),
         patch("engine.session_ops.load_role_overrides", new=AsyncMock(return_value={})),
     ):
-        await service.start_game_for_player(
-            repo=repo,
-            cfg=MagicMock(),
-            player_id=_FIXED_PLAYER_ID,
-            setting="Rome",
-            language="English",
-        )
-        await service.start_game_for_player(
-            repo=repo,
-            cfg=MagicMock(),
-            player_id=_FIXED_PLAYER_ID,
-            setting="Rome",
-            language="English",
-        )
+        await service.start_game_for_player(repo=repo, cfg=MagicMock(), start_request=start_request)
+        await service.start_game_for_player(repo=repo, cfg=MagicMock(), start_request=start_request)
 
     create_calls = repo.sessions.create_web.await_args_list
     assert len(create_calls) == 2

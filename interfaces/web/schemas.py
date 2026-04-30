@@ -9,13 +9,45 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from interfaces.web.character_schemas import CharacterInfo
 
 _SETTING_MAX_CHARS = 500
 _ACTION_MAX_CHARS = 2000
 _DEFAULT_LANGUAGE = "English"
+_NAME_MAX_CHARS = 128
+_APPEARANCE_MAX_CHARS = 500
+_INVENTORY_MAX_ITEMS = 20
+_INVENTORY_ITEM_MAX_CHARS = 64
+
+
+class CharacterCreationInput(BaseModel):
+    """Body field on ``StartGameRequest`` carrying the player's character.
+
+    All fields are optional; an absent or fully-empty payload preserves
+    the engine's anonymous defaults.
+    """
+
+    name: str = Field(default="", max_length=_NAME_MAX_CHARS)
+    appearance: str = Field(default="", max_length=_APPEARANCE_MAX_CHARS)
+    inventory: list[str] = Field(default_factory=list, max_length=_INVENTORY_MAX_ITEMS)
+
+    @field_validator("inventory")
+    @classmethod
+    def _strip_and_drop_empty(cls, raw_items: list[str]) -> list[str]:
+        """Trim each item and drop anything that's empty after trimming."""
+        cleaned: list[str] = []
+        for raw in raw_items:
+            trimmed = raw.strip()
+            if not trimmed:
+                continue
+            if len(trimmed) > _INVENTORY_ITEM_MAX_CHARS:
+                raise ValueError(
+                    f"Inventory item exceeds {_INVENTORY_ITEM_MAX_CHARS} characters",
+                )
+            cleaned.append(trimmed)
+        return cleaned
 
 
 class StartGameRequest(BaseModel):
@@ -23,6 +55,7 @@ class StartGameRequest(BaseModel):
 
     setting: str = Field(min_length=1, max_length=_SETTING_MAX_CHARS)
     language: str = _DEFAULT_LANGUAGE
+    character: CharacterCreationInput | None = None
 
 
 class ActionRequest(BaseModel):

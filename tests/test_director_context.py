@@ -5,8 +5,9 @@ from __future__ import annotations
 import allure
 
 from cast.director_context import ContextFormatter, format_npcs_present
+from cast.player_context import format_player_appearance, format_player_inventory
 from knowledge.graph import KnowledgeGraph
-from models.game_state import GameState
+from models.game_state import GameState, PlayerState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
@@ -15,6 +16,16 @@ from models.visible_entity import VisibleEntity
 _GUARD_NAME = "Guard"
 _GUARD = "guard"
 _LOC = "loc1"
+
+
+class _CapturingPerformer:
+    """Minimal stub that records ``set_context`` kwargs for assertions."""
+
+    def __init__(self) -> None:
+        self.kwargs: dict[str, str] = {}
+
+    def set_context(self, **kwargs: str) -> None:
+        self.kwargs.update(kwargs)
 
 
 def _make_game_state_with_npcs(npc_list: list[NPCCard]) -> GameState:
@@ -152,3 +163,40 @@ class TestAppendTurnLogsVisibleEntities:
         gs = _make_game_state_with_npcs([])
         ContextFormatter(gs).append_turn_logs("look", "Silence.", "EXPLORE")
         assert gs.conversation_log[-1]["visible_entities"] == []
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Director context formatting")
+@allure.story("Player character context")
+class TestPlayerCharacterContext:
+    @allure.title("format_player_appearance returns 'unremarkable' when the player has no appearance set")
+    def test_default_appearance(self):
+        player = PlayerState()
+        assert format_player_appearance(player) == "unremarkable"
+
+    @allure.title("format_player_appearance returns the player's appearance verbatim when set")
+    def test_appearance_round_trip(self):
+        player = PlayerState(appearance="grey hoodie")
+        assert format_player_appearance(player) == "grey hoodie"
+
+    @allure.title("format_player_inventory returns 'nothing of note' for an empty inventory")
+    def test_default_inventory(self):
+        player = PlayerState()
+        assert format_player_inventory(player) == "nothing of note"
+
+    @allure.title("format_player_inventory comma-joins inventory items in their stored order")
+    def test_inventory_joined(self):
+        player = PlayerState(inventory=["phone", "keys"])
+        assert format_player_inventory(player) == "phone, keys"
+
+    @allure.title("ContextFormatter.sync_context populates player_appearance and player_inventory on the performer")
+    def test_sync_context_sets_player_vars(self):
+        gs = _make_game_state_with_npcs([])
+        gs.player.appearance = "grey hoodie"
+        gs.player.inventory = ["phone", "keys"]
+
+        performer = _CapturingPerformer()
+        ContextFormatter(gs).sync_context(performer)
+
+        assert performer.kwargs["player_appearance"] == "grey hoodie"
+        assert performer.kwargs["player_inventory"] == "phone, keys"

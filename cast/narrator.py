@@ -7,6 +7,7 @@ from typing import Any
 from loguru import logger
 
 from cast.base_performer_class import BasePerformer
+from cast.player_context import format_player_appearance, format_player_inventory
 from cast.narrator_dedup import dedup_dialogue, dedup_npc_turns
 from cast.narrator_labels import NarratorLabels, get_narrator_labels
 from cast.narrator_wait import append_wait_parts, format_wait_context_bullets
@@ -115,11 +116,14 @@ def _build_narrator_context_kwargs(game_state: Any, language: str, is_new_scene:
     mood into every response turns small actions into atmospheric
     embroidery, so we omit it there.
     """
+    player = game_state.player
     ctx_kwargs: dict[str, str] = {
         "setting_name": game_state.setting.name,
         "time_period": game_state.setting.time_period,
         "time_of_day": game_state.game_time,
         "language": language,
+        "player_appearance": format_player_appearance(player),
+        "player_inventory": format_player_inventory(player),
     }
     mood = game_state.world_state.world_mood
     if mood and is_new_scene:

@@ -14,14 +14,17 @@ from fastapi.responses import FileResponse
 
 from config import Config
 from db.repository import GameRepository
+from defaults.player_character import TEMPLATE_CHARACTER
 from interfaces.web import service
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
 from interfaces.web.schemas import (
     ActionRequest,
     ActionResponse,
+    CharacterCreationInput,
     GameSnapshot,
     StartGameRequest,
 )
+from interfaces.web.service_helpers import StartGameParams
 
 router = APIRouter()
 
@@ -70,12 +73,27 @@ async def start_game(
     repo: RepoDep,
 ) -> GameSnapshot:
     """Start a new game for the caller (replaces any existing one)."""
-    return await service.start_game_for_player(
-        repo,
-        cfg,
-        player_id,
-        body.setting,
-        body.language,
+    start_request = StartGameParams(
+        player_id=player_id,
+        setting=body.setting,
+        language=body.language,
+        character=body.character,
+    )
+    return await service.start_game_for_player(repo, cfg, start_request)
+
+
+@router.get("/api/character-template", response_model=CharacterCreationInput)
+async def get_character_template() -> CharacterCreationInput:
+    """Return the canned template character for one-click anonymous start.
+
+    The UI offers a "Use template" button that fetches this and
+    pre-populates the onboarding form, so a player who doesn't want to
+    enter real personal info can start a game with a plausible default.
+    """
+    return CharacterCreationInput(
+        name=TEMPLATE_CHARACTER.name,
+        appearance=TEMPLATE_CHARACTER.appearance,
+        inventory=list(TEMPLATE_CHARACTER.inventory),
     )
 
 

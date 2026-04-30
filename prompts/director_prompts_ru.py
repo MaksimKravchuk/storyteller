@@ -22,6 +22,17 @@ DIRECTOR_SYSTEM_RU = PromptTemplate(
             required_vars=["setting_name", "time_period"],
         ),
         PromptSection(
+            name="player_character",
+            template=(
+                "Персонаж игрока:\n"
+                "- Внешность: {player_appearance}\n"
+                "- При себе: {player_inventory}\n"
+                "Считай это каноном. NPC видят внешность игрока и любые "
+                "видимые предметы; обращайся к ним естественно, когда это уместно."
+            ),
+            required_vars=["player_appearance", "player_inventory"],
+        ),
+        PromptSection(
             name="rules",
             template=(
                 "Правила:\n"
