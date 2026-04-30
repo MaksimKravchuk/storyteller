@@ -1,10 +1,19 @@
 from __future__ import annotations
 
+import asyncio
 import types
-from typing import Any
+from typing import Any, Awaitable, Callable
+
+from loguru import logger
 
 from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import LLMResponse, Message, Role, Tool, ToolCall
+
+# Bounded backoff for Anthropic 5xx (e.g. transient ``Grammar compilation
+# is temporarily unavailable``). Layered on top of the SDK's own retries
+# to absorb outages that outlast the SDK's default ~1.5s budget.
+_RETRY_MAX_ATTEMPTS = 3
+_RETRY_BASE_DELAY = 2.0
 
 # Centralised Anthropic payload keys so string literals don't repeat
 # through the translation helpers (flake8 WPS226 caps re-use at 3).
@@ -58,6 +67,40 @@ def _build_tool_choice(tool_choice: str | None) -> dict[str, Any] | None:
     if mapped is not None:
         return mapped
     return {_KEY_TYPE: _TYPE_TOOL, "name": tool_choice}
+
+
+async def _call_with_retry(
+    create: Callable[[], Awaitable[Any]],
+    max_attempts: int = _RETRY_MAX_ATTEMPTS,
+    base_delay: float = _RETRY_BASE_DELAY,
+    attempt: int = 0,
+) -> Any:
+    """Invoke ``create`` with bounded exponential backoff on Anthropic 5xx.
+
+    Retries only on :class:`anthropic.InternalServerError` (e.g. the
+    transient ``Grammar compilation is temporarily unavailable`` 503).
+    Backoff is ``base_delay * 2**attempt``. Other errors (4xx, validation,
+    network) propagate immediately. Implemented via tail recursion so the
+    retry loop carries its own attempt counter without an ``await`` inside
+    a ``for`` loop body.
+    """
+    from anthropic import InternalServerError
+
+    try:
+        return await create()
+    except InternalServerError as exc:
+        if attempt + 1 >= max_attempts:
+            raise
+        delay = base_delay * (2**attempt)
+        logger.warning(
+            "Anthropic 5xx (attempt {}/{}); retrying in {}s: {}",
+            attempt + 1,
+            max_attempts,
+            delay,
+            exc,
+        )
+        await asyncio.sleep(delay)
+    return await _call_with_retry(create, max_attempts, base_delay, attempt + 1)
 
 
 def _stamp_no_additional_properties(node: Any) -> Any:
@@ -137,9 +180,9 @@ class AnthropicClient(BaseLLMClient):
                 )
             hardened_schema = _stamp_no_additional_properties(output_format.schema)
             kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": hardened_schema}
-            response = await self._client.beta.messages.create(**kwargs)
+            response = await _call_with_retry(lambda: self._client.beta.messages.create(**kwargs))
         else:
-            response = await self._client.messages.create(**kwargs)
+            response = await _call_with_retry(lambda: self._client.messages.create(**kwargs))
 
         response_text = ""
         for block in response.content:

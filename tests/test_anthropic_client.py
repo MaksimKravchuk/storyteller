@@ -7,15 +7,29 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
+import httpx
 import pytest
+from anthropic import BadRequestError, InternalServerError
 
 from llm import message as msg
-from llm.anthropic_client import AnthropicClient
+from llm.anthropic_client import AnthropicClient, _call_with_retry
 from llm.base_client import OutputFormat
 from llm.message import Tool
 
 _ANTHROPIC_CTOR = "anthropic.AsyncAnthropic"
 _MODEL = "claude-sonnet-4-20250514"
+
+
+def _make_anthropic_5xx(message: str = "Grammar compilation is temporarily unavailable.") -> InternalServerError:
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    response = httpx.Response(503, request=request)
+    return InternalServerError(message, response=response, body=None)
+
+
+def _make_anthropic_400() -> BadRequestError:
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    response = httpx.Response(400, request=request)
+    return BadRequestError("bad", response=response, body=None)
 
 
 def _text_block(text: str) -> SimpleNamespace:
@@ -248,6 +262,64 @@ class TestAnthropicClient:
         # Caller's dicts must remain untouched.
         assert "additionalProperties" not in original_schema
         assert "additionalProperties" not in nested_node
+
+    @allure.story("Retry on 5xx")
+    @allure.title(
+        "AnthropicClient.send_message retries beta endpoint on Anthropic 5xx and returns the eventual success"
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_retries_5xx_then_succeeds(self) -> None:
+        sdk_class = MagicMock()
+        sdk_instance = MagicMock()
+        beta_create = AsyncMock(side_effect=[_make_anthropic_5xx(), _make_anthropic_5xx(), _make_response()])
+        sdk_instance.beta.messages.create = beta_create
+        sdk_class.return_value = sdk_instance
+        with (
+            patch(_ANTHROPIC_CTOR, sdk_class),
+            patch("llm.anthropic_client.asyncio.sleep", new=AsyncMock()) as sleep_mock,
+        ):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            result = await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema={"type": "object", "properties": {}}, schema_name="Widget"),
+            )
+        assert beta_create.await_count == 3
+        assert result.body == "hello"
+        # Backoff schedule: 2.0s, 4.0s
+        assert [call.args[0] for call in sleep_mock.await_args_list] == [pytest.approx(2.0), pytest.approx(4.0)]
+
+    @allure.story("Retry on 5xx")
+    @allure.title("AnthropicClient.send_message stops retrying after _RETRY_MAX_ATTEMPTS and raises the last 5xx")
+    @pytest.mark.asyncio
+    async def test_send_message_5xx_exhausts_retries(self) -> None:
+        sdk_class = MagicMock()
+        sdk_instance = MagicMock()
+        final_error = _make_anthropic_5xx("final")
+        beta_create = AsyncMock(side_effect=[_make_anthropic_5xx(), _make_anthropic_5xx(), final_error])
+        sdk_instance.beta.messages.create = beta_create
+        sdk_class.return_value = sdk_instance
+        with patch(_ANTHROPIC_CTOR, sdk_class), patch("llm.anthropic_client.asyncio.sleep", new=AsyncMock()):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            with pytest.raises(InternalServerError) as exc_info:
+                await client.send_message(
+                    messages=[_user_msg()],
+                    output_format=OutputFormat(schema={"type": "object", "properties": {}}, schema_name="Widget"),
+                )
+        assert beta_create.await_count == 3
+        assert exc_info.value is final_error
+
+    @allure.story("Retry on 5xx")
+    @allure.title("_call_with_retry does not retry 4xx errors and propagates them on the first attempt")
+    @pytest.mark.asyncio
+    async def test_call_with_retry_does_not_retry_4xx(self) -> None:
+        bad = _make_anthropic_400()
+        create = AsyncMock(side_effect=bad)
+        sleep_mock = AsyncMock()
+        with patch("llm.anthropic_client.asyncio.sleep", new=sleep_mock):
+            with pytest.raises(BadRequestError):
+                await _call_with_retry(create)
+        assert create.await_count == 1
+        sleep_mock.assert_not_awaited()
 
     @allure.story("Strict structured outputs")
     @allure.title("AnthropicClient.send_message preserves an explicit additionalProperties: true setting")
