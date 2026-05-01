@@ -161,6 +161,12 @@ class AnthropicClient(BaseLLMClient):
         max_tokens: int | None = None,
         output_format: OutputFormat | None = None,
     ) -> LLMResponse:
+        if output_format is not None and output_format.schema is not None:
+            # Raises NotImplementedError before any wire-payload work when the
+            # schema has been quarantined (or the model never supported strict
+            # outputs), so the prompt-fallback path doesn't pay for kwargs +
+            # schema hardening on every turn after the first 400.
+            self._guard_strict_supported(output_format.schema_name)
         kwargs = self._build_request_kwargs(
             messages,
             system_prompt,
@@ -169,7 +175,6 @@ class AnthropicClient(BaseLLMClient):
             output_format,
         )
         if output_format is not None and output_format.schema is not None:
-            self._guard_strict_supported(output_format.schema_name)
             hardened_schema = harden_anthropic_schema(output_format.schema)
             kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": hardened_schema}
             response = await self._send_strict(kwargs, output_format.schema_name)

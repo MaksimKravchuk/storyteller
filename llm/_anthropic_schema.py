@@ -20,20 +20,20 @@ _KEY_TYPE = "type"
 # Numeric range constraints Anthropic's structured-output beta rejects on
 # ``"type": "integer"`` nodes (``"For 'integer' type, properties maximum,
 # minimum are not supported"``).
-_INTEGER_RANGE_KEYS = ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum")
+_INTEGER_RANGE_KEYS = frozenset(("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"))
 
 # Cosmetic metadata that inflates Anthropic's schema-complexity score
 # without affecting validation. ``default`` is metadata-only in JSON
 # schema; pydantic still applies python-level defaults when deserialising
 # the LLM response.
-_NOISE_KEYS = ("title", "description", "default", "examples")
+_NOISE_KEYS = frozenset(("title", "description", "default", "examples"))
 
 # JSON-schema keys whose value is a *mapping* of user-defined names (not
 # reserved schema keywords). Their immediate children must be walked
 # without applying ``_NOISE_KEYS`` to the property names — otherwise a
 # field literally named ``description`` (e.g. ``NPCGoalDraft.description``)
 # would be silently dropped from ``properties``.
-_PROPERTY_MAP_KEYS = ("properties", "$defs", "definitions", "patternProperties")
+_PROPERTY_MAP_KEYS = frozenset(("properties", "$defs", "definitions", "patternProperties"))
 
 
 def harden_anthropic_schema(node: Any) -> Any:

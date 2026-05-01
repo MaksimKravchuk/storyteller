@@ -290,7 +290,6 @@ class TestAnthropicClient:
             )
         wired_schema = beta_create.call_args.kwargs["output_format"]["schema"]
         assert wired_schema["properties"]["score"] == {"type": "integer"}
-        # Caller's dict must remain untouched.
         assert integer_node["minimum"] == 0
         assert integer_node["maximum"] == 10
 
