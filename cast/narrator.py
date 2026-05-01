@@ -24,14 +24,13 @@ _KEY_HOURS_WAITED = "hours_waited"
 _KEY_TURN_INTENT = "turn_intent"
 
 
-def _format_poi_labels(poi: Any) -> str:
-    """Render a POI as ``primary (aka: alias1, alias2)`` for the Narrator prompt.
+def _format_alias_list(names: list[str]) -> str:
+    """Render an alias list as ``primary (aka: alias1, alias2)``.
 
-    The Narrator receives the full alias list so it can alternate between
-    synonyms naturally rather than repeating one label. POIs with a single
-    name render just that name.
+    Single-element lists render just the primary so the Narrator does
+    not see a noisy ``(aka: …)`` suffix when there is no real synonym
+    to alternate with.
     """
-    names = list(poi.names)
     primary = names[0]
     aliases = names[1:]
     if not aliases:
@@ -42,19 +41,18 @@ def _format_poi_labels(poi: Any) -> str:
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
     """Format NPC label, gating names on ``player.known_npcs``.
 
-    Introduced NPCs render as ``Name (Occupation)`` — a proper noun +
-    in-world title we let the Narrator LLM translate or preserve. NPCs
-    the player has not been introduced to render as their
-    ``short_descriptor`` if the card carries one, else the scene-side
-    ``role`` tag. A ``uuid`` set on the ``SceneNPC`` that is missing
-    from ``game_state.npcs`` is a broken invariant the NPC Ticker is
-    supposed to prevent — surfaced as a warning so operators can trace
-    the divergence while the player-facing fallback keeps rendering.
+    Routes through :meth:`NPCCard.known_names_for_player` — that's the
+    single source of truth for the alias shape (introduced vs.
+    descriptor vs. role fallback). A ``uuid`` set on the ``SceneNPC``
+    that is missing from ``game_state.npcs`` is a broken invariant the
+    NPC Ticker is supposed to prevent — surfaced as a warning so
+    operators can trace the divergence while the player-facing
+    fallback keeps rendering.
     """
     if snpc.uuid:
         npc = game_state.npcs.get(snpc.uuid)
         if npc is not None:
-            return npc.label_for_player(game_state, snpc.role)
+            return _format_alias_list(npc.known_names_for_player(game_state, snpc.role))
         logger.warning(
             "Narrator._format_npc_label: scene uuid={0} role={1} missing from game_state.npcs",
             snpc.uuid,
@@ -255,7 +253,7 @@ class Narrator(BasePerformer):
             npc_descriptions = [_format_npc_label(snpc, game_state) for snpc in scene.npcs_present]
             raw_parts.append(labels.people_visible.format(", ".join(npc_descriptions)))
         if scene.points_of_interest:
-            poi_labels = [_format_poi_labels(poi) for poi in scene.points_of_interest]
+            poi_labels = [_format_alias_list(poi.names) for poi in scene.points_of_interest]
             raw_parts.append(labels.notable_things.format(", ".join(poi_labels)))
 
     def _build_narration_kwargs(
