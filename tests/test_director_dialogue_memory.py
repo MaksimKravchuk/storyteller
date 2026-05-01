@@ -290,6 +290,43 @@ class TestDialogueHandlerLongTermMemory:
             assert call.args[0] == []
 
 
+@allure.epic("Narrative Delivery")
+@allure.feature("Dialogue routing")
+class TestDialogueHandlerEntryProduction:
+    """``handle_dialogue`` must populate ``DialogueEntry.npc_uuid`` from
+    the NPC card. The Narrator gates player-facing names on that uuid;
+    a producer that drops it would silently leak proper names while
+    every Narrator unit test (which sets uuids directly) keeps passing.
+    """
+
+    @allure.story("Producer handoff")
+    @allure.title("DialogueHandler.handle_dialogue stamps each entry with the speaker NPC's uuid")
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_entries_carry_npc_uuid(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
+        )
+
+        actor = make_mock_actor("Hail, traveller.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor}, memory_manager)
+
+        entries, _ = await handler.handle_dialogue("greetings", ["Marcus"])
+
+        assert len(entries) == 1
+        assert entries[0]["npc_name"] == "Marcus"
+        assert entries[0]["npc_uuid"] == _NPC_A
+
+
 @allure.epic("Memory & Persistence")
 @allure.feature("NPC conversation history")
 class TestDialogueHandlerConversationHistory:

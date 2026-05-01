@@ -14,8 +14,18 @@ from __future__ import annotations
 import allure
 import pytest
 
+import uuid
+
 from cast.narrator_dedup import dedup_dialogue, dedup_npc_turns
 from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry
+
+# Static UUIDs so the dedup tests can pin two distinct NPCs as separate
+# entities (the dedup helpers key on ``npc_uuid``, which production
+# always sets to a real ``uuid4`` string from :class:`models.base_model.BaseModel`).
+_IVAN_UUID = str(uuid.uuid4())
+_BORIS_UUID = str(uuid.uuid4())
+_FROL_UUID = str(uuid.uuid4())
+_PETR_UUID = str(uuid.uuid4())
 
 
 @allure.epic("Narrative Delivery")
@@ -99,9 +109,9 @@ class TestDedupDialogue:
     @allure.title("Interleaved same-NPC entries merge without disturbing other NPCs' order")
     def test_interleaved_preserves_first_appearance_order(self):
         entries = [
-            DialogueEntry(npc_name="Ivan", response="Halt!"),
-            DialogueEntry(npc_name="Boris", response="Who is it?"),
-            DialogueEntry(npc_name="Ivan", response="State your business!"),
+            DialogueEntry(npc_uuid=_IVAN_UUID, npc_name="Ivan", response="Halt!"),
+            DialogueEntry(npc_uuid=_BORIS_UUID, npc_name="Boris", response="Who is it?"),
+            DialogueEntry(npc_uuid=_IVAN_UUID, npc_name="Ivan", response="State your business!"),
         ]
         result = dedup_dialogue(entries)
         assert [entry.npc_name for entry in result] == ["Ivan", "Boris"]
@@ -109,13 +119,29 @@ class TestDedupDialogue:
         assert result[1].response == "Who is it?"
 
     @allure.story("Dedup dialogue")
+    @allure.title("Two same-named NPCs with distinct uuids do NOT collapse — keying is by uuid, not name")
+    def test_same_name_distinct_uuid_does_not_collapse(self):
+        # Pins the load-bearing reason for keying on ``npc_uuid``: two
+        # NPCs that happen to share a display name but are different
+        # entities (different uuids) must remain two entries through
+        # dedup. Under the previous name-keyed implementation they
+        # would have silently merged.
+        entries = [
+            DialogueEntry(npc_uuid=_IVAN_UUID, npc_name="Marcus", response="Halt!"),
+            DialogueEntry(npc_uuid=_BORIS_UUID, npc_name="Marcus", response="Stop right there."),
+        ]
+        result = dedup_dialogue(entries)
+        assert len(result) == 2
+        assert {entry.npc_uuid for entry in result} == {_IVAN_UUID, _BORIS_UUID}
+
+    @allure.story("Dedup dialogue")
     @allure.title("Dedup is per-NPC: one NPC's duplicates do not affect another NPC's distinct lines")
     def test_mixed_duplicates_and_distinct_across_npcs(self):
         entries = [
-            DialogueEntry(npc_name="Ivan", response="Halt!"),
-            DialogueEntry(npc_name="Boris", response="Who?"),
-            DialogueEntry(npc_name="Ivan", response="Halt!"),
-            DialogueEntry(npc_name="Boris", response="Show yourself!"),
+            DialogueEntry(npc_uuid=_IVAN_UUID, npc_name="Ivan", response="Halt!"),
+            DialogueEntry(npc_uuid=_BORIS_UUID, npc_name="Boris", response="Who?"),
+            DialogueEntry(npc_uuid=_IVAN_UUID, npc_name="Ivan", response="Halt!"),
+            DialogueEntry(npc_uuid=_BORIS_UUID, npc_name="Boris", response="Show yourself!"),
         ]
         result = dedup_dialogue(entries)
         ivan = next(entry for entry in result if entry.npc_name == "Ivan")
@@ -168,9 +194,9 @@ class TestDedupNPCTurns:
     @allure.title("Interleaved same-NPC turns merge without disturbing other NPCs' order")
     def test_interleaved_preserves_first_appearance_order(self):
         entries = [
-            NPCTurnEntry(npc_name="Frol", action="draws his sword", action_type="COMBAT"),
-            NPCTurnEntry(npc_name="Petr", action="backs away", action_type="FLEE"),
-            NPCTurnEntry(npc_name="Frol", action="advances", action_type="COMBAT"),
+            NPCTurnEntry(npc_uuid=_FROL_UUID, npc_name="Frol", action="draws his sword", action_type="COMBAT"),
+            NPCTurnEntry(npc_uuid=_PETR_UUID, npc_name="Petr", action="backs away", action_type="FLEE"),
+            NPCTurnEntry(npc_uuid=_FROL_UUID, npc_name="Frol", action="advances", action_type="COMBAT"),
         ]
         result = dedup_npc_turns(entries)
         assert [entry.npc_name for entry in result] == ["Frol", "Petr"]

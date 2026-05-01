@@ -27,11 +27,26 @@ from models.world_state import WorldThread
 class DialogueEntry(BaseModel):
     """One NPC's utterance in response to the player's action.
 
+    ``npc_uuid`` is the canonical reference into ``game_state.npcs`` and
+    is what the Narrator uses to gate the player-facing label on
+    ``player.known_npcs`` (so an unmet NPC never has their proper name
+    leaked into prose). ``npc_name`` carries the NPC's real name for
+    internal consumers — the World Chronicler's turn summary, dedup
+    fallbacks, and retaliation memory pinning — that legitimately need
+    the canonical identifier rather than the gated label.
+
+    ``npc_uuid`` defaults to an empty string so deterministic fixtures
+    (benchmarks, narrator unit tests) can construct entries without a
+    real ``GameState`` to back them — :func:`narrator_aliases.resolve_dialogue_npc_label`
+    falls back to ``npc_name`` when the uuid is empty or absent from
+    the game state. Production producers always set the uuid.
+
     ``contest_roll`` carries the human-readable combat/contest summary
     that ``cast.director_dialogue`` attaches to dialogue entries when
     the interaction is resolved via a dice roll.
     """
 
+    npc_uuid: str = ""
     npc_name: str
     response: str
     contest_roll: str | None = None
@@ -40,11 +55,18 @@ class DialogueEntry(BaseModel):
 class NPCTurnEntry(BaseModel):
     """One NPC's autonomous action on a turn-counting player action.
 
+    ``npc_uuid`` mirrors :class:`DialogueEntry` — it is the gate key the
+    Narrator uses to resolve the player-facing label. ``npc_name`` keeps
+    the canonical real name for internal consumers (World Chronicler).
+    ``npc_uuid`` defaults to an empty string for the same fixture-friendliness
+    reason :class:`DialogueEntry` documents.
+
     The field name ``action_type`` mirrors the attribute used on
     :class:`cast.npc_turn.NPCTurnAction` and avoids shadowing the
     builtin ``type``.
     """
 
+    npc_uuid: str = ""
     npc_name: str
     action: str
     action_type: str

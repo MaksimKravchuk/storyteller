@@ -59,6 +59,12 @@ class NarratorLabels:
     wait_bullet_stirring: str  # "- stirring: {line}"
     # No-material placeholder
     no_scene_data: str
+    # Gate-safe descriptor used when an NPC referenced by a turn entry
+    # cannot be resolved against ``game_state.npcs`` — the resolver
+    # falls back to this neutral label instead of the canonical
+    # ``npc.name`` so a stale/orphaned uuid never leaks the proper
+    # name into the Narrator prompt.
+    unknown_someone: str
 
 
 _ENGLISH = NarratorLabels(
@@ -85,6 +91,7 @@ _ENGLISH = NarratorLabels(
     wait_bullet_on_shift="- on shift: {0}",
     wait_bullet_stirring="- stirring: {0}",
     no_scene_data="No specific scene data.",
+    unknown_someone="someone",
 )
 
 
@@ -112,6 +119,7 @@ _RUSSIAN = NarratorLabels(
     wait_bullet_on_shift="- на дежурстве: {0}",
     wait_bullet_stirring="- движение: {0}",
     no_scene_data="Особых данных по сцене нет.",
+    unknown_someone="кто-то",
 )
 
 
