@@ -6,6 +6,8 @@ from typing import Any
 
 from models.game_state import GameState
 
+from cast.player_context import format_player_appearance, format_player_inventory
+
 _SCENE_SUMMARY_CHARS = 500
 
 _KEY_PLAYER_ACTION = "player_action"
@@ -79,6 +81,7 @@ class ContextFormatter:
     def sync_context(self, performer: Any) -> None:
         """Update system prompt variables from the current game state."""
         scene = self._gs.current_scene
+        player = self._gs.player
         context_vars = dict(
             setting_name=self._gs.setting.name,
             time_period=self._gs.setting.time_period,
@@ -87,6 +90,8 @@ class ContextFormatter:
             points_of_interest=format_pois(scene),
             game_time=self._gs.game_time,
             game_clock=str(round(self._gs.game_clock, 1)),
+            player_appearance=format_player_appearance(player),
+            player_inventory=format_player_inventory(player),
         )
         history_summary = format_scene_history(self._gs)
         if history_summary:

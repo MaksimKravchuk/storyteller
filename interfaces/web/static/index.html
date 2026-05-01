@@ -37,6 +37,46 @@
           required
           placeholder="e.g. Rome, 1st century AD, during the reign of Augustus"
         ></textarea>
+
+        <fieldset id="character-fields">
+          <legend>Your character</legend>
+          <p class="hint">
+            Describe yourself however you like — leave fields blank to stay anonymous,
+            or click <em>Use template</em> for a plausible default.
+          </p>
+
+          <label for="char-name">Name (optional)</label>
+          <input
+            id="char-name"
+            name="name"
+            type="text"
+            maxlength="128"
+            autocomplete="off"
+            placeholder="Leave empty if you'd rather stay anonymous"
+          />
+
+          <label for="char-appearance">Appearance</label>
+          <textarea
+            id="char-appearance"
+            name="appearance"
+            rows="2"
+            maxlength="500"
+            placeholder="Average build, dark hair, jeans and a t-shirt"
+          ></textarea>
+
+          <label for="char-inventory">Inventory (comma-separated)</label>
+          <input
+            id="char-inventory"
+            name="inventory"
+            type="text"
+            maxlength="500"
+            autocomplete="off"
+            placeholder="phone, wallet, keys"
+          />
+
+          <button type="button" id="use-template-btn">Use template</button>
+        </fieldset>
+
         <button type="submit">Start</button>
       </form>
       <p id="setting-status" class="status"></p>

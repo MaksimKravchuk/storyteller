@@ -8,9 +8,18 @@ from defaults.models import AI_MODELS, ModelConfig
 from engine.engine_wiring import LLMClients, create_llm_clients, restore_actors, wire_director
 from engine.graph_populator import populate_graph_from_setting
 from knowledge.graph import KnowledgeGraph
-from models.game_state import GameState
+from models.game_state import GameState, PlayerState
+from models.player_character_input import PlayerCharacterInput
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
+
+
+def _apply_character_to_player(player: PlayerState, character: PlayerCharacterInput) -> None:
+    """Apply onboarding character to player; blank name keeps anonymous default."""
+    if character.name:
+        player.name = character.name
+    player.appearance = character.appearance
+    player.inventory = list(character.inventory)
 
 
 class GameEngine:
@@ -56,7 +65,11 @@ class GameEngine:
     # Public API
     # ------------------------------------------------------------------
 
-    async def start_game(self, setting_description: str) -> str:
+    async def start_game(
+        self,
+        setting_description: str,
+        character: PlayerCharacterInput | None = None,
+    ) -> str:
         """Initialise a new game session.
 
         1. Data Miner researches the setting via Wikipedia.
@@ -64,6 +77,10 @@ class GameEngine:
         3. Event manager is created.
         4. All agents are wired together.
         5. An opening scene is generated.
+
+        ``character`` populates the player's name, appearance, and
+        starting inventory; omitting it keeps anonymous defaults so
+        callers that don't yet collect onboarding info still work.
 
         Returns the opening narration.
         """
@@ -75,6 +92,8 @@ class GameEngine:
         self._knowledge_graph = KnowledgeGraph()
         populate_graph_from_setting(self._knowledge_graph, setting)
         self._game_state = GameState(setting=setting, knowledge_graph=self._knowledge_graph)
+        if character is not None:
+            _apply_character_to_player(self._game_state.player, character)
         self._event_manager = EventManager(game_state=self._game_state, knowledge_graph=self._knowledge_graph)
 
         self._director = wire_director(

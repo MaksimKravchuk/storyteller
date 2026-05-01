@@ -13,15 +13,30 @@ from config import Config
 from db.repository import GameRepository
 from engine.session_ops import begin_session, persist_engine_state, resume_session
 from interfaces.web.character import build_character_info
-from interfaces.web.schemas import ActionResponse, GameSnapshot
+from interfaces.web.schemas import ActionResponse, CharacterCreationInput, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
+    StartGameParams,
     restore_engine,
     session_language,
     snapshot_from_engine,
 )
+from models.player_character_input import PlayerCharacterInput
 
 _STATE_PLAYING = "playing"
+
+
+def _to_engine_character(character: CharacterCreationInput | None) -> PlayerCharacterInput | None:
+    """Convert wire-side character to engine-layer; return None for blank payloads."""
+    if character is None:
+        return None
+    if not character.name and not character.appearance and not character.inventory:
+        return None
+    return PlayerCharacterInput(
+        name=character.name,
+        appearance=character.appearance,
+        inventory=list(character.inventory),
+    )
 
 
 class GameNotFoundError(Exception):
@@ -48,32 +63,37 @@ async def _start_and_persist(
     session_id: str,
     engine,
     setting: str,
+    character: PlayerCharacterInput | None,
 ) -> None:
     """Run ``start_game`` and persist the resulting state in one call."""
-    await engine.start_game(setting)
+    await engine.start_game(setting, character=character)
     await persist_engine_state(repo, session_id, engine, turn_number=None)
 
 
 async def start_game_for_player(
     repo: GameRepository,
     cfg: Config,
-    player_id: str,
-    setting: str,
-    language: str,
+    start_request: StartGameParams,
 ) -> GameSnapshot:
     """Create a fresh session for this web player and return the opening snapshot."""
-    session_row = await repo.sessions.create_web(player_id)
+    session_row = await repo.sessions.create_web(start_request.player_id)
     session_id = session_row["id"]
 
-    engine = await begin_session(repo, cfg, session_id, language)
+    engine = await begin_session(repo, cfg, session_id, start_request.language)
     try:
-        await _start_and_persist(repo, session_id, engine, setting)
+        await _start_and_persist(
+            repo,
+            session_id,
+            engine,
+            start_request.setting,
+            _to_engine_character(start_request.character),
+        )
     except Exception:
-        logger.exception("Failed to start web game for player {}", player_id)
+        logger.exception("Failed to start web game for player {}", start_request.player_id)
         await repo.rollback()
         raise
-    await repo.sessions.update(session_id, state=_STATE_PLAYING, language=language)
-    return snapshot_from_engine(engine, language)
+    await repo.sessions.update(session_id, state=_STATE_PLAYING, language=start_request.language)
+    return snapshot_from_engine(engine, start_request.language)
 
 
 async def _act_and_persist(

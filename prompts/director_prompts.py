@@ -28,6 +28,17 @@ DIRECTOR_SYSTEM = PromptTemplate(
             required_vars=["setting_name", "time_period"],
         ),
         PromptSection(
+            name="player_character",
+            template=(
+                "The player character:\n"
+                "- Appearance: {player_appearance}\n"
+                "- Carrying: {player_inventory}\n"
+                "Treat these as canon. NPCs see the player's appearance and any visible "
+                "items; reference them naturally when relevant."
+            ),
+            required_vars=["player_appearance", "player_inventory"],
+        ),
+        PromptSection(
             name="rules",
             template=(
                 "Rules:\n"
