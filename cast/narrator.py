@@ -29,8 +29,7 @@ def _format_alias_list(names: list[str]) -> str:
 
     Single-element lists render just the primary so the Narrator does
     not see a noisy ``(aka: …)`` suffix when there is no real synonym
-    to alternate with. Shared by POI and NPC label rendering so both
-    paths emit the identical ``aka`` shape.
+    to alternate with.
     """
     primary = names[0]
     aliases = names[1:]
@@ -42,15 +41,11 @@ def _format_alias_list(names: list[str]) -> str:
 def _format_npc_label(snpc: Any, game_state: Any) -> str:
     """Format NPC label, gating names on ``player.known_npcs``.
 
-    Introduced NPCs render as ``Name (Occupation) (aka: Name, the
-    occupation)`` so the Narrator can alternate between the proper
-    noun + title, the bare name, and the occupational descriptor —
-    matching the POI ``aka`` treatment. NPCs the player has not been
-    introduced to render as their ``short_descriptor`` if the card
-    carries one, else the scene-side ``role`` tag (single label, no
-    ``aka`` suffix). A ``uuid`` set on the ``SceneNPC`` that is
-    missing from ``game_state.npcs`` is a broken invariant the NPC
-    Ticker is supposed to prevent — surfaced as a warning so
+    Routes through :meth:`NPCCard.known_names_for_player` — that's the
+    single source of truth for the alias shape (introduced vs.
+    descriptor vs. role fallback). A ``uuid`` set on the ``SceneNPC``
+    that is missing from ``game_state.npcs`` is a broken invariant the
+    NPC Ticker is supposed to prevent — surfaced as a warning so
     operators can trace the divergence while the player-facing
     fallback keeps rendering.
     """
