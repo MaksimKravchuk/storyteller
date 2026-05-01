@@ -263,6 +263,121 @@ class TestAnthropicClient:
         assert "additionalProperties" not in original_schema
         assert "additionalProperties" not in nested_node
 
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "AnthropicClient.send_message strips minimum/maximum from integer schema nodes "
+        "(Anthropic beta rejects them with invalid_request_error)",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_strips_integer_range(self) -> None:
+        sdk_class, beta_create = _install_beta_sdk_mock()
+        integer_node: dict[str, Any] = {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10,
+            "exclusiveMinimum": -1,
+            "exclusiveMaximum": 11,
+        }
+        original_schema: dict[str, Any] = {
+            "type": "object",
+            "properties": {"score": integer_node},
+        }
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema=original_schema, schema_name="Scored"),
+            )
+        wired_schema = beta_create.call_args.kwargs["output_format"]["schema"]
+        assert wired_schema["properties"]["score"] == {"type": "integer"}
+        # Caller's dict must remain untouched.
+        assert integer_node["minimum"] == 0
+        assert integer_node["maximum"] == 10
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "AnthropicClient.send_message translates 'Schema is too complex' 400 into "
+        "NotImplementedError and quarantines the schema for subsequent calls",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_schema_too_complex_falls_back(self) -> None:
+        request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        response = httpx.Response(400, request=request)
+        too_complex = BadRequestError(
+            "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', "
+            "'message': 'Schema is too complex.'}}",
+            response=response,
+            body=None,
+        )
+        sdk_class, beta_create = _install_beta_sdk_mock(side_effect=too_complex)
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            schema = {"type": "object", "properties": {"x": {"type": "string"}}}
+            with pytest.raises(NotImplementedError, match="too complex"):
+                await client.send_message(
+                    messages=[_user_msg()],
+                    output_format=OutputFormat(schema=schema, schema_name="BigSchema"),
+                )
+            # Second call with the same schema_name skips the strict path
+            # entirely — no second beta roundtrip.
+            beta_create.reset_mock()
+            with pytest.raises(NotImplementedError, match="previously rejected"):
+                await client.send_message(
+                    messages=[_user_msg()],
+                    output_format=OutputFormat(schema=schema, schema_name="BigSchema"),
+                )
+            beta_create.assert_not_called()
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "AnthropicClient.send_message lets non-complexity 400s propagate as BadRequestError "
+        "so genuine API failures are not silently downgraded",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_other_400_propagates(self) -> None:
+        sdk_class, _ = _install_beta_sdk_mock(side_effect=_make_anthropic_400())
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            with pytest.raises(BadRequestError):
+                await client.send_message(
+                    messages=[_user_msg()],
+                    output_format=OutputFormat(
+                        schema={"type": "object", "properties": {}},
+                        schema_name="Widget",
+                    ),
+                )
+
+    @allure.story("Strict structured outputs")
+    @allure.title(
+        "AnthropicClient.send_message strips noise metadata (title/description/default/examples) "
+        "to keep below the beta complexity budget while preserving property names that collide with those keys",
+    )
+    @pytest.mark.asyncio
+    async def test_send_message_json_schema_strips_noise_keys(self) -> None:
+        sdk_class, beta_create = _install_beta_sdk_mock()
+        original_schema: dict[str, Any] = {
+            "title": "Goal",
+            "description": "Top-level description",
+            "type": "object",
+            "properties": {
+                # ``description`` here is a property name, not metadata — must survive.
+                "description": {"type": "string", "title": "Goal description"},
+                "kind": {"type": "string", "default": "kill", "examples": ["kill", "flee"]},
+            },
+        }
+        with patch(_ANTHROPIC_CTOR, sdk_class):
+            client = AnthropicClient(model=_MODEL, api_key="k")
+            await client.send_message(
+                messages=[_user_msg()],
+                output_format=OutputFormat(schema=original_schema, schema_name="Goal"),
+            )
+        wired_schema = beta_create.call_args.kwargs["output_format"]["schema"]
+        assert "title" not in wired_schema
+        assert "description" not in wired_schema  # top-level metadata stripped
+        assert "description" in wired_schema["properties"]  # property name kept
+        assert wired_schema["properties"]["description"] == {"type": "string"}
+        assert wired_schema["properties"]["kind"] == {"type": "string"}
+
     @allure.story("Retry on 5xx")
     @allure.title(
         "AnthropicClient.send_message retries beta endpoint on Anthropic 5xx and returns the eventual success"

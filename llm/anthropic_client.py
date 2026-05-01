@@ -6,6 +6,7 @@ from typing import Any, Awaitable, Callable
 
 from loguru import logger
 
+from llm._anthropic_schema import harden_anthropic_schema
 from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import LLMResponse, Message, Role, Tool, ToolCall
 
@@ -22,6 +23,14 @@ _TYPE_TOOL = "tool"
 _TYPE_AUTO = "auto"
 _TYPE_ANY = "any"
 _TYPE_NONE = "none"
+
+# Substring marker in Anthropic's 400-response body that means "schema
+# exceeds the structured-output beta's grammar-complexity budget". The
+# strict path is unrecoverable for this schema, so the client translates
+# to ``NotImplementedError`` and ``_send_json`` falls back to the
+# prompt-based JSON path.
+_SCHEMA_TOO_COMPLEX_MARKER = "Schema is too complex"
+
 
 _NAMED_CHOICE_MAP: types.MappingProxyType[str, dict[str, Any]] = types.MappingProxyType(
     {
@@ -103,24 +112,6 @@ async def _call_with_retry(
     return await _call_with_retry(create, max_attempts, base_delay, attempt + 1)
 
 
-def _stamp_no_additional_properties(node: Any) -> Any:
-    """Recursively add ``additionalProperties: false`` to every object node.
-
-    Anthropic's structured-output beta rejects ``"type": "object"`` schemas
-    that omit ``additionalProperties``; pydantic's ``model_json_schema()``
-    does not emit it by default. The walk returns a fresh structure so
-    caller-owned schema dicts are not mutated.
-    """
-    if isinstance(node, dict):
-        walked = {key: _stamp_no_additional_properties(child) for key, child in node.items()}
-        if walked.get(_KEY_TYPE) == "object" and "additionalProperties" not in walked:
-            walked["additionalProperties"] = False
-        return walked
-    if isinstance(node, list):
-        return [_stamp_no_additional_properties(child) for child in node]
-    return node
-
-
 def _parse_tool_calls(response: Any) -> list[ToolCall]:
     """Extract ``ToolCall`` objects from an Anthropic ``Message`` response.
 
@@ -157,6 +148,10 @@ class AnthropicClient(BaseLLMClient):
         from anthropic import AsyncAnthropic
 
         self._client = AsyncAnthropic(api_key=self.api_key)
+        # Schemas the beta endpoint already rejected as "too complex".
+        # Subsequent calls with the same ``schema_name`` skip the strict
+        # path entirely so we don't pay the 400-roundtrip every turn.
+        self._schemas_skip_strict: set[str] = set()
 
     async def send_message(
         self,
@@ -174,13 +169,10 @@ class AnthropicClient(BaseLLMClient):
             output_format,
         )
         if output_format is not None and output_format.schema is not None:
-            if not self.supports_structured_output:
-                raise NotImplementedError(
-                    "structured outputs not supported for model={0}".format(self.model),
-                )
-            hardened_schema = _stamp_no_additional_properties(output_format.schema)
+            self._guard_strict_supported(output_format.schema_name)
+            hardened_schema = harden_anthropic_schema(output_format.schema)
             kwargs["output_format"] = {_KEY_TYPE: "json_schema", "schema": hardened_schema}
-            response = await _call_with_retry(lambda: self._client.beta.messages.create(**kwargs))
+            response = await self._send_strict(kwargs, output_format.schema_name)
         else:
             response = await _call_with_retry(lambda: self._client.messages.create(**kwargs))
 
@@ -198,6 +190,48 @@ class AnthropicClient(BaseLLMClient):
             model=response.model,
             tool_calls=_parse_tool_calls(response),
         )
+
+    def _guard_strict_supported(self, schema_name: str | None) -> None:
+        """Raise ``NotImplementedError`` if strict outputs are off for this schema.
+
+        Two cases: the model never supports structured outputs, or this
+        specific schema_name has already been quarantined after a prior
+        ``"Schema is too complex."`` 400. Either way the strict path is
+        unrecoverable and ``_send_json`` should fall back to the prompt path.
+        """
+        if not self.supports_structured_output:
+            raise NotImplementedError(
+                "structured outputs not supported for model={0}".format(self.model),
+            )
+        if schema_name and schema_name in self._schemas_skip_strict:
+            raise NotImplementedError(
+                "schema {0!r} previously rejected as too complex; using prompt fallback".format(schema_name),
+            )
+
+    async def _send_strict(self, kwargs: dict[str, Any], schema_name: str | None) -> Any:
+        """Call the beta endpoint, translating schema-complexity 400s to ``NotImplementedError``.
+
+        Quarantines the offending ``schema_name`` so subsequent calls skip
+        the strict path without paying for another rejected roundtrip.
+        Other 400s (and all other errors) propagate unchanged so the caller
+        sees genuine API failures.
+        """
+        from anthropic import BadRequestError
+
+        try:
+            return await _call_with_retry(lambda: self._client.beta.messages.create(**kwargs))
+        except BadRequestError as exc:
+            if _SCHEMA_TOO_COMPLEX_MARKER not in str(exc):
+                raise
+            if schema_name:
+                self._schemas_skip_strict.add(schema_name)
+            logger.warning(
+                "Anthropic rejected schema {!r} as too complex; falling back to prompt-based JSON",
+                schema_name,
+            )
+            raise NotImplementedError(
+                "schema {0!r} too complex for Anthropic strict mode".format(schema_name),
+            ) from exc
 
     def _build_request_kwargs(
         self,
