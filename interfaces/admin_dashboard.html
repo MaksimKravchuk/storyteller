@@ -81,6 +81,9 @@
   .ai-call-meta { color: #666; font-size: 11px; }
   .ai-call-detail-toggle { cursor: pointer; color: #7c83ff; font-size: 11px; margin-top: 4px; user-select: none; }
   .ai-call-detail-toggle:hover { color: #aab0ff; }
+  .ai-call-copy-bar { display: flex; gap: 6px; margin-bottom: 6px; }
+  .copy-btn { background: #0f3460; color: #7c83ff; border: 1px solid #1a4a7a; border-radius: 4px; padding: 3px 8px; font-size: 10px; cursor: pointer; font-family: inherit; }
+  .copy-btn:hover { background: #16467a; color: #aab0ff; }
   .ai-call-detail { display: none; margin-top: 6px; }
   .ai-call-detail.open { display: block; }
   .ai-call-detail pre { background: #0a0f1e; border-radius: 4px; padding: 8px; font-size: 11px; color: #aaa; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; }
@@ -434,12 +437,31 @@ function renderJsonTree(obj, depth) {
   return `<details open><summary><span class="json-punct">{</span> <span class="json-num">${keys.length}</span> <span class="json-punct">}</span></summary>${items}</details>`;
 }
 
+window.__aiCallCache = window.__aiCallCache || {};
+
+function copyCallPrompt(uid, kind, btn) {
+  const c = window.__aiCallCache[uid];
+  if (!c) return;
+  let text;
+  if (kind === 'system') {
+    text = c.system_prompt || '';
+  } else {
+    text = JSON.stringify({ system: c.system_prompt || '', messages: c.messages || [] }, null, 2);
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1200);
+  });
+}
+
 function renderSingleCall(c, turnNumber) {
   const tokens = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
   const tokenStr = tokens.length ? tokens.join('+') + ' tok' : '';
   const durStr = c.duration_ms != null ? c.duration_ms + 'ms' : '';
   const metaParts = [c.model, tokenStr, durStr].filter(Boolean).join(' | ');
   const uid = 'aic-' + Math.random().toString(36).slice(2, 10);
+  window.__aiCallCache[uid] = { system_prompt: c.system_prompt, messages: c.messages };
   const seqBadge = c.call_sequence != null ? `<span class="call-seq-badge">${turnNumber != null ? turnNumber + '.' + c.call_sequence : '#' + c.call_sequence}</span>` : '';
   return `
     <div class="ai-call-entry">
@@ -450,6 +472,10 @@ function renderSingleCall(c, turnNumber) {
       </div>
       <div class="ai-call-detail-toggle" onclick="toggleDetail('${uid}')">Show prompt &amp; response</div>
       <div class="ai-call-detail" id="${uid}">
+        <div class="ai-call-copy-bar">
+          <button type="button" class="copy-btn" onclick="copyCallPrompt('${uid}', 'system', this)">Copy system</button>
+          <button type="button" class="copy-btn" onclick="copyCallPrompt('${uid}', 'full', this)">Copy full prompt (JSON)</button>
+        </div>
         ${renderSystemPrompt(c.system_prompt)}
         <h4>Messages Sent</h4>
         ${renderMessages(c.messages)}
