@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
+from cast import (
+    narrator_aliases,
+    narrator_dedup,
+    narrator_labels,
+    narrator_wait,
+    player_context,
+    visible_entities,
+)
 from cast.base_performer_class import BasePerformer
-from cast.player_context import format_player_appearance, format_player_inventory
-from cast.narrator_dedup import dedup_dialogue, dedup_npc_turns
-from cast.narrator_labels import NarratorLabels, get_narrator_labels
-from cast.narrator_wait import append_wait_parts, format_wait_context_bullets
 from cast.schemas.turn_outputs import TurnOutputs
-from cast.visible_entities import collect_for_turn
-from models.scene import Scene
 from prompts.narrator_prompts import get_narrator_prompts
+
+if TYPE_CHECKING:
+    from models.scene import Scene
 
 _HISTORY_PREVIEW_CHARS = 200
 _NARRATION_MAX_TOKENS = 450
@@ -22,43 +27,6 @@ _KEY_COMPLETED_EVENTS = "completed_events"
 _KEY_WAIT_CONTEXT_LINES = "wait_context_lines"
 _KEY_HOURS_WAITED = "hours_waited"
 _KEY_TURN_INTENT = "turn_intent"
-
-
-def _format_alias_list(names: list[str]) -> str:
-    """Render an alias list as ``primary (aka: alias1, alias2)``.
-
-    Single-element lists render just the primary so the Narrator does
-    not see a noisy ``(aka: …)`` suffix when there is no real synonym
-    to alternate with.
-    """
-    primary = names[0]
-    aliases = names[1:]
-    if not aliases:
-        return primary
-    return "{0} (aka: {1})".format(primary, ", ".join(aliases))
-
-
-def _format_npc_label(snpc: Any, game_state: Any) -> str:
-    """Format NPC label, gating names on ``player.known_npcs``.
-
-    Routes through :meth:`NPCCard.known_names_for_player` — that's the
-    single source of truth for the alias shape (introduced vs.
-    descriptor vs. role fallback). A ``uuid`` set on the ``SceneNPC``
-    that is missing from ``game_state.npcs`` is a broken invariant the
-    NPC Ticker is supposed to prevent — surfaced as a warning so
-    operators can trace the divergence while the player-facing
-    fallback keeps rendering.
-    """
-    if snpc.uuid:
-        npc = game_state.npcs.get(snpc.uuid)
-        if npc is not None:
-            return _format_alias_list(npc.known_names_for_player(game_state, snpc.role))
-        logger.warning(
-            "Narrator._format_npc_label: scene uuid={0} role={1} missing from game_state.npcs",
-            snpc.uuid,
-            snpc.role,
-        )
-    return snpc.role
 
 
 def _resolve_current_location_id(game_state: Any) -> str | None:
@@ -90,7 +58,11 @@ def _resolve_current_location(game_state: Any) -> Any:
     return location
 
 
-def _append_prior_damage_parts(raw_parts: list[str], game_state: Any, labels: NarratorLabels) -> None:
+def _append_prior_damage_parts(
+    raw_parts: list[str],
+    game_state: Any,
+    labels: narrator_labels.NarratorLabels,
+) -> None:
     """Append a localised ``Prior damage:`` line for every tracked object state.
 
     No-op when the player's current location is unresolvable or has
@@ -120,8 +92,8 @@ def _build_narrator_context_kwargs(game_state: Any, language: str, is_new_scene:
         "time_period": game_state.setting.time_period,
         "time_of_day": game_state.game_time,
         "language": language,
-        "player_appearance": format_player_appearance(player),
-        "player_inventory": format_player_inventory(player),
+        "player_appearance": player_context.format_player_appearance(player),
+        "player_inventory": player_context.format_player_inventory(player),
     }
     mood = game_state.world_state.world_mood
     if mood and is_new_scene:
@@ -146,7 +118,7 @@ class Narrator(BasePerformer):
         )
         self._language = language
         self._narrate_template = prompts.narrate
-        self._labels = get_narrator_labels(language)
+        self._labels = narrator_labels.get_narrator_labels(language)
 
     async def act(self, input_data: TurnOutputs, context: dict) -> str:
         """Transform raw turn outputs into literary narration.
@@ -163,7 +135,7 @@ class Narrator(BasePerformer):
 
         # Best-effort: a bad scene/NPC invariant must not abort the turn.
         try:
-            game_state.last_visible_entities = collect_for_turn(input_data, game_state)
+            game_state.last_visible_entities = visible_entities.collect_for_turn(input_data, game_state)
         except Exception:
             logger.exception(
                 "Narrator.act: collect_for_turn failed; proceeding without visible_entities (turn={0})",
@@ -208,28 +180,40 @@ class Narrator(BasePerformer):
         else:
             self._append_scene_parts(raw_parts, input_data.scene, game_state)
 
-        self._append_turn_lines(raw_parts, input_data)
+        self._append_turn_lines(raw_parts, input_data, game_state)
         return raw_parts
 
-    def _append_turn_lines(self, raw_parts: list[str], input_data: TurnOutputs) -> None:
+    def _append_turn_lines(self, raw_parts: list[str], input_data: TurnOutputs, game_state: Any) -> None:
         """Append dialogue, new NPCs, items, wait, NPC turns and departures.
 
         Dialogue and ``npc_turns`` are deduplicated per-NPC before
         rendering so the Narrator does not serialise two entries for
         the same character into an ``and then… and then…`` cadence.
+
+        Speaker labels are resolved via
+        :func:`narrator_aliases.resolve_dialogue_npc_label` so an
+        unintroduced NPC's proper name never reaches the Narrator
+        prompt — the gate the scene-side ``people visible`` line
+        already enforces.
         """
         labels = self._labels
-        for entry in dedup_dialogue(input_data.dialogue):
-            raw_parts.append(labels.says.format(entry.npc_name, entry.response))
+        for entry in narrator_dedup.dedup_dialogue(input_data.dialogue):
+            speaker = narrator_aliases.resolve_dialogue_npc_label(entry.npc_uuid, entry.npc_name, game_state)
+            raw_parts.append(labels.says.format(speaker, entry.response))
         raw_parts.extend(labels.new_person.format(desc) for desc in input_data.new_npcs)
         raw_parts.extend(labels.item_examined.format(desc) for desc in input_data.item_examination)
         raw_parts.extend(labels.object_interaction.format(desc) for desc in input_data.object_interactions)
 
         if input_data.wait:
-            append_wait_parts(raw_parts, input_data, labels)
+            narrator_wait.append_wait_parts(raw_parts, input_data, labels)
 
-        for npc_turn in dedup_npc_turns(input_data.npc_turns):
-            raw_parts.append(labels.meanwhile.format(npc_turn.npc_name, npc_turn.action))
+        for npc_turn in narrator_dedup.dedup_npc_turns(input_data.npc_turns):
+            actor_label = narrator_aliases.resolve_dialogue_npc_label(
+                npc_turn.npc_uuid,
+                npc_turn.npc_name,
+                game_state,
+            )
+            raw_parts.append(labels.meanwhile.format(actor_label, npc_turn.action))
         raw_parts.extend(labels.someone_departs.format(line) for line in input_data.npc_departures)
 
     def _append_history_parts(self, raw_parts: list[str], scene_history: list[dict]) -> None:
@@ -250,10 +234,12 @@ class Narrator(BasePerformer):
         if scene.ambient_description:
             raw_parts.append(labels.atmosphere.format(scene.ambient_description))
         if scene.npcs_present:
-            npc_descriptions = [_format_npc_label(snpc, game_state) for snpc in scene.npcs_present]
+            npc_descriptions = [
+                narrator_aliases.format_scene_npc_label(snpc, game_state) for snpc in scene.npcs_present
+            ]
             raw_parts.append(labels.people_visible.format(", ".join(npc_descriptions)))
         if scene.points_of_interest:
-            poi_labels = [_format_alias_list(poi.names) for poi in scene.points_of_interest]
+            poi_labels = [narrator_aliases.format_poi_aliases(poi) for poi in scene.points_of_interest]
             raw_parts.append(labels.notable_things.format(", ".join(poi_labels)))
 
     def _build_narration_kwargs(
@@ -272,7 +258,7 @@ class Narrator(BasePerformer):
         if input_data.completed_events:
             kwargs[_KEY_COMPLETED_EVENTS] = "\n".join(f"- {ev}" for ev in input_data.completed_events)
         if input_data.wait_context is not None:
-            bullets = format_wait_context_bullets(input_data.wait_context, self._labels)
+            bullets = narrator_wait.format_wait_context_bullets(input_data.wait_context, self._labels)
             if bullets:
                 kwargs[_KEY_WAIT_CONTEXT_LINES] = "\n".join(bullets)
                 kwargs[_KEY_HOURS_WAITED] = "{0:.1f}".format(input_data.wait_context.hours_waited)

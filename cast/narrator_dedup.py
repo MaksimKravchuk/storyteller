@@ -28,6 +28,7 @@ def _join_distinct(bucket: list[str]) -> str:
 
 def _merged_dialogue(existing: DialogueEntry, incoming: DialogueEntry, bucket: list[str]) -> DialogueEntry:
     return DialogueEntry(
+        npc_uuid=incoming.npc_uuid,
         npc_name=incoming.npc_name,
         response=_join_distinct(bucket),
         contest_roll=existing.contest_roll or incoming.contest_roll,
@@ -36,6 +37,7 @@ def _merged_dialogue(existing: DialogueEntry, incoming: DialogueEntry, bucket: l
 
 def _merged_npc_turn(existing: NPCTurnEntry, incoming: NPCTurnEntry, bucket: list[str]) -> NPCTurnEntry:
     return NPCTurnEntry(
+        npc_uuid=incoming.npc_uuid,
         npc_name=incoming.npc_name,
         action=_join_distinct(bucket),
         action_type=existing.action_type,
@@ -43,26 +45,29 @@ def _merged_npc_turn(existing: NPCTurnEntry, incoming: NPCTurnEntry, bucket: lis
 
 
 def dedup_dialogue(entries: list[DialogueEntry]) -> list[DialogueEntry]:
-    """Collapse same-NPC dialogue entries into one per name.
+    """Collapse same-NPC dialogue entries into one per UUID.
 
     Exact-duplicate responses are dropped; distinct responses for the
-    same NPC are joined with ``" / "``. ``contest_roll`` is preserved
-    first-seen-wins: the earliest non-empty value is kept, so when the
-    primary-dialogue path (which carries the roll) runs before the
-    retaliation path (which doesn't), the roll survives the merge.
+    same NPC are joined with ``" / "``. Keying on ``npc_uuid`` (not
+    ``npc_name``) is the right invariant — the schema's UUID is the
+    canonical identity, so two same-named NPCs in one scene would not
+    collide. ``contest_roll`` is preserved first-seen-wins: the
+    earliest non-empty value is kept, so when the primary-dialogue
+    path (which carries the roll) runs before the retaliation path
+    (which doesn't), the roll survives the merge.
     """
     grouped: dict[str, DialogueEntry] = {}
     seen: dict[str, list[str]] = {}
     for entry in entries:
-        bucket = seen.setdefault(entry.npc_name, [])
+        bucket = seen.setdefault(entry.npc_uuid, [])
         if entry.response in bucket:
             continue
         bucket.append(entry.response)
-        existing = grouped.get(entry.npc_name)
+        existing = grouped.get(entry.npc_uuid)
         if existing is None:
-            grouped[entry.npc_name] = entry
+            grouped[entry.npc_uuid] = entry
             continue
-        grouped[entry.npc_name] = _merged_dialogue(existing, entry, bucket)
+        grouped[entry.npc_uuid] = _merged_dialogue(existing, entry, bucket)
     return list(grouped.values())
 
 
@@ -70,21 +75,22 @@ def dedup_npc_turns(entries: list[NPCTurnEntry]) -> list[NPCTurnEntry]:
     """Collapse same-NPC ``npc_turns`` entries, mirroring dialogue dedup.
 
     Exact-duplicate actions are dropped; distinct actions for the same
-    NPC are joined with ``" / "``. ``action_type`` is preserved from the
-    first-seen entry — the Narrator does not render it, so the choice
-    is cosmetic today, but downstream readers (benchmarks, schedulers)
-    receive the pre-dedup ``TurnOutputs`` anyway.
+    NPC are joined with ``" / "``. Keys on ``npc_uuid`` for the same
+    reason as :func:`dedup_dialogue`. ``action_type`` is preserved from
+    the first-seen entry — the Narrator does not render it, so the
+    choice is cosmetic today, but downstream readers (benchmarks,
+    schedulers) receive the pre-dedup ``TurnOutputs`` anyway.
     """
     grouped: dict[str, NPCTurnEntry] = {}
     seen: dict[str, list[str]] = {}
     for entry in entries:
-        bucket = seen.setdefault(entry.npc_name, [])
+        bucket = seen.setdefault(entry.npc_uuid, [])
         if entry.action in bucket:
             continue
         bucket.append(entry.action)
-        existing = grouped.get(entry.npc_name)
+        existing = grouped.get(entry.npc_uuid)
         if existing is None:
-            grouped[entry.npc_name] = entry
+            grouped[entry.npc_uuid] = entry
             continue
-        grouped[entry.npc_name] = _merged_npc_turn(existing, entry, bucket)
+        grouped[entry.npc_uuid] = _merged_npc_turn(existing, entry, bucket)
     return list(grouped.values())

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from unittest.mock import AsyncMock
 
 import allure
@@ -10,11 +11,7 @@ import pytest
 from cast.narrator import Narrator
 from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
-from models.game_state import GameState
-from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
-from models.setting import Setting
-from models.world_state import WorldState
+from models import game_state as gs_mod, npc_card, scene as scene_mod, setting as setting_mod, world_state
 
 
 def _make_narrator() -> Narrator:
@@ -29,9 +26,9 @@ def _make_narrator() -> Narrator:
     return Narrator(llm_client=llm_client, language="English")
 
 
-def _make_game_state() -> GameState:
-    setting = Setting(name="Rome", time_period="1 AD", region="Italy", summary="")
-    gs = GameState(setting=setting, knowledge_graph=KnowledgeGraph())
+def _make_game_state() -> gs_mod.GameState:
+    setting = setting_mod.Setting(name="Rome", time_period="1 AD", region="Italy", summary="")
+    gs = gs_mod.GameState(setting=setting, knowledge_graph=KnowledgeGraph())
     return gs
 
 
@@ -114,8 +111,18 @@ class TestNarratorInputBranches:
         await narrator.act(
             input_data=TurnOutputs(
                 npc_turns=[
-                    NPCTurnEntry(npc_name="Guard", action="draws his sword", action_type="COMBAT"),
-                    NPCTurnEntry(npc_name="Merchant", action="ducks behind a barrel", action_type="IDLE"),
+                    NPCTurnEntry(
+                        npc_uuid=str(uuid.uuid4()),
+                        npc_name="Guard",
+                        action="draws his sword",
+                        action_type="COMBAT",
+                    ),
+                    NPCTurnEntry(
+                        npc_uuid=str(uuid.uuid4()),
+                        npc_name="Merchant",
+                        action="ducks behind a barrel",
+                        action_type="IDLE",
+                    ),
                 ],
             ),
             context={"player_action": "shout", "game_state": gs},
@@ -151,7 +158,7 @@ class TestNarratorSceneFallback:
     async def test_scene_description_rendered(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        scene = Scene(location_id="anywhere", description="A plain string scene descriptor.")
+        scene = scene_mod.Scene(location_id="anywhere", description="A plain string scene descriptor.")
 
         await narrator.act(
             input_data=TurnOutputs(scene=scene),
@@ -228,8 +235,8 @@ class TestNarratorWorldMood:
     async def test_world_mood_rendered_on_new_scene(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        gs.world_state = WorldState(world_mood="tense and restless")
-        scene = Scene(location_id="forum", description="The Forum.")
+        gs.world_state = world_state.WorldState(world_mood="tense and restless")
+        scene = scene_mod.Scene(location_id="forum", description="The Forum.")
 
         await narrator.act(
             input_data=TurnOutputs(scene=scene),
@@ -247,7 +254,7 @@ class TestNarratorWorldMood:
         """Weaving mood into every small action produces cliché padding."""
         narrator = _make_narrator()
         gs = _make_game_state()
-        gs.world_state = WorldState(world_mood="tense and restless")
+        gs.world_state = world_state.WorldState(world_mood="tense and restless")
 
         await narrator.act(
             input_data=TurnOutputs(),
@@ -268,14 +275,14 @@ class TestFormatNpcLabel:
     async def test_known_npc_uses_name_and_occupation(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        npc = NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
+        npc = npc_card.NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
         gs.npcs[npc.uuid] = npc
         gs.player.known_npcs.add(npc.uuid)
 
-        scene = Scene(
+        scene = scene_mod.Scene(
             location_id="forum",
             description="The Forum.",
-            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
 
         await narrator.act(
@@ -293,14 +300,14 @@ class TestFormatNpcLabel:
     async def test_known_npc_emits_aka_synonyms(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        npc = NPCCard(name="Marcus", occupation="centurion")
+        npc = npc_card.NPCCard(name="Marcus", occupation="centurion")
         gs.npcs[npc.uuid] = npc
         gs.player.known_npcs.add(npc.uuid)
 
-        scene = Scene(
+        scene = scene_mod.Scene(
             location_id="forum",
             description="The Forum.",
-            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
 
         await narrator.act(
@@ -317,13 +324,13 @@ class TestFormatNpcLabel:
     async def test_unknown_npc_has_no_aka_suffix(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        npc = NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
+        npc = npc_card.NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
         gs.npcs[npc.uuid] = npc
 
-        scene = Scene(
+        scene = scene_mod.Scene(
             location_id="forum",
             description="The Forum.",
-            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
 
         await narrator.act(
@@ -341,13 +348,13 @@ class TestFormatNpcLabel:
     async def test_unknown_npc_with_descriptor_hides_name(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        npc = NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
+        npc = npc_card.NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
         gs.npcs[npc.uuid] = npc
 
-        scene = Scene(
+        scene = scene_mod.Scene(
             location_id="forum",
             description="The Forum.",
-            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
 
         await narrator.act(
@@ -361,18 +368,20 @@ class TestFormatNpcLabel:
         assert "centurion" not in body
 
     @allure.story("NPC label formatting")
-    @allure.title("Narrator falls back to SceneNPC.role when the card has no short_descriptor and is not known")
+    @allure.title(
+        "Narrator falls back to scene_mod.SceneNPC.role when the card has no short_descriptor and is not known"
+    )
     @pytest.mark.asyncio
     async def test_unknown_npc_without_descriptor_falls_back_to_role(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        npc = NPCCard(name="Marcus", occupation="centurion")
+        npc = npc_card.NPCCard(name="Marcus", occupation="centurion")
         gs.npcs[npc.uuid] = npc
 
-        scene = Scene(
+        scene = scene_mod.Scene(
             location_id="forum",
             description="The Forum.",
-            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
 
         await narrator.act(
@@ -385,16 +394,18 @@ class TestFormatNpcLabel:
         assert "Marcus" not in body
 
     @allure.story("NPC label formatting")
-    @allure.title("Narrator falls back to SceneNPC.role and warns when a scene uuid is missing from game_state.npcs")
+    @allure.title(
+        "Narrator falls back to scene_mod.SceneNPC.role and warns when a scene uuid is missing from game_state.npcs"
+    )
     @pytest.mark.asyncio
     async def test_orphaned_scene_uuid_falls_back_and_warns(self, loguru_sink):
         narrator = _make_narrator()
         gs = _make_game_state()
 
-        scene = Scene(
+        scene = scene_mod.Scene(
             location_id="forum",
             description="The Forum.",
-            npcs_present=[SceneNPC(role="soldier", uuid="evicted-uuid")],
+            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid="evicted-uuid")],
         )
 
         await narrator.act(
@@ -406,6 +417,99 @@ class TestFormatNpcLabel:
         assert "soldier" in body
         warning_messages = [rec["message"] for rec in loguru_sink if rec["level"].name == "WARNING"]
         assert any("evicted-uuid" in msg for msg in warning_messages)
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("Narrator")
+class TestDialogueAndTurnNameGating:
+    """Dialogue and NPC-turn raw lines must run through the same
+    ``known_npcs`` gate the scene's ``people visible`` list does. Before
+    KER-XX the raw material carried ``npc.name`` verbatim, so the
+    Narrator received ``"Marcus says: Halt!"`` for an NPC the player
+    had never met — contradicting the system prompt's
+    ``do not give a proper name to any NPC whose card the player has
+    not met`` rule and routinely leaking proper names. These tests pin
+    the new gate at both the dialogue and npc-turn entry points.
+    """
+
+    @allure.story("Name gating")
+    @allure.title("Dialogue from an unmet NPC renders as the descriptor, not the proper name")
+    @pytest.mark.asyncio
+    async def test_dialogue_unknown_npc_hides_name(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = npc_card.NPCCard(
+            name="Marcus",
+            occupation="centurion",
+            short_descriptor="a tall man in a red cloak",
+        )
+        gs.npcs[npc.uuid] = npc
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                dialogue=[DialogueEntry(npc_uuid=npc.uuid, npc_name=npc.name, response="Halt!")],
+            ),
+            context={"player_action": "approach", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "a tall man in a red cloak says: Halt!" in body
+        assert "Marcus" not in body
+
+    @allure.story("Name gating")
+    @allure.title("Dialogue from an introduced NPC renders the proper name plus the aka aliases")
+    @pytest.mark.asyncio
+    async def test_dialogue_known_npc_renders_name_with_aka(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = npc_card.NPCCard(
+            name="Marcus",
+            occupation="centurion",
+            short_descriptor="a tall man in a red cloak",
+        )
+        gs.npcs[npc.uuid] = npc
+        gs.player.known_npcs.add(npc.uuid)
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                dialogue=[DialogueEntry(npc_uuid=npc.uuid, npc_name=npc.name, response="Halt!")],
+            ),
+            context={"player_action": "approach", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Marcus (centurion) (aka: Marcus, the centurion) says: Halt!" in body
+
+    @allure.story("Name gating")
+    @allure.title("NPC-turn 'Meanwhile' line for an unmet NPC renders as the descriptor, not the proper name")
+    @pytest.mark.asyncio
+    async def test_npc_turn_unknown_npc_hides_name(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = npc_card.NPCCard(
+            name="Marcus",
+            occupation="centurion",
+            short_descriptor="a tall man in a red cloak",
+        )
+        gs.npcs[npc.uuid] = npc
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                npc_turns=[
+                    NPCTurnEntry(
+                        npc_uuid=npc.uuid,
+                        npc_name=npc.name,
+                        action="watches the player closely",
+                        action_type="IDLE",
+                    ),
+                ],
+            ),
+            context={"player_action": "approach", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Meanwhile, a tall man in a red cloak: watches the player closely" in body
+        assert "Marcus" not in body
 
 
 @allure.epic("Narrative Delivery")

@@ -495,6 +495,7 @@ class PlanExecutor:
         if npc_actions:
             raw_outputs.npc_turns = [
                 turn_outputs.NPCTurnEntry(
+                    npc_uuid=npc_act.npc_uuid,
                     npc_name=npc_act.npc_name,
                     action=npc_act.action_description,
                     action_type=npc_act.action_type,

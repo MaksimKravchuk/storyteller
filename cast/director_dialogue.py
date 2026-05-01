@@ -58,6 +58,7 @@ async def _execute_npc_dialogue(
     )
     known_npcs.apply_revealed_reply(reply, npc.uuid, game_state)
     result_entry: dict[str, str] = {
+        "npc_uuid": npc.uuid,
         "npc_name": npc.name,
         "response": reply.text,
     }
@@ -223,9 +224,9 @@ class DialogueHandler:
 
         ``RetaliationHandler`` produces one entry per NPC whose mood
         flipped into an attack this turn. Each entry carries an
-        ``npc_uuid`` key (silently dropped by ``DialogueEntry``'s
-        extras handling) that pins the resulting memory to the
-        retaliator — without this, a subsequent
+        ``npc_uuid`` key — also surfaced on :class:`DialogueEntry` for
+        the Narrator's known-name gating — that pins the resulting
+        memory to the retaliator. Without this, a subsequent
         ``get_memories_about(retaliator)`` would return nothing about
         the fight.
 
