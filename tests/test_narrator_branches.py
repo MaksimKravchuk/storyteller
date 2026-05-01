@@ -288,6 +288,60 @@ class TestFormatNpcLabel:
         assert "a tall man in a red cloak" not in body
 
     @allure.story("NPC label formatting")
+    @allure.title("Narrator renders introduced NPC aliases as 'Name (Occupation) (aka: Name, the occupation)'")
+    @pytest.mark.asyncio
+    async def test_known_npc_emits_aka_synonyms(self):
+        """The Narrator needs the alias list — same shape as POI ``aka`` —
+        so it can alternate between the proper noun, bare name, and
+        occupational descriptor instead of repeating one label."""
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = NPCCard(name="Marcus", occupation="centurion")
+        gs.npcs[npc.uuid] = npc
+        gs.player.known_npcs.add(npc.uuid)
+
+        scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+        )
+
+        await narrator.act(
+            input_data=TurnOutputs(scene=scene),
+            context={"player_action": "enter", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Marcus (centurion) (aka: Marcus, the centurion)" in body
+
+    @allure.story("NPC label formatting")
+    @allure.title("Narrator omits the '(aka: …)' suffix for unknown NPCs that only have a single descriptor")
+    @pytest.mark.asyncio
+    async def test_unknown_npc_has_no_aka_suffix(self):
+        """``known_names_for_player`` returns a single-element list for
+        unknown NPCs — the Narrator should not see a noisy ``(aka: …)``
+        suffix when there is no real synonym to alternate with."""
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = NPCCard(name="Marcus", occupation="centurion", short_descriptor="a tall man in a red cloak")
+        gs.npcs[npc.uuid] = npc
+
+        scene = Scene(
+            location_id="forum",
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="soldier", uuid=npc.uuid)],
+        )
+
+        await narrator.act(
+            input_data=TurnOutputs(scene=scene),
+            context={"player_action": "enter", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "a tall man in a red cloak" in body
+        assert "(aka:" not in body
+
+    @allure.story("NPC label formatting")
     @allure.title("Narrator hides the name of NPCs not yet in known_npcs and uses short_descriptor instead")
     @pytest.mark.asyncio
     async def test_unknown_npc_with_descriptor_hides_name(self):
