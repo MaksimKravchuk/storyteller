@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import uuid
 from unittest.mock import AsyncMock
 
 import allure
@@ -107,19 +106,28 @@ class TestNarratorInputBranches:
     async def test_npc_turns_rendered(self):
         narrator = _make_narrator()
         gs = _make_game_state()
+        # Both NPCs are registered AND introduced — the assertion below
+        # checks the canonical proper-name rendering, not the
+        # known_npcs gate (which has its own coverage in
+        # ``TestDialogueAndTurnNameGating``).
+        guard = npc_card.NPCCard(name="Guard", occupation="watchman")
+        merchant = npc_card.NPCCard(name="Merchant", occupation="trader")
+        gs.npcs[guard.uuid] = guard
+        gs.npcs[merchant.uuid] = merchant
+        gs.player.known_npcs.update({guard.uuid, merchant.uuid})
 
         await narrator.act(
             input_data=TurnOutputs(
                 npc_turns=[
                     NPCTurnEntry(
-                        npc_uuid=str(uuid.uuid4()),
-                        npc_name="Guard",
+                        npc_uuid=guard.uuid,
+                        npc_name=guard.name,
                         action="draws his sword",
                         action_type="COMBAT",
                     ),
                     NPCTurnEntry(
-                        npc_uuid=str(uuid.uuid4()),
-                        npc_name="Merchant",
+                        npc_uuid=merchant.uuid,
+                        npc_name=merchant.name,
                         action="ducks behind a barrel",
                         action_type="IDLE",
                     ),
@@ -129,8 +137,10 @@ class TestNarratorInputBranches:
         )
 
         body = _last_user_body(narrator)
-        assert "Meanwhile, Guard: draws his sword" in body
-        assert "Meanwhile, Merchant: ducks behind a barrel" in body
+        assert "Meanwhile, Guard (watchman)" in body
+        assert "draws his sword" in body
+        assert "Meanwhile, Merchant (trader)" in body
+        assert "ducks behind a barrel" in body
 
     @allure.story("Completed events")
     @allure.title("Narrator forwards completed_events into the prompt as a bulleted list")
@@ -368,9 +378,7 @@ class TestFormatNpcLabel:
         assert "centurion" not in body
 
     @allure.story("NPC label formatting")
-    @allure.title(
-        "Narrator falls back to scene_mod.SceneNPC.role when the card has no short_descriptor and is not known"
-    )
+    @allure.title("Narrator falls back to SceneNPC.role when the card has no short_descriptor and is not known")
     @pytest.mark.asyncio
     async def test_unknown_npc_without_descriptor_falls_back_to_role(self):
         narrator = _make_narrator()
@@ -394,9 +402,7 @@ class TestFormatNpcLabel:
         assert "Marcus" not in body
 
     @allure.story("NPC label formatting")
-    @allure.title(
-        "Narrator falls back to scene_mod.SceneNPC.role and warns when a scene uuid is missing from game_state.npcs"
-    )
+    @allure.title("Narrator falls back to SceneNPC.role and warns when a scene uuid is missing from game_state.npcs")
     @pytest.mark.asyncio
     async def test_orphaned_scene_uuid_falls_back_and_warns(self, loguru_sink):
         narrator = _make_narrator()
@@ -423,13 +429,13 @@ class TestFormatNpcLabel:
 @allure.feature("Narrator")
 class TestDialogueAndTurnNameGating:
     """Dialogue and NPC-turn raw lines must run through the same
-    ``known_npcs`` gate the scene's ``people visible`` list does. Before
-    KER-XX the raw material carried ``npc.name`` verbatim, so the
+    ``known_npcs`` gate the scene's ``people visible`` list does. The
+    raw material previously carried ``npc.name`` verbatim, so the
     Narrator received ``"Marcus says: Halt!"`` for an NPC the player
-    had never met — contradicting the system prompt's
-    ``do not give a proper name to any NPC whose card the player has
-    not met`` rule and routinely leaking proper names. These tests pin
-    the new gate at both the dialogue and npc-turn entry points.
+    had never met — contradicting the system prompt's "do not give a
+    proper name to any NPC whose card the player has not met" rule.
+    These tests pin the gate at both the dialogue and npc-turn entry
+    points.
     """
 
     @allure.story("Name gating")
@@ -479,6 +485,62 @@ class TestDialogueAndTurnNameGating:
 
         body = _last_user_body(narrator)
         assert "Marcus (centurion) (aka: Marcus, the centurion) says: Halt!" in body
+
+    @allure.story("Name gating")
+    @allure.title("NPC-turn 'Meanwhile' line for an introduced NPC renders the proper name plus aka aliases")
+    @pytest.mark.asyncio
+    async def test_npc_turn_known_npc_renders_name_with_aka(self):
+        narrator = _make_narrator()
+        gs = _make_game_state()
+        npc = npc_card.NPCCard(
+            name="Marcus",
+            occupation="centurion",
+            short_descriptor="a tall man in a red cloak",
+        )
+        gs.npcs[npc.uuid] = npc
+        gs.player.known_npcs.add(npc.uuid)
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                npc_turns=[
+                    NPCTurnEntry(
+                        npc_uuid=npc.uuid,
+                        npc_name=npc.name,
+                        action="watches the player closely",
+                        action_type="IDLE",
+                    ),
+                ],
+            ),
+            context={"player_action": "approach", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Meanwhile, Marcus (centurion) (aka: Marcus, the centurion): watches the player closely" in body
+
+    @allure.story("Name gating")
+    @allure.title("Dialogue with a stale uuid renders the gate-safe descriptor, not the canonical name, and warns")
+    @pytest.mark.asyncio
+    async def test_dialogue_stale_uuid_does_not_leak_name(self, loguru_sink):
+        # Production producer bug surrogate: the entry carries a uuid
+        # that is not registered in ``game_state.npcs``. Without the
+        # gate, the resolver previously fell back to ``npc_name``,
+        # which IS the canonical proper name — directly leaking the
+        # value the gate exists to suppress.
+        narrator = _make_narrator()
+        gs = _make_game_state()
+
+        await narrator.act(
+            input_data=TurnOutputs(
+                dialogue=[DialogueEntry(npc_uuid="stale-uuid", npc_name="Marcus", response="Halt!")],
+            ),
+            context={"player_action": "approach", "game_state": gs},
+        )
+
+        body = _last_user_body(narrator)
+        assert "Marcus" not in body
+        assert "someone says: Halt!" in body
+        warning_messages = [rec["message"] for rec in loguru_sink if rec["level"].name == "WARNING"]
+        assert any("stale-uuid" in msg for msg in warning_messages)
 
     @allure.story("Name gating")
     @allure.title("NPC-turn 'Meanwhile' line for an unmet NPC renders as the descriptor, not the proper name")

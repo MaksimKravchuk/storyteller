@@ -71,7 +71,13 @@ def format_scene_npc_label(snpc: Any, game_state: Any) -> str:
     return snpc.role
 
 
-def resolve_dialogue_npc_label(npc_uuid: str, fallback_name: str, game_state: Any) -> str:
+def resolve_dialogue_npc_label(
+    npc_uuid: str,
+    fallback_name: str,
+    game_state: Any,
+    *,
+    unknown_descriptor: str,
+) -> str:
     """Render a dialogue/npc-turn speaker label, gated on ``known_npcs``.
 
     Mirrors :func:`format_poi_aliases` for NPCs. The full alias list
@@ -80,13 +86,18 @@ def resolve_dialogue_npc_label(npc_uuid: str, fallback_name: str, game_state: An
     NPCs, the list collapses to the short descriptor so a proper name
     never reaches the prompt.
 
-    A scene-side ``SceneNPC.role`` is not available at this call site
-    (dialogue/npc-turn entries do not carry the scene role), so the
-    NPC's stored name is used as the role fallback. That fallback only
-    surfaces when the card has neither ``short_descriptor`` nor a
-    known introduction — a state ``NPCGenerator`` should not produce —
-    and matches the behaviour the schema's ``npc_name`` field already
-    carries for internal consumers.
+    Two failure modes are deliberately distinct:
+
+    * Empty ``npc_uuid`` — the entry has no GameState backing
+      (deterministic benchmark/unit fixture). Falls back to
+      ``fallback_name`` because the canonical name *is* the only name
+      a fixture has, and there is no ``known_npcs`` set to gate against.
+    * ``npc_uuid`` set but missing from ``game_state.npcs`` — a
+      production producer bug (stale or hallucinated uuid). Returns
+      the gate-safe ``unknown_descriptor`` rather than ``fallback_name``
+      so the resolver itself never leaks the canonical proper name
+      that the gate exists to suppress. A warning surfaces the
+      invariant break for operators.
     """
     if not npc_uuid:
         return fallback_name
@@ -96,5 +107,5 @@ def resolve_dialogue_npc_label(npc_uuid: str, fallback_name: str, game_state: An
             "narrator_aliases.resolve_dialogue_npc_label: uuid={0} missing from game_state.npcs",
             npc_uuid,
         )
-        return fallback_name
+        return unknown_descriptor
     return format_aka_label(npc.known_names_for_player(game_state, fallback_name))

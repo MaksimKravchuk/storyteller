@@ -198,7 +198,12 @@ class Narrator(BasePerformer):
         """
         labels = self._labels
         for entry in narrator_dedup.dedup_dialogue(input_data.dialogue):
-            speaker = narrator_aliases.resolve_dialogue_npc_label(entry.npc_uuid, entry.npc_name, game_state)
+            speaker = narrator_aliases.resolve_dialogue_npc_label(
+                entry.npc_uuid,
+                entry.npc_name,
+                game_state,
+                unknown_descriptor=labels.unknown_someone,
+            )
             raw_parts.append(labels.says.format(speaker, entry.response))
         raw_parts.extend(labels.new_person.format(desc) for desc in input_data.new_npcs)
         raw_parts.extend(labels.item_examined.format(desc) for desc in input_data.item_examination)
@@ -212,6 +217,7 @@ class Narrator(BasePerformer):
                 npc_turn.npc_uuid,
                 npc_turn.npc_name,
                 game_state,
+                unknown_descriptor=labels.unknown_someone,
             )
             raw_parts.append(labels.meanwhile.format(actor_label, npc_turn.action))
         raw_parts.extend(labels.someone_departs.format(line) for line in input_data.npc_departures)

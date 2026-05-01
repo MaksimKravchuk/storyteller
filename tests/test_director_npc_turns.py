@@ -233,3 +233,7 @@ class TestNPCTurnsPassedToNarrator:
         assert raw_outputs.npc_turns
         assert len(raw_outputs.npc_turns) == 1
         assert raw_outputs.npc_turns[0].npc_name == _GUARD
+        # Producer handoff: the uuid the Narrator gates on must
+        # round-trip from the NPC card. A regression that drops it
+        # would leak proper names while only ``npc_name`` keeps passing.
+        assert raw_outputs.npc_turns[0].npc_uuid == _NPC_A

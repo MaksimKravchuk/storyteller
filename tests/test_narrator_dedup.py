@@ -119,6 +119,22 @@ class TestDedupDialogue:
         assert result[1].response == "Who is it?"
 
     @allure.story("Dedup dialogue")
+    @allure.title("Two same-named NPCs with distinct uuids do NOT collapse — keying is by uuid, not name")
+    def test_same_name_distinct_uuid_does_not_collapse(self):
+        # Pins the load-bearing reason for keying on ``npc_uuid``: two
+        # NPCs that happen to share a display name but are different
+        # entities (different uuids) must remain two entries through
+        # dedup. Under the previous name-keyed implementation they
+        # would have silently merged.
+        entries = [
+            DialogueEntry(npc_uuid=_IVAN_UUID, npc_name="Marcus", response="Halt!"),
+            DialogueEntry(npc_uuid=_BORIS_UUID, npc_name="Marcus", response="Stop right there."),
+        ]
+        result = dedup_dialogue(entries)
+        assert len(result) == 2
+        assert {entry.npc_uuid for entry in result} == {_IVAN_UUID, _BORIS_UUID}
+
+    @allure.story("Dedup dialogue")
     @allure.title("Dedup is per-NPC: one NPC's duplicates do not affect another NPC's distinct lines")
     def test_mixed_duplicates_and_distinct_across_npcs(self):
         entries = [
