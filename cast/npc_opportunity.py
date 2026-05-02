@@ -1,18 +1,14 @@
 """Opportunity-window detection for NPC autonomous turns.
 
 When an NPC shares a scene with someone they have a standing hostile
-goal toward — encoded either as a hostility-flavoured relationship label
+goal toward — encoded either as a hostile :class:`~models.relationship.Relationship`
 or as a violence-flavoured knowledge fact mentioning that NPC by name —
 the autonomous-turn prompt lifts the baseline "most turns are routine"
 nudge and appends an OPPORTUNITY clause so the LLM can choose in
 character whether to act on the moment.
 
-Routine NPCs (empty / peaceful relationships, neutral knowledge) fall
+Routine NPCs (peaceful relationships, neutral knowledge) fall
 through every gate here and see the unchanged baseline prompt.
-
-Keywords match on **word boundaries**, not raw substrings — otherwise
-``"kill"`` would fire on ``"skillful"`` and ``"harm"`` on
-``"pharmacist"``, misrouting peaceful NPCs with perfectly benign labels.
 """
 
 from __future__ import annotations
@@ -23,23 +19,9 @@ from uuid import UUID
 from knowledge.query import KnowledgeQueryEngine
 from models.game_state import GameState
 from models.npc_card import NPCCard
+from models.relationship import Relationship, RelationshipKind
 from models.scene import Scene
 
-RELATIONSHIP_HOSTILITY_KEYWORDS: frozenset[str] = frozenset(
-    (
-        "kill",
-        "murder",
-        "murderous",
-        "harm",
-        "wound",
-        "enemy",
-        "rival",
-        "foe",
-        "vendetta",
-        "vengeance",
-        "hostile",
-    ),
-)
 KNOWLEDGE_VIOLENCE_KEYWORDS: frozenset[str] = frozenset(("kill", "murder", "harm", "wound"))
 
 _OPPORTUNITY_TEMPLATE = (
@@ -60,20 +42,16 @@ TACTICAL_HOSTILE_CLAUSE = (
     "Commit to one action. Do not hedge."
 )
 
-
-# Full-token boundary pattern: uses [^a-zA-Z] instead of \b so that
-# "kill" fires on "murderous_enemy" (underscore-separated tokens) while
-# still rejecting "skillful" and "pharmacist" (alphabetic neighbours).
-_FULL_TOKEN_RE = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)"
-
-_RELATIONSHIP_KEYWORD_RE = re.compile(_FULL_TOKEN_RE.format("|".join(RELATIONSHIP_HOSTILITY_KEYWORDS)), re.IGNORECASE)
-_KNOWLEDGE_KEYWORD_RE = re.compile(_FULL_TOKEN_RE.format("|".join(KNOWLEDGE_VIOLENCE_KEYWORDS)), re.IGNORECASE)
+_KNOWLEDGE_KEYWORD_RE = re.compile(
+    r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)".format("|".join(KNOWLEDGE_VIOLENCE_KEYWORDS)),
+    re.IGNORECASE,
+)
 
 
 def get_opportunity_clause(npc: NPCCard, game_state: GameState) -> str | None:
     """Return a directive OPPORTUNITY clause naming the hostile target, or None.
 
-    When a hostile co-located target is found — via relationship label or
+    When a hostile co-located target is found — via relationship or
     violent knowledge fact — the returned string names that target and
     instructs the Actor LLM to choose ATTACK, STEALTH, or IDLE with a
     named obstacle. Returns ``None`` when no gate fires (routine turn).
@@ -100,37 +78,34 @@ def _co_located_npc_uuids(scene: Scene, self_npc: NPCCard) -> list[UUID]:
     return uuids
 
 
+def _resolve_hostile_target(
+    rel: Relationship,
+    co_located_set: set[str],
+    game_state: GameState,
+) -> str | None:
+    if rel.target_uuid not in co_located_set:
+        return None
+    if rel.kind != RelationshipKind.ENEMY or rel.intensity > -2:
+        return None
+    try:
+        npc_uuid = UUID(rel.target_uuid)
+    except ValueError:
+        return None
+    target_npc = game_state.npcs.get(npc_uuid)
+    return target_npc.name if target_npc else None
+
+
 def _name_from_relationship(
     npc: NPCCard,
     co_located_uuids: list[UUID],
     game_state: GameState,
 ) -> str | None:
     co_located_set = {str(uid) for uid in co_located_uuids}
-    for target_uuid, label in npc.relationships.items():
-        name = _resolve_hostile_rel(target_uuid, label, co_located_set, game_state)
+    for rel in npc.relationships:
+        name = _resolve_hostile_target(rel, co_located_set, game_state)
         if name is not None:
             return name
     return None
-
-
-def _resolve_hostile_rel(
-    target_uuid: str,
-    label: str | None,
-    co_located_set: set[str],
-    game_state: GameState,
-) -> str | None:
-    if target_uuid not in co_located_set:
-        return None
-    if not _RELATIONSHIP_KEYWORD_RE.search(label or ""):
-        return None
-    try:
-        npc_uuid = UUID(target_uuid)
-    except ValueError:
-        return None
-    target_npc = game_state.npcs.get(npc_uuid)
-    if target_npc is None:
-        return None
-    return target_npc.name
 
 
 def _name_from_knowledge(
@@ -153,7 +128,7 @@ def _names_in_text(names: list[str], text: str) -> str | None:
     for candidate in names:
         if not candidate:
             continue
-        pattern = _FULL_TOKEN_RE.format(re.escape(candidate))
+        pattern = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)".format(re.escape(candidate))
         if re.search(pattern, text, re.IGNORECASE):
             return candidate
     return None

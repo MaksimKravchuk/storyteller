@@ -9,6 +9,8 @@ from __future__ import annotations
 from uuid import UUID
 
 from benchmarks._uuid_helpers import make_uuid
+from models.relationship import Relationship, RelationshipKind
+
 
 BRUTUS_UUID: UUID = make_uuid("npc-brutus-legionary")
 BRUTUS_NAME = "Brutus"
@@ -17,3 +19,10 @@ BRUTUS_OCCUPATION = "former legionary"
 MARCUS_UUID: UUID = make_uuid("npc-marcus-merchant")
 MARCUS_NAME = "Marcus"
 MARCUS_OCCUPATION = "cloth merchant"
+
+BRUTUS_RELATIONSHIP = Relationship(
+    target_uuid=str(MARCUS_UUID),
+    kind=RelationshipKind.ENEMY,
+    intensity=-3,
+    note="murderous_enemy",
+)

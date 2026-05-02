@@ -22,6 +22,7 @@ from db.converters import (
 from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models import game_state, location, npc_card, scene, setting
 from models.goal import Goal, GoalKind, GoalScope, GoalStatus
+from models.relationship import Relationship, RelationshipKind
 from tests._uuid_helpers import make_uuid
 from timeline import event as timeline_event
 
@@ -115,7 +116,7 @@ class TestNPCConverter:
             attributes={"strength": 8},
             inventory=["sword", "shield"],
             location_id=make_uuid("loc-1"),
-            relationships={"npc-2": "friend"},
+            relationships=[Relationship(target_uuid="npc-2", kind=RelationshipKind.FRIEND)],
         )
         npc.conversation_history = [{"role": "user", "content": "hi"}]
         npc.current_mood = "suspicious"
@@ -141,7 +142,9 @@ class TestNPCConverter:
         assert restored.attributes == {"strength": 8}
         assert restored.inventory == ["sword", "shield"]
         assert restored.location_id == make_uuid("loc-1")
-        assert restored.relationships == {"npc-2": "friend"}
+        assert len(restored.relationships) == 1
+        assert restored.relationships[0].target_uuid == "npc-2"
+        assert restored.relationships[0].kind == RelationshipKind.FRIEND
         assert restored.conversation_history == [{"role": "user", "content": "hi"}]
         assert restored.current_mood == "suspicious"
         assert restored.physical_status == "wounded"
@@ -190,6 +193,19 @@ class TestNPCConverter:
         restored = npc_conv.row_to_npc(row)
         assert restored.life_goal is None
         assert restored.tactical_goal is None
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_npc upcasts a legacy dict[str, str] relationships payload to list[Relationship]")
+    def test_legacy_dict_relationships_upcast(self):
+        npc = npc_card.NPCCard(name="Legacy")
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        row["relationships"] = {"npc-enemy": "murderous_enemy", "npc-friend": "trusted friend"}
+
+        restored = npc_conv.row_to_npc(row)
+        assert len(restored.relationships) == 2
+        by_target = {r.target_uuid: r for r in restored.relationships}
+        assert by_target["npc-enemy"].kind == RelationshipKind.ENEMY
+        assert by_target["npc-friend"].kind == RelationshipKind.NEUTRAL
 
     @allure.story("Backwards compatibility")
     @allure.title("row_to_npc defaults goal columns to None on legacy rows lacking those columns")

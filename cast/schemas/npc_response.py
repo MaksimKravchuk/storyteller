@@ -5,6 +5,23 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from models.goal import GoalKind
+from models.relationship import RelationshipKind
+
+
+class RelationshipDraft(BaseModel):
+    """A relationship the NPC generator may attach to a new NPC card.
+
+    Mirrors :class:`~models.relationship.Relationship` but omits the
+    auto-generated ``uuid``, ``established_turn``, and
+    ``source_thread_uuid`` fields that the generator caller stamps in.
+    ``target_name`` is resolved against ``game_state.npcs`` by the
+    applier; unresolvable names are dropped with a logged warning.
+    """
+
+    target_name: str
+    kind: RelationshipKind
+    intensity: int = Field(default=0, ge=-3, le=3)
+    note: str = ""
 
 
 class NPCGoalDraft(BaseModel):
@@ -77,3 +94,4 @@ class NPCResponse(BaseModel):
     attributes: NPCAttributes = Field(default_factory=NPCAttributes)
     inventory: list[str] = Field(default_factory=list)
     goal: NPCGoalDraft | None = None
+    relationships: list[RelationshipDraft] = Field(default_factory=list)

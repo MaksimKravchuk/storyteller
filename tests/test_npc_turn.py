@@ -17,6 +17,7 @@ from models import (
     game_state as gs_mod,
     location as location_mod,
     npc_card as npc_card_mod,
+    relationship as relationship_mod,
     scene as scene_mod,
     setting as setting_mod,
 )
@@ -39,6 +40,9 @@ _FORUM = make_uuid("forum")
 _GHOST = make_uuid("ghost")
 _GUARD = "Guard"
 _MERCHANT = "Merchant"
+
+_Rel = relationship_mod.Relationship
+_RK = relationship_mod.RelationshipKind
 
 
 def _make_gs() -> GameState:
@@ -448,7 +452,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
+        brutus.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.ENEMY, intensity=-3)]
         _place_both(gs, brutus, marcus)
 
         prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
@@ -462,7 +466,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         cook = _make_npc(_NPC_UUID_A, "Cook")
         carpenter = _make_npc(_NPC_UUID_B, "Carpenter")
-        cook.relationships[str(_NPC_UUID_B)] = "acquaintance"
+        cook.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.NEUTRAL, intensity=0)]
         _place_both(gs, cook, carpenter)
 
         prompt = npc_turn_mod._build_turn_prompt(cook, "Player waits.", gs)
@@ -504,11 +508,11 @@ class TestBuildTurnPromptOpportunityWindow:
 
     @allure.story("Opportunity window")
     @allure.title("Label containing 'kill' as a substring of 'skillful' does not fire on its own")
-    def test_skillful_prefix_alone_does_not_fire(self):
+    def test_neutral_relationship_does_not_fire(self):
         gs = _make_gs()
         apprentice = _make_npc(_NPC_UUID_A, "Apprentice")
         apothecary = _make_npc(_NPC_UUID_B, "Apothecary")
-        apprentice.relationships[str(_NPC_UUID_B)] = "skillful apprentice"
+        apprentice.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.NEUTRAL, intensity=0)]
         _place_both(gs, apprentice, apothecary)
         _plot_knowledge(gs, apprentice.uuid, "The pharmacist Apothecary mixes salves all day.")
 
@@ -523,7 +527,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
+        brutus.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.ENEMY, intensity=-3)]
         _place_both(gs, brutus, marcus)
 
         prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
@@ -531,14 +535,14 @@ class TestBuildTurnPromptOpportunityWindow:
         assert "Marcus" in prompt
 
     @allure.story("Opportunity window")
-    @allure.title("Genuine keyword fires even when the label also contains substring-only matches")
-    def test_genuine_keyword_fires_alongside_false_positive_prefix(self):
+    @allure.title("ENEMY relationship with intensity -2 fires the opportunity clause")
+    def test_enemy_relationship_fires_clause(self):
         gs = _make_gs()
         apprentice = _make_npc(_NPC_UUID_A, "Apprentice")
         apothecary = _make_npc(_NPC_UUID_B, "Apothecary")
-        # "skillful" contains "kill" but is word-boundary-rejected; "rival"
-        # is a genuine keyword and must still fire alongside it.
-        apprentice.relationships[str(_NPC_UUID_B)] = "skillful rival apprentice"
+        apprentice.relationships = [
+            _Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.ENEMY, intensity=-2),
+        ]
         _place_both(gs, apprentice, apothecary)
 
         prompt = npc_turn_mod._build_turn_prompt(apprentice, "Player waits.", gs)
@@ -563,7 +567,7 @@ class TestBuildTurnPromptOpportunityWindowIntegration:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
+        brutus.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.ENEMY, intensity=-3)]
         _place_both(gs, brutus, marcus)
 
         brutus_actor = _make_actor(_idle_response("Brutus"))
@@ -695,7 +699,7 @@ class TestBuildTurnPromptTacticalClause:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
+        brutus.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.ENEMY, intensity=-3)]
         _place_both(gs, brutus, marcus)
 
         prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
@@ -710,7 +714,7 @@ class TestBuildTurnPromptTacticalClause:
         gs = _make_gs()
         cook = _make_npc(_NPC_UUID_A, "Cook")
         carpenter = _make_npc(_NPC_UUID_B, "Carpenter")
-        cook.relationships[str(_NPC_UUID_B)] = "acquaintance"
+        cook.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.NEUTRAL, intensity=0)]
         _place_both(gs, cook, carpenter)
 
         prompt = npc_turn_mod._build_turn_prompt(cook, "Player waits.", gs)

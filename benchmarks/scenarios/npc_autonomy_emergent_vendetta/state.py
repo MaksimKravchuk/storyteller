@@ -17,15 +17,14 @@ emergent path lands the same outcome as the hand-authored path.
 
 from __future__ import annotations
 
-from uuid import UUID
-
-from benchmarks._uuid_helpers import make_uuid
+from benchmarks._uuid_helpers import UUID, make_uuid
 from benchmarks.harness.types._scenarios import ScenarioState
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
+from models.relationship import Relationship, RelationshipKind
 from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 from models.world_state import WorldThread
@@ -77,7 +76,9 @@ def _make_npcs() -> tuple[NPCCard, NPCCard]:
         attributes={"combat_skill": 7},
     )
     brutus.uuid = BRUTUS_UUID
-    brutus.relationships[str(MARCUS_UUID)] = "murderous_enemy"
+    brutus.relationships = [
+        Relationship(target_uuid=str(MARCUS_UUID), kind=RelationshipKind.ENEMY, intensity=-3, note="murderous_enemy"),
+    ]
     # Deliberately NO life_goal here — emergence is what we're measuring.
 
     marcus = NPCCard(

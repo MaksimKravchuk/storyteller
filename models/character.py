@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from uuid import UUID
 
+from pydantic import Field
+
 from models.base_model import StorytellerBase
+from models.relationship import Relationship
 
 
 class Character(StorytellerBase):
@@ -14,7 +17,7 @@ class Character(StorytellerBase):
 
     name: str
     biography: str = ""
-    relationships: dict[str, str] = {}
+    relationships: list[Relationship] = Field(default_factory=list)
     attributes: dict[str, int] = {}
     inventory: list[str] = []
     # Extended fields (populated by NPC generator)

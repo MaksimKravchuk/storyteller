@@ -13,6 +13,7 @@ from benchmarks.scenarios.npc_autonomy_murder_plot._ids import (
     UUID,
     BRUTUS_NAME,
     BRUTUS_OCCUPATION,
+    BRUTUS_RELATIONSHIP,
     BRUTUS_UUID,
     MARCUS_NAME,
     MARCUS_OCCUPATION,
@@ -63,7 +64,7 @@ def _make_npcs() -> tuple[NPCCard, NPCCard]:
         attributes={"combat_skill": 7},
     )
     brutus.uuid = BRUTUS_UUID
-    brutus.relationships[str(MARCUS_UUID)] = "murderous_enemy"
+    brutus.relationships = [BRUTUS_RELATIONSHIP]
     brutus.life_goal = Goal(
         kind=GoalKind.KILL,
         description="Avenge brother by killing Marcus today, before he leaves the taberna.",
