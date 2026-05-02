@@ -30,7 +30,7 @@ class TestWebSessionLifecycle:
         player_id = _player_id()
         row = await repo.sessions.create_web(player_id)
 
-        assert row["web_player_id"] == player_id
+        assert str(row["web_player_id"]) == player_id
         assert row["telegram_chat_id"] is None
         assert row["state"] == "idle"
         assert row["language"] == "English"
@@ -51,7 +51,7 @@ class TestWebSessionLifecycle:
         second = await repo.sessions.create_web(player_id)
 
         assert first["id"] != second["id"]
-        assert first["web_player_id"] == second["web_player_id"] == player_id
+        assert str(first["web_player_id"]) == str(second["web_player_id"]) == player_id
 
     @allure.story("Web session bootstrap")
     @allure.title("get_latest_web_session returns the most recently created row for the player")

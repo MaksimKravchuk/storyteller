@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from timeline.effect_applier import EffectApplier
 from timeline.event import EventStatus, GameEvent
@@ -71,12 +72,12 @@ class EventManager:
     # Public API
     # ------------------------------------------------------------------
 
-    def schedule(self, event: GameEvent) -> str:
+    def schedule(self, event: GameEvent) -> UUID:
         """Add an event to the timeline. Returns the event UUID."""
         self._events.append(event)
         return event.uuid
 
-    def cancel(self, event_id: str) -> bool:
+    def cancel(self, event_id: UUID) -> bool:
         """Cancel a pending event. Returns True if found and cancelled."""
         for ev in self._events:
             if ev.uuid == event_id and ev.status == EventStatus.PENDING:

@@ -13,6 +13,7 @@ from interfaces.admin_route_helpers import _json_response, _json_serial
 from knowledge.node import KnowledgeNode, KnowledgeScope
 from knowledge.query_filters import passes_location
 from prompts.base_template import PromptSection, PromptTemplate
+from tests._uuid_helpers import make_uuid
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -69,9 +70,9 @@ class TestPassesLocation:
         node = KnowledgeNode(
             text="A local gossip",
             scope=KnowledgeScope.LOCAL,
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
         )
-        assert passes_location(node, "market") is False
+        assert passes_location(node, make_uuid("market")) is False
 
     @allure.story("Query filtering")
     @allure.title("passes_location accepts a LOCAL node whose location_id matches the query")
@@ -79,9 +80,9 @@ class TestPassesLocation:
         node = KnowledgeNode(
             text="A local gossip",
             scope=KnowledgeScope.LOCAL,
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
         )
-        assert passes_location(node, "tavern") is True
+        assert passes_location(node, make_uuid("tavern")) is True
 
 
 @allure.epic("Engine & LLM Infrastructure")

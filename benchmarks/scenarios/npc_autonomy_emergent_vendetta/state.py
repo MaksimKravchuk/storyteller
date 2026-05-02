@@ -17,6 +17,9 @@ emergent path lands the same outcome as the hand-authored path.
 
 from __future__ import annotations
 
+from uuid import UUID
+
+from benchmarks._uuid_helpers import make_uuid
 from benchmarks.harness.types._scenarios import ScenarioState
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -27,11 +30,11 @@ from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 from models.world_state import WorldThread
 
-BRUTUS_UUID = "npc-brutus-legionary"
+BRUTUS_UUID = make_uuid("npc-brutus-legionary")
 BRUTUS_NAME = "Brutus"
 BRUTUS_OCCUPATION = "former legionary"
 
-MARCUS_UUID = "npc-marcus-merchant"
+MARCUS_UUID = make_uuid("npc-marcus-merchant")
 MARCUS_NAME = "Marcus"
 MARCUS_OCCUPATION = "cloth merchant"
 
@@ -74,7 +77,7 @@ def _make_npcs() -> tuple[NPCCard, NPCCard]:
         attributes={"combat_skill": 7},
     )
     brutus.uuid = BRUTUS_UUID
-    brutus.relationships[MARCUS_UUID] = "murderous_enemy"
+    brutus.relationships[str(MARCUS_UUID)] = "murderous_enemy"
     # Deliberately NO life_goal here — emergence is what we're measuring.
 
     marcus = NPCCard(
@@ -110,7 +113,7 @@ def _make_location() -> Location:
     )
 
 
-def _make_scene(location_id: str) -> Scene:
+def _make_scene(location_id: UUID) -> Scene:
     return Scene(
         location_id=location_id,
         description=(
@@ -132,7 +135,7 @@ def _make_scene(location_id: str) -> Scene:
     )
 
 
-def _seed_plot_context(graph: KnowledgeGraph, game_state: GameState, location_id: str) -> None:
+def _seed_plot_context(graph: KnowledgeGraph, game_state: GameState, location_id: UUID) -> None:
     """Wire the public-rumour thread + Brutus's private brooding fact.
 
     The thread is the hook the Chronicler should pick up to emit a

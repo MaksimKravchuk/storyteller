@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import allure
 import pytest
@@ -18,6 +19,7 @@ from knowledge.node import (
 )
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import LLMResponse
+from tests._uuid_helpers import make_uuid
 
 pytestmark = [
     allure.epic("Memory & Persistence"),
@@ -26,7 +28,11 @@ pytestmark = [
 
 _SUMMARY_TEXT = "The merchant now trusts the traveller and shared a rumour."
 _EVENT_DESCRIPTION = "A ceremonial explosion rocked the agora."
-_LOCATION_ID = "loc-agora"
+_LOCATION_ID = make_uuid("loc-agora")
+_W1 = make_uuid("w1")
+_W2 = make_uuid("w2")
+_UNKNOWN_NPC = make_uuid("unknown-npc-uuid")
+_MARCUS = make_uuid("npc-marcus")
 
 
 def _make_manager() -> tuple[MemoryManager, KnowledgeGraph, AsyncMock]:
@@ -38,7 +44,7 @@ def _make_manager() -> tuple[MemoryManager, KnowledgeGraph, AsyncMock]:
     return MemoryManager(graph=graph, llm_client=llm), graph, llm
 
 
-def _seed_npc_node(graph: KnowledgeGraph) -> str:
+def _seed_npc_node(graph: KnowledgeGraph) -> UUID:
     npc_node = KnowledgeNode(
         text="Marcus the legionary",
         scope=KnowledgeScope.LOCAL,
@@ -78,10 +84,10 @@ async def test_summarize_batch_links_to_existing_npc() -> None:
 async def test_summarize_batch_no_edge_when_npc_missing() -> None:
     """With an unknown npc_id, the node is added but no edge is created."""
     manager, graph, _ = _make_manager()
-    await manager.summarize_interactions_batch([("unknown-npc-uuid", "whatever")])
+    await manager.summarize_interactions_batch([(_UNKNOWN_NPC, "whatever")])
     nodes = graph.all_nodes()
     assert len(nodes) == 1
-    assert graph.get_edges_from("unknown-npc-uuid") == []
+    assert graph.get_edges_from(_UNKNOWN_NPC) == []
 
 
 @allure.story("summarize_interactions_batch")
@@ -90,7 +96,7 @@ async def test_summarize_batch_no_edge_when_npc_missing() -> None:
 async def test_summarize_batch_creates_witnessed_edge_and_is_queryable() -> None:
     """Register an NPC via register_actor_node, summarise an interaction, then query it back."""
     manager, graph, _ = _make_manager()
-    npc_id = "npc-marcus"
+    npc_id = _MARCUS
     graph.register_actor_node(npc_id, label="Marcus (legionary)")
 
     await manager.summarize_interactions_batch([(npc_id, "Player: greetings\nMarcus: hail")], game_time=3.0)
@@ -113,7 +119,7 @@ async def test_summarize_batch_creates_witnessed_edge_and_is_queryable() -> None
 async def test_create_memory_local_scope_personal_per_witness() -> None:
     """LOCAL scope: one PERSONAL_EXPERIENCE node per witness, each WITNESSED-linked."""
     manager, graph, _ = _make_manager()
-    witness_ids = ["w1", "w2"]
+    witness_ids = [_W1, _W2]
 
     created = await manager.create_memory_from_event(
         event_description=_EVENT_DESCRIPTION,
@@ -142,7 +148,7 @@ async def test_create_memory_local_scope_personal_per_witness() -> None:
 async def test_create_memory_city_scope_produces_rumor_plus_personal() -> None:
     """CITY scope: first node is a CITY RUMOR, followed by per-witness personal copies."""
     manager, graph, _ = _make_manager()
-    witness_ids = ["w1", "w2"]
+    witness_ids = [_W1, _W2]
 
     created = await manager.create_memory_from_event(
         event_description=_EVENT_DESCRIPTION,
@@ -177,7 +183,7 @@ async def test_create_memory_world_scope_uses_fact_source() -> None:
     manager, graph, _ = _make_manager()
     created = await manager.create_memory_from_event(
         event_description=_EVENT_DESCRIPTION,
-        witness_ids=["w1"],
+        witness_ids=[_W1],
         scope=KnowledgeScope.WORLD,
         location_id=_LOCATION_ID,
     )
@@ -196,7 +202,7 @@ async def test_create_memory_propagates_location_id() -> None:
     manager, graph, _ = _make_manager()
     created = await manager.create_memory_from_event(
         event_description=_EVENT_DESCRIPTION,
-        witness_ids=["w1", "w2"],
+        witness_ids=[_W1, _W2],
         scope=KnowledgeScope.REGION,
         location_id=_LOCATION_ID,
     )

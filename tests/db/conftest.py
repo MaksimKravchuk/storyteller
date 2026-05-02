@@ -10,6 +10,7 @@ dev machines without Docker.
 from __future__ import annotations
 
 import importlib
+import os
 import subprocess
 import sys
 import uuid as _uuid
@@ -78,7 +79,13 @@ async def _rollback_conn(engine):
 
 
 def _run_alembic_upgrade(database_url: str) -> None:
-    """Run ``alembic upgrade head`` programmatically against the given URL."""
+    """Run ``alembic upgrade head`` programmatically against the given URL.
+
+    ``alembic/env.py`` honours ``DATABASE_URL`` and would otherwise hijack the
+    URL we just passed in (e.g. when a developer's parent-directory ``.env``
+    points at their dev Postgres). We temporarily drop it for the upgrade so
+    migrations always land on the testcontainer.
+    """
     alembic_command = importlib.import_module("alembic.command")
     alembic_config = importlib.import_module("alembic.config")
 
@@ -86,7 +93,10 @@ def _run_alembic_upgrade(database_url: str) -> None:
     cfg = alembic_config.Config(str(project_root / "alembic.ini"))
     cfg.set_main_option("script_location", str(project_root / "alembic"))
     cfg.set_main_option("sqlalchemy.url", database_url)
+    saved_db_url = os.environ.pop("DATABASE_URL", None)
     alembic_command.upgrade(cfg, "head")
+    if saved_db_url is not None:
+        os.environ["DATABASE_URL"] = saved_db_url
 
 
 @pytest.fixture(scope="session")
@@ -326,9 +336,9 @@ def _apply_scalars(game_state) -> None:
     game_state.game_time = "afternoon"
     game_state.conversation_log = [{"speaker": "player", "text": "hello"}]
     game_state.scene_conversation_log = [{"speaker": "merchant", "text": "welcome"}]
-    game_state.player.known_npcs = {"npc-known-1", "npc-known-2"}
+    game_state.player.known_npcs = {_uuid.uuid4(), _uuid.uuid4()}
     game_state.player.player_event_log = ["Entered the marketplace", "Met the merchant"]
-    game_state.player.learned_facts = {"fact-bronze", "fact-king"}
+    game_state.player.learned_facts = {_uuid.uuid4(), _uuid.uuid4()}
 
 
 def _attach_world(game_state) -> None:

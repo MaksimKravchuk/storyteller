@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from db.converters._columns import COL_GAME_STATE_ID, COL_ID, COL_LOCATION_ID, COL_SCOPE, COL_TAGS
+from db.converters._uuid_text import uuid_to_text
 from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 
 _COL_CANON = "canon"
@@ -19,7 +20,7 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
         _COL_CANON: node.canon.value,
         "required_education": node.required_education,
         COL_TAGS: node.tags,
-        COL_LOCATION_ID: node.location_id,
+        COL_LOCATION_ID: uuid_to_text(node.location_id),
         "timestamp": node.timestamp,
     }
 

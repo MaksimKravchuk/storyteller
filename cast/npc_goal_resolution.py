@@ -77,8 +77,6 @@ def maybe_complete_kill_goal(actor: NPCCard, target: NPCCard, game_state: GameSt
         return
     for goal in matched:
         goal.status = GoalStatus.COMPLETED
-    if not (actor.uuid and target.uuid):
-        return
     for thread in game_state.world_state.threads:
         joined = actor.uuid in thread.involved_npcs and target.uuid in thread.involved_npcs
         if thread.status == _THREAD_OPEN and joined:

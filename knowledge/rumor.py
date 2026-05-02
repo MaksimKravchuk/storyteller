@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from knowledge.hearsay import HearsayDraft, write_hearsay_node
 from knowledge.rumor_scope import non_witness_city_npcs, witnesses_at
@@ -42,16 +43,16 @@ class _Rumor:
     """
 
     text: str
-    told_by: str
+    told_by: UUID
     game_time: float
-    recipients: list[tuple[str, str]]
+    recipients: list[tuple[UUID, UUID]]
 
 
 def propagate_rumors(
     graph: KnowledgeGraph,
     game_state: GameState,
     events: list[GameEvent],
-) -> list[str]:
+) -> list[UUID]:
     """Transmit CITY+ events to non-witness NPCs in the same city.
 
     For each eligible event, a HEARSAY ``KnowledgeNode`` is added for
@@ -63,7 +64,7 @@ def propagate_rumors(
     Returns the list of created HEARSAY node UUIDs so the caller can
     log or assert over them.
     """
-    created_ids: list[str] = []
+    created_ids: list[UUID] = []
     for event in events:
         rumor = _rumor_from_event(game_state, event)
         if rumor is not None:
@@ -71,7 +72,7 @@ def propagate_rumors(
     return created_ids
 
 
-def _write_rumor_hearsay(graph: KnowledgeGraph, rumor: _Rumor) -> list[str]:
+def _write_rumor_hearsay(graph: KnowledgeGraph, rumor: _Rumor) -> list[UUID]:
     """Write one HEARSAY node per recipient for a single ``_Rumor`` payload."""
     return [
         write_hearsay_node(

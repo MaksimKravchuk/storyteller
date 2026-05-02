@@ -18,12 +18,17 @@ from tests.director_helpers import (
     make_mock_actor,
     make_mock_agent,
     make_setting,
+    make_uuid,
     setup_npc,
 )
 
 _HOSTILE = "hostile"
-_NPC_A = "npc-1"
-_NPC_B = "npc-2"
+_NPC_A = make_uuid("npc-1")
+_NPC_B = make_uuid("npc-2")
+_DOCKS = make_uuid("docks")
+_MARKET = make_uuid("market")
+_GEN_1 = make_uuid("gen-1")
+_GEN_2 = make_uuid("gen-2")
 _GUARD = "Guard"
 _NIGHT_GUARD = "night guard"
 _DOCK_GUARD = "dock guard"
@@ -55,7 +60,7 @@ class TestDuplicateNPCNames:
         setup_npc(gs, _NPC_A, name=_GUARD, occupation=_NIGHT_GUARD, mood="")
         setup_npc(gs, _NPC_B, name=_GUARD, occupation=_DOCK_GUARD, mood="")
         gs.current_scene = Scene(
-            location_id="docks",
+            location_id=_DOCKS,
             description="The docks.",
             npcs_present=[
                 SceneNPC(role=_NIGHT_GUARD, uuid=_NPC_A),
@@ -87,7 +92,7 @@ class TestDuplicateNPCNames:
         setup_npc(gs, _NPC_A, name=_GUARD, occupation=_NIGHT_GUARD, attributes={"combat_skill": 5})
         setup_npc(gs, _NPC_B, name=_GUARD, occupation=_DOCK_GUARD, attributes={"combat_skill": 5})
         gs.current_scene = Scene(
-            location_id="docks",
+            location_id=_DOCKS,
             description="The docks.",
             npcs_present=[
                 SceneNPC(role=_NIGHT_GUARD, uuid=_NPC_A),
@@ -141,9 +146,9 @@ class TestNPCGeneratorDeduplication:
         from knowledge.graph import KnowledgeGraph
 
         gs = GameState(setting=make_setting(), knowledge_graph=KnowledgeGraph())
-        gs.current_scene = Scene(location_id="market", description="The market.", npcs_present=[])
+        gs.current_scene = Scene(location_id=_MARKET, description="The market.", npcs_present=[])
         generated = NPCCard(name="Blacksmith", occupation="blacksmith")
-        generated.uuid = "gen-1"
+        generated.uuid = _GEN_1
 
         npc_gen = AsyncMock()
         npc_gen.execute = AsyncMock(return_value=[generated])
@@ -225,13 +230,13 @@ class TestNPCGeneratorDeduplication:
         from knowledge.graph import KnowledgeGraph
 
         gs = GameState(setting=make_setting(), knowledge_graph=KnowledgeGraph())
-        gs.current_scene = Scene(location_id="market", description="The market.", npcs_present=[])
+        gs.current_scene = Scene(location_id=_MARKET, description="The market.", npcs_present=[])
         generated = NPCCard(
             name="Cassia",
             occupation="cloth merchant",
             short_descriptor="a woman behind a bolt-laden stall",
         )
-        generated.uuid = "gen-2"
+        generated.uuid = _GEN_2
         director = make_director(
             game_state=gs,
             route_response={

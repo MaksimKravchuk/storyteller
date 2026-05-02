@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from models.game_state import INITIAL_GAME_CLOCK, PlayerState
 
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 _SUMMARY_MAX_TOKENS = 200
 
 
-def record_player_learned_fact(player: PlayerState, created_ids: list[str]) -> None:
+def record_player_learned_fact(player: PlayerState, created_ids: list[UUID]) -> None:
     """Attach the first created memory UUID to ``player.learned_facts``.
 
     All per-witness nodes produced by LOCAL-scope
@@ -51,7 +52,7 @@ class MemoryManager:
 
     async def summarize_interactions_batch(
         self,
-        pairs: list[tuple[str, str]],
+        pairs: list[tuple[UUID, str]],
         game_time: float = INITIAL_GAME_CLOCK,
     ) -> None:
         """Summarise many interactions concurrently into memory nodes.
@@ -77,11 +78,11 @@ class MemoryManager:
     async def create_memory_from_event(
         self,
         event_description: str,
-        witness_ids: list[str],
+        witness_ids: list[UUID],
         scope: KnowledgeScope,
-        location_id: str | None = None,
+        location_id: UUID | None = None,
         game_time: float = INITIAL_GAME_CLOCK,
-    ) -> list[str]:
+    ) -> list[UUID]:
         """Create memory nodes for all witnesses of an event.
 
         Scope determines how the memory propagates:
@@ -94,7 +95,7 @@ class MemoryManager:
         player was subject or witness may pass the list to
         :func:`record_player_learned_fact`.
         """
-        created_ids: list[str] = []
+        created_ids: list[UUID] = []
 
         if scope == KnowledgeScope.LOCAL:
             for witness_id in witness_ids:
@@ -143,7 +144,7 @@ class MemoryManager:
     async def _summarize_one(
         self,
         interaction_log: str,
-        npc_id: str,
+        npc_id: UUID,
         game_time: float,
     ) -> None:
         """Summarise a single interaction into a memory node linked to an NPC."""

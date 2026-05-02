@@ -7,6 +7,8 @@ state mutations themselves and are intentionally left untouched.
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import allure
 
 from knowledge.graph import KnowledgeGraph
@@ -16,9 +18,16 @@ from models.game_state import GameState
 from models.location import Location
 from models.npc_card import NPCCard
 from models.setting import Setting
-from timeline.effect_applier import EffectApplier
-from timeline.event import EventEffect, GameEvent
-from timeline.event_manager import EventManager
+from tests._uuid_helpers import make_uuid
+from timeline import effect_applier as _ea, event as _ev, event_manager as _em
+
+EffectApplier = _ea.EffectApplier
+EventEffect = _ev.EventEffect
+GameEvent = _ev.GameEvent
+EventManager = _em.EventManager
+
+_LOC_1 = make_uuid("loc-1")
+_LOC_2 = make_uuid("loc-2")
 
 
 def _make_game_state() -> GameState:
@@ -32,7 +41,7 @@ def _populate_co_located_pair(
     gs: GameState,
     target: NPCCard,
     witness: NPCCard,
-    location_id: str,
+    location_id: UUID,
 ) -> None:
     """Place ``target`` and ``witness`` in the same location and register the witness."""
     gs.npcs[target.uuid] = target
@@ -49,10 +58,10 @@ class TestDeathMemoryPropagation:
     @allure.story("Change status → death")
     @allure.title("CHANGE_STATUS=dead via EventManager creates a witness memory referencing the death")
     def test_scheduled_death_creates_witness_memory(self):
-        target = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
-        witness = NPCCard(name="Livia", occupation="baker", location_id="loc-1")
+        target = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
+        witness = NPCCard(name="Livia", occupation="baker", location_id=_LOC_1)
         gs = _make_game_state()
-        _populate_co_located_pair(gs, target, witness, "loc-1")
+        _populate_co_located_pair(gs, target, witness, _LOC_1)
 
         mgr = EventManager(gs, gs.knowledge_graph)
         mgr.schedule(
@@ -79,10 +88,10 @@ class TestDeathMemoryPropagation:
     @allure.story("Change status → death")
     @allure.title("CHANGE_STATUS=dead also emits a CITY-scope rumor so distant NPCs can learn of it")
     def test_death_emits_city_scope_rumor(self):
-        target = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
-        witness = NPCCard(name="Livia", occupation="baker", location_id="loc-1")
+        target = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
+        witness = NPCCard(name="Livia", occupation="baker", location_id=_LOC_1)
         gs = _make_game_state()
-        _populate_co_located_pair(gs, target, witness, "loc-1")
+        _populate_co_located_pair(gs, target, witness, _LOC_1)
 
         EffectApplier(gs, gs.knowledge_graph).apply(
             EventEffect(
@@ -110,12 +119,12 @@ class TestItemMemoryPropagation:
         target = NPCCard(
             name="Marcus",
             occupation="guard",
-            location_id="loc-1",
+            location_id=_LOC_1,
             inventory=["sword"],
         )
-        witness = NPCCard(name="Livia", occupation="baker", location_id="loc-1")
+        witness = NPCCard(name="Livia", occupation="baker", location_id=_LOC_1)
         gs = _make_game_state()
-        _populate_co_located_pair(gs, target, witness, "loc-1")
+        _populate_co_located_pair(gs, target, witness, _LOC_1)
 
         mgr = EventManager(gs, gs.knowledge_graph)
         mgr.schedule(
@@ -145,17 +154,17 @@ class TestMoveNpcMemory:
     @allure.story("Move NPC")
     @allure.title("MOVE_NPC records a departure memory for the NPCs left behind at the origin")
     def test_departure_recorded_for_origin_witnesses(self):
-        target = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
-        witness = NPCCard(name="Livia", occupation="baker", location_id="loc-1")
+        target = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
+        witness = NPCCard(name="Livia", occupation="baker", location_id=_LOC_1)
         gs = _make_game_state()
-        _populate_co_located_pair(gs, target, witness, "loc-1")
-        gs.locations["loc-2"] = Location(name="Market")
+        _populate_co_located_pair(gs, target, witness, _LOC_1)
+        gs.locations[_LOC_2] = Location(name="Market")
 
         EffectApplier(gs, gs.knowledge_graph).apply(
             EventEffect(
                 effect_type="MOVE_NPC",
                 target_id=target.uuid,
-                effect_data={"npc_id": target.uuid, "to_location_id": "loc-2"},
+                effect_data={"npc_id": target.uuid, "to_location_id": str(_LOC_2)},
             ),
         )
 
@@ -170,11 +179,11 @@ class TestMemorySilencing:
     @allure.story("No spurious writes")
     @allure.title("Effects without co-located witnesses emit no LOCAL-scope graph memories")
     def test_no_memory_when_target_is_alone(self):
-        target = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        target = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
         gs = _make_game_state()
         gs.npcs[target.uuid] = target
-        gs.locations["loc-1"] = Location(name="Forum")
-        gs.locations["loc-1"].add_npc(target.uuid)
+        gs.locations[_LOC_1] = Location(name="Forum")
+        gs.locations[_LOC_1].add_npc(target.uuid)
 
         EffectApplier(gs, gs.knowledge_graph).apply(
             EventEffect(
@@ -190,7 +199,7 @@ class TestMemorySilencing:
     @allure.title("ADD_KNOWLEDGE does not double-write a memory (handler already writes the graph node)")
     def test_add_knowledge_is_not_double_written(self):
         gs = _make_game_state()
-        gs.locations["loc-1"] = Location(name="Forum")
+        gs.locations[_LOC_1] = Location(name="Forum")
 
         EffectApplier(gs, gs.knowledge_graph).apply(
             EventEffect(

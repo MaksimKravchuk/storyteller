@@ -34,6 +34,7 @@ and should be handled in a follow-up PR.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from knowledge.hearsay import HearsayDraft, write_hearsay_node
 from knowledge.node import (
@@ -60,9 +61,9 @@ _MAX_MEMORIES_PER_DEPARTURE = 20
 def preserve_departing_npc_memories(
     graph: KnowledgeGraph,
     game_state: GameState,
-    npc_id: str,
-    scene_location_id: str,
-) -> list[str]:
+    npc_id: UUID,
+    scene_location_id: UUID,
+) -> list[UUID]:
     """Fan a departing NPC's session memories out as hearsay for same-city non-witnesses.
 
     Returns the list of newly-created ``HEARSAY`` node UUIDs so
@@ -87,12 +88,12 @@ def preserve_departing_npc_memories(
 def _fan_out_hearsay(
     graph: KnowledgeGraph,
     memories: list[KnowledgeNode],
-    told_by: str,
+    told_by: UUID,
     game_time: float,
-    recipients: list[tuple[str, str]],
-) -> list[str]:
+    recipients: list[tuple[UUID, UUID]],
+) -> list[UUID]:
     """Write a hearsay node per (memory, recipient) pair and tag each memory."""
-    created_ids: list[str] = []
+    created_ids: list[UUID] = []
     for memory in memories:
         created_ids.extend(_hearsay_for_one_memory(graph, memory, told_by, game_time, recipients))
         _mark_propagated(memory)
@@ -102,10 +103,10 @@ def _fan_out_hearsay(
 def _hearsay_for_one_memory(
     graph: KnowledgeGraph,
     memory: KnowledgeNode,
-    told_by: str,
+    told_by: UUID,
     game_time: float,
-    recipients: list[tuple[str, str]],
-) -> list[str]:
+    recipients: list[tuple[UUID, UUID]],
+) -> list[UUID]:
     """Write one HEARSAY node per recipient for a single memory."""
     return [
         write_hearsay_node(
@@ -122,7 +123,7 @@ def _hearsay_for_one_memory(
     ]
 
 
-def _eligible_memories(graph: KnowledgeGraph, npc_id: str) -> list[KnowledgeNode]:
+def _eligible_memories(graph: KnowledgeGraph, npc_id: UUID) -> list[KnowledgeNode]:
     """Return the departing NPC's propagate-able session memories, newest first.
 
     Walks ``WITNESSED`` edges outbound from ``npc_id`` and keeps

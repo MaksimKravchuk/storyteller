@@ -15,6 +15,7 @@ from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
 from models.world_state import WorldThread
+from tests._uuid_helpers import make_uuid
 
 _ZERO_GAME_TIME = float(0)
 
@@ -49,10 +50,10 @@ def make_actor_target_state() -> tuple[GameState, NPCCard, NPCCard, Location]:
     """Build a minimal GameState with two co-located NPCs (``Brutus`` + ``Marcus``)."""
     location = Location(name="Taberna", description="", location_type="building")
     actor = NPCCard(name="Brutus", occupation="legionary")
-    actor.uuid = "npc-brutus"
+    actor.uuid = make_uuid("npc-brutus")
     actor.location_id = location.uuid
     target = NPCCard(name="Marcus", occupation="merchant")
-    target.uuid = "npc-marcus"
+    target.uuid = make_uuid("npc-marcus")
     target.location_id = location.uuid
     state = GameState(
         setting=Setting(name="Test", time_period="now", region="lab", summary=""),

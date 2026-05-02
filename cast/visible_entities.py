@@ -49,34 +49,41 @@ def collect_for_turn(raw_outputs: Any, game_state: Any) -> list[VisibleEntity]:
     return collect_visible_entities(active_scene, game_state, location)
 
 
-def _make_poi_entity(poi: Any) -> VisibleEntity:
-    return VisibleEntity(kind="poi", id=poi.uuid, names=list(poi.names))
+def _make_npc_entity(snpc: Any, game_state: Any, all_npcs: dict) -> VisibleEntity | None:
+    """Return a ``VisibleEntity`` for ``snpc``, or ``None`` to skip it.
+
+    Uninitialised stubs (no uuid) and stale uuids that no longer match a
+    registered ``NPCCard`` both yield ``None``; the latter logs a warning
+    that mirrors :func:`cast.narrator_aliases.format_scene_npc_label` so
+    operators see the divergence from both render paths.
+    """
+    if snpc.uuid is None:
+        return None
+    card = all_npcs.get(snpc.uuid)
+    if card is None:
+        logger.warning(
+            "visible_entities._npc_entities: scene uuid={0} role={1} missing from game_state.npcs",
+            snpc.uuid,
+            snpc.role,
+        )
+        return None
+    names = card.known_names_for_player(game_state, snpc.role)
+    return VisibleEntity(kind="npc", id=str(snpc.uuid), names=names)
 
 
 def _npc_entities(scene: Any, game_state: Any) -> list[VisibleEntity]:
-    npc_entities: list[VisibleEntity] = []
     all_npcs = getattr(game_state, "npcs", {}) or {}
-    for snpc in scene.npcs_present:
-        if not snpc.uuid:
-            continue
-        card = all_npcs.get(snpc.uuid)
-        if card is None:
-            # Invariant break: uuid assigned but no NPCCard registered. Mirrors
-            # the warning in cast.narrator._format_npc_label so operators see
-            # the same divergence from both render paths.
-            logger.warning(
-                "visible_entities._npc_entities: scene uuid={0} role={1} missing from game_state.npcs",
-                snpc.uuid,
-                snpc.role,
-            )
-            continue
-        names = card.known_names_for_player(game_state, snpc.role)
-        npc_entities.append(VisibleEntity(kind="npc", id=snpc.uuid, names=names))
-    return npc_entities
+    candidates = (_make_npc_entity(snpc, game_state, all_npcs) for snpc in scene.npcs_present)
+    return [entity for entity in candidates if entity is not None]
 
 
 def _poi_entities(scene: Any) -> list[VisibleEntity]:
-    return [_make_poi_entity(poi) for poi in scene.points_of_interest]
+    entities: list[VisibleEntity] = []
+    for poi in scene.points_of_interest:
+        poi_id = str(poi.uuid)
+        poi_names = list(poi.names)
+        entities.append(VisibleEntity(kind="poi", id=poi_id, names=poi_names))
+    return entities
 
 
 def _item_entities(location: Any, already_collected: list[VisibleEntity]) -> list[VisibleEntity]:

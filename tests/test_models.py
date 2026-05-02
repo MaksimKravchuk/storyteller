@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import uuid as uuid_mod
 from types import SimpleNamespace
 
 import allure
 import pytest
+from pydantic import ValidationError
 
 from models.base_model import StorytellerBase
 from models.character import Character
@@ -15,7 +17,6 @@ from models.setting import Setting
 
 _DAGGER = "dagger"
 _NPC_A = "npc-1"
-_UUID_LENGTH = 36
 
 
 def _fake_game_state(known_npcs: set[str] | None = None) -> SimpleNamespace:
@@ -27,17 +28,29 @@ def _fake_game_state(known_npcs: set[str] | None = None) -> SimpleNamespace:
 @allure.feature("Domain models")
 class TestBaseModel:
     @allure.story("BaseModel UUID")
-    @allure.title("StorytellerBase assigns a 36-character string UUID on construction")
+    @allure.title("StorytellerBase assigns a UUID on construction")
     def test_uuid_generated_on_init(self):
         model = StorytellerBase()
-        assert isinstance(model.uuid, str)
-        assert len(model.uuid) == _UUID_LENGTH
+        assert isinstance(model.uuid, uuid_mod.UUID)
 
     @allure.story("BaseModel UUID")
     @allure.title("100 StorytellerBase instances produce 100 unique UUIDs")
     def test_unique_uuids(self):
         uuids = {StorytellerBase().uuid for _ in range(100)}
         assert len(uuids) == 100
+
+    @allure.story("BaseModel UUID")
+    @allure.title("StorytellerBase generates a uuid.UUID with version 4")
+    def test_uuid_is_uuid4_instance(self):
+        model = StorytellerBase()
+        assert isinstance(model.uuid, uuid_mod.UUID)
+        assert model.uuid.version == 4
+
+    @allure.story("BaseModel UUID")
+    @allure.title("Constructing with a non-UUID string raises ValidationError")
+    def test_invalid_uuid_rejected(self):
+        with pytest.raises(ValidationError):
+            StorytellerBase(uuid="guard")
 
 
 @allure.epic("Memory & Persistence")
@@ -268,6 +281,6 @@ class TestSetting:
         assert simple_setting.key_persons[0]["name"] == "Augustus"
 
     @allure.story("Setting fields")
-    @allure.title("A Setting inherits a 36-character UUID from BaseModel")
+    @allure.title("A Setting inherits a UUID from BaseModel")
     def test_has_uuid(self, simple_setting):
-        assert isinstance(simple_setting.uuid, str) and len(simple_setting.uuid) == _UUID_LENGTH
+        assert isinstance(simple_setting.uuid, uuid_mod.UUID)

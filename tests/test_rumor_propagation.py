@@ -2,35 +2,38 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import allure
 
-from knowledge.graph import KnowledgeGraph
-from knowledge.node import (
-    CanonSource,
-    EdgeType,
-    KnowledgeScope,
-    KnowledgeSource,
-)
-from knowledge.query import KnowledgeQueryEngine
-from knowledge.rumor import propagate_rumors
+from knowledge import graph as _graph, node as _node, query as _query, rumor as _rumor
 from models.game_state import GameState
 from models.location import Location
 from models.npc_card import NPCCard
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 from timeline.event import GameEvent
+
+KnowledgeGraph = _graph.KnowledgeGraph
+CanonSource = _node.CanonSource
+EdgeType = _node.EdgeType
+KnowledgeScope = _node.KnowledgeScope
+KnowledgeSource = _node.KnowledgeSource
+KnowledgeQueryEngine = _query.KnowledgeQueryEngine
+propagate_rumors = _rumor.propagate_rumors
 
 pytestmark = [
     allure.epic("Knowledge Graph"),
     allure.feature("Rumor propagation"),
 ]
 
-_CITY_ID = "loc-city-rome"
-_FORUM_ID = "loc-forum"
-_TAVERN_ID = "loc-tavern"
-_MARKET_ID = "loc-market"
+_CITY_ID = make_uuid("loc-city-rome")
+_FORUM_ID = make_uuid("loc-forum")
+_TAVERN_ID = make_uuid("loc-tavern")
+_MARKET_ID = make_uuid("loc-market")
 
-_WITNESS_ID = "npc-witness"
-_ABSENT_ID = "npc-absent"
+_WITNESS_ID = make_uuid("npc-witness")
+_ABSENT_ID = make_uuid("npc-absent")
 _EVENT_TEXT = "A ceremonial explosion rocked the Forum."
 
 
@@ -106,7 +109,7 @@ def _make_event(*, scope: str) -> GameEvent:
     )
 
 
-def _hearsay_nodes_at(graph: KnowledgeGraph, location_id: str) -> list:
+def _hearsay_nodes_at(graph: KnowledgeGraph, location_id: UUID) -> list:
     return [
         node for node in graph.all_nodes() if node.source == KnowledgeSource.HEARSAY and node.location_id == location_id
     ]

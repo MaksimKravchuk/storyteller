@@ -9,6 +9,7 @@ import pytest
 
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from models.scene import Scene, SceneNPC
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import make_director, make_game_state, route_plan as _route
 
 _TALK = "TALK"
@@ -100,9 +101,9 @@ class TestSceneChanges:
         in ``game_state``.
         """
         seeded_scene = Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The bustling Roman Forum.",
-            npcs_present=[SceneNPC(role="guard", uuid="npc-seeded")],
+            npcs_present=[SceneNPC(role="guard", uuid=make_uuid("npc-seeded"))],
         )
         gs = make_game_state()
         gs.current_scene = seeded_scene

@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import asyncio
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 from loguru import logger
 
@@ -54,7 +55,7 @@ def _scene_hint(game_state: GameState) -> str:
     return scene.description[:_SCENE_DESC_PREVIEW]
 
 
-def initialised_scene_witnesses(game_state: GameState) -> list[str]:
+def initialised_scene_witnesses(game_state: GameState) -> list[UUID]:
     """Return UUIDs of every initialised NPC in the current scene.
 
     Uninitialised ``SceneNPC`` stubs are skipped for the same reason as
@@ -70,7 +71,8 @@ def initialised_scene_witnesses(game_state: GameState) -> list[str]:
     if scene is None:
         return []
     registered = game_state.npcs
-    return [snpc.uuid for snpc in scene.npcs_present if snpc.uuid and snpc.uuid in registered]
+    candidates = (snpc.uuid for snpc in scene.npcs_present)
+    return [uid for uid in candidates if uid is not None and uid in registered]
 
 
 async def _run_single_interaction(
@@ -100,13 +102,13 @@ def _persist_delta(
 
     Writes both sinks (``scene_state`` knowledge node and the typed
     ``Location.object_states`` channel) or neither — the shared
-    early-return guard on ``delta_text``, ``scene``, ``scene.location_id``
-    and ``object_key`` keeps the two sources of truth aligned so a
-    bystander reading persistent world changes never sees a delta the
-    Narrator's ``Prior damage:`` line omits.
+    early-return guard on ``delta_text``, ``scene``, and ``object_key``
+    keeps the two sources of truth aligned so a bystander reading
+    persistent world changes never sees a delta the Narrator's
+    ``Prior damage:`` line omits.
     """
     scene = game_state.current_scene
-    if not delta_text or not object_key or scene is None or not scene.location_id:
+    if not delta_text or not object_key or scene is None:
         return
     record_scene_delta(
         game_state.knowledge_graph,

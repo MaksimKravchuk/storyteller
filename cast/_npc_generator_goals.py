@@ -11,6 +11,7 @@ back when it applies a per-batch rate-limited goal to a freshly built
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from loguru import logger
 
@@ -38,7 +39,7 @@ def candidate_goal_targets(game_state: Any) -> list[str]:
     return [npc.name for npc in game_state.npcs.values() if npc.name]
 
 
-def _resolve_target_uuid(target_name: str | None, game_state: Any) -> str | None:
+def _resolve_target_uuid(target_name: str | None, game_state: Any) -> UUID | None:
     """Case-insensitive lookup of an NPC by display name; ``None`` when no match."""
     if not target_name:
         return None

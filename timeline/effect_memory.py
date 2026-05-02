@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from knowledge.node import (
     CanonSource,
@@ -17,6 +18,7 @@ from knowledge.node import (
     KnowledgeScope,
     KnowledgeSource,
 )
+from timeline._uuid_coerce import coerce_uuid
 from timeline.event import EventEffect
 
 if TYPE_CHECKING:
@@ -34,9 +36,9 @@ class EffectPreState:
     composing witness text after the handler finishes.
     """
 
-    npc_id: str = ""
+    npc_id: UUID | None = None
     npc_name: str = ""
-    location_id: str | None = None
+    location_id: UUID | None = None
 
 
 @dataclass(frozen=True)
@@ -44,15 +46,17 @@ class WitnessWrite:
     """Parameters for a single effect-driven graph write."""
 
     text: str
-    witness_ids: list[str]
+    witness_ids: list[UUID]
     scope: KnowledgeScope
-    location_id: str | None
+    location_id: UUID | None
     game_time: float
 
 
 def capture_pre_state(game_state: GameState, effect: EventEffect) -> EffectPreState:
     """Snapshot the target NPC before the handler mutates or removes it."""
-    npc_id = effect.effect_data.get("npc_id") or effect.target_id
+    npc_id = coerce_uuid(effect.effect_data.get("npc_id") or effect.target_id)
+    if npc_id is None:
+        return EffectPreState()
     npc = game_state.npcs.get(npc_id)
     if npc is None:
         return EffectPreState()
@@ -61,11 +65,11 @@ def capture_pre_state(game_state: GameState, effect: EventEffect) -> EffectPreSt
 
 def co_located_witnesses(
     game_state: GameState,
-    location_id: str | None,
-    exclude_id: str,
-) -> list[str]:
+    location_id: UUID | None,
+    exclude_id: UUID | None,
+) -> list[UUID]:
     """Return NPC UUIDs at ``location_id`` excluding ``exclude_id``."""
-    if not location_id:
+    if location_id is None:
         return []
     location = game_state.locations.get(location_id)
     if location is None:
@@ -140,7 +144,7 @@ def emit_memory(
     witnesses. CITY-scope effects still emit the wider rumor even
     without witnesses.
     """
-    if not pre.npc_id:
+    if pre.npc_id is None:
         return
     text = _plan_text(effect, pre.npc_name)
     if text is None:

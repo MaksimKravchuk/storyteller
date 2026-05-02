@@ -12,6 +12,7 @@ from db.converters._columns import (
     COL_POINTS_OF_INTEREST,
     COL_TAGS,
 )
+from db.converters._uuid_text import uuid_to_text
 from models.location import Location
 
 
@@ -21,12 +22,12 @@ def location_to_row(loc: Location, game_state_id: str) -> dict:
         COL_GAME_STATE_ID: game_state_id,
         COL_NAME: loc.name,
         COL_DESCRIPTION: loc.description,
-        "parent_location_id": loc.parent_location_id,
+        "parent_location_id": uuid_to_text(loc.parent_location_id),
         "location_type": loc.location_type,
         COL_TAGS: loc.tags,
-        "connected_locations": loc.connected_locations,
-        COL_NPCS_PRESENT: loc.npcs_present,
-        COL_POINTS_OF_INTEREST: [poi.model_dump() for poi in loc.points_of_interest],
+        "connected_locations": [str(uid) for uid in loc.connected_locations],
+        COL_NPCS_PRESENT: [str(uid) for uid in loc.npcs_present],
+        COL_POINTS_OF_INTEREST: [poi.model_dump(mode="json") for poi in loc.points_of_interest],
         COL_OBJECT_STATES: loc.object_states,
     }
 

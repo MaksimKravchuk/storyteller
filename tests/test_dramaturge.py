@@ -33,6 +33,7 @@ from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, Knowledge
 from models.game_state import GameState
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 
 _PLAYER_ACTION = "player_action"
 _GAME_STATE = "game_state"
@@ -48,9 +49,9 @@ def _make_game_state() -> GameState:
     )
     gs = GameState(setting=setting, knowledge_graph=KnowledgeGraph())
     gs.current_scene = Scene(
-        location_id="forum",
+        location_id=make_uuid("forum"),
         description="The Roman Forum at noon.",
-        npcs_present=[SceneNPC(role="guard", uuid="npc-1")],
+        npcs_present=[SceneNPC(role="guard", uuid=make_uuid("npc-1"))],
     )
     return gs
 

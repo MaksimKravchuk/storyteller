@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from knowledge.node import KnowledgeNode, KnowledgeScope
 
 
@@ -17,7 +19,7 @@ def passes_education(node: KnowledgeNode, max_education_required: int) -> bool:
 
 def passes_location(
     node: KnowledgeNode,
-    location_id: str | None,
+    location_id: UUID | None,
 ) -> bool:
     """Local-scope nodes are only visible when their location matches."""
     if not location_id or not node.location_id:

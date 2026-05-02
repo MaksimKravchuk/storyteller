@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any, NamedTuple
+from uuid import UUID
 
 from cast.dice import (
     ContestOutcome,
@@ -35,24 +36,24 @@ class RetaliationWork(NamedTuple):
 class _RetaliationGates(NamedTuple):
     """Per-turn filters shared across every NPC the retaliation phase examines."""
 
-    mood_snapshot: dict[str, str]
+    mood_snapshot: dict[UUID, str]
     retaliated_names: set[str]
-    force_uuids: set[str]
+    force_uuids: set[UUID]
 
 
 class RetaliationHandler:
     """Checks for and executes NPC retaliations after dialogue."""
 
-    def __init__(self, game_state: GameState, actors: dict[str, Any]) -> None:
+    def __init__(self, game_state: GameState, actors: dict[UUID, Any]) -> None:
         self._gs = game_state
         self._actors = actors
 
     async def check_retaliation(
         self,
-        mood_snapshot: dict[str, str],
-        skip_uuids: set[str] | None = None,
-        force_uuids: set[str] | None = None,
-    ) -> list[dict[str, str]]:
+        mood_snapshot: dict[UUID, str],
+        skip_uuids: set[UUID] | None = None,
+        force_uuids: set[UUID] | None = None,
+    ) -> list[dict[str, Any]]:
         """Check if any NPC whose mood changed wants to attack.
 
         ``skip_uuids`` lists NPCs whose dialogue call already resolved a
@@ -82,7 +83,7 @@ class RetaliationHandler:
             )
         )
 
-    def _seed_retaliated_names(self, skip: set[str]) -> set[str]:
+    def _seed_retaliated_names(self, skip: set[UUID]) -> set[str]:
         """Pre-populate the dedup set with skipped NPCs' display names.
 
         Guarantees that duplicate-name twins (e.g. two "guards") also skip
@@ -97,7 +98,7 @@ class RetaliationHandler:
 
     def _collect_work(
         self,
-        skip: set[str],
+        skip: set[UUID],
         gates: _RetaliationGates,
     ) -> list[RetaliationWork]:
         """Build retaliation work items for every NPC that still qualifies."""
@@ -112,7 +113,7 @@ class RetaliationHandler:
 
 
 def _build_retaliation_work(
-    npc_uuid: str,
+    npc_uuid: UUID,
     actor: Any,
     game_state: GameState,
     gates: _RetaliationGates,
@@ -171,7 +172,7 @@ def _format_retaliation_input(npc_name: str, contest_roll: ContestRoll) -> str:
     )
 
 
-async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> dict[str, str]:
+async def _execute_retaliation(work: RetaliationWork, game_state: GameState) -> dict[str, Any]:
     """Execute a single NPC retaliation and return the result entry.
 
     The returned dict carries an ``npc_uuid`` key alongside the

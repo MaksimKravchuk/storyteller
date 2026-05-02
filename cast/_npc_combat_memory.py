@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import MappingProxyType
+from uuid import UUID
 
 from cast._npc_outcome import OutcomeKind
 from knowledge.memory import MemoryManager
@@ -40,31 +41,29 @@ class CombatEvent:
     target: NPCCard
     new_value: str
     kind: OutcomeKind
-    location_id: str | None = None
+    location_id: UUID | None = None
 
 
 def _co_located_witness_ids(
     actor: NPCCard,
     target: NPCCard,
     game_state: GameState,
-    location_id: str | None,
-) -> list[str]:
+    location_id: UUID | None,
+) -> list[UUID]:
     """Return UUIDs of every NPC who would have witnessed the clash.
 
     Includes both combatants plus every NPC currently at ``location_id``.
     Falls back to the current scene when ``location_id`` is the scene's
     location, so the in-scene case still walks ``scene.npcs_present``.
     """
-    witnesses: set[str] = set()
-    if actor.uuid:
-        witnesses.add(actor.uuid)
-    if target.uuid:
-        witnesses.add(target.uuid)
+    witnesses: set[UUID] = set()
+    witnesses.add(actor.uuid)
+    witnesses.add(target.uuid)
     if location_id is None:
         return list(witnesses)
     location = game_state.locations.get(location_id)
     if location is not None:
-        witnesses.update(uuid for uuid in location.npcs_present if uuid)
+        witnesses.update(location.npcs_present)
     return list(witnesses)
 
 

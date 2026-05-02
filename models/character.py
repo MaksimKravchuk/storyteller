@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from models.base_model import StorytellerBase
 
 
@@ -22,7 +24,7 @@ class Character(StorytellerBase):
     occupation: str = ""
     speech_style: str = ""
     knowledge_scope: str = "local"
-    location_id: str | None = None
+    location_id: UUID | None = None
 
     # --- Attribute helpers ---
 

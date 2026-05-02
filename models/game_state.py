@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 from pydantic import ConfigDict, Field
 
 from knowledge.graph import KnowledgeGraph
@@ -41,13 +43,13 @@ class PlayerState(StorytellerBase):
     """
 
     name: str = "Player"
-    location_id: str | None = None
+    location_id: UUID | None = None
     inventory: list[str] = []
     appearance: str = ""
     physical_status: str = "healthy"
-    known_npcs: set[str] = Field(default_factory=set)
+    known_npcs: set[UUID] = Field(default_factory=set)
     player_event_log: list[str] = []
-    learned_facts: set[str] = Field(default_factory=set)
+    learned_facts: set[UUID] = Field(default_factory=set)
 
 
 class GameState(StorytellerBase):
@@ -66,8 +68,8 @@ class GameState(StorytellerBase):
     knowledge_graph: KnowledgeGraph
     player: PlayerState = Field(default_factory=PlayerState)
     current_scene: Scene | None = None
-    locations: dict[str, Location] = {}
-    npcs: dict[str, NPCCard] = {}
+    locations: dict[UUID, Location] = {}
+    npcs: dict[UUID, NPCCard] = {}
     turn_count: int = 0
     round_number: int = 0
     scene_number: int = 0

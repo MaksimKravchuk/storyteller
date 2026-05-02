@@ -12,6 +12,9 @@ from cast.npc_generator import NPCGenerator
 from cast.schemas.npc_response import NPCAttributes, NPCGoalDraft, NPCResponse
 from models.goal import GoalKind, GoalScope
 from models.npc_card import NPCCard
+from tests._uuid_helpers import make_uuid
+
+_MARCUS = make_uuid("npc-marcus")
 
 _SEND_JSON = "_send_json"
 
@@ -35,7 +38,7 @@ def _payload(name: str, goal: NPCGoalDraft | None = None) -> NPCResponse:
 def _seed_marcus(game_state) -> NPCCard:
     """Add a Marcus NPC to ``game_state`` so KILL goals have a real target."""
     marcus = NPCCard(name="Marcus", occupation="merchant")
-    marcus.uuid = "npc-marcus"
+    marcus.uuid = _MARCUS
     game_state.npcs[marcus.uuid] = marcus
     return marcus
 
@@ -115,7 +118,7 @@ class TestGeneratorGoalIntegration:
         card = cards[0]
         assert card.life_goal is not None
         assert card.life_goal.kind is GoalKind.KILL
-        assert card.life_goal.target_uuid == "npc-marcus"
+        assert card.life_goal.target_uuid == _MARCUS
 
     @pytest.mark.asyncio
     @allure.story("Rate limit")

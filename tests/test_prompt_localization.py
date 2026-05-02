@@ -19,14 +19,33 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from cast import director_routing, narrator as narrator_mod, narrator_labels as narrator_labels_mod
-from cast.schemas.turn_outputs import DialogueEntry, TurnOutputs
+from cast import (
+    director_routing,
+    narrator as narrator_mod,
+    narrator_labels as narrator_labels_mod,
+    schemas as _cast_schemas,
+)
 from knowledge.graph import KnowledgeGraph
-from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod
 from llm.message import ToolCall
-from prompts import actor_prompts, chronicler_prompts, data_miner_prompts, director_prompts, dramaturge_prompts
-from prompts import item_generator_prompts, narrator_prompts, npc_generator_prompts, scene_builder_prompts
-from prompts.locales import DEFAULT_LOCALE, Locale, resolve_locale
+from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod
+from prompts import (
+    actor_prompts,
+    chronicler_prompts,
+    data_miner_prompts,
+    director_prompts,
+    dramaturge_prompts,
+    item_generator_prompts,
+    narrator_prompts,
+    npc_generator_prompts,
+)
+from prompts import locales as _locales, scene_builder_prompts
+from tests._uuid_helpers import make_uuid
+
+DialogueEntry = _cast_schemas.turn_outputs.DialogueEntry
+TurnOutputs = _cast_schemas.turn_outputs.TurnOutputs
+DEFAULT_LOCALE = _locales.DEFAULT_LOCALE
+Locale = _locales.Locale
+resolve_locale = _locales.resolve_locale
 
 ActionRouter = director_routing.ActionRouter
 get_actor_prompts = actor_prompts.get_actor_prompts
@@ -52,9 +71,9 @@ def _make_game_state() -> gs_mod.GameState:
     )
     gs = gs_mod.GameState(setting=setting, knowledge_graph=KnowledgeGraph())
     gs.current_scene = scene_mod.Scene(
-        location_id="neva_delta",
+        location_id=make_uuid("neva_delta"),
         description="Туманная Нева на рассвете.",
-        npcs_present=[scene_mod.SceneNPC(role="часовой", uuid="npc-1")],
+        npcs_present=[scene_mod.SceneNPC(role="часовой", uuid=make_uuid("npc-1"))],
         points_of_interest=[scene_mod.PointOfInterest(names=["деревянный помост"])],
         ambient_description="Сырой воздух и запах смолы.",
     )

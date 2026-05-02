@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 if TYPE_CHECKING:
     from models.game_state import GameState
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 _CITY_LOCATION_TYPE = "city"
 
 
-def witnesses_at(game_state: GameState, location_id: str) -> list[str]:
+def witnesses_at(game_state: GameState, location_id: UUID) -> list[UUID]:
     """Return NPC UUIDs currently present at ``location_id``."""
     location = game_state.locations.get(location_id)
     if location is None:
@@ -28,9 +29,9 @@ def witnesses_at(game_state: GameState, location_id: str) -> list[str]:
 
 def non_witness_city_npcs(
     game_state: GameState,
-    event_location_id: str,
-    witness_ids: list[str],
-) -> list[tuple[str, str]]:
+    event_location_id: UUID,
+    witness_ids: list[UUID],
+) -> list[tuple[UUID, UUID]]:
     """Return ``(npc_id, location_id)`` pairs for same-city non-witnesses.
 
     NPCs at the event's own location are treated as witnesses (whether
@@ -54,11 +55,11 @@ def non_witness_city_npcs(
 class _ListenerContext:
     """Bundles the shared filter inputs for ``accepts()``."""
 
-    city_ids: set[str]
-    witness_set: set[str]
-    event_location_id: str
+    city_ids: set[UUID]
+    witness_set: set[UUID]
+    event_location_id: UUID
 
-    def accepts(self, npc_id: str, npc_location: str) -> bool:
+    def accepts(self, npc_id: UUID, npc_location: UUID) -> bool:
         if npc_id in self.witness_set:
             return False
         if npc_location == self.event_location_id:
@@ -67,17 +68,17 @@ class _ListenerContext:
 
 
 def _same_city_locations(
-    locations: dict[str, Location],
-    event_location_id: str,
-) -> set[str]:
+    locations: dict[UUID, Location],
+    event_location_id: UUID,
+) -> set[UUID]:
     """Return every location_id that shares a city with ``event_location_id``."""
     return _reachable_descendants(locations, _city_root(locations, event_location_id))
 
 
-def _city_root(locations: dict[str, Location], location_id: str) -> str:
+def _city_root(locations: dict[UUID, Location], location_id: UUID) -> UUID:
     """Walk up ``parent_location_id`` to the first city, or the topmost node."""
     current = location_id
-    visited: set[str] = set()
+    visited: set[UUID] = set()
     while current in locations and current not in visited:
         visited.add(current)
         node = locations[current]
@@ -87,7 +88,7 @@ def _city_root(locations: dict[str, Location], location_id: str) -> str:
     return location_id
 
 
-def _reachable_descendants(locations: dict[str, Location], root_id: str) -> set[str]:
+def _reachable_descendants(locations: dict[UUID, Location], root_id: UUID) -> set[UUID]:
     """Return ``{root_id}`` plus every location whose parent chain reaches root."""
     reachable = {root_id}
     changed = True

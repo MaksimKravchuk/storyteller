@@ -10,6 +10,7 @@ world evolves whether or not there is a plot.
 from __future__ import annotations
 
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -33,8 +34,8 @@ class WorldThread(StorytellerBase):
     description: str
     category: ThreadCategory
     introduced_scene: int
-    involved_locations: list[str] = []
-    involved_npcs: list[str] = []
+    involved_locations: list[UUID] = []
+    involved_npcs: list[UUID] = []
     status: ThreadStatus = "open"
     last_advanced_scene: int = 0
 

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+from uuid import UUID
+
 from cast.schemas.chronicler_response import ScheduledEventDraft
 from knowledge.memory import MemoryManager
 from knowledge.node import KnowledgeScope
@@ -31,7 +33,7 @@ class EventProcessor:
         hours = resolve_time_cost(action_type, time_override)
         return self._event_mgr.advance_time(hours), hours
 
-    def schedule_drafts(self, drafts: list[ScheduledEventDraft], now: float) -> list[str]:
+    def schedule_drafts(self, drafts: list[ScheduledEventDraft], now: float) -> list[UUID]:
         """Turn Chronicler-produced drafts into real :class:`GameEvent`s.
 
         Each draft becomes a :class:`GameEvent` scheduled ``draft.hours_from_now``
@@ -41,7 +43,7 @@ class EventProcessor:
         ``scheduled_at`` and ``duration`` explicitly. Returns the list
         of newly scheduled event UUIDs for logging.
         """
-        scheduled_uuids: list[str] = []
+        scheduled_uuids: list[UUID] = []
         for draft in drafts:
             event = GameEvent(
                 name=draft.name,
@@ -72,16 +74,16 @@ class EventProcessor:
             *(self._memory_mgr.create_memory_from_event(**self.build_memory_kwargs(ev)) for ev in events),
         )
 
-    def propagate_rumors_for_turn(self, events: list[GameEvent]) -> list[str]:
+    def propagate_rumors_for_turn(self, events: list[GameEvent]) -> list[UUID]:
         """Fan completed CITY+ events out to non-witness NPCs in the same city."""
         return propagate_rumors(self._gs.knowledge_graph, self._gs, events)
 
     def build_memory_kwargs(self, ev: GameEvent) -> dict:
         """Build keyword arguments for create_memory_from_event."""
         scope = _scope_from_string(ev.scope)
-        witnesses: list[str] = []
+        witnesses: list[UUID] = []
         locations = self._gs.locations
-        if ev.location_id and ev.location_id in locations:
+        if ev.location_id is not None and ev.location_id in locations:
             witnesses = list(locations[ev.location_id].npcs_present)
         return {
             "event_description": ev.on_complete_description or ev.name,

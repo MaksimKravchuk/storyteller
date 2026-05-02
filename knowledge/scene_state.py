@@ -23,6 +23,7 @@ The nodes are:
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from knowledge.node import (
     CanonSource,
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
 SCENE_STATE_TAG = "scene_state"
 
 
-def _is_scene_state_for_location(node: KnowledgeNode, location_id: str) -> bool:
+def _is_scene_state_for_location(node: KnowledgeNode, location_id: UUID) -> bool:
     """Return True when ``node`` is a scene-state delta for ``location_id``."""
     return node.location_id == location_id and SCENE_STATE_TAG in node.tags
 
@@ -46,10 +47,10 @@ def _is_scene_state_for_location(node: KnowledgeNode, location_id: str) -> bool:
 def record_scene_delta(
     graph: KnowledgeGraph,
     *,
-    location_id: str,
+    location_id: UUID,
     delta_text: str,
     game_time: float = INITIAL_GAME_CLOCK,
-) -> str:
+) -> UUID:
     """Write a persistent scene-state delta for ``location_id``.
 
     Returns the UUID of the created node so callers (primarily the
@@ -63,14 +64,14 @@ def record_scene_delta(
         canon=CanonSource.SESSION,
         location_id=location_id,
         timestamp=game_time,
-        tags=[SCENE_STATE_TAG, location_id],
+        tags=[SCENE_STATE_TAG, str(location_id)],
     )
     return graph.add_node(node)
 
 
 def query_scene_deltas(
     graph: KnowledgeGraph,
-    location_id: str,
+    location_id: UUID,
 ) -> list[KnowledgeNode]:
     """Return every scene-state delta recorded for ``location_id``.
 
@@ -81,7 +82,7 @@ def query_scene_deltas(
     return [node for node in graph.all_nodes() if _is_scene_state_for_location(node, location_id)]
 
 
-def all_scene_deltas(graph: KnowledgeGraph) -> dict[str, list[str]]:
+def all_scene_deltas(graph: KnowledgeGraph) -> dict[UUID, list[str]]:
     """Return every ``scene_state`` delta grouped by ``location_id``.
 
     Used by :class:`cast.scene_builder.SceneBuilder` when building the
@@ -90,9 +91,9 @@ def all_scene_deltas(graph: KnowledgeGraph) -> dict[str, list[str]]:
     the LLM call, so it injects every known delta and relies on the
     LLM to apply only those matching the scene it emits.
     """
-    grouped: dict[str, list[str]] = {}
+    grouped: dict[UUID, list[str]] = {}
     for node in graph.all_nodes():
-        if SCENE_STATE_TAG not in node.tags or not node.location_id:
+        if SCENE_STATE_TAG not in node.tags or node.location_id is None:
             continue
         grouped.setdefault(node.location_id, []).append(node.text)
     return grouped

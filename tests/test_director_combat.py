@@ -6,10 +6,11 @@ import allure
 import pytest
 
 from models.npc_card import NPCCard
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import make_director, make_game_state, make_mock_actor
 
 _HOSTILE = "hostile"
-_NPC_A = "npc-1"
+_NPC_A = make_uuid("npc-1")
 _GUARD_NAME = "Guard"
 _CITY_GUARD = "city guard"
 _COMBAT_SKILL = "combat_skill"

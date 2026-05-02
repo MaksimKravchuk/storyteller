@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Mapping
+from uuid import UUID
 
 from loguru import logger
 
@@ -28,7 +29,7 @@ _STATUS_BY_NAME: Mapping[str, GoalStatus] = types.MappingProxyType(
 )
 
 
-def _draft_skip_reason(draft: GoalDraft, npcs: dict[str, NPCCard]) -> str | None:
+def _draft_skip_reason(draft: GoalDraft, npcs: dict[UUID, NPCCard]) -> str | None:
     """Return a one-line reason if ``draft`` must be skipped, else ``None``.
 
     Three skip causes: unknown ``npc_uuid``, unknown ``target_uuid``,
@@ -45,7 +46,7 @@ def _draft_skip_reason(draft: GoalDraft, npcs: dict[str, NPCCard]) -> str | None
     return None
 
 
-def apply_goal_drafts(npcs: dict[str, NPCCard], drafts: list[GoalDraft]) -> None:
+def apply_goal_drafts(npcs: dict[UUID, NPCCard], drafts: list[GoalDraft]) -> None:
     """Stamp each valid :class:`GoalDraft` onto its named NPC's life slot.
 
     Validation lives in :func:`_draft_skip_reason`; on any reason the
@@ -66,7 +67,7 @@ def apply_goal_drafts(npcs: dict[str, NPCCard], drafts: list[GoalDraft]) -> None
         )
 
 
-def _apply_one_update(npcs: dict[str, NPCCard], update: GoalUpdate) -> None:
+def _apply_one_update(npcs: dict[UUID, NPCCard], update: GoalUpdate) -> None:
     """Flip one NPC's life-goal status if the NPC and an ACTIVE goal both exist."""
     npc = npcs.get(update.npc_uuid)
     if npc is None:
@@ -80,7 +81,7 @@ def _apply_one_update(npcs: dict[str, NPCCard], update: GoalUpdate) -> None:
         goal.record_progress("chronicler {0}: {1}".format(update.status, update.reason))
 
 
-def apply_goal_updates(npcs: dict[str, NPCCard], updates: list[GoalUpdate]) -> None:
+def apply_goal_updates(npcs: dict[UUID, NPCCard], updates: list[GoalUpdate]) -> None:
     """Apply each :class:`GoalUpdate` via :func:`_apply_one_update`."""
     for update in updates:
         _apply_one_update(npcs, update)

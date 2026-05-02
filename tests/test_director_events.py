@@ -8,22 +8,29 @@ import allure
 import pytest
 
 from cast.director_events import EventProcessor, _scope_from_string
-from knowledge.graph import KnowledgeGraph
-from knowledge.node import KnowledgeScope
+from knowledge import graph as _kg, node as _kn
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 
+KnowledgeGraph = _kg.KnowledgeGraph
+KnowledgeScope = _kn.KnowledgeScope
+
 
 def _make_state() -> GameState:
+    tavern_id = make_uuid("tavern")
     gs = GameState(
         setting=Setting(name="Rome", time_period="1 AD", region="Italy", summary=""),
         knowledge_graph=KnowledgeGraph(),
-        player=PlayerState(location_id="tavern"),
+        player=PlayerState(location_id=tavern_id),
     )
-    gs.locations["tavern"] = Location(name="Tavern", npcs_present=["npc-1", "npc-2"])
+    gs.locations[tavern_id] = Location(
+        name="Tavern",
+        npcs_present=[make_uuid("npc-1"), make_uuid("npc-2")],
+    )
     return gs
 
 
@@ -70,8 +77,8 @@ class TestPartitionEvents:
     def test_splits_local_and_remote(self):
         gs = _make_state()
         processor = _make_processor(gs)
-        here = GameEvent(name="Brawl", scheduled_at=0, duration=1, location_id="tavern")
-        there = GameEvent(name="Fire", scheduled_at=0, duration=1, location_id="market")
+        here = GameEvent(name="Brawl", scheduled_at=0, duration=1, location_id=make_uuid("tavern"))
+        there = GameEvent(name="Fire", scheduled_at=0, duration=1, location_id=make_uuid("market"))
 
         local, remote = processor.partition_events([here, there])
 
@@ -104,7 +111,7 @@ class TestBuildMemoryKwargs:
             scheduled_at=0,
             duration=1,
             scope="city",
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
             on_complete_description="A riot breaks out.",
         )
 
@@ -112,15 +119,15 @@ class TestBuildMemoryKwargs:
 
         assert kwargs["event_description"] == "A riot breaks out."
         assert kwargs["scope"] == KnowledgeScope.CITY
-        assert kwargs["location_id"] == "tavern"
-        assert kwargs["witness_ids"] == ["npc-1", "npc-2"]
+        assert kwargs["location_id"] == make_uuid("tavern")
+        assert kwargs["witness_ids"] == [make_uuid("npc-1"), make_uuid("npc-2")]
 
     @allure.story("Memory kwargs")
     @allure.title("build_memory_kwargs() falls back to the event name when no description is set")
     def test_falls_back_to_name(self):
         gs = _make_state()
         processor = _make_processor(gs)
-        ev = GameEvent(name="Parade", scheduled_at=0, duration=1, location_id="tavern")
+        ev = GameEvent(name="Parade", scheduled_at=0, duration=1, location_id=make_uuid("tavern"))
 
         kwargs = processor.build_memory_kwargs(ev)
 
@@ -131,7 +138,7 @@ class TestBuildMemoryKwargs:
     def test_no_witnesses_when_location_unknown(self):
         gs = _make_state()
         processor = _make_processor(gs)
-        ev = GameEvent(name="Comet", scheduled_at=0, duration=1, location_id="unknown")
+        ev = GameEvent(name="Comet", scheduled_at=0, duration=1, location_id=make_uuid("unknown"))
 
         kwargs = processor.build_memory_kwargs(ev)
 
@@ -152,8 +159,8 @@ class TestProcessRemoteEvents:
         processor = EventProcessor(gs, event_mgr, memory_mgr)
 
         events = [
-            GameEvent(name="A", scheduled_at=0, duration=1, location_id="tavern", scope="region"),
-            GameEvent(name="B", scheduled_at=0, duration=1, location_id="market", scope="world"),
+            GameEvent(name="A", scheduled_at=0, duration=1, location_id=make_uuid("tavern"), scope="region"),
+            GameEvent(name="B", scheduled_at=0, duration=1, location_id=make_uuid("market"), scope="world"),
         ]
         await processor.process_remote_events(events)
 
@@ -162,14 +169,14 @@ class TestProcessRemoteEvents:
         memory_mgr.create_memory_from_event.assert_any_await(
             event_description="A",
             scope=KnowledgeScope.REGION,
-            location_id="tavern",
-            witness_ids=["npc-1", "npc-2"],
+            location_id=make_uuid("tavern"),
+            witness_ids=[make_uuid("npc-1"), make_uuid("npc-2")],
             game_time=gs.game_clock,
         )
         memory_mgr.create_memory_from_event.assert_any_await(
             event_description="B",
             scope=KnowledgeScope.WORLD,
-            location_id="market",
+            location_id=make_uuid("market"),
             witness_ids=[],  # "market" not in gs.locations → no witnesses
             game_time=gs.game_clock,
         )

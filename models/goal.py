@@ -15,6 +15,7 @@ through JSON for persistence.
 from __future__ import annotations
 
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -88,7 +89,7 @@ class Goal(BaseModel):
     scope: GoalScope = GoalScope.LIFE
     kind: GoalKind
     description: str
-    target_uuid: str | None = None
+    target_uuid: UUID | None = None
     status: GoalStatus = GoalStatus.ACTIVE
     turns_pursued: int = 0
     last_attempted_action: str | None = None

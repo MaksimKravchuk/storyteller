@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 from typing import Any
+from uuid import UUID
 
 import allure
 import pytest
@@ -23,6 +24,7 @@ from cast.npc_turn import NPCTurnResolver
 from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
 from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
+from tests._uuid_helpers import make_uuid
 
 GameState = gs_mod.GameState
 NPCCard = npc_card_mod.NPCCard
@@ -30,9 +32,9 @@ Scene = scene_mod.Scene
 SceneNPC = scene_mod.SceneNPC
 Setting = setting_mod.Setting
 
-_NPC_UUID_A = "npc-a"
-_NPC_UUID_B = "npc-b"
-_NPC_UUID_C = "npc-c"
+_NPC_UUID_A = make_uuid("npc-a")
+_NPC_UUID_B = make_uuid("npc-b")
+_NPC_UUID_C = make_uuid("npc-c")
 _GUARD = "Guard"
 _MERCHANT = "Merchant"
 _COOK = "Cook"
@@ -49,7 +51,7 @@ def _make_gs() -> GameState:
     )
 
 
-def _make_npc(uuid: str, name: str) -> NPCCard:
+def _make_npc(uuid: UUID, name: str) -> NPCCard:
     npc = NPCCard(name=name, occupation="test")
     npc.uuid = uuid
     npc.current_mood = "neutral"
@@ -67,7 +69,7 @@ def _build_three_npc_scene(gs: GameState) -> None:
     gs.npcs[_NPC_UUID_B] = _make_npc(_NPC_UUID_B, _MERCHANT)
     gs.npcs[_NPC_UUID_C] = _make_npc(_NPC_UUID_C, _COOK)
     gs.current_scene = Scene(
-        location_id="forum",
+        location_id=make_uuid("forum"),
         description="The bustling Forum.",
         npcs_present=[
             SceneNPC(role="npc", uuid=_NPC_UUID_A),

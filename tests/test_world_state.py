@@ -13,6 +13,7 @@ import allure
 from db.converters import world_state as conv_world_state
 from models.game_state import GameState
 from models.world_state import WorldState, WorldThread
+from tests._uuid_helpers import make_uuid
 
 
 @allure.epic("Memory & Persistence")
@@ -98,8 +99,8 @@ class TestWorldStateConverter:
                     description="A plague spreads in the docks district",
                     category="natural",
                     introduced_scene=1,
-                    involved_locations=["loc-1", "loc-2"],
-                    involved_npcs=["npc-1"],
+                    involved_locations=[make_uuid("loc-1"), make_uuid("loc-2")],
+                    involved_npcs=[make_uuid("npc-1")],
                     status="open",
                     last_advanced_scene=2,
                 ),
@@ -125,8 +126,8 @@ class TestWorldStateConverter:
         assert len(restored.threads) == 2
         assert restored.threads[0].description == "A plague spreads in the docks district"
         assert restored.threads[0].category == "natural"
-        assert restored.threads[0].involved_locations == ["loc-1", "loc-2"]
-        assert restored.threads[0].involved_npcs == ["npc-1"]
+        assert restored.threads[0].involved_locations == [make_uuid("loc-1"), make_uuid("loc-2")]
+        assert restored.threads[0].involved_npcs == [make_uuid("npc-1")]
         assert restored.threads[0].last_advanced_scene == 2
         assert restored.threads[0].uuid == original.threads[0].uuid
         assert restored.threads[1].status == "resolved"

@@ -19,6 +19,7 @@ from tests._aftermath_helpers import (
     make_actor_target_state,
     seed_kill_thread,
 )
+from tests._uuid_helpers import make_uuid
 
 
 def _combat_roll(outcome: ContestOutcome) -> ContestRoll:
@@ -43,7 +44,7 @@ class TestGoalProgress:
         actor = NPCCard(
             name="Brutus",
             occupation="legionary",
-            life_goal=Goal(kind=GoalKind.KILL, description="x", target_uuid="t"),
+            life_goal=Goal(kind=GoalKind.KILL, description="x", target_uuid=make_uuid("t")),
         )
         update_goal_progress(actor, "STEALTH", "moved to the shadows")
         assert actor.life_goal is not None
@@ -60,7 +61,7 @@ class TestGoalProgress:
             life_goal=Goal(
                 kind=GoalKind.KILL,
                 description="x",
-                target_uuid="t",
+                target_uuid=make_uuid("t"),
                 status=GoalStatus.COMPLETED,
             ),
         )
@@ -176,7 +177,7 @@ class TestResolveActionsAftermath:
     @allure.title("ActionAftermath bundles all fields and an empty-target run still ticks goal progress")
     async def test_aftermath_dataclass_fields_round_trip(self) -> None:
         state, actor, _, _ = make_actor_target_state()
-        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid="missing")
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=make_uuid("missing"))
         memory = RecordingMemoryManager()
 
         await resolve_actions_aftermath(

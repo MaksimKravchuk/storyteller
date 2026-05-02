@@ -26,11 +26,13 @@ from cast.schemas.chronicler_response import ChroniclerResponse
 from cast.schemas.turn_outputs import TurnOutputs, WaitContext
 from models.location import Location
 from models.world_state import WorldThread
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import make_director, make_game_state, make_mock_agent, setup_npc
 from timeline.event import GameEvent
 
-_FORUM = "forum"
-_NPC_MERCHANT = "npc-1"
+_FORUM = make_uuid("forum")
+_HARBOUR = make_uuid("harbour")
+_NPC_MERCHANT = make_uuid("npc-1")
 _PLAYER_ACTION = "player_action"
 _GAME_STATE = "game_state"
 _MESSAGES = "messages"
@@ -209,7 +211,7 @@ class TestWaitContextPopulation:
                     description="Riot in the harbour district",
                     category="political",
                     introduced_scene=0,
-                    involved_locations=["harbour"],
+                    involved_locations=[_HARBOUR],
                 ),
                 WorldThread(
                     description="Grain shipments are delayed",

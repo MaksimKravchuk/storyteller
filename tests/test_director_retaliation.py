@@ -12,14 +12,21 @@ import pytest
 from cast.dice import ContestOutcome, ContestRoll, ContestType
 from cast.director_retaliation import RetaliationHandler
 from models.npc_card import NPCCard
-from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_actor, setup_npc
+from tests.director_helpers import (
+    actor_reply,
+    make_director,
+    make_game_state,
+    make_mock_actor,
+    make_uuid,
+    setup_npc,
+)
 
 _HOSTILE = "hostile"
 _NEUTRAL = "neutral"
-_NPC_A = "npc-1"
+_NPC_A = make_uuid("npc-1")
 _GUARD = "guard"
-_BANDIT_FIRST = "uuid-1"
-_BANDIT_SECOND = "uuid-2"
+_BANDIT_FIRST = make_uuid("uuid-1")
+_BANDIT_SECOND = make_uuid("uuid-2")
 _ATTACK_ROLL = 15
 
 
@@ -153,7 +160,7 @@ class TestNPCRetaliation:
 
         entries = await _run_patched(
             _make_aggression_stub(True),
-            handler.check_retaliation({_NPC_A: _NEUTRAL}, skip_uuids={"other-uuid"}),
+            handler.check_retaliation({_NPC_A: _NEUTRAL}, skip_uuids={make_uuid("other-uuid")}),
             combat_replacement=_fixed_combat,
         )
 

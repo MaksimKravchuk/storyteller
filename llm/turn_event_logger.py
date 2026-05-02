@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import contextvars
 from typing import Any
+from uuid import UUID
 
 from llm.call_logger import agent_stack, current_session_id
 
@@ -71,7 +72,7 @@ def record_turn_event(
     event_type: str,
     payload: dict[str, Any],
     *,
-    npc_id: str | None = None,
+    npc_id: UUID | None = None,
     agent_name: str | None = None,
 ) -> None:
     """Append a structured event to the turn buffer.
@@ -88,7 +89,7 @@ def record_turn_event(
         {
             "event_type": event_type,
             "agent_name": agent_name or _current_agent_name(),
-            "npc_id": npc_id,
+            "npc_id": None if npc_id is None else str(npc_id),
             "payload": payload,
             "sequence": _next_event_sequence(),
         },

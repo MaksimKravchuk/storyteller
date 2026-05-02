@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import allure
 import pytest
 
@@ -15,16 +17,22 @@ from cast.npc_ticker import (
 )
 from cast.schemas.turn_outputs import TurnOutputs
 from knowledge.graph import KnowledgeGraph
-from models.game_state import GameState
-from models.goal import Goal, GoalKind, GoalScope
-from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
-from models.setting import Setting
+from models import game_state as _gs, goal as _goal, npc_card as _npc, scene as _scene, setting as _setting
+from tests._uuid_helpers import make_uuid
 
-_BARTENDER_UUID = "npc-bartender"
-_GUARD_UUID = "npc-guard"
-_BAKER_UUID = "npc-baker"
-_UNKNOWN_UUID = "npc-unknown"
+GameState = _gs.GameState
+Goal = _goal.Goal
+GoalKind = _goal.GoalKind
+GoalScope = _goal.GoalScope
+NPCCard = _npc.NPCCard
+Scene = _scene.Scene
+SceneNPC = _scene.SceneNPC
+Setting = _setting.Setting
+
+_BARTENDER_UUID = make_uuid("npc-bartender")
+_GUARD_UUID = make_uuid("npc-guard")
+_BAKER_UUID = make_uuid("npc-baker")
+_UNKNOWN_UUID = make_uuid("npc-unknown")
 
 
 def _make_game_state(game_time: str = "morning") -> GameState:
@@ -36,16 +44,16 @@ def _make_game_state(game_time: str = "morning") -> GameState:
     return gs
 
 
-def _add_npc(gs: GameState, uuid: str, name: str, occupation: str) -> NPCCard:
+def _add_npc(gs: GameState, uuid: UUID, name: str, occupation: str) -> NPCCard:
     npc = NPCCard(name=name, occupation=occupation)
     npc.uuid = uuid
     gs.npcs[uuid] = npc
     return npc
 
 
-def _set_scene(gs: GameState, *npc_uuids: str) -> Scene:
+def _set_scene(gs: GameState, *npc_uuids: UUID) -> Scene:
     scene = Scene(
-        location_id="tavern",
+        location_id=make_uuid("tavern"),
         description="The Rusty Anchor tavern.",
         npcs_present=[SceneNPC(role="npc", uuid=uid) for uid in npc_uuids],
     )
@@ -106,15 +114,17 @@ class TestNPCTickerNoOp:
     @allure.title("tick() leaves every always-present NPC in place regardless of time of day")
     def test_always_present_npcs_are_kept(self):
         gs = _make_game_state(game_time="night")
-        _add_npc(gs, "npc-priest", "Paolo", "priest")
-        _add_npc(gs, "npc-beggar", "Benno", "beggar")
-        scene = _set_scene(gs, "npc-priest", "npc-beggar")
+        priest = make_uuid("npc-priest")
+        beggar = make_uuid("npc-beggar")
+        _add_npc(gs, priest, "Paolo", "priest")
+        _add_npc(gs, beggar, "Benno", "beggar")
+        scene = _set_scene(gs, priest, beggar)
 
         outputs = TurnOutputs()
         NPCTicker(gs).tick(outputs)
 
         assert outputs.npc_departures == []
-        assert [snpc.uuid for snpc in scene.npcs_present] == ["npc-priest", "npc-beggar"]
+        assert [snpc.uuid for snpc in scene.npcs_present] == [priest, beggar]
 
     @allure.story("No-op paths")
     @allure.title("tick() silently keeps SceneNPCs whose UUID is missing from game_state.npcs")
@@ -133,7 +143,7 @@ class TestNPCTickerNoOp:
     def test_uninitialised_scene_npc_is_kept(self):
         gs = _make_game_state(game_time="night")
         scene = Scene(
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
             description="x",
             npcs_present=[SceneNPC(role="stranger", uuid=None)],
         )

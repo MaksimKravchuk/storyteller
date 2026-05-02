@@ -10,6 +10,7 @@ import json as _json
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any
+from uuid import UUID
 
 from loguru import logger
 
@@ -21,9 +22,8 @@ from cast.dice import (
     record_npc_contest_event,
     roll_contest,
 )
+from cast import npc_goal_resolution as _ngr, npc_opportunity as _npo
 from cast.director_witness import WitnessedAggression, is_guard_occupation
-from cast.npc_goal_resolution import resolve_actions_aftermath, resolve_goal_target_name
-from cast.npc_opportunity import TACTICAL_HOSTILE_CLAUSE, get_opportunity_clause
 from cast.wait_detection import INCAPACITATING_STATES
 from models.game_state import GameState
 
@@ -116,7 +116,7 @@ def _roll_npc_contest(
 
 
 def _apply_scene_mutation(
-    npc_uuid: str,
+    npc_uuid: UUID,
     action_type: str,
     action_target: str | None,
     game_state: GameState,
@@ -143,9 +143,17 @@ def _apply_scene_mutation(
     location.remove_npc(npc_uuid)
 
 
+def _peer_matches(snpc: Any, self_uuid: UUID, lower_target: str, game_state: GameState) -> bool:
+    """Return True when ``snpc`` is a co-located NPC whose name matches ``lower_target``."""
+    if snpc.uuid is None or snpc.uuid == self_uuid:
+        return False
+    peer = game_state.npcs.get(snpc.uuid)
+    return bool(peer and peer.name.lower() == lower_target)
+
+
 def _is_targeting_scene_npc(
     target: str | None,
-    self_uuid: str,
+    self_uuid: UUID,
     scene: Any,
     game_state: GameState,
 ) -> bool:
@@ -155,13 +163,7 @@ def _is_targeting_scene_npc(
     lower_target = target.lower()
     if lower_target == "player":
         return True
-    for snpc in scene.npcs_present:
-        if snpc.uuid == self_uuid:
-            continue
-        peer = game_state.npcs.get(snpc.uuid)
-        if peer and peer.name.lower() == lower_target:
-            return True
-    return False
+    return any(_peer_matches(snpc, self_uuid, lower_target, game_state) for snpc in scene.npcs_present)
 
 
 def _filter_successful(
@@ -249,7 +251,7 @@ class NPCTurnResolver:
     def __init__(
         self,
         game_state: GameState,
-        actors: dict[str, Any],
+        actors: dict[UUID, Any],
     ) -> None:
         self._gs = game_state
         self._actors = actors
@@ -261,7 +263,7 @@ class NPCTurnResolver:
         knowledge nodes, advances each actor's :class:`~models.goal.Goal`,
         and flips matching world threads on goal completion.
         """
-        await resolve_actions_aftermath(actions, self._gs, memory_manager)
+        await _ngr.resolve_actions_aftermath(actions, self._gs, memory_manager)
 
     async def resolve_npc_turns(
         self,
@@ -332,7 +334,7 @@ class NPCTurnResolver:
 
     def _try_npc(self, snpc: Any) -> tuple[str, Any, Any] | None:
         """Return (uuid, npc, actor) if the scene-NPC can act, else None."""
-        if not snpc.uuid or snpc.uuid not in self._gs.npcs:
+        if snpc.uuid is None or snpc.uuid not in self._gs.npcs:
             return None
         npc = self._gs.npcs[snpc.uuid]
         if (npc.physical_status or "").lower() in _NPC_SKIP_STATUSES:
@@ -359,7 +361,7 @@ class NPCTurnResolver:
                     "npc": npc,
                     "game_state": self._gs,
                     "is_npc_turn": True,
-                    "goal_target_name": resolve_goal_target_name(npc, self._gs),
+                    "goal_target_name": _ngr.resolve_goal_target_name(npc, self._gs),
                 },
             )
         except Exception:
@@ -418,7 +420,7 @@ def _build_turn_prompt(
     directive OPPORTUNITY clause naming the specific target is appended
     and the baseline "most turns are routine" nudge is dropped.
     """
-    opportunity_clause = get_opportunity_clause(npc, game_state)
+    opportunity_clause = _npo.get_opportunity_clause(npc, game_state)
     base_prompt = _format_base_turn_prompt(
         npc=npc,
         player_action_summary=player_action_summary,
@@ -434,7 +436,7 @@ def _build_turn_prompt(
         clauses.append(_format_incident_clause(npc, incident))
     if opportunity_clause is not None:
         clauses.append(opportunity_clause)
-        clauses.append(TACTICAL_HOSTILE_CLAUSE)
+        clauses.append(_npo.TACTICAL_HOSTILE_CLAUSE)
     return "\n\n".join(clauses)
 
 

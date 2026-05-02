@@ -39,11 +39,12 @@ from cast.schemas import item_response as item_resp, turn_outputs as to_mod
 from knowledge.memory import MemoryManager
 from llm.message import LLMResponse
 from models.scene import SceneNPC
-from tests.director_helpers import make_director, make_game_state, make_mock_actor, setup_npc
+from tests.director_helpers import make_director, make_game_state, make_mock_actor, make_uuid, setup_npc
 
-_GUARD_UUID = "npc-1"
-_TAILOR_UUID = "npc-tailor"
-_FORUM = "forum"
+_GUARD_UUID = make_uuid("npc-1")
+_TAILOR_UUID = make_uuid("npc-tailor")
+_FORUM = make_uuid("forum")
+_TAVERN = make_uuid("tavern")
 _NEUTRAL = "neutral"
 
 
@@ -339,7 +340,7 @@ class TestBuildTurnPromptIncidentClause:
         event = WitnessedAggression(
             kind=WITNESS_KIND_OBJECT_SMASH,
             target="shutter",
-            location_id="tavern",
+            location_id=_TAVERN,
             description="smash the shutter.",
         )
 

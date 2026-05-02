@@ -10,6 +10,8 @@ The pure function is unit-tested in
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import allure
 
 from cast.npc_ticker import NPCTicker
@@ -23,25 +25,29 @@ from knowledge.node import (
     KnowledgeSource,
 )
 from knowledge.query import KnowledgeQueryEngine
-from models.game_state import GameState
-from models.location import Location
-from models.npc_card import NPCCard
-from models.scene import Scene, SceneNPC
-from models.setting import Setting
+from models import game_state as _gs, location as _loc, npc_card as _npc, scene as _scene, setting as _setting
+from tests._uuid_helpers import make_uuid
+
+GameState = _gs.GameState
+Location = _loc.Location
+NPCCard = _npc.NPCCard
+Scene = _scene.Scene
+SceneNPC = _scene.SceneNPC
+Setting = _setting.Setting
 
 pytestmark = [
     allure.epic("NPC Interaction"),
     allure.feature("NPC schedule ticker"),
 ]
 
-_CITY_ID = "loc-city-rome"
-_TAVERN_ID = "loc-tavern"
-_MARKET_ID = "loc-market"
+_CITY_ID = make_uuid("loc-city-rome")
+_TAVERN_ID = make_uuid("loc-tavern")
+_MARKET_ID = make_uuid("loc-market")
 
-_BARTENDER_UUID = "npc-bartender"
-_BAKER_UUID = "npc-baker"
-_GUARD_UUID = "npc-guard"
-_SCHOLAR_UUID = "npc-scholar"
+_BARTENDER_UUID = make_uuid("npc-bartender")
+_BAKER_UUID = make_uuid("npc-baker")
+_GUARD_UUID = make_uuid("npc-guard")
+_SCHOLAR_UUID = make_uuid("npc-scholar")
 
 _MEMORY_TEXT = "The player confessed to stealing the senator's ring."
 
@@ -75,10 +81,10 @@ def _make_city_state(game_time: str = "morning") -> GameState:
 
 def _add_city_npc(
     gs: GameState,
-    uuid: str,
+    uuid: UUID,
     name: str,
     occupation: str,
-    location_id: str,
+    location_id: UUID,
 ) -> NPCCard:
     """Add an NPC anchored to a specific city-location and register it in the graph."""
     npc = NPCCard(name=name, occupation=occupation, location_id=location_id)
@@ -89,7 +95,7 @@ def _add_city_npc(
     return npc
 
 
-def _set_scene_at(gs: GameState, location_id: str, *npc_uuids: str) -> Scene:
+def _set_scene_at(gs: GameState, location_id: UUID, *npc_uuids: UUID) -> Scene:
     scene = Scene(
         location_id=location_id,
         description="The {0}".format(gs.locations[location_id].name),
@@ -101,7 +107,7 @@ def _set_scene_at(gs: GameState, location_id: str, *npc_uuids: str) -> Scene:
 
 def _add_session_memory(
     gs: GameState,
-    npc_id: str,
+    npc_id: UUID,
     text: str = _MEMORY_TEXT,
 ) -> KnowledgeNode:
     memory = KnowledgeNode(
@@ -117,7 +123,7 @@ def _add_session_memory(
     return memory
 
 
-def _hearsay_at(gs: GameState, location_id: str) -> list[KnowledgeNode]:
+def _hearsay_at(gs: GameState, location_id: UUID) -> list[KnowledgeNode]:
     return [
         node
         for node in gs.knowledge_graph.all_nodes()

@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import json
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import allure
 import pytest
 
-from cast.dice import ContestType
-from cast import npc_turn as npc_turn_mod
-from cast.npc_turn import NPCAction, NPCTurnResolver
+from cast import dice as _dice, npc_turn as npc_turn_mod
 from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -21,7 +20,11 @@ from models import (
     scene as scene_mod,
     setting as setting_mod,
 )
+from tests._uuid_helpers import make_uuid
 
+ContestType = _dice.ContestType
+NPCAction = npc_turn_mod.NPCAction
+NPCTurnResolver = npc_turn_mod.NPCTurnResolver
 GameState = gs_mod.GameState
 Location = location_mod.Location
 NPCCard = npc_card_mod.NPCCard
@@ -29,8 +32,11 @@ Scene = scene_mod.Scene
 SceneNPC = scene_mod.SceneNPC
 Setting = setting_mod.Setting
 
-_NPC_UUID_A = "npc-a"
-_NPC_UUID_B = "npc-b"
+_NPC_UUID_A = make_uuid("npc-a")
+_NPC_UUID_B = make_uuid("npc-b")
+_NPC_ABSENT = make_uuid("npc-absent")
+_FORUM = make_uuid("forum")
+_GHOST = make_uuid("ghost")
 _GUARD = "Guard"
 _MERCHANT = "Merchant"
 
@@ -43,7 +49,7 @@ def _make_gs() -> GameState:
     )
 
 
-def _make_npc(uuid: str, name: str, mood: str = "neutral", status: str = "healthy", **attrs) -> NPCCard:
+def _make_npc(uuid: UUID, name: str, mood: str = "neutral", status: str = "healthy", **attrs) -> NPCCard:
     npc = NPCCard(name=name, occupation="test", attributes=attrs)
     npc.uuid = uuid
     npc.current_mood = mood
@@ -51,9 +57,9 @@ def _make_npc(uuid: str, name: str, mood: str = "neutral", status: str = "health
     return npc
 
 
-def _make_scene(*npc_uuids: str) -> Scene:
+def _make_scene(*npc_uuids: UUID) -> Scene:
     return Scene(
-        location_id="forum",
+        location_id=make_uuid("forum"),
         description="The bustling Forum.",
         npcs_present=[SceneNPC(role="npc", uuid=uid) for uid in npc_uuids],
     )
@@ -115,7 +121,7 @@ class TestNPCTurnResolverEmptyScene:
     @pytest.mark.asyncio
     async def test_no_npcs_returns_empty(self):
         gs = _make_gs()
-        gs.current_scene = Scene(location_id="empty", description="Empty room.", npcs_present=[])
+        gs.current_scene = Scene(location_id=make_uuid("empty"), description="Empty room.", npcs_present=[])
         resolver = NPCTurnResolver(game_state=gs, actors={})
         actions = await resolver.resolve_npc_turns("Player waited.")
         assert actions == []
@@ -348,9 +354,9 @@ class TestNPCTurnSceneMutation:
     async def test_move_targeting_absent_registered_npc_evicts(self):
         gs = _make_gs()
         guard = _make_npc(_NPC_UUID_A, _GUARD)
-        absent = _make_npc("npc-absent", "Caesar")
+        absent = _make_npc(_NPC_ABSENT, "Caesar")
         gs.npcs[_NPC_UUID_A] = guard
-        gs.npcs["npc-absent"] = absent
+        gs.npcs[_NPC_ABSENT] = absent
         gs.current_scene = _make_scene(_NPC_UUID_A)
 
         actor_a = _make_actor(_move_response_targeting("Caesar"))
@@ -416,7 +422,7 @@ def _place_both(gs: GameState, actor: NPCCard, target: NPCCard) -> None:
     gs.current_scene = _make_scene(actor.uuid, target.uuid)
 
 
-def _plot_knowledge(gs: GameState, npc_uuid: str, text: str) -> None:
+def _plot_knowledge(gs: GameState, npc_uuid: UUID, text: str) -> None:
     plot_node = KnowledgeNode(
         text=text,
         scope=KnowledgeScope.LOCAL,
@@ -442,7 +448,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
         _place_both(gs, brutus, marcus)
 
         prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
@@ -456,7 +462,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         cook = _make_npc(_NPC_UUID_A, "Cook")
         carpenter = _make_npc(_NPC_UUID_B, "Carpenter")
-        cook.relationships[_NPC_UUID_B] = "acquaintance"
+        cook.relationships[str(_NPC_UUID_B)] = "acquaintance"
         _place_both(gs, cook, carpenter)
 
         prompt = npc_turn_mod._build_turn_prompt(cook, "Player waits.", gs)
@@ -486,7 +492,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         other_bystander = _make_npc(_NPC_UUID_B, "Titus")
-        absent = _make_npc("npc-absent", "Marcus")
+        absent = _make_npc(_NPC_ABSENT, "Marcus")
         gs.npcs[absent.uuid] = absent
         _place_both(gs, brutus, other_bystander)
         _plot_knowledge(gs, brutus.uuid, "Brutus intends to kill Marcus today.")
@@ -502,7 +508,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         apprentice = _make_npc(_NPC_UUID_A, "Apprentice")
         apothecary = _make_npc(_NPC_UUID_B, "Apothecary")
-        apprentice.relationships[_NPC_UUID_B] = "skillful apprentice"
+        apprentice.relationships[str(_NPC_UUID_B)] = "skillful apprentice"
         _place_both(gs, apprentice, apothecary)
         _plot_knowledge(gs, apprentice.uuid, "The pharmacist Apothecary mixes salves all day.")
 
@@ -517,7 +523,7 @@ class TestBuildTurnPromptOpportunityWindow:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
         _place_both(gs, brutus, marcus)
 
         prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
@@ -532,7 +538,7 @@ class TestBuildTurnPromptOpportunityWindow:
         apothecary = _make_npc(_NPC_UUID_B, "Apothecary")
         # "skillful" contains "kill" but is word-boundary-rejected; "rival"
         # is a genuine keyword and must still fire alongside it.
-        apprentice.relationships[_NPC_UUID_B] = "skillful rival apprentice"
+        apprentice.relationships[str(_NPC_UUID_B)] = "skillful rival apprentice"
         _place_both(gs, apprentice, apothecary)
 
         prompt = npc_turn_mod._build_turn_prompt(apprentice, "Player waits.", gs)
@@ -557,7 +563,7 @@ class TestBuildTurnPromptOpportunityWindowIntegration:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
         _place_both(gs, brutus, marcus)
 
         brutus_actor = _make_actor(_idle_response("Brutus"))
@@ -614,10 +620,10 @@ class TestNPCTurnSceneMutationLocation:
 
         location = Location(name="Forum", description="The Forum.")
         location.add_npc(_NPC_UUID_A)
-        gs.locations["forum"] = location
+        gs.locations[_FORUM] = location
 
         scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The bustling Forum.",
             npcs_present=[SceneNPC(role="npc", uuid=_NPC_UUID_A)],
         )
@@ -628,7 +634,7 @@ class TestNPCTurnSceneMutationLocation:
 
         await resolver.resolve_npc_turns("Player waited.")
 
-        assert _NPC_UUID_A not in gs.locations["forum"].npcs_present
+        assert _NPC_UUID_A not in gs.locations[_FORUM].npcs_present
 
     @allure.story("Scene mutation")
     @allure.title("An NPC IDLE action does not remove the NPC from location.npcs_present")
@@ -640,10 +646,10 @@ class TestNPCTurnSceneMutationLocation:
 
         location = Location(name="Forum", description="The Forum.")
         location.add_npc(_NPC_UUID_A)
-        gs.locations["forum"] = location
+        gs.locations[_FORUM] = location
 
         scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The bustling Forum.",
             npcs_present=[SceneNPC(role="npc", uuid=_NPC_UUID_A)],
         )
@@ -654,7 +660,7 @@ class TestNPCTurnSceneMutationLocation:
 
         await resolver.resolve_npc_turns("Player waited.")
 
-        assert _NPC_UUID_A in gs.locations["forum"].npcs_present
+        assert _NPC_UUID_A in gs.locations[_FORUM].npcs_present
 
     @allure.story("Scene mutation")
     @allure.title("MOVE with an unregistered location_id removes NPC from scene and does not raise")
@@ -664,7 +670,7 @@ class TestNPCTurnSceneMutationLocation:
         npc = _make_npc(_NPC_UUID_A, _MERCHANT)
         gs.npcs[_NPC_UUID_A] = npc
         gs.current_scene = Scene(
-            location_id="ghost",
+            location_id=_GHOST,
             description="Unregistered location.",
             npcs_present=[SceneNPC(role="npc", uuid=_NPC_UUID_A)],
         )
@@ -689,7 +695,7 @@ class TestBuildTurnPromptTacticalClause:
         gs = _make_gs()
         brutus = _make_npc(_NPC_UUID_A, "Brutus")
         marcus = _make_npc(_NPC_UUID_B, "Marcus")
-        brutus.relationships[_NPC_UUID_B] = "murderous_enemy"
+        brutus.relationships[str(_NPC_UUID_B)] = "murderous_enemy"
         _place_both(gs, brutus, marcus)
 
         prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
@@ -704,7 +710,7 @@ class TestBuildTurnPromptTacticalClause:
         gs = _make_gs()
         cook = _make_npc(_NPC_UUID_A, "Cook")
         carpenter = _make_npc(_NPC_UUID_B, "Carpenter")
-        cook.relationships[_NPC_UUID_B] = "acquaintance"
+        cook.relationships[str(_NPC_UUID_B)] = "acquaintance"
         _place_both(gs, cook, carpenter)
 
         prompt = npc_turn_mod._build_turn_prompt(cook, "Player waits.", gs)

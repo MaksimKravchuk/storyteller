@@ -8,6 +8,7 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 from timeline.event import EventEffect, EventStatus, GameEvent
 from timeline.event_manager import EventManager
 
@@ -93,8 +94,8 @@ class TestEventManagerPendingEvents:
     def test_get_all_pending(self):
         gs = _make_state()
         mgr = EventManager(gs, gs.knowledge_graph)
-        e1 = GameEvent(name="E1", scheduled_at=0, duration=1, owner_id="alice")
-        e2 = GameEvent(name="E2", scheduled_at=0, duration=1, owner_id="bob")
+        e1 = GameEvent(name="E1", scheduled_at=0, duration=1, owner_id=make_uuid("alice"))
+        e2 = GameEvent(name="E2", scheduled_at=0, duration=1, owner_id=make_uuid("bob"))
         mgr.schedule(e1)
         mgr.schedule(e2)
 

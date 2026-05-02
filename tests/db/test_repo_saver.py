@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+from uuid import UUID
 
 import allure
 import pytest
@@ -18,13 +19,13 @@ from tests.db.conftest import GameRepository
 pytestmark = pytest.mark.db
 
 
-async def _count(async_session, table, game_state_id: str) -> int:
+async def _count(async_session, table, game_state_id: UUID) -> int:
     base = sqlalchemy.select(sqlalchemy.func.count()).select_from(table)
     query = await async_session.execute(base.where(table.c.game_state_id == game_state_id))
     return query.scalar() or 0
 
 
-async def _child_counts(async_session, game_state_id: str) -> dict:
+async def _child_counts(async_session, game_state_id: UUID) -> dict:
     return {
         "locations": await _count(async_session, tbl.locations, game_state_id),
         "npcs": await _count(async_session, tbl.npcs, game_state_id),
@@ -202,7 +203,7 @@ class TestEdgeTypeRoundTrip:
         kg = KnowledgeGraph()
         root = KnowledgeNode(text="root")
         kg.add_node(root)
-        edge_targets: dict[str, EdgeType] = {}
+        edge_targets: dict[UUID, EdgeType] = {}
         for edge_type in EdgeType:
             leaf = KnowledgeNode(text="leaf-{0}".format(edge_type.value))
             kg.add_node(leaf)

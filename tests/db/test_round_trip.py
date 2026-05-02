@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid as uuid_mod
+
 import allure
 import pytest
 
@@ -85,3 +87,35 @@ class TestMutationIdempotence:
         assert loaded_state.game_time == "night"
         assert len(loaded_state.npcs) == original_npc_count - 1
         assert drop_uuid not in loaded_state.npcs
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Round trip")
+class TestNativeUuidRoundTrip:
+    """Pin that, after save/load, uuid-keyed dicts hold native ``uuid.UUID`` objects."""
+
+    @allure.story("Native UUID")
+    @allure.title("Loaded GameState carries uuid.UUID instances on every uuid field and dict key")
+    @pytest.mark.asyncio
+    async def test_uuid_round_trip_is_native(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, kg, events = populated_game_state
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        loaded_state, _kg, _events = loaded
+
+        assert isinstance(loaded_state.uuid, uuid_mod.UUID)
+        for npc_uuid, npc in loaded_state.npcs.items():
+            assert isinstance(npc_uuid, uuid_mod.UUID)
+            assert isinstance(npc.uuid, uuid_mod.UUID)
+        for loc_uuid, loc in loaded_state.locations.items():
+            assert isinstance(loc_uuid, uuid_mod.UUID)
+            assert isinstance(loc.uuid, uuid_mod.UUID)
+        for known in loaded_state.player.known_npcs:
+            assert isinstance(known, uuid_mod.UUID)

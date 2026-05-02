@@ -11,25 +11,37 @@ NPC Autonomy feature. The ticker runs *after*
 from __future__ import annotations
 
 from functools import partial
+from typing import Any
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import allure
 import pytest
 
-from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
-from cast.schemas import chronicler_response as chronicler_schema, turn_outputs
+from cast import (
+    director_dialogue,
+    director_events,
+    director_execution,
+    director_retaliation,
+    npc_ticker,
+    npc_turn,
+    schemas as _cast_schemas,
+)
 from knowledge import graph as graph_mod, memory as memory_mod
 from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
-from tests.director_helpers import route_plan
+from tests.director_helpers import make_uuid, route_plan
 from timeline.event_manager import EventManager
+
+chronicler_schema = _cast_schemas.chronicler_response
+turn_outputs = _cast_schemas.turn_outputs
 
 NPCCard = npc_card_mod.NPCCard
 
-_BARTENDER_UUID = "npc-bartender"
-_GUARD_UUID = "npc-guard"
+_BARTENDER_UUID = make_uuid("npc-bartender")
+_GUARD_UUID = make_uuid("npc-guard")
 
 
-def _register_npc(gs: gs_mod.GameState, uuid: str, name: str, occupation: str) -> NPCCard:
+def _register_npc(gs: gs_mod.GameState, uuid: UUID, name: str, occupation: str) -> NPCCard:
     npc = NPCCard(name=name, occupation=occupation)
     npc.uuid = uuid
     gs.npcs[uuid] = npc
@@ -54,7 +66,7 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
     event_mgr = EventManager(game_state=gs, knowledge_graph=gs.knowledge_graph)
     mem_mgr = memory_mod.MemoryManager.__new__(memory_mod.MemoryManager)
     events = director_events.EventProcessor(gs, event_mgr, mem_mgr)
-    actors: dict[str, object] = {}
+    actors: dict[UUID, Any] = {}
     dialogue = director_dialogue.DialogueHandler(gs, actors, mem_mgr)
     retaliation = director_retaliation.RetaliationHandler(gs, actors)
     npc_turns = npc_turn.NPCTurnResolver(gs, actors)
@@ -92,9 +104,9 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
     return executor, gs, narrator, chronicler
 
 
-def _seed_tavern_scene(gs: gs_mod.GameState, *npc_uuids: str) -> scene_mod.Scene:
+def _seed_tavern_scene(gs: gs_mod.GameState, *npc_uuids: UUID) -> scene_mod.Scene:
     scene = scene_mod.Scene(
-        location_id="tavern",
+        location_id=make_uuid("tavern"),
         description="The Rusty Anchor tavern.",
         npcs_present=[scene_mod.SceneNPC(role="npc", uuid=uid) for uid in npc_uuids],
     )
@@ -205,7 +217,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
         # init_scene_npcs will back it with the NPCCard the generator
         # returns, matching the real runtime flow.
         scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
             description="The Rusty Anchor, mid-morning.",
             npcs_present=[scene_mod.SceneNPC(role="bartender")],
         )
@@ -244,7 +256,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
         # Scene rebuilds to include the existing guard (pre-initialised
         # SceneNPC, carries her uuid) plus a fresh bartender shell.
         scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
             description="The Rusty Anchor after dark.",
             npcs_present=[
                 scene_mod.SceneNPC(role="guard", uuid=_GUARD_UUID),
@@ -288,7 +300,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
         # SceneBuilder produces one shell (guard). Guards are absent at
         # night, so without the skip this NPC would be evicted.
         scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
             description="The Rusty Anchor at night.",
             npcs_present=[scene_mod.SceneNPC(role="guard")],
         )

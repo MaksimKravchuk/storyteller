@@ -10,11 +10,12 @@ import pytest
 from cast.schemas.chronicler_response import ChroniclerResponse
 from models.location import Location
 from models.world_state import WorldThread
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_agent, setup_npc
 
-_NPC_A = "npc-1"
+_NPC_A = make_uuid("npc-1")
 _GUARD = "guard"
-_FORUM = "forum"
+_FORUM = make_uuid("forum")
 
 
 def _last_narrator_input(director):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import random
 from typing import Any
+from uuid import UUID
 
 from loguru import logger
 
@@ -18,31 +19,31 @@ from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
 
-def role_matched_uuids(targets_lower: set[str], game_state: GameState) -> set[str]:
+def role_matched_uuids(targets_lower: set[str], game_state: GameState) -> set[UUID]:
     """Return UUIDs of scene NPCs whose role matches a target name."""
     scene = game_state.current_scene
     if not scene:
         return set()
-    matched: set[str] = set()
+    matched: set[UUID] = set()
     for snpc in scene.npcs_present:
-        if snpc.uuid and snpc.role.lower() in targets_lower:
+        if snpc.uuid is not None and snpc.role.lower() in targets_lower:
             matched.add(snpc.uuid)
     return matched
 
 
-def name_matched_uuids(targets_lower: set[str], game_state: GameState) -> set[str]:
+def name_matched_uuids(targets_lower: set[str], game_state: GameState) -> set[UUID]:
     """Return UUIDs of NPCs whose name matches a target."""
-    matched: set[str] = set()
+    matched: set[UUID] = set()
     for uid, npc in game_state.npcs.items():
         if npc.name.lower() in targets_lower:
             matched.add(uid)
     return matched
 
 
-def deduplicate_by_name(uuids: set[str], game_state: GameState) -> list[str]:
+def deduplicate_by_name(uuids: set[UUID], game_state: GameState) -> list[UUID]:
     """De-duplicate NPC UUIDs so each name appears only once."""
     seen: set[str] = set()
-    unique_uuids: list[str] = []
+    unique_uuids: list[UUID] = []
     for uid in uuids:
         npc = game_state.npcs.get(uid)
         if npc and npc.name.lower() not in seen:
@@ -51,7 +52,7 @@ def deduplicate_by_name(uuids: set[str], game_state: GameState) -> list[str]:
     return unique_uuids
 
 
-def resolve_target_uuids(target_names: list[str], game_state: GameState) -> list[str]:
+def resolve_target_uuids(target_names: list[str], game_state: GameState) -> list[UUID]:
     """Resolve target names to a de-duplicated list of NPC UUIDs."""
     targets_lower = {target.lower() for target in target_names}
     matched = role_matched_uuids(targets_lower, game_state) | name_matched_uuids(targets_lower, game_state)
@@ -146,7 +147,7 @@ def format_dialogue_summary_pairs(
     work_items: list[tuple[Any, Any, str, ContestRoll | None]],
     dialogue_entries: list[dict[str, str]],
     player_action: str,
-) -> list[tuple[str, str]]:
+) -> list[tuple[UUID, str]]:
     """Build ``(npc_uuid, interaction_log)`` pairs for the memory summariser.
 
     Extracted so :meth:`DialogueHandler.handle_dialogue` stays under the

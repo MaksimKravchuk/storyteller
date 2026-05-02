@@ -12,6 +12,7 @@ import types
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
+from uuid import UUID
 
 from llm.turn_event_logger import record_turn_event
 
@@ -158,7 +159,7 @@ class NPCAction:
     anything. Validation happens at the ``cast.npc_turn`` boundary.
     """
 
-    npc_uuid: str
+    npc_uuid: UUID
     npc_name: str
     action_description: str
     action_type: str

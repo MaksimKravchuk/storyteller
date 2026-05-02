@@ -35,7 +35,7 @@ class TestListSessionsFiltering:
 
         rows = await repo.admin.list_sessions(web_player_id=player_id)
         assert len(rows) == 2
-        assert {row["web_player_id"] for row in rows} == {player_id}
+        assert {str(row["web_player_id"]) for row in rows} == {player_id}
         # Newest-first ordering is load-bearing: admins looking at a player's
         # game history expect the most recent game to appear on top.
         assert [row["id"] for row in rows] == [second["id"], first["id"]]
@@ -59,7 +59,7 @@ class TestListSessionsFiltering:
     async def test_search_matches_session_id_prefix(self, repo: GameRepository) -> None:
         row = await repo.sessions.create_telegram(_chat_id())
         await repo.sessions.create_telegram(_chat_id())
-        prefix = row["id"][:8]
+        prefix = str(row["id"])[:8]
 
         rows = await repo.admin.list_sessions(search=prefix)
         assert row["id"] in {item["id"] for item in rows}

@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from knowledge.node import (
     CanonSource,
@@ -42,13 +43,13 @@ class HearsayDraft:
     """
 
     text: str
-    told_by: str
+    told_by: UUID
     game_time: float
-    recipient_id: str
-    recipient_location: str
+    recipient_id: UUID
+    recipient_location: UUID
 
 
-def write_hearsay_node(graph: KnowledgeGraph, draft: HearsayDraft) -> str:
+def write_hearsay_node(graph: KnowledgeGraph, draft: HearsayDraft) -> UUID:
     """Create one ``LOCAL`` ``HEARSAY`` node for ``draft.recipient_id`` and return its UUID.
 
     The recipient NPC does not get a direct edge to the node — the

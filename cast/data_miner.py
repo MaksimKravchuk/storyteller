@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any
+from uuid import UUID
 
-from cast.base_performer_class import BasePerformer
+from cast import _data_miner_init as _dmi, base_performer_class as _bpc
 from cast.schemas.setting_response import SearchTermsResponse, SettingResponse
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
+from llm.base_client import BaseLLMClient
 from loguru import logger
 from models.setting import Setting
-from prompts.data_miner_prompts import get_data_miner_prompts
 from research.wikipedia_client import WikipediaClient
 
 # The synthesised ``Setting`` JSON (key persons, events, locations, traditions,
@@ -22,7 +22,7 @@ from research.wikipedia_client import WikipediaClient
 _RESEARCH_MAX_TOKENS = 8000
 
 
-class DataMiner(BasePerformer):
+class DataMiner(_bpc.BasePerformer):
     """Researches historical / geographical data via Wikipedia and synthesises
     it into a structured ``Setting`` for the game.
     """
@@ -30,19 +30,19 @@ class DataMiner(BasePerformer):
     def __init__(
         self,
         *,
-        llm_client: Any,
+        llm_client: BaseLLMClient,
         wikipedia_client: WikipediaClient | None = None,
         language: str = "English",
     ):
-        prompts = get_data_miner_prompts(language)
+        prompts = _dmi.resolve_prompts(language)
         super().__init__(
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
         self._search_terms_template = prompts.search_terms
         self._research_template = prompts.research
-        self.wikipedia = wikipedia_client or WikipediaClient()
-        self._fact_cache: dict[str, str] = {}  # entity name → node UUID
+        self.wikipedia = _dmi.resolve_wikipedia_client(wikipedia_client)
+        self._fact_cache: dict[str, UUID] = {}  # entity name → node UUID
         self._fact_locks: dict[str, asyncio.Lock] = {}  # per-entity asyncio lock
         self.set_context(language=language)
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import allure
 
 from interfaces.web.character import _SOURCE_WIRE, build_character_info
@@ -13,6 +15,7 @@ from knowledge.node import (
 )
 from models.game_state import GameState
 from models.npc_card import NPCCard
+from tests._uuid_helpers import make_uuid
 
 _STORY_BUILDER = "Character info builder"
 _FACT_TEXT = "You smashed the clay amphora on the tavern floor."
@@ -30,7 +33,7 @@ def _add_known_npc(game_state: GameState) -> NPCCard:
     return npc
 
 
-def _add_learned_fact(game_state: GameState, text: str) -> str:
+def _add_learned_fact(game_state: GameState, text: str) -> UUID:
     node = KnowledgeNode(
         text=text,
         scope=KnowledgeScope.LOCAL,
@@ -95,7 +98,7 @@ def test_builder_projects_learned_facts(game_state: GameState) -> None:
 @allure.story(_STORY_BUILDER)
 @allure.title("build_character_info skips known_npcs UUIDs that no longer resolve to a card")
 def test_builder_skips_evicted_npcs(game_state: GameState) -> None:
-    game_state.player.known_npcs.add("ghost-uuid-not-in-npcs")
+    game_state.player.known_npcs.add(make_uuid("ghost-uuid-not-in-npcs"))
 
     assert build_character_info(game_state).known_npcs == []
 
@@ -103,7 +106,7 @@ def test_builder_skips_evicted_npcs(game_state: GameState) -> None:
 @allure.story(_STORY_BUILDER)
 @allure.title("build_character_info skips learned_facts UUIDs that no longer resolve to a graph node")
 def test_builder_skips_missing_facts(game_state: GameState) -> None:
-    game_state.player.learned_facts.add("ghost-uuid-not-in-graph")
+    game_state.player.learned_facts.add(make_uuid("ghost-uuid-not-in-graph"))
 
     assert build_character_info(game_state).learned_facts == []
 
@@ -112,25 +115,31 @@ def test_builder_skips_missing_facts(game_state: GameState) -> None:
 @allure.title("build_character_info sorts known_npcs and learned_facts by UUID for a stable payload")
 def test_builder_sorts_set_backed_fields_by_uuid(game_state: GameState) -> None:
     first = NPCCard(name="Aulus", occupation="baker", short_descriptor="a flour-dusted baker")
-    first.uuid = "npc-aaa"
+    first.uuid = make_uuid("npc-aaa")
     second = NPCCard(name="Brutus", occupation="guard", short_descriptor="a stern guard")
-    second.uuid = "npc-bbb"
+    second.uuid = make_uuid("npc-bbb")
     game_state.npcs[first.uuid] = first
     game_state.npcs[second.uuid] = second
     game_state.player.known_npcs.update({second.uuid, first.uuid})
 
     alpha = KnowledgeNode(text="bread is fresh", source=KnowledgeSource.FACT)
-    alpha.uuid = "fact-aaa"
+    alpha.uuid = make_uuid("fact-aaa")
     beta = KnowledgeNode(text="gates close at dusk", source=KnowledgeSource.FACT)
-    beta.uuid = "fact-bbb"
+    beta.uuid = make_uuid("fact-bbb")
     game_state.knowledge_graph.add_node(alpha)
     game_state.knowledge_graph.add_node(beta)
     game_state.player.learned_facts.update({beta.uuid, alpha.uuid})
 
     sidebar = build_character_info(game_state)
 
-    assert [npc.name for npc in sidebar.known_npcs] == ["Aulus", "Brutus"]
-    assert [fact.text for fact in sidebar.learned_facts] == ["bread is fresh", "gates close at dusk"]
+    # Sidebar iterates known_npcs / learned_facts in sorted UUID order, so derive
+    # the expected order from the deterministic make_uuid hashes rather than name.
+    npc_by_uuid = {first.uuid: first.name, second.uuid: second.name}
+    fact_by_uuid = {alpha.uuid: alpha.text, beta.uuid: beta.text}
+    expected_npc_names = [npc_by_uuid[uid] for uid in sorted(npc_by_uuid)]
+    expected_fact_texts = [fact_by_uuid[uid] for uid in sorted(fact_by_uuid)]
+    assert [npc.name for npc in sidebar.known_npcs] == expected_npc_names
+    assert [fact.text for fact in sidebar.learned_facts] == expected_fact_texts
 
 
 @allure.story(_STORY_BUILDER)

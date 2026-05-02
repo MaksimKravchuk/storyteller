@@ -6,6 +6,9 @@ import allure
 
 from models.goal import Goal, GoalKind, GoalScope, GoalStatus
 from models.npc_card import NPCCard
+from tests._uuid_helpers import make_uuid
+
+_MARCUS = make_uuid("npc-marcus")
 
 
 def _kill_marcus_goal(last_attempted_action: str | None = None) -> Goal:
@@ -13,7 +16,7 @@ def _kill_marcus_goal(last_attempted_action: str | None = None) -> Goal:
     return Goal(
         kind=GoalKind.KILL,
         description="Avenge brother by killing Marcus",
-        target_uuid="npc-marcus",
+        target_uuid=_MARCUS,
         last_attempted_action=last_attempted_action,
     )
 
@@ -53,7 +56,7 @@ class TestGoalModel:
         assert revived.scope is GoalScope.LIFE
         assert revived.kind is GoalKind.KILL
         assert revived.description == "Avenge brother by killing Marcus"
-        assert revived.target_uuid == "npc-marcus"
+        assert revived.target_uuid == _MARCUS
         assert revived.status is GoalStatus.ACTIVE
         assert revived.last_attempted_action == "STEALTH"
         assert revived.progress_notes == ["approached the table"]
@@ -80,4 +83,4 @@ class TestGoalModel:
 
         assert npc.life_goal is not None
         assert npc.life_goal.kind is GoalKind.KILL
-        assert npc.life_goal.target_uuid == "npc-marcus"
+        assert npc.life_goal.target_uuid == _MARCUS

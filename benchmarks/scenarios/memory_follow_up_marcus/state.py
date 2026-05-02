@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
+from benchmarks._uuid_helpers import make_uuid
 from benchmarks.harness.types._scenarios import ScenarioState
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -11,7 +14,7 @@ from models.npc_card import NPCCard
 from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 
-_MARCUS_UUID = "npc-marcus-baker"
+_MARCUS_UUID = make_uuid("npc-marcus-baker")
 
 _ROLE_USER = "user"
 _ROLE_ASSISTANT = "assistant"
@@ -76,7 +79,7 @@ def _make_marcus() -> NPCCard:
     return marcus
 
 
-def _seed_marcus_memories(graph: KnowledgeGraph, marcus_uuid: str, location_id: str) -> None:
+def _seed_marcus_memories(graph: KnowledgeGraph, marcus_uuid: UUID, location_id: UUID) -> None:
     """Attach Marcus's two personal-experience memories to the graph."""
     graph.register_actor_node(marcus_uuid, label="Marcus (baker)")
     for text in (_FACT_STOLEN_LOAF, _FACT_SUSPECT_GAIUS):
@@ -106,7 +109,7 @@ def _make_location() -> Location:
     )
 
 
-def _make_scene(location_id: str, marcus_uuid: str) -> Scene:
+def _make_scene(location_id: UUID, marcus_uuid: UUID) -> Scene:
     return Scene(
         location_id=location_id,
         description=(

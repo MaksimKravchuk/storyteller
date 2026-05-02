@@ -9,6 +9,8 @@ per aggressive turn.
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from cast.director_dialogue_helpers import resolve_target_uuids
 from cast.hostility import RETALIATION_THRESHOLD, SEVERITY_HIGH, bump_hostility
 from llm.turn_event_logger import record_turn_event
@@ -19,7 +21,7 @@ def apply_aggressive_turn(
     game_state: GameState,
     target_names: list[str],
     player_action: str,
-) -> set[str]:
+) -> set[UUID]:
     """Bump hostility on each targeted NPC and return the UUIDs now past the retaliation threshold.
 
     Single pass: resolves target names through :func:`resolve_target_uuids`
@@ -31,7 +33,7 @@ def apply_aggressive_turn(
     """
     if not target_names:
         return set()
-    force_uuids: set[str] = set()
+    force_uuids: set[UUID] = set()
     for uuid in resolve_target_uuids(target_names, game_state):
         npc = game_state.npcs.get(uuid)
         if npc is None:
@@ -41,7 +43,8 @@ def apply_aggressive_turn(
             # different vector (no bump → no retaliation).
             record_turn_event(
                 "hostility_resolve_miss",
-                {"uuid": uuid, "targets": list(target_names), "turn": game_state.turn_count},
+                {"targets": list(target_names), "turn": game_state.turn_count},
+                npc_id=uuid,
             )
             continue
         bump_hostility(

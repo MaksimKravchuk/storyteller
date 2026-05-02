@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
+from benchmarks._uuid_helpers import make_uuid
 from benchmarks.harness.types._scenarios import ScenarioState
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState, PlayerState
@@ -10,9 +13,9 @@ from models.npc_card import NPCCard
 from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 
-_AULUS_UUID = "npc-guard-aulus"
-_BASSUS_UUID = "npc-guard-bassus"
-_CATO_UUID = "npc-guard-cato"
+_AULUS_UUID = make_uuid("npc-guard-aulus")
+_BASSUS_UUID = make_uuid("npc-guard-bassus")
+_CATO_UUID = make_uuid("npc-guard-cato")
 # Shared occupation keyword so ``cast.director_witness.is_guard_occupation``
 # recognises all three and the proximity-witness wiring kicks in.
 _CITY_GUARD_ROLE = "city guard"
@@ -27,7 +30,7 @@ def _make_setting() -> Setting:
     )
 
 
-def _make_guard(uuid: str, name: str) -> NPCCard:
+def _make_guard(uuid: UUID, name: str) -> NPCCard:
     """Build one city-guard NPCCard pinned to a stable uuid."""
     # combat_skill=5 keeps contest rolls from one-shotting the player and
     # short-circuiting bystander reactions the scenario is measuring.
@@ -61,7 +64,7 @@ def _make_location() -> Location:
     )
 
 
-def _make_scene(location_id: str) -> Scene:
+def _make_scene(location_id: UUID) -> Scene:
     return Scene(
         location_id=location_id,
         description=(
@@ -83,7 +86,7 @@ def _make_scene(location_id: str) -> Scene:
     )
 
 
-_GUARD_ROSTER: tuple[tuple[str, str], ...] = (
+_GUARD_ROSTER: tuple[tuple[UUID, str], ...] = (
     (_AULUS_UUID, "Aulus"),
     (_BASSUS_UUID, "Bassus"),
     (_CATO_UUID, "Cato"),

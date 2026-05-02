@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from uuid import UUID
 
 from typing import Any
 
@@ -51,8 +52,8 @@ class GameEvent(StorytellerBase):
     name: str
     scheduled_at: float
     duration: float
-    owner_id: str | None = None
-    location_id: str | None = None
+    owner_id: UUID | None = None
+    location_id: UUID | None = None
     scope: str = "local"
     effects: list[EventEffect] = []
     on_complete_description: str = ""

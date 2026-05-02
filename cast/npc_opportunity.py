@@ -18,6 +18,7 @@ Keywords match on **word boundaries**, not raw substrings — otherwise
 from __future__ import annotations
 
 import re
+from uuid import UUID
 
 from knowledge.query import KnowledgeQueryEngine
 from models.game_state import GameState
@@ -91,20 +92,20 @@ def get_opportunity_clause(npc: NPCCard, game_state: GameState) -> str | None:
     return _OPPORTUNITY_TEMPLATE.format(target=target_name)
 
 
-def _co_located_npc_uuids(scene: Scene, self_npc: NPCCard) -> list[str]:
-    uuids: list[str] = []
+def _co_located_npc_uuids(scene: Scene, self_npc: NPCCard) -> list[UUID]:
+    uuids: list[UUID] = []
     for snpc in scene.npcs_present:
-        if snpc.uuid and snpc.uuid != self_npc.uuid:
+        if snpc.uuid is not None and snpc.uuid != self_npc.uuid:
             uuids.append(snpc.uuid)
     return uuids
 
 
 def _name_from_relationship(
     npc: NPCCard,
-    co_located_uuids: list[str],
+    co_located_uuids: list[UUID],
     game_state: GameState,
 ) -> str | None:
-    co_located_set = set(co_located_uuids)
+    co_located_set = {str(uid) for uid in co_located_uuids}
     for target_uuid, label in npc.relationships.items():
         name = _resolve_hostile_rel(target_uuid, label, co_located_set, game_state)
         if name is not None:
@@ -122,7 +123,11 @@ def _resolve_hostile_rel(
         return None
     if not _RELATIONSHIP_KEYWORD_RE.search(label or ""):
         return None
-    target_npc = game_state.npcs.get(target_uuid)
+    try:
+        npc_uuid = UUID(target_uuid)
+    except ValueError:
+        return None
+    target_npc = game_state.npcs.get(npc_uuid)
     if target_npc is None:
         return None
     return target_npc.name
@@ -130,7 +135,7 @@ def _resolve_hostile_rel(
 
 def _name_from_knowledge(
     npc: NPCCard,
-    co_located_uuids: list[str],
+    co_located_uuids: list[UUID],
     game_state: GameState,
 ) -> str | None:
     co_located_names = _co_located_display_names(co_located_uuids, game_state)
@@ -154,7 +159,7 @@ def _names_in_text(names: list[str], text: str) -> str | None:
     return None
 
 
-def _co_located_display_names(co_located_uuids: list[str], game_state: GameState) -> list[str]:
+def _co_located_display_names(co_located_uuids: list[UUID], game_state: GameState) -> list[str]:
     """Resolve UUIDs to NPC display names, skipping any not registered in game state."""
     names: list[str] = []
     for uuid in co_located_uuids:
