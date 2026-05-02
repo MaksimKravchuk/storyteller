@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Iterator
 from uuid import UUID
 
 import allure
-from loguru import logger
 
 from cast.visible_entities import collect_visible_entities
 from knowledge.graph import KnowledgeGraph
 from models import game_state as _gs, location as _loc, npc_card as _npc, scene as _scene, setting as _setting
+from tests._log_helpers import capture_warnings
 from tests._uuid_helpers import make_uuid
 
 _NPC_1 = make_uuid("npc-1")
@@ -25,17 +23,6 @@ PointOfInterest = _scene.PointOfInterest
 Scene = _scene.Scene
 SceneNPC = _scene.SceneNPC
 Setting = _setting.Setting
-
-
-@contextmanager
-def _capture_warnings() -> Iterator[list[str]]:
-    """Collect loguru WARNING messages emitted inside the with-block."""
-    messages: list[str] = []
-    sink_id = logger.add(messages.append, level="WARNING", format="{level} {message}")
-    try:
-        yield messages
-    finally:
-        logger.remove(sink_id)
 
 
 def _make_state() -> GameState:
@@ -155,7 +142,7 @@ class TestCollectVisibleEntities:
             location_id=_TAVERN,
             npcs_present=[SceneNPC(role="guard", uuid=_NPC_MISSING)],
         )
-        with _capture_warnings() as messages:
+        with capture_warnings() as messages:
             entities = collect_visible_entities(scene, gs, None)
         assert entities == []
         assert any(str(_NPC_MISSING) in message for message in messages)
@@ -168,7 +155,7 @@ class TestCollectVisibleEntities:
             location_id=_TAVERN,
             npcs_present=[SceneNPC(role="guard")],
         )
-        with _capture_warnings() as messages:
+        with capture_warnings() as messages:
             entities = collect_visible_entities(scene, gs, None)
         assert entities == []
         assert not any("visible_entities" in message for message in messages)

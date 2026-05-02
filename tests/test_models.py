@@ -40,14 +40,14 @@ class TestBaseModel:
         assert len(uuids) == 100
 
     @allure.story("BaseModel UUID")
-    @allure.title("StorytellerBase generates a uuid.UUID with version 4 (KER-44 pin)")
+    @allure.title("StorytellerBase generates a uuid.UUID with version 4")
     def test_uuid_is_uuid4_instance(self):
         model = StorytellerBase()
         assert isinstance(model.uuid, uuid_mod.UUID)
         assert model.uuid.version == 4
 
     @allure.story("BaseModel UUID")
-    @allure.title("Constructing with a non-UUID string raises ValidationError (KER-44 pin)")
+    @allure.title("Constructing with a non-UUID string raises ValidationError")
     def test_invalid_uuid_rejected(self):
         with pytest.raises(ValidationError):
             StorytellerBase(uuid="guard")

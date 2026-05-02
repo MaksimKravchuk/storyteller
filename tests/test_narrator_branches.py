@@ -653,16 +653,16 @@ class TestNarratorDedup:
 @allure.epic("Narrator")
 @allure.feature("Schema validation")
 class TestTurnOutputsUuidValidation:
-    """Pin that DialogueEntry / NPCTurnEntry reject non-UUID npc_uuid at parse time (KER-44)."""
+    """Pin that DialogueEntry / NPCTurnEntry reject non-UUID npc_uuid at parse time."""
 
     @allure.story("DialogueEntry schema")
-    @allure.title("DialogueEntry rejects a non-UUID npc_uuid (KER-44 pin)")
+    @allure.title("DialogueEntry rejects a non-UUID npc_uuid")
     def test_invalid_dialogue_npc_uuid_rejected(self):
         with pytest.raises(ValidationError):
             DialogueEntry(npc_uuid="guard", npc_name="Guard", response="Halt!")
 
     @allure.story("NPCTurnEntry schema")
-    @allure.title("NPCTurnEntry rejects a non-UUID npc_uuid (KER-44 pin)")
+    @allure.title("NPCTurnEntry rejects a non-UUID npc_uuid")
     def test_invalid_npc_turn_npc_uuid_rejected(self):
         with pytest.raises(ValidationError):
             NPCTurnEntry(

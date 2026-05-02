@@ -29,6 +29,10 @@ def _format_persistent_world_changes(deltas: dict[UUID, list[str]]) -> str:
     if not deltas:
         return ""
     lines = []
+    # Sort by canonical string form so the rendered prompt stays
+    # alphabetical (matching what a human reading the prompt sees) and
+    # deterministic across runs — UUIDs are orderable by their 128-bit
+    # int, but lexicographic order matches the rendered text.
     for location_id in sorted(deltas, key=str):
         location_deltas = deltas[location_id]
         joined = " ".join(location_deltas)

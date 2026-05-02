@@ -13,7 +13,15 @@ from uuid import UUID
 
 
 def coerce_uuid(raw: Any) -> UUID | None:
-    """Return ``raw`` as a ``UUID`` (or ``None`` for missing/empty input)."""
+    """Return ``raw`` as a ``UUID`` (or ``None`` for missing/empty input).
+
+    Asymmetric on purpose: ``None`` and ``""`` are "field omitted" (the
+    common case for optional ``effect_data`` keys) and flow through as
+    ``None``. Any other non-empty unparseable input raises
+    ``ValueError`` from :class:`uuid.UUID` — that signals serialized
+    state corruption and should fail loudly rather than silently
+    collapse to ``None``.
+    """
     if raw is None or raw == "":
         return None
     if isinstance(raw, UUID):

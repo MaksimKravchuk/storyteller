@@ -9,7 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from cast._chronicler_goals import apply_goal_drafts, apply_goal_updates
-from cast.schemas.chronicler_response import GoalDraft, GoalUpdate
+from cast.schemas.chronicler_response import GoalDraft, GoalUpdate, WorldThreadUpdate
 from models.goal import Goal, GoalKind, GoalScope, GoalStatus
 from models.npc_card import NPCCard
 from tests._uuid_helpers import make_uuid
@@ -131,11 +131,11 @@ class TestApplyGoalDrafts:
 
 @allure.epic("World Chronicler")
 @allure.feature("Chronicler goal emission")
-class TestGoalDraftSchema:
-    """Schema-level validation for Chronicler-emitted goal drafts (KER-44 pin)."""
+class TestChroniclerSchemaUuidPinning:
+    """Pin that every Chronicler-emitted identifier rejects non-UUID input at parse time."""
 
     @allure.story("Goal draft schema")
-    @allure.title("GoalDraft rejects a non-UUID npc_uuid at parse time (KER-44 pin)")
+    @allure.title("GoalDraft rejects a non-UUID npc_uuid at parse time")
     def test_invalid_npc_uuid_rejected(self) -> None:
         with pytest.raises(ValidationError):
             GoalDraft.model_validate(
@@ -145,6 +145,18 @@ class TestGoalDraftSchema:
                     "description": "x",
                 },
             )
+
+    @allure.story("Goal update schema")
+    @allure.title("GoalUpdate rejects a non-UUID npc_uuid at parse time")
+    def test_invalid_goal_update_npc_uuid_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            GoalUpdate.model_validate({"npc_uuid": "not-a-uuid", "status": "abandoned"})
+
+    @allure.story("World thread update schema")
+    @allure.title("WorldThreadUpdate rejects a non-UUID thread_uuid at parse time")
+    def test_invalid_world_thread_update_uuid_rejected(self) -> None:
+        with pytest.raises(ValidationError):
+            WorldThreadUpdate.model_validate({"thread_uuid": "not-a-uuid", "status": "resolved"})
 
 
 @allure.epic("World Chronicler")

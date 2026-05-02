@@ -2,8 +2,7 @@
 
 The Data Miner pulls in a Wikipedia client and a prompt bundle on
 construction; both imports are pinned here so :mod:`cast.data_miner`
-itself stays inside the WPS201 module-import budget after the KER-44
-``UUID`` annotation was added.
+itself stays inside the WPS201 module-import budget.
 """
 
 from __future__ import annotations

@@ -102,13 +102,13 @@ def _persist_delta(
 
     Writes both sinks (``scene_state`` knowledge node and the typed
     ``Location.object_states`` channel) or neither — the shared
-    early-return guard on ``delta_text``, ``scene``, ``scene.location_id``
-    and ``object_key`` keeps the two sources of truth aligned so a
-    bystander reading persistent world changes never sees a delta the
-    Narrator's ``Prior damage:`` line omits.
+    early-return guard on ``delta_text``, ``scene``, and ``object_key``
+    keeps the two sources of truth aligned so a bystander reading
+    persistent world changes never sees a delta the Narrator's
+    ``Prior damage:`` line omits.
     """
     scene = game_state.current_scene
-    if not delta_text or not object_key or scene is None or scene.location_id is None:
+    if not delta_text or not object_key or scene is None:
         return
     record_scene_delta(
         game_state.knowledge_graph,

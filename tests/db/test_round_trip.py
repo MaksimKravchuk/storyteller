@@ -92,7 +92,7 @@ class TestMutationIdempotence:
 @allure.epic("Memory & Persistence")
 @allure.feature("Round trip")
 class TestNativeUuidRoundTrip:
-    """KER-44 pin: after save/load, uuid-keyed dicts hold native ``uuid.UUID`` objects."""
+    """Pin that, after save/load, uuid-keyed dicts hold native ``uuid.UUID`` objects."""
 
     @allure.story("Native UUID")
     @allure.title("Loaded GameState carries uuid.UUID instances on every uuid field and dict key")

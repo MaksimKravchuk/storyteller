@@ -1,16 +1,13 @@
 """Test helpers that produce valid UUID4 values from readable labels.
 
-KER-44 made every domain ``uuid`` field a real ``pydantic.UUID4`` rather
-than a free-form string. Hundreds of pre-existing tests carry literals
-like ``npc.uuid = "npc-brutus"`` that are not valid UUIDs and would now
-fail validation. Rewriting them to ``uuid.uuid4()`` would lose the
-readable label that helped diagnose test failures; rewriting them to a
-fixed canonical UUID per label is what this helper provides.
-
-``make_uuid(label)`` returns a deterministic ``uuid.UUID`` derived from
-the label by hashing — the same label always produces the same UUID,
-so equality assertions across producer / consumer boundaries continue
-to work without threading a fixture-built UUID through every fake.
+Every domain ``uuid`` field is a ``pydantic.UUID4``, so test fixtures
+cannot use readable strings like ``"npc-brutus"`` directly. Replacing
+them with ``uuid.uuid4()`` would lose the label that helps diagnose
+test failures; ``make_uuid(label)`` returns a deterministic ``uuid.UUID``
+derived from the label by hashing instead. The same label always
+produces the same UUID, so equality assertions across producer /
+consumer boundaries continue to work without threading a fixture-built
+UUID through every fake.
 """
 
 from __future__ import annotations

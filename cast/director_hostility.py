@@ -43,7 +43,8 @@ def apply_aggressive_turn(
             # different vector (no bump → no retaliation).
             record_turn_event(
                 "hostility_resolve_miss",
-                {"uuid": uuid, "targets": list(target_names), "turn": game_state.turn_count},
+                {"targets": list(target_names), "turn": game_state.turn_count},
+                npc_id=uuid,
             )
             continue
         bump_hostility(
