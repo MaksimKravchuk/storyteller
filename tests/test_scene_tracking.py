@@ -9,6 +9,7 @@ import pytest
 
 from db.converters.scene import scene_to_row
 from models.scene import Scene, SceneNPC
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import make_director, make_game_state
 
 _TALK = "TALK"
@@ -91,14 +92,14 @@ class TestSceneToRowConverter:
     @allure.story("Scene converter")
     @allure.title("scene_to_row defaults scene_number to 0 when it is not explicitly provided")
     def test_default_scene_number_zero(self):
-        scene = Scene(location_id="market", description="A market.")
+        scene = Scene(location_id=make_uuid("market"), description="A market.")
         row = scene_to_row(scene, "gs-1")
         assert row[_SCENE_NUM] == 0
 
     @allure.story("Scene converter")
     @allure.title("scene_to_row forwards an explicit scene_number and is_current flag onto the ORM row")
     def test_explicit_scene_number(self):
-        scene = Scene(location_id="docks", description="The docks.")
+        scene = Scene(location_id=make_uuid("docks"), description="The docks.")
         row = scene_to_row(scene, "gs-1", is_current=True, scene_number=3)
         assert row[_SCENE_NUM] == 3
         assert row["is_current"] is True
@@ -109,7 +110,7 @@ class TestSceneToRowConverter:
     )
     def test_row_has_scene_and_location_keys(self):
         scene = Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The forum.",
             npcs_present=[SceneNPC(role="guard")],
             points_of_interest=["fountain"],

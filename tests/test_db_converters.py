@@ -22,6 +22,7 @@ from db.converters import (
 from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models import game_state, location, npc_card, scene, setting
 from models.goal import Goal, GoalKind, GoalScope, GoalStatus
+from tests._uuid_helpers import make_uuid
 from timeline import event as timeline_event
 
 GAME_STATE_ID = "gs-1"
@@ -71,12 +72,12 @@ class TestLocationConverter:
         loc = location.Location(
             name="Market",
             description="A bustling market",
-            parent_location_id="city-1",
+            parent_location_id=make_uuid("city-1"),
             location_type="district",
             tags=["commerce"],
-            connected_locations=["loc-a", "loc-b"],
+            connected_locations=[make_uuid("loc-a"), make_uuid("loc-b")],
         )
-        loc.npcs_present = ["npc-1", "npc-2"]
+        loc.npcs_present = [make_uuid("npc-1"), make_uuid("npc-2")]
         loc.points_of_interest = ["fountain", "statue"]
         loc.object_states = {"shutter": "splintered; frame torn loose"}
 
@@ -87,11 +88,11 @@ class TestLocationConverter:
         assert restored.uuid == loc.uuid
         assert restored.name == "Market"
         assert restored.description == "A bustling market"
-        assert restored.parent_location_id == "city-1"
+        assert restored.parent_location_id == make_uuid("city-1")
         assert restored.location_type == "district"
         assert restored.tags == ["commerce"]
-        assert restored.connected_locations == ["loc-a", "loc-b"]
-        assert restored.npcs_present == ["npc-1", "npc-2"]
+        assert restored.connected_locations == [make_uuid("loc-a"), make_uuid("loc-b")]
+        assert restored.npcs_present == [make_uuid("npc-1"), make_uuid("npc-2")]
         assert [poi.primary_name for poi in restored.points_of_interest] == ["fountain", "statue"]
         assert restored.object_states == {"shutter": "splintered; frame torn loose"}
 
@@ -113,7 +114,7 @@ class TestNPCConverter:
             knowledge_scope="city",
             attributes={"strength": 8},
             inventory=["sword", "shield"],
-            location_id="loc-1",
+            location_id=make_uuid("loc-1"),
             relationships={"npc-2": "friend"},
         )
         npc.conversation_history = [{"role": "user", "content": "hi"}]
@@ -139,7 +140,7 @@ class TestNPCConverter:
         assert restored.knowledge_scope == "city"
         assert restored.attributes == {"strength": 8}
         assert restored.inventory == ["sword", "shield"]
-        assert restored.location_id == "loc-1"
+        assert restored.location_id == make_uuid("loc-1")
         assert restored.relationships == {"npc-2": "friend"}
         assert restored.conversation_history == [{"role": "user", "content": "hi"}]
         assert restored.current_mood == "suspicious"
@@ -157,7 +158,7 @@ class TestNPCConverter:
             scope=GoalScope.LIFE,
             kind=GoalKind.KILL,
             description="Avenge brother",
-            target_uuid="npc-9",
+            target_uuid=make_uuid("npc-9"),
             progress_notes=["spotted target near the bridge"],
         )
         npc.tactical_goal = Goal(
@@ -210,30 +211,30 @@ class TestPlayerConverter:
     @allure.title("PlayerState round-trips including inventory and known NPCs")
     def test_round_trip(self):
         player = game_state.PlayerState(name="Hero")
-        player.location_id = "loc-42"
+        player.location_id = make_uuid("loc-42")
         player.inventory = ["torch", "map"]
         player.appearance = "A weary adventurer"
         player.physical_status = "exhausted"
-        player.known_npcs = {"npc-1", "npc-2"}
+        player.known_npcs = {make_uuid("npc-1"), make_uuid("npc-2")}
         player.player_event_log = ["Met Marcus", "Found the shrine"]
-        player.learned_facts = {"fact-a", "fact-b"}
+        player.learned_facts = {make_uuid("fact-a"), make_uuid("fact-b")}
 
         row = pl_conv.player_to_row(player, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
-        assert row["known_npcs"] == ["npc-1", "npc-2"]
+        assert set(row["known_npcs"]) == {make_uuid("npc-1"), make_uuid("npc-2")}
         assert row["player_event_log"] == ["Met Marcus", "Found the shrine"]
-        assert row["learned_facts"] == ["fact-a", "fact-b"]
+        assert set(row["learned_facts"]) == {make_uuid("fact-a"), make_uuid("fact-b")}
 
         restored = pl_conv.row_to_player(row)
         assert restored.uuid == player.uuid
         assert restored.name == "Hero"
-        assert restored.location_id == "loc-42"
+        assert restored.location_id == make_uuid("loc-42")
         assert restored.inventory == ["torch", "map"]
         assert restored.appearance == "A weary adventurer"
         assert restored.physical_status == "exhausted"
-        assert restored.known_npcs == {"npc-1", "npc-2"}
+        assert restored.known_npcs == {make_uuid("npc-1"), make_uuid("npc-2")}
         assert restored.player_event_log == ["Met Marcus", "Found the shrine"]
-        assert restored.learned_facts == {"fact-a", "fact-b"}
+        assert restored.learned_facts == {make_uuid("fact-a"), make_uuid("fact-b")}
 
 
 @allure.epic("Persistence")
@@ -243,9 +244,9 @@ class TestSceneConverter:
     @allure.title("Scene round-trips preserving SceneNPC role/uuid pairs via to_dict serialization")
     def test_round_trip(self):
         original = scene.Scene(
-            location_id="loc-1",
+            location_id=make_uuid("loc-1"),
             description="A quiet square",
-            npcs_present=[scene.SceneNPC(role="guard", uuid="npc-1")],
+            npcs_present=[scene.SceneNPC(role="guard", uuid=make_uuid("npc-1"))],
             points_of_interest=["well"],
             ambient_description="Birds chirp",
             time_of_day="dawn",
@@ -256,15 +257,15 @@ class TestSceneConverter:
         assert row["game_state_id"] == GAME_STATE_ID
         assert row["is_current"] is True
         assert row["scene_number"] == 3
-        assert row["npcs_present"] == [{"role": "guard", "uuid": "npc-1"}]
+        assert row["npcs_present"] == [{"role": "guard", "uuid": make_uuid("npc-1")}]
 
         restored = sc_conv.row_to_scene(row)
         assert restored.uuid == original.uuid
-        assert restored.location_id == "loc-1"
+        assert restored.location_id == make_uuid("loc-1")
         assert restored.description == "A quiet square"
         assert len(restored.npcs_present) == 1
         assert restored.npcs_present[0].role == "guard"
-        assert restored.npcs_present[0].uuid == "npc-1"
+        assert restored.npcs_present[0].uuid == make_uuid("npc-1")
         assert [poi.primary_name for poi in restored.points_of_interest] == ["well"]
         assert restored.ambient_description == "Birds chirp"
         assert restored.time_of_day == "dawn"
@@ -273,14 +274,15 @@ class TestSceneConverter:
     @allure.story("Backwards compatibility")
     @allure.title("row_to_scene handles legacy rows where npcs_present entries are bare UUID strings")
     def test_legacy_string_npcs_present(self):
-        original = scene.Scene(location_id="loc-1")
+        original = scene.Scene(location_id=make_uuid("loc-1"))
         row = sc_conv.scene_to_row(original, GAME_STATE_ID)
-        row["npcs_present"] = ["npc-legacy-uuid"]
+        legacy_uuid_str = str(make_uuid("npc-legacy-uuid"))
+        row["npcs_present"] = [legacy_uuid_str]
 
         restored = sc_conv.row_to_scene(row)
         assert len(restored.npcs_present) == 1
-        assert restored.npcs_present[0].role == "npc-legacy-uuid"
-        assert restored.npcs_present[0].uuid == "npc-legacy-uuid"
+        assert restored.npcs_present[0].role == legacy_uuid_str
+        assert restored.npcs_present[0].uuid == make_uuid("npc-legacy-uuid")
 
 
 @allure.epic("Persistence")
@@ -296,7 +298,7 @@ class TestKnowledgeConverter:
             canon=CanonSource.SESSION,
             required_education=5,
             tags=["politics", "scandal"],
-            location_id="loc-court",
+            location_id=make_uuid("loc-court"),
             timestamp=12.5,
         )
         row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
@@ -311,7 +313,7 @@ class TestKnowledgeConverter:
         assert restored.canon == CanonSource.SESSION
         assert restored.required_education == 5
         assert restored.tags == ["politics", "scandal"]
-        assert restored.location_id == "loc-court"
+        assert restored.location_id == make_uuid("loc-court")
         assert restored.timestamp == pytest.approx(12.5)
 
     @allure.story("Backwards compatibility")
@@ -340,8 +342,8 @@ class TestGameEventConverter:
             name="guard patrol",
             scheduled_at=10,
             duration=2,
-            owner_id="npc-1",
-            location_id="loc-1",
+            owner_id=make_uuid("npc-1"),
+            location_id=make_uuid("loc-1"),
             scope="local",
             effects=[effect],
             on_complete_description="The guard arrives at the gate.",
@@ -360,8 +362,8 @@ class TestGameEventConverter:
         assert restored.scheduled_at == pytest.approx(10)
         assert restored.duration == pytest.approx(2)
         assert restored.completes_at == pytest.approx(12)
-        assert restored.owner_id == "npc-1"
-        assert restored.location_id == "loc-1"
+        assert restored.owner_id == make_uuid("npc-1")
+        assert restored.location_id == make_uuid("loc-1")
         assert restored.scope == "local"
         assert restored.status == timeline_event.EventStatus.COMPLETED
         assert len(restored.effects) == 1

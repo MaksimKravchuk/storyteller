@@ -13,10 +13,12 @@ from knowledge.query import KnowledgeQueryEngine
 from llm.message import LLMResponse
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import make_director, make_game_state, make_mock_actor, setup_npc
 
-_NPC_A = "npc-1"
-_NPC_B = "npc-2"
+_NPC_A = make_uuid("npc-1")
+_NPC_B = make_uuid("npc-2")
+_FORUM = make_uuid("forum")
 _MEMORY_SUMMARY = "Marcus finds the player curious and welcoming."
 _RETALIATION_SUMMARY = "Marcus recalls the player shouting insults and striking back."
 _DAMNING_STATEMENT = "I killed the duke's son last winter"
@@ -35,7 +37,7 @@ class TestDialogueHandlerLongTermMemory:
         setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
         )
@@ -81,7 +83,7 @@ class TestDialogueHandlerLongTermMemory:
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.knowledge_graph.register_actor_node(_NPC_B, label="Cassia (innkeeper)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[
                 SceneNPC(role="legionary", uuid=_NPC_A),
@@ -143,7 +145,7 @@ class TestDialogueHandlerLongTermMemory:
         setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
         )
@@ -180,7 +182,7 @@ class TestDialogueHandlerLongTermMemory:
         setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[
                 SceneNPC(role="legionary", uuid=_NPC_A),
@@ -307,7 +309,7 @@ class TestDialogueHandlerEntryProduction:
         setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
         )
@@ -340,7 +342,7 @@ class TestDialogueHandlerConversationHistory:
         npc = setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
         )
@@ -373,7 +375,7 @@ class TestDialogueHandlerConversationHistory:
         npc.conversation_history = list(seed)
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (baker)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[SceneNPC(role="baker", uuid=_NPC_A)],
         )
@@ -404,7 +406,7 @@ class TestDialogueHandlerConversationHistory:
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.knowledge_graph.register_actor_node(_NPC_B, label="Cassia (innkeeper)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[
                 SceneNPC(role="legionary", uuid=_NPC_A),
@@ -445,7 +447,7 @@ class TestDialogueHandlerConversationHistory:
         npc = setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
         gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
         )

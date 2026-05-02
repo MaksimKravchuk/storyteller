@@ -21,8 +21,8 @@ from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 
 metadata = MetaData()
 
-# Reusable column type: UUID stored as string (not Python UUID objects)
-_UUID_STR = UUID(as_uuid=False)
+# Reusable column type: native Postgres UUID round-tripped as Python ``uuid.UUID``.
+_UUID_STR = UUID(as_uuid=True)
 
 # Column name constants
 _COL_ID = "id"

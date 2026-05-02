@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
+from benchmarks._uuid_helpers import make_uuid
 from benchmarks.harness.types._scenarios import ScenarioState
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState, PlayerState
@@ -10,7 +13,7 @@ from models.npc_card import NPCCard
 from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 
-SENTRY_UUID = "npc-sentry-quintus"
+SENTRY_UUID = make_uuid("npc-sentry-quintus")
 SENTRY_NAME = "Quintus"
 SENTRY_CHALLENGE_FORMULA = "Halt! State your name and your business at this gate."
 SENTRY_OCCUPATION = "gate sentry"
@@ -66,7 +69,7 @@ def _make_location() -> Location:
     )
 
 
-def _make_scene(location_id: str) -> Scene:
+def _make_scene(location_id: UUID) -> Scene:
     return Scene(
         location_id=location_id,
         description=(

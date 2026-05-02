@@ -14,11 +14,12 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.location import Location
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 from timeline.effect_applier import EffectApplier
 from timeline.event import EventEffect
 
 _EFFECT_TYPE = "APPLY_OBJECT_DAMAGE"
-_LOCATION_ID = "tavern"
+_LOCATION_ID = make_uuid("tavern")
 _OBJECT_KEY = "shutter"
 _STATE_DESC = "splintered; frame torn loose"
 
@@ -95,11 +96,12 @@ class TestApplyObjectDamageEffect:
         gs = _make_game_state_with_location()
         applier = EffectApplier(gs, KnowledgeGraph())
 
+        nonexistent = make_uuid("nonexistent")
         effect = EventEffect(
             effect_type=_EFFECT_TYPE,
-            target_id="nonexistent",
+            target_id=str(nonexistent),
             effect_data={
-                "location_id": "nonexistent",
+                "location_id": str(nonexistent),
                 "object_key": _OBJECT_KEY,
                 "state_description": _STATE_DESC,
             },

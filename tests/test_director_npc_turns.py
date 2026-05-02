@@ -9,9 +9,10 @@ import allure
 import pytest
 
 from models.npc_card import NPCCard
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import actor_reply, make_director, make_game_state
 
-_NPC_A = "npc-1"
+_NPC_A = make_uuid("npc-1")
 _GUARD = "Guard"
 
 

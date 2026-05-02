@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum, IntEnum
+from uuid import UUID
 
 from models.base_model import StorytellerBase
 
@@ -49,5 +50,5 @@ class KnowledgeNode(StorytellerBase):
     canon: CanonSource = CanonSource.HISTORICAL
     required_education: int = 0  # 0-10
     tags: list[str] = []
-    location_id: str | None = None
+    location_id: UUID | None = None
     timestamp: float | None = None  # Game-clock time when learned

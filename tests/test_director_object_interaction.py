@@ -22,10 +22,13 @@ from knowledge.query import KnowledgeQueryEngine
 from knowledge.scene_state import SCENE_STATE_TAG, query_scene_deltas
 from llm.message import LLMResponse
 from models import location as location_mod, scene as scene_mod
-from tests.director_helpers import make_game_state, setup_npc
+from tests.director_helpers import make_game_state, make_uuid, setup_npc
 
 _SEND_JSON = "_send_json"
-_NPC_UUID = "npc-bystander"
+_NPC_UUID = make_uuid("npc-bystander")
+_TAVERN = make_uuid("tavern")
+_FORUM = make_uuid("forum")
+_GHOST = make_uuid("ghost")
 
 
 def _stub_item_generator(response: item_resp.ObjectInteractionResponse) -> ig_mod.ItemGenerator:
@@ -52,7 +55,7 @@ class TestApplyObjectInteractions:
     async def test_persists_delta_and_returns_narration(self):
         gs = make_game_state()
         gs.current_scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             description="The Rusty Anchor, dim and smoky.",
             npcs_present=[],
         )
@@ -74,7 +77,7 @@ class TestApplyObjectInteractions:
 
         assert result.narrations == ["Glass shatters with a sharp crack."]
         assert result.deltas == ["The front window is broken."]
-        deltas = query_scene_deltas(gs.knowledge_graph, "tavern")
+        deltas = query_scene_deltas(gs.knowledge_graph, _TAVERN)
         assert len(deltas) == 1
         assert deltas[0].text == "The front window is broken."
         assert SCENE_STATE_TAG in deltas[0].tags
@@ -87,7 +90,7 @@ class TestApplyObjectInteractions:
         setup_npc(gs, _NPC_UUID, name="Livia", occupation="innkeeper")
         gs.knowledge_graph.register_actor_node(_NPC_UUID, label="Livia (innkeeper)")
         gs.current_scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             description="The Rusty Anchor.",
             npcs_present=[scene_mod.SceneNPC(role="innkeeper", uuid=_NPC_UUID)],
         )
@@ -119,7 +122,7 @@ class TestApplyObjectInteractions:
         setup_npc(gs, _NPC_UUID, name="Livia", occupation="innkeeper")
         gs.knowledge_graph.register_actor_node(_NPC_UUID, label="Livia (innkeeper)")
         gs.current_scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             description="The Rusty Anchor.",
             npcs_present=[scene_mod.SceneNPC(role="innkeeper", uuid=_NPC_UUID)],
         )
@@ -141,7 +144,7 @@ class TestApplyObjectInteractions:
 
         assert result.narrations == ["You bump into the wall; nothing gives."]
         assert result.deltas == [""]
-        assert query_scene_deltas(gs.knowledge_graph, "tavern") == []
+        assert query_scene_deltas(gs.knowledge_graph, _TAVERN) == []
         # No delta → no witness memory either. The bystander's graph node
         # exists but has no PERSONAL_EXPERIENCE edges.
         assert KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_UUID) == []
@@ -154,7 +157,7 @@ class TestApplyObjectInteractions:
         setup_npc(gs, _NPC_UUID, name="Livia", occupation="innkeeper")
         gs.knowledge_graph.register_actor_node(_NPC_UUID, label="Livia (innkeeper)")
         gs.current_scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             description="The Rusty Anchor.",
             npcs_present=[scene_mod.SceneNPC(role="innkeeper", uuid=_NPC_UUID)],
         )
@@ -208,7 +211,7 @@ class TestApplyObjectInteractions:
     async def test_uninitialised_scene_stub_skipped(self):
         gs = make_game_state()
         gs.current_scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             description="The Rusty Anchor.",
             npcs_present=[scene_mod.SceneNPC(role="beggar")],  # No uuid, no card.
         )
@@ -253,7 +256,7 @@ class TestSceneBuilderDeltaInjection:
         """
         gs = make_game_state()
         gs.current_scene = scene_mod.Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             description="The Rusty Anchor.",
             npcs_present=[],
         )
@@ -275,7 +278,7 @@ class TestSceneBuilderDeltaInjection:
         )
 
         # The delta is in the graph under the tavern location.
-        deltas = query_scene_deltas(gs.knowledge_graph, "tavern")
+        deltas = query_scene_deltas(gs.knowledge_graph, _TAVERN)
         assert len(deltas) == 1
 
         # --- Phase 2: MOVE to the forum ---
@@ -292,13 +295,13 @@ class TestSceneBuilderDeltaInjection:
 
         # Delta must still be queryable after the move — the scene_state
         # node is tied to location_id, not the live current_scene.
-        assert len(query_scene_deltas(gs.knowledge_graph, "tavern")) == 1
+        assert len(query_scene_deltas(gs.knowledge_graph, _TAVERN)) == 1
 
         # --- Phase 3: MOVE back to the tavern ---
         # Capture the system prompt the Scene Builder renders on the
         # second visit: it must contain the broken-window delta.
         tavern_response = scene_resp.SceneResponse(
-            location_id="tavern",
+            location_id=str(_TAVERN),
             description="The Rusty Anchor — now with a shattered front window.",
             npcs_present=[],
             points_of_interest=["broken window"],
@@ -309,9 +312,9 @@ class TestSceneBuilderDeltaInjection:
 
         rendered_system_prompt = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "The front window is broken." in rendered_system_prompt
-        assert "tavern" in rendered_system_prompt
+        assert str(_TAVERN) in rendered_system_prompt
         # Sanity: the delta did not evaporate during the round-trip.
-        assert len(query_scene_deltas(gs.knowledge_graph, "tavern")) == 1
+        assert len(query_scene_deltas(gs.knowledge_graph, _TAVERN)) == 1
 
 
 @allure.epic("Scene & Exploration")
@@ -328,8 +331,8 @@ class TestApplyObjectInteractionsDualSink:
     @pytest.mark.asyncio
     async def test_writes_typed_channel_and_graph(self):
         gs = make_game_state()
-        gs.locations["tavern"] = location_mod.Location(uuid="tavern", name="Rusty Anchor")
-        gs.current_scene = scene_mod.Scene(location_id="tavern", description="The Rusty Anchor.")
+        gs.locations[_TAVERN] = location_mod.Location(uuid=_TAVERN, name="Rusty Anchor")
+        gs.current_scene = scene_mod.Scene(location_id=_TAVERN, description="The Rusty Anchor.")
         item_gen = _stub_item_generator(
             item_resp.ObjectInteractionResponse(
                 narration="Glass shatters.",
@@ -346,16 +349,16 @@ class TestApplyObjectInteractionsDualSink:
             memory_manager,
         )
 
-        assert gs.locations["tavern"].object_states == {"window": "The front window is broken."}
-        assert len(query_scene_deltas(gs.knowledge_graph, "tavern")) == 1
+        assert gs.locations[_TAVERN].object_states == {"window": "The front window is broken."}
+        assert len(query_scene_deltas(gs.knowledge_graph, _TAVERN)) == 1
 
     @allure.story("Dual-sink persistence")
     @allure.title("apply_object_interactions normalizes paraphrased object keys to a single object_states slot")
     @pytest.mark.asyncio
     async def test_normalizes_paraphrased_keys(self):
         gs = make_game_state()
-        gs.locations["tavern"] = location_mod.Location(uuid="tavern", name="Rusty Anchor")
-        gs.current_scene = scene_mod.Scene(location_id="tavern", description="The Rusty Anchor.")
+        gs.locations[_TAVERN] = location_mod.Location(uuid=_TAVERN, name="Rusty Anchor")
+        gs.current_scene = scene_mod.Scene(location_id=_TAVERN, description="The Rusty Anchor.")
         item_gen = _stub_item_generator(
             item_resp.ObjectInteractionResponse(
                 narration="You hit the shutter.",
@@ -372,15 +375,15 @@ class TestApplyObjectInteractionsDualSink:
             memory_manager,
         )
 
-        assert gs.locations["tavern"].object_states == {"wooden shutter": "The wooden shutter is splintered."}
+        assert gs.locations[_TAVERN].object_states == {"wooden shutter": "The wooden shutter is splintered."}
 
     @allure.story("Dual-sink persistence")
     @allure.title("apply_object_interactions pairs multi-target deltas with their object keys in order")
     @pytest.mark.asyncio
     async def test_multi_target_pairing(self):
         gs = make_game_state()
-        gs.locations["tavern"] = location_mod.Location(uuid="tavern", name="Rusty Anchor")
-        gs.current_scene = scene_mod.Scene(location_id="tavern", description="The Rusty Anchor.")
+        gs.locations[_TAVERN] = location_mod.Location(uuid=_TAVERN, name="Rusty Anchor")
+        gs.current_scene = scene_mod.Scene(location_id=_TAVERN, description="The Rusty Anchor.")
         gen = ig_mod.ItemGenerator(llm_client=MagicMock())
         responses = [
             item_resp.ObjectInteractionResponse(
@@ -403,7 +406,7 @@ class TestApplyObjectInteractionsDualSink:
             memory_manager,
         )
 
-        assert gs.locations["tavern"].object_states == {
+        assert gs.locations[_TAVERN].object_states == {
             "window": "The window is broken.",
             "door": "The door is splintered.",
         }
@@ -413,8 +416,8 @@ class TestApplyObjectInteractionsDualSink:
     @pytest.mark.asyncio
     async def test_empty_object_key_skips_both_sinks(self):
         gs = make_game_state()
-        gs.locations["tavern"] = location_mod.Location(uuid="tavern", name="Rusty Anchor")
-        gs.current_scene = scene_mod.Scene(location_id="tavern", description="The Rusty Anchor.")
+        gs.locations[_TAVERN] = location_mod.Location(uuid=_TAVERN, name="Rusty Anchor")
+        gs.current_scene = scene_mod.Scene(location_id=_TAVERN, description="The Rusty Anchor.")
         item_gen = _stub_item_generator(
             item_resp.ObjectInteractionResponse(narration="Nothing happens.", delta="Wall is cracked."),
         )
@@ -428,15 +431,15 @@ class TestApplyObjectInteractionsDualSink:
             memory_manager,
         )
 
-        assert gs.locations["tavern"].object_states == {}
-        assert query_scene_deltas(gs.knowledge_graph, "tavern") == []
+        assert gs.locations[_TAVERN].object_states == {}
+        assert query_scene_deltas(gs.knowledge_graph, _TAVERN) == []
 
     @allure.story("Dual-sink persistence")
     @allure.title("apply_object_interactions keeps the graph write loud when the scene's location is unregistered")
     @pytest.mark.asyncio
     async def test_missing_location_logs_but_writes_graph(self):
         gs = make_game_state()
-        gs.current_scene = scene_mod.Scene(location_id="ghost", description="Nowhere.")
+        gs.current_scene = scene_mod.Scene(location_id=_GHOST, description="Nowhere.")
         item_gen = _stub_item_generator(
             item_resp.ObjectInteractionResponse(
                 narration="The wall cracks.",
@@ -454,5 +457,5 @@ class TestApplyObjectInteractionsDualSink:
         )
 
         # Graph write still fires — the dangling location only blocks the typed channel.
-        assert len(query_scene_deltas(gs.knowledge_graph, "ghost")) == 1
-        assert "ghost" not in gs.locations
+        assert len(query_scene_deltas(gs.knowledge_graph, _GHOST)) == 1
+        assert _GHOST not in gs.locations

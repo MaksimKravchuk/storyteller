@@ -13,6 +13,7 @@ from cast._npc_tactical_goal import (
 )
 from models.goal import Goal, GoalKind, GoalScope, GoalStatus
 from tests._aftermath_helpers import make_actor_target_state
+from tests._uuid_helpers import make_uuid
 
 
 @allure.epic("NPC Interaction")
@@ -24,14 +25,14 @@ class TestAssignDefendGoals:
     @allure.title("Player attack stamps a tactical DEFEND on the targeted NPC")
     def test_defend_goal_set_on_target(self) -> None:
         state, actor, _target, _location = make_actor_target_state()
-        state.player.uuid = "player-1"
+        state.player.uuid = make_uuid("player-1")
 
         assign_defend_goals_from_aggression(state, [actor.uuid], "punches Brutus")
 
         assert actor.tactical_goal is not None
         assert actor.tactical_goal.scope is GoalScope.TACTICAL
         assert actor.tactical_goal.kind is GoalKind.DEFEND
-        assert actor.tactical_goal.target_uuid == "player-1"
+        assert actor.tactical_goal.target_uuid == make_uuid("player-1")
         assert actor.tactical_goal.created_on_turn == state.turn_count
 
     @allure.story("DEFEND assignment")
@@ -42,7 +43,7 @@ class TestAssignDefendGoals:
             scope=GoalScope.TACTICAL,
             kind=GoalKind.KILL,
             description="finish the vendetta",
-            target_uuid="other",
+            target_uuid=make_uuid("other"),
         )
 
         assign_defend_goals_from_aggression(state, [actor.uuid], "shoves")
@@ -53,7 +54,7 @@ class TestAssignDefendGoals:
     @allure.title("Unknown UUIDs are silently skipped")
     def test_unknown_uuid_is_noop(self) -> None:
         state, _actor, _target, _location = make_actor_target_state()
-        assign_defend_goals_from_aggression(state, ["ghost-uuid"], "punches air")
+        assign_defend_goals_from_aggression(state, [make_uuid("ghost-uuid")], "punches air")
         assert all(npc.tactical_goal is None for npc in state.npcs.values())
 
 
@@ -86,7 +87,7 @@ class TestLifeOnSightPromotion:
         actor.life_goal = Goal(
             kind=GoalKind.KILL,
             description="hunt someone",
-            target_uuid="missing-uuid",
+            target_uuid=make_uuid("missing-uuid"),
         )
 
         promote_life_goals_on_sight(state)
@@ -194,7 +195,7 @@ class TestActiveTacticalQuery:
         _state, actor, _target, _location = make_actor_target_state()
         assert has_active_tactical_goal(actor) is False
 
-        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid="t")
+        actor.life_goal = Goal(kind=GoalKind.KILL, description="x", target_uuid=make_uuid("t"))
         assert has_active_tactical_goal(actor) is False  # life-only doesn't count
 
         actor.tactical_goal = Goal(

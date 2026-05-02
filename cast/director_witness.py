@@ -30,6 +30,7 @@ you do this":
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -67,7 +68,7 @@ class WitnessedAggression(BaseModel):
 
     kind: str
     target: str
-    location_id: str | None
+    location_id: UUID | None
     description: str
 
 
@@ -88,7 +89,7 @@ def build_object_smash_witness(
     target: str,
     delta_text: str,
     player_action: str,
-    location_id: str | None,
+    location_id: UUID | None,
 ) -> WitnessedAggression:
     """Build a :class:`WitnessedAggression` for an aggressive object INTERACT.
 
@@ -120,7 +121,7 @@ def _format_witness_description(player_action: str, delta_text: str) -> str:
 def build_npc_attack_witness(
     target_name: str,
     player_action: str,
-    location_id: str | None,
+    location_id: UUID | None,
 ) -> WitnessedAggression:
     """Build a :class:`WitnessedAggression` for an aggressive NPC INTERACT (KER-33).
 
@@ -156,9 +157,9 @@ def _eligible_for_bump(npc: object) -> bool:
 
 def bump_guard_moods(
     game_state: GameState,
-    witness_uuids: list[str],
+    witness_uuids: list[UUID],
     new_mood: str = WITNESS_MOOD_THREATENED,
-) -> list[str]:
+) -> list[UUID]:
     """Flip ``current_mood`` to ``new_mood`` for neutral guard witnesses.
 
     Only NPCs whose current mood is exactly ``"neutral"`` are bumped,
@@ -169,7 +170,7 @@ def bump_guard_moods(
     Returns the list of UUIDs that were actually bumped, useful for
     logging or test assertions.
     """
-    bumped: list[str] = []
+    bumped: list[UUID] = []
     for uuid in witness_uuids:
         npc = game_state.npcs.get(uuid)
         if npc is None or not _eligible_for_bump(npc):

@@ -14,6 +14,8 @@ Module is private — callers reach these helpers through
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from models.goal import Goal, GoalKind, GoalStatus
 from models.npc_card import NPCCard
 
@@ -31,7 +33,7 @@ def select_active_goal(npc: NPCCard) -> Goal | None:
     return None
 
 
-def _matches_kill_target(goal: Goal | None, target_uuid: str | None) -> bool:
+def _matches_kill_target(goal: Goal | None, target_uuid: UUID | None) -> bool:
     """True iff ``goal`` is an ACTIVE KILL goal targeting ``target_uuid``.
 
     A ``None`` ``target_uuid`` means "any target" — used by callers that
@@ -44,7 +46,7 @@ def _matches_kill_target(goal: Goal | None, target_uuid: str | None) -> bool:
     return target_uuid is None or goal.target_uuid == target_uuid
 
 
-def kill_goals_targeting(actor: NPCCard, target_uuid: str | None) -> list[Goal]:
+def kill_goals_targeting(actor: NPCCard, target_uuid: UUID | None) -> list[Goal]:
     """Return every ACTIVE KILL goal on actor whose target matches ``target_uuid``.
 
     A vengeful NPC may carry both a life-tier KILL and a tactical-tier

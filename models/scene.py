@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -55,7 +56,7 @@ class SceneNPC(BaseModel):
     """
 
     role: str  # Short role from LLM, e.g. "guard", "merchant"
-    uuid: str | None = None  # Set after NPCCard generation
+    uuid: UUID | None = None  # Set after NPCCard generation
 
 
 def coerce_point_of_interest(entry: Any) -> PointOfInterest:
@@ -99,7 +100,7 @@ class Scene(StorytellerBase):
 
     model_config = ConfigDict(validate_assignment=True)
 
-    location_id: str
+    location_id: UUID
     description: str = ""
     npcs_present: list[SceneNPC] = []
     points_of_interest: list[PointOfInterest] = []

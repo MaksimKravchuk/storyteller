@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from models.game_state import GameState
 
@@ -64,10 +65,10 @@ def format_scene_history(game_state: GameState) -> str | None:
     return "\n".join(lines)
 
 
-def get_location_name(location_id: str | None, game_state: GameState) -> str:
+def get_location_name(location_id: UUID | None, game_state: GameState) -> str:
     """Resolve a location ID to its name."""
     locations = game_state.locations
-    if location_id and location_id in locations:
+    if location_id is not None and location_id in locations:
         return locations[location_id].name
     return "this place"
 

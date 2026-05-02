@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from uuid import UUID
 
 from loguru import logger
 
+from cast._scene_location import coerce_scene_location_id
 from cast.base_performer_class import BasePerformer
 from cast.schemas.scene_response import SceneResponse
 from knowledge.scene_state import all_scene_deltas
@@ -16,7 +18,7 @@ from prompts.scene_builder_prompts import get_scene_builder_prompts
 _SETTING_SUMMARY_MAX = 500
 
 
-def _format_persistent_world_changes(deltas: dict[str, list[str]]) -> str:
+def _format_persistent_world_changes(deltas: dict[UUID, list[str]]) -> str:
     """Render the ``persistent_world_changes`` prompt section.
 
     The section is only rendered when at least one location has a
@@ -27,7 +29,7 @@ def _format_persistent_world_changes(deltas: dict[str, list[str]]) -> str:
     if not deltas:
         return ""
     lines = []
-    for location_id in sorted(deltas):
+    for location_id in sorted(deltas, key=str):
         location_deltas = deltas[location_id]
         joined = " ".join(location_deltas)
         lines.append("- {0}: {1}".format(location_id, joined))
@@ -119,8 +121,9 @@ def _scene_from_response(scene_data: SceneResponse, fallback_time_of_day: str) -
         coerce_point_of_interest(raw if isinstance(raw, str) else raw.model_dump())
         for raw in scene_data.points_of_interest
     ]
+    location_id = coerce_scene_location_id(scene_data.location_id)
     return Scene(
-        location_id=scene_data.location_id or "unknown",
+        location_id=location_id,
         description=scene_data.description,
         npcs_present=npcs,
         points_of_interest=pois,

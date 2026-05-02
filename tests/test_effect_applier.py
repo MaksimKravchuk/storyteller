@@ -11,8 +11,12 @@ from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 from timeline.effect_applier import EffectApplier
 from timeline.event import EventEffect
+
+_LOC_1 = make_uuid("loc-1")
+_LOC_2 = make_uuid("loc-2")
 
 
 def _make_game_state_with_npc(npc: NPCCard) -> GameState:
@@ -58,8 +62,8 @@ class TestChangeStatusEffect:
 
         effect = EventEffect(
             effect_type="CHANGE_STATUS",
-            target_id="nonexistent-uuid",
-            effect_data={"npc_id": "nonexistent-uuid", "status": "wounded"},
+            target_id=str(make_uuid("nonexistent-uuid")),
+            effect_data={"npc_id": str(make_uuid("nonexistent-uuid")), "status": "wounded"},
         )
         # Should not raise
         applier.apply(effect)
@@ -87,37 +91,37 @@ class TestMoveNpcEffect:
     @allure.story("Move NPC")
     @allure.title("MOVE_NPC removes the NPC from the old location and adds them to the new one")
     def test_moves_between_locations(self):
-        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
         gs = _make_game_state_with_npc(npc)
-        gs.locations["loc-1"] = Location(name="Gate")
-        gs.locations["loc-1"].npcs_present.append(npc.uuid)
-        gs.locations["loc-2"] = Location(name="Forum")
+        gs.locations[_LOC_1] = Location(name="Gate")
+        gs.locations[_LOC_1].npcs_present.append(npc.uuid)
+        gs.locations[_LOC_2] = Location(name="Forum")
 
         effect = EventEffect(
             effect_type="MOVE_NPC",
             target_id=npc.uuid,
-            effect_data={"npc_id": npc.uuid, "to_location_id": "loc-2"},
+            effect_data={"npc_id": npc.uuid, "to_location_id": str(_LOC_2)},
         )
         EffectApplier(gs, KnowledgeGraph()).apply(effect)
 
-        assert npc.location_id == "loc-2"
-        assert npc.uuid not in gs.locations["loc-1"].npcs_present
-        assert npc.uuid in gs.locations["loc-2"].npcs_present
+        assert npc.location_id == _LOC_2
+        assert npc.uuid not in gs.locations[_LOC_1].npcs_present
+        assert npc.uuid in gs.locations[_LOC_2].npcs_present
 
     @allure.story("Move NPC")
     @allure.title("MOVE_NPC into the current scene's location adds the NPC to scene.npcs_present")
     def test_adds_npc_to_current_scene_on_arrival(self):
-        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
         gs = _make_game_state_with_npc(npc)
-        gs.locations["loc-1"] = Location(name="Gate")
-        gs.locations["loc-2"] = Location(name="Forum")
-        gs.current_scene = Scene(location_id="loc-2")
+        gs.locations[_LOC_1] = Location(name="Gate")
+        gs.locations[_LOC_2] = Location(name="Forum")
+        gs.current_scene = Scene(location_id=_LOC_2)
 
         EffectApplier(gs, KnowledgeGraph()).apply(
             EventEffect(
                 effect_type="MOVE_NPC",
                 target_id=npc.uuid,
-                effect_data={"npc_id": npc.uuid, "to_location_id": "loc-2"},
+                effect_data={"npc_id": npc.uuid, "to_location_id": str(_LOC_2)},
             )
         )
 
@@ -126,12 +130,12 @@ class TestMoveNpcEffect:
     @allure.story("Move NPC")
     @allure.title("MOVE_NPC does not duplicate a scene NPC entry when the NPC is already present")
     def test_does_not_duplicate_scene_npc(self):
-        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
         gs = _make_game_state_with_npc(npc)
-        gs.locations["loc-1"] = Location(name="Gate")
-        gs.locations["loc-2"] = Location(name="Forum")
+        gs.locations[_LOC_1] = Location(name="Gate")
+        gs.locations[_LOC_2] = Location(name="Forum")
         gs.current_scene = Scene(
-            location_id="loc-2",
+            location_id=_LOC_2,
             npcs_present=[SceneNPC(role="guard", uuid=npc.uuid)],
         )
 
@@ -139,7 +143,7 @@ class TestMoveNpcEffect:
             EventEffect(
                 effect_type="MOVE_NPC",
                 target_id=npc.uuid,
-                effect_data={"npc_id": npc.uuid, "to_location_id": "loc-2"},
+                effect_data={"npc_id": npc.uuid, "to_location_id": str(_LOC_2)},
             )
         )
 
@@ -154,8 +158,8 @@ class TestMoveNpcEffect:
         EffectApplier(gs, KnowledgeGraph()).apply(
             EventEffect(
                 effect_type="MOVE_NPC",
-                target_id="ghost",
-                effect_data={"npc_id": "ghost", "to_location_id": "loc-2"},
+                target_id=str(make_uuid("ghost")),
+                effect_data={"npc_id": str(make_uuid("ghost")), "to_location_id": str(_LOC_2)},
             )
         )
 
@@ -241,7 +245,7 @@ class TestAddKnowledgeEffect:
                     "content": "The bridge has collapsed",
                     "scope": "city",
                     "tags": ["news"],
-                    "location_id": "loc-1",
+                    "location_id": str(_LOC_1),
                 },
             )
         )
@@ -253,7 +257,7 @@ class TestAddKnowledgeEffect:
         assert nodes[0].source == KnowledgeSource.FACT
         assert nodes[0].canon == CanonSource.SESSION
         assert nodes[0].tags == ["news"]
-        assert nodes[0].location_id == "loc-1"
+        assert nodes[0].location_id == _LOC_1
 
     @allure.story("Add knowledge")
     @allure.title("ADD_KNOWLEDGE defaults to LOCAL scope when 'scope' is omitted")
@@ -322,12 +326,12 @@ class TestRemoveNpcEffect:
     @allure.story("Remove NPC")
     @allure.title("REMOVE_NPC drops the NPC from game_state, its location, and the current scene")
     def test_removes_npc_fully(self):
-        npc = NPCCard(name="Marcus", occupation="guard", location_id="loc-1")
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
         gs = _make_game_state_with_npc(npc)
-        gs.locations["loc-1"] = Location(name="Gate")
-        gs.locations["loc-1"].npcs_present.append(npc.uuid)
+        gs.locations[_LOC_1] = Location(name="Gate")
+        gs.locations[_LOC_1].npcs_present.append(npc.uuid)
         gs.current_scene = Scene(
-            location_id="loc-1",
+            location_id=_LOC_1,
             npcs_present=[SceneNPC(role="guard", uuid=npc.uuid)],
         )
 
@@ -336,7 +340,7 @@ class TestRemoveNpcEffect:
         )
 
         assert npc.uuid not in gs.npcs
-        assert npc.uuid not in gs.locations["loc-1"].npcs_present
+        assert npc.uuid not in gs.locations[_LOC_1].npcs_present
         assert all(snpc.uuid != npc.uuid for snpc in gs.current_scene.npcs_present)
 
     @allure.story("Remove NPC")
@@ -345,7 +349,7 @@ class TestRemoveNpcEffect:
         gs = _empty_game_state()
 
         EffectApplier(gs, KnowledgeGraph()).apply(
-            EventEffect(effect_type="REMOVE_NPC", target_id="ghost", effect_data={}),
+            EventEffect(effect_type="REMOVE_NPC", target_id=str(make_uuid("ghost")), effect_data={}),
         )
 
 

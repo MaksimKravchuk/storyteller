@@ -7,6 +7,7 @@ import allure
 from cast.actor_config import goal_prompt_vars
 from models.goal import Goal, GoalKind, GoalStatus
 from models.npc_card import NPCCard
+from tests._uuid_helpers import make_uuid
 
 
 def _kill_marcus(npc_name: str = "Brutus") -> NPCCard:
@@ -16,7 +17,7 @@ def _kill_marcus(npc_name: str = "Brutus") -> NPCCard:
         life_goal=Goal(
             kind=GoalKind.KILL,
             description="Avenge brother by killing Marcus",
-            target_uuid="npc-marcus",
+            target_uuid=make_uuid("npc-marcus"),
         ),
     )
 

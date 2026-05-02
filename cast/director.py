@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from cast.base_performer_class import BasePerformer
 from cast import director_context, director_dialogue, director_events
@@ -44,7 +45,7 @@ class Director(BasePerformer):
         item_generator: Any,
         world_chronicler: Any | None = None,
         dramaturge: Any | None = None,
-        actors: dict[str, Any] | None = None,
+        actors: dict[UUID, Any] | None = None,
         language: str = "English",
     ):
         prompts = get_director_prompts(language)
@@ -54,7 +55,7 @@ class Director(BasePerformer):
         )
         self._game_state = game_state
         self._event_manager = event_manager
-        self._actors: dict[str, Any] = dict(actors or {})
+        self._actors: dict[UUID, Any] = dict(actors or {})
         self._language = language
         self.set_context(language=language)
 
@@ -114,11 +115,11 @@ class Director(BasePerformer):
         self._ctx.append_turn_logs(input_data, narrated, action_type)
         return narrated
 
-    def register_actor(self, npc_uuid: str, actor: Any) -> None:
+    def register_actor(self, npc_uuid: UUID, actor: Any) -> None:
         """Register an Actor agent for an NPC."""
         self._actors[npc_uuid] = actor
 
-    def schedule_event(self, event: event_mod.GameEvent) -> str:
+    def schedule_event(self, event: event_mod.GameEvent) -> UUID:
         """Convenience wrapper to schedule an event."""
         return self._event_manager.schedule(event)
 

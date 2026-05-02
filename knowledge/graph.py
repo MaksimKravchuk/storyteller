@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 import networkx as nx
 
@@ -28,12 +29,12 @@ class KnowledgeGraph:
     # Node operations
     # ------------------------------------------------------------------
 
-    def add_node(self, node: KnowledgeNode) -> str:
+    def add_node(self, node: KnowledgeNode) -> UUID:
         """Add a knowledge node. Returns its UUID."""
         self.digraph.add_node(node.uuid, data=node)
         return node.uuid
 
-    def register_actor_node(self, actor_id: str, label: str = "") -> None:
+    def register_actor_node(self, actor_id: UUID, label: str = "") -> None:
         """Register an NPC/actor as a graph node so memory edges can link to it.
 
         The node is added **without** a ``data`` payload so it stays invisible
@@ -44,12 +45,12 @@ class KnowledgeGraph:
         """
         self.digraph.add_node(actor_id, label=label)
 
-    def get_node(self, node_id: str) -> KnowledgeNode | None:
+    def get_node(self, node_id: UUID) -> KnowledgeNode | None:
         if node_id in self.digraph:
             return self.digraph.nodes[node_id].get(_NODE_DATA_KEY)
         return None
 
-    def remove_node(self, node_id: str) -> None:
+    def remove_node(self, node_id: UUID) -> None:
         if node_id in self.digraph:
             self.digraph.remove_node(node_id)
 
@@ -59,8 +60,8 @@ class KnowledgeGraph:
 
     def add_edge(
         self,
-        from_id: str,
-        to_id: str,
+        from_id: UUID,
+        to_id: UUID,
         edge_type: EdgeType,
         metadata: dict[str, Any] | None = None,
     ) -> None:
@@ -78,7 +79,7 @@ class KnowledgeGraph:
             if _NODE_DATA_KEY in self.digraph.nodes[nid]
         ]
 
-    def get_edges_from(self, node_id: str) -> list[tuple[str, EdgeType]]:
+    def get_edges_from(self, node_id: UUID) -> list[tuple[UUID, EdgeType]]:
         """Return (target_id, edge_type) for all outgoing edges."""
         if node_id not in self.digraph:
             return []

@@ -17,7 +17,7 @@ only has to populate it from the ``NPCTicker`` output.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import UUID4, BaseModel, ConfigDict, Field
 
 from cast.director_witness import WitnessedAggression
 from models.scene import Scene
@@ -35,10 +35,10 @@ class DialogueEntry(BaseModel):
     fallbacks, and retaliation memory pinning — that legitimately need
     the canonical identifier rather than the gated label.
 
-    ``npc_uuid`` defaults to an empty string so deterministic fixtures
+    ``npc_uuid`` defaults to ``None`` so deterministic fixtures
     (benchmarks, narrator unit tests) can construct entries without a
     real ``GameState`` to back them — :func:`narrator_aliases.resolve_dialogue_npc_label`
-    falls back to ``npc_name`` when the uuid is empty or absent from
+    falls back to ``npc_name`` when the uuid is ``None`` or absent from
     the game state. Production producers always set the uuid.
 
     ``contest_roll`` carries the human-readable combat/contest summary
@@ -46,7 +46,7 @@ class DialogueEntry(BaseModel):
     the interaction is resolved via a dice roll.
     """
 
-    npc_uuid: str = ""
+    npc_uuid: UUID4 | None = None
     npc_name: str
     response: str
     contest_roll: str | None = None
@@ -58,7 +58,7 @@ class NPCTurnEntry(BaseModel):
     ``npc_uuid`` mirrors :class:`DialogueEntry` — it is the gate key the
     Narrator uses to resolve the player-facing label. ``npc_name`` keeps
     the canonical real name for internal consumers (World Chronicler).
-    ``npc_uuid`` defaults to an empty string for the same fixture-friendliness
+    ``npc_uuid`` defaults to ``None`` for the same fixture-friendliness
     reason :class:`DialogueEntry` documents.
 
     The field name ``action_type`` mirrors the attribute used on
@@ -66,7 +66,7 @@ class NPCTurnEntry(BaseModel):
     builtin ``type``.
     """
 
-    npc_uuid: str = ""
+    npc_uuid: UUID4 | None = None
     npc_name: str
     action: str
     action_type: str

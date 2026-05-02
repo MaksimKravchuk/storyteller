@@ -17,6 +17,7 @@ Plus integration tests that drive the Director end-to-end and verify
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import allure
 import pytest
@@ -28,6 +29,7 @@ from cast.known_npcs import (
     scan_player_text_for_known_uuids,
 )
 from models.scene import Scene, SceneNPC
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import (
     actor_reply,
     make_director,
@@ -36,9 +38,10 @@ from tests.director_helpers import (
     setup_npc,
 )
 
-_NPC_A = "npc-1"
-_NPC_B = "npc-2"
-_NPC_OTHER_SCENE = "npc-other"
+_NPC_A = make_uuid("npc-1")
+_NPC_B = make_uuid("npc-2")
+_NPC_OTHER_SCENE = make_uuid("npc-other")
+_FORUM = make_uuid("forum")
 _MARCUS = "Marcus"
 _CASSIA = "Cassia"
 _ACTION_TYPE = "action_type"
@@ -47,9 +50,9 @@ _NEEDS_CLARIFICATION = "needs_clarification"
 _DELEGATE_TO = "delegate_to"
 
 
-def _scene_with(*uuids: str) -> Scene:
+def _scene_with(*uuids: UUID) -> Scene:
     return Scene(
-        location_id="forum",
+        location_id=_FORUM,
         description="The Forum.",
         npcs_present=[SceneNPC(role="npc", uuid=uid) for uid in uuids],
     )
@@ -172,7 +175,7 @@ class TestScanPlayerText:
         gs = make_game_state()
         setup_npc(gs, _NPC_A, name=_MARCUS, occupation="legionary")
         gs.current_scene = Scene(
-            location_id="forum",
+            location_id=_FORUM,
             description="The Forum.",
             npcs_present=[SceneNPC(role="npc", uuid=_NPC_A), SceneNPC(role="beggar")],
         )

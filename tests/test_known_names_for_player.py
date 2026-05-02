@@ -14,8 +14,9 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 
-_UUID = "npc-1"
+_UUID = make_uuid("npc-1")
 
 
 def _make_state() -> GameState:

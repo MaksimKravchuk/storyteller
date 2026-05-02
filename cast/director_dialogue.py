@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from typing import Any
+from uuid import UUID
 
 from cast import (
     director_context,
@@ -19,12 +20,12 @@ _KEY_GAME_STATE = "game_state"
 
 # Convenience alias for dialogue result entries to keep annotations shallow.
 DialogueEntry = dict[str, str]
-DialogueResult = tuple[list[DialogueEntry], set[str]]
+DialogueResult = tuple[list[DialogueEntry], set[UUID]]
 
 
 def _snpc_matches(snpc: Any, targets_lower: set[str], game_state: GameState) -> bool:
     """Check whether a single SceneNPC matches any of the target names."""
-    if not snpc.uuid or snpc.uuid not in game_state.npcs:
+    if snpc.uuid is None or snpc.uuid not in game_state.npcs:
         return False
     npc = game_state.npcs[snpc.uuid]
     return snpc.role.lower() in targets_lower or npc.name.lower() in targets_lower
@@ -109,7 +110,7 @@ class DialogueHandler:
     def __init__(
         self,
         game_state: GameState,
-        actors: dict[str, Any],
+        actors: dict[UUID, Any],
         memory_manager: MemoryManager,
     ) -> None:
         self._gs = game_state
@@ -217,7 +218,7 @@ class DialogueHandler:
 
     async def summarize_retaliations(
         self,
-        retaliation_entries: list[dict[str, str]],
+        retaliation_entries: list[dict[str, Any]],
         player_action: str,
     ) -> None:
         """Persist a WITNESSED memory node for each retaliating NPC.

@@ -30,6 +30,7 @@ from benchmarks.scenarios.npc_autonomy_murder_plot.state import (
 from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry, TurnOutputs
 from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.game_state import GameState
+from tests._uuid_helpers import make_uuid
 
 _HEALTHY = "healthy"
 
@@ -67,7 +68,7 @@ def _city_node(text: str) -> KnowledgeNode:
         scope=KnowledgeScope.CITY,
         source=KnowledgeSource.PERSONAL_EXPERIENCE,
         canon=CanonSource.SESSION,
-        location_id="loc",
+        location_id=make_uuid("loc"),
         tags=[],
     )
 
@@ -167,7 +168,7 @@ class TestNodeChecks:
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.PERSONAL_EXPERIENCE,
             canon=CanonSource.SESSION,
-            location_id="loc",
+            location_id=make_uuid("loc"),
             tags=[],
         )
         assert node_marcus_dead(local) is False

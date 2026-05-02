@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+from uuid import UUID
 
 from loguru import logger
 
+from timeline._uuid_coerce import coerce_uuid as _coerce_uuid
 from timeline.effect_memory import capture_pre_state, emit_memory
 from timeline.event import EventEffect
 
@@ -17,16 +19,20 @@ _KEY_NPC_ID = "npc_id"
 
 
 def _apply_add_item(game_state: GameState, effect: EventEffect) -> None:
-    npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
+    npc_id = _coerce_uuid(effect.effect_data.get(_KEY_NPC_ID, effect.target_id))
     inventory_item = effect.effect_data.get("item", "")
+    if npc_id is None:
+        return
     npc = game_state.npcs.get(npc_id)
     if npc and inventory_item:
         npc.add_item_to_inventory(inventory_item)
 
 
 def _apply_remove_item(game_state: GameState, effect: EventEffect) -> None:
-    npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
+    npc_id = _coerce_uuid(effect.effect_data.get(_KEY_NPC_ID, effect.target_id))
     inventory_item = effect.effect_data.get("item", "")
+    if npc_id is None:
+        return
     npc = game_state.npcs.get(npc_id)
     if npc and inventory_item and inventory_item in npc.inventory:
         npc.remove_item_from_inventory(inventory_item)
@@ -45,31 +51,42 @@ def _apply_add_knowledge(graph: KnowledgeGraph, effect: EventEffect) -> None:
             source=KnowledgeSource.FACT,
             canon=CanonSource.SESSION,
             tags=tags,
-            location_id=effect.effect_data.get("location_id"),
+            location_id=_coerce_uuid(effect.effect_data.get("location_id")),
         )
         graph.add_node(node)
 
 
 def _apply_change_attribute(game_state: GameState, effect: EventEffect) -> None:
-    target = game_state.npcs.get(effect.target_id)
+    target_id = _coerce_uuid(effect.target_id)
     attr = effect.effect_data.get("attribute", "")
     attribute_value = effect.effect_data.get("value", 0)
+    if target_id is None:
+        return
+    target = game_state.npcs.get(target_id)
     if target and attr:
         target.update_attribute(attr, attribute_value)
 
 
 def _apply_change_status(game_state: GameState, effect: EventEffect) -> None:
-    npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
+    npc_id = _coerce_uuid(effect.effect_data.get(_KEY_NPC_ID, effect.target_id))
     new_status = effect.effect_data.get("status", "")
+    if npc_id is None:
+        return
     npc = game_state.npcs.get(npc_id)
     if npc and new_status:
         npc.physical_status = new_status
 
 
 def _apply_object_damage(game_state: GameState, effect: EventEffect) -> None:
-    location_id = effect.effect_data.get("location_id") or effect.target_id
+    location_id = _coerce_uuid(effect.effect_data.get("location_id") or effect.target_id)
     object_key = effect.effect_data.get("object_key", "")
     state_description = effect.effect_data.get("state_description", "")
+    if location_id is None:
+        logger.warning(
+            "APPLY_OBJECT_DAMAGE dropped: missing location_id (target_id={0})",
+            effect.target_id,
+        )
+        return
     location = game_state.locations.get(location_id)
     if location is None:
         logger.warning(
@@ -120,19 +137,23 @@ class EffectApplier:
         }
 
     def _move_npc(self, effect: EventEffect) -> None:
-        npc_id = effect.effect_data.get(_KEY_NPC_ID, effect.target_id)
+        npc_id = _coerce_uuid(effect.effect_data.get(_KEY_NPC_ID, effect.target_id))
+        if npc_id is None:
+            return
         npc = self._game_state.npcs.get(npc_id)
         if not npc:
             return
-        if npc.location_id and npc.location_id in self._game_state.locations:
+        if npc.location_id is not None and npc.location_id in self._game_state.locations:
             self._game_state.locations[npc.location_id].remove_npc(npc_id)
-        npc.location_id = effect.effect_data.get("to_location_id", "")
+        npc.location_id = _coerce_uuid(effect.effect_data.get("to_location_id"))
+        if npc.location_id is None:
+            return
         new_loc = self._game_state.locations.get(npc.location_id)
         if new_loc:
             new_loc.add_npc(npc_id)
         self._update_scene(npc_id, npc)
 
-    def _update_scene(self, npc_id: str, npc: Any) -> None:
+    def _update_scene(self, npc_id: UUID, npc: Any) -> None:
         """Add a moved NPC to the current scene if they arrived at the scene's location."""
         scene = self._game_state.current_scene
         if not scene or scene.location_id != npc.location_id:
@@ -146,13 +167,15 @@ class EffectApplier:
         scene.npcs_present.append(SceneNPC(role=npc_role, uuid=npc_id))
 
     def _remove_npc(self, effect: EventEffect) -> None:
-        npc_id = effect.target_id
+        npc_id = _coerce_uuid(effect.target_id)
+        if npc_id is None:
+            return
         game_state = self._game_state
         npc = game_state.npcs.get(npc_id)
         if not npc:
             return
         locations = game_state.locations
-        if npc.location_id and npc.location_id in locations:
+        if npc.location_id is not None and npc.location_id in locations:
             locations[npc.location_id].remove_npc(npc_id)
         if game_state.current_scene:
             game_state.current_scene.npcs_present = [

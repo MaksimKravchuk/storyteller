@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import UUID
 
 from benchmarks.harness.snapshots import conversation_history_len
 from benchmarks.harness.types._captures import CapturedTurn
@@ -81,7 +82,7 @@ def _game_clock_advanced(
     )
 
 
-def _marcus_uuid_from_state(snap: GameState) -> str | None:
+def _marcus_uuid_from_state(snap: GameState) -> UUID | None:
     """Look up Marcus's uuid in a snapshot by matching the canonical name."""
     for uuid, npc in snap.npcs.items():
         if _is_marcus(npc.name):

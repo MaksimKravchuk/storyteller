@@ -7,6 +7,8 @@ path through the ticker is tested in ``tests/test_npc_ticker.py``.
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import allure
 
 from knowledge.graph import KnowledgeGraph
@@ -27,20 +29,21 @@ from models.game_state import GameState
 from models.location import Location
 from models.npc_card import NPCCard
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 
 pytestmark = [
     allure.epic("Knowledge Graph"),
     allure.feature("Departure memory preservation"),
 ]
 
-_CITY_ID = "loc-city-rome"
-_TAVERN_ID = "loc-tavern"
-_MARKET_ID = "loc-market"
-_FORUM_ID = "loc-forum"
+_CITY_ID = make_uuid("loc-city-rome")
+_TAVERN_ID = make_uuid("loc-tavern")
+_MARKET_ID = make_uuid("loc-market")
+_FORUM_ID = make_uuid("loc-forum")
 
-_BARTENDER_ID = "npc-bartender"
-_BAKER_ID = "npc-baker"
-_MERCHANT_ID = "npc-merchant"
+_BARTENDER_ID = make_uuid("npc-bartender")
+_BAKER_ID = make_uuid("npc-baker")
+_MERCHANT_ID = make_uuid("npc-merchant")
 
 _MEMORY_TEXT = "The player confessed to stealing the senator's ring."
 
@@ -120,7 +123,7 @@ def _build_city_state() -> GameState:
 
 def _add_session_memory(
     graph: KnowledgeGraph,
-    npc_id: str,
+    npc_id: UUID,
     *,
     text: str = _MEMORY_TEXT,
     timestamp: float | None = 1.0,
@@ -141,7 +144,7 @@ def _add_session_memory(
     return memory
 
 
-def _hearsay_nodes_at(graph: KnowledgeGraph, location_id: str) -> list[KnowledgeNode]:
+def _hearsay_nodes_at(graph: KnowledgeGraph, location_id: UUID) -> list[KnowledgeNode]:
     return [
         node for node in graph.all_nodes() if node.source == KnowledgeSource.HEARSAY and node.location_id == location_id
     ]
@@ -316,7 +319,7 @@ def test_scene_location_not_in_locations_map() -> None:
     graph = game_state.knowledge_graph
     memory = _add_session_memory(graph, _BARTENDER_ID)
 
-    created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, "loc-nonexistent")
+    created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, make_uuid("loc-nonexistent"))
 
     assert created_ids == []
     # The memory is still tagged so re-eviction is a cheap no-op.

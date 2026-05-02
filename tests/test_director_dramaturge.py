@@ -10,21 +10,24 @@ preserving parity with the pre-Dramaturge behaviour.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import allure
 import pytest
 
 from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
 from knowledge import graph as knowledge_graph, memory as knowledge_memory
-from models.game_state import GameState
-from models.scene import Scene
-from models.setting import Setting
-from tests.director_helpers import route_plan
+from models import game_state as _gs, scene as _scene, setting as _setting
+from tests.director_helpers import make_uuid, route_plan
 from timeline.event_manager import EventManager
 
 KnowledgeGraph = knowledge_graph.KnowledgeGraph
 MemoryManager = knowledge_memory.MemoryManager
+GameState = _gs.GameState
+Scene = _scene.Scene
+Setting = _setting.Setting
 
 
 def _make_plan_executor_pieces(*, with_dramaturge: bool):
@@ -33,7 +36,7 @@ def _make_plan_executor_pieces(*, with_dramaturge: bool):
     event_mgr = EventManager(game_state=gs, knowledge_graph=gs.knowledge_graph)
     mem_mgr = MemoryManager.__new__(MemoryManager)
     events = director_events.EventProcessor(gs, event_mgr, mem_mgr)
-    actors: dict[str, object] = {}
+    actors: dict[UUID, Any] = {}
     dialogue = director_dialogue.DialogueHandler(gs, actors, mem_mgr)
     retaliation = director_retaliation.RetaliationHandler(gs, actors)
     npc_turns_resolver = npc_turn.NPCTurnResolver(gs, actors)
@@ -44,7 +47,7 @@ def _make_plan_executor_pieces(*, with_dramaturge: bool):
     scene_builder = AsyncMock()
     scene_builder.execute = AsyncMock(
         return_value=Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The bustling Forum.",
             npcs_present=[],
         ),
@@ -120,7 +123,7 @@ class TestPlanExecutorDramaturgeGate:
         # A continuation turn assumes a scene already exists; without this the
         # fresh-session fallback in _prepare_scene would build one and trip
         # the very gate we are testing.
-        gs.current_scene = Scene(location_id="forum", description="The bustling Forum.")
+        gs.current_scene = Scene(location_id=make_uuid("forum"), description="The bustling Forum.")
 
         result = await executor.execute_plan(
             plan=route_plan("TALK", delegate=["actor"], targets=[]),

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 from typing import Any
+from uuid import UUID
 
 from cast._npc_combat_memory import CombatEvent, persist_combat_memory
 from cast._npc_outcome import commit_outcome, predict_contest_outcome
@@ -47,14 +48,14 @@ _GOAL_KIND_TO_CONTEST: MappingProxyType[GoalKind, ContestType] = MappingProxyTyp
 )
 
 
-def _scene_present_uuids(game_state: GameState) -> set[str]:
+def _scene_present_uuids(game_state: GameState) -> set[UUID]:
     scene = game_state.current_scene
     if scene is None:
         return set()
-    return {snpc.uuid for snpc in scene.npcs_present if snpc.uuid}
+    return {snpc.uuid for snpc in scene.npcs_present if snpc.uuid is not None}
 
 
-def _is_eligible(npc: NPCCard, present_uuids: set[str]) -> bool:
+def _is_eligible(npc: NPCCard, present_uuids: set[UUID]) -> bool:
     if npc.uuid in present_uuids:
         return False
     if (npc.physical_status or "").lower() in _NPC_SKIP_STATUSES:

@@ -22,10 +22,10 @@ from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry
 # Static UUIDs so the dedup tests can pin two distinct NPCs as separate
 # entities (the dedup helpers key on ``npc_uuid``, which production
 # always sets to a real ``uuid4`` string from :class:`models.base_model.BaseModel`).
-_IVAN_UUID = str(uuid.uuid4())
-_BORIS_UUID = str(uuid.uuid4())
-_FROL_UUID = str(uuid.uuid4())
-_PETR_UUID = str(uuid.uuid4())
+_IVAN_UUID = uuid.uuid4()
+_BORIS_UUID = uuid.uuid4()
+_FROL_UUID = uuid.uuid4()
+_PETR_UUID = uuid.uuid4()
 
 
 @allure.epic("Narrative Delivery")

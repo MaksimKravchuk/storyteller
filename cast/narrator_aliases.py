@@ -14,6 +14,7 @@ WPS202 module-member budget.
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from loguru import logger
 
@@ -59,7 +60,7 @@ def format_scene_npc_label(snpc: Any, game_state: Any) -> str:
     surfaced as a warning so operators can trace the divergence while
     the player-facing fallback keeps rendering.
     """
-    if snpc.uuid:
+    if snpc.uuid is not None:
         npc = game_state.npcs.get(snpc.uuid)
         if npc is not None:
             return format_aka_label(npc.known_names_for_player(game_state, snpc.role))
@@ -72,7 +73,7 @@ def format_scene_npc_label(snpc: Any, game_state: Any) -> str:
 
 
 def resolve_dialogue_npc_label(
-    npc_uuid: str,
+    npc_uuid: UUID | None,
     fallback_name: str,
     game_state: Any,
     *,
@@ -88,18 +89,18 @@ def resolve_dialogue_npc_label(
 
     Two failure modes are deliberately distinct:
 
-    * Empty ``npc_uuid`` — the entry has no GameState backing
+    * ``npc_uuid is None`` — the entry has no GameState backing
       (deterministic benchmark/unit fixture). Falls back to
       ``fallback_name`` because the canonical name *is* the only name
       a fixture has, and there is no ``known_npcs`` set to gate against.
     * ``npc_uuid`` set but missing from ``game_state.npcs`` — a
-      production producer bug (stale or hallucinated uuid). Returns
-      the gate-safe ``unknown_descriptor`` rather than ``fallback_name``
-      so the resolver itself never leaks the canonical proper name
-      that the gate exists to suppress. A warning surfaces the
-      invariant break for operators.
+      production producer bug (stale uuid from an in-flight scene
+      rebuild). Returns the gate-safe ``unknown_descriptor`` rather
+      than ``fallback_name`` so the resolver itself never leaks the
+      canonical proper name that the gate exists to suppress. A
+      warning surfaces the invariant break for operators.
     """
-    if not npc_uuid:
+    if npc_uuid is None:
         return fallback_name
     npc = game_state.npcs.get(npc_uuid)
     if npc is None:

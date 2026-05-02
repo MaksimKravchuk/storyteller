@@ -20,8 +20,9 @@ from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 
-_UUID = "npc-tony"
+_UUID = make_uuid("npc-tony")
 
 
 def _make_state() -> GameState:
@@ -31,7 +32,7 @@ def _make_state() -> GameState:
     card.uuid = _UUID
     gs.npcs[_UUID] = card
     gs.current_scene = Scene(
-        location_id="gate",
+        location_id=make_uuid("gate"),
         description="The south gate.",
         npcs_present=[SceneNPC(role="guard", uuid=_UUID)],
     )
@@ -55,7 +56,7 @@ class TestWatchmanRegression:
         entities, html = _render_turn(gs, "An armed man blocks the door.")
         assert len(entities) == 1
         entity = entities[0]
-        assert entity.id == _UUID
+        assert entity.id == str(_UUID)
         assert entity.names == ["an armed man"]
         assert "Tony" not in html
         assert "watchman" not in html

@@ -29,6 +29,7 @@ from cast.schemas.scene_response import SceneResponse
 from cast.schemas.turn_outputs import TurnOutputs
 from models.location import Location
 from models.scene import PointOfInterest, Scene
+from tests._uuid_helpers import make_uuid
 
 _SEND_JSON = "_send_json"
 _PLAYER_ACTION = "player_action"
@@ -36,7 +37,8 @@ _GAME_STATE = "game_state"
 _MESSAGES = "messages"
 _DAMAGE_KEY = "shutter"
 _DAMAGE_STATE = "splintered; frame torn loose"
-_LOCATION_ID = "tavern"
+_LOCATION_ID = make_uuid("tavern")
+_GHOST_LOCATION_ID = make_uuid("ghost")
 
 
 def _seed_damaged_location(game_state) -> None:
@@ -101,7 +103,7 @@ class TestSceneBuilderPreservesObjectStates:
         _seed_damaged_location(game_state)
         builder = SceneBuilder(llm_client=MagicMock())
         pristine_payload = SceneResponse(
-            location_id=_LOCATION_ID,
+            location_id=str(_LOCATION_ID),
             description="A pristine tavern with no damage visible.",
             points_of_interest=["oak bar"],
         )
@@ -143,7 +145,7 @@ class TestSceneBuilderPreservesObjectStates:
         _seed_damaged_location(game_state)
         builder = SceneBuilder(llm_client=MagicMock())
         aware_payload = SceneResponse(
-            location_id=_LOCATION_ID,
+            location_id=str(_LOCATION_ID),
             description="The splintered shutter still hangs askew.",
             points_of_interest=["oak bar"],
         )
@@ -160,7 +162,7 @@ class TestSceneBuilderPreservesObjectStates:
         _seed_damaged_location(game_state)
         builder = SceneBuilder(llm_client=MagicMock())
         poi_payload = SceneResponse(
-            location_id=_LOCATION_ID,
+            location_id=str(_LOCATION_ID),
             description="A pristine tavern.",
             points_of_interest=["Broken Shutter hanging on its hinges"],
         )
@@ -180,7 +182,7 @@ class TestSceneBuilderPreservesObjectStates:
         game_state.locations[_LOCATION_ID].object_states = {"bar": "cracked down the middle"}
         builder = SceneBuilder(llm_client=MagicMock())
         fragment_payload = SceneResponse(
-            location_id=_LOCATION_ID,
+            location_id=str(_LOCATION_ID),
             description="A tavern behind a wooden barricade.",
             points_of_interest=["barrel"],
         )
@@ -265,8 +267,8 @@ class TestNarratorSurfacesPriorDamage:
     @pytest.mark.asyncio
     async def test_continuation_omits_prior_damage_when_location_missing(self, game_state) -> None:
         _seed_damaged_location(game_state)
-        game_state.player.location_id = "ghost"
-        game_state.current_scene = Scene(location_id="ghost", description="Nowhere.")
+        game_state.player.location_id = _GHOST_LOCATION_ID
+        game_state.current_scene = Scene(location_id=_GHOST_LOCATION_ID, description="Nowhere.")
         narrator, mock_send = _make_narrator()
 
         await narrator.act(

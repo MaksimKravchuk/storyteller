@@ -4,17 +4,27 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from typing import Iterator
+from uuid import UUID
 
 import allure
 from loguru import logger
 
 from cast.visible_entities import collect_visible_entities
 from knowledge.graph import KnowledgeGraph
-from models.game_state import GameState
-from models.location import Location
-from models.npc_card import NPCCard
-from models.scene import PointOfInterest, Scene, SceneNPC
-from models.setting import Setting
+from models import game_state as _gs, location as _loc, npc_card as _npc, scene as _scene, setting as _setting
+from tests._uuid_helpers import make_uuid
+
+_NPC_1 = make_uuid("npc-1")
+_NPC_MISSING = make_uuid("npc-missing")
+_TAVERN = make_uuid("tavern")
+
+GameState = _gs.GameState
+Location = _loc.Location
+NPCCard = _npc.NPCCard
+PointOfInterest = _scene.PointOfInterest
+Scene = _scene.Scene
+SceneNPC = _scene.SceneNPC
+Setting = _setting.Setting
 
 
 @contextmanager
@@ -35,7 +45,7 @@ def _make_state() -> GameState:
 
 def _register_npc(
     gs: GameState,
-    uuid: str,
+    uuid: UUID,
     name: str = "Tony",
     occupation: str = "watchman",
     short_descriptor: str = "an armed man",
@@ -53,27 +63,27 @@ class TestCollectVisibleEntities:
     @allure.title("Unknown NPCs render under their short_descriptor, not the canonical name")
     def test_unknown_npc(self):
         gs = _make_state()
-        _register_npc(gs, "npc-1")
+        _register_npc(gs, _NPC_1)
         scene = Scene(
-            location_id="tavern",
-            npcs_present=[SceneNPC(role="guard", uuid="npc-1")],
+            location_id=_TAVERN,
+            npcs_present=[SceneNPC(role="guard", uuid=_NPC_1)],
         )
         entities = collect_visible_entities(scene, gs, None)
         assert len(entities) == 1
         entity = entities[0]
         assert entity.kind == "npc"
-        assert entity.id == "npc-1"
+        assert entity.id == str(_NPC_1)
         assert entity.names == ["an armed man"]
 
     @allure.story("Introduced NPC")
     @allure.title("Introduced NPCs expose the combined label plus the bare name and occupation alias")
     def test_introduced_npc(self):
         gs = _make_state()
-        _register_npc(gs, "npc-1")
-        gs.player.known_npcs.add("npc-1")
+        _register_npc(gs, _NPC_1)
+        gs.player.known_npcs.add(_NPC_1)
         scene = Scene(
-            location_id="tavern",
-            npcs_present=[SceneNPC(role="guard", uuid="npc-1")],
+            location_id=_TAVERN,
+            npcs_present=[SceneNPC(role="guard", uuid=_NPC_1)],
         )
         entity = collect_visible_entities(scene, gs, None)[0]
         assert entity.names == ["Tony (watchman)", "Tony", "the watchman"]
@@ -84,19 +94,19 @@ class TestCollectVisibleEntities:
         gs = _make_state()
         hearth = PointOfInterest(names=["fireplace", "the hearth"])
         scene = Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             points_of_interest=[hearth],
         )
         entity = collect_visible_entities(scene, gs, None)[0]
         assert entity.kind == "poi"
-        assert entity.id == hearth.uuid
+        assert entity.id == str(hearth.uuid)
         assert entity.names == ["fireplace", "the hearth"]
 
     @allure.story("Tracked items")
     @allure.title("Location.object_states keys not already covered by POI aliases surface as items")
     def test_items_from_object_states(self):
         gs = _make_state()
-        scene = Scene(location_id="tavern")
+        scene = Scene(location_id=_TAVERN)
         location = Location(
             name="Tavern",
             object_states={"shutter": "splintered", "bar": "polished"},
@@ -110,7 +120,7 @@ class TestCollectVisibleEntities:
     def test_item_suppressed_by_poi_overlap(self):
         gs = _make_state()
         scene = Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             points_of_interest=[PointOfInterest(names=["broken shutter"])],
         )
         location = Location(name="Tavern", object_states={"shutter": "splintered"})
@@ -129,7 +139,7 @@ class TestCollectVisibleEntities:
     def test_item_short_key_not_swallowed_by_substring(self):
         gs = _make_state()
         scene = Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             points_of_interest=[PointOfInterest(names=["bar"])],
         )
         location = Location(name="Tavern", object_states={"ar": "etched"})
@@ -142,20 +152,20 @@ class TestCollectVisibleEntities:
     def test_missing_npc_card_logs_warning(self):
         gs = _make_state()
         scene = Scene(
-            location_id="tavern",
-            npcs_present=[SceneNPC(role="guard", uuid="npc-missing")],
+            location_id=_TAVERN,
+            npcs_present=[SceneNPC(role="guard", uuid=_NPC_MISSING)],
         )
         with _capture_warnings() as messages:
             entities = collect_visible_entities(scene, gs, None)
         assert entities == []
-        assert any("npc-missing" in message for message in messages)
+        assert any(str(_NPC_MISSING) in message for message in messages)
 
     @allure.story("Invariant logging")
     @allure.title("A SceneNPC without a uuid is skipped silently (pre-init state is expected)")
     def test_scene_npc_without_uuid_skipped_silently(self):
         gs = _make_state()
         scene = Scene(
-            location_id="tavern",
+            location_id=_TAVERN,
             npcs_present=[SceneNPC(role="guard")],
         )
         with _capture_warnings() as messages:

@@ -22,10 +22,11 @@ from cast import director_dialogue, director_hostility, director_retaliation, ho
 from cast.dice import AggressionRoll
 from models.npc_card import NPCCard
 from models.scene import SceneNPC
+from tests._uuid_helpers import make_uuid
 from tests.director_helpers import actor_reply, make_director, make_game_state, make_mock_actor, setup_npc
 from tests.test_director_retaliation import _fixed_combat
 
-_NPC_A = "npc-1"
+_NPC_A = make_uuid("npc-1")
 _GUARD = "guard"
 _ATTACK_ROLL = 15
 
@@ -207,9 +208,9 @@ class TestMultiTargetAndRoleResolution:
     @pytest.mark.asyncio
     async def test_multi_target_bumps_each_npc(self, force_attack_rolls):
         gs = make_game_state()
-        guard_a = setup_npc(gs, "uuid-a", name="Aulus", occupation="city guard")
-        guard_b = setup_npc(gs, "uuid-b", name="Bassus", occupation="city guard")
-        gs.current_scene.npcs_present.append(SceneNPC(role="city guard", uuid="uuid-b"))
+        guard_a = setup_npc(gs, make_uuid("uuid-a"), name="Aulus", occupation="city guard")
+        guard_b = setup_npc(gs, make_uuid("uuid-b"), name="Bassus", occupation="city guard")
+        gs.current_scene.npcs_present.append(SceneNPC(role="city guard", uuid=make_uuid("uuid-b")))
 
         force_uuids = director_hostility.apply_aggressive_turn(
             gs,
@@ -231,8 +232,8 @@ class TestMultiTargetAndRoleResolution:
         gs = make_game_state()
         # NPC with distinct name vs. scene role — e.g. "Quintus" occupying a "sentry" post.
         gs.current_scene.npcs_present.clear()
-        gs.current_scene.npcs_present.append(SceneNPC(role="sentry", uuid="uuid-q"))
-        quintus = setup_npc(gs, "uuid-q", name="Quintus", occupation="sentry")
+        gs.current_scene.npcs_present.append(SceneNPC(role="sentry", uuid=make_uuid("uuid-q")))
+        quintus = setup_npc(gs, make_uuid("uuid-q"), name="Quintus", occupation="sentry")
 
         director_hostility.apply_aggressive_turn(gs, ["sentry"], "punch the sentry")
 

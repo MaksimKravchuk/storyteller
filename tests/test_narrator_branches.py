@@ -6,11 +6,13 @@ from unittest.mock import AsyncMock
 
 import allure
 import pytest
+from pydantic import ValidationError
 
 from cast.narrator import Narrator
 from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry, TurnOutputs
 from knowledge.graph import KnowledgeGraph
 from models import game_state as gs_mod, npc_card, scene as scene_mod, setting as setting_mod, world_state
+from tests._uuid_helpers import make_uuid
 
 
 def _make_narrator() -> Narrator:
@@ -168,7 +170,7 @@ class TestNarratorSceneFallback:
     async def test_scene_description_rendered(self):
         narrator = _make_narrator()
         gs = _make_game_state()
-        scene = scene_mod.Scene(location_id="anywhere", description="A plain string scene descriptor.")
+        scene = scene_mod.Scene(location_id=make_uuid("anywhere"), description="A plain string scene descriptor.")
 
         await narrator.act(
             input_data=TurnOutputs(scene=scene),
@@ -246,7 +248,7 @@ class TestNarratorWorldMood:
         narrator = _make_narrator()
         gs = _make_game_state()
         gs.world_state = world_state.WorldState(world_mood="tense and restless")
-        scene = scene_mod.Scene(location_id="forum", description="The Forum.")
+        scene = scene_mod.Scene(location_id=make_uuid("forum"), description="The Forum.")
 
         await narrator.act(
             input_data=TurnOutputs(scene=scene),
@@ -290,7 +292,7 @@ class TestFormatNpcLabel:
         gs.player.known_npcs.add(npc.uuid)
 
         scene = scene_mod.Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The Forum.",
             npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
@@ -315,7 +317,7 @@ class TestFormatNpcLabel:
         gs.player.known_npcs.add(npc.uuid)
 
         scene = scene_mod.Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The Forum.",
             npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
@@ -338,7 +340,7 @@ class TestFormatNpcLabel:
         gs.npcs[npc.uuid] = npc
 
         scene = scene_mod.Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The Forum.",
             npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
@@ -362,7 +364,7 @@ class TestFormatNpcLabel:
         gs.npcs[npc.uuid] = npc
 
         scene = scene_mod.Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The Forum.",
             npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
@@ -387,7 +389,7 @@ class TestFormatNpcLabel:
         gs.npcs[npc.uuid] = npc
 
         scene = scene_mod.Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The Forum.",
             npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=npc.uuid)],
         )
@@ -409,9 +411,9 @@ class TestFormatNpcLabel:
         gs = _make_game_state()
 
         scene = scene_mod.Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The Forum.",
-            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid="evicted-uuid")],
+            npcs_present=[scene_mod.SceneNPC(role="soldier", uuid=make_uuid("evicted-uuid"))],
         )
 
         await narrator.act(
@@ -422,7 +424,8 @@ class TestFormatNpcLabel:
         body = _last_user_body(narrator)
         assert "soldier" in body
         warning_messages = [rec["message"] for rec in loguru_sink if rec["level"].name == "WARNING"]
-        assert any("evicted-uuid" in msg for msg in warning_messages)
+        evicted_uuid = make_uuid("evicted-uuid")
+        assert any(str(evicted_uuid) in msg for msg in warning_messages)
 
 
 @allure.epic("Narrative Delivery")
@@ -531,7 +534,7 @@ class TestDialogueAndTurnNameGating:
 
         await narrator.act(
             input_data=TurnOutputs(
-                dialogue=[DialogueEntry(npc_uuid="stale-uuid", npc_name="Marcus", response="Halt!")],
+                dialogue=[DialogueEntry(npc_uuid=make_uuid("stale-uuid"), npc_name="Marcus", response="Halt!")],
             ),
             context={"player_action": "approach", "game_state": gs},
         )
@@ -540,7 +543,8 @@ class TestDialogueAndTurnNameGating:
         assert "Marcus" not in body
         assert "someone says: Halt!" in body
         warning_messages = [rec["message"] for rec in loguru_sink if rec["level"].name == "WARNING"]
-        assert any("stale-uuid" in msg for msg in warning_messages)
+        stale_uuid = make_uuid("stale-uuid")
+        assert any(str(stale_uuid) in msg for msg in warning_messages)
 
     @allure.story("Name gating")
     @allure.title("NPC-turn 'Meanwhile' line for an unmet NPC renders as the descriptor, not the proper name")
@@ -644,3 +648,26 @@ class TestNarratorDedup:
 
         body = _last_user_body(narrator)
         assert body.count("Meanwhile, Frol:") == 1
+
+
+@allure.epic("Narrator")
+@allure.feature("Schema validation")
+class TestTurnOutputsUuidValidation:
+    """Pin that DialogueEntry / NPCTurnEntry reject non-UUID npc_uuid at parse time (KER-44)."""
+
+    @allure.story("DialogueEntry schema")
+    @allure.title("DialogueEntry rejects a non-UUID npc_uuid (KER-44 pin)")
+    def test_invalid_dialogue_npc_uuid_rejected(self):
+        with pytest.raises(ValidationError):
+            DialogueEntry(npc_uuid="guard", npc_name="Guard", response="Halt!")
+
+    @allure.story("NPCTurnEntry schema")
+    @allure.title("NPCTurnEntry rejects a non-UUID npc_uuid (KER-44 pin)")
+    def test_invalid_npc_turn_npc_uuid_rejected(self):
+        with pytest.raises(ValidationError):
+            NPCTurnEntry(
+                npc_uuid="guard",
+                npc_name="Guard",
+                action="draws sword",
+                action_type="COMBAT",
+            )

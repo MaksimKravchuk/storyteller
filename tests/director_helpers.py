@@ -4,17 +4,20 @@ from __future__ import annotations
 
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 from cast.director import Director
 from cast.schemas import action_plan as plan_mod
-from knowledge.graph import KnowledgeGraph
-from knowledge.memory import MemoryManager
+from knowledge import graph as _kg, memory as _km
 from models import game_state as gs_mod, npc_card as npc_card_mod, scene as scene_mod, setting as setting_mod
-from tests import actor_helpers
+from tests import actor_helpers, item_helpers
 from tests._route_plan_builder import build_route_plan as route_plan
-from tests.item_helpers import default_item_generator_execute
+from tests._uuid_helpers import make_uuid
 from timeline.event_manager import EventManager
 
+KnowledgeGraph = _kg.KnowledgeGraph
+MemoryManager = _km.MemoryManager
+default_item_generator_execute = item_helpers.default_item_generator_execute
 actor_reply = actor_helpers.actor_reply
 make_mock_actor = actor_helpers.make_mock_actor
 GameState = gs_mod.GameState
@@ -39,9 +42,9 @@ def make_game_state() -> GameState:
     kg = KnowledgeGraph()
     gs = GameState(setting=make_setting(), knowledge_graph=kg)
     gs.current_scene = Scene(
-        location_id="forum",
+        location_id=make_uuid("forum"),
         description="The bustling Roman Forum.",
-        npcs_present=[SceneNPC(role="guard", uuid="npc-1")],
+        npcs_present=[SceneNPC(role="guard", uuid=make_uuid("npc-1"))],
         points_of_interest=[scene_mod.PointOfInterest(names=["fountain"]), scene_mod.PointOfInterest(names=["statue"])],
     )
     return gs
@@ -63,7 +66,7 @@ def make_cast(narrator_response: str = "Narrated result.") -> dict[str, Any]:
     return {
         "scene_builder": make_mock_agent(
             Scene(
-                location_id="new-loc",
+                location_id=make_uuid("new-loc"),
                 description="A new place.",
                 npcs_present=[SceneNPC(role="merchant")],
             )
@@ -165,7 +168,7 @@ def make_director(
 
 def setup_npc(
     gs: GameState,
-    uuid: str,
+    uuid: UUID,
     name: str = "Guard",
     occupation: str = "city guard",
     **kwargs: Any,

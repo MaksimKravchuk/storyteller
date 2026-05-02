@@ -25,6 +25,10 @@ from knowledge.scene_state import (
     record_scene_delta,
 )
 from models.game_state import INITIAL_GAME_CLOCK
+from tests._uuid_helpers import make_uuid
+
+_TAVERN = make_uuid("tavern")
+_FORUM = make_uuid("forum")
 
 
 @allure.epic("Scene & Exploration")
@@ -36,7 +40,7 @@ class TestRecordSceneDelta:
         graph = KnowledgeGraph()
         node_id = record_scene_delta(
             graph,
-            location_id="tavern",
+            location_id=_TAVERN,
             delta_text="The front window is broken.",
             game_time=12.5,
         )
@@ -46,10 +50,10 @@ class TestRecordSceneDelta:
         assert node.scope == KnowledgeScope.LOCAL
         assert node.source == KnowledgeSource.FACT
         assert node.canon == CanonSource.SESSION
-        assert node.location_id == "tavern"
+        assert node.location_id == _TAVERN
         assert node.timestamp == pytest.approx(12.5)
         assert SCENE_STATE_TAG in node.tags
-        assert "tavern" in node.tags
+        assert str(_TAVERN) in node.tags
 
     @allure.story("Node attributes")
     @allure.title("record_scene_delta accepts the default game_time when no timestamp is provided")
@@ -57,7 +61,7 @@ class TestRecordSceneDelta:
         graph = KnowledgeGraph()
         node_id = record_scene_delta(
             graph,
-            location_id="forum",
+            location_id=_FORUM,
             delta_text="The statue of Jupiter is toppled.",
         )
         node = graph.get_node(node_id)
@@ -72,9 +76,9 @@ class TestQuerySceneDeltas:
     @allure.title("query_scene_deltas returns only nodes whose location_id matches the query")
     def test_filters_by_location(self):
         graph = KnowledgeGraph()
-        record_scene_delta(graph, location_id="tavern", delta_text="Window broken.")
-        record_scene_delta(graph, location_id="forum", delta_text="Statue toppled.")
-        results = query_scene_deltas(graph, "tavern")
+        record_scene_delta(graph, location_id=_TAVERN, delta_text="Window broken.")
+        record_scene_delta(graph, location_id=_FORUM, delta_text="Statue toppled.")
+        results = query_scene_deltas(graph, _TAVERN)
         assert len(results) == 1
         assert results[0].text == "Window broken."
 
@@ -88,12 +92,12 @@ class TestQuerySceneDeltas:
                 text="Someone muttered a rumour here.",
                 scope=KnowledgeScope.LOCAL,
                 source=KnowledgeSource.RUMOR,
-                location_id="tavern",
+                location_id=_TAVERN,
                 tags=["rumour"],
             ),
         )
-        record_scene_delta(graph, location_id="tavern", delta_text="Window broken.")
-        results = query_scene_deltas(graph, "tavern")
+        record_scene_delta(graph, location_id=_TAVERN, delta_text="Window broken.")
+        results = query_scene_deltas(graph, _TAVERN)
         assert len(results) == 1
         assert results[0].text == "Window broken."
 
@@ -101,7 +105,7 @@ class TestQuerySceneDeltas:
     @allure.title("query_scene_deltas returns an empty list when no deltas have been recorded")
     def test_empty_graph(self):
         graph = KnowledgeGraph()
-        assert query_scene_deltas(graph, "tavern") == []
+        assert query_scene_deltas(graph, _TAVERN) == []
 
 
 @allure.epic("Scene & Exploration")
@@ -111,13 +115,13 @@ class TestAllSceneDeltas:
     @allure.title("all_scene_deltas groups every scene_state delta by its location_id")
     def test_groups_by_location(self):
         graph = KnowledgeGraph()
-        record_scene_delta(graph, location_id="tavern", delta_text="Window broken.")
-        record_scene_delta(graph, location_id="tavern", delta_text="Door splintered.")
-        record_scene_delta(graph, location_id="forum", delta_text="Statue toppled.")
+        record_scene_delta(graph, location_id=_TAVERN, delta_text="Window broken.")
+        record_scene_delta(graph, location_id=_TAVERN, delta_text="Door splintered.")
+        record_scene_delta(graph, location_id=_FORUM, delta_text="Statue toppled.")
         grouped = all_scene_deltas(graph)
-        assert set(grouped.keys()) == {"tavern", "forum"}
-        assert sorted(grouped["tavern"]) == ["Door splintered.", "Window broken."]
-        assert grouped["forum"] == ["Statue toppled."]
+        assert set(grouped.keys()) == {_TAVERN, _FORUM}
+        assert sorted(grouped[_TAVERN]) == ["Door splintered.", "Window broken."]
+        assert grouped[_FORUM] == ["Statue toppled."]
 
     @allure.story("Grouping")
     @allure.title("all_scene_deltas skips scene_state nodes that are missing a location_id")
@@ -131,6 +135,6 @@ class TestAllSceneDeltas:
                 tags=[SCENE_STATE_TAG],
             ),
         )
-        record_scene_delta(graph, location_id="tavern", delta_text="Window broken.")
+        record_scene_delta(graph, location_id=_TAVERN, delta_text="Window broken.")
         grouped = all_scene_deltas(graph)
-        assert grouped == {"tavern": ["Window broken."]}
+        assert grouped == {_TAVERN: ["Window broken."]}

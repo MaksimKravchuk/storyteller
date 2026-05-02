@@ -6,6 +6,7 @@ import allure
 
 from models.game_state import GameState, PlayerState
 from models.scene import SceneNPC
+from tests._uuid_helpers import make_uuid
 
 _GUARD = "guard"
 
@@ -134,8 +135,8 @@ class TestSceneNPCInit:
     @allure.story("SceneNPC init")
     @allure.title("Constructing a SceneNPC with an explicit UUID stores it on the model")
     def test_uuid_arg_stored(self):
-        snpc = SceneNPC(role="merchant", uuid="abc-123")
-        assert snpc.uuid == "abc-123"
+        snpc = SceneNPC(role="merchant", uuid=make_uuid("abc-123"))
+        assert snpc.uuid == make_uuid("abc-123")
 
     @allure.story("SceneNPC init")
     @allure.title("SceneNPC repr exposes role and uuid=None before init and the UUID afterwards")
@@ -143,8 +144,8 @@ class TestSceneNPCInit:
         snpc = SceneNPC(role=_GUARD)
         assert _GUARD in repr(snpc)
         assert "None" in repr(snpc)
-        snpc.uuid = "abc"
-        assert "abc" in repr(snpc)
+        snpc.uuid = make_uuid("abc")
+        assert str(make_uuid("abc")) in repr(snpc)
 
 
 @allure.epic("Memory & Persistence")
@@ -155,8 +156,8 @@ class TestSceneNPCSerialization:
     @allure.story("SceneNPC serialization")
     @allure.title("SceneNPC.model_dump serializes role and UUID into a plain dict")
     def test_model_dump(self):
-        snpc = SceneNPC(role="beggar", uuid="uuid-42")
-        assert snpc.model_dump() == {"role": "beggar", "uuid": "uuid-42"}
+        snpc = SceneNPC(role="beggar", uuid=make_uuid("uuid-42"))
+        assert snpc.model_dump() == {"role": "beggar", "uuid": make_uuid("uuid-42")}
 
     @allure.story("SceneNPC serialization")
     @allure.title("An uninitialized SceneNPC serializes with uuid=None")
@@ -167,10 +168,10 @@ class TestSceneNPCSerialization:
     @allure.story("SceneNPC serialization")
     @allure.title("SceneNPC model_dump/model_validate round-trips role and UUID")
     def test_model_validate_roundtrip(self):
-        original = SceneNPC(role="scribe", uuid="uuid-99")
+        original = SceneNPC(role="scribe", uuid=make_uuid("uuid-99"))
         restored = SceneNPC.model_validate(original.model_dump())
         assert restored.role == "scribe"
-        assert restored.uuid == "uuid-99"
+        assert restored.uuid == make_uuid("uuid-99")
 
     @allure.story("SceneNPC serialization")
     @allure.title("SceneNPC.model_validate without a UUID produces a fresh uninitialized SceneNPC")

@@ -19,6 +19,7 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
+from tests._uuid_helpers import make_uuid
 
 _PLAYER_ACTION = "player_action"
 _GAME_STATE = "game_state"
@@ -41,9 +42,9 @@ def _make_game_state() -> GameState:
     kg = KnowledgeGraph()
     gs = GameState(setting=setting, knowledge_graph=kg)
     gs.current_scene = Scene(
-        location_id="forum",
+        location_id=make_uuid("forum"),
         description="The bustling Roman Forum.",
-        npcs_present=[SceneNPC(role="guard", uuid="npc-1")],
+        npcs_present=[SceneNPC(role="guard", uuid=make_uuid("npc-1"))],
         points_of_interest=[PointOfInterest(names=["fountain"])],
     )
     return gs

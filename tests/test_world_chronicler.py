@@ -16,10 +16,14 @@ from cast.schemas.chronicler_response import (
 from cast.schemas.turn_outputs import TurnOutputs
 from cast.world_chronicler import WorldChronicler, _format_threads, _summarize_turn
 from knowledge.graph import KnowledgeGraph
-from models.game_state import GameState
-from models.scene import Scene, SceneNPC
-from models.setting import Setting
-from models.world_state import WorldThread
+from models import game_state as _gs, scene as _scene, setting as _setting, world_state as _ws
+from tests._uuid_helpers import make_uuid
+
+GameState = _gs.GameState
+Scene = _scene.Scene
+SceneNPC = _scene.SceneNPC
+Setting = _setting.Setting
+WorldThread = _ws.WorldThread
 
 
 def _make_game_state() -> GameState:
@@ -31,7 +35,7 @@ def _make_game_state() -> GameState:
     )
     gs = GameState(setting=setting, knowledge_graph=KnowledgeGraph())
     gs.current_scene = Scene(
-        location_id="piazza",
+        location_id=make_uuid("piazza"),
         description="The Piazza della Signoria at dawn.",
         npcs_present=[SceneNPC(role="guard")],
         ambient_description="Bells echo off stone.",
@@ -64,7 +68,7 @@ class TestChroniclerHappyPath:
                 {
                     "description": "A plague whisper spreads through the docks",
                     "category": "natural",
-                    "involved_locations": ["loc-1"],
+                    "involved_locations": [str(make_uuid("loc-1"))],
                     "involved_npcs": [],
                 },
             ],
@@ -180,7 +184,7 @@ class TestChroniclerHelpers:
     @allure.story("Prompt helpers")
     @allure.title("_summarize_turn includes scene, dialogue, departures, and completed events")
     def test_summarize_turn_includes_all_branches(self):
-        scene = Scene(location_id="tavern", description="A smoky tavern")
+        scene = Scene(location_id=make_uuid("tavern"), description="A smoky tavern")
         summary = _summarize_turn(
             TurnOutputs(
                 scene=scene,
@@ -223,7 +227,7 @@ class TestChroniclerResponseSchemaDefaults:
     @allure.story("Schema defaults")
     @allure.title("WorldThreadUpdate accepts a None status to mean 'just bump last_advanced_scene'")
     def test_thread_update_status_optional(self):
-        update = WorldThreadUpdate(thread_uuid="abc")
+        update = WorldThreadUpdate(thread_uuid=make_uuid("abc"))
         assert update.status is None
 
     @allure.story("Schema defaults")

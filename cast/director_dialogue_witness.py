@@ -10,6 +10,7 @@ pure (these helpers touch ``MemoryManager`` and are async).
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from cast.dice import ContestRoll
 from knowledge.memory import MemoryManager, record_player_learned_fact
@@ -21,9 +22,9 @@ DialogueEntry = dict[str, str]
 
 
 def cowitness_uuids(
-    targeted_uuids: set[str],
+    targeted_uuids: set[UUID],
     game_state: GameState,
-) -> list[str]:
+) -> list[UUID]:
     """Return UUIDs of initialised scene NPCs who aren't the dialogue targets.
 
     A scene NPC counts as a co-witness when its ``uuid`` is set *and*
@@ -39,7 +40,7 @@ def cowitness_uuids(
     return [
         snpc.uuid
         for snpc in scene.npcs_present
-        if snpc.uuid and snpc.uuid in game_state.npcs and snpc.uuid not in targeted_uuids
+        if snpc.uuid is not None and snpc.uuid in game_state.npcs and snpc.uuid not in targeted_uuids
     ]
 
 

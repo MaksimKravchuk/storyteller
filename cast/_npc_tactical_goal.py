@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Iterable, Mapping
+from uuid import UUID
 
 from cast._npc_active_goal import select_active_goal
 from models.game_state import GameState
@@ -54,7 +55,7 @@ _LIFE_TO_TACTICAL_PROMOTION: Mapping[GoalKind, GoalKind] = types.MappingProxyTyp
 
 def assign_defend_goals_from_aggression(
     game_state: GameState,
-    target_uuids: Iterable[str],
+    target_uuids: Iterable[UUID],
     player_action: str,
 ) -> None:
     """Stamp a tactical DEFEND on every NPC the player just attacked.
@@ -107,13 +108,13 @@ def _build_tactical_promotion(npc: NPCCard, current_turn: int) -> Goal | None:
     )
 
 
-def _maybe_promote_at(uuid: str, game_state: GameState, present: set[str]) -> None:
+def _maybe_promote_at(uuid: UUID, game_state: GameState, present: set[UUID]) -> None:
     """Apply :func:`_build_tactical_promotion` to one NPC if their life-goal target shares the scene."""
     npc = game_state.npcs.get(uuid)
     if npc is None or npc.life_goal is None:
         return
     target_uuid = npc.life_goal.target_uuid
-    if not target_uuid or target_uuid not in present:
+    if target_uuid is None or target_uuid not in present:
         return
     promotion = _build_tactical_promotion(npc, game_state.turn_count)
     if promotion is not None:
@@ -130,7 +131,7 @@ def promote_life_goals_on_sight(game_state: GameState) -> None:
     scene = game_state.current_scene
     if scene is None:
         return
-    present = {snpc.uuid for snpc in scene.npcs_present if snpc.uuid}
+    present: set[UUID] = {snpc.uuid for snpc in scene.npcs_present if snpc.uuid is not None}
     if len(present) < 2:
         return
     for uuid in present:

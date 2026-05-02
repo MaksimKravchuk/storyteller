@@ -13,6 +13,7 @@ from models.goal import Goal, GoalKind, GoalStatus
 from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
+from tests._uuid_helpers import make_uuid
 from tests._aftermath_helpers import RecordingMemoryManager, make_actor_target_state, seed_kill_thread
 
 
@@ -28,7 +29,7 @@ def _move_actor_offscene(state, actor: NPCCard, target: NPCCard) -> Location:
         state.current_scene = Scene(
             location_id=state.current_scene.location_id,
             description="",
-            npcs_present=[SceneNPC(role="bystander", uuid="player-only")],
+            npcs_present=[SceneNPC(role="bystander", uuid=make_uuid("player-only"))],
         )
     return other
 
@@ -125,7 +126,7 @@ class TestNPCBackgroundTicker:
             state.current_scene = Scene(
                 location_id=state.current_scene.location_id,
                 description="",
-                npcs_present=[SceneNPC(role="bystander", uuid="player-only")],
+                npcs_present=[SceneNPC(role="bystander", uuid=make_uuid("player-only"))],
             )
         memory = RecordingMemoryManager()
 

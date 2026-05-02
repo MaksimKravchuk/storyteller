@@ -11,6 +11,7 @@ from cast.npc_generator import NPCGenerator
 from cast.schemas.npc_response import NPCAttributes, NPCResponse
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
+from tests._uuid_helpers import make_uuid
 
 _SEND_JSON = "_send_json"
 _SETTING_CAP = 500
@@ -71,11 +72,12 @@ class TestNPCGenerator:
     @allure.title("NPCGenerator stamps each card with the current scene's location_id from game state")
     @pytest.mark.asyncio
     async def test_location_propagation(self, game_state) -> None:
-        game_state.current_scene = Scene(location_id="forum", description="plaza")
+        forum_id = make_uuid("forum")
+        game_state.current_scene = Scene(location_id=forum_id, description="plaza")
         gen = NPCGenerator(llm_client=MagicMock())
         with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Caius")])):
             cards = await gen.act(["guard"], {"game_state": game_state})
-        assert cards[0].location_id == "forum"
+        assert cards[0].location_id == forum_id
 
     @allure.story("Location propagation")
     @allure.title("NPCGenerator leaves location_id None when the game state has no current scene")
@@ -144,7 +146,7 @@ class TestNPCGenerator:
         existing = NPCCard(name="Ivan Matveyev", occupation="fisherman")
         game_state.npcs[existing.uuid] = existing
         game_state.current_scene = Scene(
-            location_id="village",
+            location_id=make_uuid("village"),
             description="wooden pier",
             npcs_present=[SceneNPC(role="fisherman", uuid=existing.uuid)],
         )
@@ -162,7 +164,7 @@ class TestNPCGenerator:
         existing = NPCCard(name="Фрол Михайлов", occupation="fisherman")
         game_state.npcs[existing.uuid] = existing
         game_state.current_scene = Scene(
-            location_id="village",
+            location_id=make_uuid("village"),
             description="wooden pier",
             npcs_present=[SceneNPC(role="fisherman", uuid=existing.uuid)],
         )
@@ -178,7 +180,7 @@ class TestNPCGenerator:
     async def test_context_truncation(self, game_state) -> None:
         game_state.setting.summary = "s" * 1200
         game_state.setting.social_structure = "h" * 1200
-        game_state.current_scene = Scene(location_id="x", description="d" * 1200)
+        game_state.current_scene = Scene(location_id=make_uuid("x"), description="d" * 1200)
         gen = NPCGenerator(llm_client=MagicMock())
         with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("X")])):
             await gen.act(["guard"], {"game_state": game_state})

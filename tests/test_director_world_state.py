@@ -10,7 +10,9 @@ preserved.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import allure
 import pytest
@@ -19,7 +21,7 @@ from cast import director_dialogue, director_events, director_execution, directo
 from cast.schemas import chronicler_response as chronicler_schema
 from knowledge import graph as graph_mod, memory as memory_mod
 from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod, world_state as world_state_mod
-from tests.director_helpers import route_plan
+from tests.director_helpers import make_uuid, route_plan
 from timeline.event_manager import EventManager
 
 
@@ -29,7 +31,7 @@ def _make_plan_executor_pieces(*, with_chronicler: bool):
     event_mgr = EventManager(game_state=gs, knowledge_graph=gs.knowledge_graph)
     mem_mgr = memory_mod.MemoryManager.__new__(memory_mod.MemoryManager)
     events = director_events.EventProcessor(gs, event_mgr, mem_mgr)
-    actors: dict[str, object] = {}
+    actors: dict[UUID, Any] = {}
     dialogue = director_dialogue.DialogueHandler(gs, actors, mem_mgr)
     retaliation = director_retaliation.RetaliationHandler(gs, actors)
     npc_turns = npc_turn.NPCTurnResolver(gs, actors)
@@ -40,7 +42,7 @@ def _make_plan_executor_pieces(*, with_chronicler: bool):
     scene_builder = AsyncMock()
     scene_builder.execute = AsyncMock(
         return_value=scene_mod.Scene(
-            location_id="forum",
+            location_id=make_uuid("forum"),
             description="The bustling Forum.",
             npcs_present=[],
         ),
@@ -63,7 +65,7 @@ def _make_plan_executor_pieces(*, with_chronicler: bool):
                     chronicler_schema.ScheduledEventDraft(
                         name="Courier arrives with news",
                         hours_from_now=4.0,
-                        location_id="forum",
+                        location_id=make_uuid("forum"),
                         scope="remote",
                         on_complete_description="A courier bursts in with sealed dispatches.",
                     ),
@@ -142,7 +144,7 @@ class TestPlanExecutorChroniclerGate:
         # A continuation turn assumes a scene already exists; without this the
         # fresh-session fallback in _prepare_scene would build one and trip
         # the chronicler gate we are verifying stays closed here.
-        gs.current_scene = scene_mod.Scene(location_id="forum", description="The bustling Forum.")
+        gs.current_scene = scene_mod.Scene(location_id=make_uuid("forum"), description="The bustling Forum.")
 
         # TALK is not a scene-changing action, so PlanExecutor.execute_plan
         # never builds a scene and the chronicler gate should short-circuit.
@@ -183,7 +185,7 @@ class TestApplyThreadUpdates:
     def test_apply_thread_updates_ignores_unknown_uuid(self):
         thread = world_state_mod.WorldThread(description="A", category="political", introduced_scene=1)
         state = world_state_mod.WorldState(threads=[thread])
-        updates = [chronicler_schema.WorldThreadUpdate(thread_uuid="does-not-exist", status="resolved")]
+        updates = [chronicler_schema.WorldThreadUpdate(thread_uuid=make_uuid("does-not-exist"), status="resolved")]
         director_execution._apply_thread_updates(state, updates, current_scene=7)
 
         assert thread.status == "open"

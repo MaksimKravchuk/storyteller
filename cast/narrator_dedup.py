@@ -17,6 +17,8 @@ so the Narrator sees a single bullet per character.
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from cast.schemas.turn_outputs import DialogueEntry, NPCTurnEntry
 
 _MULTI_RESPONSE_SEP = " / "
@@ -56,8 +58,8 @@ def dedup_dialogue(entries: list[DialogueEntry]) -> list[DialogueEntry]:
     path (which carries the roll) runs before the retaliation path
     (which doesn't), the roll survives the merge.
     """
-    grouped: dict[str, DialogueEntry] = {}
-    seen: dict[str, list[str]] = {}
+    grouped: dict[UUID | None, DialogueEntry] = {}
+    seen: dict[UUID | None, list[str]] = {}
     for entry in entries:
         bucket = seen.setdefault(entry.npc_uuid, [])
         if entry.response in bucket:
@@ -81,8 +83,8 @@ def dedup_npc_turns(entries: list[NPCTurnEntry]) -> list[NPCTurnEntry]:
     choice is cosmetic today, but downstream readers (benchmarks,
     schedulers) receive the pre-dedup ``TurnOutputs`` anyway.
     """
-    grouped: dict[str, NPCTurnEntry] = {}
-    seen: dict[str, list[str]] = {}
+    grouped: dict[UUID | None, NPCTurnEntry] = {}
+    seen: dict[UUID | None, list[str]] = {}
     for entry in entries:
         bucket = seen.setdefault(entry.npc_uuid, [])
         if entry.action in bucket:

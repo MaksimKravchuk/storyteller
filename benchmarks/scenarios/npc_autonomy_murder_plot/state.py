@@ -9,6 +9,15 @@ autonomous clash between them and records its outcome in world facts.
 from __future__ import annotations
 
 from benchmarks.harness.types._scenarios import ScenarioState
+from benchmarks.scenarios.npc_autonomy_murder_plot._ids import (
+    UUID,
+    BRUTUS_NAME,
+    BRUTUS_OCCUPATION,
+    BRUTUS_UUID,
+    MARCUS_NAME,
+    MARCUS_OCCUPATION,
+    MARCUS_UUID,
+)
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.game_state import GameState, PlayerState
@@ -18,14 +27,6 @@ from models.npc_card import NPCCard
 from models.scene import PointOfInterest, Scene, SceneNPC
 from models.setting import Setting
 from models.world_state import WorldThread
-
-BRUTUS_UUID = "npc-brutus-legionary"
-BRUTUS_NAME = "Brutus"
-BRUTUS_OCCUPATION = "former legionary"
-
-MARCUS_UUID = "npc-marcus-merchant"
-MARCUS_NAME = "Marcus"
-MARCUS_OCCUPATION = "cloth merchant"
 
 _BRUTUS_PLOT_FACT = "Brutus carries a concealed pugio and intends to kill Marcus today to avenge his brother's ruin."
 _THREAD_DESCRIPTION = "Brutus plots to murder Marcus in the Forum Taberna over an old grievance."
@@ -62,7 +63,7 @@ def _make_npcs() -> tuple[NPCCard, NPCCard]:
         attributes={"combat_skill": 7},
     )
     brutus.uuid = BRUTUS_UUID
-    brutus.relationships[MARCUS_UUID] = "murderous_enemy"
+    brutus.relationships[str(MARCUS_UUID)] = "murderous_enemy"
     brutus.life_goal = Goal(
         kind=GoalKind.KILL,
         description="Avenge brother by killing Marcus today, before he leaves the taberna.",
@@ -102,7 +103,7 @@ def _make_location() -> Location:
     )
 
 
-def _make_scene(location_id: str) -> Scene:
+def _make_scene(location_id: UUID) -> Scene:
     return Scene(
         location_id=location_id,
         description=(
@@ -124,7 +125,7 @@ def _make_scene(location_id: str) -> Scene:
     )
 
 
-def _seed_plot_context(graph: KnowledgeGraph, game_state: GameState, location_id: str) -> None:
+def _seed_plot_context(graph: KnowledgeGraph, game_state: GameState, location_id: UUID) -> None:
     """Wire Brutus's private plot into the graph and surface it as an open world thread."""
     graph.register_actor_node(BRUTUS_UUID, label="{0} ({1})".format(BRUTUS_NAME, BRUTUS_OCCUPATION))
     graph.register_actor_node(MARCUS_UUID, label="{0} ({1})".format(MARCUS_NAME, MARCUS_OCCUPATION))

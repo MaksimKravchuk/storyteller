@@ -10,6 +10,7 @@ import pytest
 from cast.scene_builder import SceneBuilder
 from cast.schemas.scene_response import PointOfInterestResponse, SceneResponse
 from models.scene import Scene, SceneNPC
+from tests._uuid_helpers import make_uuid
 
 _SEND_JSON = "_send_json"
 _EXPECTED_SUMMARY_CAP = 500
@@ -37,7 +38,11 @@ class TestSceneBuilder:
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=_full_scene_payload())):
             scene = await builder.act("look around", {"game_state": game_state})
         assert isinstance(scene, Scene)
-        assert scene.location_id == "forum"
+        # SceneResponse.location_id is the LLM-emitted str "forum"; SceneBuilder
+        # rewrites it through coerce_scene_location_id to the all-zero sentinel.
+        from cast._scene_location import UNKNOWN_SCENE_LOCATION
+
+        assert scene.location_id == UNKNOWN_SCENE_LOCATION
         assert scene.description == "A crowded plaza."
         assert len(scene.npcs_present) == 2
         assert all(isinstance(npc, SceneNPC) for npc in scene.npcs_present)
@@ -73,7 +78,9 @@ class TestSceneBuilder:
         builder = SceneBuilder(llm_client=MagicMock())
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             scene = await builder.act("look", {"game_state": game_state})
-        assert scene.location_id == "unknown"
+        from cast._scene_location import UNKNOWN_SCENE_LOCATION
+
+        assert scene.location_id == UNKNOWN_SCENE_LOCATION
         assert scene.description == ""
         assert scene.npcs_present == []
         assert scene.points_of_interest == []
@@ -105,7 +112,7 @@ class TestSceneBuilder:
     @allure.title("SceneBuilder uses the current scene's description as the current_location context variable")
     @pytest.mark.asyncio
     async def test_uses_current_scene_description(self, game_state) -> None:
-        game_state.current_scene = Scene(location_id="home", description="A warm hearth.")
+        game_state.current_scene = Scene(location_id=make_uuid("home"), description="A warm hearth.")
         builder = SceneBuilder(llm_client=MagicMock())
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look", {"game_state": game_state})
@@ -140,12 +147,12 @@ class TestSceneBuilder:
 
         record_scene_delta(
             game_state.knowledge_graph,
-            location_id="tavern",
+            location_id=make_uuid("tavern"),
             delta_text="The front window is broken.",
         )
         record_scene_delta(
             game_state.knowledge_graph,
-            location_id="forum",
+            location_id=make_uuid("forum"),
             delta_text="The statue of Jupiter is toppled.",
         )
         builder = SceneBuilder(llm_client=MagicMock())
@@ -154,5 +161,5 @@ class TestSceneBuilder:
 
         rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "Persistent world changes" in rendered_system
-        assert "tavern: The front window is broken." in rendered_system
-        assert "forum: The statue of Jupiter is toppled." in rendered_system
+        assert "{0}: The front window is broken.".format(make_uuid("tavern")) in rendered_system
+        assert "{0}: The statue of Jupiter is toppled.".format(make_uuid("forum")) in rendered_system

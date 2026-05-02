@@ -12,10 +12,11 @@ from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from models.setting import Setting
 from models.visible_entity import VisibleEntity
+from tests._uuid_helpers import make_uuid
 
 _GUARD_NAME = "Guard"
 _GUARD = "guard"
-_LOC = "loc1"
+_LOC = make_uuid("loc1")
 
 
 class _CapturingPerformer:
@@ -130,7 +131,7 @@ class TestFormatNpcsPresent:
         gs = _make_game_state_with_npcs([])
         scene = Scene(
             location_id=_LOC,
-            npcs_present=[SceneNPC(role=_GUARD, uuid="ghost-uuid")],
+            npcs_present=[SceneNPC(role=_GUARD, uuid=make_uuid("ghost-uuid"))],
         )
         assert format_npcs_present(scene, gs) == "None"
 

@@ -37,6 +37,7 @@ from collections.abc import Mapping
 from collections.abc import Set as AbstractSet
 from dataclasses import dataclass
 from typing import Any
+from uuid import UUID
 
 from cast._npc_tactical_goal import has_active_tactical_goal
 from cast.schemas import turn_outputs
@@ -204,7 +205,7 @@ class NPCTicker:
     def tick(
         self,
         raw_outputs: turn_outputs.TurnOutputs,
-        skip_uuids: set[str] | None = None,
+        skip_uuids: set[UUID] | None = None,
     ) -> None:
         """Evict schedule-absent NPCs from the current scene.
 
@@ -262,8 +263,8 @@ class NPCTicker:
         self,
         scene_npcs: list[Any],
         time_of_day: str,
-        skip_uuids: AbstractSet[str],
-    ) -> tuple[list[Any], list[str], list[str]]:
+        skip_uuids: AbstractSet[UUID],
+    ) -> tuple[list[Any], list[str], list[UUID]]:
         """Split scene NPCs into (kept, departure_lines, departing_uuids).
 
         Any NPC whose ``uuid`` appears in ``skip_uuids`` is kept,
@@ -279,7 +280,7 @@ class NPCTicker:
         """
         remaining: list[Any] = []
         departures: list[str] = []
-        departing_uuids: list[str] = []
+        departing_uuids: list[UUID] = []
         for snpc in scene_npcs:
             departure = self._decide_departure(snpc, time_of_day, skip_uuids)
             if departure is None:
@@ -293,8 +294,8 @@ class NPCTicker:
         self,
         snpc: Any,
         time_of_day: str,
-        skip_uuids: AbstractSet[str],
-    ) -> tuple[str, str] | None:
+        skip_uuids: AbstractSet[UUID],
+    ) -> tuple[str, UUID] | None:
         """Return ``(departure_line, uuid)`` if the NPC leaves, ``None`` to keep them.
 
         By the time this method returns a non-``None`` tuple, ``uuid``
