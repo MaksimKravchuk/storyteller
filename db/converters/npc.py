@@ -10,20 +10,19 @@ from db.converters._columns import (
     COL_LOCATION_ID,
     COL_NAME,
 )
+from db.converters._npc_relationships import relationships_to_row, row_to_relationships
 from db.converters._uuid_text import uuid_to_text
 from models.goal import Goal
 from models.npc_card import NPCCard
 
 
 def _goal_to_row(goal: Goal | None) -> dict | None:
-    """Serialize a ``Goal`` into a JSON-safe dict, or ``None`` when unset."""
     if goal is None:
         return None
     return goal.model_dump(mode="json")
 
 
 def _row_to_goal(payload: dict | None) -> Goal | None:
-    """Restore a ``Goal`` from a JSON dict; ``None`` / falsy stays ``None``."""
     if not payload:
         return None
     return Goal.model_validate(payload)
@@ -44,7 +43,7 @@ def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
         "attributes": npc.attributes,
         COL_INVENTORY: npc.inventory,
         COL_LOCATION_ID: uuid_to_text(npc.location_id),
-        "relationships": npc.relationships,
+        "relationships": relationships_to_row(npc.relationships),
         "conversation_history": npc.conversation_history,
         "current_mood": npc.current_mood,
         "physical_status": npc.physical_status,
@@ -69,7 +68,7 @@ def row_to_npc(row) -> NPCCard:
         attributes=row["attributes"],
         inventory=row[COL_INVENTORY],
         location_id=row[COL_LOCATION_ID],
-        relationships=row["relationships"],
+        relationships=row_to_relationships(row["relationships"]),
         conversation_history=row["conversation_history"],
         current_mood=row["current_mood"],
         physical_status=row["physical_status"],
