@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from db.converters._columns import COL_GAME_STATE_ID, COL_ID, COL_LOCATION_ID, COL_NAME, COL_SCOPE
+from db.converters._uuid_text import uuid_to_text
 from timeline.event import EventEffect, EventStatus, GameEvent
 
 
@@ -15,8 +16,8 @@ def game_event_to_row(event: GameEvent, game_state_id: str) -> dict:
         "duration": event.duration,
         "completes_at": event.completes_at,
         "status": event.status.value,
-        "owner_id": event.owner_id,
-        COL_LOCATION_ID: event.location_id,
+        "owner_id": uuid_to_text(event.owner_id),
+        COL_LOCATION_ID: uuid_to_text(event.location_id),
         COL_SCOPE: event.scope,
         "effects": [
             {

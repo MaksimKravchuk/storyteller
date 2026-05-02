@@ -221,9 +221,9 @@ class TestPlayerConverter:
 
         row = pl_conv.player_to_row(player, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
-        assert set(row["known_npcs"]) == {make_uuid("npc-1"), make_uuid("npc-2")}
+        assert set(row["known_npcs"]) == {str(make_uuid("npc-1")), str(make_uuid("npc-2"))}
         assert row["player_event_log"] == ["Met Marcus", "Found the shrine"]
-        assert set(row["learned_facts"]) == {make_uuid("fact-a"), make_uuid("fact-b")}
+        assert set(row["learned_facts"]) == {str(make_uuid("fact-a")), str(make_uuid("fact-b"))}
 
         restored = pl_conv.row_to_player(row)
         assert restored.uuid == player.uuid
@@ -257,7 +257,7 @@ class TestSceneConverter:
         assert row["game_state_id"] == GAME_STATE_ID
         assert row["is_current"] is True
         assert row["scene_number"] == 3
-        assert row["npcs_present"] == [{"role": "guard", "uuid": make_uuid("npc-1")}]
+        assert row["npcs_present"] == [{"role": "guard", "uuid": str(make_uuid("npc-1"))}]
 
         restored = sc_conv.row_to_scene(row)
         assert restored.uuid == original.uuid

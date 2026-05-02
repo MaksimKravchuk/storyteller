@@ -10,6 +10,7 @@ from db.converters._columns import (
     COL_NPCS_PRESENT,
     COL_POINTS_OF_INTEREST,
 )
+from db.converters._uuid_text import uuid_to_text
 from models.scene import Scene, SceneNPC
 
 
@@ -19,10 +20,10 @@ def scene_to_row(scene: Scene, game_state_id: str, is_current: bool = False, sce
         COL_GAME_STATE_ID: game_state_id,
         "is_current": is_current,
         "scene_number": scene_number,
-        COL_LOCATION_ID: scene.location_id,
+        COL_LOCATION_ID: uuid_to_text(scene.location_id),
         COL_DESCRIPTION: scene.description,
-        COL_NPCS_PRESENT: [snpc.model_dump() for snpc in scene.npcs_present],
-        COL_POINTS_OF_INTEREST: [poi.model_dump() for poi in scene.points_of_interest],
+        COL_NPCS_PRESENT: [snpc.model_dump(mode="json") for snpc in scene.npcs_present],
+        COL_POINTS_OF_INTEREST: [poi.model_dump(mode="json") for poi in scene.points_of_interest],
         "ambient_description": scene.ambient_description,
         "time_of_day": scene.time_of_day,
         "narrated_text": scene.narrated_text,

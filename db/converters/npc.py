@@ -10,6 +10,7 @@ from db.converters._columns import (
     COL_LOCATION_ID,
     COL_NAME,
 )
+from db.converters._uuid_text import uuid_to_text
 from models.goal import Goal
 from models.npc_card import NPCCard
 
@@ -42,7 +43,7 @@ def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
         "knowledge_scope": npc.knowledge_scope,
         "attributes": npc.attributes,
         COL_INVENTORY: npc.inventory,
-        COL_LOCATION_ID: npc.location_id,
+        COL_LOCATION_ID: uuid_to_text(npc.location_id),
         "relationships": npc.relationships,
         "conversation_history": npc.conversation_history,
         "current_mood": npc.current_mood,

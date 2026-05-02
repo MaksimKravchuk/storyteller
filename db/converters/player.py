@@ -10,6 +10,7 @@ from db.converters._columns import (
     COL_LOCATION_ID,
     COL_NAME,
 )
+from db.converters._uuid_text import uuid_to_text
 from models.game_state import PlayerState
 
 _COL_KNOWN_NPCS = "known_npcs"
@@ -23,13 +24,13 @@ def player_to_row(player: PlayerState, game_state_id: str) -> dict:
         COL_ID: player.uuid,
         COL_GAME_STATE_ID: game_state_id,
         COL_NAME: player.name,
-        COL_LOCATION_ID: player.location_id,
+        COL_LOCATION_ID: uuid_to_text(player.location_id),
         COL_INVENTORY: player.inventory,
         COL_APPEARANCE: player.appearance,
         _COL_PHYSICAL_STATUS: player.physical_status,
-        _COL_KNOWN_NPCS: sorted(player.known_npcs),
+        _COL_KNOWN_NPCS: sorted(str(uid) for uid in player.known_npcs),
         _COL_PLAYER_EVENT_LOG: player.player_event_log,
-        _COL_LEARNED_FACTS: sorted(player.learned_facts),
+        _COL_LEARNED_FACTS: sorted(str(uid) for uid in player.learned_facts),
     }
 
 

@@ -90,7 +90,7 @@ class TestGet:
 
         matching = await repo.turn_events.get(test_session_id, npc_id=npc_uuid)
         assert len(matching) == 1
-        assert matching[0]["npc_id"] == npc_uuid
+        assert str(matching[0]["npc_id"]) == npc_uuid
 
     @allure.story("Get")
     @allure.title("get(event_type=T) filters events by type")
