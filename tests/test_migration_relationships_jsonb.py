@@ -45,7 +45,5 @@ class TestRelationshipsJsonbCast:
     @allure.story("Migration parameter binding")
     @allure.title("The relationships UPDATE does not contain the `:rels::jsonb` cast pattern")
     def test_update_sql_avoids_double_colon_after_bind(self):
-        # `:name::type` is the trap — sa.text() cannot parse it correctly.
-        # `CAST(:name AS type)` is the safe form.
         assert ":rels::" not in UPDATE_NPC_RELATIONSHIPS_SQL
         assert "CAST(:rels AS jsonb)" in UPDATE_NPC_RELATIONSHIPS_SQL

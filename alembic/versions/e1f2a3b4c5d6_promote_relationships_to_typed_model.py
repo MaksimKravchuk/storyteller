@@ -25,8 +25,8 @@ _HOSTILITY_KEYWORDS = frozenset(
 _TOKEN_RE = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)"
 _HOSTILITY_RE = re.compile(_TOKEN_RE.format("|".join(_HOSTILITY_KEYWORDS)), re.IGNORECASE)
 
-# `CAST(:rels AS jsonb)` rather than `:rels::jsonb`: SQLAlchemy's text() parser
-# treats `::` as part of an escape and silently mis-binds the named parameter.
+# Use CAST(... AS jsonb), not `:rels::jsonb` — sa.text()'s bind-param regex
+# backtracks across `::` and binds `:rel` instead of `:rels`, raising a syntax error.
 UPDATE_NPC_RELATIONSHIPS_SQL = "UPDATE npcs SET relationships = CAST(:rels AS jsonb) WHERE id = :id"
 
 
