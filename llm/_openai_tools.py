@@ -61,6 +61,11 @@ class _StrictSchemaNormalizer:
         if not isinstance(node, dict):
             return
         node.pop("default", None)
+        # Pydantic emits the non-standard ``format: "uuid4"`` for ``UUID4``
+        # fields; OpenAI's strict validator only accepts the standard
+        # ``"uuid"`` and rejects the request outright otherwise.
+        if node.get("format") == "uuid4":
+            node["format"] = "uuid"
         if node.get("type") == "object" or "properties" in node:
             cls._normalize_object(node)
         cls._walk_children(node)
