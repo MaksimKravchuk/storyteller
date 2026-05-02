@@ -62,7 +62,7 @@ class TestCharacter:
         char = Character(name="Livia")
         assert char.name == "Livia"
         assert char.biography == ""
-        assert char.relationships == {}
+        assert char.relationships == []
         assert char.attributes == {}
         assert char.inventory == []
 
