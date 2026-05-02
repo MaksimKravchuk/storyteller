@@ -25,6 +25,10 @@ _HOSTILITY_KEYWORDS = frozenset(
 _TOKEN_RE = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)"
 _HOSTILITY_RE = re.compile(_TOKEN_RE.format("|".join(_HOSTILITY_KEYWORDS)), re.IGNORECASE)
 
+# Use CAST(... AS jsonb), not `:rels::jsonb` — sa.text()'s bind-param regex
+# backtracks across `::` and binds `:rel` instead of `:rels`, raising a syntax error.
+UPDATE_NPC_RELATIONSHIPS_SQL = "UPDATE npcs SET relationships = CAST(:rels AS jsonb) WHERE id = :id"
+
 
 def _infer_kind(label: str) -> str:
     if _HOSTILITY_RE.search(label):
@@ -59,7 +63,7 @@ def upgrade() -> None:
             continue
         new_rels = _upcast(rels)
         conn.execute(
-            sa.text("UPDATE npcs SET relationships = :rels::jsonb WHERE id = :id"),
+            sa.text(UPDATE_NPC_RELATIONSHIPS_SQL),
             {"rels": json.dumps(new_rels), "id": row_id},
         )
 
