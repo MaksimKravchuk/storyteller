@@ -73,8 +73,12 @@ class MemoryEvent:
     ``salience`` defaults to the neutral preset; combat / overheard /
     event sites pick a tuned value from :mod:`knowledge.salience`.
     ``slots`` carries the optional structured
-    subject/object/action/outcome quadruple — see
-    :class:`knowledge.memory_slots.MemorySlots`.
+    subject/object/action/outcome quadruple (see
+    :class:`knowledge.memory_slots.MemorySlots`). ``subject_id`` is the
+    canonical UUID of the entity the resulting nodes are *about* —
+    distinct from ``slots.subject`` (free-text name) — so a later
+    :meth:`KnowledgeGraph.resolve_subject_identity` lookup can find
+    every memory tagged with the same person across encounters.
     """
 
     event_description: str
@@ -84,6 +88,7 @@ class MemoryEvent:
     game_time: float = INITIAL_GAME_CLOCK
     salience: float = salience_presets.DEFAULT
     slots: MemorySlots = EMPTY_SLOTS
+    subject_id: UUID | None = None
 
 
 class MemoryManager:
@@ -107,23 +112,22 @@ class MemoryManager:
         game_time: float = INITIAL_GAME_CLOCK,
         location_id: UUID | None = None,
         salience: float = salience_presets.ROUTINE_DIALOGUE,
+        subject_id: UUID | None = None,
     ) -> None:
         """Summarise many interactions concurrently into memory nodes.
 
         Each ``pair`` is ``(npc_id, interaction_log)`` or
-        ``(npc_id, interaction_log, slots)``. Both the targeted-dialogue
-        path and the retaliation path feed this helper so a single
-        turn issues one concurrent gather for all NPC memories.
-        ``salience`` is the importance score stamped on every produced
-        memory — the retaliation path overrides the default since a
-        fight an NPC was dragged into matters more than ordinary
-        chitchat.
+        ``(npc_id, interaction_log, slots)``. ``salience`` is the
+        importance score stamped on every produced memory; ``subject_id``
+        is the canonical entity all summaries on this turn are about
+        (typically ``player.uuid``).
         """
         if not pairs:
             return
-        await asyncio.gather(
-            *(self._summarize_one(_split_pair(pair), game_time, location_id, salience) for pair in pairs),
-        )
+        coros = [
+            self._summarize_one(_split_pair(pair), game_time, location_id, salience, subject_id) for pair in pairs
+        ]
+        await asyncio.gather(*coros)
 
     async def create_memory_from_event(self, event: MemoryEvent) -> MemoryEventResult:
         """Create memory nodes for all witnesses of an event.
@@ -164,6 +168,7 @@ class MemoryManager:
                 location_id=event.location_id,
                 timestamp=event.game_time,
                 salience=event.salience,
+                subject_id=event.subject_id,
                 **slot_fields,
             ),
         )
@@ -181,6 +186,7 @@ class MemoryManager:
                 location_id=event.location_id,
                 timestamp=event.game_time,
                 salience=event.salience,
+                subject_id=event.subject_id,
                 **slot_fields,
             ),
         )
@@ -193,6 +199,7 @@ class MemoryManager:
         game_time: float,
         location_id: UUID | None,
         salience: float,
+        subject_id: UUID | None,
     ) -> None:
         """Summarise a single interaction into a memory node linked to an NPC."""
         from llm.message import Message, Role
@@ -215,6 +222,7 @@ class MemoryManager:
                 location_id=location_id,
                 timestamp=game_time,
                 salience=salience,
+                subject_id=subject_id,
                 **slot_kwargs(pair[2]),
             ),
         )

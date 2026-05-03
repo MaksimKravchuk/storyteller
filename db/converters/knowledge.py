@@ -9,6 +9,7 @@ from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, Knowledge
 
 _COL_CANON = "canon"
 _COL_SALIENCE = "salience"
+_COL_SUBJECT_ID = "subject_id"
 _DEFAULT_CANON = CanonSource.HISTORICAL.value
 
 
@@ -29,6 +30,7 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
         "object": node.object,
         "action": node.action,
         "outcome": node.outcome,
+        _COL_SUBJECT_ID: uuid_to_text(node.subject_id),
     }
 
 
@@ -48,4 +50,5 @@ def row_to_knowledge_node(row) -> KnowledgeNode:
         object=row.get("object"),
         action=row.get("action"),
         outcome=row.get("outcome"),
+        subject_id=row.get(_COL_SUBJECT_ID),
     )

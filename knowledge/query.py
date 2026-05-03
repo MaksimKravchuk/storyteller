@@ -94,6 +94,15 @@ def _memory_score(memory: KnowledgeNode, now: float) -> float:
     return _SALIENCE_WEIGHT * memory.salience + _RECENCY_WEIGHT * recency_factor
 
 
+def _rank_by_score(memories: list[KnowledgeNode]) -> list[KnowledgeNode]:
+    """Sort *memories* in place by the salience+recency blend, newest-impactful first."""
+    if not memories:
+        return memories
+    now = _now_reference(memories)
+    memories.sort(key=lambda memory: _memory_score(memory, now), reverse=True)
+    return memories
+
+
 class KnowledgeQueryEngine:
     """Applies filters to the knowledge graph for NPC-aware retrieval.
 
@@ -160,26 +169,32 @@ class KnowledgeQueryEngine:
         summaries. Equal-salience memories fall back to recency
         ordering — the recency term still differentiates them.
         """
-        memories = self._personal_memories_for(npc_id)
-        if not memories:
-            return []
-        now = _now_reference(memories)
-        memories.sort(key=lambda memory: _memory_score(memory, now), reverse=True)
-        return memories[:limit]
+        return _rank_by_score(self._graph.personal_memories_for(npc_id))[:limit]
 
-    def _personal_memories_for(self, npc_id: UUID) -> list[KnowledgeNode]:
-        """Return every PERSONAL_EXPERIENCE node witnessed by *npc_id*.
+    def get_memories_about_subject(
+        self,
+        holder_id: UUID,
+        subject_id: UUID,
+        limit: int | None = None,
+    ) -> list[KnowledgeNode]:
+        """Return *holder_id*'s personal memories whose ``subject_id`` matches.
 
-        Thin shim over :meth:`KnowledgeGraph.personal_memories_for`
-        kept so the call-site reads naturally inside this engine —
-        the graph-side method is index-backed, so this is no longer
-        the ``O(N)`` walk the old in-engine implementation was.
+        Ranked with the same salience+recency blend as
+        :meth:`get_memories_held_by`. ``limit=None`` returns every
+        match; conversational prompts that only show the top-N can pass
+        an explicit cap.
         """
-        return self._graph.personal_memories_for(npc_id)
+        matched = [
+            memory for memory in self._graph.personal_memories_for(holder_id) if memory.subject_id == subject_id
+        ]
+        ranked = _rank_by_score(matched)
+        if limit is None:
+            return ranked
+        return ranked[:limit]
 
     def _add_personal_memories(self, npc_id: UUID, matching_nodes: list[KnowledgeNode]) -> None:
         """Append personal-experience nodes linked to *npc_id* that aren't already included."""
         existing_ids = {node.uuid for node in matching_nodes}
-        for memory in self._personal_memories_for(npc_id):
+        for memory in self._graph.personal_memories_for(npc_id):
             if memory.uuid not in existing_ids:
                 matching_nodes.append(memory)
