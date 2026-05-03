@@ -310,6 +310,37 @@ class TestDialogueHandlerLongTermMemory:
         assert "*lunges at you, sword drawn*" in sent_prompt
 
     @allure.story("Memory summarisation hook")
+    @allure.title("summarize_retaliations tags the retaliating NPC's memory with the current scene's location_id")
+    @pytest.mark.asyncio
+    async def test_summarize_retaliations_carries_scene_location_id(self):
+        """Retaliation summaries must carry location_id like targeted dialogue summaries."""
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id=_FORUM,
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
+        )
+
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_RETALIATION_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {}, memory_manager)
+
+        retaliation_entries = [
+            {"npc_uuid": _NPC_A, "npc_name": "Marcus", "response": "*lunges*"},
+        ]
+
+        await handler.summarize_retaliations(retaliation_entries, "shout insults")
+
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_A)
+        assert len(memories) == 1
+        assert memories[0].location_id == _FORUM
+
+    @allure.story("Memory summarisation hook")
     @allure.title("summarize_retaliations skips entries missing an npc_uuid without hitting the summariser")
     @pytest.mark.asyncio
     async def test_summarize_retaliations_skips_entries_without_uuid(self):
