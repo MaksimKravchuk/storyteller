@@ -125,12 +125,12 @@ class KnowledgeQueryEngine:
         return memories[:limit]
 
     def _personal_memories_for(self, npc_id: UUID) -> list[KnowledgeNode]:
-        """Return every PERSONAL_EXPERIENCE node linked from *npc_id*.
+        """Return every PERSONAL_EXPERIENCE node witnessed by *npc_id*.
 
-        Delegates to :meth:`KnowledgeGraph.personal_memories_for`,
-        which is backed by a ``WITNESSED``-edge index — replacing what
-        used to be an ``O(N)`` walk of every node in the graph on
-        every Actor turn.
+        Thin shim over :meth:`KnowledgeGraph.personal_memories_for`
+        kept so the call-site reads naturally inside this engine —
+        the graph-side method is index-backed, so this is no longer
+        the ``O(N)`` walk the old in-engine implementation was.
         """
         return self._graph.personal_memories_for(npc_id)
 

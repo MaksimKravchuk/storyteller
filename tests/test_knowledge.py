@@ -414,27 +414,48 @@ class TestWitnessMemoryIndex:
         assert [mem.uuid for mem in remaining] == [survivor.uuid]
 
     @allure.story("Witness-memory index")
-    @allure.title("Removing a witness NPC node clears that NPC's index entry")
+    @allure.title("Removing a witness NPC node clears that NPC's index entry but leaves the memory node intact")
     def test_remove_witness_clears_index_entry(self, empty_graph):
         empty_graph.register_actor_node(_NPC_1, label="Guard")
-        _attach_memory(empty_graph, _NPC_1, "memory", timestamp=1.0)
+        memory = _attach_memory(empty_graph, _NPC_1, "memory", timestamp=1.0)
 
         empty_graph.remove_node(_NPC_1)
 
         assert empty_graph.personal_memories_for(_NPC_1) == []
+        assert empty_graph.get_node(memory.uuid) is not None
 
     @allure.story("Witness-memory index")
-    @allure.title("Non-WITNESSED outgoing edges from an NPC are not indexed as personal memories")
-    def test_non_witnessed_edges_are_not_indexed(self, empty_graph):
-        empty_graph.register_actor_node(_NPC_1, label="Source")
-        hearsay = KnowledgeNode(
-            text="rumour",
+    @allure.title("Removing a memory shared by two witnesses evicts it from both index entries")
+    def test_remove_shared_memory_evicts_from_all_witnesses(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        empty_graph.register_actor_node(_NPC_2, label="Innkeeper")
+        shared = KnowledgeNode(
+            text="shared",
             scope=KnowledgeScope.LOCAL,
-            source=KnowledgeSource.HEARSAY,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
             timestamp=1.0,
         )
-        hearsay_id = empty_graph.add_node(hearsay)
-        empty_graph.add_edge(hearsay_id, _NPC_1, EdgeType.TOLD_BY)
+        shared_id = empty_graph.add_node(shared)
+        empty_graph.add_edge(_NPC_1, shared_id, EdgeType.WITNESSED)
+        empty_graph.add_edge(_NPC_2, shared_id, EdgeType.WITNESSED)
+
+        empty_graph.remove_node(shared_id)
+
+        assert empty_graph.personal_memories_for(_NPC_1) == []
+        assert empty_graph.personal_memories_for(_NPC_2) == []
+
+    @allure.story("Witness-memory index")
+    @allure.title("Non-WITNESSED outgoing edges from an NPC to a PERSONAL_EXPERIENCE node are not indexed")
+    def test_non_witnessed_outgoing_edge_not_indexed(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Source")
+        memory = KnowledgeNode(
+            text="dream",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=1.0,
+        )
+        memory_id = empty_graph.add_node(memory)
+        empty_graph.add_edge(_NPC_1, memory_id, EdgeType.TOLD_BY)
 
         assert empty_graph.personal_memories_for(_NPC_1) == []
 

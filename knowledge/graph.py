@@ -26,11 +26,12 @@ class KnowledgeGraph:
     have a ``WITNESSED`` edge to. The index lets
     :meth:`personal_memories_for` answer per-NPC memory lookups in
     ``O(memories_for_npc)`` instead of walking every node in the
-    graph. The index relies on the project-wide invariant that
-    ``WITNESSED`` is the only edge type emitted *from* NPC nodes and
-    that its target is always a ``PERSONAL_EXPERIENCE`` node — the
-    same invariant ``knowledge.memory_preservation._eligible_memories``
-    already assumes.
+    graph on every Actor turn. ``WITNESSED`` is currently the only
+    edge type emitted *from* NPC nodes (memory.py callers) and its
+    target is always a ``PERSONAL_EXPERIENCE`` node — the index
+    re-checks both before adding an entry, so a future caller that
+    breaks this convention silently degrades coverage rather than
+    poisoning the index.
     """
 
     def __init__(self) -> None:
@@ -79,12 +80,13 @@ class KnowledgeGraph:
         edge_type: EdgeType,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        """Add a directed edge. Callers must ``add_node`` the target first.
+        """Add a directed edge.
 
-        For ``WITNESSED`` edges the target must already exist as a
-        ``PERSONAL_EXPERIENCE`` ``KnowledgeNode`` for the witness-memory
-        index to pick it up — the index is consulted on every Actor
-        turn, so a missing entry silently degrades query coverage.
+        For ``WITNESSED`` edges, callers must ``add_node`` the target
+        ``PERSONAL_EXPERIENCE`` node *before* this call so the
+        witness-memory index can pick it up — the index is consulted
+        on every Actor turn, and a missed entry silently degrades
+        per-NPC memory coverage.
         """
         self.digraph.add_edge(from_id, to_id, edge_type=edge_type, **(metadata or {}))
         self._maybe_index_witness_edge(from_id, to_id, edge_type)
@@ -114,9 +116,7 @@ class KnowledgeGraph:
         """Return every ``PERSONAL_EXPERIENCE`` node witnessed by *npc_id*.
 
         Backed by the witness-memory index, so this is
-        ``O(memories_for_npc)`` instead of a full graph walk. Returns
-        an empty list when the NPC has no indexed memories or has
-        been removed from the graph.
+        ``O(memories_for_npc)`` instead of a full graph walk.
         """
         memory_ids = self._witness_memory_index.get(npc_id)
         if not memory_ids:
@@ -142,7 +142,6 @@ class KnowledgeGraph:
         self._witness_memory_index = rebuilt
 
     def _is_witnessed_personal_memory(self, target_id: UUID, edge_attrs: dict[str, Any]) -> bool:
-        """Return True if (edge_type, target) describe a witness→personal-memory edge."""
         if edge_attrs.get("edge_type") != EdgeType.WITNESSED:
             return False
         target_node = self.get_node(target_id)
@@ -153,7 +152,6 @@ class KnowledgeGraph:
     # ------------------------------------------------------------------
 
     def _maybe_index_witness_edge(self, from_id: UUID, to_id: UUID, edge_type: EdgeType) -> None:
-        """Record a personal-experience target in the witness-memory index, if applicable."""
         if edge_type != EdgeType.WITNESSED:
             return
         target = self.get_node(to_id)
