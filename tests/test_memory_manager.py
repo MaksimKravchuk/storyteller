@@ -332,6 +332,43 @@ async def test_summarize_batch_keeps_dissimilar_memories() -> None:
 
 
 @allure.story("summarize_interactions_batch")
+@allure.title("summaries with high token overlap but below the dedup threshold are kept distinct")
+@pytest.mark.asyncio
+async def test_summarize_batch_keeps_high_similarity_below_threshold() -> None:
+    """Pin the Jaccard cutoff: 8/14≈0.57 overlap must stay below the 0.65 threshold.
+
+    Without this, dropping ``_DEDUP_JACCARD_THRESHOLD`` toward 0.5 would silently
+    start collapsing distinct topics and only the existing near-zero-overlap test
+    would still pass.
+    """
+    graph = KnowledgeGraph()
+    llm = AsyncMock()
+    llm.send_message = AsyncMock(
+        side_effect=[
+            LLMResponse(
+                body="alpha beta gamma delta epsilon zeta eta theta iota kappa lambda",
+                model="stub",
+                usage={},
+            ),
+            LLMResponse(
+                body="alpha beta gamma delta epsilon zeta eta theta mu nu xi",
+                model="stub",
+                usage={},
+            ),
+        ],
+    )
+    manager = MemoryManager(graph=graph, llm_client=llm)
+    npc_id = _MARCUS
+    graph.register_actor_node(npc_id, label="Marcus")
+
+    await manager.summarize_interactions_batch([(npc_id, "chat one")])
+    await manager.summarize_interactions_batch([(npc_id, "chat two")])
+
+    engine = KnowledgeQueryEngine(graph)
+    assert len(engine.get_memories_about(npc_id)) == 2
+
+
+@allure.story("summarize_interactions_batch")
 @allure.title("duplicate detection is scoped per NPC — another NPC's identical summary is still recorded")
 @pytest.mark.asyncio
 async def test_summarize_batch_dedup_is_per_npc() -> None:
