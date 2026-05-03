@@ -7,6 +7,7 @@ from uuid import UUID
 
 from loguru import logger
 
+from knowledge.memory_preservation import preserve_departing_npc_memories
 from timeline._uuid_coerce import coerce_uuid as _coerce_uuid
 from timeline.effect_memory import capture_pre_state, emit_memory
 from timeline.event import EventEffect
@@ -174,6 +175,11 @@ class EffectApplier:
         npc = game_state.npcs.get(npc_id)
         if not npc:
             return
+        # Run preservation BEFORE mutation: once the NPC is popped and
+        # their location cleared, the rumor-scope walker has no anchor
+        # to resolve same-city listeners and the memories silently rot.
+        if npc.location_id is not None:
+            preserve_departing_npc_memories(self._graph, game_state, npc_id, npc.location_id)
         locations = game_state.locations
         if npc.location_id is not None and npc.location_id in locations:
             locations[npc.location_id].remove_npc(npc_id)
