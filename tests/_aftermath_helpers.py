@@ -8,8 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from knowledge.graph import KnowledgeGraph
-from knowledge.memory import MemoryEvent
+from knowledge import graph as _kg, memory as _km
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
@@ -17,6 +16,9 @@ from models.scene import Scene, SceneNPC
 from models.setting import Setting
 from models.world_state import WorldThread
 from tests._uuid_helpers import make_uuid
+
+KnowledgeGraph = _kg.KnowledgeGraph
+MemoryEvent = _km.MemoryEvent
 
 
 @dataclass

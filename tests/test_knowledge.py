@@ -138,6 +138,12 @@ class TestKnowledgeNode:
         with pytest.raises(ValidationError):
             KnowledgeNode(text="too cold", salience=-0.1)
 
+    @allure.story("Salience")
+    @allure.title("A KnowledgeNode accepts salience at the inclusive bounds 0.0 and 1.0")
+    def test_salience_accepts_inclusive_bounds(self):
+        assert KnowledgeNode(text="zero", salience=float(0)).salience == pytest.approx(0)
+        assert KnowledgeNode(text="one", salience=float(1)).salience == pytest.approx(1)
+
 
 # ---------------------------------------------------------------------------
 # KnowledgeGraph

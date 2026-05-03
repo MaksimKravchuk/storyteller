@@ -7,7 +7,7 @@ from unittest.mock import patch
 import allure
 import pytest
 
-from cast import dice
+from cast.dice import ContestOutcome, ContestRoll, ContestType
 from cast.npc_background_tick import NPCBackgroundTicker
 from models.goal import Goal, GoalKind, GoalStatus
 from models.location import Location
@@ -94,9 +94,9 @@ class TestNPCBackgroundTicker:
         backroom = _move_actor_offscene(state, actor, target)
         memory = RecordingMemoryManager()
 
-        forced_roll = dice.ContestRoll(
-            contest_type=dice.ContestType.COMBAT,
-            outcome=dice.ContestOutcome.ACTOR_DOMINATES,
+        forced_roll = ContestRoll(
+            contest_type=ContestType.COMBAT,
+            outcome=ContestOutcome.ACTOR_DOMINATES,
             actor_roll=20,
             target_roll=1,
             actor_bonus=0,

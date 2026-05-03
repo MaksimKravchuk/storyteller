@@ -25,8 +25,7 @@ OVERHEARD = 0.3
 # matters more than chatter but less than physical clashes.
 OBJECT_INTERACTION = 0.5
 
-# Witnessed combat — the canonical high-salience event class. Sits at
-# the top of the band the issue calls out (0.8–1.0).
+# Witnessed combat — the canonical high-salience event class.
 COMBAT = 0.85
 
 # Retaliation summaries are combat by another name — an NPC's mood
@@ -38,7 +37,5 @@ RETALIATION = 0.85
 # both deserve more weight than chitchat but less than a clash you saw.
 REMOTE_EVENT = 0.6
 
-# The model default. Used only when a caller can't classify the event
-# — keeping the constant in one place lets the field default drift
-# with the design without scattering 0.5 through call sites.
+# Neutral midpoint; used only when a caller can't classify the event.
 DEFAULT = 0.5

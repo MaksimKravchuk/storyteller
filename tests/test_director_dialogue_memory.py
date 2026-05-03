@@ -8,13 +8,15 @@ import allure
 import pytest
 
 from cast.director_dialogue import DialogueHandler
-from knowledge.memory import MemoryManager
-from knowledge.query import KnowledgeQueryEngine
+from knowledge import memory as _km, query as _kq, salience as salience_presets
 from llm.message import LLMResponse
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from tests._uuid_helpers import make_uuid
 from tests.director_helpers import make_director, make_game_state, make_mock_actor, setup_npc
+
+MemoryManager = _km.MemoryManager
+KnowledgeQueryEngine = _kq.KnowledgeQueryEngine
 
 _NPC_A = make_uuid("npc-1")
 _NPC_B = make_uuid("npc-2")
@@ -56,6 +58,7 @@ class TestDialogueHandlerLongTermMemory:
         memories = engine.get_memories_about(_NPC_A)
         assert len(memories) == 1
         assert memories[0].text == _MEMORY_SUMMARY
+        assert memories[0].salience == pytest.approx(salience_presets.ROUTINE_DIALOGUE)
         memory_llm.send_message.assert_awaited_once()
 
     @allure.story("Co-witness memory broadcast")
@@ -114,6 +117,7 @@ class TestDialogueHandlerLongTermMemory:
         assert len(cowitness_memories) == 1
         assert _DAMNING_STATEMENT in cowitness_memories[0].text
         assert "Marcus" in cowitness_memories[0].text
+        assert cowitness_memories[0].salience == pytest.approx(salience_presets.OVERHEARD)
 
         # The co-witness broadcast also surfaces as a learned fact on the
         # player, so the Character sidebar can render the confession the

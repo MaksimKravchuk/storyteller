@@ -16,14 +16,13 @@ if TYPE_CHECKING:
 
 _DEFAULT_SORT_PRIORITY = 99
 
-# Tuning for the salience+recency blend in ``get_memories_about``. With
-# ``W=0.7`` the salience term dominates so a 0.95 witnessed-killing
-# memory keeps the top slot for at least one full ``TAU`` window of
-# game-clock hours even as 0.3 small-talk memories pile in.
+# Tuning for the salience+recency blend in ``get_memories_about``.
+# ``W=0.7`` keeps the salience term dominant: a 0.95 pivotal memory
+# beats a fresh 0.3 routine memory at every ``TAU`` age, then both
+# decay symmetrically.
 _SALIENCE_WEIGHT = 0.7
 _RECENCY_WEIGHT = 1 - _SALIENCE_WEIGHT
 _RECENCY_TAU_HOURS = 72.0
-# Named so we can write 0-valued floats without tripping WPS358.
 _FLOAT_ZERO = float(0)
 
 _SOURCE_PRIORITY = MappingProxyType(

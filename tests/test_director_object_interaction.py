@@ -17,12 +17,15 @@ import pytest
 
 from cast import director_object_interaction as doi_mod, item_generator as ig_mod, scene_builder as sb_mod
 from cast.schemas import item_response as item_resp, scene_response as scene_resp
-from knowledge.memory import MemoryManager
-from knowledge.query import KnowledgeQueryEngine
-from knowledge.scene_state import SCENE_STATE_TAG, query_scene_deltas
+from knowledge import memory as _km, query as _kq, salience as salience_presets, scene_state
 from llm.message import LLMResponse
 from models import location as location_mod, scene as scene_mod
 from tests.director_helpers import make_game_state, make_uuid, setup_npc
+
+MemoryManager = _km.MemoryManager
+KnowledgeQueryEngine = _kq.KnowledgeQueryEngine
+SCENE_STATE_TAG = scene_state.SCENE_STATE_TAG
+query_scene_deltas = scene_state.query_scene_deltas
 
 _SEND_JSON = "_send_json"
 _NPC_UUID = make_uuid("npc-bystander")
@@ -113,6 +116,7 @@ class TestApplyObjectInteractions:
         memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_UUID)
         assert len(memories) == 1
         assert "window is broken" in memories[0].text.lower()
+        assert memories[0].salience == pytest.approx(salience_presets.OBJECT_INTERACTION)
 
     @allure.story("Empty delta")
     @allure.title("apply_object_interactions skips the graph write when the LLM returns an empty delta")

@@ -59,7 +59,4 @@ class KnowledgeNode(StorytellerBase):
     tags: list[str] = []
     location_id: UUID | None = None
     timestamp: float | None = None  # Game-clock time when learned
-    # Per-memory importance — forgettable to life-changing. Combined
-    # with recency by ``KnowledgeQueryEngine.get_memories_about`` so a
-    # witnessed killing isn't crowded out by trivial chatter.
     salience: float = _SALIENCE_FIELD

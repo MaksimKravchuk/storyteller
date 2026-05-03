@@ -106,11 +106,6 @@ class MemoryManager:
           - CITY/REGION: becomes RUMOR accessible in that area
           - WORLD: becomes FACT accessible broadly
 
-        ``event.salience`` is stamped on every created node so the
-        recall layer can rank pivotal events (combat, deaths, big
-        reveals) above routine chatter. Callers should reach into
-        :mod:`knowledge.salience` for the right preset.
-
         Returns list of created node UUIDs. The first entry is
         canonical across per-witness duplicates, so callers where the
         player was subject or witness may pass the list to
