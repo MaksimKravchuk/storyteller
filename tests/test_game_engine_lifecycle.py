@@ -87,6 +87,21 @@ async def test_start_game_populates_internal_state(simple_setting) -> None:
 
 
 @allure.story("start_game wiring")
+@allure.title("start_game materialises Setting.locations into game_state.locations and anchors the player")
+@pytest.mark.asyncio
+async def test_start_game_materialises_setting_locations(simple_setting) -> None:
+    engine = GameEngine()
+    with _StartGameHarness(simple_setting):
+        await engine.start_game("Ancient Rome during Augustus")
+
+    game_state, _, _ = engine.assert_running()
+    assert len(game_state.locations) == 1
+    assert game_state.player.location_id is not None
+    assert game_state.player.location_id in game_state.locations
+    assert next(iter(game_state.locations.values())).name == "Forum Romanum"
+
+
+@allure.story("start_game wiring")
 @allure.title("start_game passes the DataMiner instance into wire_director so agents share research state")
 @pytest.mark.asyncio
 async def test_start_game_wires_director_with_data_miner(simple_setting) -> None:

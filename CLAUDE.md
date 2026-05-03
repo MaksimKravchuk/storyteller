@@ -109,7 +109,8 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ## Testing
 
-- For bug fixes, write a failing regression test first (TDD), then fix the root cause. Don't patch around symptoms.
+- For bug fixes, follow strict TDD: write the regression test first, **run pytest and watch it fail with the expected assertion error**, then fix the root cause and watch the same test pass. A test you never saw fail is not a regression test — it might be exercising the wrong path or asserting the wrong thing. Don't patch around symptoms.
+- Test at the consumer-side integration seam, not just the supplier. A test that asserts a model method returns the right value does not prove the consumer actually uses it. When a contract says "*X receives Y*", add a test that reads X's input boundary and asserts Y appears there. Past regressions in this repo (NPC alias list reaching `NPCCard.known_names_for_player` but never reaching the Narrator's prompt body) all lived in this gap — supplier well-tested, consumer wiring un-tested.
 - Maintain 90%+ unit test coverage. When adding new modules, add tests in the same PR.
 - E2E tests under `tests/e2e/` must carry Allure annotations following the project taxonomy.
 
