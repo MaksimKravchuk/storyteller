@@ -1,5 +1,3 @@
-"""Promote ``Setting.locations`` dicts into ``game_state.locations`` and anchor the player."""
-
 from __future__ import annotations
 
 from models.game_state import GameState
@@ -7,12 +5,7 @@ from models.location import Location
 
 
 def materialise_setting_locations(game_state: GameState) -> None:
-    """Promote ``setting.locations`` dicts into ``Location`` instances; anchor the player on the first.
-
-    No-op when ``game_state.locations`` already has entries — restored
-    sessions arrive with locations already loaded and the player's
-    anchor preserved.
-    """
+    """No-op when ``game_state.locations`` already has entries — restored sessions arrive with locations preserved."""
     if game_state.locations:
         return
     for entry in game_state.setting.locations:

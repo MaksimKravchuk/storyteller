@@ -1,11 +1,10 @@
-"""Tests for ``engine.location_init.materialise_setting_locations``."""
-
 from __future__ import annotations
 
 from uuid import uuid4
 
 import allure
 
+from cast.narrator import _resolve_current_location
 from engine.location_init import materialise_setting_locations
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
@@ -134,3 +133,19 @@ def test_materialise_empty_setting_leaves_player_unanchored() -> None:
 
     assert game_state.locations == {}
     assert game_state.player.location_id is None
+
+
+@allure.story("Consumer seam: Narrator")
+@allure.title("Narrator._resolve_current_location returns the materialised Location, not None")
+def test_narrator_resolves_materialised_location() -> None:
+    """Without materialisation, the Narrator falls through to ``None`` and silently drops prior-damage surfacing."""
+    game_state = _make_game_state(
+        locations=[{"name": "Forum", "type": "district", "description": "Open square"}],
+    )
+
+    materialise_setting_locations(game_state)
+    resolved = _resolve_current_location(game_state)
+
+    assert resolved is not None
+    assert resolved.name == "Forum"
+    assert resolved.uuid == game_state.player.location_id
