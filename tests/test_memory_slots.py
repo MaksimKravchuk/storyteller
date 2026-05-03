@@ -22,9 +22,11 @@ from typing import Any
 from cast import (
     _npc_combat_memory as combat_mod,
     _npc_outcome,
+    director_dialogue as dlg_mod,
     director_dialogue_helpers as dlg_helpers,
     director_dialogue_witness as cowitness_mod,
     director_events as events_mod,
+    director_object_witness as obj_witness_mod,
 )
 from db.converters import knowledge as kn_conv
 from knowledge import (
@@ -36,7 +38,12 @@ from knowledge import (
 from llm.message import LLMResponse
 from models.npc_card import NPCCard
 from tests import _slots_helpers as helpers
-from timeline import effect_memory as effect_mod, event as event_mod, event_manager as ev_mgr_mod
+from timeline import (
+    effect_memory as effect_mod,
+    effect_memory_slots as effect_slots_mod,
+    event as event_mod,
+    event_manager as ev_mgr_mod,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -362,6 +369,111 @@ class TestEffectMemorySlotsAtConsumerSeam:
         for node in nodes:
             assert node.subject == "Marcus"
             assert node.object == "ring"
+
+    @allure.story("Effect slots")
+    @allure.title("REMOVE_ITEM, MOVE_NPC, CHANGE_ATTRIBUTE, REMOVE_NPC, and unknown all map to the right verb")
+    @pytest.mark.parametrize(
+        ("etype", "edata", "expected_action", "expected_object", "expected_outcome"),
+        [
+            ("REMOVE_ITEM", {"item": "ring"}, "lost", "ring", None),
+            ("MOVE_NPC", {"to_location_id": "loc-X"}, "departed", None, "loc-X"),
+            ("CHANGE_ATTRIBUTE", {"attribute": "mood"}, "changed_attribute", "mood", None),
+            ("REMOVE_NPC", {}, "left_scene", None, None),
+            ("CHANGE_STATUS", {"status": "wounded"}, "changed_status", None, "wounded"),
+        ],
+    )
+    def test_each_effect_verb_lands_on_node(
+        self,
+        etype: str,
+        edata: dict,
+        expected_action: str,
+        expected_object: str | None,
+        expected_outcome: str | None,
+    ) -> None:
+        state, pre = helpers.state_with_target_at(helpers.LOC, helpers.MARCUS, "Marcus")
+        effect = event_mod.EventEffect(
+            effect_type=etype,
+            target_id=str(helpers.MARCUS),
+            effect_data=edata,
+        )
+
+        effect_mod.emit_memory(state, state.knowledge_graph, effect, pre)
+
+        nodes = [n for n in state.knowledge_graph.all_nodes() if n.subject == "Marcus"]
+        assert nodes, "every effect type with a known target must produce at least one witness memory"
+        for node in nodes:
+            assert node.action == expected_action
+            assert node.object == expected_object
+            assert node.outcome == expected_outcome
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Structured memory slots")
+class TestUnknownEffectFallsBackToEmptySlots:
+    @allure.story("Effect slots")
+    @allure.title("Unknown effect_type falls back to EMPTY_SLOTS via slots_for_effect")
+    def test_unknown_effect_returns_empty_slots(self) -> None:
+        effect = event_mod.EventEffect(effect_type="GRANT_ANCIENT_BLESSING", target_id="x", effect_data={})
+
+        derived = effect_slots_mod.slots_for_effect(effect, "Marcus")
+
+        assert derived == slots_mod.EMPTY_SLOTS
+
+
+# ---------------------------------------------------------------------------
+# Consumer seam: object-interaction witness memories
+# ---------------------------------------------------------------------------
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Structured memory slots")
+class TestObjectInteractionSlotsAtConsumerSeam:
+    @allure.story("Object-interaction slots")
+    @allure.title("apply_object_interactions writes subject=player, action=interacted_with onto every witness node")
+    @pytest.mark.asyncio
+    async def test_object_interaction_carries_player_subject(self) -> None:
+        state = helpers.make_cowitness_state()
+        manager = mem_mod.MemoryManager(graph=state.knowledge_graph, llm_client=AsyncMock())
+        witnesses = [helpers.MARCUS, helpers.LIVIA]
+
+        await obj_witness_mod.emit_witness_memories(manager, state, witnesses, "the window is now shattered")
+
+        nodes = [n for n in state.knowledge_graph.all_nodes() if n.subject == helpers.PLAYER_NAME]
+        assert nodes, "object-interaction broadcast must produce witness memories carrying slots"
+        for node in nodes:
+            assert node.action == "interacted_with"
+
+
+# ---------------------------------------------------------------------------
+# Consumer seam: retaliation memory summariser
+# ---------------------------------------------------------------------------
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Structured memory slots")
+class TestRetaliationSlotsAtConsumerSeam:
+    @allure.story("Retaliation slots")
+    @allure.title("summarize_retaliations carries subject=NPC, object=player, action=retaliated_against to the node")
+    @pytest.mark.asyncio
+    async def test_retaliation_node_carries_slots(self) -> None:
+        state = helpers.make_cowitness_state()
+        state.knowledge_graph.register_actor_node(helpers.MARCUS, label="Marcus")
+        llm = AsyncMock()
+        llm.send_message = AsyncMock(return_value=LLMResponse(body="Marcus retaliated.", model="stub", usage={}))
+        manager = mem_mod.MemoryManager(graph=state.knowledge_graph, llm_client=llm)
+
+        handler = dlg_mod.DialogueHandler(state, {}, manager)
+        retaliation_entries: list[dict[str, Any]] = [
+            {"npc_uuid": helpers.MARCUS, "npc_name": "Marcus", "response": "*lunges*"},
+        ]
+
+        await handler.summarize_retaliations(retaliation_entries, "shout insults")
+
+        retaliated_nodes = [n for n in state.knowledge_graph.all_nodes() if n.action == "retaliated_against"]
+        assert retaliated_nodes
+        for node in retaliated_nodes:
+            assert node.subject == "Marcus"
+            assert node.object == helpers.PLAYER_NAME
 
 
 # ---------------------------------------------------------------------------
