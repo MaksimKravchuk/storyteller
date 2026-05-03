@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from loguru import logger
 
 from cast._npc_generator_goals import build_life_goal, candidate_goal_targets
+from cast._scene_location import UNKNOWN_SCENE_LOCATION
 from cast.base_performer_class import BasePerformer
 from cast.schemas.npc_response import NPCGoalDraft, NPCResponse
 from models.npc_card import NPCCard
@@ -66,6 +68,25 @@ def _render_vars_for(npc_request: str, game_state: Any, taken_names: set[str]) -
     return render_vars
 
 
+def _resolve_npc_location_id(game_state: Any) -> UUID | None:
+    """Fall back to the player's location when the scene carries the unknown-location sentinel."""
+    scene = game_state.current_scene
+    if scene and scene.location_id != UNKNOWN_SCENE_LOCATION:
+        return scene.location_id
+    player_loc = game_state.player.location_id
+    if scene and player_loc:
+        logger.error(
+            "NPCGenerator: scene.location_id is UNKNOWN_SCENE_LOCATION; falling back to player location {0}",
+            player_loc,
+        )
+    elif scene and not player_loc:
+        logger.error(
+            "NPCGenerator: scene.location_id is UNKNOWN_SCENE_LOCATION and player has no location; "
+            "NPC will be created with location_id=None",
+        )
+    return player_loc
+
+
 def _card_from_response(npc_data: NPCResponse, npc_request: str, game_state: Any) -> NPCCard:
     """Project an :class:`NPCResponse` into a fresh :class:`NPCCard`.
 
@@ -83,7 +104,7 @@ def _card_from_response(npc_data: NPCResponse, npc_request: str, game_state: Any
         knowledge_scope=npc_data.knowledge_scope or "local",
         attributes=npc_data.attributes.model_dump(),
         inventory=npc_data.inventory,
-        location_id=(game_state.current_scene.location_id if game_state.current_scene else None),
+        location_id=_resolve_npc_location_id(game_state),
     )
 
 
