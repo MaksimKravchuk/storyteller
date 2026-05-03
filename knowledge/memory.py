@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -23,16 +24,23 @@ if TYPE_CHECKING:
 _SUMMARY_MAX_TOKENS = 200
 
 
-def record_player_learned_fact(player: PlayerState, created_ids: list[UUID]) -> None:
-    """Attach the first created memory UUID to ``player.learned_facts``.
+@dataclass(frozen=True)
+class MemoryEventResult:
+    """Outcome of :meth:`MemoryManager.create_memory_from_event`.
 
-    All per-witness nodes produced by LOCAL-scope
-    :meth:`MemoryManager.create_memory_from_event` share the same
-    ``event_description``, so a single representative UUID is enough
-    for the Character sidebar to render a ``RememberedFact``.
+    ``canonical_id`` is the broadcast node for non-LOCAL scopes, the
+    first per-witness node for LOCAL, and ``None`` only when no nodes
+    were created. ``all_ids`` carries every created node id in creation
+    order.
     """
-    if created_ids:
-        player.learned_facts.add(created_ids[0])
+
+    canonical_id: UUID | None
+    all_ids: tuple[UUID, ...] = ()
+
+
+def record_player_learned_fact(player: PlayerState, canonical_id: UUID | None) -> None:
+    if canonical_id is not None:
+        player.learned_facts.add(canonical_id)
 
 
 class MemoryManager:
@@ -84,64 +92,86 @@ class MemoryManager:
         scope: KnowledgeScope,
         location_id: UUID | None = None,
         game_time: float = INITIAL_GAME_CLOCK,
-    ) -> list[UUID]:
+    ) -> MemoryEventResult:
         """Create memory nodes for all witnesses of an event.
 
         Scope determines how the memory propagates:
           - LOCAL: only witnesses get PERSONAL_EXPERIENCE
           - CITY/REGION: becomes RUMOR accessible in that area
           - WORLD: becomes FACT accessible broadly
-
-        Returns list of created node UUIDs. The first entry is
-        canonical across per-witness duplicates, so callers where the
-        player was subject or witness may pass the list to
-        :func:`record_player_learned_fact`.
         """
-        created_ids: list[UUID] = []
-
         if scope == KnowledgeScope.LOCAL:
-            for witness_id in witness_ids:
-                node_id = self._graph.add_node(
-                    KnowledgeNode(
-                        text=event_description,
-                        scope=KnowledgeScope.LOCAL,
-                        source=KnowledgeSource.PERSONAL_EXPERIENCE,
-                        canon=CanonSource.SESSION,
-                        location_id=location_id,
-                        timestamp=game_time,
-                    )
-                )
-                self._graph.add_edge(witness_id, node_id, EdgeType.WITNESSED)
-                created_ids.append(node_id)
-        else:
-            created_ids.append(
-                self._graph.add_node(
-                    KnowledgeNode(
-                        text=event_description,
-                        scope=scope,
-                        source=KnowledgeSource.FACT if scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR,
-                        canon=CanonSource.SESSION,
-                        location_id=location_id,
-                        timestamp=game_time,
-                    )
-                )
+            return self._create_local_memory(
+                event_description=event_description,
+                witness_ids=witness_ids,
+                location_id=location_id,
+                game_time=game_time,
             )
+        return self._create_broadcast_memory(
+            event_description=event_description,
+            witness_ids=witness_ids,
+            scope=scope,
+            location_id=location_id,
+            game_time=game_time,
+        )
 
-            # Also give witnesses a personal memory
-            for witness_id in witness_ids:
-                personal = KnowledgeNode(
-                    text=event_description,
-                    scope=KnowledgeScope.LOCAL,
-                    source=KnowledgeSource.PERSONAL_EXPERIENCE,
-                    canon=CanonSource.SESSION,
-                    location_id=location_id,
-                    timestamp=game_time,
-                )
-                personal_id = self._graph.add_node(personal)
-                self._graph.add_edge(witness_id, personal_id, EdgeType.WITNESSED)
-                created_ids.append(personal_id)
+    def _create_local_memory(
+        self,
+        event_description: str,
+        witness_ids: list[UUID],
+        location_id: UUID | None,
+        game_time: float,
+    ) -> MemoryEventResult:
+        personal_ids = [
+            self._attach_personal_node(witness_id, event_description, location_id, game_time)
+            for witness_id in witness_ids
+        ]
+        canonical_id = personal_ids[0] if personal_ids else None
+        return MemoryEventResult(canonical_id=canonical_id, all_ids=tuple(personal_ids))
 
-        return created_ids
+    def _create_broadcast_memory(
+        self,
+        event_description: str,
+        witness_ids: list[UUID],
+        scope: KnowledgeScope,
+        location_id: UUID | None,
+        game_time: float,
+    ) -> MemoryEventResult:
+        broadcast_id = self._graph.add_node(
+            KnowledgeNode(
+                text=event_description,
+                scope=scope,
+                source=KnowledgeSource.FACT if scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR,
+                canon=CanonSource.SESSION,
+                location_id=location_id,
+                timestamp=game_time,
+            )
+        )
+        personal_ids = [
+            self._attach_personal_node(witness_id, event_description, location_id, game_time)
+            for witness_id in witness_ids
+        ]
+        return MemoryEventResult(canonical_id=broadcast_id, all_ids=(broadcast_id, *personal_ids))
+
+    def _attach_personal_node(
+        self,
+        witness_id: UUID,
+        event_description: str,
+        location_id: UUID | None,
+        game_time: float,
+    ) -> UUID:
+        node_id = self._graph.add_node(
+            KnowledgeNode(
+                text=event_description,
+                scope=KnowledgeScope.LOCAL,
+                source=KnowledgeSource.PERSONAL_EXPERIENCE,
+                canon=CanonSource.SESSION,
+                location_id=location_id,
+                timestamp=game_time,
+            )
+        )
+        self._graph.add_edge(witness_id, node_id, EdgeType.WITNESSED)
+        return node_id
 
     async def _summarize_one(
         self,
