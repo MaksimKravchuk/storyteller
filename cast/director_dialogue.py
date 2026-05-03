@@ -152,9 +152,11 @@ class DialogueHandler:
             await asyncio.gather(*(_execute_npc_dialogue(*wi, self._gs) for wi in work_items)),
         )
         dlg_helpers.append_conversation_history(work_items, dialogue_entries, player_action)
+        scene = self._gs.current_scene
         await self._memory_manager.summarize_interactions_batch(
             dlg_helpers.format_dialogue_summary_pairs(work_items, dialogue_entries, player_action),
             self._gs.game_clock,
+            location_id=scene.location_id if scene else None,
         )
         await director_dialogue_witness.broadcast_cowitness_memories(
             work_items,
@@ -247,7 +249,12 @@ class DialogueHandler:
             for entry in retaliation_entries
             if entry.get("npc_uuid")
         ]
-        await self._memory_manager.summarize_interactions_batch(pairs, self._gs.game_clock)
+        scene = self._gs.current_scene
+        await self._memory_manager.summarize_interactions_batch(
+            pairs,
+            self._gs.game_clock,
+            location_id=scene.location_id if scene else None,
+        )
 
     def _collect_targets(
         self,

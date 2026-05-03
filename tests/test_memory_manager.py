@@ -113,6 +113,24 @@ async def test_summarize_batch_creates_witnessed_edge_and_is_queryable() -> None
     assert memories[0].text == _SUMMARY_TEXT
 
 
+@allure.story("summarize_interactions_batch")
+@allure.title("summarize_interactions_batch tags every produced memory node with the supplied location_id")
+@pytest.mark.asyncio
+async def test_summarize_batch_propagates_location_id() -> None:
+    """Dialogue summary memories must carry location_id like memories from create_memory_from_event."""
+    manager, graph, _ = _make_manager()
+    npc_id = _seed_npc_node(graph)
+
+    await manager.summarize_interactions_batch(
+        [(npc_id, "Player: greetings\nMarcus: hail")],
+        location_id=_LOCATION_ID,
+    )
+
+    memory_nodes = [n for n in graph.all_nodes() if n.source == KnowledgeSource.PERSONAL_EXPERIENCE]
+    assert len(memory_nodes) == 1
+    assert memory_nodes[0].location_id == _LOCATION_ID
+
+
 @allure.story("create_memory_from_event")
 @allure.title("create_memory_from_event at LOCAL scope creates per-witness PERSONAL_EXPERIENCE nodes")
 @pytest.mark.asyncio

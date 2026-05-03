@@ -54,6 +54,7 @@ class MemoryManager:
         self,
         pairs: list[tuple[UUID, str]],
         game_time: float = INITIAL_GAME_CLOCK,
+        location_id: UUID | None = None,
     ) -> None:
         """Summarise many interactions concurrently into memory nodes.
 
@@ -70,6 +71,7 @@ class MemoryManager:
                     interaction_log=log,
                     npc_id=npc_id,
                     game_time=game_time,
+                    location_id=location_id,
                 )
                 for npc_id, log in pairs
             ),
@@ -146,6 +148,7 @@ class MemoryManager:
         interaction_log: str,
         npc_id: UUID,
         game_time: float,
+        location_id: UUID | None = None,
     ) -> None:
         """Summarise a single interaction into a memory node linked to an NPC."""
         from llm.message import Message, Role
@@ -168,6 +171,7 @@ class MemoryManager:
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.PERSONAL_EXPERIENCE,
             canon=CanonSource.SESSION,
+            location_id=location_id,
             timestamp=game_time,
         )
         node_id = self._graph.add_node(node)

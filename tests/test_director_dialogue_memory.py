@@ -129,6 +129,40 @@ class TestDialogueHandlerLongTermMemory:
         # any extra LLM calls.
         memory_llm.send_message.assert_awaited_once()
 
+    @allure.story("Memory summarisation hook")
+    @allure.title(
+        "handle_dialogue tags the targeted NPC's dialogue summary memory with the current scene's location_id",
+    )
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_summary_carries_scene_location_id(self):
+        """Dialogue summary memories must carry location_id so the location filter applies consistently.
+
+        Regression for the bug where ``_summarize_one`` dropped ``location_id``
+        even though sibling memories from ``create_memory_from_event`` set it.
+        """
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id=_FORUM,
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
+        )
+
+        actor = make_mock_actor("Hail, traveller.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_NPC_A: actor}, memory_manager)
+
+        await handler.handle_dialogue("greetings", ["Marcus"])
+
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_A)
+        assert len(memories) == 1
+        assert memories[0].location_id == _FORUM
+
     @allure.story("Co-witness memory broadcast")
     @allure.title(
         "handle_dialogue with only a targeted NPC creates no extra co-witness nodes (KER-11 regression baseline)",
