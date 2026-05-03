@@ -134,7 +134,7 @@ class DialogueHandler:
         zero-LLM-cost ``PERSONAL_EXPERIENCE`` memory containing the raw
         overheard transcript (KER-11). Summarisation is awaited before
         returning so every memory is in the graph before the next
-        Actor call reads them back via ``get_memories_about``.
+        Actor call reads them back via ``get_memories_held_by``.
 
         LLM call budget per TALK turn: ``N_targeted`` summariser calls
         (unchanged from before KER-11) — co-witness broadcast is
@@ -230,7 +230,7 @@ class DialogueHandler:
         ``npc_uuid`` key — also surfaced on :class:`DialogueEntry` for
         the Narrator's known-name gating — that pins the resulting
         memory to the retaliator. Without this, a subsequent
-        ``get_memories_about(retaliator)`` would return nothing about
+        ``get_memories_held_by(retaliator)`` would return nothing about
         the fight.
 
         The interaction log is prefixed with ``[retaliation]`` so the

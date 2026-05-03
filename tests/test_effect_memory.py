@@ -80,7 +80,7 @@ class TestDeathMemoryPropagation:
         )
         mgr.advance_time(2.0)
 
-        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(witness.uuid)
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(witness.uuid)
         assert memories, "co-located NPC should have witnessed the death"
         assert any("died" in mem.text.lower() for mem in memories)
         assert all(mem.source == KnowledgeSource.PERSONAL_EXPERIENCE for mem in memories)
@@ -143,7 +143,7 @@ class TestItemMemoryPropagation:
         )
         mgr.advance_time(2.0)
 
-        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(witness.uuid)
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(witness.uuid)
         assert memories, "co-located NPC should have witnessed the item loss"
         assert any("sword" in mem.text.lower() for mem in memories)
 
@@ -168,7 +168,7 @@ class TestMoveNpcMemory:
             ),
         )
 
-        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(witness.uuid)
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(witness.uuid)
         assert memories, "origin witness should have a departure memory"
         assert any("departed" in mem.text.lower() for mem in memories)
 

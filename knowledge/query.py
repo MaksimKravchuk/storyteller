@@ -118,7 +118,7 @@ class KnowledgeQueryEngine:
         lines = [f"- {_SOURCE_PREFIXES.get(node.source, '')}{node.text}" for node in nodes]
         return "\n".join(lines)
 
-    def get_memories_about(self, npc_id: UUID, limit: int = 5) -> list[KnowledgeNode]:
+    def get_memories_held_by(self, npc_id: UUID, limit: int = 5) -> list[KnowledgeNode]:
         """Return the NPC's most recent PERSONAL_EXPERIENCE memories, newest first."""
         memories = self._personal_memories_for(npc_id)
         memories.sort(key=_memory_sort_key, reverse=True)

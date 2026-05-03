@@ -92,7 +92,7 @@ async def test_summarize_batch_no_edge_when_npc_missing() -> None:
 
 
 @allure.story("summarize_interactions_batch")
-@allure.title("summarize_interactions_batch creates a WITNESSED edge that is queryable via get_memories_about")
+@allure.title("summarize_interactions_batch creates a WITNESSED edge that is queryable via get_memories_held_by")
 @pytest.mark.asyncio
 async def test_summarize_batch_creates_witnessed_edge_and_is_queryable() -> None:
     """Register an NPC via register_actor_node, summarise an interaction, then query it back."""
@@ -108,7 +108,7 @@ async def test_summarize_batch_creates_witnessed_edge_and_is_queryable() -> None
     assert edge_type == EdgeType.WITNESSED
 
     engine = KnowledgeQueryEngine(graph)
-    memories = engine.get_memories_about(npc_id)
+    memories = engine.get_memories_held_by(npc_id)
     assert len(memories) == 1
     assert memories[0].uuid == node_id
     assert memories[0].text == _SUMMARY_TEXT
