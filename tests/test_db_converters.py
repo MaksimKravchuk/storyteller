@@ -305,7 +305,7 @@ class TestSceneConverter:
 @allure.feature("Domain↔row converters")
 class TestKnowledgeConverter:
     @allure.story("Round-trip")
-    @allure.title("KnowledgeNode round-trips preserving scope, source, canon, and education")
+    @allure.title("KnowledgeNode round-trips preserving scope, source, canon, education, and salience")
     def test_round_trip(self):
         node = KnowledgeNode(
             text="The king was poisoned",
@@ -316,10 +316,12 @@ class TestKnowledgeConverter:
             tags=["politics", "scandal"],
             location_id=make_uuid("loc-court"),
             timestamp=12.5,
+            salience=0.85,
         )
         row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
         assert row["canon"] == "session"
+        assert row["salience"] == pytest.approx(0.85)
 
         restored = kn_conv.row_to_knowledge_node(row)
         assert restored.uuid == node.uuid
@@ -331,6 +333,7 @@ class TestKnowledgeConverter:
         assert restored.tags == ["politics", "scandal"]
         assert restored.location_id == make_uuid("loc-court")
         assert restored.timestamp == pytest.approx(12.5)
+        assert restored.salience == pytest.approx(0.85)
 
     @allure.story("Backwards compatibility")
     @allure.title("row_to_knowledge_node defaults canon to HISTORICAL on legacy rows missing the column")
@@ -341,6 +344,16 @@ class TestKnowledgeConverter:
 
         restored = kn_conv.row_to_knowledge_node(row)
         assert restored.canon == CanonSource.HISTORICAL
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_knowledge_node defaults salience to 0.5 on legacy rows missing the column")
+    def test_salience_defaults_on_legacy_row(self):
+        node = KnowledgeNode(text="Legacy fact")
+        row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
+        row.pop("salience")
+
+        restored = kn_conv.row_to_knowledge_node(row)
+        assert restored.salience == pytest.approx(0.5)
 
 
 @allure.epic("Persistence")

@@ -13,6 +13,7 @@ from cast import (
     known_npcs,
 )
 from cast.dice import ContestRoll, ContestType
+from knowledge import salience as salience_presets
 from knowledge.memory import MemoryManager
 from models.game_state import GameState
 
@@ -254,6 +255,7 @@ class DialogueHandler:
             pairs,
             self._gs.game_clock,
             location_id=scene.location_id if scene else None,
+            salience=salience_presets.RETALIATION,
         )
 
     def _collect_targets(

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from db.converters._columns import COL_GAME_STATE_ID, COL_ID, COL_LOCATION_ID, COL_SCOPE, COL_TAGS
 from db.converters._uuid_text import uuid_to_text
+from knowledge import salience as salience_presets
 from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 
 _COL_CANON = "canon"
+_COL_SALIENCE = "salience"
 _DEFAULT_CANON = CanonSource.HISTORICAL.value
 
 
@@ -22,6 +24,7 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
         COL_TAGS: node.tags,
         COL_LOCATION_ID: uuid_to_text(node.location_id),
         "timestamp": node.timestamp,
+        _COL_SALIENCE: node.salience,
     }
 
 
@@ -36,4 +39,5 @@ def row_to_knowledge_node(row) -> KnowledgeNode:
         tags=row[COL_TAGS],
         location_id=row[COL_LOCATION_ID],
         timestamp=row["timestamp"],
+        salience=row.get(_COL_SALIENCE, salience_presets.DEFAULT),
     )

@@ -9,7 +9,7 @@ import allure
 import pytest
 
 from knowledge.graph import KnowledgeGraph
-from knowledge.memory import MemoryEventResult, MemoryManager, record_player_learned_fact
+from knowledge.memory import MemoryEvent, MemoryEventResult, MemoryManager, record_player_learned_fact
 from knowledge.node import (
     CanonSource,
     EdgeType,
@@ -141,10 +141,12 @@ async def test_create_memory_local_scope_personal_per_witness() -> None:
     witness_ids = [_W1, _W2]
 
     result = await manager.create_memory_from_event(
-        event_description=_EVENT_DESCRIPTION,
-        witness_ids=witness_ids,
-        scope=KnowledgeScope.LOCAL,
-        location_id=_LOCATION_ID,
+        MemoryEvent(
+            event_description=_EVENT_DESCRIPTION,
+            witness_ids=witness_ids,
+            scope=KnowledgeScope.LOCAL,
+            location_id=_LOCATION_ID,
+        ),
     )
 
     assert len(result.all_ids) == 2
@@ -173,10 +175,12 @@ async def test_create_memory_local_scope_no_witnesses_returns_empty_result() -> 
     manager, _graph, _ = _make_manager()
 
     result = await manager.create_memory_from_event(
-        event_description=_EVENT_DESCRIPTION,
-        witness_ids=[],
-        scope=KnowledgeScope.LOCAL,
-        location_id=_LOCATION_ID,
+        MemoryEvent(
+            event_description=_EVENT_DESCRIPTION,
+            witness_ids=[],
+            scope=KnowledgeScope.LOCAL,
+            location_id=_LOCATION_ID,
+        ),
     )
 
     assert result.canonical_id is None
@@ -192,10 +196,12 @@ async def test_create_memory_city_scope_canonical_is_broadcast_rumor() -> None:
     witness_ids = [_W1, _W2]
 
     result = await manager.create_memory_from_event(
-        event_description=_EVENT_DESCRIPTION,
-        witness_ids=witness_ids,
-        scope=KnowledgeScope.CITY,
-        location_id=_LOCATION_ID,
+        MemoryEvent(
+            event_description=_EVENT_DESCRIPTION,
+            witness_ids=witness_ids,
+            scope=KnowledgeScope.CITY,
+            location_id=_LOCATION_ID,
+        ),
     )
 
     assert len(result.all_ids) == 3
@@ -225,10 +231,12 @@ async def test_create_memory_world_scope_uses_fact_source() -> None:
     """WORLD scope: the canonical broadcast node uses KnowledgeSource.FACT, not RUMOR."""
     manager, graph, _ = _make_manager()
     result = await manager.create_memory_from_event(
-        event_description=_EVENT_DESCRIPTION,
-        witness_ids=[_W1],
-        scope=KnowledgeScope.WORLD,
-        location_id=_LOCATION_ID,
+        MemoryEvent(
+            event_description=_EVENT_DESCRIPTION,
+            witness_ids=[_W1],
+            scope=KnowledgeScope.WORLD,
+            location_id=_LOCATION_ID,
+        ),
     )
     assert result.canonical_id is not None
     fact_node = graph.get_node(result.canonical_id)
@@ -245,16 +253,58 @@ async def test_create_memory_propagates_location_id() -> None:
     """Every created node — fact and personal — must carry the supplied location_id."""
     manager, graph, _ = _make_manager()
     result = await manager.create_memory_from_event(
-        event_description=_EVENT_DESCRIPTION,
-        witness_ids=[_W1, _W2],
-        scope=KnowledgeScope.REGION,
-        location_id=_LOCATION_ID,
+        MemoryEvent(
+            event_description=_EVENT_DESCRIPTION,
+            witness_ids=[_W1, _W2],
+            scope=KnowledgeScope.REGION,
+            location_id=_LOCATION_ID,
+        ),
     )
     assert len(result.all_ids) == 3
     for node_id in result.all_ids:
         node = graph.get_node(node_id)
         assert node is not None
         assert node.location_id == _LOCATION_ID
+
+
+@allure.story("create_memory_from_event")
+@allure.title("create_memory_from_event stamps the supplied salience on every node it creates")
+@pytest.mark.asyncio
+async def test_create_memory_stamps_salience_on_all_nodes() -> None:
+    """The broadcast node and the per-witness personal copies share the same salience."""
+    manager, graph, _ = _make_manager()
+    result = await manager.create_memory_from_event(
+        MemoryEvent(
+            event_description=_EVENT_DESCRIPTION,
+            witness_ids=[_W1, _W2],
+            scope=KnowledgeScope.CITY,
+            location_id=_LOCATION_ID,
+            salience=0.85,
+        ),
+    )
+    assert len(result.all_ids) == 3
+    for node_id in result.all_ids:
+        node = graph.get_node(node_id)
+        assert node is not None
+        assert node.salience == pytest.approx(0.85)
+
+
+@allure.story("summarize_interactions_batch")
+@allure.title("summarize_interactions_batch stamps the supplied salience on the produced memory node")
+@pytest.mark.asyncio
+async def test_summarize_batch_stamps_salience() -> None:
+    """Retaliation/dialogue paths each pick a different preset; the manager honours it verbatim."""
+    manager, graph, _ = _make_manager()
+    npc_id = _seed_npc_node(graph)
+
+    await manager.summarize_interactions_batch(
+        [(npc_id, "[retaliation] Player: stop\nMarcus: never")],
+        salience=0.85,
+    )
+
+    memory_nodes = [n for n in graph.all_nodes() if n.source == KnowledgeSource.PERSONAL_EXPERIENCE]
+    assert len(memory_nodes) == 1
+    assert memory_nodes[0].salience == pytest.approx(0.85)
 
 
 @allure.story("record_player_learned_fact")
@@ -301,7 +351,7 @@ async def test_summarize_batch_skips_near_duplicate_for_same_npc() -> None:
     await manager.summarize_interactions_batch([(npc_id, "second chat")])
 
     engine = KnowledgeQueryEngine(graph)
-    memories = engine.get_memories_about(npc_id)
+    memories = engine.get_memories_held_by(npc_id)
     assert len(memories) == 1
     assert memories[0].text == "The merchant trusts the traveller and shares a rumour."
 
@@ -327,7 +377,7 @@ async def test_summarize_batch_keeps_dissimilar_memories() -> None:
     await manager.summarize_interactions_batch([(npc_id, "chat two")])
 
     engine = KnowledgeQueryEngine(graph)
-    memories = engine.get_memories_about(npc_id)
+    memories = engine.get_memories_held_by(npc_id)
     assert len(memories) == 2
 
 
@@ -365,7 +415,7 @@ async def test_summarize_batch_keeps_high_similarity_below_threshold() -> None:
     await manager.summarize_interactions_batch([(npc_id, "chat two")])
 
     engine = KnowledgeQueryEngine(graph)
-    assert len(engine.get_memories_about(npc_id)) == 2
+    assert len(engine.get_memories_held_by(npc_id)) == 2
 
 
 @allure.story("summarize_interactions_batch")
@@ -388,5 +438,5 @@ async def test_summarize_batch_dedup_is_per_npc() -> None:
     await manager.summarize_interactions_batch([(npc_a, "chat a"), (npc_b, "chat b")])
 
     engine = KnowledgeQueryEngine(graph)
-    assert len(engine.get_memories_about(npc_a)) == 1
-    assert len(engine.get_memories_about(npc_b)) == 1
+    assert len(engine.get_memories_held_by(npc_a)) == 1
+    assert len(engine.get_memories_held_by(npc_b)) == 1

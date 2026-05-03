@@ -231,6 +231,7 @@ knowledge_nodes = Table(
     Column("tags", JSONB, nullable=False, server_default=_DEFAULT_JSON_ARRAY),
     Column(_COL_LOCATION_ID, Text, nullable=True),
     Column("timestamp", Float, nullable=True),
+    Column("salience", Float, nullable=False, server_default="0.5"),
     Index("idx_kn_game_state", _COL_GAME_STATE_ID),
     Index("idx_kn_scope", _COL_GAME_STATE_ID, "scope"),
     Index("idx_kn_tags", "tags", postgresql_using="gin"),

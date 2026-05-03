@@ -111,6 +111,7 @@ class TestNPCBackgroundTicker:
         assert state.world_state.threads[0].status == "resolved"
         assert len(memory.calls) == 1
         assert memory.calls[0]["location_id"] == backroom.uuid
+        assert memory.calls[0]["salience"] == pytest.approx(0.85)  # salience_presets.COMBAT
 
     @pytest.mark.asyncio
     @allure.story("Lone actor")

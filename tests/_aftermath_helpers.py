@@ -8,8 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from knowledge.graph import KnowledgeGraph
-from knowledge.memory import MemoryEventResult
+from knowledge import graph as _kg, memory as _km
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
@@ -18,7 +17,9 @@ from models.setting import Setting
 from models.world_state import WorldThread
 from tests._uuid_helpers import make_uuid
 
-_ZERO_GAME_TIME = float(0)
+KnowledgeGraph = _kg.KnowledgeGraph
+MemoryEvent = _km.MemoryEvent
+MemoryEventResult = _km.MemoryEventResult
 
 
 @dataclass
@@ -27,21 +28,15 @@ class RecordingMemoryManager:
 
     calls: list[dict[str, Any]] = field(default_factory=list)
 
-    async def create_memory_from_event(
-        self,
-        event_description: str,
-        witness_ids: list[str],
-        scope: Any,
-        location_id: str | None = None,
-        game_time: float = _ZERO_GAME_TIME,
-    ) -> MemoryEventResult:
+    async def create_memory_from_event(self, event: MemoryEvent) -> MemoryEventResult:
         self.calls.append(
             {
-                "event_description": event_description,
-                "witness_ids": witness_ids,
-                "scope": scope,
-                "location_id": location_id,
-                "game_time": game_time,
+                "event_description": event.event_description,
+                "witness_ids": event.witness_ids,
+                "scope": event.scope,
+                "location_id": event.location_id,
+                "game_time": event.game_time,
+                "salience": event.salience,
             },
         )
         return MemoryEventResult(canonical_id=None, all_ids=())

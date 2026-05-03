@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from cast.director_events import EventProcessor, _scope_from_string
-from knowledge import graph as _kg, memory as _km, node as _kn
+from knowledge import graph as _kg, memory as _km, node as _kn, salience as salience_presets
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.setting import Setting
@@ -102,9 +102,9 @@ class TestPartitionEvents:
 
 @allure.epic("Game Timeline")
 @allure.feature("Director event processor")
-class TestBuildMemoryKwargs:
-    @allure.story("Memory kwargs")
-    @allure.title("build_memory_kwargs() uses on_complete_description as the event summary when present")
+class TestBuildMemoryEvent:
+    @allure.story("Memory event")
+    @allure.title("build_memory_event() uses on_complete_description as the event summary when present")
     def test_uses_on_complete_description(self):
         gs = _make_state()
         processor = _make_processor(gs)
@@ -117,34 +117,35 @@ class TestBuildMemoryKwargs:
             on_complete_description="A riot breaks out.",
         )
 
-        kwargs = processor.build_memory_kwargs(ev)
+        memory_event = processor.build_memory_event(ev)
 
-        assert kwargs["event_description"] == "A riot breaks out."
-        assert kwargs["scope"] == KnowledgeScope.CITY
-        assert kwargs["location_id"] == make_uuid("tavern")
-        assert kwargs["witness_ids"] == [make_uuid("npc-1"), make_uuid("npc-2")]
+        assert memory_event.event_description == "A riot breaks out."
+        assert memory_event.scope == KnowledgeScope.CITY
+        assert memory_event.location_id == make_uuid("tavern")
+        assert memory_event.witness_ids == [make_uuid("npc-1"), make_uuid("npc-2")]
+        assert memory_event.salience == pytest.approx(salience_presets.REMOTE_EVENT)
 
-    @allure.story("Memory kwargs")
-    @allure.title("build_memory_kwargs() falls back to the event name when no description is set")
+    @allure.story("Memory event")
+    @allure.title("build_memory_event() falls back to the event name when no description is set")
     def test_falls_back_to_name(self):
         gs = _make_state()
         processor = _make_processor(gs)
         ev = GameEvent(name="Parade", scheduled_at=0, duration=1, location_id=make_uuid("tavern"))
 
-        kwargs = processor.build_memory_kwargs(ev)
+        memory_event = processor.build_memory_event(ev)
 
-        assert kwargs["event_description"] == "Parade"
+        assert memory_event.event_description == "Parade"
 
-    @allure.story("Memory kwargs")
-    @allure.title("build_memory_kwargs() returns no witnesses when the location is unknown")
+    @allure.story("Memory event")
+    @allure.title("build_memory_event() returns no witnesses when the location is unknown")
     def test_no_witnesses_when_location_unknown(self):
         gs = _make_state()
         processor = _make_processor(gs)
         ev = GameEvent(name="Comet", scheduled_at=0, duration=1, location_id=make_uuid("unknown"))
 
-        kwargs = processor.build_memory_kwargs(ev)
+        memory_event = processor.build_memory_event(ev)
 
-        assert kwargs["witness_ids"] == []
+        assert memory_event.witness_ids == []
 
 
 @allure.epic("Game Timeline")
@@ -169,20 +170,25 @@ class TestProcessRemoteEvents:
         await processor.process_remote_events(events)
 
         assert memory_mgr.create_memory_from_event.await_count == 2
-        # Pin the kwargs flow — a no-op build_memory_kwargs must NOT pass.
         memory_mgr.create_memory_from_event.assert_any_await(
-            event_description="A",
-            scope=KnowledgeScope.REGION,
-            location_id=make_uuid("tavern"),
-            witness_ids=[make_uuid("npc-1"), make_uuid("npc-2")],
-            game_time=gs.game_clock,
+            _km.MemoryEvent(
+                event_description="A",
+                scope=KnowledgeScope.REGION,
+                location_id=make_uuid("tavern"),
+                witness_ids=[make_uuid("npc-1"), make_uuid("npc-2")],
+                game_time=gs.game_clock,
+                salience=salience_presets.REMOTE_EVENT,
+            ),
         )
         memory_mgr.create_memory_from_event.assert_any_await(
-            event_description="B",
-            scope=KnowledgeScope.WORLD,
-            location_id=make_uuid("market"),
-            witness_ids=[],  # "market" not in gs.locations → no witnesses
-            game_time=gs.game_clock,
+            _km.MemoryEvent(
+                event_description="B",
+                scope=KnowledgeScope.WORLD,
+                location_id=make_uuid("market"),
+                witness_ids=[],  # "market" not in gs.locations → no witnesses
+                game_time=gs.game_clock,
+                salience=salience_presets.REMOTE_EVENT,
+            ),
         )
 
 
