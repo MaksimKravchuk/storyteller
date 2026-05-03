@@ -69,26 +69,20 @@ def _render_vars_for(npc_request: str, game_state: Any, taken_names: set[str]) -
 
 
 def _resolve_npc_location_id(game_state: Any) -> UUID | None:
-    """Resolve a real ``location_id`` for a freshly generated NPC.
-
-    NPCs are physical beings, never ghosts: they belong at the scene's
-    location. When the SceneBuilder failed to bind the scene to a
-    registered location it leaves the all-zero
-    :data:`UNKNOWN_SCENE_LOCATION` sentinel on ``Scene.location_id``;
-    persisting that onto the NPC produces the
-    ``00000000-0000-0000-0000-000000000000`` rows we used to see in
-    ``npcs.location_id``. Fall back to the player's location instead —
-    NPCs are always generated in the scene the player is in, so this
-    is the truthful choice.
-    """
+    """Fall back to the player's location when the scene carries the unknown-location sentinel."""
     scene = game_state.current_scene
     if scene and scene.location_id != UNKNOWN_SCENE_LOCATION:
         return scene.location_id
-    player_loc = getattr(game_state.player, "location_id", None) if game_state.player else None
+    player_loc = game_state.player.location_id
     if scene and player_loc:
-        logger.warning(
-            "NPCGenerator: scene.location_id is unknown sentinel; falling back to player location {0}",
+        logger.error(
+            "NPCGenerator: scene.location_id is UNKNOWN_SCENE_LOCATION; falling back to player location {0}",
             player_loc,
+        )
+    elif scene and not player_loc:
+        logger.error(
+            "NPCGenerator: scene.location_id is UNKNOWN_SCENE_LOCATION and player has no location; "
+            "NPC will be created with location_id=None",
         )
     return player_loc
 
@@ -97,7 +91,7 @@ def _card_from_response(npc_data: NPCResponse, npc_request: str, game_state: Any
     """Project an :class:`NPCResponse` into a fresh :class:`NPCCard`.
 
     Stamps ``location_id`` from the current scene (the LLM never produces
-    one), refusing the unknown-scene sentinel so NPCs aren't ghosts.
+    one). Same fallback semantics as the original inline construction.
     """
     return NPCCard(
         name=npc_data.name or "Unknown",

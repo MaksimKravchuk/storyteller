@@ -10,9 +10,12 @@ import pytest
 from cast._scene_location import UNKNOWN_SCENE_LOCATION
 from cast.npc_generator import NPCGenerator
 from cast.schemas.npc_response import NPCAttributes, NPCResponse
+from db.converters import npc as npc_conv
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
 from tests._uuid_helpers import make_uuid
+
+_GHOST_LOCATION_TEXT = str(UNKNOWN_SCENE_LOCATION)
 
 _SEND_JSON = "_send_json"
 _SETTING_CAP = 500
@@ -94,6 +97,36 @@ class TestNPCGenerator:
         assert cards[0].location_id != UNKNOWN_SCENE_LOCATION
 
     @allure.story("Location propagation")
+    @allure.title(
+        "NPCGenerator returns location_id=None when the scene is the unknown sentinel and the player has no location"
+    )
+    @pytest.mark.asyncio
+    async def test_unknown_scene_with_no_player_location(self, game_state) -> None:
+        game_state.player.location_id = None
+        game_state.current_scene = Scene(location_id=UNKNOWN_SCENE_LOCATION, description="plaza")
+        gen = NPCGenerator(llm_client=MagicMock())
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Caius")])):
+            cards = await gen.act(["guard"], {"game_state": game_state})
+        assert cards[0].location_id is None
+        assert cards[0].location_id != UNKNOWN_SCENE_LOCATION
+
+    @allure.story("Location propagation")
+    @allure.title(
+        "NPCGenerator persists a non-sentinel location_id through npc_to_row, never leaking the ghost UUID string"
+    )
+    @pytest.mark.asyncio
+    async def test_persisted_npc_row_never_carries_ghost_uuid(self, game_state) -> None:
+        forum_id = make_uuid("forum")
+        game_state.player.location_id = forum_id
+        game_state.current_scene = Scene(location_id=UNKNOWN_SCENE_LOCATION, description="plaza")
+        gen = NPCGenerator(llm_client=MagicMock())
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Caius")])):
+            cards = await gen.act(["guard"], {"game_state": game_state})
+        row = npc_conv.npc_to_row(cards[0], "game-state-id")
+        assert row["location_id"] != _GHOST_LOCATION_TEXT
+        assert row["location_id"] == str(forum_id)
+
+    @allure.story("Location propagation")
     @allure.title("NPCGenerator leaves location_id None when the game state has no current scene")
     @pytest.mark.asyncio
     async def test_location_none_when_no_scene(self, game_state) -> None:
@@ -102,6 +135,20 @@ class TestNPCGenerator:
         with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Drusus")])):
             cards = await gen.act(["guard"], {"game_state": game_state})
         assert cards[0].location_id is None
+
+    @allure.story("Location propagation")
+    @allure.title(
+        "NPCGenerator stamps the player's location when no current scene is set but the player has a location"
+    )
+    @pytest.mark.asyncio
+    async def test_no_scene_with_player_location_uses_player(self, game_state) -> None:
+        forum_id = make_uuid("forum")
+        game_state.player.location_id = forum_id
+        game_state.current_scene = None
+        gen = NPCGenerator(llm_client=MagicMock())
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Drusus")])):
+            cards = await gen.act(["guard"], {"game_state": game_state})
+        assert cards[0].location_id == forum_id
 
     @allure.story("Batch generation")
     @allure.title("NPCGenerator preserves input order when generating NPCs sequentially")
