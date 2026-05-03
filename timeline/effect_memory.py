@@ -106,7 +106,14 @@ def _plan_text(effect: EventEffect, name: str) -> str | None:
 
 
 def write_witness_memories(graph: KnowledgeGraph, write: WitnessWrite) -> None:
-    """Persist a memory to the graph: wider rumor/fact node + personal nodes."""
+    """Persist a memory to the graph: wider rumor/fact node + one shared personal node.
+
+    Co-witnesses share a single ``PERSONAL_EXPERIENCE`` node — one
+    ``WITNESSED`` edge per witness rather than one node per witness —
+    so a scene with N bystanders adds 1 node and N edges instead of N
+    near-duplicate nodes. ``write.slots`` flow onto both the broadcast
+    and the shared personal node so downstream dedup keeps working.
+    """
     slot_fields = slot_kwargs(write.slots)
     if write.scope != KnowledgeScope.LOCAL:
         wider_source = KnowledgeSource.FACT if write.scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR
@@ -121,18 +128,20 @@ def write_witness_memories(graph: KnowledgeGraph, write: WitnessWrite) -> None:
                 **slot_fields,
             ),
         )
+    if not write.witness_ids:
+        return
+    personal_id = graph.add_node(
+        KnowledgeNode(
+            text=write.text,
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            canon=CanonSource.SESSION,
+            location_id=write.location_id,
+            timestamp=write.game_time,
+            **slot_fields,
+        ),
+    )
     for witness_id in write.witness_ids:
-        personal_id = graph.add_node(
-            KnowledgeNode(
-                text=write.text,
-                scope=KnowledgeScope.LOCAL,
-                source=KnowledgeSource.PERSONAL_EXPERIENCE,
-                canon=CanonSource.SESSION,
-                location_id=write.location_id,
-                timestamp=write.game_time,
-                **slot_fields,
-            ),
-        )
         graph.add_edge(witness_id, personal_id, EdgeType.WITNESSED)
 
 

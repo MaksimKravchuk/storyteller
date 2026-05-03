@@ -45,9 +45,15 @@ class MemoryEventResult:
     """Outcome of :meth:`MemoryManager.create_memory_from_event`.
 
     ``canonical_id`` is the broadcast node for non-LOCAL scopes, the
-    first per-witness node for LOCAL, and ``None`` only when no nodes
-    were created. ``all_ids`` carries every created node id in creation
-    order.
+    shared ``PERSONAL_EXPERIENCE`` node for LOCAL, and ``None`` only
+    when no nodes were created. ``all_ids`` carries every created
+    node id in creation order:
+
+    * LOCAL with witnesses: ``(shared_personal_id,)``
+    * LOCAL with no witnesses: ``()``
+    * non-LOCAL with witnesses: ``(broadcast_id, shared_personal_id)``
+    * non-LOCAL with no witnesses: ``(broadcast_id,)`` — the wider
+      rumor/fact still goes in even when nobody saw it first-hand.
     """
 
     canonical_id: UUID | None
@@ -136,24 +142,27 @@ class MemoryManager:
           - CITY/REGION: becomes RUMOR accessible in that area
           - WORLD: becomes FACT accessible broadly
 
-        ``event.slots`` is copied onto every per-witness ``KnowledgeNode``
-        as well as the broadcast node so a downstream dedup or
-        contradiction-detection pass can match on the structured fields
-        instead of re-parsing the free text.
+        Co-witnesses share one canonical ``PERSONAL_EXPERIENCE`` node
+        with N ``WITNESSED`` edges instead of N near-duplicate nodes,
+        so a 10-NPC scene grows by 1 node and 10 edges. ``event.slots``
+        is copied onto the shared personal node and the broadcast node
+        so a downstream dedup or contradiction-detection pass can
+        match on the structured fields instead of re-parsing the free
+        text.
         """
         if event.scope == _node.KnowledgeScope.LOCAL:
             return self._create_local_memory(event)
         return self._create_broadcast_memory(event)
 
     def _create_local_memory(self, event: MemoryEvent) -> MemoryEventResult:
-        """LOCAL-scope path: one PERSONAL_EXPERIENCE node per witness."""
-        slot_fields = slot_kwargs(event.slots)
-        personal_ids = [self._attach_personal_node(event, witness_id, slot_fields) for witness_id in event.witness_ids]
-        canonical_id = personal_ids[0] if personal_ids else None
-        return MemoryEventResult(canonical_id=canonical_id, all_ids=tuple(personal_ids))
+        """LOCAL-scope path: one shared PERSONAL_EXPERIENCE node + N WITNESSED edges."""
+        if not event.witness_ids:
+            return MemoryEventResult(canonical_id=None)
+        personal_id = self._add_shared_personal_node(event)
+        return MemoryEventResult(canonical_id=personal_id, all_ids=(personal_id,))
 
     def _create_broadcast_memory(self, event: MemoryEvent) -> MemoryEventResult:
-        """CITY+ scope path: one broadcast node plus per-witness personal copies."""
+        """CITY+ scope path: one broadcast node + one shared per-witness personal copy."""
         slot_fields = slot_kwargs(event.slots)
         broadcast_source = (
             _node.KnowledgeSource.FACT if event.scope >= _node.KnowledgeScope.COUNTRY else _node.KnowledgeSource.RUMOR
@@ -171,11 +180,21 @@ class MemoryManager:
                 **slot_fields,
             ),
         )
-        personal_ids = [self._attach_personal_node(event, witness_id, slot_fields) for witness_id in event.witness_ids]
-        return MemoryEventResult(canonical_id=broadcast_id, all_ids=(broadcast_id, *personal_ids))
+        if not event.witness_ids:
+            return MemoryEventResult(canonical_id=broadcast_id, all_ids=(broadcast_id,))
+        personal_id = self._add_shared_personal_node(event)
+        return MemoryEventResult(canonical_id=broadcast_id, all_ids=(broadcast_id, personal_id))
 
-    def _attach_personal_node(self, event: MemoryEvent, witness_id: UUID, slot_fields: dict) -> UUID:
-        """Add a LOCAL ``PERSONAL_EXPERIENCE`` node and link it to ``witness_id``."""
+    def _add_shared_personal_node(self, event: MemoryEvent) -> UUID:
+        """Create one ``PERSONAL_EXPERIENCE`` node and link every witness via ``WITNESSED``.
+
+        The shared-node shape keeps memory creation cost
+        ``O(witnesses)`` in edges instead of nodes — a 10-NPC scene
+        produces one node and ten edges, not ten near-duplicate nodes.
+        Per-witness state (e.g. departure-propagation idempotency)
+        lives on the WITNESSED edge so the canonical node stays
+        immutable across co-witnesses.
+        """
         node_id = self._graph.add_node(
             _node.KnowledgeNode(
                 text=event.event_description,
@@ -186,10 +205,11 @@ class MemoryManager:
                 timestamp=event.game_time,
                 salience=event.salience,
                 subject_id=event.subject_id,
-                **slot_fields,
+                **slot_kwargs(event.slots),
             ),
         )
-        self._graph.add_edge(witness_id, node_id, _node.EdgeType.WITNESSED)
+        for witness_id in event.witness_ids:
+            self._graph.add_edge(witness_id, node_id, _node.EdgeType.WITNESSED)
         return node_id
 
     async def _summarize_one(

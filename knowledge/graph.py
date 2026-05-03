@@ -112,6 +112,29 @@ class KnowledgeGraph:
             for _, target, edge_attrs in self.digraph.out_edges(node_id, data=True)
         ]
 
+    def edge_has_flag(self, from_id: UUID, to_id: UUID, flag: str) -> bool:
+        """Return whether the ``from_id → to_id`` edge carries a truthy ``flag``.
+
+        Co-witness memories share one canonical ``PERSONAL_EXPERIENCE``
+        node across N witnesses, so any per-witness state (e.g. the
+        departure-propagation idempotency flag) belongs on the
+        WITNESSED edge rather than on the node. Missing edges and
+        unset flags both read as ``False``.
+        """
+        if from_id not in self.digraph or to_id not in self.digraph[from_id]:
+            return False
+        return bool(self.digraph[from_id][to_id].get(flag))
+
+    def flag_edge(self, from_id: UUID, to_id: UUID, flag: str) -> None:
+        """Mark the ``from_id → to_id`` edge with a boolean ``flag``.
+
+        No-op when the edge does not exist. Pairs with
+        :meth:`edge_has_flag`; together they let callers track per-
+        witness state without mutating the shared canonical node.
+        """
+        if from_id in self.digraph and to_id in self.digraph[from_id]:
+            self.digraph[from_id][to_id][flag] = True
+
     def personal_memories_for(self, npc_id: UUID) -> list[KnowledgeNode]:
         """Return every ``PERSONAL_EXPERIENCE`` node witnessed by *npc_id*.
 

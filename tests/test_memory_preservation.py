@@ -127,9 +127,14 @@ def _add_session_memory(
     *,
     text: str = _MEMORY_TEXT,
     timestamp: float | None = 1.0,
-    tags: list[str] | None = None,
+    pre_propagated: bool = False,
 ) -> KnowledgeNode:
-    """Attach a PERSONAL_EXPERIENCE + SESSION memory to ``npc_id`` via WITNESSED."""
+    """Attach a PERSONAL_EXPERIENCE + SESSION memory to ``npc_id`` via WITNESSED.
+
+    ``pre_propagated=True`` flips the ``_DEPARTURE_PROPAGATION_TAG``
+    flag on the WITNESSED edge so the test simulates a memory whose
+    departure-propagation has already happened for this witness.
+    """
     memory = KnowledgeNode(
         text=text,
         scope=KnowledgeScope.LOCAL,
@@ -137,11 +142,17 @@ def _add_session_memory(
         canon=CanonSource.SESSION,
         location_id=_TAVERN_ID,
         timestamp=timestamp,
-        tags=list(tags) if tags else [],
     )
     graph.add_node(memory)
     graph.add_edge(npc_id, memory.uuid, EdgeType.WITNESSED)
+    if pre_propagated:
+        graph.flag_edge(npc_id, memory.uuid, _DEPARTURE_PROPAGATION_TAG)
     return memory
+
+
+def _was_propagated(graph: KnowledgeGraph, npc_id: UUID, memory_id: UUID) -> bool:
+    """Return True iff the ``npc_id → memory_id`` edge carries the propagation tag."""
+    return graph.edge_has_flag(npc_id, memory_id, _DEPARTURE_PROPAGATION_TAG)
 
 
 def _hearsay_nodes_at(graph: KnowledgeGraph, location_id: UUID) -> list[KnowledgeNode]:
@@ -193,8 +204,10 @@ def test_single_session_memory_propagates_to_same_city_non_witnesses() -> None:
         assert target_id == _BARTENDER_ID
         assert edge_attrs.get("recipient_id") in {_BAKER_ID, _MERCHANT_ID}
 
-    # Original memory is tagged so a second eviction is a cheap no-op.
-    assert _DEPARTURE_PROPAGATION_TAG in memory.tags
+    # The bartender's WITNESSED edge to the memory is tagged so a
+    # second eviction of the same NPC is a cheap no-op. Co-witnesses
+    # (none here) would still be free to propagate independently.
+    assert _was_propagated(graph, _BARTENDER_ID, memory.uuid)
     # Original WITNESSED edge is untouched — the bartender keeps their own memory.
     bartender_targets = {target for target, _ in graph.get_edges_from(_BARTENDER_ID)}
     assert memory.uuid in bartender_targets
@@ -217,7 +230,8 @@ def test_historical_canon_memories_not_propagated() -> None:
     created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)
 
     assert created_ids == []
-    assert _DEPARTURE_PROPAGATION_TAG not in historical.tags
+    # Historical-canon memories are skipped before the edge tag would be flipped.
+    assert not _was_propagated(graph, _BARTENDER_ID, historical.uuid)
 
 
 @allure.story("preserve_departing_npc_memories")
@@ -241,11 +255,11 @@ def test_hearsay_source_memories_skipped() -> None:
 
 
 @allure.story("preserve_departing_npc_memories")
-@allure.title("Memories already tagged propagated_on_departure are skipped")
-def test_pre_tagged_memory_is_skipped() -> None:
+@allure.title("Witness edges already tagged propagated_on_departure are skipped")
+def test_pre_tagged_witness_edge_is_skipped() -> None:
     game_state = _build_city_state()
     graph = game_state.knowledge_graph
-    _add_session_memory(graph, _BARTENDER_ID, tags=[_DEPARTURE_PROPAGATION_TAG])
+    _add_session_memory(graph, _BARTENDER_ID, pre_propagated=True)
 
     created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)
 
@@ -309,7 +323,7 @@ def test_no_recipients_still_tags_memories() -> None:
     created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)
 
     assert created_ids == []
-    assert _DEPARTURE_PROPAGATION_TAG in memory.tags
+    assert _was_propagated(graph, _BARTENDER_ID, memory.uuid)
 
 
 @allure.story("preserve_departing_npc_memories")
@@ -322,8 +336,8 @@ def test_scene_location_not_in_locations_map() -> None:
     created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, make_uuid("loc-nonexistent"))
 
     assert created_ids == []
-    # The memory is still tagged so re-eviction is a cheap no-op.
-    assert _DEPARTURE_PROPAGATION_TAG in memory.tags
+    # The witness edge is still tagged so re-eviction is a cheap no-op.
+    assert _was_propagated(graph, _BARTENDER_ID, memory.uuid)
 
 
 @allure.story("preserve_departing_npc_memories")
@@ -394,3 +408,65 @@ def test_propagated_hearsay_surfaces_in_recipient_context() -> None:
     assert _MEMORY_TEXT in baker_context
     assert "[Heard from someone] " in merchant_context
     assert _MEMORY_TEXT in merchant_context
+
+
+@allure.story("preserve_departing_npc_memories")
+@allure.title("Co-witnesses sharing one canonical memory each propagate hearsay independently on departure")
+def test_cowitnesses_propagate_independently_on_their_own_departure() -> None:
+    """Per-edge idempotency: a shared canonical node must not let the
+    first departing co-witness mute everyone else's propagation.
+
+    Two co-witnesses share one ``PERSONAL_EXPERIENCE`` node — the
+    shape produced by the sub-linear broadcast in
+    :meth:`MemoryManager._create_local_memory`. After the first
+    witness leaves the scene, the second witness's later departure
+    must still fan a fresh hearsay copy out, attributed to *that*
+    witness as ``told_by``. Locking this catches a regression where
+    the propagation tag was stored on the node and the second
+    departure became a silent no-op.
+    """
+    game_state = _build_city_state()
+    graph = game_state.knowledge_graph
+    # Move the merchant into the tavern so two NPCs can co-witness an event there.
+    game_state.locations[_FORUM_ID].npcs_present.remove(_MERCHANT_ID)
+    game_state.locations[_TAVERN_ID].npcs_present.append(_MERCHANT_ID)
+    game_state.npcs[_MERCHANT_ID].location_id = _TAVERN_ID
+
+    shared_memory = KnowledgeNode(
+        text="The player insulted the praetor in the tavern.",
+        scope=KnowledgeScope.LOCAL,
+        source=KnowledgeSource.PERSONAL_EXPERIENCE,
+        canon=CanonSource.SESSION,
+        location_id=_TAVERN_ID,
+        timestamp=1.0,
+    )
+    graph.add_node(shared_memory)
+    graph.add_edge(_BARTENDER_ID, shared_memory.uuid, EdgeType.WITNESSED)
+    graph.add_edge(_MERCHANT_ID, shared_memory.uuid, EdgeType.WITNESSED)
+
+    # First witness leaves: hearsay propagates to baker (only same-city
+    # non-witness still outside the tavern).
+    first = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)
+    assert len(first) == 1
+    assert _was_propagated(graph, _BARTENDER_ID, shared_memory.uuid)
+    # The merchant's edge is still untagged — they are a separate witness.
+    assert not _was_propagated(graph, _MERCHANT_ID, shared_memory.uuid)
+
+    # Move the merchant out of the tavern so they are now also "departing".
+    game_state.locations[_TAVERN_ID].npcs_present.remove(_MERCHANT_ID)
+    game_state.npcs[_MERCHANT_ID].location_id = _FORUM_ID
+    game_state.locations[_FORUM_ID].npcs_present.append(_MERCHANT_ID)
+
+    # Second witness leaves: their independent edge means hearsay
+    # propagates again, this time told_by the merchant.
+    second = preserve_departing_npc_memories(graph, game_state, _MERCHANT_ID, _TAVERN_ID)
+    assert len(second) == 1
+    assert _was_propagated(graph, _MERCHANT_ID, shared_memory.uuid)
+
+    told_by_uuids = {
+        target
+        for hearsay_id in (*first, *second)
+        for _, target, edge_attrs in graph.digraph.out_edges(hearsay_id, data=True)
+        if edge_attrs.get("edge_type") == EdgeType.TOLD_BY
+    }
+    assert told_by_uuids == {_BARTENDER_ID, _MERCHANT_ID}
