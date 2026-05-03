@@ -132,6 +132,8 @@ class TestResolveActionsAftermath:
         assert "Brutus" in recorded["event_description"]
         assert "Marcus" in recorded["event_description"]
         assert "attacked" in recorded["event_description"]
+        assert "killed" in recorded["event_description"]
+        assert "lethal" in recorded["event_description"]
         assert recorded["location_id"] == location.uuid
         assert set(recorded["witness_ids"]) == {actor.uuid, target.uuid}
 
