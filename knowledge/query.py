@@ -125,15 +125,14 @@ class KnowledgeQueryEngine:
         return memories[:limit]
 
     def _personal_memories_for(self, npc_id: UUID) -> list[KnowledgeNode]:
-        """Return every PERSONAL_EXPERIENCE node linked from *npc_id*."""
-        linked_ids = {target_id for target_id, _ in self._graph.get_edges_from(npc_id)}
-        if not linked_ids:
-            return []
-        return [
-            node
-            for node in self._graph.all_nodes()
-            if node.source == KnowledgeSource.PERSONAL_EXPERIENCE and node.uuid in linked_ids
-        ]
+        """Return every PERSONAL_EXPERIENCE node linked from *npc_id*.
+
+        Delegates to :meth:`KnowledgeGraph.personal_memories_for`,
+        which is backed by a ``WITNESSED``-edge index — replacing what
+        used to be an ``O(N)`` walk of every node in the graph on
+        every Actor turn.
+        """
+        return self._graph.personal_memories_for(npc_id)
 
     def _add_personal_memories(self, npc_id: UUID, matching_nodes: list[KnowledgeNode]) -> None:
         """Append personal-experience nodes linked to *npc_id* that aren't already included."""
