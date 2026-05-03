@@ -124,9 +124,8 @@ class MemoryManager:
         """
         if not pairs:
             return
-        coros = [
-            self._summarize_one(_split_pair(pair), game_time, location_id, salience, subject_id) for pair in pairs
-        ]
+        splits = [_split_pair(pair) for pair in pairs]
+        coros = [self._summarize_one(split, game_time, location_id, salience, subject_id) for split in splits]
         await asyncio.gather(*coros)
 
     async def create_memory_from_event(self, event: MemoryEvent) -> MemoryEventResult:

@@ -184,9 +184,7 @@ class KnowledgeQueryEngine:
         match; conversational prompts that only show the top-N can pass
         an explicit cap.
         """
-        matched = [
-            memory for memory in self._graph.personal_memories_for(holder_id) if memory.subject_id == subject_id
-        ]
+        matched = [memory for memory in self._graph.personal_memories_for(holder_id) if memory.subject_id == subject_id]
         ranked = _rank_by_score(matched)
         if limit is None:
             return ranked

@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import allure
 import pytest
 
-from cast.director_dialogue import DialogueHandler
+from cast import director_dialogue as _dlg_mod, director_object_interaction as _doi_mod, item_generator as _ig_mod
+from cast.schemas import item_response as _item_resp
 from db.converters.knowledge import knowledge_node_to_row, row_to_knowledge_node
 from knowledge import (
     graph as _graph_mod,
@@ -21,6 +22,7 @@ from llm.message import LLMResponse
 from models.scene import Scene, SceneNPC
 from tests.director_helpers import make_game_state, make_mock_actor, make_uuid, setup_npc
 
+DialogueHandler = _dlg_mod.DialogueHandler
 KnowledgeGraph = _graph_mod.KnowledgeGraph
 MemoryEvent = _memory_mod.MemoryEvent
 MemoryManager = _memory_mod.MemoryManager
@@ -334,10 +336,16 @@ class TestGetMemoriesAboutSubject:
         assert memories[0].text == _STRANGER_MEMORY
 
 
+def _stub_item_generator(response: _item_resp.ObjectInteractionResponse) -> _ig_mod.ItemGenerator:
+    gen = _ig_mod.ItemGenerator(llm_client=MagicMock())
+    gen._send_json = AsyncMock(return_value=response)  # type: ignore[method-assign]
+    return gen
+
+
 @allure.epic("Memory & Persistence")
 @allure.feature("Identity resolution")
-class TestDialogueConsumerSeam:
-    """Reads the persisted node, not the producer kwarg."""
+class TestSubjectStampingConsumerSeams:
+    """Reads the persisted node at each wiring site, not just the producer kwarg."""
 
     @allure.story("Dialogue consumer seam")
     @allure.title("handle_dialogue persists a personal memory whose subject_id is the player's UUID")
@@ -366,3 +374,91 @@ class TestDialogueConsumerSeam:
         assert len(memories) == 1
         assert memories[0].subject_id == gs.player.uuid
         assert memories[0].subject_id != _HOLDER_A
+
+    @allure.story("Co-witness consumer seam")
+    @allure.title("Co-witness broadcast persists a memory whose subject_id is the player's UUID")
+    @pytest.mark.asyncio
+    async def test_cowitness_memory_subject_is_player(self):
+        gs = make_game_state()
+        setup_npc(gs, _HOLDER_A, name="Marcus", occupation="legionary")
+        setup_npc(gs, _HOLDER_B, name="Cassia", occupation="innkeeper")
+        gs.knowledge_graph.register_actor_node(_HOLDER_A, label="Marcus (legionary)")
+        gs.knowledge_graph.register_actor_node(_HOLDER_B, label="Cassia (innkeeper)")
+        gs.current_scene = Scene(
+            location_id=_FORUM,
+            description="The Forum.",
+            npcs_present=[
+                SceneNPC(role="legionary", uuid=_HOLDER_A),
+                SceneNPC(role="innkeeper", uuid=_HOLDER_B),
+            ],
+        )
+
+        actor = make_mock_actor("I will report this.")
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {_HOLDER_A: actor}, memory_manager)
+
+        await handler.handle_dialogue("a confession", ["Marcus"])
+
+        cowitness_memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_HOLDER_B)
+        assert len(cowitness_memories) == 1
+        assert cowitness_memories[0].subject_id == gs.player.uuid
+
+    @allure.story("Retaliation consumer seam")
+    @allure.title("summarize_retaliations persists a memory whose subject_id is the player's UUID")
+    @pytest.mark.asyncio
+    async def test_retaliation_memory_subject_is_player(self):
+        gs = make_game_state()
+        setup_npc(gs, _HOLDER_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_HOLDER_A, label="Marcus (legionary)")
+
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body="Marcus recalls the player's insults.", model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {}, memory_manager)
+
+        await handler.summarize_retaliations(
+            [{"npc_uuid": _HOLDER_A, "npc_name": "Marcus", "response": "*lunges*"}],
+            "shout insults",
+        )
+
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_HOLDER_A)
+        assert len(memories) == 1
+        assert memories[0].subject_id == gs.player.uuid
+
+    @allure.story("Object-interaction consumer seam")
+    @allure.title("apply_object_interactions persists a witness memory whose subject_id is the player's UUID")
+    @pytest.mark.asyncio
+    async def test_object_interaction_witness_subject_is_player(self):
+        gs = make_game_state()
+        setup_npc(gs, _HOLDER_A, name="Livia", occupation="innkeeper")
+        gs.knowledge_graph.register_actor_node(_HOLDER_A, label="Livia (innkeeper)")
+        gs.current_scene = Scene(
+            location_id=_FORUM,
+            description="The Rusty Anchor.",
+            npcs_present=[SceneNPC(role="innkeeper", uuid=_HOLDER_A)],
+        )
+        item_gen = _stub_item_generator(
+            _item_resp.ObjectInteractionResponse(
+                narration="Glass shatters.",
+                delta="The front window is broken.",
+            ),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=AsyncMock())
+
+        await _doi_mod.apply_object_interactions(
+            item_gen,
+            ["window"],
+            "break the window",
+            gs,
+            memory_manager,
+        )
+
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_HOLDER_A)
+        assert len(memories) == 1
+        assert memories[0].subject_id == gs.player.uuid
