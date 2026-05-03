@@ -31,4 +31,5 @@ def from_dict(graph_dict: dict) -> KnowledgeGraph:
 
     kg = KnowledgeGraph()
     kg.digraph = nx.node_link_graph(graph_dict)
+    kg.rebuild_witness_memory_index()
     return kg

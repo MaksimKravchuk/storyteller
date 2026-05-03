@@ -20,6 +20,7 @@ from models.character import Character
 from tests._uuid_helpers import make_uuid
 
 _NPC_1 = make_uuid("npc-1")
+_NPC_2 = make_uuid("npc-2")
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -373,3 +374,124 @@ class TestQueryEngineGetMemoriesAbout:
         engine = KnowledgeQueryEngine(empty_graph)
         ordered_texts = [mem.text for mem in engine.get_memories_about(_NPC_1)]
         assert ordered_texts == ["newest", "middle", "oldest"]
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Memory query")
+class TestWitnessMemoryIndex:
+    @allure.story("Witness-memory index")
+    @allure.title("personal_memories_for returns indexed PERSONAL_EXPERIENCE nodes for the witness")
+    def test_index_populated_on_witnessed_edge(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        memory = _attach_memory(empty_graph, _NPC_1, "Met a stranger", timestamp=1.0)
+
+        memories = empty_graph.personal_memories_for(_NPC_1)
+
+        assert [mem.uuid for mem in memories] == [memory.uuid]
+
+    @allure.story("Witness-memory index")
+    @allure.title("personal_memories_for keeps witnesses isolated — one NPC's memories don't leak to another")
+    def test_index_isolates_witnesses(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        empty_graph.register_actor_node(_NPC_2, label="Innkeeper")
+        _attach_memory(empty_graph, _NPC_1, "Saw a fight", timestamp=1.0)
+        innkeeper_memory = _attach_memory(empty_graph, _NPC_2, "Heard a song", timestamp=2.0)
+
+        innkeeper_memories = empty_graph.personal_memories_for(_NPC_2)
+
+        assert [mem.uuid for mem in innkeeper_memories] == [innkeeper_memory.uuid]
+
+    @allure.story("Witness-memory index")
+    @allure.title("Removing a memory node evicts it from every witness's index entry")
+    def test_remove_memory_node_evicts_from_index(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        survivor = _attach_memory(empty_graph, _NPC_1, "lasting", timestamp=1.0)
+        ephemeral = _attach_memory(empty_graph, _NPC_1, "removed", timestamp=2.0)
+
+        empty_graph.remove_node(ephemeral.uuid)
+
+        remaining = empty_graph.personal_memories_for(_NPC_1)
+        assert [mem.uuid for mem in remaining] == [survivor.uuid]
+
+    @allure.story("Witness-memory index")
+    @allure.title("Removing a witness NPC node clears that NPC's index entry but leaves the memory node intact")
+    def test_remove_witness_clears_index_entry(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        memory = _attach_memory(empty_graph, _NPC_1, "memory", timestamp=1.0)
+
+        empty_graph.remove_node(_NPC_1)
+
+        assert empty_graph.personal_memories_for(_NPC_1) == []
+        assert empty_graph.get_node(memory.uuid) is not None
+
+    @allure.story("Witness-memory index")
+    @allure.title("Removing a memory shared by two witnesses evicts it from both index entries")
+    def test_remove_shared_memory_evicts_from_all_witnesses(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        empty_graph.register_actor_node(_NPC_2, label="Innkeeper")
+        shared = KnowledgeNode(
+            text="shared",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=1.0,
+        )
+        shared_id = empty_graph.add_node(shared)
+        empty_graph.add_edge(_NPC_1, shared_id, EdgeType.WITNESSED)
+        empty_graph.add_edge(_NPC_2, shared_id, EdgeType.WITNESSED)
+
+        empty_graph.remove_node(shared_id)
+
+        assert empty_graph.personal_memories_for(_NPC_1) == []
+        assert empty_graph.personal_memories_for(_NPC_2) == []
+
+    @allure.story("Witness-memory index")
+    @allure.title("Non-WITNESSED outgoing edges from an NPC to a PERSONAL_EXPERIENCE node are not indexed")
+    def test_non_witnessed_outgoing_edge_not_indexed(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Source")
+        memory = KnowledgeNode(
+            text="dream",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=1.0,
+        )
+        memory_id = empty_graph.add_node(memory)
+        empty_graph.add_edge(_NPC_1, memory_id, EdgeType.TOLD_BY)
+
+        assert empty_graph.personal_memories_for(_NPC_1) == []
+
+    @allure.story("Witness-memory index")
+    @allure.title("WITNESSED edges to non-PERSONAL_EXPERIENCE nodes are not indexed")
+    def test_non_personal_experience_target_is_not_indexed(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        fact = KnowledgeNode(
+            text="fact",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.FACT,
+            timestamp=1.0,
+        )
+        fact_id = empty_graph.add_node(fact)
+        empty_graph.add_edge(_NPC_1, fact_id, EdgeType.WITNESSED)
+
+        assert empty_graph.personal_memories_for(_NPC_1) == []
+
+    @allure.story("Witness-memory index")
+    @allure.title("Round-tripping the graph through to_dict/from_dict rebuilds the witness-memory index")
+    def test_index_rebuilt_after_serialisation(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        memory = _attach_memory(empty_graph, _NPC_1, "Met a stranger", timestamp=1.0)
+
+        restored = graph_serialization.from_dict(graph_serialization.to_dict(empty_graph))
+
+        restored_memories = restored.personal_memories_for(_NPC_1)
+        assert [mem.uuid for mem in restored_memories] == [memory.uuid]
+
+    @allure.story("Witness-memory index")
+    @allure.title("KnowledgeQueryEngine._personal_memories_for delegates to the graph index")
+    def test_query_engine_uses_graph_index(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        memory = _attach_memory(empty_graph, _NPC_1, "Met a stranger", timestamp=1.0)
+
+        engine = KnowledgeQueryEngine(empty_graph)
+        retrieved = engine.get_memories_about(_NPC_1)
+
+        assert [mem.uuid for mem in retrieved] == [memory.uuid]
