@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from knowledge.graph import KnowledgeGraph
+from knowledge.memory import MemoryEventResult
 from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
@@ -33,7 +34,7 @@ class RecordingMemoryManager:
         scope: Any,
         location_id: str | None = None,
         game_time: float = _ZERO_GAME_TIME,
-    ) -> list[str]:
+    ) -> MemoryEventResult:
         self.calls.append(
             {
                 "event_description": event_description,
@@ -43,7 +44,7 @@ class RecordingMemoryManager:
                 "game_time": game_time,
             },
         )
-        return []
+        return MemoryEventResult(canonical_id=None, all_ids=())
 
 
 def make_actor_target_state() -> tuple[GameState, NPCCard, NPCCard, Location]:

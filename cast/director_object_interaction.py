@@ -168,14 +168,14 @@ async def _emit_witness_memories(
     if not witnesses or not delta_text:
         return
     scene = game_state.current_scene
-    created_ids = await memory_manager.create_memory_from_event(
+    memory_result = await memory_manager.create_memory_from_event(
         event_description=delta_text,
         witness_ids=witnesses,
         scope=KnowledgeScope.LOCAL,
         location_id=scene.location_id if scene else None,
         game_time=game_state.game_clock,
     )
-    record_player_learned_fact(game_state.player, created_ids)
+    record_player_learned_fact(game_state.player, memory_result.canonical_id)
 
 
 async def apply_object_interactions(
