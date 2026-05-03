@@ -15,6 +15,8 @@ from cast.dice import (
     ContestType,
     roll_contest,
 )
+from knowledge.memory import DialoguePair
+from knowledge.memory_slots import MemorySlots
 from llm.turn_event_logger import record_turn_event
 from models.game_state import GameState
 
@@ -147,12 +149,14 @@ def format_dialogue_summary_pairs(
     work_items: list[tuple[Any, Any, str, ContestRoll | None]],
     dialogue_entries: list[dict[str, str]],
     player_action: str,
-) -> list[tuple[UUID, str]]:
-    """Build ``(npc_uuid, interaction_log)`` pairs for the memory summariser.
+    player_name: str,
+) -> list[DialoguePair]:
+    """Build ``(npc_id, log, slots)`` :data:`DialoguePair`s for the memory summariser.
 
-    Extracted so :meth:`DialogueHandler.handle_dialogue` stays under the
-    WPS210 local-variable limit — the comprehension previously lived in
-    the handler body.
+    Each pair carries the NPC id, the raw transcript, and structured
+    slots (subject = NPC name, object = player name, action = ``said``).
+    The slots are deterministic from the speaker/listener pair so the
+    memory summariser only needs to generate the free-text summary.
     """
     return [
         (
@@ -162,6 +166,7 @@ def format_dialogue_summary_pairs(
                 work_item[0].name,
                 entry.get("response", ""),
             ),
+            MemorySlots(subject=work_item[0].name, object=player_name, action="said"),
         )
         for work_item, entry in zip(work_items, dialogue_entries)
     ]

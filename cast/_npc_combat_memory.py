@@ -16,6 +16,7 @@ from uuid import UUID
 from cast._npc_outcome import OutcomeKind
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryEvent, MemoryManager
+from knowledge.memory_slots import MemorySlots
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
 from models.npc_card import NPCCard
@@ -25,6 +26,13 @@ _RESOLUTION_CLAUSE: MappingProxyType[tuple[OutcomeKind, str], str] = MappingProx
         (OutcomeKind.PHYSICAL, "dead"): "attacked and killed {target} with a lethal blow",
         (OutcomeKind.PHYSICAL, "wounded"): "attacked and wounded {target} in a non-lethal hit",
         (OutcomeKind.MOOD, "frightened"): "intimidated {target} into submission",
+    },
+)
+_ACTION_BY_KIND: MappingProxyType[tuple[OutcomeKind, str], str] = MappingProxyType(
+    {
+        (OutcomeKind.PHYSICAL, "dead"): "killed",
+        (OutcomeKind.PHYSICAL, "wounded"): "attacked",
+        (OutcomeKind.MOOD, "frightened"): "intimidated",
     },
 )
 
@@ -86,6 +94,21 @@ def _format_combat_event(event: CombatEvent) -> str:
     return "{0} {1}; {2} is now {3}.".format(event.actor.name, clause, event.target.name, event.new_value)
 
 
+def _slots_for_combat(event: CombatEvent) -> MemorySlots:
+    """Derive structured slots from a combat event.
+
+    Subject is the attacker, object the target, action the verb tied to
+    the outcome (``killed``/``attacked``/``intimidated``), and outcome
+    the resolved target state (``dead``/``wounded``/``frightened``).
+    """
+    return MemorySlots(
+        subject=event.actor.name,
+        object=event.target.name,
+        action=_ACTION_BY_KIND.get((event.kind, event.new_value)),
+        outcome=event.new_value,
+    )
+
+
 async def persist_combat_memory(
     memory_manager: MemoryManager,
     event: CombatEvent,
@@ -104,5 +127,6 @@ async def persist_combat_memory(
             location_id=location_id,
             game_time=game_state.game_clock,
             salience=salience_presets.COMBAT,
+            slots=_slots_for_combat(event),
         ),
     )

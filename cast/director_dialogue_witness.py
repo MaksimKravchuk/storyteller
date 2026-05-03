@@ -15,6 +15,7 @@ from uuid import UUID
 from cast.dice import ContestRoll
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryEvent, MemoryManager, record_player_learned_fact
+from knowledge.memory_slots import MemorySlots
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
 
@@ -113,6 +114,23 @@ async def broadcast_cowitness_memories(
             location_id=scene.location_id if scene else None,
             game_time=game_state.game_clock,
             salience=salience_presets.OVERHEARD,
+            slots=_overheard_slots(work_items, game_state),
         ),
     )
     record_player_learned_fact(game_state.player, memory_result.canonical_id)
+
+
+def _overheard_slots(work_items: list[WorkItem], game_state: GameState) -> MemorySlots:
+    """Build slots for a co-witness overheard memory.
+
+    Subject is the player (the one speaking), object is the joined
+    targeted-NPC names (or ``None`` if no targets were resolved), and
+    action is ``said``. The witness identity is encoded by the
+    ``WITNESSED`` edge; we only describe the speech act here.
+    """
+    targeted_names = ", ".join(wi[0].name for wi in work_items)
+    return MemorySlots(
+        subject=game_state.player.name,
+        object=targeted_names or None,
+        action="said",
+    )

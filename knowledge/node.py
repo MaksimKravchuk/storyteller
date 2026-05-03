@@ -49,7 +49,16 @@ class EdgeType(Enum):
 
 
 class KnowledgeNode(StorytellerBase):
-    """A single fact / memory in the knowledge graph."""
+    """A single fact / memory in the knowledge graph.
+
+    The free-text ``text`` is the primary display surface — the
+    ``subject``/``object``/``action``/``outcome`` slots are optional
+    structured metadata for downstream dedup, querying, and contradiction
+    detection. They are populated at creation sites where the data is
+    cheap to extract (combat, dialogue, effect-driven events) and left
+    ``None`` everywhere else (Wikipedia facts, scene-state deltas,
+    forwarded hearsay).
+    """
 
     text: str
     scope: KnowledgeScope = KnowledgeScope.LOCAL
@@ -60,3 +69,7 @@ class KnowledgeNode(StorytellerBase):
     location_id: UUID | None = None
     timestamp: float | None = None  # Game-clock time when learned
     salience: float = _SALIENCE_FIELD
+    subject: str | None = None
+    object: str | None = None
+    action: str | None = None
+    outcome: str | None = None
