@@ -138,6 +138,74 @@ class TestResolveActionsAftermath:
         assert set(recorded["witness_ids"]) == {actor.uuid, target.uuid}
 
     @pytest.mark.asyncio
+    @allure.story("Non-lethal aftermath")
+    @allure.title("Non-lethal ATTACK wounds target and the wound shape reaches the persisted memory")
+    async def test_non_lethal_attack_persists_wounded_resolution(self) -> None:
+        state, actor, target, _ = make_actor_target_state()
+        memory = RecordingMemoryManager()
+
+        await resolve_actions_aftermath(
+            [
+                NPCAction(
+                    npc_name="Brutus",
+                    npc_uuid=actor.uuid,
+                    action_type="ATTACK",
+                    action_description="slashes at Marcus",
+                    target=target.name,
+                    contest_roll=_combat_roll(ContestOutcome.ACTOR_SUCCEEDS),
+                ),
+            ],
+            state,
+            memory,
+        )
+
+        assert target.physical_status == "wounded"
+        assert len(memory.calls) == 1
+        recorded = memory.calls[0]["event_description"]
+        assert "wounded" in recorded
+        assert "non-lethal" in recorded
+        assert "killed" not in recorded
+
+    @pytest.mark.asyncio
+    @allure.story("Intimidation aftermath")
+    @allure.title("Successful INTIMIDATE cows the target and the submission shape reaches the persisted memory")
+    async def test_intimidation_persists_submission_resolution(self) -> None:
+        state, actor, target, _ = make_actor_target_state()
+        memory = RecordingMemoryManager()
+
+        intimidation_roll = ContestRoll(
+            contest_type=ContestType.INTIMIDATION,
+            outcome=ContestOutcome.ACTOR_DOMINATES,
+            actor_roll=18,
+            target_roll=2,
+            actor_bonus=0,
+            target_bonus=0,
+        )
+
+        await resolve_actions_aftermath(
+            [
+                NPCAction(
+                    npc_name="Brutus",
+                    npc_uuid=actor.uuid,
+                    action_type="INTIMIDATE",
+                    action_description="looms over Marcus",
+                    target=target.name,
+                    contest_roll=intimidation_roll,
+                ),
+            ],
+            state,
+            memory,
+        )
+
+        assert target.current_mood == "frightened"
+        assert len(memory.calls) == 1
+        recorded = memory.calls[0]["event_description"]
+        assert "intimidated" in recorded
+        assert "frightened" in recorded
+        assert "killed" not in recorded
+        assert "wounded" not in recorded
+
+    @pytest.mark.asyncio
     @allure.story("Stealth aftermath")
     @allure.title("STEALTH does not wound the target but still records goal progress")
     async def test_stealth_records_progress_only(self) -> None:
