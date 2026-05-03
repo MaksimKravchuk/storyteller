@@ -150,7 +150,7 @@ def _apply_optional_sections(actor: Actor, context: dict) -> None:
     Lives outside the :class:`Actor` class so it does not contribute
     to that class's method count budget.
     """
-    past_memories = actor.knowledge_query.get_memories_about(actor.npc.uuid, limit=_MEMORY_LIMIT)
+    past_memories = actor.knowledge_query.get_memories_held_by(actor.npc.uuid, limit=_MEMORY_LIMIT)
     if past_memories:
         actor.set_context(past_memories=format_past_memories(past_memories))
     if actor.npc.hostility_level > 0 or actor.npc.recent_hostile_actions:

@@ -60,7 +60,7 @@ def format_overheard_text(
     """Render the raw transcript a co-witness would carry away from the scene.
 
     The text deliberately mentions every targeted NPC *by name* so a
-    later ``get_memories_about`` query can match on the statement, the
+    later ``get_memories_held_by`` query can match on the statement, the
     speaker, or the listener. Co-witness memories bypass the LLM
     summariser entirely — the raw exchange is cheap, deterministic,
     and already contains enough signal for downstream Actor prompts.
@@ -87,7 +87,7 @@ async def broadcast_cowitness_memories(
     :meth:`MemoryManager.create_memory_from_event` with
     ``KnowledgeScope.LOCAL`` so they land as ``PERSONAL_EXPERIENCE``
     nodes — exactly the source class
-    :meth:`KnowledgeQueryEngine.get_memories_about` returns. No LLM
+    :meth:`KnowledgeQueryEngine.get_memories_held_by` returns. No LLM
     calls are issued; the overheard transcript is embedded verbatim so
     a subsequent Actor prompt asking NPC B about the player's
     statement has something concrete to match against.

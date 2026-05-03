@@ -2,7 +2,7 @@
 
 When an EventEffect mutates NPC state (inventory, status, location,
 ...), this module emits graph memories so that co-located NPCs can
-later recall the event via ``KnowledgeQueryEngine.get_memories_about``.
+later recall the event via ``KnowledgeQueryEngine.get_memories_held_by``.
 """
 
 from __future__ import annotations

@@ -169,7 +169,7 @@ def test_bartender_keeps_own_memory_after_departure() -> None:
     NPCTicker(gs).tick(TurnOutputs())
 
     engine = KnowledgeQueryEngine(gs.knowledge_graph)
-    own_memories = engine.get_memories_about(_BARTENDER_UUID)
+    own_memories = engine.get_memories_held_by(_BARTENDER_UUID)
     assert any(node.uuid == memory.uuid for node in own_memories)
 
 

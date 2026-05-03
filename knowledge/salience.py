@@ -3,7 +3,7 @@
 Every call site that builds a ``PERSONAL_EXPERIENCE`` node should reach
 into this module rather than hard-coding a literal so the tuning can be
 revisited in one place. Higher values keep a memory near the top of an
-NPC's recall set for longer; see ``KnowledgeQueryEngine.get_memories_about``
+NPC's recall set for longer; see ``KnowledgeQueryEngine.get_memories_held_by``
 for the salience+recency blend.
 
 Numbers are deliberately spread across the 0.0–1.0 scale so the

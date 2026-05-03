@@ -55,7 +55,7 @@ class TestDialogueHandlerLongTermMemory:
         await handler.handle_dialogue("greetings", ["Marcus"])
 
         engine = KnowledgeQueryEngine(gs.knowledge_graph)
-        memories = engine.get_memories_about(_NPC_A)
+        memories = engine.get_memories_held_by(_NPC_A)
         assert len(memories) == 1
         assert memories[0].text == _MEMORY_SUMMARY
         assert memories[0].salience == pytest.approx(salience_presets.ROUTINE_DIALOGUE)
@@ -107,13 +107,13 @@ class TestDialogueHandlerLongTermMemory:
         engine = KnowledgeQueryEngine(gs.knowledge_graph)
 
         # Target NPC got the LLM summary, exactly as before.
-        target_memories = engine.get_memories_about(_NPC_A)
+        target_memories = engine.get_memories_held_by(_NPC_A)
         assert len(target_memories) == 1
         assert target_memories[0].text == _MEMORY_SUMMARY
 
         # Co-witness NPC got a queryable memory whose text references the statement,
         # created without touching the LLM summariser.
-        cowitness_memories = engine.get_memories_about(_NPC_B)
+        cowitness_memories = engine.get_memories_held_by(_NPC_B)
         assert len(cowitness_memories) == 1
         assert _DAMNING_STATEMENT in cowitness_memories[0].text
         assert "Marcus" in cowitness_memories[0].text
@@ -163,7 +163,7 @@ class TestDialogueHandlerLongTermMemory:
 
         await handler.handle_dialogue("greetings", ["Marcus"])
 
-        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_A)
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_NPC_A)
         assert len(memories) == 1
         assert memories[0].location_id == _FORUM
 
@@ -203,7 +203,7 @@ class TestDialogueHandlerLongTermMemory:
         # Exactly one new node was added: the targeted NPC's LLM summary.
         nodes_after = len(gs.knowledge_graph.digraph.nodes)
         assert nodes_after - nodes_before == 1
-        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_A)
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_NPC_A)
         assert len(memories) == 1
         assert memories[0].text == _MEMORY_SUMMARY
 
@@ -271,7 +271,7 @@ class TestDialogueHandlerLongTermMemory:
         Without this pass, ``check_retaliation`` fires an Actor call for a
         bystander NPC whose mood flipped, appends the response to the
         turn's dialogue output, and moves on — no graph memory is created.
-        On the next encounter ``get_memories_about(retaliator)`` returns
+        On the next encounter ``get_memories_held_by(retaliator)`` returns
         nothing about the fight. This test wires the new
         ``DialogueHandler.summarize_retaliations`` to a real
         ``MemoryManager`` and asserts both (a) the memory exists in the
@@ -302,7 +302,7 @@ class TestDialogueHandlerLongTermMemory:
         await handler.summarize_retaliations(retaliation_entries, "shout insults at the legionary")
 
         engine = KnowledgeQueryEngine(gs.knowledge_graph)
-        memories = engine.get_memories_about(_NPC_A)
+        memories = engine.get_memories_held_by(_NPC_A)
         assert len(memories) == 1
         assert memories[0].text == _RETALIATION_SUMMARY
         assert memories[0].salience == pytest.approx(salience_presets.RETALIATION)
@@ -341,7 +341,7 @@ class TestDialogueHandlerLongTermMemory:
 
         await handler.summarize_retaliations(retaliation_entries, "shout insults")
 
-        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_A)
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_NPC_A)
         assert len(memories) == 1
         assert memories[0].location_id == _FORUM
 

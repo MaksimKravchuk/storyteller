@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -23,6 +24,32 @@ if TYPE_CHECKING:
     from llm.base_client import BaseLLMClient
 
 _SUMMARY_MAX_TOKENS = 200
+_DEDUP_JACCARD_THRESHOLD = 0.65
+_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+
+
+def _tokenize(text: str) -> frozenset[str]:
+    return frozenset(_TOKEN_PATTERN.findall(text.lower()))
+
+
+def _jaccard(left: frozenset[str], right: frozenset[str]) -> float:
+    """Jaccard similarity. Caller must guarantee at least one side is non-empty."""
+    return len(left & right) / len(left | right)
+
+
+def _has_near_duplicate_memory(graph: KnowledgeGraph, npc_id: UUID, new_text: str) -> bool:
+    """Return True when an existing personal memory of *npc_id* is near-identical to *new_text*.
+
+    Uses Jaccard similarity over alphanumeric word tokens; skipping the new write avoids
+    the long-session bloat from repeated dialogue summaries that paraphrase the same topic.
+    """
+    new_tokens = _tokenize(new_text)
+    if not new_tokens:
+        return False
+    return any(
+        _jaccard(new_tokens, _tokenize(existing.text)) >= _DEDUP_JACCARD_THRESHOLD
+        for existing in graph.personal_memories_for(npc_id)
+    )
 
 
 @dataclass(frozen=True)
@@ -189,8 +216,12 @@ class MemoryManager:
             max_tokens=_SUMMARY_MAX_TOKENS,
         )
 
+        summary_text = response.body.strip()
+        if _has_near_duplicate_memory(self._graph, npc_id, summary_text):
+            return
+
         node = KnowledgeNode(
-            text=response.body.strip(),
+            text=summary_text,
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.PERSONAL_EXPERIENCE,
             canon=CanonSource.SESSION,

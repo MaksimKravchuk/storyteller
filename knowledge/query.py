@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 _DEFAULT_SORT_PRIORITY = 99
 
-# Tuning for the salience+recency blend in ``get_memories_about``.
+# Tuning for the salience+recency blend in ``get_memories_held_by``.
 # ``W=0.7`` keeps the salience term dominant: a 0.95 pivotal memory
 # beats a fresh 0.3 routine memory at every ``TAU`` age, then both
 # decay symmetrically.
@@ -151,7 +151,7 @@ class KnowledgeQueryEngine:
         lines = [f"- {_SOURCE_PREFIXES.get(node.source, '')}{node.text}" for node in nodes]
         return "\n".join(lines)
 
-    def get_memories_about(self, npc_id: UUID, limit: int = 5) -> list[KnowledgeNode]:
+    def get_memories_held_by(self, npc_id: UUID, limit: int = 5) -> list[KnowledgeNode]:
         """Return the NPC's PERSONAL_EXPERIENCE memories ranked by salience+recency.
 
         Pivotal events (high ``salience``) outrank trivial chatter even

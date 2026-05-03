@@ -363,38 +363,38 @@ def _attach_memory(
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Memory query")
-class TestQueryEngineGetMemoriesAbout:
-    @allure.story("get_memories_about")
-    @allure.title("get_memories_about returns an empty list for a graph with no memory edges")
+class TestQueryEngineGetMemoriesHeldBy:
+    @allure.story("get_memories_held_by")
+    @allure.title("get_memories_held_by returns an empty list for a graph with no memory edges")
     def test_empty_graph_returns_empty(self, empty_graph):
         empty_graph.register_actor_node(_NPC_1, label="Guard")
         engine = KnowledgeQueryEngine(empty_graph)
-        assert engine.get_memories_about(_NPC_1) == []
+        assert engine.get_memories_held_by(_NPC_1) == []
 
-    @allure.story("get_memories_about")
-    @allure.title("get_memories_about returns a single PERSONAL_EXPERIENCE node linked to the NPC via WITNESSED")
+    @allure.story("get_memories_held_by")
+    @allure.title("get_memories_held_by returns a single PERSONAL_EXPERIENCE node linked to the NPC via WITNESSED")
     def test_single_memory_returned(self, empty_graph):
         empty_graph.register_actor_node(_NPC_1, label="Guard")
         memory = _attach_memory(empty_graph, _NPC_1, "Met a kind traveller", timestamp=1.0)
 
         engine = KnowledgeQueryEngine(empty_graph)
-        memories = engine.get_memories_about(_NPC_1)
+        memories = engine.get_memories_held_by(_NPC_1)
 
         assert len(memories) == 1
         assert memories[0].uuid == memory.uuid
 
-    @allure.story("get_memories_about")
-    @allure.title("get_memories_about caps the result at the requested limit")
+    @allure.story("get_memories_held_by")
+    @allure.title("get_memories_held_by caps the result at the requested limit")
     def test_limit_respected(self, empty_graph):
         empty_graph.register_actor_node(_NPC_1, label="Guard")
         for idx in range(5):
             _attach_memory(empty_graph, _NPC_1, f"memory-{idx}", timestamp=float(idx))
 
         engine = KnowledgeQueryEngine(empty_graph)
-        assert len(engine.get_memories_about(_NPC_1, limit=2)) == 2
+        assert len(engine.get_memories_held_by(_NPC_1, limit=2)) == 2
 
-    @allure.story("get_memories_about")
-    @allure.title("get_memories_about orders equal-salience memories by timestamp descending (newest first)")
+    @allure.story("get_memories_held_by")
+    @allure.title("get_memories_held_by orders equal-salience memories by timestamp descending (newest first)")
     def test_orders_by_timestamp_descending(self, empty_graph):
         empty_graph.register_actor_node(_NPC_1, label="Guard")
         _attach_memory(empty_graph, _NPC_1, "oldest", timestamp=1.0)
@@ -402,10 +402,10 @@ class TestQueryEngineGetMemoriesAbout:
         _attach_memory(empty_graph, _NPC_1, "middle", timestamp=2.0)
 
         engine = KnowledgeQueryEngine(empty_graph)
-        ordered_texts = [mem.text for mem in engine.get_memories_about(_NPC_1)]
+        ordered_texts = [mem.text for mem in engine.get_memories_held_by(_NPC_1)]
         assert ordered_texts == ["newest", "middle", "oldest"]
 
-    @allure.story("get_memories_about")
+    @allure.story("get_memories_held_by")
     @allure.title("A high-salience pivotal memory survives the top-K cut despite being older than routine chatter")
     def test_high_salience_outranks_recent_routine(self, empty_graph):
         """Regression: pure-recency ordering crowded out pivotal events.
@@ -427,7 +427,7 @@ class TestQueryEngineGetMemoriesAbout:
             )
 
         engine = KnowledgeQueryEngine(empty_graph)
-        ordered_texts = [mem.text for mem in engine.get_memories_about(_NPC_1, limit=5)]
+        ordered_texts = [mem.text for mem in engine.get_memories_held_by(_NPC_1, limit=5)]
         assert "witnessed-murder" in ordered_texts
         assert ordered_texts[0] == "witnessed-murder"
 
@@ -548,6 +548,6 @@ class TestWitnessMemoryIndex:
         memory = _attach_memory(empty_graph, _NPC_1, "Met a stranger", timestamp=1.0)
 
         engine = KnowledgeQueryEngine(empty_graph)
-        retrieved = engine.get_memories_about(_NPC_1)
+        retrieved = engine.get_memories_held_by(_NPC_1)
 
         assert [mem.uuid for mem in retrieved] == [memory.uuid]

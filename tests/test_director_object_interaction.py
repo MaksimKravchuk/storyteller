@@ -113,7 +113,7 @@ class TestApplyObjectInteractions:
             memory_manager,
         )
 
-        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_UUID)
+        memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_NPC_UUID)
         assert len(memories) == 1
         assert "window is broken" in memories[0].text.lower()
         assert memories[0].salience == pytest.approx(salience_presets.OBJECT_INTERACTION)
@@ -151,7 +151,7 @@ class TestApplyObjectInteractions:
         assert query_scene_deltas(gs.knowledge_graph, _TAVERN) == []
         # No delta → no witness memory either. The bystander's graph node
         # exists but has no PERSONAL_EXPERIENCE edges.
-        assert KnowledgeQueryEngine(gs.knowledge_graph).get_memories_about(_NPC_UUID) == []
+        assert KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_NPC_UUID) == []
 
     @allure.story("Witness memories")
     @allure.title("apply_object_interactions adds the witness-memory node UUID to player.learned_facts")
