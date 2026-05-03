@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import allure
 import pytest
 
+from cast._scene_location import UNKNOWN_SCENE_LOCATION
 from cast.npc_generator import NPCGenerator
 from cast.schemas.npc_response import NPCAttributes, NPCResponse
 from models.npc_card import NPCCard
@@ -78,6 +79,19 @@ class TestNPCGenerator:
         with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Caius")])):
             cards = await gen.act(["guard"], {"game_state": game_state})
         assert cards[0].location_id == forum_id
+
+    @allure.story("Location propagation")
+    @allure.title("NPCGenerator falls back to the player's location when the scene's location is the unknown sentinel")
+    @pytest.mark.asyncio
+    async def test_unknown_scene_location_falls_back_to_player(self, game_state) -> None:
+        forum_id = make_uuid("forum")
+        game_state.player.location_id = forum_id
+        game_state.current_scene = Scene(location_id=UNKNOWN_SCENE_LOCATION, description="plaza")
+        gen = NPCGenerator(llm_client=MagicMock())
+        with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[_full_npc_payload("Caius")])):
+            cards = await gen.act(["guard"], {"game_state": game_state})
+        assert cards[0].location_id == forum_id
+        assert cards[0].location_id != UNKNOWN_SCENE_LOCATION
 
     @allure.story("Location propagation")
     @allure.title("NPCGenerator leaves location_id None when the game state has no current scene")

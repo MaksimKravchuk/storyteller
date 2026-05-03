@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import UUID
 
 from loguru import logger
 
 from cast._npc_generator_goals import build_life_goal, candidate_goal_targets
+from cast._scene_location import UNKNOWN_SCENE_LOCATION
 from cast.base_performer_class import BasePerformer
 from cast.schemas.npc_response import NPCGoalDraft, NPCResponse
 from models.npc_card import NPCCard
@@ -66,11 +68,36 @@ def _render_vars_for(npc_request: str, game_state: Any, taken_names: set[str]) -
     return render_vars
 
 
+def _resolve_npc_location_id(game_state: Any) -> UUID | None:
+    """Resolve a real ``location_id`` for a freshly generated NPC.
+
+    NPCs are physical beings, never ghosts: they belong at the scene's
+    location. When the SceneBuilder failed to bind the scene to a
+    registered location it leaves the all-zero
+    :data:`UNKNOWN_SCENE_LOCATION` sentinel on ``Scene.location_id``;
+    persisting that onto the NPC produces the
+    ``00000000-0000-0000-0000-000000000000`` rows we used to see in
+    ``npcs.location_id``. Fall back to the player's location instead —
+    NPCs are always generated in the scene the player is in, so this
+    is the truthful choice.
+    """
+    scene = game_state.current_scene
+    if scene and scene.location_id != UNKNOWN_SCENE_LOCATION:
+        return scene.location_id
+    player_loc = getattr(game_state.player, "location_id", None) if game_state.player else None
+    if scene and player_loc:
+        logger.warning(
+            "NPCGenerator: scene.location_id is unknown sentinel; falling back to player location {0}",
+            player_loc,
+        )
+    return player_loc
+
+
 def _card_from_response(npc_data: NPCResponse, npc_request: str, game_state: Any) -> NPCCard:
     """Project an :class:`NPCResponse` into a fresh :class:`NPCCard`.
 
     Stamps ``location_id`` from the current scene (the LLM never produces
-    one). Same fallback semantics as the original inline construction.
+    one), refusing the unknown-scene sentinel so NPCs aren't ghosts.
     """
     return NPCCard(
         name=npc_data.name or "Unknown",
@@ -83,7 +110,7 @@ def _card_from_response(npc_data: NPCResponse, npc_request: str, game_state: Any
         knowledge_scope=npc_data.knowledge_scope or "local",
         attributes=npc_data.attributes.model_dump(),
         inventory=npc_data.inventory,
-        location_id=(game_state.current_scene.location_id if game_state.current_scene else None),
+        location_id=_resolve_npc_location_id(game_state),
     )
 
 
