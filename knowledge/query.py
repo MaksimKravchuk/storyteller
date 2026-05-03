@@ -16,6 +16,16 @@ if TYPE_CHECKING:
 
 _DEFAULT_SORT_PRIORITY = 99
 
+# Tuning for the salience+recency blend in ``get_memories_about``. With
+# ``W=0.7`` the salience term dominates so a 0.95 witnessed-killing
+# memory keeps the top slot for at least one full ``TAU`` window of
+# game-clock hours even as 0.3 small-talk memories pile in.
+_SALIENCE_WEIGHT = 0.7
+_RECENCY_WEIGHT = 1 - _SALIENCE_WEIGHT
+_RECENCY_TAU_HOURS = 72.0
+# Named so we can write 0-valued floats without tripping WPS358.
+_FLOAT_ZERO = float(0)
+
 _SOURCE_PRIORITY = MappingProxyType(
     {
         KnowledgeSource.PERSONAL_EXPERIENCE: 0,
@@ -54,11 +64,35 @@ def _node_matches(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
     return all(checks)
 
 
-def _memory_sort_key(node: KnowledgeNode) -> float:
-    """Return the timestamp of a memory node for sorting, treating missing as oldest."""
-    if node.timestamp is None:
-        return float("-inf")
-    return node.timestamp
+def _now_reference(memories: list[KnowledgeNode]) -> float:
+    """Pick the recency reference time for a result set.
+
+    The query engine has no direct line on the game clock, so we use
+    the freshest known timestamp in the candidate pool as "now". Any
+    memory missing a timestamp drops to the oldest bucket and gets a
+    zero recency contribution — its salience alone decides whether it
+    survives the cut.
+    """
+    timestamps = [memory.timestamp for memory in memories if memory.timestamp is not None]
+    if not timestamps:
+        return _FLOAT_ZERO
+    return max(timestamps)
+
+
+def _memory_score(memory: KnowledgeNode, now: float) -> float:
+    """Blend salience and recency into a single ranking score.
+
+    ``recency_factor`` decays linearly over ``_RECENCY_TAU_HOURS`` so
+    a memory older than the window contributes nothing from the
+    recency side and is held up by salience alone. The blend is a
+    convex combination — both terms live in ``[0, 1]`` and ``score``
+    does too — which keeps the weights interpretable.
+    """
+    recency_factor = _FLOAT_ZERO
+    if memory.timestamp is not None:
+        age = max(_FLOAT_ZERO, now - memory.timestamp)
+        recency_factor = max(_FLOAT_ZERO, 1 - age / _RECENCY_TAU_HOURS)
+    return _SALIENCE_WEIGHT * memory.salience + _RECENCY_WEIGHT * recency_factor
 
 
 class KnowledgeQueryEngine:
@@ -119,9 +153,19 @@ class KnowledgeQueryEngine:
         return "\n".join(lines)
 
     def get_memories_about(self, npc_id: UUID, limit: int = 5) -> list[KnowledgeNode]:
-        """Return the NPC's most recent PERSONAL_EXPERIENCE memories, newest first."""
+        """Return the NPC's PERSONAL_EXPERIENCE memories ranked by salience+recency.
+
+        Pivotal events (high ``salience``) outrank trivial chatter even
+        when the chatter is fresher, so a witnessed killing isn't
+        crowded out of the top-K cut by an afternoon of small-talk
+        summaries. Equal-salience memories fall back to recency
+        ordering — the recency term still differentiates them.
+        """
         memories = self._personal_memories_for(npc_id)
-        memories.sort(key=_memory_sort_key, reverse=True)
+        if not memories:
+            return []
+        now = _now_reference(memories)
+        memories.sort(key=lambda memory: _memory_score(memory, now), reverse=True)
         return memories[:limit]
 
     def _personal_memories_for(self, npc_id: UUID) -> list[KnowledgeNode]:

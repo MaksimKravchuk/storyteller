@@ -7,7 +7,7 @@ from unittest.mock import patch
 import allure
 import pytest
 
-from cast.dice import ContestOutcome, ContestRoll, ContestType
+from cast import dice
 from cast.npc_background_tick import NPCBackgroundTicker
 from models.goal import Goal, GoalKind, GoalStatus
 from models.location import Location
@@ -94,9 +94,9 @@ class TestNPCBackgroundTicker:
         backroom = _move_actor_offscene(state, actor, target)
         memory = RecordingMemoryManager()
 
-        forced_roll = ContestRoll(
-            contest_type=ContestType.COMBAT,
-            outcome=ContestOutcome.ACTOR_DOMINATES,
+        forced_roll = dice.ContestRoll(
+            contest_type=dice.ContestType.COMBAT,
+            outcome=dice.ContestOutcome.ACTOR_DOMINATES,
             actor_roll=20,
             target_roll=1,
             actor_bonus=0,
@@ -111,6 +111,7 @@ class TestNPCBackgroundTicker:
         assert state.world_state.threads[0].status == "resolved"
         assert len(memory.calls) == 1
         assert memory.calls[0]["location_id"] == backroom.uuid
+        assert memory.calls[0]["salience"] == pytest.approx(0.85)  # salience_presets.COMBAT
 
     @pytest.mark.asyncio
     @allure.story("Lone actor")

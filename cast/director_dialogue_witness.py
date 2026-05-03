@@ -13,7 +13,8 @@ from typing import Any
 from uuid import UUID
 
 from cast.dice import ContestRoll
-from knowledge.memory import MemoryManager, record_player_learned_fact
+from knowledge import salience as salience_presets
+from knowledge.memory import MemoryEvent, MemoryManager, record_player_learned_fact
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
 
@@ -105,10 +106,13 @@ async def broadcast_cowitness_memories(
     scene = game_state.current_scene
     overheard_text = format_overheard_text(player_action, work_items, dialogue_entries)
     created_ids = await memory_manager.create_memory_from_event(
-        event_description=overheard_text,
-        witness_ids=witnesses,
-        scope=KnowledgeScope.LOCAL,
-        location_id=scene.location_id if scene else None,
-        game_time=game_state.game_clock,
+        MemoryEvent(
+            event_description=overheard_text,
+            witness_ids=witnesses,
+            scope=KnowledgeScope.LOCAL,
+            location_id=scene.location_id if scene else None,
+            game_time=game_state.game_clock,
+            salience=salience_presets.OVERHEARD,
+        ),
     )
     record_player_learned_fact(game_state.player, created_ids)

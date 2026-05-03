@@ -34,9 +34,8 @@ from uuid import UUID
 
 from loguru import logger
 
+from cast.director_object_witness import emit_witness_memories
 from cast.schemas.item_response import ObjectInteractionResponse, ObjectInteractionResult
-from knowledge.memory import record_player_learned_fact
-from knowledge.node import KnowledgeScope
 from knowledge.scene_state import record_scene_delta
 from llm.turn_event_logger import record_turn_event
 
@@ -153,31 +152,6 @@ def _persist_and_record(
         )
 
 
-async def _emit_witness_memories(
-    memory_manager: MemoryManager,
-    game_state: GameState,
-    delta_text: str,
-) -> None:
-    """Broadcast a ``PERSONAL_EXPERIENCE`` memory to initialised scene NPCs.
-
-    Short-circuits when there is nothing to remember (no witnesses or
-    empty delta) so a silent "bumping into a wall" INTERACT does not
-    spam the graph with ghost memory nodes.
-    """
-    witnesses = initialised_scene_witnesses(game_state)
-    if not witnesses or not delta_text:
-        return
-    scene = game_state.current_scene
-    created_ids = await memory_manager.create_memory_from_event(
-        event_description=delta_text,
-        witness_ids=witnesses,
-        scope=KnowledgeScope.LOCAL,
-        location_id=scene.location_id if scene else None,
-        game_time=game_state.game_clock,
-    )
-    record_player_learned_fact(game_state.player, created_ids)
-
-
 async def apply_object_interactions(
     item_generator: Any,
     object_targets: list[str],
@@ -207,8 +181,9 @@ async def apply_object_interactions(
     )
     deltas = [resp.delta for resp in responses]
     _persist_and_record(game_state, object_targets, player_action, responses)
+    witnesses = initialised_scene_witnesses(game_state)
     await asyncio.gather(
-        *(_emit_witness_memories(memory_manager, game_state, delta) for delta in deltas),
+        *(emit_witness_memories(memory_manager, game_state, witnesses, delta) for delta in deltas),
     )
     narrations = [resp.narration for resp in responses if resp.narration]
     return ObjectInteractionResult(narrations=narrations, deltas=deltas)

@@ -6,7 +6,8 @@ import asyncio
 from uuid import UUID
 
 from cast.schemas.chronicler_response import ScheduledEventDraft
-from knowledge.memory import MemoryManager
+from knowledge import salience as salience_presets
+from knowledge.memory import MemoryEvent, MemoryManager
 from knowledge.node import KnowledgeScope
 from knowledge.rumor import propagate_rumors
 from models.game_state import GameState
@@ -71,27 +72,28 @@ class EventProcessor:
     async def process_remote_events(self, events: list[GameEvent]) -> None:
         """Feed remote events into the memory system as rumours."""
         await asyncio.gather(
-            *(self._memory_mgr.create_memory_from_event(**self.build_memory_kwargs(ev)) for ev in events),
+            *(self._memory_mgr.create_memory_from_event(self.build_memory_event(ev)) for ev in events),
         )
 
     def propagate_rumors_for_turn(self, events: list[GameEvent]) -> list[UUID]:
         """Fan completed CITY+ events out to non-witness NPCs in the same city."""
         return propagate_rumors(self._gs.knowledge_graph, self._gs, events)
 
-    def build_memory_kwargs(self, ev: GameEvent) -> dict:
-        """Build keyword arguments for create_memory_from_event."""
+    def build_memory_event(self, ev: GameEvent) -> MemoryEvent:
+        """Wrap a completed :class:`GameEvent` as a :class:`MemoryEvent`."""
         scope = _scope_from_string(ev.scope)
         witnesses: list[UUID] = []
         locations = self._gs.locations
         if ev.location_id is not None and ev.location_id in locations:
             witnesses = list(locations[ev.location_id].npcs_present)
-        return {
-            "event_description": ev.on_complete_description or ev.name,
-            "witness_ids": witnesses,
-            "scope": scope,
-            "location_id": ev.location_id,
-            "game_time": self._gs.game_clock,
-        }
+        return MemoryEvent(
+            event_description=ev.on_complete_description or ev.name,
+            witness_ids=witnesses,
+            scope=scope,
+            location_id=ev.location_id,
+            game_time=self._gs.game_clock,
+            salience=salience_presets.REMOTE_EVENT,
+        )
 
 
 def _scope_from_string(scope_str: str) -> KnowledgeScope:

@@ -13,7 +13,8 @@ from types import MappingProxyType
 from uuid import UUID
 
 from cast._npc_outcome import OutcomeKind
-from knowledge.memory import MemoryManager
+from knowledge import salience as salience_presets
+from knowledge.memory import MemoryEvent, MemoryManager
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
 from models.npc_card import NPCCard
@@ -90,9 +91,12 @@ async def persist_combat_memory(
         scene = game_state.current_scene
         location_id = scene.location_id if scene else None
     await memory_manager.create_memory_from_event(
-        event_description=_format_combat_event(event),
-        witness_ids=_co_located_witness_ids(event.actor, event.target, game_state, location_id),
-        scope=KnowledgeScope.LOCAL,
-        location_id=location_id,
-        game_time=game_state.game_clock,
+        MemoryEvent(
+            event_description=_format_combat_event(event),
+            witness_ids=_co_located_witness_ids(event.actor, event.target, game_state, location_id),
+            scope=KnowledgeScope.LOCAL,
+            location_id=location_id,
+            game_time=game_state.game_clock,
+            salience=salience_presets.COMBAT,
+        ),
     )

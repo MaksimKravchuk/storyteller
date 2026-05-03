@@ -13,6 +13,7 @@ from cast import (
     known_npcs,
 )
 from cast.dice import ContestRoll, ContestType
+from knowledge import salience as salience_presets
 from knowledge.memory import MemoryManager
 from models.game_state import GameState
 
@@ -247,7 +248,11 @@ class DialogueHandler:
             for entry in retaliation_entries
             if entry.get("npc_uuid")
         ]
-        await self._memory_manager.summarize_interactions_batch(pairs, self._gs.game_clock)
+        await self._memory_manager.summarize_interactions_batch(
+            pairs,
+            self._gs.game_clock,
+            salience=salience_presets.RETALIATION,
+        )
 
     def _collect_targets(
         self,

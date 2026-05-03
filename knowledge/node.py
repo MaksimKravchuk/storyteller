@@ -5,7 +5,14 @@ from __future__ import annotations
 from enum import Enum, IntEnum
 from uuid import UUID
 
+from pydantic import Field
+
+from knowledge import salience as salience_presets
 from models.base_model import StorytellerBase
+
+_SALIENCE_LOW = float(0)
+_SALIENCE_HIGH = float(1)
+_SALIENCE_FIELD = Field(default=salience_presets.DEFAULT, ge=_SALIENCE_LOW, le=_SALIENCE_HIGH)
 
 
 class KnowledgeScope(IntEnum):
@@ -52,3 +59,7 @@ class KnowledgeNode(StorytellerBase):
     tags: list[str] = []
     location_id: UUID | None = None
     timestamp: float | None = None  # Game-clock time when learned
+    # Per-memory importance — forgettable to life-changing. Combined
+    # with recency by ``KnowledgeQueryEngine.get_memories_about`` so a
+    # witnessed killing isn't crowded out by trivial chatter.
+    salience: float = _SALIENCE_FIELD

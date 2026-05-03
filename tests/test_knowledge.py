@@ -5,6 +5,8 @@ from __future__ import annotations
 from uuid import UUID
 
 import allure
+import pytest
+from pydantic import ValidationError
 
 from knowledge.graph import KnowledgeGraph
 from knowledge import graph_serialization
@@ -115,6 +117,26 @@ class TestKnowledgeNode:
     def test_custom_canon_session(self):
         node = KnowledgeNode(text="Player slew the duke", canon=CanonSource.SESSION)
         assert node.canon == CanonSource.SESSION
+
+    @allure.story("Salience")
+    @allure.title("A KnowledgeNode defaults its salience to the neutral midpoint 0.5")
+    def test_default_salience(self):
+        node = KnowledgeNode(text="Generic fact")
+        assert node.salience == pytest.approx(0.5)
+
+    @allure.story("Salience")
+    @allure.title("A KnowledgeNode accepts an explicit salience score in the [0, 1] range")
+    def test_custom_salience(self):
+        node = KnowledgeNode(text="Witnessed a clash", salience=0.85)
+        assert node.salience == pytest.approx(0.85)
+
+    @allure.story("Salience")
+    @allure.title("A KnowledgeNode rejects salience outside the [0, 1] range")
+    def test_salience_out_of_range_rejected(self):
+        with pytest.raises(ValidationError):
+            KnowledgeNode(text="too hot", salience=1.5)
+        with pytest.raises(ValidationError):
+            KnowledgeNode(text="too cold", salience=-0.1)
 
 
 # ---------------------------------------------------------------------------
@@ -317,6 +339,7 @@ def _attach_memory(
     npc_id: UUID,
     text: str,
     timestamp: float,
+    salience: float = 0.5,
 ) -> KnowledgeNode:
     """Helper: add a PERSONAL_EXPERIENCE node and link it to an NPC via WITNESSED."""
     memory = KnowledgeNode(
@@ -324,6 +347,7 @@ def _attach_memory(
         scope=KnowledgeScope.LOCAL,
         source=KnowledgeSource.PERSONAL_EXPERIENCE,
         timestamp=timestamp,
+        salience=salience,
     )
     memory_id = graph.add_node(memory)
     graph.add_edge(npc_id, memory_id, EdgeType.WITNESSED)
@@ -363,7 +387,7 @@ class TestQueryEngineGetMemoriesAbout:
         assert len(engine.get_memories_about(_NPC_1, limit=2)) == 2
 
     @allure.story("get_memories_about")
-    @allure.title("get_memories_about orders memories by timestamp descending (newest first)")
+    @allure.title("get_memories_about orders equal-salience memories by timestamp descending (newest first)")
     def test_orders_by_timestamp_descending(self, empty_graph):
         empty_graph.register_actor_node(_NPC_1, label="Guard")
         _attach_memory(empty_graph, _NPC_1, "oldest", timestamp=1.0)
@@ -373,3 +397,29 @@ class TestQueryEngineGetMemoriesAbout:
         engine = KnowledgeQueryEngine(empty_graph)
         ordered_texts = [mem.text for mem in engine.get_memories_about(_NPC_1)]
         assert ordered_texts == ["newest", "middle", "oldest"]
+
+    @allure.story("get_memories_about")
+    @allure.title("A high-salience pivotal memory survives the top-K cut despite being older than routine chatter")
+    def test_high_salience_outranks_recent_routine(self, empty_graph):
+        """Regression: pure-recency ordering crowded out pivotal events.
+
+        With limit=5 and 5 newer routine memories plus 1 older
+        pivotal memory, pure-recency ranking returns only the 5
+        routine memories. Salience-aware ranking must keep the
+        pivotal memory in the result set.
+        """
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        _attach_memory(empty_graph, _NPC_1, "witnessed-murder", timestamp=10.0, salience=0.95)
+        for idx in range(5):
+            _attach_memory(
+                empty_graph,
+                _NPC_1,
+                "small-talk-{0}".format(idx),
+                timestamp=11.0 + idx,
+                salience=0.3,
+            )
+
+        engine = KnowledgeQueryEngine(empty_graph)
+        ordered_texts = [mem.text for mem in engine.get_memories_about(_NPC_1, limit=5)]
+        assert "witnessed-murder" in ordered_texts
+        assert ordered_texts[0] == "witnessed-murder"
