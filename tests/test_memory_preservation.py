@@ -416,14 +416,14 @@ def test_cowitnesses_propagate_independently_on_their_own_departure() -> None:
     """Per-edge idempotency: a shared canonical node must not let the
     first departing co-witness mute everyone else's propagation.
 
-    Two co-witnesses share one ``PERSONAL_EXPERIENCE`` node — the
-    shape produced by the sub-linear broadcast in
-    :meth:`MemoryManager._create_local_memory`. After the first
-    witness leaves the scene, the second witness's later departure
-    must still fan a fresh hearsay copy out, attributed to *that*
-    witness as ``told_by``. Locking this catches a regression where
-    the propagation tag was stored on the node and the second
-    departure became a silent no-op.
+    Two co-witnesses share one LOCAL ``PERSONAL_EXPERIENCE`` node —
+    the shape produced by the sub-linear co-witness broadcast in
+    LOCAL-scope memory creation. After the first witness leaves the
+    scene, the second witness's later departure must still fan a
+    fresh hearsay copy out, attributed to *that* witness as
+    ``told_by``. Locking this catches a regression where the
+    propagation tag was stored on the node and the second departure
+    became a silent no-op.
     """
     game_state = _build_city_state()
     graph = game_state.knowledge_graph
