@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from uuid import UUID, uuid4
 
 import allure
 import pytest
@@ -128,3 +129,19 @@ class TestAdminJsonSerial:
 
         payload = json.loads(resp.text)
         assert payload == {"when": moment.isoformat()}
+
+    @allure.story("JSON serialisation")
+    @allure.title("_json_serial converts uuid.UUID to its canonical string form")
+    def test_uuid_serialises_to_str(self):
+        sample = UUID("fb8f781a-af70-43be-bcca-7c94830a1ca2")
+        assert _json_serial(sample) == str(sample)
+
+    @allure.story("JSON serialisation")
+    @allure.title("_json_response handles rows that mix UUIDs and datetimes (regression for /api/sessions 500)")
+    def test_json_response_handles_uuid_in_row(self):
+        row = {"id": uuid4(), "created_at": datetime(2026, 4, 11, 12, 30, 0)}
+        resp = _json_response({"sessions": [row]})
+
+        payload = json.loads(resp.text)
+        assert payload["sessions"][0]["id"] == str(row["id"])
+        assert payload["sessions"][0]["created_at"] == row["created_at"].isoformat()
