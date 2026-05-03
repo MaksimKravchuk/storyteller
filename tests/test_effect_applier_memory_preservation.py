@@ -249,3 +249,49 @@ def test_remove_npc_does_not_delete_the_underlying_memory_node() -> None:
     # NPC card is gone. The query engine surfaces the propagated rumor
     # for other NPCs (asserted in the surface test above).
     assert graph.get_node(memory.uuid) is not None
+
+
+@allure.story("Remove NPC")
+@allure.title("REMOVE_NPC fires preservation AND post-handler witness memory in one apply()")
+def test_remove_npc_propagates_hearsay_alongside_post_handler_witness_memory() -> None:
+    """Co-located NPC must witness the removal directly while distant NPCs hear about it.
+
+    Locks in the ordering invariant: preservation runs BEFORE the
+    mutation (so same-city non-witnesses get hearsay of the victim's
+    prior memory) and ``emit_memory`` fires AFTER the mutation (so a
+    co-located witness gets a fresh ``"... is no longer here"``
+    PERSONAL_EXPERIENCE node). A future refactor that moves the
+    preservation call below the mutation would silently lose the
+    hearsay; this test catches that.
+    """
+    gs = _build_city_state()
+    graph = gs.knowledge_graph
+    # Add a co-located witness in the tavern alongside the victim.
+    witness_id = make_uuid("npc-witness")
+    witness = NPCCard(name="Cassia", occupation="bard", location_id=_TAVERN_ID)
+    witness.uuid = witness_id
+    gs.npcs[witness_id] = witness
+    gs.locations[_TAVERN_ID].npcs_present.append(witness_id)
+    graph.register_actor_node(witness_id, label="Cassia")
+    _add_session_memory(graph, _VICTIM_ID)
+
+    EffectApplier(gs, graph).apply(
+        EventEffect(effect_type="REMOVE_NPC", target_id=str(_VICTIM_ID), effect_data={}),
+    )
+
+    # Distant non-witnesses (baker at market, merchant at forum) see hearsay.
+    assert len(_hearsay_at(graph, _MARKET_ID)) == 1
+    assert len(_hearsay_at(graph, _FORUM_ID)) == 1
+    # The co-located witness has NO hearsay copy at the tavern (they were there).
+    assert _hearsay_at(graph, _TAVERN_ID) == []
+    # The post-handler emit fires a fresh "Marco is no longer here"
+    # PERSONAL_EXPERIENCE node WITNESSED by the co-located witness.
+    witness_targets = {target for target, _ in graph.get_edges_from(witness_id)}
+    new_witness_memories = [
+        graph.get_node(target_id)
+        for target_id in witness_targets
+        if graph.get_node(target_id) is not None
+        and graph.get_node(target_id).source == KnowledgeSource.PERSONAL_EXPERIENCE  # type: ignore[union-attr]
+        and "no longer here" in (graph.get_node(target_id).text or "")  # type: ignore[union-attr]
+    ]
+    assert len(new_witness_memories) == 1
