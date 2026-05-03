@@ -278,3 +278,115 @@ def test_record_player_learned_fact_noop_on_none() -> None:
     player = PlayerState(name="Player")
     record_player_learned_fact(player, None)
     assert player.learned_facts == set()
+
+
+@allure.story("summarize_interactions_batch")
+@allure.title("near-duplicate dialogue summary for the same NPC is skipped on write")
+@pytest.mark.asyncio
+async def test_summarize_batch_skips_near_duplicate_for_same_npc() -> None:
+    """Two interactions producing near-identical summaries yield only one PERSONAL_EXPERIENCE node."""
+    graph = KnowledgeGraph()
+    llm = AsyncMock()
+    llm.send_message = AsyncMock(
+        side_effect=[
+            LLMResponse(body="The merchant trusts the traveller and shares a rumour.", model="stub", usage={}),
+            LLMResponse(body="The merchant now trusts the traveller and shared a rumour.", model="stub", usage={}),
+        ],
+    )
+    manager = MemoryManager(graph=graph, llm_client=llm)
+    npc_id = _MARCUS
+    graph.register_actor_node(npc_id, label="Marcus")
+
+    await manager.summarize_interactions_batch([(npc_id, "first chat")])
+    await manager.summarize_interactions_batch([(npc_id, "second chat")])
+
+    engine = KnowledgeQueryEngine(graph)
+    memories = engine.get_memories_about(npc_id)
+    assert len(memories) == 1
+    assert memories[0].text == "The merchant trusts the traveller and shares a rumour."
+
+
+@allure.story("summarize_interactions_batch")
+@allure.title("dissimilar dialogue summaries for the same NPC are kept as distinct memories")
+@pytest.mark.asyncio
+async def test_summarize_batch_keeps_dissimilar_memories() -> None:
+    """Different topics must not collapse — Jaccard threshold must be strict enough to keep them."""
+    graph = KnowledgeGraph()
+    llm = AsyncMock()
+    llm.send_message = AsyncMock(
+        side_effect=[
+            LLMResponse(body="The merchant trusts the traveller and shares a rumour.", model="stub", usage={}),
+            LLMResponse(body="Marcus dislikes the player after the brawl in the tavern.", model="stub", usage={}),
+        ],
+    )
+    manager = MemoryManager(graph=graph, llm_client=llm)
+    npc_id = _MARCUS
+    graph.register_actor_node(npc_id, label="Marcus")
+
+    await manager.summarize_interactions_batch([(npc_id, "chat one")])
+    await manager.summarize_interactions_batch([(npc_id, "chat two")])
+
+    engine = KnowledgeQueryEngine(graph)
+    memories = engine.get_memories_about(npc_id)
+    assert len(memories) == 2
+
+
+@allure.story("summarize_interactions_batch")
+@allure.title("summaries with high token overlap but below the dedup threshold are kept distinct")
+@pytest.mark.asyncio
+async def test_summarize_batch_keeps_high_similarity_below_threshold() -> None:
+    """Pin the Jaccard cutoff: 8/14≈0.57 overlap must stay below the 0.65 threshold.
+
+    Without this, dropping ``_DEDUP_JACCARD_THRESHOLD`` toward 0.5 would silently
+    start collapsing distinct topics and only the existing near-zero-overlap test
+    would still pass.
+    """
+    graph = KnowledgeGraph()
+    llm = AsyncMock()
+    llm.send_message = AsyncMock(
+        side_effect=[
+            LLMResponse(
+                body="alpha beta gamma delta epsilon zeta eta theta iota kappa lambda",
+                model="stub",
+                usage={},
+            ),
+            LLMResponse(
+                body="alpha beta gamma delta epsilon zeta eta theta mu nu xi",
+                model="stub",
+                usage={},
+            ),
+        ],
+    )
+    manager = MemoryManager(graph=graph, llm_client=llm)
+    npc_id = _MARCUS
+    graph.register_actor_node(npc_id, label="Marcus")
+
+    await manager.summarize_interactions_batch([(npc_id, "chat one")])
+    await manager.summarize_interactions_batch([(npc_id, "chat two")])
+
+    engine = KnowledgeQueryEngine(graph)
+    assert len(engine.get_memories_about(npc_id)) == 2
+
+
+@allure.story("summarize_interactions_batch")
+@allure.title("duplicate detection is scoped per NPC — another NPC's identical summary is still recorded")
+@pytest.mark.asyncio
+async def test_summarize_batch_dedup_is_per_npc() -> None:
+    """A near-duplicate against NPC A must not block creating the same memory for NPC B."""
+    graph = KnowledgeGraph()
+    summary = "The merchant trusts the traveller and shares a rumour."
+    llm = AsyncMock()
+    llm.send_message = AsyncMock(
+        return_value=LLMResponse(body=summary, model="stub", usage={}),
+    )
+    manager = MemoryManager(graph=graph, llm_client=llm)
+    npc_a = _MARCUS
+    npc_b = make_uuid("npc-livia")
+    graph.register_actor_node(npc_a, label="Marcus")
+    graph.register_actor_node(npc_b, label="Livia")
+
+    await manager.summarize_interactions_batch([(npc_a, "chat a"), (npc_b, "chat b")])
+
+    engine = KnowledgeQueryEngine(graph)
+    assert len(engine.get_memories_about(npc_a)) == 1
+    assert len(engine.get_memories_about(npc_b)) == 1
