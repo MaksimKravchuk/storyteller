@@ -19,6 +19,7 @@ from tests._uuid_helpers import make_uuid
 
 KnowledgeGraph = _kg.KnowledgeGraph
 MemoryEvent = _km.MemoryEvent
+MemoryEventResult = _km.MemoryEventResult
 
 
 @dataclass
@@ -27,7 +28,7 @@ class RecordingMemoryManager:
 
     calls: list[dict[str, Any]] = field(default_factory=list)
 
-    async def create_memory_from_event(self, event: MemoryEvent) -> list[str]:
+    async def create_memory_from_event(self, event: MemoryEvent) -> MemoryEventResult:
         self.calls.append(
             {
                 "event_description": event.event_description,
@@ -38,7 +39,7 @@ class RecordingMemoryManager:
                 "salience": event.salience,
             },
         )
-        return []
+        return MemoryEventResult(canonical_id=None, all_ids=())
 
 
 def make_actor_target_state() -> tuple[GameState, NPCCard, NPCCard, Location]:

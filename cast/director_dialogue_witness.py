@@ -105,7 +105,7 @@ async def broadcast_cowitness_memories(
         return
     scene = game_state.current_scene
     overheard_text = format_overheard_text(player_action, work_items, dialogue_entries)
-    created_ids = await memory_manager.create_memory_from_event(
+    memory_result = await memory_manager.create_memory_from_event(
         MemoryEvent(
             event_description=overheard_text,
             witness_ids=witnesses,
@@ -115,4 +115,4 @@ async def broadcast_cowitness_memories(
             salience=salience_presets.OVERHEARD,
         ),
     )
-    record_player_learned_fact(game_state.player, created_ids)
+    record_player_learned_fact(game_state.player, memory_result.canonical_id)

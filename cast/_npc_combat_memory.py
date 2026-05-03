@@ -2,8 +2,9 @@
 
 Wraps :meth:`~knowledge.memory.MemoryManager.create_memory_from_event`
 with the witness list and event-text shape the rubric/detectors expect:
-both combatants' names plus an attack verb in a single LOCAL-scope
-node, with co-located NPCs added as witnesses.
+both combatants' names, an attack verb, and the resolution clause
+(lethality + new state) in a single LOCAL-scope node, with co-located
+NPCs added as witnesses.
 """
 
 from __future__ import annotations
@@ -19,10 +20,11 @@ from knowledge.node import KnowledgeScope
 from models.game_state import GameState
 from models.npc_card import NPCCard
 
-_VERB_BY_KIND: MappingProxyType[OutcomeKind, str] = MappingProxyType(
+_RESOLUTION_CLAUSE: MappingProxyType[tuple[OutcomeKind, str], str] = MappingProxyType(
     {
-        OutcomeKind.PHYSICAL: "attacked",
-        OutcomeKind.MOOD: "intimidated",
+        (OutcomeKind.PHYSICAL, "dead"): "attacked and killed {target} with a lethal blow",
+        (OutcomeKind.PHYSICAL, "wounded"): "attacked and wounded {target} in a non-lethal hit",
+        (OutcomeKind.MOOD, "frightened"): "intimidated {target} into submission",
     },
 )
 
@@ -34,8 +36,10 @@ class CombatEvent:
     Bundling keeps the signature within the WPS function-argument
     budget. ``location_id=None`` falls back to the current scene's
     location; off-scene callers (the background ticker) pass the
-    actor's own location id. ``kind`` controls the verb in the
-    persisted event text — physical → "attacked", mood → "intimidated".
+    actor's own location id. ``kind`` and ``new_value`` together pick
+    the resolution clause in the persisted event text — physical+dead
+    reads as a lethal kill, physical+wounded as a non-lethal hit, and
+    mood+frightened as a successful intimidation.
     """
 
     actor: NPCCard
@@ -69,15 +73,17 @@ def _co_located_witness_ids(
 
 
 def _format_combat_event(event: CombatEvent) -> str:
-    """Render the LOCAL memory text describing the clash outcome.
+    """Render the LOCAL memory text describing the clash *and its resolution*.
 
-    Both names plus an outcome-kind verb — physical attacks read
-    "attacked", intimidation reads "intimidated" — so the persisted
-    record matches what actually happened (rather than always saying
-    "attacked", which would mislead later prompt context).
+    The clause carries who won, the severity (lethal vs non-lethal for
+    physical, intimidation submission for mood), and the new state — so
+    co-located witnesses can later recall how the fight ended, not just
+    that one started. The trailing ``; X is now Y.`` keeps the new
+    state explicit alongside the narrative phrasing.
     """
-    verb = _VERB_BY_KIND[event.kind]
-    return "{0} {1} {2}; {2} is now {3}.".format(event.actor.name, verb, event.target.name, event.new_value)
+    clause_template = _RESOLUTION_CLAUSE[(event.kind, event.new_value)]
+    clause = clause_template.format(target=event.target.name)
+    return "{0} {1}; {2} is now {3}.".format(event.actor.name, clause, event.target.name, event.new_value)
 
 
 async def persist_combat_memory(

@@ -25,16 +25,30 @@ if TYPE_CHECKING:
 _SUMMARY_MAX_TOKENS = 200
 
 
-def record_player_learned_fact(player: PlayerState, created_ids: list[UUID]) -> None:
-    """Attach the first created memory UUID to ``player.learned_facts``.
+@dataclass(frozen=True)
+class MemoryEventResult:
+    """Outcome of :meth:`MemoryManager.create_memory_from_event`.
 
-    All per-witness nodes produced by LOCAL-scope
-    :meth:`MemoryManager.create_memory_from_event` share the same
-    ``event_description``, so a single representative UUID is enough
-    for the Character sidebar to render a ``RememberedFact``.
+    ``canonical_id`` is the broadcast node for non-LOCAL scopes, the
+    first per-witness node for LOCAL, and ``None`` only when no nodes
+    were created. ``all_ids`` carries every created node id in creation
+    order.
     """
-    if created_ids:
-        player.learned_facts.add(created_ids[0])
+
+    canonical_id: UUID | None
+    all_ids: tuple[UUID, ...] = ()
+
+
+def record_player_learned_fact(player: PlayerState, canonical_id: UUID | None) -> None:
+    """Add the canonical memory UUID to ``player.learned_facts``, if any.
+
+    Called by witness-broadcast paths that want the Character sidebar
+    to render a ``RememberedFact`` for events the player witnessed.
+    ``canonical_id=None`` is a no-op so callers can pass
+    ``MemoryEventResult.canonical_id`` unconditionally.
+    """
+    if canonical_id is not None:
+        player.learned_facts.add(canonical_id)
 
 
 @dataclass(frozen=True)
@@ -72,6 +86,7 @@ class MemoryManager:
         self,
         pairs: list[tuple[UUID, str]],
         game_time: float = INITIAL_GAME_CLOCK,
+        location_id: UUID | None = None,
         salience: float = salience_presets.ROUTINE_DIALOGUE,
     ) -> None:
         """Summarise many interactions concurrently into memory nodes.
@@ -92,34 +107,32 @@ class MemoryManager:
                     interaction_log=log,
                     npc_id=npc_id,
                     game_time=game_time,
+                    location_id=location_id,
                     salience=salience,
                 )
                 for npc_id, log in pairs
             ),
         )
 
-    async def create_memory_from_event(self, event: MemoryEvent) -> list[UUID]:
+    async def create_memory_from_event(self, event: MemoryEvent) -> MemoryEventResult:
         """Create memory nodes for all witnesses of an event.
 
         Scope determines how the memory propagates:
           - LOCAL: only witnesses get PERSONAL_EXPERIENCE
           - CITY/REGION: becomes RUMOR accessible in that area
           - WORLD: becomes FACT accessible broadly
-
-        Returns list of created node UUIDs. The first entry is
-        canonical across per-witness duplicates, so callers where the
-        player was subject or witness may pass the list to
-        :func:`record_player_learned_fact`.
         """
         if event.scope == KnowledgeScope.LOCAL:
-            return self._create_local_witness_memories(event)
-        return self._create_broadcast_with_witnesses(event)
+            return self._create_local_memory(event)
+        return self._create_broadcast_memory(event)
 
-    def _create_local_witness_memories(self, event: MemoryEvent) -> list[UUID]:
+    def _create_local_memory(self, event: MemoryEvent) -> MemoryEventResult:
         """LOCAL-scope path: one PERSONAL_EXPERIENCE node per witness."""
-        return [self._add_personal_witness_memory(event, witness_id) for witness_id in event.witness_ids]
+        personal_ids = [self._attach_personal_node(event, witness_id) for witness_id in event.witness_ids]
+        canonical_id = personal_ids[0] if personal_ids else None
+        return MemoryEventResult(canonical_id=canonical_id, all_ids=tuple(personal_ids))
 
-    def _create_broadcast_with_witnesses(self, event: MemoryEvent) -> list[UUID]:
+    def _create_broadcast_memory(self, event: MemoryEvent) -> MemoryEventResult:
         """CITY+ scope path: one broadcast node plus per-witness personal copies."""
         broadcast_source = KnowledgeSource.FACT if event.scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR
         broadcast_id = self._graph.add_node(
@@ -133,10 +146,10 @@ class MemoryManager:
                 salience=event.salience,
             ),
         )
-        personal_ids = (self._add_personal_witness_memory(event, witness_id) for witness_id in event.witness_ids)
-        return [broadcast_id, *personal_ids]
+        personal_ids = [self._attach_personal_node(event, witness_id) for witness_id in event.witness_ids]
+        return MemoryEventResult(canonical_id=broadcast_id, all_ids=(broadcast_id, *personal_ids))
 
-    def _add_personal_witness_memory(self, event: MemoryEvent, witness_id: UUID) -> UUID:
+    def _attach_personal_node(self, event: MemoryEvent, witness_id: UUID) -> UUID:
         """Add a LOCAL ``PERSONAL_EXPERIENCE`` node and link it to ``witness_id``."""
         node_id = self._graph.add_node(
             KnowledgeNode(
@@ -157,6 +170,7 @@ class MemoryManager:
         interaction_log: str,
         npc_id: UUID,
         game_time: float,
+        location_id: UUID | None,
         salience: float,
     ) -> None:
         """Summarise a single interaction into a memory node linked to an NPC."""
@@ -180,6 +194,7 @@ class MemoryManager:
             scope=KnowledgeScope.LOCAL,
             source=KnowledgeSource.PERSONAL_EXPERIENCE,
             canon=CanonSource.SESSION,
+            location_id=location_id,
             timestamp=game_time,
             salience=salience,
         )

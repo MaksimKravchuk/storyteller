@@ -38,7 +38,9 @@ def _make_processor(gs: GameState, memory_mgr: AsyncMock | None = None) -> Event
     event_mgr = EventManager(gs, gs.knowledge_graph)
     if memory_mgr is None:
         memory_mgr = AsyncMock()
-        memory_mgr.create_memory_from_event = AsyncMock(return_value=[])
+        memory_mgr.create_memory_from_event = AsyncMock(
+            return_value=_km.MemoryEventResult(canonical_id=None, all_ids=())
+        )
     return EventProcessor(gs, event_mgr, memory_mgr)
 
 
@@ -156,7 +158,9 @@ class TestProcessRemoteEvents:
         gs = _make_state()
         event_mgr = EventManager(gs, gs.knowledge_graph)
         memory_mgr = AsyncMock()
-        memory_mgr.create_memory_from_event = AsyncMock(return_value=[])
+        memory_mgr.create_memory_from_event = AsyncMock(
+            return_value=_km.MemoryEventResult(canonical_id=None, all_ids=())
+        )
         processor = EventProcessor(gs, event_mgr, memory_mgr)
 
         events = [

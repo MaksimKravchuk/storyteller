@@ -8,7 +8,11 @@ themselves DO stay in the graph — the ticker never deletes them —
 but they have ``scope=LOCAL`` + ``location_id=<scene>`` which means
 the :class:`knowledge.query.KnowledgeQueryEngine` only surfaces them
 for NPCs currently at that scene's location. Once the witnessing
-NPC leaves, nobody else can learn what happened.
+NPC leaves, nobody else can learn what happened. The same loss-of-
+visibility hits the hard-removal path
+(:meth:`timeline.effect_applier.EffectApplier._remove_npc`) when an
+NPC is killed or forcibly relocated, which is why both call sites
+funnel through this single primitive.
 
 This module walks a departing NPC's ``WITNESSED`` memories and
 creates one ``HEARSAY`` :class:`knowledge.node.KnowledgeNode` per
@@ -23,12 +27,6 @@ Each propagated memory is tagged with
 subsequent evictions of the same NPC (or the same memory) cheap
 no-ops — the tag is the idempotency key. Non-session memories and
 memories that already carry the tag are skipped.
-
-Scope note: this module handles the :class:`cast.npc_ticker.NPCTicker`
-soft-eviction path only. The parallel
-:meth:`timeline.effect_applier.EffectApplier._remove_npc` hard
-removal path (deaths, forced moves) does not yet preserve memories
-and should be handled in a follow-up PR.
 """
 
 from __future__ import annotations

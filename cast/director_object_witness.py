@@ -35,7 +35,7 @@ async def emit_witness_memories(
     if not witness_ids or not delta_text:
         return
     scene = game_state.current_scene
-    created_ids = await memory_manager.create_memory_from_event(
+    memory_result = await memory_manager.create_memory_from_event(
         MemoryEvent(
             event_description=delta_text,
             witness_ids=witness_ids,
@@ -45,4 +45,4 @@ async def emit_witness_memories(
             salience=salience_presets.OBJECT_INTERACTION,
         ),
     )
-    record_player_learned_fact(game_state.player, created_ids)
+    record_player_learned_fact(game_state.player, memory_result.canonical_id)

@@ -168,15 +168,14 @@ class KnowledgeQueryEngine:
         return memories[:limit]
 
     def _personal_memories_for(self, npc_id: UUID) -> list[KnowledgeNode]:
-        """Return every PERSONAL_EXPERIENCE node linked from *npc_id*."""
-        linked_ids = {target_id for target_id, _ in self._graph.get_edges_from(npc_id)}
-        if not linked_ids:
-            return []
-        return [
-            node
-            for node in self._graph.all_nodes()
-            if node.source == KnowledgeSource.PERSONAL_EXPERIENCE and node.uuid in linked_ids
-        ]
+        """Return every PERSONAL_EXPERIENCE node witnessed by *npc_id*.
+
+        Thin shim over :meth:`KnowledgeGraph.personal_memories_for`
+        kept so the call-site reads naturally inside this engine —
+        the graph-side method is index-backed, so this is no longer
+        the ``O(N)`` walk the old in-engine implementation was.
+        """
+        return self._graph.personal_memories_for(npc_id)
 
     def _add_personal_memories(self, npc_id: UUID, matching_nodes: list[KnowledgeNode]) -> None:
         """Append personal-experience nodes linked to *npc_id* that aren't already included."""
