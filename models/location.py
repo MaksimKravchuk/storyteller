@@ -8,7 +8,10 @@ from pydantic import ConfigDict, Field, field_validator
 from models.base_model import StorytellerBase
 from models.scene import PointOfInterest, _coerce_points_of_interest
 
-_LOCATION_TYPE_MAX_LEN = 32  # mirrors locations.location_type varchar(32) in db/tables.py
+_GENERIC_LOCATION_TYPE = "generic"
+LOCATION_TYPES: frozenset[str] = frozenset(
+    ("building", "district", "city", "region", "country", _GENERIC_LOCATION_TYPE),
+)
 
 
 class Location(StorytellerBase):
@@ -23,7 +26,7 @@ class Location(StorytellerBase):
     name: str
     description: str = ""
     parent_location_id: UUID | None = None
-    location_type: str = "generic"  # "building", "district", "city", "region", "country"
+    location_type: str = _GENERIC_LOCATION_TYPE  # one of LOCATION_TYPES
     tags: list[str] = []
     connected_locations: list[UUID] = []
     npcs_present: list[UUID] = []  # NPC UUIDs currently at this location
@@ -62,8 +65,13 @@ class Location(StorytellerBase):
 
     @field_validator("location_type", mode="before")
     @classmethod
-    def _truncate_location_type(cls, raw: Any) -> str:
-        # DataMiner can emit long phrases (esp. in non-English settings) that overflow the
-        # locations.location_type varchar(32) column and crash persistence at game start.
-        text = str(raw) if raw else "generic"
-        return text[:_LOCATION_TYPE_MAX_LEN]
+    def _coerce_location_type(cls, raw: Any) -> str:
+        # `location_type` is a categorical slug — `knowledge.rumor_scope` compares it to "city"
+        # to anchor city-scoped rumor walks. DataMiner can emit freeform phrases (esp. in
+        # non-English settings, e.g. "религиозное общественное сооружение") that both overflow
+        # the varchar(32) DB column and silently misroute that walk. Collapse anything outside
+        # the canonical set to "generic" instead of storing meaningless prefixes.
+        if not raw:
+            return _GENERIC_LOCATION_TYPE
+        normalized = str(raw).strip().lower()
+        return normalized if normalized in LOCATION_TYPES else _GENERIC_LOCATION_TYPE

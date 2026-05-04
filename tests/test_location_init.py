@@ -92,35 +92,34 @@ def test_materialise_skips_blank_name_entries() -> None:
     assert [loc.name for loc in game_state.locations.values()] == ["Forum"]
 
 
-@allure.story("DB length cap")
-@allure.title("materialise_setting_locations truncates location_type to fit the varchar(32) DB column")
-def test_materialise_truncates_long_location_type() -> None:
-    """Regression: DataMiner can return long Russian phrases like 'религиозное сооружение' that overflow
-    the locations.location_type varchar(32) column and crash the POST /api/games persistence write.
+@allure.story("Categorical slug invariant")
+@allure.title("materialise_setting_locations falls back to 'generic' for off-enum location_type values")
+def test_materialise_collapses_unknown_location_type_to_generic() -> None:
+    """Regression: DataMiner can emit freeform phrases (esp. for non-English settings, e.g.
+    'религиозное общественное сооружение') that both overflow locations.location_type varchar(32)
+    and silently misroute knowledge.rumor_scope's city-anchor walk, which compares to the slug "city".
+    Off-enum values must collapse to "generic".
     """
-    long_type = "религиозное общественное сооружение"  # 35 chars, > 32
-    assert len(long_type) > 32
     game_state = _make_game_state(
-        locations=[{"name": "Храм", "type": long_type, "description": ""}],
+        locations=[{"name": "Храм", "type": "религиозное общественное сооружение", "description": ""}],
     )
 
     materialise_setting_locations(game_state)
 
     loc = next(iter(game_state.locations.values()))
-    assert len(loc.location_type) <= 32
+    assert loc.location_type == "generic"
 
 
-@allure.story("DB length cap")
-@allure.title("location_to_row emits a location_type that fits the varchar(32) DB column")
-def test_location_to_row_caps_location_type_for_db_insert() -> None:
-    """Consumer-seam check: the value handed to the locations.location_type INSERT must be ≤ 32 chars,
-    even if a future caller bypasses the materialisation path or uses model_construct. This is the
-    seam that actually crashed prod, so pin it directly.
+@allure.story("Categorical slug invariant")
+@allure.title("location_to_row emits an enum-valid location_type for the DB INSERT")
+def test_location_to_row_writes_enum_valid_location_type() -> None:
+    """Consumer-seam check: even if a future caller bypasses materialisation (or uses model_construct),
+    the row handed to locations.location_type must be a known categorical slug — not a freeform phrase.
     """
     loc = Location(name="Храм", location_type="религиозное общественное сооружение")
     row = location_to_row(loc, game_state_id=str(uuid4()))
 
-    assert len(row["location_type"]) <= 32
+    assert row["location_type"] == "generic"
 
 
 @allure.story("Defaults")
