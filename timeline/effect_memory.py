@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from knowledge.memory_slots import EMPTY_SLOTS, MemorySlots, slot_kwargs
 from knowledge.node import (
     CanonSource,
     EdgeType,
@@ -19,6 +20,7 @@ from knowledge.node import (
     KnowledgeSource,
 )
 from timeline._uuid_coerce import coerce_uuid
+from timeline.effect_memory_slots import slots_for_effect
 from timeline.event import EventEffect
 
 if TYPE_CHECKING:
@@ -50,6 +52,7 @@ class WitnessWrite:
     scope: KnowledgeScope
     location_id: UUID | None
     game_time: float
+    slots: MemorySlots = EMPTY_SLOTS
 
 
 def capture_pre_state(game_state: GameState, effect: EventEffect) -> EffectPreState:
@@ -104,6 +107,7 @@ def _plan_text(effect: EventEffect, name: str) -> str | None:
 
 def write_witness_memories(graph: KnowledgeGraph, write: WitnessWrite) -> None:
     """Persist a memory to the graph: wider rumor/fact node + personal nodes."""
+    slot_fields = slot_kwargs(write.slots)
     if write.scope != KnowledgeScope.LOCAL:
         wider_source = KnowledgeSource.FACT if write.scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR
         graph.add_node(
@@ -114,6 +118,7 @@ def write_witness_memories(graph: KnowledgeGraph, write: WitnessWrite) -> None:
                 canon=CanonSource.SESSION,
                 location_id=write.location_id,
                 timestamp=write.game_time,
+                **slot_fields,
             ),
         )
     for witness_id in write.witness_ids:
@@ -125,6 +130,7 @@ def write_witness_memories(graph: KnowledgeGraph, write: WitnessWrite) -> None:
                 canon=CanonSource.SESSION,
                 location_id=write.location_id,
                 timestamp=write.game_time,
+                **slot_fields,
             ),
         )
         graph.add_edge(witness_id, personal_id, EdgeType.WITNESSED)
@@ -163,5 +169,6 @@ def emit_memory(
             scope=scope,
             location_id=pre.location_id,
             game_time=game_state.game_clock,
+            slots=slots_for_effect(effect, pre.npc_name),
         ),
     )

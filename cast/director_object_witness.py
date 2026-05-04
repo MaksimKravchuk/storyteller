@@ -13,6 +13,7 @@ from uuid import UUID
 
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryEvent, record_player_learned_fact
+from knowledge.memory_slots import MemorySlots
 from knowledge.node import KnowledgeScope
 
 if TYPE_CHECKING:
@@ -43,6 +44,7 @@ async def emit_witness_memories(
             location_id=scene.location_id if scene else None,
             game_time=game_state.game_clock,
             salience=salience_presets.OBJECT_INTERACTION,
+            slots=MemorySlots(subject=game_state.player.name, action="interacted_with"),
         ),
     )
     record_player_learned_fact(game_state.player, memory_result.canonical_id)

@@ -3,53 +3,41 @@
 from __future__ import annotations
 
 import asyncio
-import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import UUID
 
 from models.game_state import INITIAL_GAME_CLOCK, PlayerState
 
-from knowledge import salience as salience_presets
+from knowledge import node as _node, salience as salience_presets
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import (
-    CanonSource,
-    EdgeType,
-    KnowledgeNode,
-    KnowledgeScope,
-    KnowledgeSource,
-)
+from knowledge.memory_dedup import has_near_duplicate_memory
+from knowledge.memory_slots import EMPTY_SLOTS, MemorySlots, slot_kwargs
 
 if TYPE_CHECKING:
     from llm.base_client import BaseLLMClient
 
 _SUMMARY_MAX_TOKENS = 200
-_DEDUP_JACCARD_THRESHOLD = 0.65
-_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+_SUMMARISER_SYSTEM_PROMPT = (
+    "You are a memory summariser for a text adventure game. Output only the summary, nothing else."
+)
+_SUMMARISER_USER_PROMPT = (
+    "Summarise the following conversation from the NPC's perspective "
+    "in 1-2 sentences. Focus on: what did the NPC learn? "
+    "What is their impression of the player?\n\n"
+)
+
+# A 2-tuple ``(npc_id, transcript)`` carries no slots; a 3-tuple
+# ``(npc_id, transcript, slots)`` carries explicit subject/object/action
+# values. Both forms feed ``summarize_interactions_batch``.
+DialoguePair = tuple[UUID, str] | tuple[UUID, str, MemorySlots]
 
 
-def _tokenize(text: str) -> frozenset[str]:
-    return frozenset(_TOKEN_PATTERN.findall(text.lower()))
-
-
-def _jaccard(left: frozenset[str], right: frozenset[str]) -> float:
-    """Jaccard similarity. Caller must guarantee at least one side is non-empty."""
-    return len(left & right) / len(left | right)
-
-
-def _has_near_duplicate_memory(graph: KnowledgeGraph, npc_id: UUID, new_text: str) -> bool:
-    """Return True when an existing personal memory of *npc_id* is near-identical to *new_text*.
-
-    Uses Jaccard similarity over alphanumeric word tokens; skipping the new write avoids
-    the long-session bloat from repeated dialogue summaries that paraphrase the same topic.
-    """
-    new_tokens = _tokenize(new_text)
-    if not new_tokens:
-        return False
-    return any(
-        _jaccard(new_tokens, _tokenize(existing.text)) >= _DEDUP_JACCARD_THRESHOLD
-        for existing in graph.personal_memories_for(npc_id)
-    )
+def _split_pair(pair: DialoguePair) -> tuple[UUID, str, MemorySlots]:
+    """Normalise a 2- or 3-tuple :data:`DialoguePair` to ``(npc_id, log, slots)``."""
+    if len(pair) == 3:
+        return pair[0], pair[1], pair[2]
+    return pair[0], pair[1], EMPTY_SLOTS
 
 
 @dataclass(frozen=True)
@@ -84,14 +72,18 @@ class MemoryEvent:
 
     ``salience`` defaults to the neutral preset; combat / overheard /
     event sites pick a tuned value from :mod:`knowledge.salience`.
+    ``slots`` carries the optional structured
+    subject/object/action/outcome quadruple — see
+    :class:`knowledge.memory_slots.MemorySlots`.
     """
 
     event_description: str
     witness_ids: list[UUID]
-    scope: KnowledgeScope
+    scope: _node.KnowledgeScope
     location_id: UUID | None = None
     game_time: float = INITIAL_GAME_CLOCK
     salience: float = salience_presets.DEFAULT
+    slots: MemorySlots = EMPTY_SLOTS
 
 
 class MemoryManager:
@@ -111,34 +103,26 @@ class MemoryManager:
 
     async def summarize_interactions_batch(
         self,
-        pairs: list[tuple[UUID, str]],
+        pairs: list[DialoguePair],
         game_time: float = INITIAL_GAME_CLOCK,
         location_id: UUID | None = None,
         salience: float = salience_presets.ROUTINE_DIALOGUE,
     ) -> None:
         """Summarise many interactions concurrently into memory nodes.
 
-        Each ``pair`` is ``(npc_id, interaction_log)``. Both the
-        targeted-dialogue path and the retaliation path feed this
-        helper so a single turn issues one concurrent gather for all
-        NPC memories. ``salience`` is the importance score stamped on
-        every produced memory — the retaliation path overrides the
-        default since a fight an NPC was dragged into matters more
-        than ordinary chitchat.
+        Each ``pair`` is ``(npc_id, interaction_log)`` or
+        ``(npc_id, interaction_log, slots)``. Both the targeted-dialogue
+        path and the retaliation path feed this helper so a single
+        turn issues one concurrent gather for all NPC memories.
+        ``salience`` is the importance score stamped on every produced
+        memory — the retaliation path overrides the default since a
+        fight an NPC was dragged into matters more than ordinary
+        chitchat.
         """
         if not pairs:
             return
         await asyncio.gather(
-            *(
-                self._summarize_one(
-                    interaction_log=log,
-                    npc_id=npc_id,
-                    game_time=game_time,
-                    location_id=location_id,
-                    salience=salience,
-                )
-                for npc_id, log in pairs
-            ),
+            *(self._summarize_one(_split_pair(pair), game_time, location_id, salience) for pair in pairs),
         )
 
     async def create_memory_from_event(self, event: MemoryEvent) -> MemoryEventResult:
@@ -148,54 +132,64 @@ class MemoryManager:
           - LOCAL: only witnesses get PERSONAL_EXPERIENCE
           - CITY/REGION: becomes RUMOR accessible in that area
           - WORLD: becomes FACT accessible broadly
+
+        ``event.slots`` is copied onto every per-witness ``KnowledgeNode``
+        as well as the broadcast node so a downstream dedup or
+        contradiction-detection pass can match on the structured fields
+        instead of re-parsing the free text.
         """
-        if event.scope == KnowledgeScope.LOCAL:
+        if event.scope == _node.KnowledgeScope.LOCAL:
             return self._create_local_memory(event)
         return self._create_broadcast_memory(event)
 
     def _create_local_memory(self, event: MemoryEvent) -> MemoryEventResult:
         """LOCAL-scope path: one PERSONAL_EXPERIENCE node per witness."""
-        personal_ids = [self._attach_personal_node(event, witness_id) for witness_id in event.witness_ids]
+        slot_fields = slot_kwargs(event.slots)
+        personal_ids = [self._attach_personal_node(event, witness_id, slot_fields) for witness_id in event.witness_ids]
         canonical_id = personal_ids[0] if personal_ids else None
         return MemoryEventResult(canonical_id=canonical_id, all_ids=tuple(personal_ids))
 
     def _create_broadcast_memory(self, event: MemoryEvent) -> MemoryEventResult:
         """CITY+ scope path: one broadcast node plus per-witness personal copies."""
-        broadcast_source = KnowledgeSource.FACT if event.scope >= KnowledgeScope.COUNTRY else KnowledgeSource.RUMOR
+        slot_fields = slot_kwargs(event.slots)
+        broadcast_source = (
+            _node.KnowledgeSource.FACT if event.scope >= _node.KnowledgeScope.COUNTRY else _node.KnowledgeSource.RUMOR
+        )
         broadcast_id = self._graph.add_node(
-            KnowledgeNode(
+            _node.KnowledgeNode(
                 text=event.event_description,
                 scope=event.scope,
                 source=broadcast_source,
-                canon=CanonSource.SESSION,
+                canon=_node.CanonSource.SESSION,
                 location_id=event.location_id,
                 timestamp=event.game_time,
                 salience=event.salience,
+                **slot_fields,
             ),
         )
-        personal_ids = [self._attach_personal_node(event, witness_id) for witness_id in event.witness_ids]
+        personal_ids = [self._attach_personal_node(event, witness_id, slot_fields) for witness_id in event.witness_ids]
         return MemoryEventResult(canonical_id=broadcast_id, all_ids=(broadcast_id, *personal_ids))
 
-    def _attach_personal_node(self, event: MemoryEvent, witness_id: UUID) -> UUID:
+    def _attach_personal_node(self, event: MemoryEvent, witness_id: UUID, slot_fields: dict) -> UUID:
         """Add a LOCAL ``PERSONAL_EXPERIENCE`` node and link it to ``witness_id``."""
         node_id = self._graph.add_node(
-            KnowledgeNode(
+            _node.KnowledgeNode(
                 text=event.event_description,
-                scope=KnowledgeScope.LOCAL,
-                source=KnowledgeSource.PERSONAL_EXPERIENCE,
-                canon=CanonSource.SESSION,
+                scope=_node.KnowledgeScope.LOCAL,
+                source=_node.KnowledgeSource.PERSONAL_EXPERIENCE,
+                canon=_node.CanonSource.SESSION,
                 location_id=event.location_id,
                 timestamp=event.game_time,
                 salience=event.salience,
+                **slot_fields,
             ),
         )
-        self._graph.add_edge(witness_id, node_id, EdgeType.WITNESSED)
+        self._graph.add_edge(witness_id, node_id, _node.EdgeType.WITNESSED)
         return node_id
 
     async def _summarize_one(
         self,
-        interaction_log: str,
-        npc_id: UUID,
+        pair: tuple[UUID, str, MemorySlots],
         game_time: float,
         location_id: UUID | None,
         salience: float,
@@ -203,33 +197,26 @@ class MemoryManager:
         """Summarise a single interaction into a memory node linked to an NPC."""
         from llm.message import Message, Role
 
-        prompt = (
-            "Summarise the following conversation from the NPC's perspective "
-            "in 1-2 sentences. Focus on: what did the NPC learn? "
-            "What is their impression of the player?\n\n"
-            f"{interaction_log}"
-        )
+        npc_id = pair[0]
         response = await self._llm.send_message(
-            messages=[Message(role=Role.USER, body=prompt)],
-            system_prompt="You are a memory summariser for a text adventure game. "
-            "Output only the summary, nothing else.",
+            messages=[Message(role=Role.USER, body=_SUMMARISER_USER_PROMPT + pair[1])],
+            system_prompt=_SUMMARISER_SYSTEM_PROMPT,
             max_tokens=_SUMMARY_MAX_TOKENS,
         )
-
         summary_text = response.body.strip()
-        if _has_near_duplicate_memory(self._graph, npc_id, summary_text):
+        if not summary_text or has_near_duplicate_memory(self._graph, npc_id, summary_text):
             return
-
-        node = KnowledgeNode(
-            text=summary_text,
-            scope=KnowledgeScope.LOCAL,
-            source=KnowledgeSource.PERSONAL_EXPERIENCE,
-            canon=CanonSource.SESSION,
-            location_id=location_id,
-            timestamp=game_time,
-            salience=salience,
+        node_id = self._graph.add_node(
+            _node.KnowledgeNode(
+                text=summary_text,
+                scope=_node.KnowledgeScope.LOCAL,
+                source=_node.KnowledgeSource.PERSONAL_EXPERIENCE,
+                canon=_node.CanonSource.SESSION,
+                location_id=location_id,
+                timestamp=game_time,
+                salience=salience,
+                **slot_kwargs(pair[2]),
+            ),
         )
-        node_id = self._graph.add_node(node)
-
         if npc_id in self._graph.digraph:
-            self._graph.add_edge(npc_id, node_id, EdgeType.WITNESSED)
+            self._graph.add_edge(npc_id, node_id, _node.EdgeType.WITNESSED)

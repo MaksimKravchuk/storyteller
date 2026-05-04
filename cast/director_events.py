@@ -7,7 +7,7 @@ from uuid import UUID
 
 from cast.schemas.chronicler_response import ScheduledEventDraft
 from knowledge import salience as salience_presets
-from knowledge.memory import MemoryEvent, MemoryManager
+from knowledge.memory import MemoryEvent, MemoryManager, MemorySlots
 from knowledge.node import KnowledgeScope
 from knowledge.rumor import propagate_rumors
 from models.game_state import GameState
@@ -80,7 +80,14 @@ class EventProcessor:
         return propagate_rumors(self._gs.knowledge_graph, self._gs, events)
 
     def build_memory_event(self, ev: GameEvent) -> MemoryEvent:
-        """Wrap a completed :class:`GameEvent` as a :class:`MemoryEvent`."""
+        """Wrap a completed :class:`GameEvent` as a :class:`MemoryEvent`.
+
+        Slots carry the event ``name`` as ``action`` and the
+        ``on_complete_description`` (when distinct from ``name``) as
+        ``outcome``. Scheduled events do not track a single ``subject``
+        — they fire on a clock, not on an actor — so the subject slot
+        is left ``None``.
+        """
         scope = _scope_from_string(ev.scope)
         witnesses: list[UUID] = []
         locations = self._gs.locations
@@ -93,6 +100,7 @@ class EventProcessor:
             location_id=ev.location_id,
             game_time=self._gs.game_clock,
             salience=salience_presets.REMOTE_EVENT,
+            slots=_slots_from_event(ev),
         )
 
 
@@ -106,3 +114,11 @@ def _scope_from_string(scope_str: str) -> KnowledgeScope:
         "world": KnowledgeScope.WORLD,
     }
     return scope_map.get(scope_str, KnowledgeScope.LOCAL)
+
+
+def _slots_from_event(ev: GameEvent) -> MemorySlots:
+    description = ev.on_complete_description
+    return MemorySlots(
+        action=ev.name or None,
+        outcome=description if description and description != ev.name else None,
+    )

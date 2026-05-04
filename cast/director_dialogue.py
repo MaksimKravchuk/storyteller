@@ -15,6 +15,7 @@ from cast import (
 from cast.dice import ContestRoll, ContestType
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryManager
+from knowledge.memory_slots import MemorySlots
 from models.game_state import GameState
 
 _KEY_GAME_STATE = "game_state"
@@ -155,7 +156,12 @@ class DialogueHandler:
         dlg_helpers.append_conversation_history(work_items, dialogue_entries, player_action)
         scene = self._gs.current_scene
         await self._memory_manager.summarize_interactions_batch(
-            dlg_helpers.format_dialogue_summary_pairs(work_items, dialogue_entries, player_action),
+            dlg_helpers.format_dialogue_summary_pairs(
+                work_items,
+                dialogue_entries,
+                player_action,
+                player_name=self._gs.player.name,
+            ),
             self._gs.game_clock,
             location_id=scene.location_id if scene else None,
         )
@@ -238,13 +244,21 @@ class DialogueHandler:
         summariser — and any downstream prompt that inspects the raw
         log — can distinguish provoked combat from targeted combat.
         """
-        pairs = [
+        from knowledge.memory import DialoguePair
+
+        player_name = self._gs.player.name
+        pairs: list[DialoguePair] = [
             (
                 entry["npc_uuid"],
                 "[retaliation] Player: {0}\n{1}: {2}".format(
                     player_action,
                     entry.get("npc_name", ""),
                     entry.get("response", ""),
+                ),
+                MemorySlots(
+                    subject=entry.get("npc_name", "") or None,
+                    object=player_name,
+                    action="retaliated_against",
                 ),
             )
             for entry in retaliation_entries

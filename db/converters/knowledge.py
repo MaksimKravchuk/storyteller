@@ -25,6 +25,10 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
         COL_LOCATION_ID: uuid_to_text(node.location_id),
         "timestamp": node.timestamp,
         _COL_SALIENCE: node.salience,
+        "subject": node.subject,
+        "object": node.object,
+        "action": node.action,
+        "outcome": node.outcome,
     }
 
 
@@ -40,4 +44,8 @@ def row_to_knowledge_node(row) -> KnowledgeNode:
         location_id=row[COL_LOCATION_ID],
         timestamp=row["timestamp"],
         salience=row.get(_COL_SALIENCE, salience_presets.DEFAULT),
+        subject=row.get("subject"),
+        object=row.get("object"),
+        action=row.get("action"),
+        outcome=row.get("outcome"),
     )

@@ -124,6 +124,8 @@ class TestBuildMemoryEvent:
         assert memory_event.location_id == make_uuid("tavern")
         assert memory_event.witness_ids == [make_uuid("npc-1"), make_uuid("npc-2")]
         assert memory_event.salience == pytest.approx(salience_presets.REMOTE_EVENT)
+        assert memory_event.slots.action == "Riot"
+        assert memory_event.slots.outcome == "A riot breaks out."
 
     @allure.story("Memory event")
     @allure.title("build_memory_event() falls back to the event name when no description is set")
@@ -135,6 +137,8 @@ class TestBuildMemoryEvent:
         memory_event = processor.build_memory_event(ev)
 
         assert memory_event.event_description == "Parade"
+        assert memory_event.slots.action == "Parade"
+        assert memory_event.slots.outcome is None
 
     @allure.story("Memory event")
     @allure.title("build_memory_event() returns no witnesses when the location is unknown")
@@ -170,26 +174,22 @@ class TestProcessRemoteEvents:
         await processor.process_remote_events(events)
 
         assert memory_mgr.create_memory_from_event.await_count == 2
-        memory_mgr.create_memory_from_event.assert_any_await(
-            _km.MemoryEvent(
-                event_description="A",
-                scope=KnowledgeScope.REGION,
-                location_id=make_uuid("tavern"),
-                witness_ids=[make_uuid("npc-1"), make_uuid("npc-2")],
-                game_time=gs.game_clock,
-                salience=salience_presets.REMOTE_EVENT,
-            ),
-        )
-        memory_mgr.create_memory_from_event.assert_any_await(
-            _km.MemoryEvent(
-                event_description="B",
-                scope=KnowledgeScope.WORLD,
-                location_id=make_uuid("market"),
-                witness_ids=[],  # "market" not in gs.locations → no witnesses
-                game_time=gs.game_clock,
-                salience=salience_presets.REMOTE_EVENT,
-            ),
-        )
+        # Pin the MemoryEvent flow including slot threading.
+        recorded_events = [call.args[0] for call in memory_mgr.create_memory_from_event.await_args_list]
+        descriptions = {ev.event_description for ev in recorded_events}
+        assert descriptions == {"A", "B"}
+        for ev_arg in recorded_events:
+            if ev_arg.event_description == "A":
+                assert ev_arg.scope == KnowledgeScope.REGION
+                assert ev_arg.location_id == make_uuid("tavern")
+                assert ev_arg.witness_ids == [make_uuid("npc-1"), make_uuid("npc-2")]
+                assert ev_arg.slots.action == "A"
+            else:
+                assert ev_arg.scope == KnowledgeScope.WORLD
+                assert ev_arg.location_id == make_uuid("market")
+                assert ev_arg.witness_ids == []  # "market" not in gs.locations
+                assert ev_arg.slots.action == "B"
+            assert ev_arg.salience == pytest.approx(salience_presets.REMOTE_EVENT)
 
 
 @allure.epic("Game Timeline")

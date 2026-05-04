@@ -100,7 +100,10 @@ async def test_summarize_batch_creates_witnessed_edge_and_is_queryable() -> None
     npc_id = _MARCUS
     graph.register_actor_node(npc_id, label="Marcus (legionary)")
 
-    await manager.summarize_interactions_batch([(npc_id, "Player: greetings\nMarcus: hail")], game_time=3.0)
+    await manager.summarize_interactions_batch(
+        [(npc_id, "Player: greetings\nMarcus: hail")],
+        game_time=3.0,
+    )
 
     edges = graph.get_edges_from(npc_id)
     assert len(edges) == 1
@@ -435,7 +438,12 @@ async def test_summarize_batch_dedup_is_per_npc() -> None:
     graph.register_actor_node(npc_a, label="Marcus")
     graph.register_actor_node(npc_b, label="Livia")
 
-    await manager.summarize_interactions_batch([(npc_a, "chat a"), (npc_b, "chat b")])
+    await manager.summarize_interactions_batch(
+        [
+            (npc_a, "chat a"),
+            (npc_b, "chat b"),
+        ],
+    )
 
     engine = KnowledgeQueryEngine(graph)
     assert len(engine.get_memories_held_by(npc_a)) == 1
