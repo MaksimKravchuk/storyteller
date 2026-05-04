@@ -5,6 +5,7 @@ from uuid import uuid4
 import allure
 
 from cast.narrator import _resolve_current_location
+from db.converters.location import location_to_row
 from engine.location_init import materialise_setting_locations
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
@@ -107,6 +108,19 @@ def test_materialise_truncates_long_location_type() -> None:
 
     loc = next(iter(game_state.locations.values()))
     assert len(loc.location_type) <= 32
+
+
+@allure.story("DB length cap")
+@allure.title("location_to_row emits a location_type that fits the varchar(32) DB column")
+def test_location_to_row_caps_location_type_for_db_insert() -> None:
+    """Consumer-seam check: the value handed to the locations.location_type INSERT must be ≤ 32 chars,
+    even if a future caller bypasses the materialisation path or uses model_construct. This is the
+    seam that actually crashed prod, so pin it directly.
+    """
+    loc = Location(name="Храм", location_type="религиозное общественное сооружение")
+    row = location_to_row(loc, game_state_id=str(uuid4()))
+
+    assert len(row["location_type"]) <= 32
 
 
 @allure.story("Defaults")
