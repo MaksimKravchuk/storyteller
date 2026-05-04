@@ -5,6 +5,7 @@ from uuid import uuid4
 import allure
 
 from cast.narrator import _resolve_current_location
+from db.converters.location import location_to_row
 from engine.location_init import materialise_setting_locations
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
@@ -89,6 +90,36 @@ def test_materialise_skips_blank_name_entries() -> None:
     materialise_setting_locations(game_state)
 
     assert [loc.name for loc in game_state.locations.values()] == ["Forum"]
+
+
+@allure.story("Categorical slug invariant")
+@allure.title("materialise_setting_locations falls back to 'generic' for off-enum location_type values")
+def test_materialise_collapses_unknown_location_type_to_generic() -> None:
+    """Regression: DataMiner can emit freeform phrases (esp. for non-English settings, e.g.
+    'религиозное общественное сооружение') that both overflow locations.location_type varchar(32)
+    and silently misroute knowledge.rumor_scope's city-anchor walk, which compares to the slug "city".
+    Off-enum values must collapse to "generic".
+    """
+    game_state = _make_game_state(
+        locations=[{"name": "Храм", "type": "религиозное общественное сооружение", "description": ""}],
+    )
+
+    materialise_setting_locations(game_state)
+
+    loc = next(iter(game_state.locations.values()))
+    assert loc.location_type == "generic"
+
+
+@allure.story("Categorical slug invariant")
+@allure.title("location_to_row emits an enum-valid location_type for the DB INSERT")
+def test_location_to_row_writes_enum_valid_location_type() -> None:
+    """Consumer-seam check: even if a future caller bypasses materialisation (or uses model_construct),
+    the row handed to locations.location_type must be a known categorical slug — not a freeform phrase.
+    """
+    loc = Location(name="Храм", location_type="религиозное общественное сооружение")
+    row = location_to_row(loc, game_state_id=str(uuid4()))
+
+    assert row["location_type"] == "generic"
 
 
 @allure.story("Defaults")
