@@ -208,7 +208,7 @@ class TestDialogueSummaryPairCarriesSlots:
     def test_pairs_include_speaker_listener_action(self) -> None:
         npc = NPCCard(name="Marcus", occupation="merchant")
         npc.uuid = helpers.MARCUS
-        work_items: list[tuple[Any, Any, str, Any]] = [(npc, object(), "Player: hello\n", None)]
+        work_items: list[tuple[Any, Any, str, Any, Any]] = [(npc, object(), "Player: hello\n", None, None)]
         entries = [{"npc_name": "Marcus", "response": "Hail, traveller."}]
 
         pairs = dlg_helpers.format_dialogue_summary_pairs(
@@ -274,7 +274,7 @@ class TestCowitnessSlotsAtConsumerSeam:
         marcus = state.npcs[helpers.MARCUS]
         manager = mem_mod.MemoryManager(graph=state.knowledge_graph, llm_client=AsyncMock())
 
-        work_items: list[tuple[Any, Any, str, Any]] = [(marcus, object(), "Player: hello\n", None)]
+        work_items: list[tuple[Any, Any, str, Any, Any]] = [(marcus, object(), "Player: hello\n", None, None)]
         entries = [{"npc_name": "Marcus", "response": "Hail."}]
 
         await cowitness_mod.broadcast_cowitness_memories(work_items, entries, "hello", state, manager)

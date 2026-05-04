@@ -11,14 +11,6 @@ from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from knowledge import query_filters
 
-# Default similarity threshold for ``get_memories_about_concept``.
-# Calibrated against snake_case concept slugs where a single token
-# substitution (``light_without_flame`` vs ``light_without_fire``)
-# scores ~0.86 with ``difflib.SequenceMatcher`` — at 0.85 the pair
-# matches without sweeping in unrelated concepts that share only a
-# common prefix.
-_CONCEPT_FUZZY_DEFAULT = 0.85
-
 if TYPE_CHECKING:
     from models.character import Character
 
@@ -111,6 +103,14 @@ def _rank_by_score(memories: list[KnowledgeNode]) -> list[KnowledgeNode]:
     return memories
 
 
+def _rank_and_limit(memories: list[KnowledgeNode], limit: int | None) -> list[KnowledgeNode]:
+    """Rank *memories* by salience+recency and trim to *limit*; ``None`` returns every match."""
+    ranked = _rank_by_score(memories)
+    if limit is None:
+        return ranked
+    return ranked[:limit]
+
+
 class KnowledgeQueryEngine:
     """Applies filters to the knowledge graph for NPC-aware retrieval.
 
@@ -193,16 +193,13 @@ class KnowledgeQueryEngine:
         an explicit cap.
         """
         matched = [memory for memory in self._graph.personal_memories_for(holder_id) if memory.subject_id == subject_id]
-        ranked = _rank_by_score(matched)
-        if limit is None:
-            return ranked
-        return ranked[:limit]
+        return _rank_and_limit(matched, limit)
 
     def get_memories_about_concept(
         self,
         holder_id: UUID,
         concept_tag: str,
-        fuzzy_threshold: float = _CONCEPT_FUZZY_DEFAULT,
+        fuzzy_threshold: float = query_filters.CONCEPT_FUZZY_DEFAULT,
         limit: int | None = None,
     ) -> list[KnowledgeNode]:
         """Return *holder_id*'s personal memories whose ``tags`` match *concept_tag*.
@@ -224,7 +221,4 @@ class KnowledgeQueryEngine:
             for memory in self._graph.personal_memories_for(holder_id)
             if query_filters.concept_tag_matches(memory.tags, concept_tag, fuzzy_threshold)
         ]
-        ranked = _rank_by_score(matched)
-        if limit is None:
-            return ranked
-        return ranked[:limit]
+        return _rank_and_limit(matched, limit)

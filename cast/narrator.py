@@ -205,6 +205,13 @@ class Narrator(BasePerformer):
                 unknown_descriptor=labels.unknown_someone,
             )
             raw_parts.append(labels.says.format(speaker, entry.response))
+            if entry.perceived_rewrite:
+                raw_parts.append(
+                    "Frame {0}'s reaction through their perception: {1}".format(
+                        speaker,
+                        entry.perceived_rewrite,
+                    ),
+                )
         raw_parts.extend(labels.new_person.format(desc) for desc in input_data.new_npcs)
         raw_parts.extend(labels.item_examined.format(desc) for desc in input_data.item_examination)
         raw_parts.extend(labels.object_interaction.format(desc) for desc in input_data.object_interactions)

@@ -87,9 +87,8 @@ class MemoryEvent:
     every memory tagged with the same person across encounters.
     ``tags`` are concept identifiers (e.g. ``light_without_flame``,
     ``image_capture``) that let downstream queries find every memory
-    referencing the same abstract idea; without them the field on
-    :class:`knowledge.node.KnowledgeNode` was silently dropped at
-    every event-creation site.
+    referencing the same abstract idea via
+    :meth:`KnowledgeQueryEngine.get_memories_about_concept`.
     """
 
     event_description: str

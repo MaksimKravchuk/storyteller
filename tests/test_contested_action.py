@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from cast.dice import ContestOutcome, ContestType
-from cast.director_dialogue_helpers import build_contested_action
+from cast.director_dialogue_helpers import ContestRequest, build_contested_action
 from models.npc_card import NPCCard
 
 _GUARD = "Guard"
@@ -38,7 +38,9 @@ class TestBuildContestedActionCombat:
     @allure.title("Aggressive action against a guard injects a combat dice roll into the actor's input")
     def test_aggressive_produces_combat_roll(self):
         npc = _make_npc(attributes={_COMBAT_SKILL: 5})
-        text, roll = build_contested_action("slash the guard", npc, is_aggressive=True, _rng=random.Random(_RNG_SEED))
+        text, roll = build_contested_action(
+            "slash the guard", npc, ContestRequest(is_aggressive=True), rng=random.Random(_RNG_SEED)
+        )
         assert roll is not None
         assert roll.contest_type == ContestType.COMBAT
         assert _DICE_MARKER in text
@@ -48,7 +50,7 @@ class TestBuildContestedActionCombat:
     @allure.title("Non-aggressive action leaves the input text untouched and skips the dice roll")
     def test_non_aggressive_no_roll(self):
         npc = _make_npc()
-        text, roll = build_contested_action("hello guard", npc, is_aggressive=False)
+        text, roll = build_contested_action("hello guard", npc, ContestRequest())
         assert roll is None
         assert text == "hello guard"
 
@@ -58,7 +60,7 @@ class TestBuildContestedActionCombat:
         npc = _make_npc(attributes={_COMBAT_SKILL: 0})
         for seed in range(200):
             rng = random.Random(seed)
-            text, roll = build_contested_action("attack guard", npc, is_aggressive=True, _rng=rng)
+            text, roll = build_contested_action("attack guard", npc, ContestRequest(is_aggressive=True), rng=rng)
             if roll and roll.outcome == ContestOutcome.ACTOR_SUCCEEDS:
                 assert _STATUS_TAG in text
                 return
@@ -70,7 +72,7 @@ class TestBuildContestedActionCombat:
         npc = _make_npc(attributes={_COMBAT_SKILL: 10})
         for seed in range(200):
             rng = random.Random(seed)
-            text, roll = build_contested_action("attack guard", npc, is_aggressive=True, _rng=rng)
+            text, roll = build_contested_action("attack guard", npc, ContestRequest(is_aggressive=True), rng=rng)
             if roll and roll.outcome in (ContestOutcome.TARGET_RESISTS, ContestOutcome.TARGET_DOMINATES):
                 assert _STATUS_TAG not in text
                 return
@@ -90,8 +92,8 @@ class TestBuildContestedActionSocial:
         text, roll = build_contested_action(
             "convince the merchant to lower prices",
             npc,
-            contest_info=contest_info,
-            _rng=random.Random(_RNG_SEED),
+            ContestRequest(contest_info=contest_info),
+            rng=random.Random(_RNG_SEED),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.PERSUASION
@@ -107,8 +109,8 @@ class TestBuildContestedActionSocial:
         text, roll = build_contested_action(
             "lie about my identity",
             npc,
-            contest_info=contest_info,
-            _rng=random.Random(42),
+            ContestRequest(contest_info=contest_info),
+            rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.DECEPTION
@@ -121,8 +123,8 @@ class TestBuildContestedActionSocial:
         text, roll = build_contested_action(
             "threaten the guard",
             npc,
-            contest_info=contest_info,
-            _rng=random.Random(42),
+            ContestRequest(contest_info=contest_info),
+            rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.INTIMIDATION
@@ -135,8 +137,8 @@ class TestBuildContestedActionSocial:
         text, roll = build_contested_action(
             "sneak past the guard",
             npc,
-            contest_info=contest_info,
-            _rng=random.Random(42),
+            ContestRequest(contest_info=contest_info),
+            rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.STEALTH
@@ -146,7 +148,7 @@ class TestBuildContestedActionSocial:
     @allure.title("No contest info and no aggression means the input text passes through untouched")
     def test_no_contest_info_no_roll(self):
         npc = _make_npc()
-        text, roll = build_contested_action("talk to guard", npc, contest_info=None)
+        text, roll = build_contested_action("talk to guard", npc, ContestRequest())
         assert roll is None
         assert text == "talk to guard"
 
@@ -159,9 +161,8 @@ class TestBuildContestedActionSocial:
         text, roll = build_contested_action(
             "convince the guard",
             npc,
-            is_aggressive=False,
-            contest_info=contest_info,
-            _rng=random.Random(42),
+            ContestRequest(is_aggressive=False, contest_info=contest_info),
+            rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.PERSUASION
@@ -175,9 +176,8 @@ class TestBuildContestedActionSocial:
         text, roll = build_contested_action(
             "attack while talking",
             npc,
-            is_aggressive=True,
-            contest_info=contest_info,
-            _rng=random.Random(42),
+            ContestRequest(is_aggressive=True, contest_info=contest_info),
+            rng=random.Random(42),
         )
         assert roll is not None
         assert roll.contest_type == ContestType.COMBAT
@@ -196,8 +196,8 @@ class TestBuildContestedActionDefaultSkill:
         _, roll = build_contested_action(
             "persuade",
             npc,
-            contest_info=contest_info,
-            _rng=random.Random(42),
+            ContestRequest(contest_info=contest_info),
+            rng=random.Random(42),
         )
         assert roll is not None
         assert roll.target_bonus == 0

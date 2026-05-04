@@ -4,9 +4,17 @@ from __future__ import annotations
 
 import typing
 
-from cast import data_miner as data_miner_mod, director as director_mod, dramaturge as dramaturge_mod
-from cast import item_generator as item_gen_mod, world_chronicler as world_chronicler_mod
-from cast import narrator as narrator_mod, npc_generator as npc_gen_mod, scene_builder as scene_builder_mod
+from cast import (
+    data_miner as data_miner_mod,
+    director as director_mod,
+    dramaturge as dramaturge_mod,
+    item_generator as item_gen_mod,
+    narrator as narrator_mod,
+    npc_generator as npc_gen_mod,
+    scene_builder as scene_builder_mod,
+    world_chronicler as world_chronicler_mod,
+)
+from cast import anachronism as anachronism_mod
 from defaults.models import ModelConfig
 from knowledge import graph as graph_mod, memory as memory_mod
 from llm.factory import create_llm_client
@@ -82,6 +90,7 @@ def wire_director(
         item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent, language=language),
         world_chronicler=world_chronicler_mod.WorldChronicler(llm_client=clients.agent, language=language),
         dramaturge=dramaturge,
+        anachronism_classifier=anachronism_mod.AnachronismClassifier(llm_client=clients.agent),
         language=language,
     )
 

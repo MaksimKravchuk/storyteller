@@ -29,7 +29,7 @@ there is no excluded-targets set — an object has no ``NPCCard``.
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 from uuid import UUID
 
 from loguru import logger
@@ -40,8 +40,46 @@ from knowledge.scene_state import record_scene_delta
 from llm.turn_event_logger import record_turn_event
 
 if TYPE_CHECKING:
+    from cast.anachronism import TurnAnachronismContext
     from knowledge.memory import MemoryManager
     from models.game_state import GameState
+
+
+class ObjectInteractionEnv(NamedTuple):
+    """Per-call services for :func:`apply_object_interactions`.
+
+    Bundles the game-state + memory-manager pair so the public entry
+    point fits inside the WPS211 argument budget without losing the
+    services it needs to persist deltas and emit witness memories.
+    The optional anachronism context rides along here too — it's
+    read-only telemetry the object-interaction event payload picks up
+    when a prior dialogue phase already populated the verdict.
+    """
+
+    game_state: GameState
+    memory_manager: MemoryManager
+    anachronism_ctx: TurnAnachronismContext | None = None
+
+    def anachronism_event_fields(self) -> dict[str, Any]:
+        """Extract anachronism telemetry fields for the ``object_interaction`` event.
+
+        Returns an empty dict when no classifier ran on this turn
+        (e.g. object-only INTERACT actions never trigger the dialogue
+        path), when the classifier returned a 0-strangeness verdict,
+        or when no context is attached. The caller merges the result
+        via ``**`` so empty-dict is the natural pass-through.
+        """
+        if self.anachronism_ctx is None:
+            return {}
+        base = self.anachronism_ctx.base_or_empty
+        if base.strangeness_score == 0:
+            return {}
+        return {
+            "anachronism_strangeness": base.strangeness_score,
+            "anachronism_concepts": list(base.unfamiliar_concepts),
+            "anachronism_perceived_rewrite": base.perceived_rewrite,
+        }
+
 
 _SCENE_DESC_PREVIEW = 200
 
@@ -126,10 +164,10 @@ def _persist_delta(
 
 
 def _persist_and_record(
-    game_state: GameState,
     object_targets: list[str],
     player_action: str,
     responses: list[ObjectInteractionResponse],
+    env: ObjectInteractionEnv,
 ) -> None:
     """Write deltas to both persistence sinks *and* emit one turn event per target.
 
@@ -138,9 +176,16 @@ def _persist_and_record(
     issues an ``asyncio.gather`` over a comprehension with its own
     ``delta`` name, which tripped WPS441 when both lived in the same
     function body.
+
+    The classifier is **not** fired from the object-interaction path
+    (per issue #186 scope — that mood-flip layer is v2). When a prior
+    dialogue phase already populated the verdict on
+    ``env.anachronism_ctx``, its fields ride along on the event payload
+    for downstream telemetry only.
     """
+    extra_fields = env.anachronism_event_fields()
     for object_key, resp in zip(object_targets, responses):
-        _persist_delta(game_state, object_key, resp.delta)
+        _persist_delta(env.game_state, object_key, resp.delta)
         record_turn_event(
             "object_interaction",
             {
@@ -148,6 +193,7 @@ def _persist_and_record(
                 "player_action": player_action,
                 "narration": resp.narration,
                 "delta": resp.delta,
+                **extra_fields,
             },
         )
 
@@ -156,8 +202,7 @@ async def apply_object_interactions(
     item_generator: Any,
     object_targets: list[str],
     player_action: str,
-    game_state: GameState,
-    memory_manager: MemoryManager,
+    env: ObjectInteractionEnv,
 ) -> ObjectInteractionResult:
     """Resolve every object target in the INTERACT plan.
 
@@ -176,14 +221,17 @@ async def apply_object_interactions(
         return ObjectInteractionResult(narrations=[], deltas=[])
     responses: list[ObjectInteractionResponse] = list(
         await asyncio.gather(
-            *(_run_single_interaction(item_generator, target, player_action, game_state) for target in object_targets),
+            *(
+                _run_single_interaction(item_generator, target, player_action, env.game_state)
+                for target in object_targets
+            ),
         ),
     )
     deltas = [resp.delta for resp in responses]
-    _persist_and_record(game_state, object_targets, player_action, responses)
-    witnesses = initialised_scene_witnesses(game_state)
+    _persist_and_record(object_targets, player_action, responses, env)
+    witnesses = initialised_scene_witnesses(env.game_state)
     await asyncio.gather(
-        *(emit_witness_memories(memory_manager, game_state, witnesses, delta) for delta in deltas),
+        *(emit_witness_memories(env.memory_manager, env.game_state, witnesses, delta) for delta in deltas),
     )
     narrations = [resp.narration for resp in responses if resp.narration]
     return ObjectInteractionResult(narrations=narrations, deltas=deltas)

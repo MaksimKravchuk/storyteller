@@ -45,6 +45,7 @@ class Director(BasePerformer):
         item_generator: Any,
         world_chronicler: Any | None = None,
         dramaturge: Any | None = None,
+        anachronism_classifier: Any | None = None,
         actors: dict[UUID, Any] | None = None,
         language: str = "English",
     ):
@@ -87,6 +88,7 @@ class Director(BasePerformer):
             item_generator=item_generator,
             world_chronicler=world_chronicler,
             dramaturge=dramaturge,
+            anachronism_classifier=anachronism_classifier,
             register_npc_fn=self._register_new_npc,
         )
         self._narrator = narrator

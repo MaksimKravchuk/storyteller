@@ -20,6 +20,7 @@ _NAME_MAX_CHARS = 128
 _APPEARANCE_MAX_CHARS = 500
 _INVENTORY_MAX_ITEMS = 20
 _INVENTORY_ITEM_MAX_CHARS = 64
+_ORIGIN_ERA_MAX_CHARS = 64
 
 
 class CharacterCreationInput(BaseModel):
@@ -32,6 +33,7 @@ class CharacterCreationInput(BaseModel):
     name: str = Field(default="", max_length=_NAME_MAX_CHARS)
     appearance: str = Field(default="", max_length=_APPEARANCE_MAX_CHARS)
     inventory: list[str] = Field(default_factory=list, max_length=_INVENTORY_MAX_ITEMS)
+    origin_era: str = Field(default="", max_length=_ORIGIN_ERA_MAX_CHARS)
 
     @field_validator("inventory")
     @classmethod

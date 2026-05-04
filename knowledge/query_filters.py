@@ -11,6 +11,13 @@ from knowledge.node import KnowledgeNode, KnowledgeScope
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
 
+# Default similarity threshold for ``concept_tag_matches``. Calibrated
+# against snake_case concept slugs where a single token substitution
+# (``light_without_flame`` vs ``light_without_fire``) scores ~0.86 with
+# ``difflib.SequenceMatcher`` — at 0.85 the pair matches without sweeping
+# in unrelated concepts that share only a common prefix.
+CONCEPT_FUZZY_DEFAULT = 0.85
+
 
 def passes_scope(node: KnowledgeNode, max_scope: KnowledgeScope) -> bool:
     """Return True if the node's scope is within the given max scope."""
@@ -34,17 +41,23 @@ def passes_location(
     return True
 
 
-def concept_tag_matches(tags: list[str], target: str, threshold: float) -> bool:
+def concept_tag_matches(tags: list[str], target: str, threshold: float = CONCEPT_FUZZY_DEFAULT) -> bool:
     """Return True if any of *tags* is similar enough to *target*.
 
-    Comparison is case-insensitive via :class:`difflib.SequenceMatcher`
-    so a classifier emitting ``light_without_fire`` against a stored
-    ``light_without_flame`` still finds the prior encounter rather than
-    starting the familiarity counter from zero.
+    Comparison is case-insensitive. The exact-match short-circuit handles
+    the common path (a classifier reusing the seed identifier) in a single
+    hash lookup; the SequenceMatcher fallback only runs when the
+    classifier drifts (``light_without_fire`` against stored
+    ``light_without_flame``). ``autojunk=False`` keeps the ratio honest
+    on short snake_case slugs where the heuristic would otherwise treat
+    repeated chars as junk.
     """
     folded_target = target.casefold()
-    for tag in tags:
-        if SequenceMatcher(a=tag.casefold(), b=folded_target).ratio() >= threshold:
+    folded_tags = [tag.casefold() for tag in tags]
+    if folded_target in folded_tags:
+        return True
+    for folded_tag in folded_tags:
+        if SequenceMatcher(a=folded_tag, b=folded_target, autojunk=False).ratio() >= threshold:
             return True
     return False
 
