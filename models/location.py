@@ -8,6 +8,8 @@ from pydantic import ConfigDict, Field, field_validator
 from models.base_model import StorytellerBase
 from models.scene import PointOfInterest, _coerce_points_of_interest
 
+_LOCATION_TYPE_MAX_LEN = 32  # mirrors locations.location_type varchar(32) in db/tables.py
+
 
 class Location(StorytellerBase):
     """A place in the game world.
@@ -57,3 +59,11 @@ class Location(StorytellerBase):
     @classmethod
     def _coerce_pois(cls, raw: Any) -> list[PointOfInterest]:
         return _coerce_points_of_interest(raw)
+
+    @field_validator("location_type", mode="before")
+    @classmethod
+    def _truncate_location_type(cls, raw: Any) -> str:
+        # DataMiner can emit long phrases (esp. in non-English settings) that overflow the
+        # locations.location_type varchar(32) column and crash persistence at game start.
+        text = str(raw) if raw else "generic"
+        return text[:_LOCATION_TYPE_MAX_LEN]

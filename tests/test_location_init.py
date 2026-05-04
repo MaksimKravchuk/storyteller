@@ -91,6 +91,24 @@ def test_materialise_skips_blank_name_entries() -> None:
     assert [loc.name for loc in game_state.locations.values()] == ["Forum"]
 
 
+@allure.story("DB length cap")
+@allure.title("materialise_setting_locations truncates location_type to fit the varchar(32) DB column")
+def test_materialise_truncates_long_location_type() -> None:
+    """Regression: DataMiner can return long Russian phrases like 'религиозное сооружение' that overflow
+    the locations.location_type varchar(32) column and crash the POST /api/games persistence write.
+    """
+    long_type = "религиозное общественное сооружение"  # 35 chars, > 32
+    assert len(long_type) > 32
+    game_state = _make_game_state(
+        locations=[{"name": "Храм", "type": long_type, "description": ""}],
+    )
+
+    materialise_setting_locations(game_state)
+
+    loc = next(iter(game_state.locations.values()))
+    assert len(loc.location_type) <= 32
+
+
 @allure.story("Defaults")
 @allure.title("materialise_setting_locations defaults location_type to 'generic' when type is missing or blank")
 def test_materialise_defaults_location_type() -> None:
