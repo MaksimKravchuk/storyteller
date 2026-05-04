@@ -236,6 +236,7 @@ knowledge_nodes = Table(
     Column("object", Text, nullable=True),
     Column("action", Text, nullable=True),
     Column("outcome", Text, nullable=True),
+    Column("subject_id", Text, nullable=True),
     Index("idx_kn_game_state", _COL_GAME_STATE_ID),
     Index("idx_kn_scope", _COL_GAME_STATE_ID, "scope"),
     Index("idx_kn_tags", "tags", postgresql_using="gin"),

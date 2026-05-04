@@ -38,6 +38,7 @@ class RecordingMemoryManager:
                 "game_time": event.game_time,
                 "salience": event.salience,
                 "slots": event.slots,
+                "subject_id": event.subject_id,
             },
         )
         return MemoryEventResult(canonical_id=None, all_ids=())

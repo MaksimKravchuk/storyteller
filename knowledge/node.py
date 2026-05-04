@@ -57,7 +57,11 @@ class KnowledgeNode(StorytellerBase):
     detection. They are populated at creation sites where the data is
     cheap to extract (combat, dialogue, effect-driven events) and left
     ``None`` everywhere else (Wikipedia facts, scene-state deltas,
-    forwarded hearsay).
+    forwarded hearsay). ``subject_id`` is the *canonical UUID* of the
+    entity the memory is about — distinct from the free-text ``subject``
+    name and from the WITNESSED edge — and may be backfilled later by
+    :meth:`KnowledgeGraph.resolve_subject_identity` once an identity is
+    learned.
     """
 
     text: str
@@ -73,3 +77,4 @@ class KnowledgeNode(StorytellerBase):
     object: str | None = None
     action: str | None = None
     outcome: str | None = None
+    subject_id: UUID | None = None

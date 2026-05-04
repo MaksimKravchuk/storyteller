@@ -115,6 +115,7 @@ async def broadcast_cowitness_memories(
             game_time=game_state.game_clock,
             salience=salience_presets.OVERHEARD,
             slots=_overheard_slots(work_items, game_state),
+            subject_id=game_state.player.uuid,
         ),
     )
     record_player_learned_fact(game_state.player, memory_result.canonical_id)

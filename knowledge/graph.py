@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 from uuid import UUID
 
 import networkx as nx
@@ -127,6 +127,28 @@ class KnowledgeGraph:
             if node is not None:
                 memories.append(node)
         return memories
+
+    def resolve_subject_identity(
+        self,
+        holder_id: UUID,
+        subject_id: UUID,
+        predicate: Callable[[KnowledgeNode], bool],
+    ) -> int:
+        """Backfill ``subject_id`` on *holder_id*'s anonymous memories matching *predicate*.
+
+        Already-resolved memories are left untouched so a second
+        resolution can't silently overwrite an earlier one. Returns the
+        number of nodes actually updated.
+        """
+        updated = 0
+        for memory in self.personal_memories_for(holder_id):
+            if memory.subject_id is not None:
+                continue
+            if not predicate(memory):
+                continue
+            memory.subject_id = subject_id
+            updated += 1
+        return updated
 
     def rebuild_witness_memory_index(self) -> None:
         """Rebuild the witness-memory index from the current graph state.

@@ -164,6 +164,7 @@ class DialogueHandler:
             ),
             self._gs.game_clock,
             location_id=scene.location_id if scene else None,
+            subject_id=self._gs.player.uuid,
         )
         await director_dialogue_witness.broadcast_cowitness_memories(
             work_items,
@@ -270,6 +271,7 @@ class DialogueHandler:
             self._gs.game_clock,
             location_id=scene.location_id if scene else None,
             salience=salience_presets.RETALIATION,
+            subject_id=self._gs.player.uuid,
         )
 
     def _collect_targets(
