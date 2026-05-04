@@ -37,6 +37,13 @@ def _make_game_state() -> GameState:
     )
 
 
+def _register_witness(gs: GameState, witness: NPCCard, location_id: UUID) -> None:
+    """Place ``witness`` at ``location_id`` and register their graph node."""
+    gs.npcs[witness.uuid] = witness
+    gs.locations[location_id].add_npc(witness.uuid)
+    gs.knowledge_graph.register_actor_node(witness.uuid, label=witness.name)
+
+
 def _populate_co_located_pair(
     gs: GameState,
     target: NPCCard,
@@ -45,11 +52,9 @@ def _populate_co_located_pair(
 ) -> None:
     """Place ``target`` and ``witness`` in the same location and register the witness."""
     gs.npcs[target.uuid] = target
-    gs.npcs[witness.uuid] = witness
     gs.locations[location_id] = Location(name="Forum")
     gs.locations[location_id].add_npc(target.uuid)
-    gs.locations[location_id].add_npc(witness.uuid)
-    gs.knowledge_graph.register_actor_node(witness.uuid, label=witness.name)
+    _register_witness(gs, witness, location_id)
 
 
 @allure.epic("Game Timeline")
@@ -171,6 +176,43 @@ class TestMoveNpcMemory:
         memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(witness.uuid)
         assert memories, "origin witness should have a departure memory"
         assert any("departed" in mem.text.lower() for mem in memories)
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect-side graph writes")
+class TestSharedCanonicalWitnessNode:
+    """Co-located bystanders must share one ``PERSONAL_EXPERIENCE`` node.
+
+    Locks the sub-linear contract on the EffectApplier's witness
+    writer: a single effect with N co-located witnesses adds 1 node
+    + N WITNESSED edges, and ``KnowledgeQueryEngine.get_memories_held_by``
+    surfaces the same canonical UUID for each witness.
+    """
+
+    @allure.story("Co-witness sharing")
+    @allure.title("Two co-located witnesses of an effect share one PERSONAL_EXPERIENCE node + 2 WITNESSED edges")
+    def test_two_co_witnesses_share_one_personal_node(self):
+        target = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
+        first_witness = NPCCard(name="Livia", occupation="baker", location_id=_LOC_1)
+        second_witness = NPCCard(name="Cassia", occupation="bard", location_id=_LOC_1)
+        gs = _make_game_state()
+        _populate_co_located_pair(gs, target, first_witness, _LOC_1)
+        _register_witness(gs, second_witness, _LOC_1)
+
+        EffectApplier(gs, gs.knowledge_graph).apply(
+            EventEffect(
+                effect_type="ADD_ITEM",
+                target_id=target.uuid,
+                effect_data={"npc_id": target.uuid, "item": "coin"},
+            ),
+        )
+
+        engine = KnowledgeQueryEngine(gs.knowledge_graph)
+        first_memories = engine.get_memories_held_by(first_witness.uuid)
+        second_memories = engine.get_memories_held_by(second_witness.uuid)
+        assert len(first_memories) == 1
+        assert first_memories[0].source == KnowledgeSource.PERSONAL_EXPERIENCE
+        assert [mem.uuid for mem in second_memories] == [first_memories[0].uuid]
 
 
 @allure.epic("Game Timeline")

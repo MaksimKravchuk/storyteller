@@ -22,11 +22,16 @@ non-witness NPC in the same city, mirroring the shape produced by
 original ``WITNESSED`` edge is left intact so the departing NPC
 keeps their own memory if they later return.
 
-Each propagated memory is tagged with
-``_DEPARTURE_PROPAGATION_TAG`` on the original node, which makes
-subsequent evictions of the same NPC (or the same memory) cheap
-no-ops — the tag is the idempotency key. Non-session memories and
-memories that already carry the tag are skipped.
+Each propagated (witness, memory) pair is flagged with
+``_DEPARTURE_PROPAGATION_TAG`` on the ``WITNESSED`` *edge* — not on
+the node. Co-witness broadcasts share a single ``PERSONAL_EXPERIENCE``
+node across many witnesses, so a per-node tag would let the first
+departing co-witness silently mute every subsequent co-witness's own
+departure. The per-edge tag preserves the per-witness propagation
+semantics: the same memory fans out as hearsay each time a fresh
+co-witness leaves the scene, attributed to that specific informant.
+Non-session memories and edges that already carry the tag are
+skipped.
 """
 
 from __future__ import annotations
@@ -65,11 +70,14 @@ def preserve_departing_npc_memories(
     """Fan a departing NPC's session memories out as hearsay for same-city non-witnesses.
 
     Returns the list of newly-created ``HEARSAY`` node UUIDs so
-    callers can log or assert over them. Idempotent: memories
-    already tagged ``propagated_on_departure`` are skipped, so
-    repeated evictions of the same NPC never re-propagate the same
-    memory. When no recipients are reachable (isolated scene or
-    unknown ``scene_location_id``) the eligible memories are still
+    callers can log or assert over them. Idempotent per witness:
+    once the ``WITNESSED`` edge from ``npc_id`` is tagged
+    ``propagated_on_departure``, repeated evictions of the same NPC
+    never re-propagate the same memory. Co-witnesses share the
+    canonical node but each carry their own edge, so each fresh
+    departure still gets a chance to fan its own copy out as
+    hearsay. When no recipients are reachable (isolated scene or
+    unknown ``scene_location_id``) the eligible edges are still
     tagged so subsequent evictions do not re-scan them every turn.
     """
     memories = _eligible_memories(graph, npc_id)
@@ -78,7 +86,7 @@ def preserve_departing_npc_memories(
     recipients = non_witness_city_npcs(game_state, scene_location_id, [npc_id])
     if not recipients:
         for memory in memories:
-            _mark_propagated(memory)
+            _mark_propagated(graph, npc_id, memory.uuid)
         return []
     return _fan_out_hearsay(graph, memories, npc_id, game_state.game_clock, recipients)
 
@@ -90,11 +98,11 @@ def _fan_out_hearsay(
     game_time: float,
     recipients: list[tuple[UUID, UUID]],
 ) -> list[UUID]:
-    """Write a hearsay node per (memory, recipient) pair and tag each memory."""
+    """Write a hearsay node per (memory, recipient) pair and tag each witness edge."""
     created_ids: list[UUID] = []
     for memory in memories:
         created_ids.extend(_hearsay_for_one_memory(graph, memory, told_by, game_time, recipients))
-        _mark_propagated(memory)
+        _mark_propagated(graph, told_by, memory.uuid)
     return created_ids
 
 
@@ -125,8 +133,8 @@ def _eligible_memories(graph: KnowledgeGraph, npc_id: UUID) -> list[KnowledgeNod
     """Return the departing NPC's propagate-able session memories, newest first.
 
     Walks ``WITNESSED`` edges outbound from ``npc_id`` and keeps
-    nodes that are session-canon personal experiences, have
-    non-empty text, and have not yet been tagged for departure
+    nodes that are session-canon personal experiences with non-empty
+    text whose edge has not yet been tagged for departure
     propagation. Results are sorted newest-first by ``timestamp``
     (``None`` treated as oldest) and capped at
     ``_MAX_MEMORIES_PER_DEPARTURE``.
@@ -136,7 +144,7 @@ def _eligible_memories(graph: KnowledgeGraph, npc_id: UUID) -> list[KnowledgeNod
         if edge_type != EdgeType.WITNESSED:
             continue
         node = graph.get_node(target_id)
-        if node is not None and _is_propagatable(node):
+        if node is not None and _is_propagatable(graph, node, npc_id):
             candidates.append(node)
     candidates.sort(
         key=lambda memory: float("-inf") if memory.timestamp is None else memory.timestamp,
@@ -145,24 +153,22 @@ def _eligible_memories(graph: KnowledgeGraph, npc_id: UUID) -> list[KnowledgeNod
     return candidates[:_MAX_MEMORIES_PER_DEPARTURE]
 
 
-def _is_propagatable(node: KnowledgeNode) -> bool:
-    """Return True if a memory should be propagated on departure."""
+def _is_propagatable(graph: KnowledgeGraph, node: KnowledgeNode, witness_id: UUID) -> bool:
+    """Return True if ``witness_id``'s witnessing of ``node`` should propagate on departure."""
     if node.canon != CanonSource.SESSION:
         return False
     if node.source != KnowledgeSource.PERSONAL_EXPERIENCE:
         return False
     if not (node.text or "").strip():
         return False
-    return _DEPARTURE_PROPAGATION_TAG not in node.tags
+    return not graph.edge_has_flag(witness_id, node.uuid, _DEPARTURE_PROPAGATION_TAG)
 
 
-def _mark_propagated(node: KnowledgeNode) -> None:
-    """Tag a memory so subsequent departures do not re-propagate it.
+def _mark_propagated(graph: KnowledgeGraph, witness_id: UUID, memory_id: UUID) -> None:
+    """Tag the ``witness_id → memory_id`` edge so that witness's re-departure is a no-op.
 
-    Uses list replacement rather than :meth:`list.append` so that a
-    future default-mutable-list regression in the pydantic model
-    can't cause accidental aliasing across ``KnowledgeNode``
-    instances.
+    Per-edge tagging keeps the idempotency key local to one witness:
+    co-witnesses sharing the canonical node still propagate
+    independently when they later leave the scene.
     """
-    if _DEPARTURE_PROPAGATION_TAG not in node.tags:
-        node.tags = [*node.tags, _DEPARTURE_PROPAGATION_TAG]
+    graph.flag_edge(witness_id, memory_id, _DEPARTURE_PROPAGATION_TAG)

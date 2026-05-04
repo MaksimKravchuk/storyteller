@@ -136,10 +136,17 @@ async def test_summarize_batch_propagates_location_id() -> None:
 
 
 @allure.story("create_memory_from_event")
-@allure.title("create_memory_from_event at LOCAL scope creates per-witness PERSONAL_EXPERIENCE nodes")
+@allure.title("create_memory_from_event at LOCAL scope creates ONE shared PERSONAL_EXPERIENCE node + N WITNESSED edges")
 @pytest.mark.asyncio
-async def test_create_memory_local_scope_personal_per_witness() -> None:
-    """LOCAL scope: one PERSONAL_EXPERIENCE node per witness, each WITNESSED-linked."""
+async def test_create_memory_local_scope_shares_one_canonical_node() -> None:
+    """LOCAL scope: one ``PERSONAL_EXPERIENCE`` node + N witness edges.
+
+    Locks in the sub-linear broadcast contract: with 2 co-witnesses
+    the graph gains exactly 1 memory node, not 2 near-duplicates.
+    Both witnesses still surface the canonical node via
+    ``personal_memories_for`` because it's the same target on both
+    edges.
+    """
     manager, graph, _ = _make_manager()
     witness_ids = [_W1, _W2]
 
@@ -152,20 +159,17 @@ async def test_create_memory_local_scope_personal_per_witness() -> None:
         ),
     )
 
-    assert len(result.all_ids) == 2
+    assert result.all_ids == (result.canonical_id,)
     assert result.canonical_id is not None
-    assert result.canonical_id in result.all_ids
-    for witness_id, node_id in zip(witness_ids, result.all_ids):
-        node = graph.get_node(node_id)
-        assert node is not None
-        assert node.source == KnowledgeSource.PERSONAL_EXPERIENCE
-        assert node.scope == KnowledgeScope.LOCAL
-        assert node.canon == CanonSource.SESSION
-        assert node.location_id == _LOCATION_ID
+    canonical = graph.get_node(result.canonical_id)
+    assert canonical is not None
+    assert canonical.source == KnowledgeSource.PERSONAL_EXPERIENCE
+    assert canonical.scope == KnowledgeScope.LOCAL
+    assert canonical.canon == CanonSource.SESSION
+    assert canonical.location_id == _LOCATION_ID
+    for witness_id in witness_ids:
         edges = graph.get_edges_from(witness_id)
-        # The witness wasn't seeded in graph, but edge should still exist with WITNESSED type
-        target_ids = [tgt for tgt, _ in edges]
-        assert node_id in target_ids
+        assert (result.canonical_id, EdgeType.WITNESSED) in edges
 
 
 @allure.story("create_memory_from_event")
@@ -191,10 +195,10 @@ async def test_create_memory_local_scope_no_witnesses_returns_empty_result() -> 
 
 
 @allure.story("create_memory_from_event")
-@allure.title("create_memory_from_event at CITY scope marks the broadcast RUMOR as canonical")
+@allure.title("create_memory_from_event at CITY scope writes one RUMOR + one shared PERSONAL_EXPERIENCE node")
 @pytest.mark.asyncio
 async def test_create_memory_city_scope_canonical_is_broadcast_rumor() -> None:
-    """CITY scope: canonical_id resolves to the broadcast RUMOR node."""
+    """CITY scope: ``canonical_id`` is the broadcast RUMOR; co-witnesses share one personal node."""
     manager, graph, _ = _make_manager()
     witness_ids = [_W1, _W2]
 
@@ -207,7 +211,7 @@ async def test_create_memory_city_scope_canonical_is_broadcast_rumor() -> None:
         ),
     )
 
-    assert len(result.all_ids) == 3
+    assert len(result.all_ids) == 2
     assert result.canonical_id is not None
     canonical_node = graph.get_node(result.canonical_id)
     assert canonical_node is not None
@@ -216,13 +220,14 @@ async def test_create_memory_city_scope_canonical_is_broadcast_rumor() -> None:
     assert canonical_node.canon == CanonSource.SESSION
     assert canonical_node.location_id == _LOCATION_ID
     personal_ids = [node_id for node_id in result.all_ids if node_id != result.canonical_id]
-    assert len(personal_ids) == len(witness_ids)
-    for witness_id, personal_id in zip(witness_ids, personal_ids):
-        personal = graph.get_node(personal_id)
-        assert personal is not None
-        assert personal.source == KnowledgeSource.PERSONAL_EXPERIENCE
-        assert personal.scope == KnowledgeScope.LOCAL
-        assert personal.canon == CanonSource.SESSION
+    assert len(personal_ids) == 1
+    personal_id = personal_ids[0]
+    personal = graph.get_node(personal_id)
+    assert personal is not None
+    assert personal.source == KnowledgeSource.PERSONAL_EXPERIENCE
+    assert personal.scope == KnowledgeScope.LOCAL
+    assert personal.canon == CanonSource.SESSION
+    for witness_id in witness_ids:
         target_ids = [tgt for tgt, _ in graph.get_edges_from(witness_id)]
         assert personal_id in target_ids
 
@@ -253,7 +258,7 @@ async def test_create_memory_world_scope_uses_fact_source() -> None:
 @allure.title("create_memory_from_event propagates location_id to every node it creates")
 @pytest.mark.asyncio
 async def test_create_memory_propagates_location_id() -> None:
-    """Every created node — fact and personal — must carry the supplied location_id."""
+    """Every created node — broadcast and shared personal — must carry the supplied location_id."""
     manager, graph, _ = _make_manager()
     result = await manager.create_memory_from_event(
         MemoryEvent(
@@ -263,7 +268,7 @@ async def test_create_memory_propagates_location_id() -> None:
             location_id=_LOCATION_ID,
         ),
     )
-    assert len(result.all_ids) == 3
+    assert len(result.all_ids) == 2
     for node_id in result.all_ids:
         node = graph.get_node(node_id)
         assert node is not None
@@ -274,7 +279,7 @@ async def test_create_memory_propagates_location_id() -> None:
 @allure.title("create_memory_from_event stamps the supplied salience on every node it creates")
 @pytest.mark.asyncio
 async def test_create_memory_stamps_salience_on_all_nodes() -> None:
-    """The broadcast node and the per-witness personal copies share the same salience."""
+    """The broadcast node and the shared personal node share the same salience."""
     manager, graph, _ = _make_manager()
     result = await manager.create_memory_from_event(
         MemoryEvent(
@@ -285,7 +290,7 @@ async def test_create_memory_stamps_salience_on_all_nodes() -> None:
             salience=0.85,
         ),
     )
-    assert len(result.all_ids) == 3
+    assert len(result.all_ids) == 2
     for node_id in result.all_ids:
         node = graph.get_node(node_id)
         assert node is not None

@@ -118,7 +118,7 @@ class TestKnowledgeNodeSubjectIdField:
 @allure.feature("Identity resolution")
 class TestMemoryManagerStampsSubjectId:
     @allure.story("Subject stamping at creation")
-    @allure.title("create_memory_from_event stamps subject_id onto every per-witness LOCAL node")
+    @allure.title("create_memory_from_event stamps subject_id on the shared LOCAL node every witness sees")
     @pytest.mark.asyncio
     async def test_local_event_stamps_subject_id_on_every_witness(self):
         graph = KnowledgeGraph()
@@ -135,11 +135,15 @@ class TestMemoryManagerStampsSubjectId:
             ),
         )
 
-        assert len(memory_result.all_ids) == 2
-        for node_id in memory_result.all_ids:
-            node = graph.get_node(node_id)
-            assert node is not None
-            assert node.subject_id == _BOB
+        # Co-witnesses share one canonical PERSONAL_EXPERIENCE node, so the
+        # subject_id must land on that single node and both witnesses must
+        # surface the same memory via personal_memories_for.
+        assert memory_result.all_ids == (memory_result.canonical_id,)
+        canonical = graph.get_node(memory_result.canonical_id)
+        assert canonical is not None
+        assert canonical.subject_id == _BOB
+        for witness_id in (_HOLDER_A, _HOLDER_B):
+            assert [mem.uuid for mem in graph.personal_memories_for(witness_id)] == [memory_result.canonical_id]
 
     @allure.story("Subject stamping at creation")
     @allure.title("create_memory_from_event stamps subject_id on the broadcast node and per-witness copies for CITY")

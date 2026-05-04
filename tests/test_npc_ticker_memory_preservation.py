@@ -17,6 +17,7 @@ import allure
 from cast.npc_ticker import NPCTicker
 from cast.schemas.turn_outputs import TurnOutputs
 from knowledge.graph import KnowledgeGraph
+from knowledge.memory_preservation import _DEPARTURE_PROPAGATION_TAG
 from knowledge.node import (
     CanonSource,
     EdgeType,
@@ -186,7 +187,8 @@ def test_always_present_npc_never_triggers_preservation() -> None:
     NPCTicker(gs).tick(TurnOutputs())
 
     assert _hearsay_at(gs, _MARKET_ID) == []
-    assert "propagated_on_departure" not in memory.tags
+    # The witness edge is never tagged because preservation never ran for this NPC.
+    assert not gs.knowledge_graph.edge_has_flag(_SCHOLAR_UUID, memory.uuid, _DEPARTURE_PROPAGATION_TAG)
 
 
 @allure.story("Memory preservation")
