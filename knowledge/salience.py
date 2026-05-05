@@ -37,5 +37,11 @@ RETALIATION = 0.85
 # both deserve more weight than chitchat but less than a clash you saw.
 REMOTE_EVENT = 0.6
 
+# An NPC encountering an out-of-era concept (smartphone, photo, "computer").
+# Above routine chatter so the encounter survives the salience+recency cut
+# long enough for the familiarity discount in the anachronism modifier to
+# read it back; below combat so a clash still outranks a strange object.
+ANACHRONISM_ENCOUNTER = 0.6
+
 # Neutral midpoint; used only when a caller can't classify the event.
 DEFAULT = 0.5

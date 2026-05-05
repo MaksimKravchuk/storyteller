@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -85,6 +85,11 @@ class MemoryEvent:
     distinct from ``slots.subject`` (free-text name) — so a later
     :meth:`KnowledgeGraph.resolve_subject_identity` lookup can find
     every memory tagged with the same person across encounters.
+    ``tags`` are concept identifiers (e.g. ``light_without_flame``,
+    ``image_capture``) that let downstream queries find every memory
+    referencing the same abstract idea; without them the field on
+    :class:`knowledge.node.KnowledgeNode` was silently dropped at
+    every event-creation site.
     """
 
     event_description: str
@@ -95,6 +100,7 @@ class MemoryEvent:
     salience: float = salience_presets.DEFAULT
     slots: MemorySlots = EMPTY_SLOTS
     subject_id: UUID | None = None
+    tags: list[str] = field(default_factory=list)
 
 
 class MemoryManager:
@@ -177,6 +183,7 @@ class MemoryManager:
                 timestamp=event.game_time,
                 salience=event.salience,
                 subject_id=event.subject_id,
+                tags=list(event.tags),
                 **slot_fields,
             ),
         )
@@ -205,6 +212,7 @@ class MemoryManager:
                 timestamp=event.game_time,
                 salience=event.salience,
                 subject_id=event.subject_id,
+                tags=list(event.tags),
                 **slot_kwargs(event.slots),
             ),
         )

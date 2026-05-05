@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+from difflib import SequenceMatcher
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from knowledge.node import KnowledgeNode, KnowledgeScope
+
+if TYPE_CHECKING:
+    from knowledge.graph import KnowledgeGraph
 
 
 def passes_scope(node: KnowledgeNode, max_scope: KnowledgeScope) -> bool:
@@ -27,3 +32,30 @@ def passes_location(
     if node.scope == KnowledgeScope.LOCAL:
         return node.location_id == location_id
     return True
+
+
+def concept_tag_matches(tags: list[str], target: str, threshold: float) -> bool:
+    """Return True if any of *tags* is similar enough to *target*.
+
+    Comparison is case-insensitive via :class:`difflib.SequenceMatcher`
+    so a classifier emitting ``light_without_fire`` against a stored
+    ``light_without_flame`` still finds the prior encounter rather than
+    starting the familiarity counter from zero.
+    """
+    folded_target = target.casefold()
+    for tag in tags:
+        if SequenceMatcher(a=tag.casefold(), b=folded_target).ratio() >= threshold:
+            return True
+    return False
+
+
+def append_personal_memories(
+    graph: KnowledgeGraph,
+    npc_id: UUID,
+    matching_nodes: list[KnowledgeNode],
+) -> None:
+    """Append *npc_id*'s personal-experience nodes that aren't already in the result list."""
+    existing_ids = {node.uuid for node in matching_nodes}
+    for memory in graph.personal_memories_for(npc_id):
+        if memory.uuid not in existing_ids:
+            matching_nodes.append(memory)

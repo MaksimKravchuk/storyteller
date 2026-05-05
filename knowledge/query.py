@@ -11,6 +11,14 @@ from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from knowledge import query_filters
 
+# Default similarity threshold for ``get_memories_about_concept``.
+# Calibrated against snake_case concept slugs where a single token
+# substitution (``light_without_flame`` vs ``light_without_fire``)
+# scores ~0.86 with ``difflib.SequenceMatcher`` — at 0.85 the pair
+# matches without sweeping in unrelated concepts that share only a
+# common prefix.
+_CONCEPT_FUZZY_DEFAULT = 0.85
+
 if TYPE_CHECKING:
     from models.character import Character
 
@@ -119,7 +127,7 @@ class KnowledgeQueryEngine:
         matching_nodes = [node for node in self._graph.all_nodes() if _node_matches(node, filt)]
 
         if filt.npc_id:
-            self._add_personal_memories(filt.npc_id, matching_nodes)
+            query_filters.append_personal_memories(self._graph, filt.npc_id, matching_nodes)
 
         return matching_nodes
 
@@ -190,9 +198,33 @@ class KnowledgeQueryEngine:
             return ranked
         return ranked[:limit]
 
-    def _add_personal_memories(self, npc_id: UUID, matching_nodes: list[KnowledgeNode]) -> None:
-        """Append personal-experience nodes linked to *npc_id* that aren't already included."""
-        existing_ids = {node.uuid for node in matching_nodes}
-        for memory in self._graph.personal_memories_for(npc_id):
-            if memory.uuid not in existing_ids:
-                matching_nodes.append(memory)
+    def get_memories_about_concept(
+        self,
+        holder_id: UUID,
+        concept_tag: str,
+        fuzzy_threshold: float = _CONCEPT_FUZZY_DEFAULT,
+        limit: int | None = None,
+    ) -> list[KnowledgeNode]:
+        """Return *holder_id*'s personal memories whose ``tags`` match *concept_tag*.
+
+        Concepts are abstract (``light_without_flame``,
+        ``image_capture``) and have no canonical UUID, so this is the
+        tag-keyed counterpart to :meth:`get_memories_about_subject`.
+        A memory matches when *any* of its tags has similarity at or
+        above ``fuzzy_threshold``; the comparator is
+        :class:`difflib.SequenceMatcher` so a classifier emitting
+        ``light_without_fire`` against a stored ``light_without_flame``
+        still finds the prior encounter rather than starting the
+        familiarity counter from zero. Comparison is case-insensitive
+        and ranks by the same salience+recency blend as
+        :meth:`get_memories_held_by`.
+        """
+        matched = [
+            memory
+            for memory in self._graph.personal_memories_for(holder_id)
+            if query_filters.concept_tag_matches(memory.tags, concept_tag, fuzzy_threshold)
+        ]
+        ranked = _rank_by_score(matched)
+        if limit is None:
+            return ranked
+        return ranked[:limit]
