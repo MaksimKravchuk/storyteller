@@ -30,12 +30,13 @@ def _to_engine_character(character: CharacterCreationInput | None) -> PlayerChar
     """Convert wire-side character to engine-layer; return None for blank payloads."""
     if character is None:
         return None
-    if not character.name and not character.appearance and not character.inventory:
+    if not character.name and not character.appearance and not character.inventory and not character.origin_era:
         return None
     return PlayerCharacterInput(
         name=character.name,
         appearance=character.appearance,
         inventory=list(character.inventory),
+        origin_era=character.origin_era,
     )
 
 

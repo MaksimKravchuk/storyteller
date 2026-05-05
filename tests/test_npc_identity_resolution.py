@@ -459,8 +459,7 @@ class TestSubjectStampingConsumerSeams:
             item_gen,
             ["window"],
             "break the window",
-            gs,
-            memory_manager,
+            _doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_HOLDER_A)

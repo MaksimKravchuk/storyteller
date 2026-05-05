@@ -50,6 +50,15 @@ class DialogueEntry(BaseModel):
     npc_name: str
     response: str
     contest_roll: str | None = None
+    # ``unfamiliar_concepts`` and ``perceived_rewrite`` carry the
+    # AnachronismClassifier verdict for this NPC so the Narrator can
+    # frame the NPC's reaction through their in-period
+    # misunderstanding. Both are ``None`` (not empty list / empty
+    # string) when the classifier did not fire — an empty list would
+    # be indistinguishable from "fired but no concepts matched", and
+    # the Narrator section needs the distinction.
+    unfamiliar_concepts: list[str] | None = None
+    perceived_rewrite: str | None = None
 
 
 class NPCTurnEntry(BaseModel):

@@ -83,9 +83,10 @@ class ContextFormatter:
         """Update system prompt variables from the current game state."""
         scene = self._gs.current_scene
         player = self._gs.player
+        setting = self._gs.setting
         context_vars = dict(
-            setting_name=self._gs.setting.name,
-            time_period=self._gs.setting.time_period,
+            setting_name=setting.name,
+            time_period=setting.time_period,
             scene_description=(scene.description if scene else "No scene set yet"),
             npcs_present=format_npcs_present(scene, self._gs),
             points_of_interest=format_pois(scene),
@@ -93,6 +94,8 @@ class ContextFormatter:
             game_clock=str(round(self._gs.game_clock, 1)),
             player_appearance=format_player_appearance(player),
             player_inventory=format_player_inventory(player),
+            setting_technologies=", ".join(setting.technologies) if setting.technologies else "(unrecorded)",
+            setting_social_structure=setting.social_structure or "(unrecorded)",
         )
         history_summary = format_scene_history(self._gs)
         if history_summary:

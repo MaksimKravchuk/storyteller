@@ -74,8 +74,7 @@ class TestApplyObjectInteractions:
             item_gen,
             ["window"],
             "break the window",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         assert result.narrations == ["Glass shatters with a sharp crack."]
@@ -109,8 +108,7 @@ class TestApplyObjectInteractions:
             item_gen,
             ["window"],
             "break the window",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         memories = KnowledgeQueryEngine(gs.knowledge_graph).get_memories_held_by(_NPC_UUID)
@@ -142,8 +140,7 @@ class TestApplyObjectInteractions:
             item_gen,
             ["wall"],
             "shove the wall",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         assert result.narrations == ["You bump into the wall; nothing gives."]
@@ -177,8 +174,7 @@ class TestApplyObjectInteractions:
             item_gen,
             ["window"],
             "break the window",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         assert len(gs.player.learned_facts) == 1
@@ -193,7 +189,8 @@ class TestApplyObjectInteractions:
     async def test_no_item_generator_returns_empty(self):
         gs = make_game_state()
         memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
-        result = await doi_mod.apply_object_interactions(None, ["window"], "break the window", gs, memory_manager)
+        env = doi_mod.ObjectInteractionEnv(gs, memory_manager)
+        result = await doi_mod.apply_object_interactions(None, ["window"], "break the window", env)
         assert result.narrations == []
         assert result.deltas == []
 
@@ -204,7 +201,8 @@ class TestApplyObjectInteractions:
         gs = make_game_state()
         item_gen = _stub_item_generator(item_resp.ObjectInteractionResponse())
         memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
-        result = await doi_mod.apply_object_interactions(item_gen, [], "break everything", gs, memory_manager)
+        env = doi_mod.ObjectInteractionEnv(gs, memory_manager)
+        result = await doi_mod.apply_object_interactions(item_gen, [], "break everything", env)
         assert result.narrations == []
         assert result.deltas == []
         item_gen._send_json.assert_not_awaited()  # type: ignore[attr-defined]
@@ -228,7 +226,8 @@ class TestApplyObjectInteractions:
         memory_manager = _memory_manager_with_stub_llm(gs.knowledge_graph)
         nodes_before = len(gs.knowledge_graph.digraph.nodes)
 
-        await doi_mod.apply_object_interactions(item_gen, ["window"], "break the window", gs, memory_manager)
+        env = doi_mod.ObjectInteractionEnv(gs, memory_manager)
+        await doi_mod.apply_object_interactions(item_gen, ["window"], "break the window", env)
 
         nodes_after = len(gs.knowledge_graph.digraph.nodes)
         # Exactly one new node: the scene_state delta. No stray personal
@@ -277,8 +276,7 @@ class TestSceneBuilderDeltaInjection:
             item_gen,
             ["window"],
             "break the window",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         # The delta is in the graph under the tavern location.
@@ -349,8 +347,7 @@ class TestApplyObjectInteractionsDualSink:
             item_gen,
             ["window"],
             "break the window",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         assert gs.locations[_TAVERN].object_states == {"window": "The front window is broken."}
@@ -375,8 +372,7 @@ class TestApplyObjectInteractionsDualSink:
             item_gen,
             ["Wooden_Shutter"],
             "break the shutter",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         assert gs.locations[_TAVERN].object_states == {"wooden shutter": "The wooden shutter is splintered."}
@@ -406,8 +402,7 @@ class TestApplyObjectInteractionsDualSink:
             gen,
             ["window", "door"],
             "break the window and the door",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         assert gs.locations[_TAVERN].object_states == {
@@ -431,8 +426,7 @@ class TestApplyObjectInteractionsDualSink:
             item_gen,
             [""],
             "vague action",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         assert gs.locations[_TAVERN].object_states == {}
@@ -456,8 +450,7 @@ class TestApplyObjectInteractionsDualSink:
             item_gen,
             ["wall"],
             "crack the wall",
-            gs,
-            memory_manager,
+            doi_mod.ObjectInteractionEnv(gs, memory_manager),
         )
 
         # Graph write still fires — the dangling location only blocks the typed channel.

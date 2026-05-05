@@ -50,6 +50,11 @@ class PlayerState(StorytellerBase):
     known_npcs: set[UUID] = Field(default_factory=set)
     player_event_log: list[str] = []
     learned_facts: set[UUID] = Field(default_factory=set)
+    # Free-text era label the player chose at onboarding (e.g. "21st
+    # century earth"). The :class:`AnachronismClassifier` reads it as
+    # the deterministic anchor for "is this player action out of
+    # period?". An empty string disables the classifier.
+    origin_era: str = ""
 
 
 class GameState(StorytellerBase):

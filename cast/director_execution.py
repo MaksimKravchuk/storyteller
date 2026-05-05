@@ -16,6 +16,7 @@ from cast import (
     director_witness,
     npc_ticker as npc_ticker_mod,
 )
+from cast import anachronism as anachronism_mod
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from cast.schemas import (
     chronicler_response as chronicler_schema,
@@ -23,10 +24,12 @@ from cast.schemas import (
     turn_outputs,
 )
 from loguru import logger
-from models import world_state as world_state_mod
-from models.game_state import GameState
-from timeline.event import GameEvent
-from timeline.event_manager import EventManager
+from models import game_state as gs_mod, world_state as world_state_mod
+from timeline import event as event_mod, event_manager as event_manager_mod
+
+GameState = gs_mod.GameState
+GameEvent = event_mod.GameEvent
+EventManager = event_manager_mod.EventManager
 
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_GAME_STATE = "game_state"
@@ -136,6 +139,7 @@ class PlanExecutor:
         item_generator: Any,
         world_chronicler: Any | None = None,
         dramaturge: Any | None = None,
+        anachronism_classifier: anachronism_mod.AnachronismClassifier | None = None,
         register_npc_fn: Any = None,
     ) -> None:
         self._gs = game_state
@@ -153,6 +157,7 @@ class PlanExecutor:
         self._item_generator = item_generator
         self._world_chronicler = world_chronicler
         self._dramaturge = dramaturge
+        self._anachronism_classifier = anachronism_classifier
         self._register_npc = register_npc_fn
 
     async def execute_plan(
@@ -164,15 +169,15 @@ class PlanExecutor:
         """Delegate to agents based on the routing plan and assemble output."""
         raw_outputs = turn_outputs.TurnOutputs(intent=plan.intent)
         action_type = plan.action_type
-        is_aggressive = plan_access.is_aggressive(plan)
 
+        anachronism_ctx = self._build_anachronism_context(player_action)
         local_events = await self._process_events(completed_events)
-        new_uuids = await self._dispatch_plan(plan, action_type, player_action, raw_outputs)
+        new_uuids = await self._dispatch_plan(plan, action_type, player_action, raw_outputs, anachronism_ctx)
 
         if local_events:
             raw_outputs.completed_events = [ev.on_complete_description or ev.name for ev in local_events]
 
-        await self._resolve_npc_turns(action_type, player_action, raw_outputs, is_aggressive)
+        await self._resolve_npc_turns(action_type, player_action, raw_outputs, plan_access.is_aggressive(plan))
         self._npc_ticker.tick(raw_outputs, skip_uuids=new_uuids)
         # Tactical TTL sweep follows the NPC ticker so any NPC the ticker
         # just evicted is no longer in scene when expiry conditions are
@@ -187,6 +192,24 @@ class PlanExecutor:
 
         self._append_player_event_log(raw_outputs)
         return await self._narrate_and_review(raw_outputs, player_action)
+
+    def _build_anachronism_context(self, player_action: str) -> anachronism_mod.TurnAnachronismContext | None:
+        """Construct the per-turn anachronism cache, or ``None`` when disabled.
+
+        Returns ``None`` when no classifier was wired on the cast — the
+        downstream dialogue / object-interaction call sites short-circuit
+        on ``None`` so a missing classifier costs nothing. The cache
+        itself is created without firing the LLM; the actual classifier
+        round trip happens lazily inside
+        :meth:`cast.anachronism.TurnAnachronismContext.ensure_base`.
+        """
+        if self._anachronism_classifier is None:
+            return None
+        return anachronism_mod.TurnAnachronismContext.create_for(
+            self._anachronism_classifier,
+            self._gs,
+            player_action,
+        )
 
     def _append_player_event_log(self, raw_outputs: turn_outputs.TurnOutputs) -> None:
         """Append this turn's narrator-consumed highlights to the player event log.
@@ -211,6 +234,7 @@ class PlanExecutor:
         action_type: str,
         player_action: str,
         raw_outputs: turn_outputs.TurnOutputs,
+        anachronism_ctx: anachronism_mod.TurnAnachronismContext | None,
     ) -> set[UUID]:
         """Run the scene-prep + action-specific handlers for the turn.
 
@@ -229,8 +253,8 @@ class PlanExecutor:
         targets = plan_access.targets(plan)
         is_aggressive = plan_access.is_aggressive(plan)
         new_uuids = await self._prepare_scene(action_type, targets, player_action, raw_outputs)
-        new_uuids |= await self._process_target_npcs(plan, player_action, raw_outputs)
-        await self._run_action_handler(action_type, targets, player_action, is_aggressive, raw_outputs)
+        new_uuids |= await self._process_target_npcs(plan, player_action, raw_outputs, anachronism_ctx)
+        await self._run_action_handler(action_type, targets, player_action, is_aggressive, raw_outputs, anachronism_ctx)
         return new_uuids
 
     async def _run_action_handler(
@@ -240,6 +264,7 @@ class PlanExecutor:
         player_action: str,
         is_aggressive: bool,
         raw_outputs: turn_outputs.TurnOutputs,
+        anachronism_ctx: anachronism_mod.TurnAnachronismContext | None,
     ) -> None:
         """Dispatch EXAMINE / INTERACT to the matching object handler.
 
@@ -254,7 +279,7 @@ class PlanExecutor:
             if item_desc:
                 raw_outputs.item_examination = item_desc
         elif action_type == "INTERACT":
-            await self._interact_with_objects(targets, player_action, is_aggressive, raw_outputs)
+            await self._interact_with_objects(targets, player_action, is_aggressive, raw_outputs, anachronism_ctx)
 
     async def _handle_scene_change(
         self,
@@ -516,6 +541,7 @@ class PlanExecutor:
         plan: Any,
         player_action: str,
         raw_outputs: turn_outputs.TurnOutputs,
+        anachronism_ctx: anachronism_mod.TurnAnachronismContext | None,
     ) -> set[UUID]:
         """Ensure targeted NPCs exist in the scene, run interactions.
 
@@ -547,6 +573,7 @@ class PlanExecutor:
                 plan_access.is_aggressive(plan),
                 raw_outputs,
                 plan_access.contest_as_dict(plan),
+                anachronism_ctx,
             )
         return new_uuids
 
@@ -627,6 +654,7 @@ class PlanExecutor:
         player_action: str,
         is_aggressive: bool,
         raw_outputs: turn_outputs.TurnOutputs,
+        anachronism_ctx: anachronism_mod.TurnAnachronismContext | None = None,
     ) -> None:
         """Resolve INTERACT actions whose targets are pure scene objects.
 
@@ -653,8 +681,11 @@ class PlanExecutor:
             self._item_generator,
             object_targets,
             player_action,
-            self._gs,
-            self._memory_manager,
+            doi_mod.ObjectInteractionEnv(
+                game_state=self._gs,
+                memory_manager=self._memory_manager,
+                anachronism_ctx=anachronism_ctx,
+            ),
         )
         if interaction.narrations:
             raw_outputs.object_interactions = interaction.narrations
@@ -755,6 +786,7 @@ class PlanExecutor:
         is_aggressive: bool,
         raw_outputs: turn_outputs.TurnOutputs,
         contest_info: dict | None = None,
+        anachronism_ctx: anachronism_mod.TurnAnachronismContext | None = None,
     ) -> None:
         """Run NPC dialogue and retaliation checks.
 
@@ -788,6 +820,7 @@ class PlanExecutor:
             target_names,
             is_aggressive=is_aggressive,
             contest_info=contest_info,
+            anachronism_ctx=anachronism_ctx,
         )
         if dialogue_entries:
             raw_outputs.dialogue = [turn_outputs.DialogueEntry(**entry) for entry in dialogue_entries]

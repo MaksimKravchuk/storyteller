@@ -12,15 +12,22 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from cast.dice import ContestRoll
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryEvent, MemoryManager, record_player_learned_fact
 from knowledge.memory_slots import MemorySlots
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
 
-WorkItem = tuple[Any, Any, str, ContestRoll | None]
-DialogueEntry = dict[str, str]
+# Mirrors :data:`cast.director_dialogue.WorkItem`: 5-tuple of
+# (npc, actor, action_text, contest_roll, anachronism_for_npc). Only
+# index 0 is read here, but the full shape is annotated so the type
+# checker keeps the two modules' work-item view in sync.
+# Accepts both the canonical ``WorkItem`` ``NamedTuple`` from
+# :mod:`cast.director_dialogue_workers` and the legacy raw tuples
+# tests still synthesize. Both expose ``wi[0]`` (the NPC), which is
+# all this module reads.
+WorkItem = Any
+DialogueEntry = dict[str, Any]
 
 
 def cowitness_uuids(
