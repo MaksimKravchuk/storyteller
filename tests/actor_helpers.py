@@ -26,6 +26,9 @@ BASE_ACTOR_PROMPT_VARS: types.MappingProxyType[str, str] = types.MappingProxyTyp
         "current_mood": "neutral",
         "physical_status": "healthy",
         "language": "English",
+        "player_appearance": "unremarkable",
+        "setting_name": "Ancient Rome",
+        "time_period": "1st century BCE",
     },
 )
 

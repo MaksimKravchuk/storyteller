@@ -40,6 +40,19 @@ _INVENTORY = PromptSection(
     required_vars=["npc_inventory"],
 )
 
+_PLAYER_CHARACTER = PromptSection(
+    name="player_character",
+    template=(
+        "The person interacting with you — their visible appearance: {player_appearance}.\n"
+        "Your world is {setting_name} ({time_period}). React naturally to whatever in their "
+        "appearance, build, clothing, speech, or bearing would actually surprise, intrigue, "
+        "unsettle, or offend someone of your time, place, and station — do not flatten the "
+        "encounter into bland politeness. If something about them stands out against local "
+        "norms, let it show in your tone, glance, or words; if nothing does, do not invent it."
+    ),
+    required_vars=["player_appearance", "setting_name", "time_period"],
+)
+
 _KNOWLEDGE = PromptSection(
     name="knowledge",
     template="What you know:\n{accessible_knowledge}",
@@ -174,6 +187,7 @@ ACTOR_SYSTEM_DIALOGUE = PromptTemplate(
     [
         _IDENTITY,
         _INVENTORY,
+        _PLAYER_CHARACTER,
         _KNOWLEDGE,
         _MEMORY,
         _HOSTILITY,
@@ -188,6 +202,7 @@ ACTOR_SYSTEM_ACTION = PromptTemplate(
     [
         _IDENTITY,
         _INVENTORY,
+        _PLAYER_CHARACTER,
         _KNOWLEDGE,
         _MEMORY,
         _HOSTILITY,

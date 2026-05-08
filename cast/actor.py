@@ -7,6 +7,7 @@ from typing import Any
 from cast.actor_config import format_past_memories, goal_prompt_vars
 from cast.base_performer_class import BasePerformer, LLMJSONError
 from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
+from cast.player_context import format_player_appearance
 from cast.schemas.actor_reply import ActorEnvelope, ActorReply
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import Message, Role
@@ -77,6 +78,7 @@ class Actor(BasePerformer):
             physical_status=self.npc.physical_status,
         )
 
+        _apply_player_character_section(self, context)
         _apply_optional_sections(self, context)
 
         if context.get("is_npc_turn"):
@@ -137,6 +139,25 @@ class Actor(BasePerformer):
             )
             salvaged = (exc.raw_response or "").strip()[:_SALVAGE_NARRATION_MAX]
             return ActorEnvelope(narration=salvaged or _FALLBACK_NARRATION)
+
+
+def _apply_player_character_section(actor: Actor, context: dict) -> None:
+    """Wire the player's visible appearance and the setting era into the Actor prompt.
+
+    Without this, NPCs see only the player's words/action — never their
+    height, build, dress, or accent — and react identically whether the
+    player is a 190cm Slav in ancient Rome or a local farmhand. The
+    ``player_character`` PromptSection requires all three vars, so it is
+    skipped when the caller did not provide a ``game_state``.
+    """
+    game_state = context.get("game_state")
+    if game_state is None:
+        return
+    actor.set_context(
+        player_appearance=format_player_appearance(game_state.player),
+        setting_name=game_state.setting.name,
+        time_period=game_state.setting.time_period,
+    )
 
 
 def _apply_optional_sections(actor: Actor, context: dict) -> None:

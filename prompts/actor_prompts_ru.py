@@ -40,6 +40,20 @@ _INVENTORY_RU = PromptSection(
     required_vars=["npc_inventory"],
 )
 
+_PLAYER_CHARACTER_RU = PromptSection(
+    name="player_character",
+    template=(
+        "Человек, который к тебе обращается — его видимая внешность: {player_appearance}.\n"
+        "Твой мир — {setting_name} ({time_period}). Реагируй естественно на то, что в его "
+        "облике, телосложении, одежде, речи или манере держаться по-настоящему удивило, "
+        "заинтриговало, насторожило или возмутило бы человека твоего времени, места и "
+        "положения — не сглаживай встречу до пресной вежливости. Если что-то в нём "
+        "выделяется на фоне местных норм, пусть это прозвучит в твоём тоне, взгляде или "
+        "словах; если ничего не выделяется — не выдумывай."
+    ),
+    required_vars=["player_appearance", "setting_name", "time_period"],
+)
+
 _KNOWLEDGE_RU = PromptSection(
     name="knowledge",
     template="Что ты знаешь:\n{accessible_knowledge}",
@@ -186,6 +200,7 @@ ACTOR_SYSTEM_DIALOGUE_RU = PromptTemplate(
     [
         _IDENTITY_RU,
         _INVENTORY_RU,
+        _PLAYER_CHARACTER_RU,
         _KNOWLEDGE_RU,
         _MEMORY_RU,
         _HOSTILITY_RU,
@@ -200,6 +215,7 @@ ACTOR_SYSTEM_ACTION_RU = PromptTemplate(
     [
         _IDENTITY_RU,
         _INVENTORY_RU,
+        _PLAYER_CHARACTER_RU,
         _KNOWLEDGE_RU,
         _MEMORY_RU,
         _HOSTILITY_RU,
