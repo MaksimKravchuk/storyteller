@@ -22,7 +22,7 @@ from cast.dice import (
     record_npc_contest_event,
     roll_contest,
 )
-from cast import npc_goal_resolution as _ngr, npc_opportunity as _npo
+from cast import npc_goal_resolution as _ngr, npc_opportunity as _npo, scene_log
 from cast.director_witness import WitnessedAggression, is_guard_occupation
 from cast.wait_detection import INCAPACITATING_STATES
 from models.game_state import GameState
@@ -53,6 +53,12 @@ _ACTION_TO_CONTEST: MappingProxyType[str, ContestType] = MappingProxyType(
 _NPC_SKIP_STATUSES: frozenset[str] = INCAPACITATING_STATES | frozenset(("dead",))
 
 _MAX_RAW_PREVIEW = 200
+
+# Tail of the scene action log shown to NPCs each turn. Bounded so a
+# long scene does not blow up the prompt; full log stays in GameState
+# for scene-end consolidation.
+_MAX_SCENE_LOG_ENTRIES = 25
+_MAX_SCENE_LOG_DESC_CHARS = 200
 
 
 def _parse_npc_response(raw: str) -> dict:
@@ -113,6 +119,14 @@ def _roll_npc_contest(
 
     record_npc_contest_event(contest_roll, npc, action_type, target_name)
     return contest_roll
+
+
+def _record_action_in_scene_log(game_state: GameState, action: NPCAction) -> None:
+    """Append the resolved NPC action to ``GameState.scene_action_log``."""
+    npc = game_state.npcs.get(action.npc_uuid)
+    if npc is None:
+        return
+    scene_log.append_npc_action(game_state, npc, action)
 
 
 def _apply_scene_mutation(
@@ -299,6 +313,7 @@ class NPCTurnResolver:
         )
         for action in actions:
             _apply_scene_mutation(action.npc_uuid, action.action_type, action.target, self._gs)
+            _record_action_in_scene_log(self._gs, action)
         return actions
 
     async def _gather_actions(
@@ -429,6 +444,9 @@ def _build_turn_prompt(
     )
 
     clauses: list[str] = [base_prompt]
+    scene_history_clause = _format_scene_log_clause(game_state.scene_action_log)
+    if scene_history_clause:
+        clauses.append(scene_history_clause)
     if peer_actions:
         clauses.append(_format_peer_actions_clause(peer_actions))
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
@@ -463,6 +481,32 @@ def _format_base_turn_prompt(
         status=npc.physical_status,
         tail=tail,
     )
+
+
+def _format_scene_log_entry(entry: Any) -> str:
+    """Render one scene-log entry as a bullet for the NPC prompt."""
+    description = entry.description[:_MAX_SCENE_LOG_DESC_CHARS]
+    speaker = entry.actor_name or entry.action_type or "Event"
+    return "- [t={clock:.1f}] {speaker}: {desc}".format(
+        clock=entry.game_clock,
+        speaker=speaker,
+        desc=description,
+    )
+
+
+def _format_scene_log_clause(scene_action_log: list[Any]) -> str | None:
+    """Render the per-scene chronological log as a prompt clause.
+
+    Returns ``None`` when the log is empty so the caller can omit the
+    section. Caps the rendered tail at :data:`_MAX_SCENE_LOG_ENTRIES`
+    so a long scene cannot inflate the prompt; the full log stays in
+    :class:`GameState` for scene-end consolidation regardless.
+    """
+    if not scene_action_log:
+        return None
+    tail = scene_action_log[-_MAX_SCENE_LOG_ENTRIES:]
+    lines = [_format_scene_log_entry(entry) for entry in tail]
+    return "THIS SCENE SO FAR:\n{0}".format("\n".join(lines))
 
 
 def _format_peer_actions_clause(peer_actions: list[tuple[str, str]]) -> str:

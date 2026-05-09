@@ -25,8 +25,10 @@ from cast.schemas import (
 from loguru import logger
 from models import world_state as world_state_mod
 from models.game_state import GameState
-from timeline.event import GameEvent
-from timeline.event_manager import EventManager
+from timeline import event as event_mod, event_manager as event_manager_mod
+
+GameEvent = event_mod.GameEvent
+EventManager = event_manager_mod.EventManager
 
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_GAME_STATE = "game_state"
@@ -584,9 +586,11 @@ class PlanExecutor:
                 context={_KEY_GAME_STATE: self._gs},
             )
             raw_outputs.scene = scene
+            await self._consolidate_outgoing_scene(self._gs.current_scene)
             self._gs.current_scene = scene
             self._gs.scene_number += 1
             self._gs.scene_conversation_log = []
+            self._gs.scene_action_log = []
 
         new_npcs = await self._dialogue.init_scene_npcs(
             self._npc_generator,
@@ -599,6 +603,13 @@ class PlanExecutor:
         # no co-located target exists.
         tactical_mod.promote_life_goals_on_sight(self._gs)
         return {npc.uuid for npc in new_npcs}
+
+    async def _consolidate_outgoing_scene(self, outgoing_scene: Any) -> None:
+        """Persist the outgoing scene's action log as long-term memory."""
+        # Local import: `cast` already imports 8 names at module level (WPS235 cap).
+        from cast import scene_swap
+
+        await scene_swap.consolidate_outgoing_scene(self._memory_manager, self._gs, outgoing_scene)
 
     async def _examine_items(self, targets: list[str], player_action: str) -> list[str]:
         """Examine items from scene or NPC inventories via the ItemGenerator."""

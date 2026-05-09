@@ -7,6 +7,7 @@ from uuid import UUID
 
 from models.game_state import GameState
 
+from cast import scene_log
 from cast.player_context import format_player_appearance, format_player_inventory
 
 _SCENE_SUMMARY_CHARS = 500
@@ -126,3 +127,4 @@ class ContextFormatter:
                 _KEY_ACTION_TYPE: action_type,
             }
         )
+        scene_log.append_player_action(self._gs, action_type, player_action)

@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from uuid import UUID
 
+from cast import scene_log
 from cast._npc_outcome import OutcomeKind
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryEvent, MemoryManager
@@ -119,14 +120,26 @@ async def persist_combat_memory(
     if location_id is None:
         scene = game_state.current_scene
         location_id = scene.location_id if scene else None
+    description = _format_combat_event(event)
+    witness_ids = _co_located_witness_ids(event.actor, event.target, game_state, location_id)
     await memory_manager.create_memory_from_event(
         MemoryEvent(
-            event_description=_format_combat_event(event),
-            witness_ids=_co_located_witness_ids(event.actor, event.target, game_state, location_id),
+            event_description=description,
+            witness_ids=witness_ids,
             scope=KnowledgeScope.LOCAL,
             location_id=location_id,
             game_time=game_state.game_clock,
             salience=salience_presets.COMBAT,
             slots=_slots_for_combat(event),
+        ),
+    )
+    scene_log.append_event(
+        game_state,
+        scene_log.WitnessedEvent(
+            event_type="COMBAT_WITNESS",
+            description=description,
+            witness_ids=witness_ids,
+            target_uuid=event.target.uuid,
+            already_persisted=True,
         ),
     )
