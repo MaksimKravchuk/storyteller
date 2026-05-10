@@ -493,6 +493,7 @@ class PlanExecutor:
             player_action,
             witnessed_events=raw_outputs.witnessed_events,
             is_aggressive=is_aggressive,
+            player_action_type=action_type,
         )
         await self._npc_turns.apply_goal_aftermath(npc_actions, self._memory_manager)
         if npc_actions:

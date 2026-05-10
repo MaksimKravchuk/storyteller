@@ -11,6 +11,7 @@ import allure
 
 from cast import npc_turn as npc_turn_mod
 from cast import scene_log as scene_log_mod
+from cast.player_context import PlayerUtterance
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.npc_card import NPCCard
@@ -96,6 +97,62 @@ class TestPromptContainsSceneLog:
 
         prompt = npc_turn_mod._build_turn_prompt(marcus, "Player waits.", gs)
         assert "THIS SCENE SO FAR:" not in prompt
+
+
+@allure.epic("NPC short-term memory")
+@allure.feature("Scene log in NPC prompt")
+class TestPromptLiteraryPlayerEntries:
+    @allure.story("Literary phrasing")
+    @allure.title("Player scene-log entries render via PlayerUtterance when player.appearance is set")
+    def test_player_entries_render_literarily(self):
+        gs = _make_gs()
+        gs.player.appearance = "190 cm Slav in dark furs"
+        marcus = _make_npc(_NPC_UUID_A, "Marcus")
+        _seed_scene(gs, marcus)
+
+        scene_log_mod.append_player_action(gs, "TALK", "I demand the silver.")
+        gs.scene_action_log.append(
+            SceneActionEntry(
+                actor_kind=ActorKind.NPC,
+                actor_uuid=marcus.uuid,
+                actor_name="Marcus",
+                action_type="TALK",
+                description="Marcus refuses.",
+                game_clock=1.0,
+            ),
+        )
+
+        utterance = PlayerUtterance(
+            appearance="190 cm Slav in dark furs",
+            action_type="ATTACK",
+            text="I draw my sword.",
+        )
+        prompt = npc_turn_mod._build_turn_prompt(marcus, utterance, gs)
+
+        # Player scene-log entry uses PlayerUtterance.
+        assert 'A 190 cm Slav in dark furs man says: "I demand the silver."' in prompt
+        # NPC scene-log entry stays in the bare form.
+        assert "Marcus: Marcus refuses." in prompt
+        # Per-turn cue uses PlayerUtterance with the current action_type.
+        assert "Recent events: A 190 cm Slav in dark furs man attacks: I draw my sword." in prompt
+
+    @allure.story("Literary phrasing")
+    @allure.title("Without an appearance, player entries fall back to the bare 'Player: ...' form")
+    def test_unremarkable_appearance_falls_back_to_bare_form(self):
+        gs = _make_gs()
+        # gs.player.appearance defaults to "" → format_player_appearance returns "unremarkable".
+        marcus = _make_npc(_NPC_UUID_A, "Marcus")
+        _seed_scene(gs, marcus)
+
+        scene_log_mod.append_player_action(gs, "TALK", "I greet the merchant.")
+
+        utterance = PlayerUtterance(appearance="", action_type="EXPLORE", text="I look around.")
+        prompt = npc_turn_mod._build_turn_prompt(marcus, utterance, gs)
+
+        # No "A <descriptor> man" prefix; bare Player form.
+        assert "A 190 cm" not in prompt
+        assert 'Player says: "I greet the merchant."' in prompt
+        assert "Recent events: Player looks around, doing: I look around." in prompt
 
 
 @allure.epic("NPC short-term memory")

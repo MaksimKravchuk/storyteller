@@ -137,3 +137,37 @@ async def test_none_outgoing_scene_skips_consolidation(monkeypatch) -> None:
     await executor._consolidate_outgoing_scene(None)
 
     consolidate_spy.assert_not_awaited()
+
+
+@allure.story("Scene swap")
+@allure.title("Outgoing scene swap forwards the player's visible appearance to the consolidator")
+@pytest.mark.asyncio
+async def test_player_appearance_forwarded_when_set(monkeypatch) -> None:
+    executor, gs, _ = _make_executor()
+    gs.player.appearance = "190 cm Slav in dark furs"
+    consolidate_spy = AsyncMock(return_value=None)
+    monkeypatch.setattr("knowledge.scene_consolidation.consolidate_scene", consolidate_spy)
+
+    await executor._consolidate_outgoing_scene(gs.current_scene)
+
+    await_args = consolidate_spy.await_args
+    assert await_args is not None
+    request = await_args.args[1]
+    assert request.player_appearance == "190 cm Slav in dark furs"
+
+
+@allure.story("Scene swap")
+@allure.title("Unremarkable appearance is normalised to None so the summariser falls back to the bare form")
+@pytest.mark.asyncio
+async def test_unremarkable_appearance_passes_none(monkeypatch) -> None:
+    executor, gs, _ = _make_executor()
+    # gs.player.appearance defaults to "" → format_player_appearance returns "unremarkable".
+    consolidate_spy = AsyncMock(return_value=None)
+    monkeypatch.setattr("knowledge.scene_consolidation.consolidate_scene", consolidate_spy)
+
+    await executor._consolidate_outgoing_scene(gs.current_scene)
+
+    await_args = consolidate_spy.await_args
+    assert await_args is not None
+    request = await_args.args[1]
+    assert request.player_appearance is None

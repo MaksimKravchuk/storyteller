@@ -35,6 +35,13 @@ def _make_manager() -> tuple[MemoryManager, KnowledgeGraph, AsyncMock]:
     return MemoryManager(graph=graph, llm_client=llm), graph, llm
 
 
+def _captured_user_prompt(llm: AsyncMock) -> str:
+    """Pull the body of the user message off the most recent send_message call."""
+    call_kwargs = llm.send_message.await_args.kwargs
+    messages = call_kwargs["messages"]
+    return messages[0].body
+
+
 def _routine_entry(actor_name: str, description: str, clock: float = 1.0) -> SceneActionEntry:
     return SceneActionEntry(
         actor_kind=ActorKind.PLAYER if actor_name == "Player" else ActorKind.NPC,
@@ -140,6 +147,56 @@ async def test_summary_per_npc_plus_significant_node() -> None:
     assert len(personal_nodes) == 3
     significant = [n for n in personal_nodes if "Marcus strikes Livia" in n.text]
     assert len(significant) == 1
+
+
+@allure.story("consolidate_scene")
+@allure.title("Player appearance, when supplied, renders player entries literarily in the summariser transcript")
+@pytest.mark.asyncio
+async def test_player_appearance_renders_literary_in_summariser_prompt() -> None:
+    manager, graph, llm = _make_manager()
+    graph.register_actor_node(_NPC_ALPHA, label="Marcus")
+
+    await consolidate_scene(
+        manager,
+        SceneConsolidationRequest(
+            entries=[_routine_entry("Player", "I demand the silver.")],
+            present_npc_uuids=[_NPC_ALPHA],
+            game_time=2.0,
+            location_id=_LOC,
+            player_subject_id=_PLAYER_UUID,
+            player_appearance="190 cm Slav in dark furs",
+        ),
+    )
+
+    assert llm.send_message.await_count == 1
+    user_message = _captured_user_prompt(llm)
+    assert 'A 190 cm Slav in dark furs man says: "I demand the silver."' in user_message
+    # Without an appearance, the same call would emit the bare "Player: ..." form;
+    # confirm the literary form replaced it.
+    assert "Player: I demand the silver." not in user_message
+
+
+@allure.story("consolidate_scene")
+@allure.title("With no player_appearance, player entries fall back to the bare 'Player: ...' form")
+@pytest.mark.asyncio
+async def test_no_player_appearance_falls_back_to_bare_form() -> None:
+    manager, graph, llm = _make_manager()
+    graph.register_actor_node(_NPC_ALPHA, label="Marcus")
+
+    await consolidate_scene(
+        manager,
+        SceneConsolidationRequest(
+            entries=[_routine_entry("Player", "I demand the silver.")],
+            present_npc_uuids=[_NPC_ALPHA],
+            game_time=2.0,
+            location_id=_LOC,
+            player_subject_id=_PLAYER_UUID,
+        ),
+    )
+
+    user_message = _captured_user_prompt(llm)
+    assert "Player: I demand the silver." in user_message
+    assert "A " not in user_message.split("\n")[0]  # no literary descriptor
 
 
 @allure.story("consolidate_scene")

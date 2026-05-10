@@ -14,9 +14,12 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from cast.player_context import format_player_appearance
 from knowledge import scene_consolidation
 from knowledge.memory import MemoryManager
 from models.game_state import GameState
+
+_DEFAULT_APPEARANCE = "unremarkable"
 
 
 async def consolidate_outgoing_scene(
@@ -41,8 +44,22 @@ async def consolidate_outgoing_scene(
         game_time=game_state.game_clock,
         location_id=outgoing_scene.location_id,
         player_subject_id=game_state.player.uuid,
+        player_appearance=_player_appearance_for_summary(game_state),
     )
     await scene_consolidation.consolidate_scene(memory_manager, request)
+
+
+def _player_appearance_for_summary(game_state: GameState) -> str | None:
+    """Return the player's visible appearance, or ``None`` when uninformative.
+
+    The placeholder ``unremarkable`` adds no information the summariser
+    couldn't infer from the bare transcript, so we return ``None`` and
+    let the rendered log fall back to the bare ``Player: ...`` form.
+    """
+    appearance = format_player_appearance(game_state.player)
+    if appearance == _DEFAULT_APPEARANCE:
+        return None
+    return appearance
 
 
 def _present_npc_uuids(scene: Any, game_state: GameState) -> list[UUID]:

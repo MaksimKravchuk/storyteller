@@ -15,7 +15,7 @@ from uuid import UUID
 
 from knowledge import node as _node, salience as salience_presets
 from knowledge.memory_slots import MemorySlots
-from models.scene_action_log import SceneActionEntry
+from models.scene_action_log import ActorKind, SceneActionEntry
 
 if TYPE_CHECKING:
     from knowledge.memory import MemoryManager
@@ -27,6 +27,14 @@ class SceneConsolidationRequest:
 
     Keeps the public function signature within the WPS argument-count
     budget while still carrying every field the two phases need.
+
+    ``player_appearance`` is the player's visible description (from
+    :func:`cast.player_context.format_player_appearance`). When set,
+    player entries in the summariser transcript are rendered through
+    :class:`cast.player_context.PlayerUtterance` so the resulting
+    memory node reads "the foreign Slav in dark furs threatened me"
+    instead of "someone threatened me" — anchoring long-term recall
+    on who the player visibly was.
     """
 
     entries: list[SceneActionEntry]
@@ -34,6 +42,7 @@ class SceneConsolidationRequest:
     game_time: float
     location_id: UUID | None
     player_subject_id: UUID | None
+    player_appearance: str | None = None
 
 
 async def consolidate_scene(manager: MemoryManager, request: SceneConsolidationRequest) -> None:
@@ -64,7 +73,7 @@ async def _summary_phase(manager: MemoryManager, request: SceneConsolidationRequ
     """Phase 1 — write one summary memory per present NPC."""
     from knowledge.memory import DialoguePair
 
-    rendered = _render_log_for_summariser(request.entries)
+    rendered = _render_log_for_summariser(request.entries, request.player_appearance)
     pairs: list[DialoguePair] = [(uuid, rendered) for uuid in request.present_npc_uuids]
     await manager.summarize_interactions_batch(
         pairs,
@@ -102,15 +111,25 @@ async def _significant_phase(manager: MemoryManager, request: SceneConsolidation
     await asyncio.gather(*coros)
 
 
-def _render_log_for_summariser(entries: list[SceneActionEntry]) -> str:
-    """Flatten the scene log into a transcript the summariser prompt can read."""
-    lines = [
-        "{speaker}: {desc}".format(
-            speaker=entry.actor_name or entry.action_type or "Event",
-            desc=entry.description,
-        )
-        for entry in entries
-    ]
+def _render_log_for_summariser(
+    entries: list[SceneActionEntry],
+    player_appearance: str | None = None,
+) -> str:
+    """Flatten the scene log into a transcript the summariser prompt can read.
+
+    When ``player_appearance`` is supplied, player entries render
+    through :func:`cast.player_context.render_player_entry` so the
+    produced memory anchors on who the player visibly was.
+    """
+    from cast.player_context import render_player_entry
+
+    lines: list[str] = []
+    for entry in entries:
+        if entry.actor_kind == ActorKind.PLAYER and player_appearance is not None:
+            lines.append(render_player_entry(entry.action_type, entry.description, player_appearance))
+        else:
+            speaker = entry.actor_name or entry.action_type or "Event"
+            lines.append("{speaker}: {desc}".format(speaker=speaker, desc=entry.description))
     return "\n".join(lines)
 
 
