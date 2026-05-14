@@ -115,6 +115,10 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 | `test_web_api.py` | Web UI | "Transcript building", "Current game lookup", "Start game", "Submit action", "Cookie bootstrap", "Ownership enforcement" |
 | `test_web_schemas.py` | Web UI | "Character info schema" |
 | `test_web_character.py` | Web UI | "Character info builder" |
+| `test_api_routes.py` | Mobile API | "Liveness", "Create session", "Submit action", "Get session", "List sessions" |
+| `test_api_streaming.py` | Mobile API | "Chunking", "SSE framing" |
+| `test_api_sessions.py` | Mobile API | "Session store" |
+| `test_api_service.py` | Mobile API | "Service layer" |
 
 ### Engine & LLM Infrastructure
 

@@ -71,6 +71,40 @@ The Forum Romanum stretches before you as dawn breaks over the Palatine Hill...
 The smell of fish sauce and fresh bread mingles in the morning air...
 ```
 
+## HTTP/SSE API (for native clients)
+
+The same engine is exposed over HTTP with SSE streaming for mobile/native clients. State lives in process memory only — there is no auth, rate limiting, or persistence; sessions vanish on restart.
+
+```bash
+uv run uvicorn interfaces.api.app:app --reload --host 127.0.0.1 --port 8071
+```
+
+Endpoints:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/sessions` | Start a new story; returns `session_id` + `opening_scene` |
+| `POST` | `/sessions/{id}/actions` | Submit a player action; streams the narration as SSE |
+| `GET`  | `/sessions/{id}` | Current state (scene, inventory, recent transcript) |
+| `GET`  | `/sessions` | List live sessions |
+| `GET`  | `/healthz` | Liveness probe |
+
+Start a session and read the opening scene:
+
+```bash
+curl -X POST http://127.0.0.1:8071/sessions \
+  -H 'content-type: application/json' \
+  -d '{"setting": "Rome, 1st century AD", "language": "English"}'
+```
+
+Stream a player action (SSE `event: chunk` frames followed by a final `event: done`):
+
+```bash
+curl -N -X POST http://127.0.0.1:8071/sessions/<id>/actions \
+  -H 'content-type: application/json' \
+  -d '{"action": "look around"}'
+```
+
 ## Requirements
 
 - Python 3.11+
