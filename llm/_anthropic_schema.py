@@ -3,9 +3,10 @@
 Pydantic's ``model_json_schema()`` emits a few shapes the Anthropic beta
 endpoint rejects: ``"type": "object"`` nodes without
 ``additionalProperties: false``, ``minimum``/``maximum`` constraints on
-``"type": "integer"`` nodes, and cosmetic metadata (``title``,
-``description``, ``default``, ``examples``) that pushes the schema past
-the endpoint's ``"Schema is too complex."`` budget.
+``"type": "integer"`` nodes, ``minItems``/``maxItems``/``uniqueItems``
+constraints on ``"type": "array"`` nodes, and cosmetic metadata
+(``title``, ``description``, ``default``, ``examples``) that pushes the
+schema past the endpoint's ``"Schema is too complex."`` budget.
 
 :func:`harden_anthropic_schema` returns a fresh, normalised copy so
 caller-owned schema dicts are never mutated.
@@ -21,6 +22,13 @@ _KEY_TYPE = "type"
 # ``"type": "integer"`` nodes (``"For 'integer' type, properties maximum,
 # minimum are not supported"``).
 _INTEGER_RANGE_KEYS = frozenset(("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"))
+
+# Length / uniqueness constraints Anthropic's structured-output beta rejects
+# on ``"type": "array"`` nodes (``"For 'array' type, property 'maxItems' is
+# not supported"``). Pydantic emits ``maxItems`` whenever a list field
+# carries ``Field(max_length=...)``; without this strip step those models
+# 400 on the first call.
+_ARRAY_LENGTH_KEYS = frozenset(("minItems", "maxItems", "uniqueItems"))
 
 # Cosmetic metadata that inflates Anthropic's schema-complexity score
 # without affecting validation. ``default`` is metadata-only in JSON
@@ -63,11 +71,14 @@ def _walk_value(key: str, raw_value: Any) -> Any:
 
 
 def _stamp_constraints(node: dict[str, Any]) -> dict[str, Any]:
-    """Stamp ``additionalProperties: false`` and strip integer ranges."""
+    """Stamp ``additionalProperties: false`` and strip type-specific unsupported keys."""
     node_type = node.get(_KEY_TYPE)
     if node_type == "object" and "additionalProperties" not in node:
         node["additionalProperties"] = False
     if node_type == "integer":
-        for unsupported in _INTEGER_RANGE_KEYS:
-            node.pop(unsupported, None)
+        for unsupported_integer_key in _INTEGER_RANGE_KEYS:
+            node.pop(unsupported_integer_key, None)
+    if node_type == "array":
+        for unsupported_array_key in _ARRAY_LENGTH_KEYS:
+            node.pop(unsupported_array_key, None)
     return node
