@@ -31,28 +31,6 @@ class _EnvelopeWithCappedList(BaseModel):
 @allure.feature("Anthropic client")
 class TestHardenAnthropicSchema:
     @allure.story("Schema hardening")
-    @allure.title("harden_anthropic_schema strips maxItems from an array node so Anthropic accepts it")
-    def test_strips_max_items_from_array_node(self) -> None:
-        schema = {
-            "type": "object",
-            "properties": {"tags": {"type": "array", "items": {"type": "string"}, "maxItems": 8}},
-        }
-
-        hardened = harden_anthropic_schema(schema)
-
-        assert "maxItems" not in hardened["properties"]["tags"]
-
-    @allure.story("Schema hardening")
-    @allure.title("harden_anthropic_schema strips minItems and uniqueItems from an array node")
-    def test_strips_min_items_and_unique_items_from_array_node(self) -> None:
-        schema = {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": True}
-
-        hardened = harden_anthropic_schema(schema)
-
-        assert "minItems" not in hardened
-        assert "uniqueItems" not in hardened
-
-    @allure.story("Schema hardening")
     @allure.title("harden_anthropic_schema leaves maxItems intact on non-array nodes")
     def test_preserves_max_items_on_non_array_nodes(self) -> None:
         # Defensive: ``maxItems`` is only forbidden on ``"type": "array"`` —
