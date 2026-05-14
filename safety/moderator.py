@@ -122,8 +122,29 @@ async def _score_all(
     providers: Sequence[ModerationProvider],
     text: str,
 ) -> Mapping[ModerationCategory, ModerationSeverity]:
-    """Run every provider concurrently and merge their severities by max."""
-    scored_lists = await asyncio.gather(*(provider.score(text) for provider in providers))
+    """Run every provider concurrently and merge their severities by max.
+
+    A single provider failure must not silently lose a high-severity hit
+    that another provider returned, so we use ``return_exceptions=True``
+    and log per-provider errors. The heuristic provider's match on a
+    prompt-injection attempt still flags the input even if the OpenAI
+    moderation API is unreachable.
+    """
+    outcomes = await asyncio.gather(
+        *(provider.score(text) for provider in providers),
+        return_exceptions=True,
+    )
+    scored_lists: list[Mapping[ModerationCategory, ModerationSeverity]] = []
+    for provider, outcome in zip(providers, outcomes):
+        if isinstance(outcome, BaseException):
+            logger.warning(
+                "content_safety.provider_error provider={} error_type={} error={}",
+                provider.name,
+                type(outcome).__name__,
+                outcome,
+            )
+            continue
+        scored_lists.append(outcome)
     return _merge_severities(scored_lists)
 
 

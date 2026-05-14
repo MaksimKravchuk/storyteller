@@ -103,8 +103,9 @@ class Config(BaseSettings):
     # outbound moderation. The OpenAI moderation API is consulted when an
     # ``openai_api_key`` is configured; a prompt-injection heuristic is
     # always on. Per-category thresholds accept severity names
-    # (``NONE`` / ``LOW`` / ``MEDIUM`` / ``HIGH``); unknown values fall
-    # back to safe defaults — see ``safety.moderator.ModerationThresholds``.
+    # (``NONE`` / ``LOW`` / ``MEDIUM`` / ``HIGH``); unknown values log a
+    # warning and fall back to safe defaults — see
+    # ``safety.thresholds.ModerationThresholds``.
     safety_enabled: bool = True
     safety_threshold_violence: str = _SAFETY_HIGH
     safety_threshold_sexual: str = _SAFETY_HIGH

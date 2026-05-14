@@ -78,13 +78,24 @@ class ModerationResult:
     ``severities`` is a category→severity map covering every category that
     was scored (categories not present default to ``NONE`` on lookup).
     ``triggering_categories`` lists the categories whose severity met or
-    exceeded the configured threshold; empty when ``flagged`` is False.
+    exceeded the configured threshold; ``flagged`` MUST equal
+    ``bool(triggering_categories)`` — :meth:`__post_init__` enforces it so
+    callers can't construct an invalid combined state.
     """
 
     flagged: bool
     severities: Mapping[ModerationCategory, ModerationSeverity]
     triggering_categories: tuple[ModerationCategory, ...] = ()
     provider: str = ""
+
+    def __post_init__(self) -> None:
+        if self.flagged != bool(self.triggering_categories):
+            raise ValueError(
+                "ModerationResult.flagged ({0}) inconsistent with triggering_categories ({1})".format(
+                    self.flagged,
+                    self.triggering_categories,
+                ),
+            )
 
     def severity_for(self, category: ModerationCategory) -> ModerationSeverity:
         """Return the recorded severity for ``category`` (``NONE`` if absent)."""
@@ -94,7 +105,10 @@ class ModerationResult:
 class ModerationProvider(Protocol):
     """Backend that scores a piece of text and returns severities."""
 
-    name: str
+    @property
+    def name(self) -> str:
+        """Provider identifier used for log attribution (e.g. ``"openai"``)."""
+        ...
 
     async def score(self, text: str) -> Mapping[ModerationCategory, ModerationSeverity]:
         """Return a category→severity map for ``text``.

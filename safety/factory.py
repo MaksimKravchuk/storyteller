@@ -18,11 +18,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 from safety.heuristic import HeuristicProvider
 from safety.moderator import Moderator
 from safety.openai_provider import OpenAIModerationProvider
-from safety.result import ModerationProvider, ModerationSeverity
-from safety.thresholds import _THRESHOLD_FIELD_NAMES, ModerationThresholds
+from safety.result import ModerationCategory, ModerationProvider, ModerationSeverity
+from safety.thresholds import ModerationThresholds
 
 if TYPE_CHECKING:
     from config import Config
@@ -45,13 +47,16 @@ def build_moderator(cfg: "Config") -> Moderator | None:
 def _thresholds_from_config(cfg: "Config") -> ModerationThresholds:
     """Translate the env-derived threshold names into a :class:`ModerationThresholds`.
 
-    Drives off ``_THRESHOLD_FIELD_NAMES`` so adding a new category requires
-    touching only that map plus the matching ``safety_threshold_*`` field
-    on :class:`Config` — not this factory.
+    Drives off :class:`ModerationCategory` so a new category needs only an
+    enum entry, a matching dataclass field, and a ``safety_threshold_*``
+    field on :class:`Config` — not a factory edit.
     """
     overrides = {
-        field_name: _severity_from_name(getattr(cfg, "safety_threshold_{0}".format(field_name)), field_name)
-        for field_name in _THRESHOLD_FIELD_NAMES.values()
+        category.value: _severity_from_name(
+            getattr(cfg, "safety_threshold_{0}".format(category.value)),
+            category.value,
+        )
+        for category in ModerationCategory
     }
     return ModerationThresholds(**overrides)
 
@@ -61,9 +66,17 @@ def _severity_from_name(name: str, field_name: str) -> ModerationSeverity:
 
     Falls back to the dataclass default for ``field_name`` if ``name``
     doesn't match a known severity — a typo never silently widens the
-    moderation gate.
+    moderation gate — and logs the misconfiguration so operators notice
+    instead of silently keeping the strict default.
     """
     try:
         return ModerationSeverity[name.strip().upper()]
     except KeyError:
-        return getattr(ModerationThresholds(), field_name)
+        default = getattr(ModerationThresholds(), field_name)
+        logger.warning(
+            "content_safety.threshold_invalid field={} value={!r} falling_back_to={}",
+            field_name,
+            name,
+            default.name,
+        )
+        return default

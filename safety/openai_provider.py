@@ -7,6 +7,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from loguru import logger
+
 from safety.result import ModerationCategory, ModerationSeverity
 
 if TYPE_CHECKING:
@@ -43,6 +45,24 @@ _OPENAI_CATEGORY_MAP: Mapping[str, ModerationCategory] = types.MappingProxyType(
 )
 
 
+def _resolve_openai_error_types() -> tuple[type[BaseException], ...]:
+    """Narrow tuple of OpenAI / transport errors to catch.
+
+    Resolved once at import time and cached on :data:`_OPENAI_ERROR_TYPES`.
+    Falls back to plain transport errors when ``openai`` isn't importable
+    so the moderator never accidentally swallows ``CancelledError`` or
+    SDK contract violations.
+    """
+    try:
+        from openai import APIError, APIConnectionError, APIStatusError, APITimeoutError, RateLimitError
+    except ImportError:
+        return (ConnectionError, OSError, TimeoutError)
+    return (APIError, APIConnectionError, APIStatusError, APITimeoutError, RateLimitError)
+
+
+_OPENAI_ERROR_TYPES: tuple[type[BaseException], ...] = _resolve_openai_error_types()
+
+
 class ModerationProviderError(RuntimeError):
     """Raised when an upstream moderation provider call fails."""
 
@@ -68,8 +88,15 @@ class OpenAIModerationProvider:
         client = self._get_client()
         try:
             response = await client.moderations.create(model=self.model, input=text)
-        except Exception as exc:
-            raise ModerationProviderError(str(exc)) from exc
+        except _OPENAI_ERROR_TYPES as exc:
+            logger.warning(
+                "content_safety.openai_error type={} message={}",
+                type(exc).__name__,
+                exc,
+            )
+            # Generic wrap so request URLs / payloads / headers from
+            # ``str(exc)`` never reach a FastAPI 500 detail or chat reply.
+            raise ModerationProviderError("openai moderation request failed") from exc
         return severities_from_response(response)
 
     def _get_client(self) -> "AsyncOpenAI":
@@ -100,16 +127,8 @@ def severities_from_response(response: Any) -> Mapping[ModerationCategory, Moder
     won't cause crashes, but they also won't be enforced until the local
     map gains an entry.
     """
-    payload = _first_result_payload(response)
-    if payload is None:
-        return {}
-    return _bucket_scores(_scores_from_payload(payload))
-
-
-def _bucket_scores(scores: Mapping[str, float]) -> Mapping[ModerationCategory, ModerationSeverity]:
-    """Translate a raw category_scores mapping into category→severity buckets."""
     severities: dict[ModerationCategory, ModerationSeverity] = {}
-    for wire_key, raw_score in scores.items():
+    for wire_key, raw_score in _extract_category_scores(response).items():
         category = _OPENAI_CATEGORY_MAP.get(wire_key)
         if category is None:
             continue
@@ -119,26 +138,31 @@ def _bucket_scores(scores: Mapping[str, float]) -> Mapping[ModerationCategory, M
     return severities
 
 
-def _scores_from_payload(payload: Any) -> Mapping[str, float]:
-    """Extract the category_scores mapping from a moderation response shape."""
-    if hasattr(payload, "category_scores"):
-        scores = payload.category_scores
-        if isinstance(scores, dict):
-            return scores
-        # Pydantic-style attribute container — use model_dump if available.
-        if hasattr(scores, "model_dump"):
-            return scores.model_dump()
-        return dict(scores.__dict__)
-    if isinstance(payload, dict):
-        return payload.get("category_scores", {})
-    return {}
+def _extract_category_scores(response: Any) -> Mapping[str, float]:
+    """Return ``response.results[0].category_scores`` across all wire shapes.
 
-
-def _first_result_payload(response: Any) -> Any:
-    """Return ``response.results[0]`` whether response is a dict or a model."""
+    Handles both the pydantic-model shape returned by the OpenAI SDK and
+    the plain-dict shape used by tests / replayed fixtures. Returns an
+    empty mapping when ``results`` is missing/empty so the caller never
+    has to special-case the ``no results`` path.
+    """
     container = getattr(response, "results", None)
     if container is None and isinstance(response, dict):
         container = response.get("results")
     if not container:
-        return None
-    return container[0]
+        return {}
+    return _category_scores_from_payload(container[0])
+
+
+def _category_scores_from_payload(payload: Any) -> Mapping[str, float]:
+    """Pull ``category_scores`` off a single ``results[0]`` payload."""
+    if isinstance(payload, dict):
+        return payload.get("category_scores", {})
+    scores = getattr(payload, "category_scores", None)
+    if scores is None:
+        return {}
+    if isinstance(scores, dict):
+        return scores
+    if hasattr(scores, "model_dump"):
+        return scores.model_dump()
+    return dict(scores.__dict__)

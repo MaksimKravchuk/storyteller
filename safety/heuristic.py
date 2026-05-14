@@ -61,7 +61,9 @@ _INJECTION_RULES: tuple[_InjectionRule, ...] = (
         ModerationSeverity.MEDIUM,
     ),
     (
-        re.compile(r"\breveal\s+(?:your|the)\s+(?:system\s+)?prompt\b", re.IGNORECASE),
+        # Require "system prompt" or "your prompt" specifically — bare
+        # "reveal the prompt to the king" is a legitimate in-world action.
+        re.compile(r"\breveal\s+(?:your\s+prompt|the\s+system\s+prompt)\b", re.IGNORECASE),
         ModerationSeverity.MEDIUM,
     ),
     (
@@ -79,7 +81,7 @@ _INJECTION_RULES: tuple[_InjectionRule, ...] = (
 )
 
 
-@dataclass
+@dataclass(frozen=True)
 class HeuristicProvider:
     """Deterministic, dependency-free provider for prompt-injection patterns."""
 
