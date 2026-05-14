@@ -19,6 +19,7 @@ from interfaces.web import deps, pwa, schemas, service
 from interfaces.web.beta_auth import get_beta_player_id
 from interfaces.web.readiness import readiness_payload
 from interfaces.web.service_helpers import StartGameParams
+from safety.moderator import SafetyRejectedError
 
 router = APIRouter()
 router.add_api_route("/manifest.webmanifest", pwa.manifest, include_in_schema=False)
@@ -79,7 +80,7 @@ async def start_game(
     repo: RepoDep,
 ) -> schemas.GameSnapshot:
     """Start a new game for the caller (replaces any existing one)."""
-    start_request = StartGameParams(
+    start_request = service.StartGameParams(
         player_id=player_id,
         setting=body.setting,
         language=body.language,
@@ -158,4 +159,9 @@ async def post_action(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=_START_UNAVAILABLE_DETAIL,
+        ) from exc
+    except SafetyRejectedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=exc.refusal_message,
         ) from exc

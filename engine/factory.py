@@ -14,6 +14,7 @@ from defaults.models import (
     ModelConfig,
 )
 from engine.game_engine import GameEngine
+from safety.factory import build_moderator
 
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
@@ -89,6 +90,7 @@ def create_engine(
         else None,
         api_keys=api_keys,
         language=language,
+        moderator=build_moderator(cfg),
     )
 
 
