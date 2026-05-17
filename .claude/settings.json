@@ -31,8 +31,22 @@
           },
           {
             "type": "command",
+            "if": "Bash(gh pr create *)",
+            "command": ".claude/hooks/require-prompt-audit.sh"
+          },
+          {
+            "type": "command",
             "if": "Bash(git push *)",
             "command": ".claude/hooks/check-git-push.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/protect-migrations.sh"
           }
         ]
       }
