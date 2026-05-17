@@ -17,10 +17,11 @@ from loguru import logger
 
 from knowledge import node as _node, salience as salience_presets
 from knowledge.memory_slots import MemorySlots
-from models.scene_action_log import ActorKind, SceneActionEntry
+from knowledge.scene_summary_phase import run_summary_phase
+from models.scene_action_log import SceneActionEntry
 
 if TYPE_CHECKING:
-    from knowledge.memory import DialoguePair, MemoryManager
+    from knowledge.memory import MemoryManager
 
 
 @dataclass(frozen=True)
@@ -55,7 +56,9 @@ async def consolidate_scene(manager: MemoryManager, request: SceneConsolidationR
     1. **Per-NPC summary.** One ``PERSONAL_EXPERIENCE`` node per NPC
        present at scene end, produced by
        :meth:`MemoryManager.summarize_interactions_batch` over a
-       rendered transcript. Routine-dialogue salience.
+       transcript scoped to that NPC's presence window. Routine-dialogue
+       salience. Made non-fatal to phase 2 (see
+       :func:`knowledge.scene_summary_phase.run_summary_phase`).
     2. **Significant events.** One LOCAL node per
        :class:`SceneActionEntry` flagged ``significant`` and NOT
        already persisted by combat / witness hooks
@@ -67,21 +70,8 @@ async def consolidate_scene(manager: MemoryManager, request: SceneConsolidationR
     """
     if not request.entries or not request.present_npc_uuids:
         return
-    await _summary_phase(manager, request)
+    await run_summary_phase(manager, request)
     await _significant_phase(manager, request)
-
-
-async def _summary_phase(manager: MemoryManager, request: SceneConsolidationRequest) -> None:
-    """Phase 1 — write one summary memory per present NPC."""
-    rendered = _render_log_for_summariser(request.entries, request.player_appearance)
-    pairs: list[DialoguePair] = [(uuid, rendered) for uuid in request.present_npc_uuids]
-    await manager.summarize_interactions_batch(
-        pairs,
-        game_time=request.game_time,
-        location_id=request.location_id,
-        salience=salience_presets.ROUTINE_DIALOGUE,
-        subject_id=request.player_subject_id,
-    )
 
 
 async def _significant_phase(manager: MemoryManager, request: SceneConsolidationRequest) -> None:
@@ -125,28 +115,6 @@ async def _significant_phase(manager: MemoryManager, request: SceneConsolidation
                 entry.action_type,
                 entry.actor_name or "event",
             )
-
-
-def _render_log_for_summariser(
-    entries: list[SceneActionEntry],
-    player_appearance: str | None = None,
-) -> str:
-    """Flatten the scene log into a transcript the summariser prompt can read.
-
-    When ``player_appearance`` is supplied, player entries render
-    through :func:`cast.player_context.render_player_entry` so the
-    produced memory anchors on who the player visibly was.
-    """
-    from cast.player_context import render_player_entry
-
-    lines: list[str] = []
-    for entry in entries:
-        if entry.actor_kind == ActorKind.PLAYER and player_appearance is not None:
-            lines.append(render_player_entry(entry.action_type, entry.description, player_appearance))
-        else:
-            speaker = entry.actor_name or entry.action_type or "Event"
-            lines.append("{speaker}: {desc}".format(speaker=speaker, desc=entry.description))
-    return "\n".join(lines)
 
 
 def _salience_for_entry(entry: SceneActionEntry) -> float:

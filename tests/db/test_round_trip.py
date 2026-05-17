@@ -7,6 +7,7 @@ import uuid as uuid_mod
 import allure
 import pytest
 
+from models.scene_action_log import ActorKind, SceneActionEntry
 from tests.db.conftest import GameRepository
 
 pytestmark = pytest.mark.db
@@ -119,3 +120,73 @@ class TestNativeUuidRoundTrip:
             assert isinstance(loc.uuid, uuid_mod.UUID)
         for known in loaded_state.player.known_npcs:
             assert isinstance(known, uuid_mod.UUID)
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Round trip")
+class TestSceneActionLogRoundTrip:
+    """Pin that the new ``scene_action_log`` JSONB column survives save/load.
+
+    The model-only round-trip proves Pydantic works; this proves the
+    repo serializer (``model_dump(mode="json")``) and hydrator
+    (``SceneActionEntry(**raw)``) consume it correctly — including the
+    native ``uuid.UUID`` actor/target fields and the ``ActorKind`` enum
+    through actual asyncpg JSONB.
+    """
+
+    @allure.story("Scene action log")
+    @allure.title("scene_action_log survives save/load with native UUID fields and ActorKind enum intact")
+    @pytest.mark.asyncio
+    async def test_scene_action_log_round_trip(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, kg, events = populated_game_state
+        actor_uuid = next(iter(game_state.npcs))
+        target_uuid = uuid_mod.uuid4()
+        game_state.scene_action_log = [
+            SceneActionEntry(
+                actor_kind=ActorKind.NPC,
+                actor_uuid=actor_uuid,
+                actor_name="Marcus",
+                action_type="ATTACK",
+                description="Marcus lunges with a dagger.",
+                target_uuid=target_uuid,
+                target_name="Livia",
+                game_clock=3.5,
+                significant=True,
+                metadata={"contest_outcome": "actor_wins"},
+            ),
+            SceneActionEntry(
+                actor_kind=ActorKind.EVENT,
+                actor_name="",
+                action_type="COMBAT_WITNESS",
+                description="A clash erupts by the well.",
+                game_clock=3.6,
+                significant=True,
+                metadata={"already_persisted": True, "witness_ids": [str(actor_uuid)]},
+            ),
+        ]
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        loaded_state, _kg, _events = loaded
+
+        npc_entry, event_entry = loaded_state.scene_action_log
+        assert isinstance(npc_entry.actor_kind, ActorKind)
+        assert npc_entry.actor_kind == ActorKind.NPC
+        assert isinstance(npc_entry.actor_uuid, uuid_mod.UUID)
+        assert npc_entry.actor_uuid == actor_uuid
+        assert isinstance(npc_entry.target_uuid, uuid_mod.UUID)
+        assert npc_entry.target_uuid == target_uuid
+        assert npc_entry.game_clock == pytest.approx(3.5)
+        assert npc_entry.significant is True
+        assert npc_entry.metadata == {"contest_outcome": "actor_wins"}
+
+        assert event_entry.actor_kind == ActorKind.EVENT
+        assert event_entry.actor_uuid is None
+        assert event_entry.metadata["already_persisted"] is True
+        assert event_entry.metadata["witness_ids"] == [str(actor_uuid)]

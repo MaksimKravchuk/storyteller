@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import allure
 import pytest
@@ -42,9 +43,21 @@ def _captured_user_prompt(llm: AsyncMock) -> str:
     return messages[0].body
 
 
-def _routine_entry(actor_name: str, description: str, clock: float = 1.0) -> SceneActionEntry:
+def _routine_entry(
+    actor_name: str,
+    description: str,
+    clock: float = 1.0,
+    actor_uuid: UUID | None = None,
+) -> SceneActionEntry:
+    """Build a routine TALK entry.
+
+    NPC entries carry ``actor_uuid`` in production (``append_npc_*``
+    always set it); pass it so the NPC registers as present for the
+    per-NPC presence-window scoping in ``_summary_phase``.
+    """
     return SceneActionEntry(
         actor_kind=ActorKind.PLAYER if actor_name == "Player" else ActorKind.NPC,
+        actor_uuid=actor_uuid,
         actor_name=actor_name,
         action_type="TALK",
         description=description,
@@ -73,7 +86,7 @@ def _already_persisted_event() -> SceneActionEntry:
         description="A clash already persisted by the combat hook.",
         game_clock=2.6,
         significant=True,
-        metadata={"already_persisted": True},
+        metadata={"already_persisted": True, "witness_ids": [str(_NPC_ALPHA)]},
     )
 
 
@@ -125,7 +138,7 @@ async def test_summary_per_npc_plus_significant_node() -> None:
 
     entries = [
         _routine_entry("Player", "I demand the silver back."),
-        _routine_entry("Livia", "She refuses."),
+        _routine_entry("Livia", "She refuses.", actor_uuid=_NPC_BETA),
         _significant_attack_entry(),
     ]
 
@@ -159,7 +172,10 @@ async def test_player_appearance_renders_literary_in_summariser_prompt() -> None
     await consolidate_scene(
         manager,
         SceneConsolidationRequest(
-            entries=[_routine_entry("Player", "I demand the silver.")],
+            entries=[
+                _routine_entry("Player", "I demand the silver."),
+                _routine_entry("Marcus", "He scowls and refuses.", actor_uuid=_NPC_ALPHA),
+            ],
             present_npc_uuids=[_NPC_ALPHA],
             game_time=2.0,
             location_id=_LOC,
@@ -186,7 +202,10 @@ async def test_no_player_appearance_falls_back_to_bare_form() -> None:
     await consolidate_scene(
         manager,
         SceneConsolidationRequest(
-            entries=[_routine_entry("Player", "I demand the silver.")],
+            entries=[
+                _routine_entry("Player", "I demand the silver."),
+                _routine_entry("Marcus", "He scowls and refuses.", actor_uuid=_NPC_ALPHA),
+            ],
             present_npc_uuids=[_NPC_ALPHA],
             game_time=2.0,
             location_id=_LOC,
@@ -228,3 +247,38 @@ async def test_already_persisted_skipped_in_phase_two() -> None:
     personal_nodes = [n for n in graph.all_nodes() if n.source == KnowledgeSource.PERSONAL_EXPERIENCE]
     assert len(personal_nodes) == 1
     assert "A clash already persisted" not in personal_nodes[0].text
+
+
+@allure.story("consolidate_scene")
+@allure.title("Attribution — an NPC that joins on a later turn gets no earlier-turn events in its summary")
+@pytest.mark.asyncio
+async def test_late_joining_npc_summary_excludes_earlier_turns() -> None:
+    manager = AsyncMock(spec=MemoryManager)
+    entries = [
+        _routine_entry("Player", "TURN1: I enter and look around.", clock=1.0),
+        _routine_entry("Marcus", "TURN1: Marcus nods.", clock=1.0, actor_uuid=_NPC_ALPHA),
+        _routine_entry("Player", "TURN2: I greet the newcomer.", clock=5.0),
+        _routine_entry("Livia", "TURN2: Livia arrives and answers.", clock=5.0, actor_uuid=_NPC_BETA),
+    ]
+
+    await consolidate_scene(
+        manager,
+        SceneConsolidationRequest(
+            entries=entries,
+            present_npc_uuids=[_NPC_ALPHA, _NPC_BETA],
+            game_time=5.0,
+            location_id=_LOC,
+            player_subject_id=_PLAYER_UUID,
+        ),
+    )
+
+    pairs = manager.summarize_interactions_batch.await_args.args[0]
+    rendered = dict(pairs)
+    # Marcus was present from turn 1 → his summary spans the whole scene.
+    assert "TURN1:" in rendered[_NPC_ALPHA]
+    assert "TURN2:" in rendered[_NPC_ALPHA]
+    # Livia joined on turn 2 → no turn-1 events (the bug), but she still
+    # keeps the turn-2 player line she reacted to (same game_clock).
+    assert "TURN1:" not in rendered[_NPC_BETA]
+    assert "TURN2: I greet the newcomer." in rendered[_NPC_BETA]
+    assert "TURN2: Livia arrives" in rendered[_NPC_BETA]

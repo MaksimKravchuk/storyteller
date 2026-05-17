@@ -5,13 +5,15 @@ current scene — a player action, an NPC action/dialogue, or an ambient
 witnessed event. The list is kept on
 :attr:`models.game_state.GameState.scene_action_log` and is reset at
 scene swap by the Director's plan executor, after being consolidated
-into long-term memory by :meth:`knowledge.memory.MemoryManager.consolidate_scene`.
+into long-term memory by :func:`knowledge.scene_consolidation.consolidate_scene`
+(driven from the scene-swap hook in :mod:`cast.scene_swap`).
 
 NPCs see a chronological render of the log on every turn so they can
 react to what happened earlier in the scene instead of just the last
-player utterance. Entries flagged ``significant`` (combat hits,
-intimidation wins, status changes, witnessed vandalism) become
-individual long-term nodes at scene end alongside the per-NPC summary.
+player utterance. Entries flagged ``significant`` (NPC attacks,
+aggressive player actions, intimidation wins, witnessed combat /
+vandalism) become individual long-term nodes at scene end alongside
+the per-NPC summary.
 """
 
 from __future__ import annotations

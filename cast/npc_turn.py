@@ -208,9 +208,16 @@ def _filter_successful(
     gathered: list[NPCAction | BaseException],
     eligible: list[tuple[str, Any, Any]],
 ) -> list[NPCAction]:
-    """Keep successful NPC actions and log failures."""
+    """Keep successful NPC actions and log failures.
+
+    ``CancelledError`` is re-raised rather than logged: it inherits from
+    ``BaseException``, and swallowing it would turn cooperative
+    cancellation of the gathered NPC turns into a routine error line.
+    """
     actions: list[NPCAction] = []
     for idx, outcome in enumerate(gathered):
+        if isinstance(outcome, asyncio.CancelledError):
+            raise outcome
         if isinstance(outcome, BaseException):
             npc_uuid, npc, _ = eligible[idx]
             logger.error("NPC turn failed for {} ({}): {}", npc.name, npc_uuid, outcome)
