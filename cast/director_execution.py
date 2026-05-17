@@ -46,6 +46,19 @@ _WAIT_HOURS_DEFAULT = 0.1
 _PLAYER_EVENT_LOG_CAP = 30
 
 
+def _scene_log_modules() -> tuple[Any, Any]:
+    """Lazily import the scene-log helpers as a single statement.
+
+    ``cast``'s module-level import group is already at the WPS235 name
+    cap, so these two siblings cannot join it; importing them together
+    here keeps this module within the WPS201 import-statement budget
+    instead of two separate local imports.
+    """
+    from cast import scene_log, scene_swap
+
+    return scene_log, scene_swap
+
+
 def _snapshot_moods(npcs: dict) -> dict[UUID, str]:
     """Capture current mood of every NPC by UUID."""
     return {uuid: npc.current_mood for uuid, npc in npcs.items()}
@@ -167,6 +180,14 @@ class PlanExecutor:
         raw_outputs = turn_outputs.TurnOutputs(intent=plan.intent)
         action_type = plan.action_type
         is_aggressive = plan_access.is_aggressive(plan)
+
+        # Record the player's action at the head of this turn's log, before
+        # NPC reactions are appended (so next turn's NPCs read it ahead of
+        # their own replies) and before _prepare_scene consolidates/clears
+        # the outgoing scene (so a MOVE/SLEEP trigger lands in the scene it
+        # ends, not the one it opens). Indexed (not unpacked) to keep
+        # execute_plan within its WPS210 local-variable budget.
+        _scene_log_modules()[0].append_player_action(self._gs, action_type, player_action, is_aggressive=is_aggressive)
 
         local_events = await self._process_events(completed_events)
         new_uuids = await self._dispatch_plan(plan, action_type, player_action, raw_outputs)
@@ -587,11 +608,18 @@ class PlanExecutor:
                 context={_KEY_GAME_STATE: self._gs},
             )
             raw_outputs.scene = scene
-            await self._consolidate_outgoing_scene(self._gs.current_scene)
+            outgoing = self._gs.current_scene
+            if outgoing is not None:
+                # Consolidate-then-clear is atomic: only wipe the log once
+                # its entries (including this turn's just-appended player
+                # trigger) have been handed to the consolidator. On the
+                # first turn there is no outgoing scene, so the player's
+                # opening action must survive into the new scene's log.
+                await self._consolidate_outgoing_scene(outgoing)
+                self._gs.scene_action_log = []
             self._gs.current_scene = scene
             self._gs.scene_number += 1
             self._gs.scene_conversation_log = []
-            self._gs.scene_action_log = []
 
         new_npcs = await self._dialogue.init_scene_npcs(
             self._npc_generator,
@@ -606,11 +634,25 @@ class PlanExecutor:
         return {npc.uuid for npc in new_npcs}
 
     async def _consolidate_outgoing_scene(self, outgoing_scene: Any) -> None:
-        """Persist the outgoing scene's action log as long-term memory."""
-        # Local import: `cast` already imports 8 names at module level (WPS235 cap).
-        from cast import scene_swap
+        """Persist the outgoing scene's action log as long-term memory.
 
-        await scene_swap.consolidate_outgoing_scene(self._memory_manager, self._gs, outgoing_scene)
+        Best-effort: scene memory is enrichment, not turn-critical. A
+        consolidation failure (LLM timeout, rate limit) must not abort
+        the turn — the caller still clears the log and completes the
+        scene swap. Leaving the log un-cleared on failure would
+        re-consolidate (and double-write) it on the next swap, so the
+        clear deliberately runs regardless of this method's outcome.
+        """
+        try:
+            await _scene_log_modules()[1].consolidate_outgoing_scene(self._memory_manager, self._gs, outgoing_scene)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception(
+                "Scene consolidation failed (location={}, log_entries={}); skipping enrichment for this scene",
+                getattr(outgoing_scene, "location_id", None),
+                len(self._gs.scene_action_log),
+            )
 
     async def _examine_items(self, targets: list[str], player_action: str) -> list[str]:
         """Examine items from scene or NPC inventories via the ItemGenerator."""

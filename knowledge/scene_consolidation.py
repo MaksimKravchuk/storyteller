@@ -13,12 +13,14 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from loguru import logger
+
 from knowledge import node as _node, salience as salience_presets
 from knowledge.memory_slots import MemorySlots
 from models.scene_action_log import ActorKind, SceneActionEntry
 
 if TYPE_CHECKING:
-    from knowledge.memory import MemoryManager
+    from knowledge.memory import DialoguePair, MemoryManager
 
 
 @dataclass(frozen=True)
@@ -71,8 +73,6 @@ async def consolidate_scene(manager: MemoryManager, request: SceneConsolidationR
 
 async def _summary_phase(manager: MemoryManager, request: SceneConsolidationRequest) -> None:
     """Phase 1 — write one summary memory per present NPC."""
-    from knowledge.memory import DialoguePair
-
     rendered = _render_log_for_summariser(request.entries, request.player_appearance)
     pairs: list[DialoguePair] = [(uuid, rendered) for uuid in request.present_npc_uuids]
     await manager.summarize_interactions_batch(
@@ -108,7 +108,23 @@ async def _significant_phase(manager: MemoryManager, request: SceneConsolidation
         )
         for entry in significant
     ]
-    await asyncio.gather(*coros)
+    # Best-effort: one failing event-node write must not abort the
+    # siblings (they would otherwise complete a partial graph write that
+    # the next scene swap re-attempts and double-writes). The scene-swap
+    # caller clears the log even on failure, so swallow-and-log is safe.
+    # ``CancelledError`` must propagate so cooperative cancellation is
+    # not silently turned into a log line; ``logger.opt(exception=...)``
+    # keeps the traceback even though we are outside the ``except``.
+    write_outcomes = await asyncio.gather(*coros, return_exceptions=True)
+    for entry, outcome in zip(significant, write_outcomes):
+        if isinstance(outcome, asyncio.CancelledError):
+            raise outcome
+        if isinstance(outcome, BaseException):
+            logger.opt(exception=outcome).error(
+                "Significant-event consolidation failed ({} by {})",
+                entry.action_type,
+                entry.actor_name or "event",
+            )
 
 
 def _render_log_for_summariser(
