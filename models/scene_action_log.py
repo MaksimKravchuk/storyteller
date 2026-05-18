@@ -3,10 +3,11 @@
 Each :class:`SceneActionEntry` records one chronological event in the
 current scene — a player action, an NPC action/dialogue, or an ambient
 witnessed event. The list is kept on
-:attr:`models.game_state.GameState.scene_action_log` and is reset at
-scene swap by the Director's plan executor, after being consolidated
-into long-term memory by :func:`knowledge.scene_consolidation.consolidate_scene`
-(driven from the scene-swap hook in :mod:`cast.scene_swap`).
+:attr:`models.game_state.GameState.scene_action_log`. At scene swap
+:func:`cast.scene_swap.consolidate_outgoing_scene` hands it to
+:func:`knowledge.scene_consolidation.consolidate_scene` for long-term
+memory, then :mod:`cast.director_execution` clears the list (the
+consolidate-then-clear ordering lives there, not in ``scene_swap``).
 
 NPCs see a chronological render of the log on every turn so they can
 react to what happened earlier in the scene instead of just the last
