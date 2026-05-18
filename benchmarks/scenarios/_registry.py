@@ -9,6 +9,7 @@ from benchmarks.scenarios.memory_follow_up_marcus._scenario import SCENARIO as M
 from benchmarks.scenarios.memory_follow_up_marcus_graph_only._scenario import SCENARIO as MEMORY_GRAPH_ONLY_SCENARIO
 from benchmarks.scenarios.npc_autonomy_emergent_vendetta._scenario import SCENARIO as EMERGENT_VENDETTA_SCENARIO
 from benchmarks.scenarios.npc_autonomy_murder_plot._scenario import SCENARIO as NPC_AUTONOMY_MURDER_SCENARIO
+from benchmarks.scenarios.player_appearance_in_scene._scenario import SCENARIO as PLAYER_APPEARANCE_SCENARIO
 
 ALL_SCENARIOS: tuple[Scenario, ...] = (
     MEMORY_SCENARIO,
@@ -17,6 +18,7 @@ ALL_SCENARIOS: tuple[Scenario, ...] = (
     ESCALATION_SCENARIO,
     NPC_AUTONOMY_MURDER_SCENARIO,
     EMERGENT_VENDETTA_SCENARIO,
+    PLAYER_APPEARANCE_SCENARIO,
 )
 
 

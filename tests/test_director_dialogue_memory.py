@@ -554,3 +554,44 @@ class TestDirectorRegistersNpcGraphNode:
         assert "smith-1" in gs.knowledge_graph.digraph.nodes
         # Actor is registered and can be looked up.
         assert "smith-1" in director._actors
+
+
+@allure.epic("NPC short-term memory")
+@allure.feature("Scene-log producer wiring")
+class TestHandleDialogueSceneLogWiring:
+    """G3 — handle_dialogue must invoke the scene-log recorder.
+
+    ``_record_dialogue_in_scene_log`` is unit-tested in isolation, but
+    no test proved ``handle_dialogue`` actually calls it. Without this,
+    a refactor dropping the call leaves the helper test green while NPC
+    dialogue silently stops reaching scene-end consolidation.
+    """
+
+    @allure.story("Scene-log wiring")
+    @allure.title("handle_dialogue appends the NPC's reply to scene_action_log, attributed to that NPC")
+    @pytest.mark.asyncio
+    async def test_handle_dialogue_records_reply_in_scene_log(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+        gs.current_scene = Scene(
+            location_id=_FORUM,
+            description="The Forum.",
+            npcs_present=[SceneNPC(role="legionary", uuid=_NPC_A)],
+        )
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_MEMORY_SUMMARY, model="stub", usage={}),
+        )
+        handler = DialogueHandler(
+            gs,
+            {_NPC_A: make_mock_actor("Well met, traveller.")},
+            MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm),
+        )
+
+        await handler.handle_dialogue("greetings", ["Marcus"])
+
+        npc_entries = [entry for entry in gs.scene_action_log if entry.actor_uuid == _NPC_A]
+        assert len(npc_entries) == 1
+        assert npc_entries[0].action_type == "TALK"
+        assert npc_entries[0].description == "Well met, traveller."

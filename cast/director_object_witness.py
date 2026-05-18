@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from cast import scene_log
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryEvent, record_player_learned_fact
 from knowledge.memory_slots import MemorySlots
@@ -49,3 +50,12 @@ async def emit_witness_memories(
         ),
     )
     record_player_learned_fact(game_state.player, memory_result.canonical_id)
+    scene_log.append_event(
+        game_state,
+        scene_log.WitnessedEvent(
+            event_type="WITNESS",
+            description=delta_text,
+            witness_ids=witness_ids,
+            already_persisted=True,
+        ),
+    )

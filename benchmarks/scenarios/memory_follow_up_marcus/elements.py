@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from uuid import UUID
 
 from benchmarks.harness.snapshots import conversation_history_len
@@ -14,6 +13,7 @@ from benchmarks.harness.types._elements import (
     Element,
     EvidencePromptSpec,
 )
+from benchmarks.scenarios._shared import NPCSpeaksOn, npc_name_matches
 from models.game_state import GameState
 
 _SCENARIO_BRIEF = (
@@ -21,45 +21,8 @@ _SCENARIO_BRIEF = (
     "wheat loaf was stolen from his stall and that he suspects a scarred man named Gaius. "
     "Today the player asks Marcus to recall those facts."
 )
-_MARCUS_NAME = "marcus"
-_EVIDENCE_QUOTE_CHAR_BUDGET = 120
+_MARCUS_NAME = "Marcus"
 _HISTORY_FULL_CREDIT_DELTA = 3
-
-
-def _is_marcus(npc_name: str) -> bool:
-    """Return True when ``npc_name`` is the scenario's Marcus NPC."""
-    return npc_name.strip().lower() == _MARCUS_NAME
-
-
-@dataclass(frozen=True)
-class _MarcusSpeaksOn:
-    """Deterministic predicate: Marcus emits a dialogue entry on ``turn_index``."""
-
-    turn_index: int
-
-    def __call__(
-        self,
-        captured: list[CapturedTurn],
-        _snapshots: list[GameState],
-    ) -> DeterministicResult:
-        if self.turn_index >= len(captured):
-            return DeterministicResult(
-                awarded=0,
-                reason="turn {0} was not captured".format(self.turn_index),
-            )
-        dialogue = captured[self.turn_index].turn_outputs.dialogue
-        entries = [entry for entry in dialogue if _is_marcus(entry.npc_name)]
-        if not entries:
-            return DeterministicResult(
-                awarded=0,
-                reason="no dialogue entry from Marcus on turn {0}".format(self.turn_index),
-            )
-        quote = entries[0].response[:_EVIDENCE_QUOTE_CHAR_BUDGET]
-        return DeterministicResult(
-            awarded=1,
-            reason="Marcus replied on turn {0}".format(self.turn_index),
-            evidence_quote=quote,
-        )
 
 
 def _game_clock_advanced(
@@ -85,7 +48,7 @@ def _game_clock_advanced(
 def _marcus_uuid_from_state(snap: GameState) -> UUID | None:
     """Look up Marcus's uuid in a snapshot by matching the canonical name."""
     for uuid, npc in snap.npcs.items():
-        if _is_marcus(npc.name):
+        if npc_name_matches(npc.name, _MARCUS_NAME):
             return uuid
     return None
 
@@ -124,14 +87,14 @@ ELEMENTS: tuple[Element, ...] = (
         label="Marcus replies on recall turn (loaf)",
         base_value=1,
         kind=KIND_DETERMINISTIC,
-        check=_MarcusSpeaksOn(turn_index=1),
+        check=NPCSpeaksOn(npc_name=_MARCUS_NAME, turn_index=1),
     ),
     Element(
         id="marcus_speaks_turn2",
         label="Marcus replies on recall turn (suspect)",
         base_value=1,
         kind=KIND_DETERMINISTIC,
-        check=_MarcusSpeaksOn(turn_index=2),
+        check=NPCSpeaksOn(npc_name=_MARCUS_NAME, turn_index=2),
     ),
     Element(
         id="marcus_recalls_stolen_loaf",

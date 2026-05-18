@@ -131,6 +131,7 @@ class StateSaver:
     ) -> None:
         """Persist full game state to PG (upsert game_states, delete+insert children)."""
         world_state_payload = conv_world_state.world_state_to_dict(game_state.world_state)
+        scene_action_log_payload = [entry.model_dump(mode="json") for entry in game_state.scene_action_log]
         stmt = (
             pg_insert(tbl.game_states)
             .values(
@@ -143,6 +144,7 @@ class StateSaver:
                 game_time=game_state.game_time,
                 conversation_log=game_state.conversation_log,
                 scene_conversation_log=game_state.scene_conversation_log,
+                scene_action_log=scene_action_log_payload,
                 pending_clarification=game_state.pending_clarification,
                 world_state=world_state_payload,
             )
@@ -156,6 +158,7 @@ class StateSaver:
                     "game_time": game_state.game_time,
                     "conversation_log": game_state.conversation_log,
                     "scene_conversation_log": game_state.scene_conversation_log,
+                    "scene_action_log": scene_action_log_payload,
                     "pending_clarification": game_state.pending_clarification,
                     "world_state": world_state_payload,
                 },

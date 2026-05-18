@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from uuid import UUID
 
+from cast import scene_log
 from cast._npc_outcome import OutcomeKind
 from knowledge import salience as salience_presets
 from knowledge.memory import MemoryEvent, MemoryManager
@@ -65,9 +66,12 @@ def _co_located_witness_ids(
 ) -> list[UUID]:
     """Return UUIDs of every NPC who would have witnessed the clash.
 
-    Includes both combatants plus every NPC currently at ``location_id``.
-    Falls back to the current scene when ``location_id`` is the scene's
-    location, so the in-scene case still walks ``scene.npcs_present``.
+    Always includes both combatants. When ``location_id`` is given,
+    every NPC registered at that location in ``game_state.locations``
+    is added. When ``location_id`` is ``None`` only the two combatants
+    are returned — there is no scene fallback here; the in-scene caller
+    (:func:`persist_combat_memory`) resolves ``current_scene.location_id``
+    before calling so co-located witnesses are still picked up.
     """
     witnesses: set[UUID] = set()
     witnesses.add(actor.uuid)
@@ -119,14 +123,26 @@ async def persist_combat_memory(
     if location_id is None:
         scene = game_state.current_scene
         location_id = scene.location_id if scene else None
+    description = _format_combat_event(event)
+    witness_ids = _co_located_witness_ids(event.actor, event.target, game_state, location_id)
     await memory_manager.create_memory_from_event(
         MemoryEvent(
-            event_description=_format_combat_event(event),
-            witness_ids=_co_located_witness_ids(event.actor, event.target, game_state, location_id),
+            event_description=description,
+            witness_ids=witness_ids,
             scope=KnowledgeScope.LOCAL,
             location_id=location_id,
             game_time=game_state.game_clock,
             salience=salience_presets.COMBAT,
             slots=_slots_for_combat(event),
+        ),
+    )
+    scene_log.append_event(
+        game_state,
+        scene_log.WitnessedEvent(
+            event_type="COMBAT_WITNESS",
+            description=description,
+            witness_ids=witness_ids,
+            target_uuid=event.target.uuid,
+            already_persisted=True,
         ),
     )

@@ -22,10 +22,14 @@ from cast.dice import (
     record_npc_contest_event,
     roll_contest,
 )
-from cast import npc_goal_resolution as _ngr, npc_opportunity as _npo
+from cast import npc_goal_resolution as _ngr, npc_opportunity as _npo, player_context, scene_log
 from cast.director_witness import WitnessedAggression, is_guard_occupation
 from cast.wait_detection import INCAPACITATING_STATES
-from models.game_state import GameState
+from models import game_state as gs_mod, scene_action_log as scene_action_log_mod
+
+GameState = gs_mod.GameState
+PlayerUtterance = player_context.PlayerUtterance
+ActorKind = scene_action_log_mod.ActorKind
 
 # NPC action types that trigger a contest when targeting another character.
 _CONTESTABLE_ACTIONS: frozenset[str] = frozenset(
@@ -53,6 +57,12 @@ _ACTION_TO_CONTEST: MappingProxyType[str, ContestType] = MappingProxyType(
 _NPC_SKIP_STATUSES: frozenset[str] = INCAPACITATING_STATES | frozenset(("dead",))
 
 _MAX_RAW_PREVIEW = 200
+
+# Tail of the scene action log shown to NPCs each turn. Bounded so a
+# long scene does not blow up the prompt; full log stays in GameState
+# for scene-end consolidation.
+_MAX_SCENE_LOG_ENTRIES = 25
+_MAX_SCENE_LOG_DESC_CHARS = 200
 
 
 def _parse_npc_response(raw: str) -> dict:
@@ -115,6 +125,44 @@ def _roll_npc_contest(
     return contest_roll
 
 
+def _record_action_in_scene_log(game_state: GameState, action: NPCAction) -> None:
+    """Append the resolved NPC action to ``GameState.scene_action_log``."""
+    npc = game_state.npcs.get(action.npc_uuid)
+    if npc is None:
+        # The NPC resolved an action but is no longer registered: an
+        # actor-registry desync (de-registration / swap race). Logged
+        # at ERROR to match knowledge.memory's precedent for the same
+        # root cause — silently dropping it would erase that NPC's
+        # action from scene-end consolidation with no forensic trail.
+        logger.error(
+            "Resolved NPC action dropped from scene log: {} ({}) not in game_state.npcs",
+            action.npc_uuid,
+            action.action_type,
+        )
+        return
+    scene_log.append_npc_action(game_state, npc, action)
+
+
+def _build_player_utterance(
+    game_state: GameState,
+    summary: str,
+    action_type: str,
+) -> PlayerUtterance:
+    """Bundle the current turn's player action into a :class:`PlayerUtterance`."""
+    return PlayerUtterance(
+        appearance=player_context.format_player_appearance(game_state.player),
+        action_type=action_type,
+        text=summary,
+    )
+
+
+def _record_resolved_actions(game_state: GameState, actions: list[NPCAction]) -> None:
+    """Apply scene mutations and append each NPC action to the scene log."""
+    for action in actions:
+        _apply_scene_mutation(action.npc_uuid, action.action_type, action.target, game_state)
+        _record_action_in_scene_log(game_state, action)
+
+
 def _apply_scene_mutation(
     npc_uuid: UUID,
     action_type: str,
@@ -170,9 +218,16 @@ def _filter_successful(
     gathered: list[NPCAction | BaseException],
     eligible: list[tuple[str, Any, Any]],
 ) -> list[NPCAction]:
-    """Keep successful NPC actions and log failures."""
+    """Keep successful NPC actions and log failures.
+
+    ``CancelledError`` is re-raised rather than logged: it inherits from
+    ``BaseException``, and swallowing it would turn cooperative
+    cancellation of the gathered NPC turns into a routine error line.
+    """
     actions: list[NPCAction] = []
     for idx, outcome in enumerate(gathered):
+        if isinstance(outcome, asyncio.CancelledError):
+            raise outcome
         if isinstance(outcome, BaseException):
             npc_uuid, npc, _ = eligible[idx]
             logger.error("NPC turn failed for {} ({}): {}", npc.name, npc_uuid, outcome)
@@ -189,7 +244,7 @@ class _TurnContext:
     """Shared per-turn inputs passed through every NPC resolution."""
 
     resolve_single: _PerNPCResolver
-    summary: str
+    player_utterance: PlayerUtterance
     witnessed_events: list[WitnessedAggression]
 
 
@@ -229,7 +284,7 @@ async def _resolve_one_or_log(
 ) -> NPCAction | None:
     """Invoke ``ctx.resolve_single`` for one NPC; log and swallow any exception."""
     try:
-        return await ctx.resolve_single(npc, actor, ctx.summary, ctx.witnessed_events, peer_actions)
+        return await ctx.resolve_single(npc, actor, ctx.player_utterance, ctx.witnessed_events, peer_actions)
     except Exception as exc:
         logger.error("NPC turn failed for {} ({}): {}", npc.name, npc.uuid, exc)
         return None
@@ -240,9 +295,9 @@ def _build_resolve_coros(
     eligible: list[tuple[str, Any, Any]],
 ) -> list[Any]:
     """Build the list of per-NPC resolve coroutines for the parallel path."""
-    summary = ctx.summary
+    utterance = ctx.player_utterance
     witnessed = ctx.witnessed_events
-    return [ctx.resolve_single(npc, actor, summary, witnessed) for _, npc, actor in eligible]
+    return [ctx.resolve_single(npc, actor, utterance, witnessed) for _, npc, actor in eligible]
 
 
 class NPCTurnResolver:
@@ -270,6 +325,7 @@ class NPCTurnResolver:
         player_action_summary: str,
         witnessed_events: list[WitnessedAggression] | None = None,
         is_aggressive: bool = False,
+        player_action_type: str = "",
     ) -> list[NPCAction]:
         """Resolve all NPC turns after the player's action.
 
@@ -291,27 +347,22 @@ class NPCTurnResolver:
         eligible = self._eligible_npcs()
         if not eligible:
             return []
-        actions = await self._gather_actions(
-            eligible,
-            player_action_summary,
-            witnessed_events or [],
-            is_aggressive,
-        )
-        for action in actions:
-            _apply_scene_mutation(action.npc_uuid, action.action_type, action.target, self._gs)
+        utterance = _build_player_utterance(self._gs, player_action_summary, player_action_type)
+        actions = await self._gather_actions(eligible, utterance, witnessed_events or [], is_aggressive)
+        _record_resolved_actions(self._gs, actions)
         return actions
 
     async def _gather_actions(
         self,
         eligible: list[tuple[str, Any, Any]],
-        summary: str,
+        utterance: PlayerUtterance,
         witnessed_events: list[WitnessedAggression],
         is_aggressive: bool,
     ) -> list[NPCAction]:
         """Dispatch to the parallel or sequential path based on ``is_aggressive``."""
         ctx = _TurnContext(
             resolve_single=self._resolve_single_npc,
-            summary=summary,
+            player_utterance=utterance,
             witnessed_events=witnessed_events,
         )
         if is_aggressive:
@@ -348,12 +399,12 @@ class NPCTurnResolver:
         self,
         npc: Any,
         actor: Any,
-        player_action_summary: str,
+        player_utterance: PlayerUtterance,
         witnessed_events: list[WitnessedAggression],
         peer_actions: list[tuple[str, str]] | None = None,
     ) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
-        prompt = _build_turn_prompt(npc, player_action_summary, self._gs, witnessed_events, peer_actions)
+        prompt = _build_turn_prompt(npc, player_utterance, self._gs, witnessed_events, peer_actions)
         try:
             reply = await actor.execute(
                 input_data=prompt,
@@ -395,40 +446,62 @@ def _pick_incident_for_npc(
     return None
 
 
+def _coerce_player_utterance(player_input: PlayerUtterance | str) -> PlayerUtterance:
+    """Wrap a bare string in a placeholder :class:`PlayerUtterance`.
+
+    Lets tests that only exercise the INCIDENT / OPPORTUNITY / peer
+    clauses pass the raw player text without constructing the full
+    schema. Production callers always pass a real PlayerUtterance.
+    """
+    if isinstance(player_input, PlayerUtterance):
+        return player_input
+    return PlayerUtterance(appearance="", action_type="", text=player_input)
+
+
 def _build_turn_prompt(
     npc: Any,
-    player_action_summary: str,
+    player_utterance: PlayerUtterance | str,
     game_state: GameState,
     witnessed_events: list[WitnessedAggression] | None = None,
     peer_actions: list[tuple[str, str]] | None = None,
 ) -> str:
     """Build the prompt for an NPC's autonomous turn.
 
-    When the KER-18 proximity-witness broadcast has published an
-    aggressive event pinned to this NPC's scene location *and* the NPC
-    is a guard-occupation watcher, an INCIDENT clause is appended to
-    the base prompt so the Actor LLM can decide to intervene, raise
-    the alarm, confront the player, or flee — in character.
+    ``player_utterance`` carries the per-turn ``Recent events:`` cue
+    (literary phrasing built from the player's appearance + action
+    type + raw input). A bare string is accepted for tests that only
+    exercise the OPPORTUNITY / INCIDENT / peer-action paths and do
+    not care about the player utterance's verb mapping; it is wrapped
+    in a placeholder :class:`PlayerUtterance` with no appearance.
 
-    When ``peer_actions`` is non-empty (KER-21 sequential aggressive
-    path), a "peer reactions" clause is inserted so each NPC sees what
-    its peers already did this turn and is pushed away from echoing
-    the same template reaction.
-
-    When the opportunity gate detects a co-located target named in a
-    hostile relationship or a violence-flavoured knowledge fact, a
-    directive OPPORTUNITY clause naming the specific target is appended
-    and the baseline "most turns are routine" nudge is dropped.
+    Other clauses (KER-18 INCIDENT for guard-occupation NPCs, KER-21
+    peer-reactions for sequential aggressive turns, opportunity gate)
+    layer in on top.
     """
+    utterance = _coerce_player_utterance(player_utterance)
     opportunity_clause = _npo.get_opportunity_clause(npc, game_state)
     base_prompt = _format_base_turn_prompt(
         npc=npc,
-        player_action_summary=player_action_summary,
+        player_utterance=utterance,
         game_state=game_state,
         include_routine_nudge=opportunity_clause is None,
     )
+    optional = _optional_turn_clauses(npc, game_state, witnessed_events, peer_actions, opportunity_clause)
+    return "\n\n".join([base_prompt, *optional])
 
-    clauses: list[str] = [base_prompt]
+
+def _optional_turn_clauses(
+    npc: Any,
+    game_state: GameState,
+    witnessed_events: list[WitnessedAggression] | None,
+    peer_actions: list[tuple[str, str]] | None,
+    opportunity_clause: str | None,
+) -> list[str]:
+    """Collect the optional clauses appended after the base turn prompt."""
+    clauses: list[str] = []
+    scene_history = _format_scene_log_clause(game_state.scene_action_log, game_state.player)
+    if scene_history:
+        clauses.append(scene_history)
     if peer_actions:
         clauses.append(_format_peer_actions_clause(peer_actions))
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
@@ -437,12 +510,12 @@ def _build_turn_prompt(
     if opportunity_clause is not None:
         clauses.append(opportunity_clause)
         clauses.append(_npo.TACTICAL_HOSTILE_CLAUSE)
-    return "\n\n".join(clauses)
+    return clauses
 
 
 def _format_base_turn_prompt(
     npc: Any,
-    player_action_summary: str,
+    player_utterance: PlayerUtterance,
     game_state: GameState,
     include_routine_nudge: bool,
 ) -> str:
@@ -457,12 +530,42 @@ def _format_base_turn_prompt(
         "It is {name}'s turn.\nRecent events: {summary}\nScene: {scene}\nYour mood: {mood}, Status: {status}\n\n{tail}"
     ).format(
         name=npc.name,
-        summary=player_action_summary,
+        summary=player_utterance.render(),
         scene=scene_desc,
         mood=npc.current_mood,
         status=npc.physical_status,
         tail=tail,
     )
+
+
+def _format_scene_log_entry(entry: Any, player: Any) -> str:
+    """Render one scene-log entry as a bullet for the NPC prompt."""
+    description = entry.description[:_MAX_SCENE_LOG_DESC_CHARS]
+    if entry.actor_kind == ActorKind.PLAYER:
+        body = player_context.render_player_entry(
+            entry.action_type,
+            description,
+            player_context.format_player_appearance(player),
+        )
+    else:
+        speaker = entry.actor_name or entry.action_type or "Event"
+        body = "{speaker}: {desc}".format(speaker=speaker, desc=description)
+    return "- [t={clock:.1f}] {body}".format(clock=entry.game_clock, body=body)
+
+
+def _format_scene_log_clause(scene_action_log: list[Any], player: Any) -> str | None:
+    """Render the per-scene chronological log as a prompt clause.
+
+    Returns ``None`` when the log is empty so the caller can omit the
+    section. Caps the rendered tail at :data:`_MAX_SCENE_LOG_ENTRIES`
+    so a long scene cannot inflate the prompt; the full log stays in
+    :class:`GameState` for scene-end consolidation regardless.
+    """
+    if not scene_action_log:
+        return None
+    tail = scene_action_log[-_MAX_SCENE_LOG_ENTRIES:]
+    lines = [_format_scene_log_entry(entry, player) for entry in tail]
+    return "THIS SCENE SO FAR:\n{0}".format("\n".join(lines))
 
 
 def _format_peer_actions_clause(peer_actions: list[tuple[str, str]]) -> str:

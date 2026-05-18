@@ -9,6 +9,7 @@ from models.base_model import StorytellerBase
 from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import Scene
+from models.scene_action_log import SceneActionEntry
 from models.setting import Setting
 from models.visible_entity import VisibleEntity
 from models.world_state import WorldState
@@ -77,6 +78,7 @@ class GameState(StorytellerBase):
     game_time: str = "morning"
     conversation_log: list[dict] = []
     scene_conversation_log: list[dict] = []
+    scene_action_log: list[SceneActionEntry] = []
     pending_clarification: list[dict] | None = None
     world_state: WorldState = Field(default_factory=WorldState)
     last_visible_entities: list[VisibleEntity] = []

@@ -21,5 +21,10 @@ docker-compose.override.yml
 # MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json
+# codespeak dev-tool artifacts (local only, not project source)
+.codespeak/
+codespeak.json
+*.cs.md
+resp.json
 # CodeSpeak
 .codespeak/ignored/

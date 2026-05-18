@@ -11,6 +11,7 @@ from cast import (
     director_dialogue_helpers as dlg_helpers,
     director_dialogue_witness,
     known_npcs,
+    scene_log,
 )
 from cast.dice import ContestRoll, ContestType
 from knowledge import salience as salience_presets
@@ -101,6 +102,20 @@ async def _expand_npc_inventories(
     await asyncio.gather(*(_expand_single_inventory(card, item_generator, game_state) for card in new_cards))
 
 
+def _record_dialogue_in_scene_log(
+    game_state: GameState,
+    work_items: list[tuple[Any, Any, str, ContestRoll | None]],
+    dialogue_entries: list[DialogueEntry],
+) -> None:
+    """Append each NPC's dialogue reply to ``GameState.scene_action_log``.
+
+    Lives outside :meth:`DialogueHandler.handle_dialogue` so the host
+    method stays inside the WPS local-variable budget.
+    """
+    for work_item, entry in zip(work_items, dialogue_entries):
+        scene_log.append_npc_dialogue(game_state, work_item[0], entry.get("response", ""))
+
+
 # ---------------------------------------------------------------------------
 # DialogueHandler class (≤7 methods including __init__)
 # ---------------------------------------------------------------------------
@@ -154,6 +169,7 @@ class DialogueHandler:
             await asyncio.gather(*(_execute_npc_dialogue(*wi, self._gs) for wi in work_items)),
         )
         dlg_helpers.append_conversation_history(work_items, dialogue_entries, player_action)
+        _record_dialogue_in_scene_log(self._gs, work_items, dialogue_entries)
         scene = self._gs.current_scene
         await self._memory_manager.summarize_interactions_batch(
             dlg_helpers.format_dialogue_summary_pairs(
