@@ -129,6 +129,16 @@ def _record_action_in_scene_log(game_state: GameState, action: NPCAction) -> Non
     """Append the resolved NPC action to ``GameState.scene_action_log``."""
     npc = game_state.npcs.get(action.npc_uuid)
     if npc is None:
+        # The NPC resolved an action but is no longer registered: an
+        # actor-registry desync (de-registration / swap race). Logged
+        # at ERROR to match knowledge.memory's precedent for the same
+        # root cause — silently dropping it would erase that NPC's
+        # action from scene-end consolidation with no forensic trail.
+        logger.error(
+            "Resolved NPC action dropped from scene log: {} ({}) not in game_state.npcs",
+            action.npc_uuid,
+            action.action_type,
+        )
         return
     scene_log.append_npc_action(game_state, npc, action)
 

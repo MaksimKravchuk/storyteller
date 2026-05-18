@@ -592,6 +592,95 @@ class TestBuildTurnPromptOpportunityWindowIntegration:
 
 
 @allure.epic("NPC Interaction")
+@allure.feature("NPC autonomous turn — player utterance")
+class TestPlayerActionTypeFlowsIntoActorInput:
+    """End-to-end check that ``player_action_type`` threaded into
+    ``resolve_npc_turns`` reaches the ``Recent events:`` line of the
+    prompt the Actor's LLM actually receives. A dropped
+    ``player_action_type=`` kwarg or a signature change would leave
+    every NPC seeing the generic "does" verb with no failing unit
+    test — the supplier-tested / consumer-untested gap CLAUDE.md flags.
+    """
+
+    @allure.story("Player utterance")
+    @allure.title("ATTACK action_type renders the verb-mapped sentence into Actor.execute input_data")
+    @pytest.mark.asyncio
+    async def test_attack_action_type_reaches_actor_input(self):
+        gs = _make_gs()
+        gs.player.appearance = "190 cm Slav in dark furs"
+        npc = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = npc
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+        actor = _make_actor(_idle_response())
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
+
+        await resolver.resolve_npc_turns("I lunge with my dagger.", player_action_type="ATTACK")
+
+        actor_input = actor.execute.await_args.kwargs["input_data"]
+        assert "Recent events: The 190 cm Slav in dark furs attacks: I lunge with my dagger." in actor_input
+
+    @allure.story("Player utterance")
+    @allure.title("TALK action_type renders quoted speech into Actor.execute input_data")
+    @pytest.mark.asyncio
+    async def test_talk_action_type_renders_quoted_speech(self):
+        gs = _make_gs()
+        gs.player.appearance = "190 cm Slav in dark furs"
+        npc = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = npc
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+        actor = _make_actor(_idle_response())
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
+
+        await resolver.resolve_npc_turns("Hand over the silver.", player_action_type="TALK")
+
+        actor_input = actor.execute.await_args.kwargs["input_data"]
+        assert 'Recent events: The 190 cm Slav in dark furs says: "Hand over the silver."' in actor_input
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
+class TestRecordActionMissingNPCDiagnostic:
+    """A resolved NPC action whose NPC vanished from ``game_state.npcs``
+    between resolution and recording is an actor-registry desync — the
+    same root cause ``knowledge.memory`` logs loudly. The drop must not
+    be silent: that NPC's action would never reach scene-end
+    consolidation and the bug would leave no forensic trail.
+    """
+
+    @allure.story("Scene-log wiring")
+    @allure.title("An action for an unregistered NPC is logged and skipped; siblings still record")
+    def test_missing_npc_action_logged_and_skipped(self, loguru_sink):
+        gs = _make_gs()
+        present = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = present
+        # _NPC_ABSENT is deliberately NOT registered in gs.npcs.
+        absent_action = NPCAction(
+            npc_uuid=_NPC_ABSENT,
+            npc_name="Caesar",
+            action_description="Caesar slips away.",
+            action_type="IDLE",
+            target=None,
+            contest_roll=None,
+        )
+        present_action = NPCAction(
+            npc_uuid=_NPC_UUID_A,
+            npc_name=_GUARD,
+            action_description="The guard keeps watch.",
+            action_type="IDLE",
+            target=None,
+            contest_roll=None,
+        )
+
+        npc_turn_mod._record_resolved_actions(gs, [absent_action, present_action])
+
+        recorded = [e for e in gs.scene_action_log if e.actor_kind == ActorKind.NPC]
+        assert len(recorded) == 1
+        assert recorded[0].actor_uuid == _NPC_UUID_A
+        errors = [rec["message"] for rec in loguru_sink if rec["level"].name == "ERROR"]
+        assert any(str(_NPC_ABSENT) in msg and "IDLE" in msg for msg in errors)
+
+
+@allure.epic("NPC Interaction")
 @allure.feature("NPC turn resolution")
 class TestNPCActionDataclass:
     @allure.story("NPCAction dataclass")

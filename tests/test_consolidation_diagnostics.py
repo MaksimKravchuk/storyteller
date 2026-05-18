@@ -172,17 +172,24 @@ async def test_significant_phase_failure_log_truncates_description(loguru_sink) 
     assert "X" * (cap + 1) not in failure
 
 
-def _gs_with_log_no_present_npcs() -> tuple[GameState, scene_mod.Scene]:
+_MARCUS_UUID = make_uuid("marcus")
+
+
+def _gs_with_scene_npcs(scene_npcs: list[scene_mod.SceneNPC]) -> tuple[GameState, scene_mod.Scene]:
+    """GameState with registered Marcus and a non-empty significant log.
+
+    ``scene_npcs`` populates the outgoing scene's ``npcs_present`` —
+    ``[]`` for the zero-witness case, a mix of registered/unregistered
+    SceneNPCs for the partial-drop case.
+    """
     gs = GameState(
         setting=Setting(name="Rome", time_period="1 AD", region="Italy", summary=""),
         knowledge_graph=KnowledgeGraph(),
     )
-    # An NPC exists but is NOT in npcs_present, so no witness resolves
-    # at swap even though the log is non-empty.
     marcus = NPCCard(name="Marcus", occupation="guard")
-    marcus.uuid = make_uuid("marcus")
+    marcus.uuid = _MARCUS_UUID
     gs.npcs[marcus.uuid] = marcus
-    outgoing = scene_mod.Scene(location_id=make_uuid("loc-old"), description="An empty plaza.", npcs_present=[])
+    outgoing = scene_mod.Scene(location_id=make_uuid("loc-old"), description="A forum.", npcs_present=scene_npcs)
     gs.current_scene = outgoing
     gs.scene_action_log.append(
         SceneActionEntry(
@@ -196,6 +203,11 @@ def _gs_with_log_no_present_npcs() -> tuple[GameState, scene_mod.Scene]:
         ),
     )
     return gs, outgoing
+
+
+def _gs_with_log_no_present_npcs() -> tuple[GameState, scene_mod.Scene]:
+    """Non-empty log but no NPC in npcs_present — no witness resolves at swap."""
+    return _gs_with_scene_npcs([])
 
 
 @allure.story("I2")
@@ -218,6 +230,44 @@ async def test_non_empty_log_zero_witnesses_warns(loguru_sink) -> None:
 async def test_empty_log_no_warning(loguru_sink) -> None:
     gs, outgoing = _gs_with_log_no_present_npcs()
     gs.scene_action_log = []
+    manager = AsyncMock(spec=MemoryManager)
+
+    await scene_swap.consolidate_outgoing_scene(manager, gs, outgoing)
+
+    assert _warnings(loguru_sink) == []
+
+
+_GHOST_UUID = make_uuid("npc-never-registered-2")
+
+
+@allure.story("I3")
+@allure.title("A partial present-NPC drop warns with the dropped UUID but still consolidates the survivors")
+@pytest.mark.asyncio
+async def test_partial_present_npc_drop_warns_and_continues(loguru_sink) -> None:
+    gs, outgoing = _gs_with_scene_npcs(
+        [
+            scene_mod.SceneNPC(role="npc", uuid=_MARCUS_UUID),
+            scene_mod.SceneNPC(role="npc", uuid=_GHOST_UUID),
+        ],
+    )
+    manager = AsyncMock(spec=MemoryManager)
+
+    await scene_swap.consolidate_outgoing_scene(manager, gs, outgoing)
+
+    warnings = _warnings(loguru_sink)
+    assert any(str(_GHOST_UUID) in msg and str(outgoing.location_id) in msg for msg in warnings)
+    # Survivors still consolidate rather than the whole scene being dropped.
+    manager.create_memory_from_event.assert_awaited()
+    event = manager.create_memory_from_event.await_args.args[0]
+    assert _MARCUS_UUID in event.witness_ids
+    assert _GHOST_UUID not in event.witness_ids
+
+
+@allure.story("I3")
+@allure.title("No partial-drop warning when every present NPC is registered")
+@pytest.mark.asyncio
+async def test_no_partial_drop_warning_when_all_registered(loguru_sink) -> None:
+    gs, outgoing = _gs_with_scene_npcs([scene_mod.SceneNPC(role="npc", uuid=_MARCUS_UUID)])
     manager = AsyncMock(spec=MemoryManager)
 
     await scene_swap.consolidate_outgoing_scene(manager, gs, outgoing)

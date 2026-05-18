@@ -289,3 +289,77 @@ async def test_late_joining_npc_summary_excludes_earlier_turns() -> None:
     assert "TURN1:" not in rendered[_NPC_BETA]
     assert "TURN2: I greet the newcomer." in rendered[_NPC_BETA]
     assert "TURN2: Livia arrives" in rendered[_NPC_BETA]
+
+
+@allure.story("consolidate_scene")
+@allure.title("Phase 2 stamps salience, structured slots, and subject_id on each significant node")
+@pytest.mark.asyncio
+async def test_significant_node_attributes_by_action_type() -> None:
+    manager, graph, _ = _make_manager()
+    graph.register_actor_node(_NPC_ALPHA, label="Marcus")
+
+    attack = SceneActionEntry(
+        actor_kind=ActorKind.NPC,
+        actor_uuid=_NPC_ALPHA,
+        actor_name="Marcus",
+        action_type="ATTACK",
+        description="Marcus strikes Livia with a dagger.",
+        target_name="Livia",
+        game_clock=2.0,
+        significant=True,
+    )
+    intimidate = SceneActionEntry(
+        actor_kind=ActorKind.NPC,
+        actor_uuid=_NPC_ALPHA,
+        actor_name="Marcus",
+        action_type="INTIMIDATE",
+        description="Marcus snarls a threat at the player.",
+        target_name="Player",
+        game_clock=2.5,
+        significant=True,
+    )
+    sabotage = SceneActionEntry(
+        actor_kind=ActorKind.PLAYER,
+        actor_uuid=_PLAYER_UUID,
+        actor_name="Player",
+        action_type="SABOTAGE",
+        description="I jam the gate mechanism.",
+        target_name="gate",
+        game_clock=3.0,
+        significant=True,
+    )
+
+    await consolidate_scene(
+        manager,
+        SceneConsolidationRequest(
+            entries=[attack, intimidate, sabotage],
+            present_npc_uuids=[_NPC_ALPHA],
+            game_time=4.0,
+            location_id=_LOC,
+            player_subject_id=_PLAYER_UUID,
+        ),
+    )
+
+    sig = {
+        n.action: n
+        for n in graph.all_nodes()
+        if n.source == KnowledgeSource.PERSONAL_EXPERIENCE and n.action is not None
+    }
+
+    # ATTACK→COMBAT and INTIMIDATE→RETALIATION are both elevated and
+    # equal; the default branch (SABOTAGE→OBJECT_INTERACTION) ranks
+    # strictly below. Asserting the relationship rather than the exact
+    # preset constants keeps this from breaking on salience retuning
+    # while still exercising all three _salience_for_entry branches.
+    assert sig["attack"].salience == sig["intimidate"].salience
+    assert sig["sabotage"].salience < sig["attack"].salience
+
+    assert sig["attack"].subject == "Marcus"
+    assert sig["attack"].object == "Livia"
+    assert sig["attack"].subject_id == _NPC_ALPHA
+
+    assert sig["intimidate"].subject == "Marcus"
+    assert sig["intimidate"].subject_id == _NPC_ALPHA
+
+    assert sig["sabotage"].object == "gate"
+    assert sig["sabotage"].subject_id == _PLAYER_UUID

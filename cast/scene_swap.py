@@ -73,9 +73,32 @@ def _player_appearance_for_summary(game_state: GameState) -> str | None:
 
 
 def _present_npc_uuids(scene: Any, game_state: GameState) -> list[UUID]:
-    """Return UUIDs of fully-initialised NPCs currently in *scene*."""
+    """Return UUIDs of fully-initialised NPCs currently in *scene*.
+
+    A *partial* drop (some present NPCs registered, some not) is the
+    same actor-registry desync the rest of this PR hardens against. The
+    survivors still consolidate, so it would otherwise be silent: warn
+    with the dropped UUIDs. The all-dropped case is already covered by
+    the zero-witness warning in :func:`consolidate_outgoing_scene`, so
+    only warn here when at least one NPC survived.
+    """
     npcs = game_state.npcs
-    return [snpc.uuid for snpc in scene.npcs_present if _is_initialised_npc(snpc, npcs)]
+    present: list[UUID] = []
+    dropped: list[UUID | None] = []
+    for snpc in scene.npcs_present:
+        if _is_initialised_npc(snpc, npcs):
+            present.append(snpc.uuid)
+        else:
+            dropped.append(snpc.uuid)
+    if dropped and present:
+        logger.warning(
+            "Scene consolidation dropped {} unregistered NPC(s) {} at swap "
+            "(location={}); their scene memory will be lost",
+            len(dropped),
+            dropped,
+            scene.location_id,
+        )
+    return present
 
 
 def _is_initialised_npc(snpc: Any, npcs: dict[UUID, Any]) -> bool:
