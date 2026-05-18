@@ -26,3 +26,5 @@ entities.json
 codespeak.json
 *.cs.md
 resp.json
+# CodeSpeak
+.codespeak/ignored/

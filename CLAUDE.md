@@ -26,12 +26,10 @@ docker compose up -d            # postgres + storyteller (web + admin + bot)
 # Admin:     http://localhost:8080
 # Stop:      docker compose down
 
-# Lint
+# Lint / type-check (run individually while iterating)
 uv run ruff check .
 uv run ruff format --check .
 uv run flake8 .
-
-# Type check
 uv run mypy .
 
 # Unit tests (excludes e2e + benchmarks)
@@ -63,12 +61,12 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ### Key Modules
 
-- **`cast/`** — All AI agents (director, actor, narrator, scene_builder, npc_generator, data_miner, dice)
+- **`cast/`** — All AI agents (director, actor, narrator, scene_builder, npc_generator, data_miner, dramaturge, world_chronicler, dice)
 - **`engine/`** — Public API (`GameEngine`) and factory; wires agents together
 - **`models/`** — Domain models (GameState, Setting, NPCCard, Scene, Location); all inherit UUID-based `BaseModel`
 - **`knowledge/`** — NetworkX-backed directed graph with scoped nodes (WORLD→COUNTRY→REGION→CITY→LOCAL), edge types (RELATED_TO, CAUSED_BY, etc.), and scope-filtered querying per NPC education level
 - **`timeline/`** — EventManager (game clock, scheduled events with effects) and time cost mapping
-- **`llm/`** — Provider-agnostic LLM layer; OpenAI and Anthropic clients with factory auto-detection from model name (`gpt-*`→OpenAI, `claude-*`→Anthropic)
+- **`llm/`** — Provider-agnostic LLM layer; OpenAI, Anthropic, OpenRouter, and DeepSeek clients with factory auto-detection from model name (`gpt-*`→OpenAI, `claude-*`→Anthropic)
 - **`prompts/`** — Composable `PromptTemplate` with `PromptSection`s and variable interpolation; sections with missing vars are skipped
 - **`db/`** — Async SQLAlchemy + asyncpg with Alembic migrations; `GameRepository` is the single persistence access point; domain↔ORM conversion in `converters.py`
 - **`interfaces/`** — Telegram bot, admin dashboard, and FastAPI web UI (`interfaces/web/`)
@@ -77,7 +75,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ### Configuration
 
-`config.py` loads from env vars / `.env` file. Key vars: `DIRECTOR_MODEL` (default gpt-5.4-mini), `AGENT_MODEL` (default gpt-5.4-nano), `NARRATOR_MODEL` (default gpt-5.4-mini), `DEFAULT_PROVIDER` (default openai).
+`config.py` loads from env vars / `.env`. Per-agent model vars: `DIRECTOR_MODEL` (default gpt-5.4-mini), `AGENT_MODEL` (gpt-5.4-nano), `NARRATOR_MODEL` (gpt-5.4-mini), `DRAMATURGE_MODEL` (gpt-5.4-nano). Provider is auto-detected from each model name (no global provider var). The Dramaturge consistency pass is off by default — enable with `DRAMATURGE_ENABLED=true`.
 
 ## Code Conventions
 
