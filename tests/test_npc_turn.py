@@ -19,6 +19,7 @@ from models import (
     npc_card as npc_card_mod,
     relationship as relationship_mod,
     scene as scene_mod,
+    scene_action_log as scene_action_log_mod,
     setting as setting_mod,
 )
 from tests._uuid_helpers import make_uuid
@@ -32,6 +33,7 @@ NPCCard = npc_card_mod.NPCCard
 Scene = scene_mod.Scene
 SceneNPC = scene_mod.SceneNPC
 Setting = setting_mod.Setting
+ActorKind = scene_action_log_mod.ActorKind
 
 _NPC_UUID_A = make_uuid("npc-a")
 _NPC_UUID_B = make_uuid("npc-b")
@@ -720,3 +722,47 @@ class TestBuildTurnPromptTacticalClause:
         prompt = npc_turn_mod._build_turn_prompt(cook, "Player waits.", gs)
 
         assert "TACTICAL CHOICE:" not in prompt
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
+class TestResolveNPCTurnsSceneLogWiring:
+    """G2 — the resolve_npc_turns consumer seam, not just the append helper.
+
+    ``append_npc_action`` is unit-tested in isolation elsewhere, but no
+    test proved ``resolve_npc_turns`` itself routes resolved actions
+    into ``GameState.scene_action_log``. A refactor moving the
+    ``_record_resolved_actions`` call out would leave every helper test
+    green while silently killing scene-end consolidation of NPC actions
+    — the supplier-tested / consumer-untested gap CLAUDE.md flags.
+    """
+
+    @allure.story("Scene-log wiring")
+    @allure.title("A resolved NPC ATTACK lands in scene_action_log, attributed and flagged significant")
+    @pytest.mark.asyncio
+    async def test_resolved_attack_reaches_scene_log(self):
+        gs = _make_gs()
+        npc = _make_npc(_NPC_UUID_A, _GUARD)
+        gs.npcs[_NPC_UUID_A] = npc
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: _make_actor(_attack_response())})
+
+        await resolver.resolve_npc_turns("Player waited.")
+
+        npc_entries = [e for e in gs.scene_action_log if e.actor_kind == ActorKind.NPC]
+        assert len(npc_entries) == 1
+        assert npc_entries[0].actor_uuid == _NPC_UUID_A
+        assert npc_entries[0].action_type == "ATTACK"
+        assert npc_entries[0].significant is True
+
+    @allure.story("Scene-log wiring")
+    @allure.title("No eligible NPCs ⇒ resolve_npc_turns appends nothing")
+    @pytest.mark.asyncio
+    async def test_empty_scene_appends_nothing(self):
+        gs = _make_gs()
+        gs.current_scene = _make_scene()
+        resolver = NPCTurnResolver(game_state=gs, actors={})
+
+        await resolver.resolve_npc_turns("Player looked around.")
+
+        assert gs.scene_action_log == []
