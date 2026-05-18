@@ -139,6 +139,39 @@ async def test_significant_phase_failure_log_is_actionable(loguru_sink) -> None:
     assert "Marcus lunges at Livia" in failure
 
 
+@allure.story("I1")
+@allure.title("A runaway description is truncated in the failure log, not dumped whole")
+@pytest.mark.asyncio
+async def test_significant_phase_failure_log_truncates_description(loguru_sink) -> None:
+    manager = AsyncMock(spec=MemoryManager)
+    manager.create_memory_from_event = AsyncMock(side_effect=RuntimeError("graph write failed"))
+    long_desc = "X" * 500
+    request = scene_consolidation.SceneConsolidationRequest(
+        entries=[
+            SceneActionEntry(
+                actor_kind=ActorKind.NPC,
+                actor_uuid=make_uuid("marcus"),
+                actor_name="Marcus",
+                action_type="ATTACK",
+                description=long_desc,
+                game_clock=1.0,
+                significant=True,
+            ),
+        ],
+        present_npc_uuids=[make_uuid("witness")],
+        game_time=1.0,
+        location_id=make_uuid("loc"),
+        player_subject_id=make_uuid("player"),
+    )
+
+    await scene_consolidation._significant_phase(manager, request)
+
+    failure = _errors(loguru_sink)[0]
+    cap = scene_consolidation._DESC_PREVIEW_CHARS
+    assert "X" * cap in failure
+    assert "X" * (cap + 1) not in failure
+
+
 def _gs_with_log_no_present_npcs() -> tuple[GameState, scene_mod.Scene]:
     gs = GameState(
         setting=Setting(name="Rome", time_period="1 AD", region="Italy", summary=""),
