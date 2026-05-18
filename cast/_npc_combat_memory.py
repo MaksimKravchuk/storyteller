@@ -66,9 +66,12 @@ def _co_located_witness_ids(
 ) -> list[UUID]:
     """Return UUIDs of every NPC who would have witnessed the clash.
 
-    Includes both combatants plus every NPC currently at ``location_id``.
-    Falls back to the current scene when ``location_id`` is the scene's
-    location, so the in-scene case still walks ``scene.npcs_present``.
+    Always includes both combatants. When ``location_id`` is given,
+    every NPC registered at that location in ``game_state.locations``
+    is added. When ``location_id`` is ``None`` only the two combatants
+    are returned — there is no scene fallback here; the in-scene caller
+    (:func:`persist_combat_memory`) resolves ``current_scene.location_id``
+    before calling so co-located witnesses are still picked up.
     """
     witnesses: set[UUID] = set()
     witnesses.add(actor.uuid)

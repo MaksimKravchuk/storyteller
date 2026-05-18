@@ -7,11 +7,12 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from loguru import logger
+
 from models.game_state import INITIAL_GAME_CLOCK, PlayerState
 
-from knowledge import node as _node, salience as salience_presets
+from knowledge import memory_dedup, node as _node, salience as salience_presets
 from knowledge.graph import KnowledgeGraph
-from knowledge.memory_dedup import has_near_duplicate_memory
 from knowledge.memory_slots import EMPTY_SLOTS, MemorySlots, slot_kwargs
 
 if TYPE_CHECKING:
@@ -138,7 +139,19 @@ class MemoryManager:
             return
         splits = [_split_pair(pair) for pair in pairs]
         coros = [self._summarize_one(split, game_time, location_id, salience, subject_id) for split in splits]
-        await asyncio.gather(*coros)
+        # Best-effort per NPC: one NPC's summariser failure (LLM timeout
+        # / rate-limit / parse error) must not cancel its siblings. This
+        # batch feeds scene-end consolidation, after which the caller
+        # wipes the action log — an all-or-nothing gather would let one
+        # NPC's failure permanently erase every present NPC's scene
+        # memory. ``CancelledError`` still propagates so cooperative
+        # cancellation is not turned into a log line.
+        outcomes = await asyncio.gather(*coros, return_exceptions=True)
+        for split, outcome in zip(splits, outcomes):
+            if isinstance(outcome, asyncio.CancelledError):
+                raise outcome
+            if isinstance(outcome, BaseException):
+                logger.opt(exception=outcome).error("Per-NPC interaction summary failed (npc={})", split[0])
 
     async def create_memory_from_event(self, event: MemoryEvent) -> MemoryEventResult:
         """Create memory nodes for all witnesses of an event.
@@ -217,6 +230,14 @@ class MemoryManager:
             ),
         )
         for witness_id in event.witness_ids:
+            if witness_id not in self._graph.digraph:
+                logger.error(
+                    "WITNESSED edge for unregistered witness {} on memory {}; "
+                    "auto-creating a phantom actor node (graph pollution) — "
+                    "NPC registration is out of sync",
+                    witness_id,
+                    node_id,
+                )
             self._graph.add_edge(witness_id, node_id, _node.EdgeType.WITNESSED)
         return node_id
 
@@ -238,7 +259,7 @@ class MemoryManager:
             max_tokens=_SUMMARY_MAX_TOKENS,
         )
         summary_text = response.body.strip()
-        if not summary_text or has_near_duplicate_memory(self._graph, npc_id, summary_text):
+        if not summary_text or memory_dedup.has_near_duplicate_memory(self._graph, npc_id, summary_text):
             return
         node_id = self._graph.add_node(
             _node.KnowledgeNode(
@@ -255,3 +276,10 @@ class MemoryManager:
         )
         if npc_id in self._graph.digraph:
             self._graph.add_edge(npc_id, node_id, _node.EdgeType.WITNESSED)
+        else:
+            logger.error(
+                "Summary node {} created for unregistered NPC {}; WITNESSED edge dropped, "
+                "NPC has no scene memory — NPC registration is out of sync",
+                node_id,
+                npc_id,
+            )

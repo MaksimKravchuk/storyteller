@@ -169,6 +169,7 @@ class TestPromptCapsLogSize:
             gs.scene_action_log.append(
                 SceneActionEntry(
                     actor_kind=ActorKind.PLAYER,
+                    actor_uuid=gs.player.uuid,
                     actor_name="Player",
                     action_type="TALK",
                     description="player utterance number {0}".format(idx),
@@ -194,6 +195,7 @@ class TestPromptCapsLogSize:
         gs.scene_action_log.append(
             SceneActionEntry(
                 actor_kind=ActorKind.PLAYER,
+                actor_uuid=gs.player.uuid,
                 actor_name="Player",
                 action_type="TALK",
                 description=runaway,

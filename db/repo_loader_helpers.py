@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from loguru import logger
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
-from db.converters import knowledge as conv_knowledge, setting as conv_setting
-from db.converters import world_state as conv_world_state
+from db.converters import knowledge as conv_knowledge, setting as conv_setting, world_state as conv_world_state
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import EdgeType
 from models.game_state import GameState
@@ -29,10 +30,25 @@ def _hydrate_scene_action_log(raw_entries: list[dict] | None) -> list[SceneActio
     The DB column has ``server_default='[]'`` so the value should be a
     list, but a NULL coming back from a pre-migration row is normalised
     to an empty list here.
+
+    The scene log is enrichment data: a single malformed or stale row
+    (e.g. a pre-validator PLAYER entry with no ``actor_uuid``) must not
+    brick the whole session load, so each entry is rebuilt
+    independently and a rejected one is dropped *loudly* rather than
+    propagating ``ValidationError``.
     """
     if not raw_entries:
         return []
-    return [SceneActionEntry(**raw) for raw in raw_entries]
+    entries: list[SceneActionEntry] = []
+    for raw in raw_entries:
+        try:
+            entries.append(SceneActionEntry(**raw))
+        except ValidationError:
+            logger.opt(exception=True).error(
+                "Dropping malformed scene_action_log entry on load: {!r}",
+                raw,
+            )
+    return entries
 
 
 def hydrate_game_state(gs_row: dict, setting: Any, kg: KnowledgeGraph) -> GameState:

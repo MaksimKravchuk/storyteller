@@ -23,6 +23,10 @@ from models.scene_action_log import SceneActionEntry
 if TYPE_CHECKING:
     from knowledge.memory import MemoryManager
 
+# Caps the description in the phase-2 failure log (the only forensic
+# trail for a silently-lost combat / intimidation memory).
+_DESC_PREVIEW_CHARS = 120
+
 
 @dataclass(frozen=True)
 class SceneConsolidationRequest:
@@ -111,9 +115,13 @@ async def _significant_phase(manager: MemoryManager, request: SceneConsolidation
             raise outcome
         if isinstance(outcome, BaseException):
             logger.opt(exception=outcome).error(
-                "Significant-event consolidation failed ({} by {})",
+                "Significant-event consolidation failed (action={} actor={} target={} location={} clock={} desc={!r})",
                 entry.action_type,
                 entry.actor_name or "event",
+                entry.target_name,
+                request.location_id,
+                entry.game_clock,
+                entry.description[:_DESC_PREVIEW_CHARS],
             )
 
 

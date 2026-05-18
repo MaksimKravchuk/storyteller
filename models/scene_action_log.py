@@ -22,7 +22,7 @@ from enum import Enum
 from typing import Any
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from models.base_model import StorytellerBase
 
@@ -62,3 +62,27 @@ class SceneActionEntry(StorytellerBase):
     game_clock: float
     significant: bool = False
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _check_actor_identity(self) -> SceneActionEntry:
+        """Enforce the ``actor_kind`` ↔ ``actor_uuid``/``actor_name`` matrix.
+
+        PLAYER / NPC entries carry the acting entity's UUID; EVENT
+        entries are anonymous (no UUID, empty name). Runs on
+        construction and on JSONB rehydration
+        (``SceneActionEntry(**raw)``), so a corrupted or stale row is
+        rejected at the boundary instead of silently feeding the
+        consolidator a malformed actor. ``actor_name`` is intentionally
+        not required non-empty: it is derived from ``player.name`` /
+        ``npc.name`` (both already defaulted upstream) and every
+        consumer falls back gracefully on a blank label, so enforcing
+        it here would only add a runtime failure mode without closing a
+        real illegal state.
+        """
+        if self.actor_kind is ActorKind.EVENT:
+            if self.actor_uuid is not None or self.actor_name:
+                raise ValueError("EVENT entries must have actor_uuid=None and an empty actor_name")
+            return self
+        if self.actor_uuid is None:
+            raise ValueError("{0} entries require a non-null actor_uuid".format(self.actor_kind.value))
+        return self

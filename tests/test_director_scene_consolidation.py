@@ -46,6 +46,7 @@ def _make_gs_with_outgoing_scene() -> GameState:
     gs.scene_action_log.append(
         SceneActionEntry(
             actor_kind=ActorKind.PLAYER,
+            actor_uuid=gs.player.uuid,
             actor_name="Player",
             action_type="TALK",
             description="I bid Marcus farewell.",

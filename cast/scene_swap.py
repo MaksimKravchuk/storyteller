@@ -14,6 +14,8 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
+from loguru import logger
+
 from cast.player_context import format_player_appearance
 from knowledge import scene_consolidation
 from knowledge.memory import MemoryManager
@@ -37,6 +39,14 @@ async def consolidate_outgoing_scene(
         return
     present_npc_uuids = _present_npc_uuids(outgoing_scene, game_state)
     if not present_npc_uuids:
+        # Non-empty log but zero resolved NPCs: the caller wipes the
+        # log next, so this is a real loss, not a quiet no-op.
+        logger.warning(
+            "Scene action log has {} entries but no present NPC resolved at swap "
+            "(location={}); scene memory will be dropped",
+            len(game_state.scene_action_log),
+            outgoing_scene.location_id,
+        )
         return
     request = scene_consolidation.SceneConsolidationRequest(
         entries=game_state.scene_action_log,

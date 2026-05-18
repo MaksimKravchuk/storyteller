@@ -53,11 +53,18 @@ def _routine_entry(
 
     NPC entries carry ``actor_uuid`` in production (``append_npc_*``
     always set it); pass it so the NPC registers as present for the
-    per-NPC presence-window scoping in ``_summary_phase``.
+    per-NPC presence-window scoping in ``_summary_phase``. Player
+    entries default to ``_PLAYER_UUID`` to mirror
+    ``append_player_action`` (which always stamps ``player.uuid``).
     """
+    is_player = actor_name == "Player"
+    if actor_uuid is None:
+        resolved_uuid = _PLAYER_UUID if is_player else None
+    else:
+        resolved_uuid = actor_uuid
     return SceneActionEntry(
-        actor_kind=ActorKind.PLAYER if actor_name == "Player" else ActorKind.NPC,
-        actor_uuid=actor_uuid,
+        actor_kind=ActorKind.PLAYER if is_player else ActorKind.NPC,
+        actor_uuid=resolved_uuid,
         actor_name=actor_name,
         action_type="TALK",
         description=description,

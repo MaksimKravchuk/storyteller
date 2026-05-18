@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import allure
 import pytest
+from pydantic import ValidationError
 
 from cast import scene_log as scene_log_mod
 from knowledge.graph import KnowledgeGraph
@@ -208,3 +209,89 @@ class TestAppendEvent:
         assert entry.significant is True
         assert entry.metadata["already_persisted"] is True
         assert str(_NPC_UUID) in entry.metadata["witness_ids"]
+
+
+@allure.epic("NPC short-term memory")
+@allure.feature("Scene action log")
+class TestActorKindInvariant:
+    """The ``actor_kind`` ↔ ``actor_uuid``/``actor_name`` matrix is enforced.
+
+    Illegal combinations must be rejected at construction (and therefore
+    at JSONB rehydration, which goes through ``SceneActionEntry(**raw)``)
+    rather than only being maintained by producer convention.
+    """
+
+    @allure.story("Type invariants")
+    @allure.title("PLAYER entry without an actor_uuid is rejected")
+    def test_player_requires_actor_uuid(self):
+        with pytest.raises(ValidationError):
+            SceneActionEntry(
+                actor_kind=ActorKind.PLAYER,
+                actor_uuid=None,
+                actor_name="Traveller",
+                action_type="MOVE",
+                description="walks north",
+                game_clock=1.0,
+            )
+
+    @allure.story("Type invariants")
+    @allure.title("NPC entry with an empty actor_name is accepted (name is not invariant-bearing)")
+    def test_npc_empty_actor_name_allowed(self):
+        # actor_name is derived from npc.name/player.name (defaulted
+        # upstream) and every consumer falls back on a blank label;
+        # enforcing non-empty here would only add a runtime failure
+        # mode. The load-bearing invariant is the actor_uuid presence.
+        entry = SceneActionEntry(
+            actor_kind=ActorKind.NPC,
+            actor_uuid=_NPC_UUID,
+            actor_name="",
+            action_type="TALK",
+            description="says hello",
+            game_clock=1.0,
+        )
+        assert entry.actor_kind == ActorKind.NPC
+
+    @allure.story("Type invariants")
+    @allure.title("EVENT entry carrying an actor_uuid or actor_name is rejected")
+    def test_event_must_be_anonymous(self):
+        with pytest.raises(ValidationError):
+            SceneActionEntry(
+                actor_kind=ActorKind.EVENT,
+                actor_uuid=_NPC_UUID,
+                actor_name="",
+                action_type="WITNESS",
+                description="a lantern shatters",
+                game_clock=1.0,
+            )
+        with pytest.raises(ValidationError):
+            SceneActionEntry(
+                actor_kind=ActorKind.EVENT,
+                actor_uuid=None,
+                actor_name="Marcus",
+                action_type="WITNESS",
+                description="a lantern shatters",
+                game_clock=1.0,
+            )
+
+    @allure.story("Type invariants")
+    @allure.title("Producer-shaped entries for every actor_kind still construct")
+    def test_legal_entries_round_trip(self):
+        player = SceneActionEntry(
+            actor_kind=ActorKind.PLAYER,
+            actor_uuid=_NPC_UUID,
+            actor_name="Traveller",
+            action_type="MOVE",
+            description="walks north",
+            game_clock=1.0,
+        )
+        event = SceneActionEntry(
+            actor_kind=ActorKind.EVENT,
+            actor_uuid=None,
+            actor_name="",
+            action_type="WITNESS",
+            description="a lantern shatters",
+            game_clock=1.0,
+        )
+        assert player.actor_kind == ActorKind.PLAYER
+        assert event.actor_kind == ActorKind.EVENT
+        assert SceneActionEntry(**event.model_dump()).actor_kind == ActorKind.EVENT
