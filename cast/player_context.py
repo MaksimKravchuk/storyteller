@@ -55,13 +55,15 @@ class PlayerUtterance:
     the per-turn ``Recent events:`` line, the rendered ``THIS SCENE
     SO FAR:`` clause, and the summariser transcript at scene end all
     funnel through :meth:`render`. Bundling appearance directly into
-    the verb sentence ("A 190 cm Slav in dark furs says: ...") gives
+    the verb sentence ("The 190 cm Slav in dark furs says: ...") gives
     the LLM the player's identity in the same place it sees the
-    action, instead of as a separate form field.
+    action, instead of as a separate form field. The descriptor is a
+    gender-neutral noun phrase ("The {appearance}"), not "A {appearance}
+    man" — the player's gender is unknown here.
 
     When ``appearance`` is the :data:`_DEFAULT_APPEARANCE` placeholder
-    the descriptor is dropped — there is no value in saying "an
-    unremarkable man" — and the sentence falls back to ``Player
+    the descriptor is dropped — there is no value in saying "the
+    unremarkable one" — and the sentence falls back to ``Player
     {verb}: {text}``.
     """
 
@@ -74,7 +76,7 @@ class PlayerUtterance:
         verb = _VERB_BY_ACTION_TYPE.get(self.action_type.upper(), _DEFAULT_VERB)
         body = '"{0}"'.format(self.text) if verb in _SPEECH_VERBS else self.text
         if self.appearance and self.appearance != _DEFAULT_APPEARANCE:
-            return "A {0} man {1}: {2}".format(self.appearance, verb, body)
+            return "The {0} {1}: {2}".format(self.appearance, verb, body)
         return "Player {0}: {1}".format(verb, body)
 
 

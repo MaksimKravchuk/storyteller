@@ -193,7 +193,7 @@ async def test_player_appearance_renders_literary_in_summariser_prompt() -> None
 
     assert llm.send_message.await_count == 1
     user_message = _captured_user_prompt(llm)
-    assert 'A 190 cm Slav in dark furs man says: "I demand the silver."' in user_message
+    assert 'The 190 cm Slav in dark furs says: "I demand the silver."' in user_message
     # Without an appearance, the same call would emit the bare "Player: ..." form;
     # confirm the literary form replaced it.
     assert "Player: I demand the silver." not in user_message

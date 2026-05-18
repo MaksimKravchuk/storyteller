@@ -130,11 +130,11 @@ class TestPromptLiteraryPlayerEntries:
         prompt = npc_turn_mod._build_turn_prompt(marcus, utterance, gs)
 
         # Player scene-log entry uses PlayerUtterance.
-        assert 'A 190 cm Slav in dark furs man says: "I demand the silver."' in prompt
+        assert 'The 190 cm Slav in dark furs says: "I demand the silver."' in prompt
         # NPC scene-log entry stays in the bare form.
         assert "Marcus: Marcus refuses." in prompt
         # Per-turn cue uses PlayerUtterance with the current action_type.
-        assert "Recent events: A 190 cm Slav in dark furs man attacks: I draw my sword." in prompt
+        assert "Recent events: The 190 cm Slav in dark furs attacks: I draw my sword." in prompt
 
     @allure.story("Literary phrasing")
     @allure.title("Without an appearance, player entries fall back to the bare 'Player: ...' form")
