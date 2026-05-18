@@ -25,11 +25,10 @@ from cast.dice import (
 from cast import npc_goal_resolution as _ngr, npc_opportunity as _npo, player_context, scene_log
 from cast.director_witness import WitnessedAggression, is_guard_occupation
 from cast.wait_detection import INCAPACITATING_STATES
-from models import game_state as gs_mod, scene_action_log as scene_action_log_mod
+from models import game_state as gs_mod
 
 GameState = gs_mod.GameState
 PlayerUtterance = player_context.PlayerUtterance
-ActorKind = scene_action_log_mod.ActorKind
 
 # NPC action types that trigger a contest when targeting another character.
 _CONTESTABLE_ACTIONS: frozenset[str] = frozenset(
@@ -540,16 +539,11 @@ def _format_base_turn_prompt(
 
 def _format_scene_log_entry(entry: Any, player: Any) -> str:
     """Render one scene-log entry as a bullet for the NPC prompt."""
-    description = entry.description[:_MAX_SCENE_LOG_DESC_CHARS]
-    if entry.actor_kind == ActorKind.PLAYER:
-        body = player_context.render_player_entry(
-            entry.action_type,
-            description,
-            player_context.format_player_appearance(player),
-        )
-    else:
-        speaker = entry.actor_name or entry.action_type or "Event"
-        body = "{speaker}: {desc}".format(speaker=speaker, desc=description)
+    body = scene_log.render_scene_log_entry_body(
+        entry,
+        player_context.format_player_appearance(player),
+        max_desc_chars=_MAX_SCENE_LOG_DESC_CHARS,
+    )
     return "- [t={clock:.1f}] {body}".format(clock=entry.game_clock, body=body)
 
 
