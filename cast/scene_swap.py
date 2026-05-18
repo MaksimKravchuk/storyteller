@@ -16,12 +16,10 @@ from uuid import UUID
 
 from loguru import logger
 
-from cast.player_context import format_player_appearance
+from cast.player_context import format_player_appearance, is_default_appearance
 from knowledge import scene_consolidation
 from knowledge.memory import MemoryManager
 from models.game_state import GameState
-
-_DEFAULT_APPEARANCE = "unremarkable"
 
 
 async def consolidate_outgoing_scene(
@@ -67,7 +65,7 @@ def _player_appearance_for_summary(game_state: GameState) -> str | None:
     let the rendered log fall back to the bare ``Player: ...`` form.
     """
     appearance = format_player_appearance(game_state.player)
-    if appearance == _DEFAULT_APPEARANCE:
+    if is_default_appearance(appearance):
         return None
     return appearance
 

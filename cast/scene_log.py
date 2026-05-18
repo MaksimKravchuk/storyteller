@@ -11,9 +11,33 @@ from dataclasses import dataclass, field
 from typing import Any
 from uuid import UUID
 
+from cast.player_context import render_player_entry
 from cast.scene_log_classify import classify_significance
 from models.game_state import GameState
 from models.scene_action_log import ActorKind, SceneActionEntry
+
+
+def render_scene_log_entry_body(
+    entry: SceneActionEntry,
+    player_appearance: str | None,
+    max_desc_chars: int | None = None,
+) -> str:
+    """Render one entry as a single prompt line (no bullet or timestamp).
+
+    Player entries funnel through :func:`render_player_entry` when an
+    appearance is supplied; otherwise the entry falls back to the bare
+    ``{speaker}: {desc}`` form. Shared by the NPC turn prompt
+    (:mod:`cast.npc_turn`) and the scene-end summariser transcript
+    (:mod:`knowledge.scene_summary_phase`) so the two surfaces cannot
+    drift. ``max_desc_chars`` truncates the description for the
+    length-capped NPC prompt; the summariser passes ``None`` to keep
+    the full text.
+    """
+    description = entry.description if max_desc_chars is None else entry.description[:max_desc_chars]
+    if entry.actor_kind == ActorKind.PLAYER and player_appearance is not None:
+        return render_player_entry(entry.action_type, description, player_appearance)
+    speaker = entry.actor_name or entry.action_type or "Event"
+    return "{speaker}: {desc}".format(speaker=speaker, desc=description)
 
 
 @dataclass(frozen=True)

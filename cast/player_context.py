@@ -36,8 +36,18 @@ _SPEECH_VERBS: frozenset[str] = frozenset(("says", "snarls", "urges", "claims"))
 
 
 def format_player_appearance(player: Any) -> str:
-    """Return appearance or a fallback so the player_character PromptSection always renders."""
+    """Return appearance or a fallback so the player_character PromptSection always renders.
+
+    Never returns ``None``. ``cast.scene_log.render_scene_log_entry_body``
+    relies on this: a ``None`` here would silently route a player entry
+    to the bare ``speaker: desc`` fallback in the NPC prompt.
+    """
     return player.appearance or _DEFAULT_APPEARANCE
+
+
+def is_default_appearance(appearance: str) -> bool:
+    """True when *appearance* is the uninformative placeholder fallback."""
+    return appearance == _DEFAULT_APPEARANCE
 
 
 def format_player_inventory(player: Any) -> str:

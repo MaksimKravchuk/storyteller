@@ -15,7 +15,7 @@ from uuid import UUID
 from loguru import logger
 
 from knowledge import salience as salience_presets
-from models.scene_action_log import ActorKind, SceneActionEntry
+from models.scene_action_log import SceneActionEntry
 
 if TYPE_CHECKING:
     from knowledge.memory import DialoguePair, MemoryManager
@@ -127,13 +127,6 @@ def _render_log_for_summariser(
     through :func:`cast.player_context.render_player_entry` so the
     produced memory anchors on who the player visibly was.
     """
-    from cast.player_context import render_player_entry
+    from cast.scene_log import render_scene_log_entry_body
 
-    lines: list[str] = []
-    for entry in entries:
-        if entry.actor_kind == ActorKind.PLAYER and player_appearance is not None:
-            lines.append(render_player_entry(entry.action_type, entry.description, player_appearance))
-        else:
-            speaker = entry.actor_name or entry.action_type or "Event"
-            lines.append("{speaker}: {desc}".format(speaker=speaker, desc=entry.description))
-    return "\n".join(lines)
+    return "\n".join(render_scene_log_entry_body(entry, player_appearance) for entry in entries)
