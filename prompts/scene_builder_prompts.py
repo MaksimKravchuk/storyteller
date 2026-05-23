@@ -73,7 +73,9 @@ SCENE_BUILDER_GENERATE = (
     '  "location_id": "a short snake_case id for this location",\n'
     '  "description": "Detailed visual description of the scene (what you see, architecture, objects)",\n'
     '  "npcs_present": ["EVERY person/character visible in the scene — guards, merchants,'
-    ' beggars, passers-by, etc. Use role descriptions like: guard, merchant, beggar, scribe"],\n'
+    " beggars, passers-by, etc. Use role descriptions like: guard, merchant, beggar, scribe."
+    " When the player action asks for a social investigation opening, include at least one actionable contact,"
+    ' such as a named vendor, clerk, guard, witness, informant, or an immediate path to one"],\n'
     '  "points_of_interest": [{{"names": ["full descriptive phrase",'
     ' "short head noun", "alt short head"]}}, ...],\n'
     '    // 3 to 7 items. Each entry is an object with a "names" list.\n'

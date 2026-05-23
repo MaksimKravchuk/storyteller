@@ -119,6 +119,23 @@ class TestSceneBuilder:
         assert builder._system_prompt_vars["current_location"] == "A warm hearth."
 
     @allure.story("NPC construction")
+    @allure.title("SceneBuilder asks social-investigation openings for an actionable contact")
+    @pytest.mark.asyncio
+    async def test_social_investigation_opening_prompt_requests_actionable_contact(self, game_state) -> None:
+        builder = SceneBuilder(llm_client=MagicMock())
+        send_json = AsyncMock(return_value=SceneResponse())
+        with patch.object(builder, _SEND_JSON, new=send_json):
+            await builder.act("open with a social investigation in the market", {"game_state": game_state})
+
+        call_args = send_json.await_args
+        assert call_args is not None
+        prompt = call_args.args[0]
+        assert "social investigation opening" in prompt
+        assert "actionable contact" in prompt
+        assert "named vendor" in prompt
+        assert "immediate path to one" in prompt
+
+    @allure.story("NPC construction")
     @allure.title("SceneBuilder turns each npcs_present string into a SceneNPC whose uuid starts as None")
     @pytest.mark.asyncio
     async def test_npcs_present_uuid_none(self, game_state) -> None:

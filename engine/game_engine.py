@@ -14,7 +14,11 @@ from models.player_character_input import PlayerCharacterInput
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 
-_OPENING_SCENE_PROMPT = "Look around and describe the starting scene"
+_OPENING_SCENE_PROMPT = (
+    "Look around and describe the starting scene. For any premise involving social investigation, rumor-gathering, "
+    "bargaining, testimony, or asking locals for information, include at least one named, addressable NPC or an "
+    "explicit immediate path to one, with a visible social affordance the player can act on."
+)
 
 
 def _apply_character_to_player(player: PlayerState, character: PlayerCharacterInput) -> None:
