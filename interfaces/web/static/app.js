@@ -17,6 +17,7 @@
     charAppearance: $("char-appearance"),
     charInventory: $("char-inventory"),
     useTemplateBtn: $("use-template-btn"),
+    settingExamples: $("setting-examples"),
     gamePanel: $("game-panel"),
     log: $("log"),
     actionForm: $("action-form"),
@@ -235,7 +236,7 @@
   }
 
   async function onUseTemplate() {
-    setStatus(els.settingStatus, "Loading template…", "info");
+    setStatus(els.settingStatus, "Loading a character template…", "info");
     try {
       const response = await fetch("/api/character-template");
       if (!response.ok) {
@@ -257,7 +258,11 @@
     if (!setting) return;
     const language = els.languageSelect ? els.languageSelect.value : "English";
     const character = gatherCharacter();
-    setStatus(els.settingStatus, "Researching setting and generating opening scene… (may take a minute)", "info");
+    setStatus(
+      els.settingStatus,
+      "Building your AI text quest demo: researching the setting and writing the opening scene. This may take a minute…",
+      "info",
+    );
     const button = els.settingForm.querySelector("button[type=submit]");
     button.disabled = true;
     try {
@@ -293,7 +298,7 @@
     els.actionInput.value = "";
     els.actionInput.disabled = true;
     els.actionSubmit.disabled = true;
-    setStatus(els.actionStatus, "…", "info");
+    setStatus(els.actionStatus, "The AI narrator is resolving your action…", "info");
     try {
       const response = await fetch(
         "/api/games/" + encodeURIComponent(currentGameId) + "/actions",
@@ -331,6 +336,13 @@
     els.actionInput.focus();
   }
 
+  function onSettingExampleClick(event) {
+    const button = event.target.closest("button[data-setting-example]");
+    if (!button) return;
+    els.settingInput.value = button.dataset.settingExample || "";
+    els.settingInput.focus();
+  }
+
   function initFoldableSections() {
     document.querySelectorAll(".character-col h4, .character-col h5").forEach((heading) => {
       const list = heading.nextElementSibling;
@@ -344,6 +356,9 @@
   els.actionForm.addEventListener("submit", onSubmitAction);
   els.newGameBtn.addEventListener("click", onNewGame);
   $("next-actions").addEventListener("click", onNextActionClick);
+  if (els.settingExamples) {
+    els.settingExamples.addEventListener("click", onSettingExampleClick);
+  }
   if (els.useTemplateBtn) {
     els.useTemplateBtn.addEventListener("click", onUseTemplate);
   }
