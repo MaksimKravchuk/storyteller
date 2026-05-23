@@ -324,6 +324,13 @@
     showSettingPanel();
   }
 
+  function onNextActionClick(event) {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+    els.actionInput.value = button.dataset.action || "";
+    els.actionInput.focus();
+  }
+
   function initFoldableSections() {
     document.querySelectorAll(".character-col h4, .character-col h5").forEach((heading) => {
       const list = heading.nextElementSibling;
@@ -336,6 +343,7 @@
   els.settingForm.addEventListener("submit", onStartGame);
   els.actionForm.addEventListener("submit", onSubmitAction);
   els.newGameBtn.addEventListener("click", onNewGame);
+  $("next-actions").addEventListener("click", onNextActionClick);
   if (els.useTemplateBtn) {
     els.useTemplateBtn.addEventListener("click", onUseTemplate);
   }
