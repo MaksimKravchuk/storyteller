@@ -25,6 +25,7 @@ router = APIRouter()
 _STATIC_DIR = Path(__file__).parent / "static"
 _INDEX_HTML = _STATIC_DIR / "index.html"
 _START_UNAVAILABLE_DETAIL = "Storyteller is temporarily unable to start games. Please try again later."
+_START_FAILED_DETAIL = "Storyteller could not start this game. Please try another premise or try again."
 
 PlayerIdDep = Annotated[str, Depends(get_player_id)]
 CfgDep = Annotated[Config, Depends(get_cfg)]
@@ -86,6 +87,11 @@ async def start_game(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=_START_UNAVAILABLE_DETAIL,
+        ) from exc
+    except service.GameStartFailedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=_START_FAILED_DETAIL,
         ) from exc
 
 

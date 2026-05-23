@@ -11,6 +11,10 @@ class GameStartUnavailableError(Exception):
     """Raised when provider/configuration problems make game start unavailable."""
 
 
+class GameStartFailedError(Exception):
+    """Raised when runtime game-start failures should be reported safely to players."""
+
+
 def is_provider_auth_error(exc: Exception) -> bool:
     """Return True for common LLM provider credential/authentication failures."""
     exc_type_names = {type(exc).__name__}
