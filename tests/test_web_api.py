@@ -799,6 +799,7 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
         ],
     )
     repo.sessions.update = AsyncMock()
+    repo.commit = AsyncMock()
     repo.save_game_state.return_value = None
 
     game_state = MagicMock()
@@ -841,6 +842,98 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     assert all(call.args == (_FIXED_PLAYER_ID,) for call in create_calls)
     save_calls = repo.save_game_state.await_args_list
     assert {call.args[0] for call in save_calls} == {"sess-1", "sess-2"}
+
+
+@pytest.mark.asyncio
+@allure.story("Start game")
+@allure.title("start_game_for_player commits the created session before returning")
+async def test_start_game_commits_before_returning_snapshot() -> None:
+    repo = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.create_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
+    repo.sessions.update = AsyncMock()
+    repo.commit = AsyncMock()
+    repo.save_game_state.return_value = None
+
+    game_state = MagicMock()
+    game_state.uuid = "game-1"
+    game_state.setting.name = "Rome"
+    game_state.conversation_log = []
+    game_state.turn_count = 0
+    game_state.scene_number = None
+    game_state.player = MagicMock(
+        name="Player",
+        appearance="",
+        physical_status="healthy",
+        inventory=[],
+        known_npcs=set(),
+        player_event_log=[],
+        learned_facts=set(),
+    )
+    game_state.player.name = "Player"
+    game_state.npcs = {}
+
+    engine = MagicMock()
+    engine.start_game = AsyncMock()
+    engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
+    start_request = service.StartGameParams(
+        player_id=_FIXED_PLAYER_ID,
+        setting="Rome",
+        language="English",
+    )
+
+    with (
+        patch("engine.session_ops.create_engine", return_value=engine),
+        patch("engine.session_ops.load_role_overrides", new=AsyncMock(return_value={})),
+    ):
+        await service.start_game_for_player(repo=repo, cfg=MagicMock(), start_request=start_request)
+
+    repo.sessions.update.assert_awaited_once_with("sess-1", state="playing", language="English")
+    repo.commit.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+@allure.story("Submit action")
+@allure.title("process_turn_for_player commits the action before returning")
+async def test_process_turn_commits_before_returning_response() -> None:
+    repo = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.get_latest_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
+    repo.commit = AsyncMock()
+
+    game_state = MagicMock()
+    game_state.uuid = "game-abc"
+    game_state.turn_count = 1
+    game_state.scene_number = None
+    game_state.last_visible_entities = []
+    game_state.player = MagicMock(
+        name="Player",
+        appearance="",
+        physical_status="healthy",
+        inventory=[],
+        known_npcs=set(),
+        player_event_log=[],
+        learned_facts=set(),
+    )
+    game_state.player.name = "Player"
+    game_state.npcs = {}
+    repo.load_game_state = AsyncMock(return_value=(game_state, MagicMock(), []))
+
+    engine = MagicMock()
+    engine.process_action = AsyncMock(return_value="You look around.")
+    engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
+
+    with patch("engine.session_ops.create_engine_from_state", new=AsyncMock(return_value=engine)):
+        response = await service.process_turn_for_player(
+            repo=repo,
+            cfg=MagicMock(),
+            player_id=_FIXED_PLAYER_ID,
+            game_id="game-abc",
+            action="look",
+        )
+
+    assert response.narration == "You look around."
+    repo.commit.assert_awaited_once_with()
 
 
 @pytest.mark.asyncio
