@@ -9,6 +9,7 @@ import pytest
 
 from cast.scene_builder import SceneBuilder
 from cast.schemas.scene_response import PointOfInterestResponse, SceneResponse
+from engine.game_engine import _OPENING_SCENE_PROMPT
 from models.scene import Scene, SceneNPC
 from tests._uuid_helpers import make_uuid
 
@@ -130,10 +131,91 @@ class TestSceneBuilder:
         call_args = send_json.await_args
         assert call_args is not None
         prompt = call_args.args[0]
-        assert "social investigation opening" in prompt
+        assert "actual setting/premise" in prompt
+        assert "social investigation" in prompt
         assert "actionable contact" in prompt
         assert "named vendor" in prompt
         assert "immediate path to one" in prompt
+
+    @allure.story("NPC construction")
+    @allure.title("Social-investigation openings surface an actionable contact even when the LLM omits one")
+    @pytest.mark.asyncio
+    async def test_social_investigation_opening_adds_visible_contact_from_premise(self, game_state) -> None:
+        game_state.setting.summary = (
+            "A citywide murder investigation where the player must gather rumors, "
+            "question witnesses, and bargain for testimony in a crowded market."
+        )
+        builder = SceneBuilder(llm_client=MagicMock())
+        payload = SceneResponse(
+            description="The market wakes under canvas awnings.",
+            points_of_interest=["a public fountain"],
+        )
+
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=payload)):
+            scene = await builder.act("Look around and describe the starting scene.", {"game_state": game_state})
+
+        assert [npc.role for npc in scene.npcs_present] == ["Aurelia, approachable local contact"]
+        assert "ask about rumors" in scene.description
+
+    @allure.story("NPC construction")
+    @allure.title("Generic NPC lists do not suppress the social-investigation opening contact fallback")
+    @pytest.mark.asyncio
+    async def test_social_investigation_opening_adds_contact_when_only_generic_npcs_exist(self, game_state) -> None:
+        game_state.setting.summary = (
+            "A citywide murder investigation where the player must gather rumors, "
+            "question witnesses, and bargain for testimony in a crowded market."
+        )
+        builder = SceneBuilder(llm_client=MagicMock())
+        payload = SceneResponse(
+            description="The market churns with bodies and haggling stalls.",
+            npcs_present=["crowd", "passers-by", "merchant", "vendors", "guard", "scribe", "clerk", "beggar"],
+            points_of_interest=["a public fountain"],
+        )
+
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=payload)):
+            scene = await builder.act("Look around and describe the starting scene.", {"game_state": game_state})
+
+        assert [npc.role for npc in scene.npcs_present] == [
+            "crowd",
+            "passers-by",
+            "merchant",
+            "vendors",
+            "guard",
+            "scribe",
+            "clerk",
+            "beggar",
+            "Aurelia, approachable local contact",
+        ]
+        assert "ask about rumors" in scene.description
+
+    @allure.story("NPC construction")
+    @allure.title("Russian social-investigation openings use localized deterministic fallback contact text")
+    @pytest.mark.asyncio
+    async def test_russian_social_investigation_opening_adds_localized_contact(self, game_state) -> None:
+        game_state.setting.summary = (
+            "Городское расследование убийства, где игрок собирает слухи, ищет свидетелей и показания на шумном рынке."
+        )
+        builder = SceneBuilder(llm_client=MagicMock(), language="Russian")
+        payload = SceneResponse(description="Рынок просыпается под полотняными навесами.")
+
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=payload)):
+            scene = await builder.act("Look around and describe the starting scene.", {"game_state": game_state})
+
+        assert [npc.role for npc in scene.npcs_present] == ["Аврелия, местная собеседница"]
+        assert "спросить о слухах" in scene.description
+
+    @allure.story("NPC construction")
+    @allure.title("Social affordance fallback is keyed to the premise, not synthetic opening prompt wording")
+    @pytest.mark.asyncio
+    async def test_social_investigation_prompt_text_alone_does_not_add_contact(self, game_state) -> None:
+        game_state.setting.summary = "A solitary wilderness survival trek across an empty glacier."
+        builder = SceneBuilder(llm_client=MagicMock())
+
+        with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
+            scene = await builder.act(_OPENING_SCENE_PROMPT, {"game_state": game_state})
+
+        assert scene.npcs_present == []
+        assert "ask about rumors" not in scene.description
 
     @allure.story("NPC construction")
     @allure.title("SceneBuilder turns each npcs_present string into a SceneNPC whose uuid starts as None")

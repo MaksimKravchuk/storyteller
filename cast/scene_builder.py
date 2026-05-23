@@ -16,6 +16,59 @@ from models.scene import PointOfInterest, Scene, SceneNPC, coerce_point_of_inter
 from prompts.scene_builder_prompts import get_scene_builder_prompts
 
 _SETTING_SUMMARY_MAX = 500
+_OPENING_ACTION_MARKERS = (
+    "look around",
+    "starting scene",
+    "describe the starting scene",
+)
+_SOCIAL_PREMISE_MARKERS = (
+    "ask locals",
+    "bargain",
+    "conspiracy",
+    "gossip",
+    "informant",
+    "investigation",
+    "murder",
+    "question witnesses",
+    "rumor",
+    "testimony",
+    "witness",
+    "показан",
+    "расслед",
+    "свидетел",
+    "слух",
+)
+_SOCIAL_PATH_MARKERS = (
+    "ask",
+    "contact",
+    "informant",
+    "testimony",
+    "rumor",
+    "witness",
+    "показан",
+    "спрос",
+    "свидетел",
+    "слух",
+)
+_GENERIC_SOCIAL_ROLES = frozenset(
+    (
+        "beggar",
+        "beggars",
+        "clerk",
+        "clerks",
+        "crowd",
+        "guard",
+        "guards",
+        "merchant",
+        "merchants",
+        "passers-by",
+        "passersby",
+        "scribe",
+        "scribes",
+        "vendor",
+        "vendors",
+    ),
+)
 
 
 def _format_persistent_world_changes(deltas: dict[UUID, list[str]]) -> str:
@@ -145,6 +198,7 @@ class SceneBuilder(BasePerformer):
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
+        self._language = language
         self._generate_template = prompts.generate
         self.set_context(language=language)
 
@@ -168,7 +222,60 @@ class SceneBuilder(BasePerformer):
         scene_data = await self._send_json(prompt, response_model=SceneResponse)
         scene = _scene_from_response(scene_data, game_state.game_time)
         _merge_known_object_states(scene, _current_object_states(game_state))
+        self._ensure_social_opening_affordance(scene, input_data, game_state)
         return scene
+
+    def _ensure_social_opening_affordance(self, scene: Scene, input_data: str, game_state: Any) -> None:
+        """Add a deterministic contact when a social-investigation opening lacks one."""
+        if not any(marker in input_data.lower() for marker in _OPENING_ACTION_MARKERS):
+            return
+
+        setting_text = self._actual_setting_text(game_state)
+        if not any(marker in setting_text for marker in _SOCIAL_PREMISE_MARKERS):
+            return
+
+        scene_text = "\n".join(
+            [scene.description, *[name for poi in scene.points_of_interest for name in poi.names]],
+        ).lower()
+        has_contact = False
+        for snpc in scene.npcs_present:
+            if snpc.role.strip().lower() not in _GENERIC_SOCIAL_ROLES:
+                has_contact = True
+                break
+        if has_contact or any(marker in scene_text for marker in _SOCIAL_PATH_MARKERS):
+            return
+
+        language = self._language.lower()
+        if language.startswith("ru") or language.startswith("russian") or language.startswith("рус"):
+            scene.npcs_present.append(SceneNPC(role="Аврелия, местная собеседница"))
+            scene.description = (
+                (
+                    "{0} Аврелия, местная собеседница, ждет поблизости; у нее можно спросить о слухах, "
+                    "свидетелях или о том, где найти показания."
+                )
+                .format(scene.description)
+                .strip()
+            )
+            return
+        scene.npcs_present.append(SceneNPC(role="Aurelia, approachable local contact"))
+        scene.description = (
+            (
+                "{0} Aurelia, an approachable local contact, waits nearby; you can ask about rumors, "
+                "witnesses, or where to find testimony."
+            )
+            .format(scene.description)
+            .strip()
+        )
+
+    def _actual_setting_text(self, game_state: Any) -> str:
+        """Return the actual researched setting/premise text used for premise checks."""
+        setting = game_state.setting
+        chunks = [setting.name, setting.region, setting.summary, setting.social_structure]
+        chunks.extend(str(person) for person in setting.key_persons)
+        chunks.extend(str(event) for event in setting.key_events)
+        chunks.extend(str(location) for location in setting.locations)
+        chunks.extend(setting.traditions)
+        return "\n".join(chunk for chunk in chunks if chunk).lower()
 
     def _prime_context(self, game_state: Any) -> None:
         """Prepare the system-prompt context for one scene build.
