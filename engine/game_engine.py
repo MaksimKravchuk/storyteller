@@ -14,6 +14,8 @@ from models.player_character_input import PlayerCharacterInput
 from timeline.event import GameEvent
 from timeline.event_manager import EventManager
 
+_OPENING_SCENE_PROMPT = "Look around and describe the starting scene"
+
 
 def _apply_character_to_player(player: PlayerState, character: PlayerCharacterInput) -> None:
     """Apply onboarding character to player; blank name keeps anonymous default."""
@@ -21,6 +23,28 @@ def _apply_character_to_player(player: PlayerState, character: PlayerCharacterIn
         player.name = character.name
     player.appearance = character.appearance
     player.inventory = list(character.inventory)
+
+
+def _hide_opening_prompt_from_player_history(game_state: GameState) -> None:
+    """Keep the internal opening-scene prompt out of player-visible turn history."""
+    if not game_state.conversation_log:
+        return
+    opening_entry = game_state.conversation_log[-1]
+    if opening_entry.get("player_action") != _OPENING_SCENE_PROMPT:
+        return
+    opening_entry.pop("player_action", None)
+    opening_entry["turn"] = 0
+    game_state.turn_count = 0
+    game_state.round_number = 0
+    if _scene_log_matches_opening_prompt(game_state):
+        game_state.scene_conversation_log.pop()
+
+
+def _scene_log_matches_opening_prompt(game_state: GameState) -> bool:
+    """Return true when the newest scene-history row is the synthetic opening prompt."""
+    if not game_state.scene_conversation_log:
+        return False
+    return game_state.scene_conversation_log[-1].get("player_action") == _OPENING_SCENE_PROMPT
 
 
 class GameEngine:
@@ -106,7 +130,9 @@ class GameEngine:
             self._language,
             data_miner,
         )
-        return await self._director.execute("Look around and describe the starting scene")
+        opening_narration = await self._director.execute(_OPENING_SCENE_PROMPT)
+        _hide_opening_prompt_from_player_history(self._game_state)
+        return opening_narration
 
     async def process_action(self, player_action: str) -> str:
         """Process a player action and return the narrated response."""

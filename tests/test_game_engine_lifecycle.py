@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from contextlib import ExitStack
+from functools import partial
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
 
 from engine.game_engine import GameEngine
+from interfaces.web.service_helpers import snapshot_from_engine
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 
@@ -34,6 +36,30 @@ def _make_director_mock(reply: str) -> MagicMock:
     director = MagicMock()
     director.execute = AsyncMock(return_value=reply)
     return director
+
+
+async def _record_synthetic_opening_turn(engine: GameEngine, input_data: str) -> str:
+    """Simulate Director.act appending the old synthetic opening prompt to player history."""
+    game_state, _, _ = engine.assert_running()
+    game_state.turn_count = 1
+    game_state.round_number = 1
+    game_state.conversation_log.append(
+        {
+            "turn": 1,
+            "scene_number": 1,
+            "player_action": input_data,
+            "response": _OPENING_NARRATION,
+            "visible_entities": [],
+        },
+    )
+    game_state.scene_conversation_log.append(
+        {
+            "player_action": input_data,
+            "response_summary": _OPENING_NARRATION,
+            "action_type": "EXPLORE",
+        },
+    )
+    return _OPENING_NARRATION
 
 
 class _StartGameHarness:
@@ -115,6 +141,28 @@ async def test_start_game_wires_director_with_data_miner(simple_setting) -> None
         assert call.args[0] is harness.clients
         assert call.args[4] == "Italian"
         assert call.args[5] is harness.data_miner
+
+
+@allure.story("start_game player-visible opening")
+@allure.title("start_game keeps the web transcript focused on opening narration instead of the synthetic prompt")
+@pytest.mark.asyncio
+async def test_start_game_web_snapshot_hides_synthetic_opening_prompt(simple_setting) -> None:
+    """The player should not see the engine's internal opening action as their first transcript line."""
+    engine = GameEngine()
+    opening_prompt = "Look around and describe the starting scene"
+
+    with _StartGameHarness(simple_setting) as harness:
+        harness.director.execute = AsyncMock(side_effect=partial(_record_synthetic_opening_turn, engine))
+        await engine.start_game("Ancient Rome during Augustus")
+
+    game_state, _, _ = engine.assert_running()
+    snapshot = snapshot_from_engine(engine)
+    assert snapshot.turn_count == 0
+    assert [(entry.role, entry.text) for entry in snapshot.transcript] == [("narrator", _OPENING_NARRATION)]
+    assert game_state.conversation_log[-1]["turn"] == 0
+    assert game_state.conversation_log[-1].get("player_action") is None
+    assert game_state.scene_conversation_log == []
+    assert opening_prompt not in snapshot.model_dump_json()
 
 
 @allure.story("start_game wiring")
