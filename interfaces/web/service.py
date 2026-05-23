@@ -67,6 +67,12 @@ async def _start_and_persist(
     await persist_engine_state(repo, session_id, engine, turn_number=None)
 
 
+async def _mark_session_playing(repo: GameRepository, session_id: str, language: str) -> None:
+    """Mark the new web session playable before returning to the client."""
+    await repo.sessions.update(session_id, state=_STATE_PLAYING, language=language)
+    await repo.commit()
+
+
 async def start_game_for_player(
     repo: GameRepository,
     cfg: Config,
@@ -91,7 +97,7 @@ async def start_game_for_player(
         if is_provider_auth_error(exc):
             raise GameStartUnavailableError("LLM provider credentials rejected game start") from exc
         raise
-    await repo.sessions.update(session_id, state=_STATE_PLAYING, language=start_request.language)
+    await _mark_session_playing(repo, session_id, start_request.language)
     return snapshot_from_engine(engine, start_request.language)
 
 
@@ -112,6 +118,7 @@ async def _act_and_persist(
     game_state, _, _ = engine.assert_running()
     turn_number = game_state.turn_count
     await persist_engine_state(repo, session_id, engine, turn_number=turn_number)
+    await repo.commit()
     return ActionResponse(
         narration=narration,
         narration_html=render_narrator_html(

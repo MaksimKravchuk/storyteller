@@ -35,6 +35,10 @@ class GameRepository:
         """Roll back the current transaction (use after a failed op to reuse the session)."""
         await self._session.rollback()
 
+    async def commit(self) -> None:
+        """Commit the current transaction before returning a player-visible response."""
+        await self._session.commit()
+
     async def load_game_state(
         self,
         session_id: str,
