@@ -13,6 +13,7 @@ from config import Config
 from db.repository import GameRepository
 from engine.session_ops import begin_session, persist_engine_state, resume_session
 from interfaces.web.character import build_character_info
+from interfaces.web.errors import GameNotFoundError, GameStartUnavailableError, is_provider_auth_error
 from interfaces.web.schemas import ActionResponse, CharacterCreationInput, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
@@ -37,10 +38,6 @@ def _to_engine_character(character: CharacterCreationInput | None) -> PlayerChar
         appearance=character.appearance,
         inventory=list(character.inventory),
     )
-
-
-class GameNotFoundError(Exception):
-    """Raised when a web player has no active game (or an unknown game_id)."""
 
 
 async def get_current_snapshot(
@@ -88,9 +85,11 @@ async def start_game_for_player(
             start_request.setting,
             _to_engine_character(start_request.character),
         )
-    except Exception:
+    except Exception as exc:
         logger.exception("Failed to start web game for player {}", start_request.player_id)
         await repo.rollback()
+        if is_provider_auth_error(exc):
+            raise GameStartUnavailableError("LLM provider credentials rejected game start") from exc
         raise
     await repo.sessions.update(session_id, state=_STATE_PLAYING, language=start_request.language)
     return snapshot_from_engine(engine, start_request.language)
@@ -104,7 +103,12 @@ async def _act_and_persist(
     language: str,
 ) -> ActionResponse:
     """Run a player action through the engine and persist the new state."""
-    narration = await engine.process_action(action)
+    try:
+        narration = await engine.process_action(action)
+    except Exception as exc:
+        if is_provider_auth_error(exc):
+            raise GameStartUnavailableError("LLM provider credentials rejected player action") from exc
+        raise
     game_state, _, _ = engine.assert_running()
     turn_number = game_state.turn_count
     await persist_engine_state(repo, session_id, engine, turn_number=turn_number)
