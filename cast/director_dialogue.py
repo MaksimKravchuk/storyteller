@@ -53,7 +53,7 @@ async def _execute_npc_dialogue(
 ) -> dict[str, str]:
     """Execute a single NPC dialogue and return the result entry."""
     reply = await actor.execute(
-        input_data=action_text,
+        input_data="Player is addressing you, {0}.\nPlayer action: {1}".format(npc.name, action_text),
         context={
             "npc": npc,
             _KEY_GAME_STATE: game_state,

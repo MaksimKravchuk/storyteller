@@ -52,6 +52,31 @@ def _mood_side_effect(input_data, context, gs):
 @allure.epic("NPC Interaction")
 @allure.feature("Dialogue routing")
 class TestDuplicateNPCNames:
+    @allure.story("Addressed NPC dialogue")
+    @allure.title("Actor dialogue input explicitly tells the target NPC that the player is addressing them")
+    @pytest.mark.asyncio
+    async def test_addressed_actor_receives_targeted_player_input(self):
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Livia", occupation="stallholder", mood="")
+        director = make_director(
+            game_state=gs,
+            route_response={
+                _ACTION_TYPE: _TALK,
+                _TARGETS: ("Livia",),
+                _NEEDS_CLARIFICATION: False,
+                _DELEGATE_TO: [_ACTOR, _NARRATOR],
+            },
+        )
+        actor = make_mock_actor("The stallholder answers your question.")
+        director._actors[_NPC_A] = actor
+
+        await director.act("ask about the missing silver")
+
+        dialogue_call = actor.execute.call_args_list[0]
+        input_data = dialogue_call.kwargs.get("input_data") or dialogue_call.args[0]
+        assert "Player is addressing you, Livia." in input_data
+        assert "ask about the missing silver" in input_data
+
     @allure.story("Duplicate NPC names")
     @allure.title("Talking to 'the guard' when two guards share that name triggers dialogue for only one of them")
     @pytest.mark.asyncio
