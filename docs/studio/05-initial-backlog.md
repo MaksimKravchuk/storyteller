@@ -6,7 +6,7 @@ This is a starter backlog. Convert these to GitHub issues or Hermes Kanban cards
 
 ### Issue: Confirm release target and non-goals
 
-Owner: game-producer
+Owner: gameproducer
 Labels: type:planning, priority:p0
 
 Acceptance criteria:
@@ -16,7 +16,7 @@ Acceptance criteria:
 
 ### Issue: Verify current main quality gate
 
-Owner: qa-playtester
+Owner: qaplaytester
 Labels: type:qa, priority:p0
 
 Acceptance criteria:
@@ -25,7 +25,7 @@ Acceptance criteria:
 
 ### Issue: Verify local Docker Compose runtime
 
-Owner: build-release-engineer
+Owner: buildreleaseengineer
 Labels: area:build, area:release, priority:p0
 
 Acceptance criteria:
@@ -36,7 +36,7 @@ Acceptance criteria:
 
 ### Issue: Create canonical demo scenario list
 
-Owner: narrative-evaluator
+Owner: narrativeevaluator
 Labels: area:narrative, type:qa, priority:p0
 
 Acceptance criteria:
@@ -47,7 +47,7 @@ Acceptance criteria:
 
 ### Issue: Add player web UI smoke checklist or automated smoke test
 
-Owner: qa-playtester
+Owner: qaplaytester
 Labels: area:web, type:test, priority:p1
 
 Acceptance criteria:
@@ -56,7 +56,7 @@ Acceptance criteria:
 
 ### Issue: Audit player-facing error handling
 
-Owner: gameplay-engineer
+Owner: gameplayengineer
 Labels: area:web, area:gameplay, type:bug, priority:p1
 
 Acceptance criteria:
@@ -65,7 +65,7 @@ Acceptance criteria:
 
 ### Issue: Confirm Fly.io release and rollback procedure
 
-Owner: build-release-engineer
+Owner: buildreleaseengineer
 Labels: area:release, priority:p1
 
 Acceptance criteria:
@@ -75,7 +75,7 @@ Acceptance criteria:
 
 ### Issue: Draft public demo release notes
 
-Owner: marketing-community
+Owner: marketingcommunity
 Labels: area:marketing, priority:p1
 
 Acceptance criteria:
@@ -87,7 +87,7 @@ Acceptance criteria:
 
 ### Issue: Review first-time web UX copy
 
-Owner: marketing-community
+Owner: marketingcommunity
 Labels: area:web, area:marketing, priority:p2
 
 Acceptance criteria:
@@ -97,7 +97,7 @@ Acceptance criteria:
 
 ### Issue: Add benchmark baseline for release candidate
 
-Owner: narrative-evaluator
+Owner: narrativeevaluator
 Labels: area:benchmarks, area:narrative, priority:p2
 
 Acceptance criteria:

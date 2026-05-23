@@ -15,25 +15,25 @@ Agents may propose product direction, but Max owns taste and release approval.
 Create these profiles after the first planning pass:
 
 ```bash
-hermes profile create game-producer --clone default
-hermes profile create gameplay-engineer --clone default
-hermes profile create qa-playtester --clone default
-hermes profile create build-release-engineer --clone default
-hermes profile create narrative-evaluator --clone default
-hermes profile create marketing-community --clone default
+hermes profile create gameproducer --clone default
+hermes profile create gameplayengineer --clone default
+hermes profile create qaplaytester --clone default
+hermes profile create buildreleaseengineer --clone default
+hermes profile create narrativeevaluator --clone default
+hermes profile create marketingcommunity --clone default
 ```
 
 Optional later:
 
 ```bash
-hermes profile create prompt-engineer --clone default
-hermes profile create db-persistence-engineer --clone default
-hermes profile create web-ui-engineer --clone default
+hermes profile create promptengineer --clone default
+hermes profile create dbpersistenceengineer --clone default
+hermes profile create webuiengineer --clone default
 ```
 
 ## Roles
 
-### game-producer
+### gameproducer
 
 Owns:
 - roadmap
@@ -47,7 +47,7 @@ Does not:
 - implement code directly unless explicitly asked
 - approve its own implementation work
 
-### gameplay-engineer
+### gameplayengineer
 
 Owns:
 - cast/ and engine/ gameplay flow
@@ -61,7 +61,7 @@ Required skill posture:
 - small branches
 - no direct main pushes
 
-### prompt-engineer / narrative-evaluator
+### promptengineer / narrativeevaluator
 
 Owns:
 - prompt templates
@@ -74,7 +74,7 @@ Review focus:
 - hallucination/coherence regressions
 - whether memory reaches player-facing prose
 
-### qa-playtester
+### qaplaytester
 
 Owns:
 - smoke-test checklists
@@ -86,7 +86,7 @@ Owns:
 Does not:
 - accept vague “seems fine” verification
 
-### build-release-engineer
+### buildreleaseengineer
 
 Owns:
 - CI/CD
@@ -101,7 +101,7 @@ Must require human approval before:
 - changing production secrets
 - direct deploy outside normal CI
 
-### marketing-community
+### marketingcommunity
 
 Owns:
 - release notes
