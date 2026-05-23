@@ -33,6 +33,7 @@ _HTTP_OK = 200
 _HTTP_CREATED = 201
 _HTTP_NOT_FOUND = 404
 _HTTP_INTERNAL_SERVER_ERROR = 500
+_HTTP_SERVICE_UNAVAILABLE = 503
 _HTTP_UNPROCESSABLE = 422
 
 _FIXED_PLAYER_ID = "11111111-1111-1111-1111-111111111111"
@@ -274,6 +275,61 @@ def test_healthz_returns_ok(client: TestClient, mock_repo) -> None:
     mock_repo.sessions.get_latest_web.assert_not_called()
 
 
+@allure.story("Runtime readiness")
+@allure.title("GET /readyz reports ok when every configured LLM provider has a key")
+def test_readyz_returns_ok_when_required_provider_keys_are_present(
+    client: TestClient,
+    mock_cfg: MagicMock,
+    mock_repo,
+) -> None:
+    mock_cfg.director_model = "gpt-5.4-mini"
+    mock_cfg.agent_model = "gpt-5.4-nano"
+    mock_cfg.narrator_model = "gpt-5.4-mini"
+    mock_cfg.dramaturge_model = "gpt-5.4-nano"
+    mock_cfg.dramaturge_enabled = False
+    mock_cfg.openai_api_key = "sk-present"
+    mock_cfg.anthropic_api_key = None
+    mock_cfg.openrouter_api_key = None
+    mock_cfg.deepseek_api_key = None
+
+    response = client.get("/readyz")
+
+    assert response.status_code == _HTTP_OK
+    assert response.json() == {
+        "status": "ok",
+        "required_providers": ["openai"],
+        "missing_providers": [],
+    }
+    mock_repo.sessions.get_latest_web.assert_not_called()
+
+
+@allure.story("Runtime readiness")
+@allure.title("GET /readyz fails when a configured LLM provider has no key")
+def test_readyz_returns_503_when_required_provider_key_is_missing(
+    client: TestClient,
+    mock_cfg: MagicMock,
+) -> None:
+    mock_cfg.director_model = "claude-sonnet-4"
+    mock_cfg.agent_model = "claude-haiku-4-5"
+    mock_cfg.narrator_model = "claude-sonnet-4"
+    mock_cfg.dramaturge_model = "claude-haiku-4-5"
+    mock_cfg.dramaturge_enabled = False
+    mock_cfg.openai_api_key = None
+    mock_cfg.anthropic_api_key = None
+    mock_cfg.openrouter_api_key = None
+    mock_cfg.deepseek_api_key = None
+
+    response = client.get("/readyz")
+
+    assert response.status_code == _HTTP_SERVICE_UNAVAILABLE
+    assert response.json() == {
+        "status": "unavailable",
+        "required_providers": ["anthropic"],
+        "missing_providers": ["anthropic"],
+        "detail": "Storyteller is not ready to start games: missing LLM provider credentials.",
+    }
+
+
 # ---------------------------------------------------------------------------
 # GET /api/games/current
 # ---------------------------------------------------------------------------
@@ -434,6 +490,24 @@ def test_start_game_hides_provider_exception_detail(non_raising_client: TestClie
 
 
 @allure.story("Start game")
+@allure.title("POST /api/games returns a player-safe 503 when the LLM provider rejects credentials")
+def test_start_game_returns_503_for_provider_auth_failure(client: TestClient) -> None:
+    secret = "provider traceback: OPENAI_API_KEY=sk-secret"
+    with patch.object(
+        service,
+        "start_game_for_player",
+        new=AsyncMock(side_effect=service.GameStartUnavailableError(secret)),
+    ):
+        response = client.post("/api/games", json={"setting": "Rome"})
+
+    assert response.status_code == _HTTP_SERVICE_UNAVAILABLE
+    assert response.json() == {
+        "detail": "Storyteller is temporarily unable to start games. Please try again later.",
+    }
+    assert secret not in response.text
+
+
+@allure.story("Start game")
 @allure.title("POST /api/games rejects a setting longer than 500 characters")
 def test_start_game_rejects_oversize_setting(client: TestClient) -> None:
     response = client.post("/api/games", json={"setting": "x" * 501})
@@ -552,6 +626,24 @@ def test_post_action_hides_provider_exception_detail(non_raising_client: TestCli
         response = non_raising_client.post("/api/games/game-abc/actions", json={"action": "look"})
     assert response.status_code == _HTTP_INTERNAL_SERVER_ERROR
     assert response.json() == {"detail": "Something went wrong. Please try again."}
+    assert secret not in response.text
+
+
+@allure.story("Submit action")
+@allure.title("POST /api/games/{id}/actions returns a player-safe 503 when provider auth fails")
+def test_post_action_returns_503_for_provider_auth_failure(client: TestClient) -> None:
+    secret = "provider traceback: AnthropicError(secret-token)"
+    with patch.object(
+        service,
+        "process_turn_for_player",
+        new=AsyncMock(side_effect=service.GameStartUnavailableError(secret)),
+    ):
+        response = client.post("/api/games/game-abc/actions", json={"action": "look"})
+
+    assert response.status_code == _HTTP_SERVICE_UNAVAILABLE
+    assert response.json() == {
+        "detail": "Storyteller is temporarily unable to start games. Please try again later.",
+    }
     assert secret not in response.text
 
 
@@ -749,3 +841,33 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     assert all(call.args == (_FIXED_PLAYER_ID,) for call in create_calls)
     save_calls = repo.save_game_state.await_args_list
     assert {call.args[0] for call in save_calls} == {"sess-1", "sess-2"}
+
+
+@pytest.mark.asyncio
+@allure.story("Start game")
+@allure.title("start_game_for_player raises GameStartUnavailableError when provider auth fails")
+async def test_start_game_for_player_classifies_provider_auth_failure() -> None:
+    repo = AsyncMock()
+    repo.sessions = MagicMock()
+    repo.sessions.create_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
+    repo.sessions.update = AsyncMock()
+    repo.rollback = AsyncMock()
+
+    engine = MagicMock()
+    engine.start_game = AsyncMock(side_effect=RuntimeError("invalid_api_key: bad provider key"))
+
+    start_request = service.StartGameParams(
+        player_id=_FIXED_PLAYER_ID,
+        setting="Rome",
+        language="English",
+    )
+
+    with (
+        patch("engine.session_ops.create_engine", return_value=engine),
+        patch("engine.session_ops.load_role_overrides", new=AsyncMock(return_value={})),
+    ):
+        with pytest.raises(service.GameStartUnavailableError):
+            await service.start_game_for_player(repo=repo, cfg=MagicMock(), start_request=start_request)
+
+    repo.rollback.assert_awaited_once()
+    repo.sessions.update.assert_not_awaited()

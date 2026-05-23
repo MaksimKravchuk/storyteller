@@ -15,21 +15,16 @@ from fastapi.responses import FileResponse
 from config import Config
 from db.repository import GameRepository
 from defaults.player_character import TEMPLATE_CHARACTER
-from interfaces.web import service
+from interfaces.web import schemas, service
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
-from interfaces.web.schemas import (
-    ActionRequest,
-    ActionResponse,
-    CharacterCreationInput,
-    GameSnapshot,
-    StartGameRequest,
-)
+from interfaces.web.readiness import readiness_payload
 from interfaces.web.service_helpers import StartGameParams
 
 router = APIRouter()
 
 _STATIC_DIR = Path(__file__).parent / "static"
 _INDEX_HTML = _STATIC_DIR / "index.html"
+_START_UNAVAILABLE_DETAIL = "Storyteller is temporarily unable to start games. Please try again later."
 
 PlayerIdDep = Annotated[str, Depends(get_player_id)]
 CfgDep = Annotated[Config, Depends(get_cfg)]
@@ -48,12 +43,18 @@ async def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@router.get("/api/games/current", response_model=GameSnapshot)
+@router.get("/readyz", include_in_schema=False, response_model=None)
+async def readyz(cfg: CfgDep) -> object:
+    """Readiness probe for player-startable demo dependencies."""
+    return readiness_payload(cfg)
+
+
+@router.get("/api/games/current", response_model=schemas.GameSnapshot)
 async def get_current_game(
     player_id: PlayerIdDep,
     cfg: CfgDep,
     repo: RepoDep,
-) -> GameSnapshot:
+) -> schemas.GameSnapshot:
     """Return the caller's current game, or 404 if none exists."""
     snapshot = await service.get_current_snapshot(repo, cfg, player_id)
     if snapshot is None:
@@ -63,15 +64,15 @@ async def get_current_game(
 
 @router.post(
     "/api/games",
-    response_model=GameSnapshot,
+    response_model=schemas.GameSnapshot,
     status_code=status.HTTP_201_CREATED,
 )
 async def start_game(
-    body: StartGameRequest,
+    body: schemas.StartGameRequest,
     player_id: PlayerIdDep,
     cfg: CfgDep,
     repo: RepoDep,
-) -> GameSnapshot:
+) -> schemas.GameSnapshot:
     """Start a new game for the caller (replaces any existing one)."""
     start_request = StartGameParams(
         player_id=player_id,
@@ -79,32 +80,38 @@ async def start_game(
         language=body.language,
         character=body.character,
     )
-    return await service.start_game_for_player(repo, cfg, start_request)
+    try:
+        return await service.start_game_for_player(repo, cfg, start_request)
+    except service.GameStartUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=_START_UNAVAILABLE_DETAIL,
+        ) from exc
 
 
-@router.get("/api/character-template", response_model=CharacterCreationInput)
-async def get_character_template() -> CharacterCreationInput:
+@router.get("/api/character-template", response_model=schemas.CharacterCreationInput)
+async def get_character_template() -> schemas.CharacterCreationInput:
     """Return the canned template character for one-click anonymous start.
 
     The UI offers a "Use template" button that fetches this and
     pre-populates the onboarding form, so a player who doesn't want to
     enter real personal info can start a game with a plausible default.
     """
-    return CharacterCreationInput(
+    return schemas.CharacterCreationInput(
         name=TEMPLATE_CHARACTER.name,
         appearance=TEMPLATE_CHARACTER.appearance,
         inventory=list(TEMPLATE_CHARACTER.inventory),
     )
 
 
-@router.post("/api/games/{game_id}/actions", response_model=ActionResponse)
+@router.post("/api/games/{game_id}/actions", response_model=schemas.ActionResponse)
 async def post_action(
     game_id: str,
-    body: ActionRequest,
+    body: schemas.ActionRequest,
     player_id: PlayerIdDep,
     cfg: CfgDep,
     repo: RepoDep,
-) -> ActionResponse:
+) -> schemas.ActionResponse:
     """Submit a player action against an existing game."""
     try:
         return await service.process_turn_for_player(
@@ -118,4 +125,9 @@ async def post_action(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No active game",
+        ) from exc
+    except service.GameStartUnavailableError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=_START_UNAVAILABLE_DETAIL,
         ) from exc
