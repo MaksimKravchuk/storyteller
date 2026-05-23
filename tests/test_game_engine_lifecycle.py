@@ -144,6 +144,25 @@ async def test_start_game_wires_director_with_data_miner(simple_setting) -> None
 
 
 @allure.story("start_game player-visible opening")
+@allure.title("start_game opening prompt asks for an actionable NPC/social affordance in investigation premises")
+@pytest.mark.asyncio
+async def test_start_game_opening_prompt_seeds_social_investigation_npc(simple_setting) -> None:
+    """Canonical social-investigation starts must not open with an NPC-free scene request."""
+    engine = GameEngine()
+    with _StartGameHarness(simple_setting) as harness:
+        await engine.start_game("Novgorod market: investigate why merchants are withholding amber")
+        call_args = harness.director.execute.await_args
+
+    assert call_args is not None
+    opening_prompt = call_args.args[0]
+    prompt_lower = opening_prompt.lower()
+    assert "named" in prompt_lower
+    assert "addressable npc" in prompt_lower
+    assert "social" in prompt_lower
+    assert "investigation" in prompt_lower
+
+
+@allure.story("start_game player-visible opening")
 @allure.title("start_game keeps the web transcript focused on opening narration instead of the synthetic prompt")
 @pytest.mark.asyncio
 async def test_start_game_web_snapshot_hides_synthetic_opening_prompt(simple_setting) -> None:
