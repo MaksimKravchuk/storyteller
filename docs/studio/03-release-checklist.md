@@ -86,7 +86,10 @@ Canonical scenario slots:
 
 ## 7. Deployment gate
 
-- [ ] Fly secrets present and current
+Use `docs/studio/08-fly-release-rollback.md` for the Fly.io release and rollback procedure.
+
+- [ ] Max has approved publishing this public deploy
+- [ ] Fly secrets present and current by name only; never expose values
 - [ ] Deploy workflow is green or manual deploy succeeds
 - [ ] Production healthcheck passes
 - [ ] Demo URL opens
