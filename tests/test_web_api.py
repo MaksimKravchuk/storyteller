@@ -32,6 +32,7 @@ from interfaces.web.transcript import (
 _HTTP_OK = 200
 _HTTP_CREATED = 201
 _HTTP_NOT_FOUND = 404
+_HTTP_INTERNAL_SERVER_ERROR = 500
 _HTTP_UNPROCESSABLE = 422
 
 _FIXED_PLAYER_ID = "11111111-1111-1111-1111-111111111111"
@@ -62,6 +63,18 @@ def client(mock_repo, mock_cfg) -> Iterator[TestClient]:
     app.dependency_overrides[get_player_id] = lambda: _FIXED_PLAYER_ID
     try:
         yield TestClient(app)
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def non_raising_client(mock_repo, mock_cfg) -> Iterator[TestClient]:
+    """TestClient that returns 500 responses instead of re-raising server exceptions."""
+    app.dependency_overrides[get_cfg] = lambda: mock_cfg
+    app.dependency_overrides[get_repo] = lambda: mock_repo
+    app.dependency_overrides[get_player_id] = lambda: _FIXED_PLAYER_ID
+    try:
+        yield TestClient(app, raise_server_exceptions=False)
     finally:
         app.dependency_overrides.clear()
 
@@ -280,6 +293,28 @@ def test_current_game_returns_snapshot(client: TestClient) -> None:
     assert first_entry["html"] == "<p>The forum stretches before you.</p>"
 
 
+@allure.story("Current game lookup")
+@allure.title("GET /api/games/current hides unexpected service exceptions from players")
+def test_current_game_hides_unexpected_exception_detail(non_raising_client: TestClient) -> None:
+    secret = "provider traceback: SECRET_API_KEY=sk-test"
+    with patch.object(service, "get_current_snapshot", new=AsyncMock(side_effect=RuntimeError(secret))):
+        response = non_raising_client.get("/api/games/current")
+    assert response.status_code == _HTTP_INTERNAL_SERVER_ERROR
+    assert response.json() == {"detail": "Something went wrong. Please try again."}
+    assert secret not in response.text
+
+
+@allure.story("Current game lookup")
+@allure.title("GET /api/games/current hides database exception details from players")
+def test_current_game_hides_database_exception_detail(non_raising_client: TestClient) -> None:
+    secret = "database traceback: password=super-secret"
+    with patch.object(service, "get_current_snapshot", new=AsyncMock(side_effect=RuntimeError(secret))):
+        response = non_raising_client.get("/api/games/current")
+    assert response.status_code == _HTTP_INTERNAL_SERVER_ERROR
+    assert response.json() == {"detail": "Something went wrong. Please try again."}
+    assert secret not in response.text
+
+
 # ---------------------------------------------------------------------------
 # POST /api/games
 # ---------------------------------------------------------------------------
@@ -377,6 +412,17 @@ def test_start_game_rejects_empty_setting(client: TestClient) -> None:
 
 
 @allure.story("Start game")
+@allure.title("POST /api/games hides provider exception details from players")
+def test_start_game_hides_provider_exception_detail(non_raising_client: TestClient) -> None:
+    secret = "provider traceback: OPENAI_API_KEY=sk-secret"
+    with patch.object(service, "start_game_for_player", new=AsyncMock(side_effect=RuntimeError(secret))):
+        response = non_raising_client.post("/api/games", json={"setting": "Rome"})
+    assert response.status_code == _HTTP_INTERNAL_SERVER_ERROR
+    assert response.json() == {"detail": "Something went wrong. Please try again."}
+    assert secret not in response.text
+
+
+@allure.story("Start game")
 @allure.title("POST /api/games rejects a setting longer than 500 characters")
 def test_start_game_rejects_oversize_setting(client: TestClient) -> None:
     response = client.post("/api/games", json={"setting": "x" * 501})
@@ -431,6 +477,17 @@ def test_post_action_hides_ownership_violations(client: TestClient) -> None:
         response = client.post("/api/games/other-game/actions", json={"action": "look"})
     assert response.status_code == _HTTP_NOT_FOUND
     assert response.json()["detail"] == "No active game"
+
+
+@allure.story("Submit action")
+@allure.title("POST /api/games/{id}/actions hides provider exception details from players")
+def test_post_action_hides_provider_exception_detail(non_raising_client: TestClient) -> None:
+    secret = "provider traceback: AnthropicError(secret-token)"
+    with patch.object(service, "process_turn_for_player", new=AsyncMock(side_effect=RuntimeError(secret))):
+        response = non_raising_client.post("/api/games/game-abc/actions", json={"action": "look"})
+    assert response.status_code == _HTTP_INTERNAL_SERVER_ERROR
+    assert response.json() == {"detail": "Something went wrong. Please try again."}
+    assert secret not in response.text
 
 
 @allure.story("Submit action")
