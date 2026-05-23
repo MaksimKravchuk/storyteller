@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import allure
-import aiohttp
 import pytest
-
+from aiohttp import ClientSession, web
 from interfaces.admin import AdminServer
 
 _HTTP_OK = 200
@@ -36,7 +35,7 @@ async def _assert_healthz_ok(server: AdminServer) -> None:
     assert server.bound_address is not None, "AdminServer did not bind any socket"
     host, port = server.bound_address
 
-    async with aiohttp.ClientSession() as session:
+    async with ClientSession() as session:
         async with session.get(f"http://{host}:{port}/healthz") as resp:
             assert resp.status == _HTTP_OK
             payload = await resp.json()
@@ -56,11 +55,16 @@ async def test_admin_server_stop_without_start_is_noop() -> None:
     assert server.bound_address is None
 
 
+async def _empty_sessions(_request: web.Request) -> web.Response:
+    return web.json_response({"sessions": []})
+
+
 @allure.story("Server lifecycle")
 @allure.title("AdminServer auth middleware rejects unauthorized /api/* and accepts with Bearer token")
 @pytest.mark.asyncio
 async def test_admin_server_auth_middleware_rejects_and_accepts() -> None:
-    server = AdminServer(MagicMock(), MagicMock(), port=0, token="secret")
+    with patch("interfaces.admin_routes.list_sessions", _empty_sessions):
+        server = AdminServer(MagicMock(), MagicMock(), port=0, token="secret")
 
     await server.start()
     try:
@@ -74,17 +78,17 @@ async def _assert_auth_middleware_behavior(server: AdminServer) -> None:
     host, port = server.bound_address
     base = f"http://{host}:{port}"
 
-    async with aiohttp.ClientSession() as session:
+    async with ClientSession() as session:
         # No Authorization header → middleware returns 401.
         async with session.get(f"{base}/api/sessions") as resp:
             assert resp.status == _HTTP_UNAUTHORIZED
 
         # Correct bearer token → middleware lets the request through.
-        # The handler runs against a MagicMock db factory and may itself
-        # fail, but it must NOT be 401 (which would mean middleware blocked it).
         headers = {"Authorization": "Bearer secret"}
         async with session.get(f"{base}/api/sessions", headers=headers) as resp:
-            assert resp.status != _HTTP_UNAUTHORIZED
+            assert resp.status == _HTTP_OK
+            payload = await resp.json()
+            assert payload == {"sessions": []}
 
         # /healthz is outside /api/* and must never be gated.
         async with session.get(f"{base}/healthz") as resp:
