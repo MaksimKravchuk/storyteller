@@ -13,7 +13,12 @@ from config import Config
 from db.repository import GameRepository
 from engine.session_ops import begin_session, persist_engine_state, resume_session
 from interfaces.web.character import build_character_info
-from interfaces.web.errors import GameNotFoundError, GameStartUnavailableError, is_provider_auth_error
+from interfaces.web.errors import (
+    GameNotFoundError,
+    GameStartFailedError,
+    GameStartUnavailableError,
+    is_provider_auth_error,
+)
 from interfaces.web.schemas import ActionResponse, CharacterCreationInput, GameSnapshot
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
@@ -96,7 +101,7 @@ async def start_game_for_player(
         await repo.rollback()
         if is_provider_auth_error(exc):
             raise GameStartUnavailableError("LLM provider credentials rejected game start") from exc
-        raise
+        raise GameStartFailedError("Game start failed at runtime") from exc
     await _mark_session_playing(repo, session_id, start_request.language)
     return snapshot_from_engine(engine, start_request.language)
 

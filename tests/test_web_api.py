@@ -508,6 +508,24 @@ def test_start_game_returns_503_for_provider_auth_failure(client: TestClient) ->
 
 
 @allure.story("Start game")
+@allure.title("POST /api/games returns a player-safe 503 when game start fails at runtime")
+def test_start_game_returns_503_for_runtime_start_failure(client: TestClient) -> None:
+    secret = "runtime traceback: password=super-secret"
+    with patch.object(
+        service,
+        "start_game_for_player",
+        new=AsyncMock(side_effect=service.GameStartFailedError(secret)),
+    ):
+        response = client.post("/api/games", json={"setting": "Rome"})
+
+    assert response.status_code == _HTTP_SERVICE_UNAVAILABLE
+    assert response.json() == {
+        "detail": "Storyteller could not start this game. Please try another premise or try again.",
+    }
+    assert secret not in response.text
+
+
+@allure.story("Start game")
 @allure.title("POST /api/games rejects a setting longer than 500 characters")
 def test_start_game_rejects_oversize_setting(client: TestClient) -> None:
     response = client.post("/api/games", json={"setting": "x" * 501})
