@@ -62,10 +62,41 @@ main {
   letter-spacing: 0.03em;
 }
 
-#character-fields .hint {
+#character-fields .hint,
+.setting-hint {
   margin: 0 0 0.5rem;
   font-size: 0.85rem;
   color: #9a937f;
+}
+
+.intro-copy {
+  color: #c8c0a8;
+  font-size: 1.05rem;
+}
+
+#setting-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+#setting-examples button {
+  padding: 0.35rem 0.65rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: #c8c0a8;
+  border: 1px solid #4d493f;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+#setting-examples button:hover,
+#setting-examples button:focus {
+  color: #f5c878;
+  border-color: rgba(245, 200, 120, 0.55);
+  outline: none;
 }
 
 #use-template-btn {

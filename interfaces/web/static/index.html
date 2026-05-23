@@ -13,10 +13,14 @@
   </header>
 
   <main id="app">
-    <p id="loading">Loading…</p>
+    <p id="loading">Checking for an existing quest…</p>
 
     <section id="setting-panel" hidden>
       <h2>Start a new quest</h2>
+      <p class="intro-copy">
+        Storyteller is an AI text quest demo: give it a real or imagined place,
+        era, and tone, then describe what you do as the narrator responds.
+      </p>
       <form id="setting-form">
         <label for="language-select">Story language:</label>
         <select id="language-select" name="language">
@@ -28,14 +32,29 @@
           <option value="Japanese">日本語</option>
         </select>
 
-        <label for="setting-input">Describe the setting (place, era, mood):</label>
+        <label for="setting-input">Tell Storyteller where and when the adventure should begin:</label>
+        <p class="hint setting-hint">
+          Include a place, a time period, and the mood or situation you want.
+          These examples can be used as-is or rewritten:
+        </p>
+        <div id="setting-examples" aria-label="Example setting prompts">
+          <button type="button" data-setting-example="A rain-soaked cyberpunk bazaar on Mars, one hour before curfew">
+            Cyberpunk bazaar on Mars before curfew
+          </button>
+          <button type="button" data-setting-example="A quiet Viking fishing village in winter, after strange lights appear over the fjord">
+            Viking village after strange lights
+          </button>
+          <button type="button" data-setting-example="1920s Cairo, inside a crowded museum gala on the night an artifact vanishes">
+            1920s Cairo museum mystery
+          </button>
+        </div>
         <textarea
           id="setting-input"
           name="setting"
           rows="4"
           maxlength="500"
           required
-          placeholder="e.g. Rome, 1st century AD, during the reign of Augustus"
+          placeholder="e.g. Rome, 1st century AD, during the reign of Augustus — tense political intrigue"
         ></textarea>
 
         <fieldset id="character-fields">

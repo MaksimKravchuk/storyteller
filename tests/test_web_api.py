@@ -266,6 +266,28 @@ def test_get_index_exposes_next_action_suggestions(client: TestClient) -> None:
 
 
 @allure.story("Static shell")
+@allure.title("GET / explains the AI demo and provides example first setting prompts")
+def test_get_index_explains_first_time_setting_prompt(client: TestClient) -> None:
+    response = client.get("/")
+    assert response.status_code == _HTTP_OK
+    assert "AI text quest demo" in response.text
+    assert "Tell Storyteller where and when the adventure should begin" in response.text
+    assert response.text.count("data-setting-example=") >= 3
+
+
+@allure.story("Static shell")
+@allure.title("Static web client uses understandable loading-state copy")
+def test_static_client_explains_loading_states(client: TestClient) -> None:
+    index_response = client.get("/")
+    script_response = client.get("/static/app.js")
+    assert index_response.status_code == _HTTP_OK
+    assert script_response.status_code == _HTTP_OK
+    assert "Checking for an existing quest" in index_response.text
+    assert "Building your AI text quest demo" in script_response.text
+    assert "The AI narrator is resolving your action" in script_response.text
+
+
+@allure.story("Static shell")
 @allure.title("GET /healthz returns 200 with a status:ok body and does not touch the repo")
 def test_healthz_returns_ok(client: TestClient, mock_repo) -> None:
     response = client.get("/healthz")
