@@ -453,6 +453,60 @@ def test_post_action_happy_path(client: TestClient) -> None:
     assert body["turn_count"] == 3
 
 
+@allure.story("Player smoke")
+@allure.title("Web API smoke starts a story and plays five turns with an NPC interaction and no raw traceback")
+def test_player_web_api_smoke_start_five_turns_and_npc_interaction(client: TestClient) -> None:
+    start_snapshot = _sample_snapshot(game_id="smoke-game")
+    actions = [
+        "look around",
+        "walk to the tavern",
+        "talk to Pieter about the missing map",
+        "ask Pieter to describe the stranger",
+        "thank Pieter and wait",
+    ]
+    turn_responses = [
+        _smoke_turn_response("Pieter studies the street from the archway.", 1),
+        _smoke_turn_response("You reach the tavern door as Pieter follows.", 2),
+        _smoke_turn_response("Pieter says the map vanished before dawn.", 3),
+        _smoke_turn_response("Pieter describes a cloaked stranger with a silver ring.", 4),
+        _smoke_turn_response("Pieter nods while the room settles into watchful quiet.", 5),
+    ]
+    start_mock = AsyncMock(return_value=start_snapshot)
+    process_mock = AsyncMock(side_effect=turn_responses)
+
+    with (
+        patch.object(service, "start_game_for_player", new=start_mock),
+        patch.object(service, "process_turn_for_player", new=process_mock),
+    ):
+        start_response = client.post("/api/games", json={"setting": "Delft, 1665", "language": "English"})
+        action_responses = [
+            client.post(f"/api/games/{start_snapshot.game_id}/actions", json={"action": action}) for action in actions
+        ]
+
+    assert start_response.status_code == _HTTP_CREATED
+    assert [response.status_code for response in action_responses] == [_HTTP_OK for _action in actions]
+    assert process_mock.await_count == len(actions)
+    assert [call.args[4] for call in process_mock.await_args_list] == actions
+    assert "Pieter" in action_responses[2].json()["narration"]
+    assert action_responses[-1].json()["turn_count"] == 5
+    _assert_no_raw_traceback([start_response.text, *(response.text for response in action_responses)])
+
+
+def _smoke_turn_response(narration: str, turn_count: int) -> ActionResponse:
+    return ActionResponse(
+        narration=narration,
+        narration_html=render_narrator_html(narration),
+        turn_count=turn_count,
+        character=_empty_character(),
+    )
+
+
+def _assert_no_raw_traceback(payloads: list[str]) -> None:
+    forbidden_fragments = ("Traceback (most recent call last)", "</traceback>", "RuntimeError:")
+    for payload in payloads:
+        assert not any(fragment in payload for fragment in forbidden_fragments)
+
+
 @allure.story("Submit action")
 @allure.title("POST /api/games/{id}/actions returns 404 when no game exists for the player")
 def test_post_action_returns_404_when_no_game(client: TestClient) -> None:
