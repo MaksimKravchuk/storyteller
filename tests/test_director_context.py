@@ -10,6 +10,7 @@ from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState, PlayerState
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
+from models.scene_action_log import ActorKind, SceneActionEntry
 from models.setting import Setting
 from models.visible_entity import VisibleEntity
 from tests._uuid_helpers import make_uuid
@@ -145,6 +146,28 @@ class TestFormatNpcsPresent:
 @allure.feature("Director context formatting")
 @allure.story("Turn log snapshot")
 class TestAppendTurnLogsVisibleEntities:
+    @allure.title("sync_context sends recent scene-action log entries to the Director prompt")
+    def test_sync_context_includes_scene_action_log_history(self) -> None:
+        gs = _make_game_state_with_npcs([])
+        gs.scene_action_log.append(
+            SceneActionEntry(
+                actor_kind=ActorKind.PLAYER,
+                actor_uuid=gs.player.uuid,
+                actor_name=gs.player.name,
+                action_type="EXPLORE",
+                description="I mark the loose blue tile with chalk.",
+                game_clock=gs.game_clock,
+            ),
+        )
+        performer = _CapturingPerformer()
+
+        ContextFormatter(gs).sync_context(performer)
+
+        assert (
+            performer.kwargs["scene_history_summary"]
+            == "- Player looks around, doing: I mark the loose blue tile with chalk."
+        )
+
     @allure.title("append_turn_logs snapshots last_visible_entities into the new conversation_log entry")
     def test_visible_entities_serialized_into_log(self) -> None:
         gs = _make_game_state_with_npcs([])

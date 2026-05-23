@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from models.game_state import GameState
-
+from cast import scene_log as scene_log_mod
 from cast.player_context import format_player_appearance, format_player_inventory
+from models.game_state import GameState
 
 _SCENE_SUMMARY_CHARS = 500
 
@@ -15,8 +15,14 @@ _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
 
 
-def _format_scene_entry(entry: dict) -> str:
-    """Format a single scene log entry as a bullet point."""
+def _format_scene_entry(entry: Any, game_state: GameState | None = None) -> str:
+    """Format a recent scene-history entry as a bullet point."""
+    if game_state is not None:
+        body = scene_log_mod.render_scene_log_entry_body(
+            entry,
+            format_player_appearance(game_state.player),
+        )
+        return "- {0}".format(body)
     action = entry[_KEY_PLAYER_ACTION]
     action_type = entry.get(_KEY_ACTION_TYPE, "?")
     return f"- Player: {action} -> {action_type}"
@@ -57,11 +63,13 @@ def format_pois(scene: Any) -> str:
 
 def format_scene_history(game_state: GameState) -> str | None:
     """Format recent scene actions for the system prompt."""
-    scene_log = game_state.scene_conversation_log
-    if not scene_log:
+    source_log = game_state.scene_action_log or game_state.scene_conversation_log
+    if not source_log:
         return None
-    recent = scene_log[-5:]
-    lines = [_format_scene_entry(entry) for entry in recent]
+    if game_state.scene_action_log:
+        lines = [_format_scene_entry(entry, game_state) for entry in source_log[-5:]]
+    else:
+        lines = [_format_scene_entry(entry) for entry in source_log[-5:]]
     return "\n".join(lines)
 
 
