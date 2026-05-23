@@ -1,10 +1,26 @@
-# Public Web Demo v0.1 Release Checklist
+# Storyteller Release Checklist
 
-This checklist defines the non-paid release checks for the first public Storyteller web demo. Paid LLM e2e tests and benchmark runs are opt-in only and require explicit approval before use.
+Use this for every release candidate.
 
-## Quality gate
+## 1. Scope gate
 
-Run the standard local gate before merging release work:
+- [ ] Release target named, e.g. Public Web Demo v0.1
+- [ ] Must-have scope listed
+- [ ] Non-goals listed
+- [ ] No untriaged P0/P1 issues
+- [ ] Max has approved the scope
+
+## 2. Repository gate
+
+- [ ] Working tree clean
+- [ ] Release branch/PR exists; no direct main push by agents
+- [ ] PR description includes summary and test evidence
+- [ ] Version/tag decision made
+- [ ] Changelog/release notes drafted
+
+## 3. Quality gate
+
+Run before commit/merge:
 
 ```bash
 uv run ruff check . && \
@@ -14,12 +30,54 @@ uv run mypy . && \
 uv run pytest tests/ --ignore=tests/e2e --ignore=tests/benchmarks
 ```
 
-## Runtime smoke
+- [ ] Ruff lint passes
+- [ ] Ruff format check passes
+- [ ] Flake8/wemake passes
+- [ ] Mypy passes
+- [ ] Unit tests pass
+- [ ] Coverage gate respected
+- [ ] DB tests pass in CI
 
-- Web UI starts locally and serves the player interface.
-- Admin service starts locally and responds to its health endpoint.
-- Docker Compose stack starts cleanly, applies migrations, and shuts down cleanly.
-- No secrets, API keys, or paid-provider credentials are committed or required for non-paid checks.
+## 4. Paid/LLM quality gate
+
+Only run with explicit cost/API-key approval:
+
+```bash
+uv run pytest tests/e2e/ --alluredir=allure-results -v
+uv run python -m benchmarks run
+```
+
+- [ ] E2E tests pass or failures are triaged
+- [ ] Benchmark run archived
+- [ ] Narrative quality report reviewed
+- [ ] Any severe coherence regressions addressed or waived
+
+## 5. Local runtime gate
+
+```bash
+docker compose up -d
+# Web UI: http://localhost:8070
+# Admin:  http://localhost:8080
+docker compose down
+```
+
+- [ ] Docker image builds
+- [ ] Postgres healthcheck passes
+- [ ] Web UI healthcheck passes
+- [ ] Admin healthcheck passes
+- [ ] Server logs contain no obvious startup errors
+
+## 6. Gameplay smoke gate
+
+For each canonical scenario:
+
+- [ ] Start a new story
+- [ ] Play 5+ turns
+- [ ] Talk to an NPC
+- [ ] Explore/move/inspect at least once
+- [ ] Confirm memory of a recent event appears later
+- [ ] Confirm no raw traceback appears in UI
+- [ ] Capture notes/screenshots if something feels off
 
 ## Canonical demo scenarios
 
@@ -133,3 +191,27 @@ Before public release, a human reviewer should play at least one full 5+ turn pa
 - whether NPCs and world state stayed coherent;
 - whether any red flags appeared;
 - whether the scenario is strong enough for a public demo recording or live walkthrough.
+
+## 7. Deployment gate
+
+- [ ] Fly secrets present and current
+- [ ] Deploy workflow is green or manual deploy succeeds
+- [ ] Production healthcheck passes
+- [ ] Demo URL opens
+- [ ] Rollback path documented
+
+## 8. Launch gate
+
+- [ ] README quickstart accurate
+- [ ] Demo URL or access instructions accurate
+- [ ] Known limitations documented
+- [ ] Release notes ready
+- [ ] Announcement/social copy ready
+- [ ] Feedback channel ready
+
+## 9. Human approval
+
+- [ ] Max plays release candidate
+- [ ] Max approves publishing
+- [ ] Release tag created
+- [ ] Public announcement posted

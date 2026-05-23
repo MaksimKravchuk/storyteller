@@ -8,12 +8,12 @@ from loguru import logger
 
 from config import Config
 from interfaces import (
+    admin_route_helpers,
     admin_routes,
     admin_routes_detail,
     admin_routes_entity,
     admin_routes_settings,
 )
-from interfaces.admin_route_helpers import _json_response
 
 _HTTP_UNAUTHORIZED = 401
 
@@ -21,11 +21,14 @@ _HTTP_UNAUTHORIZED = 401
 @web.middleware
 async def _auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
     """Bearer-token auth middleware for API routes."""
-    token = request.app.get("_auth_token")
+    token = request.app.get(admin_route_helpers.AUTH_TOKEN_KEY)
     if token and request.path.startswith("/api/"):
         auth = request.headers.get("Authorization", "")
         if auth != "Bearer {0}".format(token):
-            return _json_response({"error": "Unauthorized"}, status=_HTTP_UNAUTHORIZED)
+            return admin_route_helpers._json_response(
+                {"error": "Unauthorized"},
+                status=_HTTP_UNAUTHORIZED,
+            )
     return await handler(request)
 
 
@@ -46,9 +49,10 @@ class AdminServer:
     ):
         self._port = port
         self._app = web.Application(middlewares=[_auth_middleware])
-        self._app["_auth_token"] = token
-        self._app["_db_factory"] = db_session_factory
-        self._app["_cfg"] = cfg
+        if token is not None:
+            self._app[admin_route_helpers.AUTH_TOKEN_KEY] = token
+        self._app[admin_route_helpers.DB_FACTORY_KEY] = db_session_factory
+        self._app[admin_route_helpers.CFG_KEY] = cfg
         self._setup_routes()
         self._runner: web.AppRunner | None = None
 
