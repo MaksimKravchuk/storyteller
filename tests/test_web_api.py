@@ -254,6 +254,17 @@ def test_get_index_serves_html(client: TestClient) -> None:
 
 
 @allure.story("Static shell")
+@allure.title("GET / exposes player-visible next-action suggestions in the core loop")
+def test_get_index_exposes_next_action_suggestions(client: TestClient) -> None:
+    response = client.get("/")
+    assert response.status_code == _HTTP_OK
+    assert 'id="next-actions"' in response.text
+    assert 'data-action="look around"' in response.text
+    assert 'data-action="talk to someone nearby"' in response.text
+    assert 'data-action="check my inventory"' in response.text
+
+
+@allure.story("Static shell")
 @allure.title("GET /healthz returns 200 with a status:ok body and does not touch the repo")
 def test_healthz_returns_ok(client: TestClient, mock_repo) -> None:
     response = client.get("/healthz")
