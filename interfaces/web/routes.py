@@ -29,6 +29,7 @@ _INDEX_HTML = _STATIC_DIR / "index.html"
 _START_UNAVAILABLE_DETAIL = "Storyteller is temporarily unable to start games. Please try again later."
 _START_FAILED_DETAIL = "Storyteller could not start this game. Please try another premise or try again."
 _NO_ACTIVE_GAME_DETAIL = "No active game"
+_HTTP_TOO_MANY_REQUESTS = 429
 
 PlayerIdDep = Annotated[str, Depends(get_beta_player_id)]
 CfgDep = Annotated[Config, Depends(deps.get_cfg)]
@@ -86,6 +87,13 @@ async def start_game(
     )
     try:
         return await service.start_game_for_player(repo, cfg, start_request)
+    except service.BetaAccessDeniedError as exc:
+        status_code = (
+            status.HTTP_503_SERVICE_UNAVAILABLE
+            if exc.reason in {"beta_disabled", "global_budget_exhausted"}
+            else _HTTP_TOO_MANY_REQUESTS
+        )
+        raise HTTPException(status_code=status_code, detail=exc.message) from exc
     except service.GameStartUnavailableError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -134,6 +142,13 @@ async def post_action(
             game_id,
             body.action,
         )
+    except service.BetaAccessDeniedError as exc:
+        status_code = (
+            status.HTTP_503_SERVICE_UNAVAILABLE
+            if exc.reason in {"beta_disabled", "global_budget_exhausted"}
+            else _HTTP_TOO_MANY_REQUESTS
+        )
+        raise HTTPException(status_code=status_code, detail=exc.message) from exc
     except service.GameNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

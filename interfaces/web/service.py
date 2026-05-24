@@ -7,24 +7,26 @@ via ``app.dependency_overrides``.
 
 from __future__ import annotations
 
+from typing import Any
+
 from loguru import logger
 
 from config import Config
 from db.repository import GameRepository
-from engine.session_ops import begin_session, persist_engine_state, resume_session
-from interfaces.web.character import build_character_info
+from engine.session_ops import begin_session, resume_session
+from interfaces.web import beta_policy, quota_locks
 from interfaces.web.errors import (
     GameNotFoundError,
     GameStartFailedError,
     GameStartUnavailableError,
     is_provider_auth_error,
 )
+from interfaces.web.runtime import ActionPersistence, StartPersistence
 from interfaces.web.schemas import (
     ActionResponse,
     CharacterCreationInput,
     GameSnapshot,
 )
-from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
     StartGameParams,
     owned_session_context,
@@ -35,6 +37,7 @@ from interfaces.web.service_helpers import (
 from models.player_character_input import PlayerCharacterInput
 
 _STATE_PLAYING = "playing"
+BetaAccessDeniedError = beta_policy.BetaAccessDeniedError
 
 
 def _to_engine_character(character: CharacterCreationInput | None) -> PlayerCharacterInput | None:
@@ -65,22 +68,25 @@ async def get_current_snapshot(
     return snapshot_from_engine(engine, session_language(session_row))
 
 
-async def _start_and_persist(
-    repo: GameRepository,
-    session_id: str,
-    engine,
-    setting: str,
-    character: PlayerCharacterInput | None,
-) -> None:
-    """Run ``start_game`` and persist the resulting state in one call."""
-    await engine.start_game(setting, character=character)
-    await persist_engine_state(repo, session_id, engine, turn_number=None)
-
-
 async def _mark_session_playing(repo: GameRepository, session_id: str, language: str) -> None:
     """Mark the new web session playable before returning to the client."""
     await repo.sessions.update(session_id, state=_STATE_PLAYING, language=language)
     await repo.commit()
+
+
+async def _prepare_started_engine(
+    repo: GameRepository,
+    cfg: Config,
+    start_request: StartGameParams,
+):
+    """Run beta checks, create a session, and return its engine."""
+    policy = beta_policy.BetaPolicy(repo, cfg)
+    await policy.ensure_open()
+    await policy.ensure_active_game_quota(start_request.player_id)
+    session_row = await repo.sessions.create_web(start_request.player_id)
+    session_id = session_row["id"]
+    engine = await begin_session(repo, cfg, session_id, start_request.language)
+    return session_id, engine
 
 
 async def start_game_for_player(
@@ -89,56 +95,37 @@ async def start_game_for_player(
     start_request: StartGameParams,
 ) -> GameSnapshot:
     """Create a fresh session for this web player and return the opening snapshot."""
-    session_row = await repo.sessions.create_web(start_request.player_id)
-    session_id = session_row["id"]
+    async with quota_locks.player_lock(start_request.player_id):
+        session_id, engine = await _prepare_started_engine(repo, cfg, start_request)
+        try:
+            await StartPersistence(
+                repo=repo,
+                session_id=session_id,
+                user_id=start_request.player_id,
+                engine=engine,
+                setting=start_request.setting,
+                character=_to_engine_character(start_request.character),
+            ).run()
+        except Exception as exc:
+            logger.exception("Failed to start web game for player {}", start_request.player_id)
+            await repo.rollback()
+            if is_provider_auth_error(exc):
+                raise GameStartUnavailableError("LLM provider credentials rejected game start") from exc
+            raise GameStartFailedError("Game start failed at runtime") from exc
+        await _mark_session_playing(repo, session_id, start_request.language)
+        return snapshot_from_engine(engine, start_request.language)
 
-    engine = await begin_session(repo, cfg, session_id, start_request.language)
-    try:
-        await _start_and_persist(
-            repo,
-            session_id,
-            engine,
-            start_request.setting,
-            _to_engine_character(start_request.character),
-        )
-    except Exception as exc:
-        logger.exception("Failed to start web game for player {}", start_request.player_id)
-        await repo.rollback()
-        if is_provider_auth_error(exc):
-            raise GameStartUnavailableError("LLM provider credentials rejected game start") from exc
-        raise GameStartFailedError("Game start failed at runtime") from exc
-    await _mark_session_playing(repo, session_id, start_request.language)
-    return snapshot_from_engine(engine, start_request.language)
 
-
-async def _act_and_persist(
-    repo: GameRepository,
-    session_id: str,
-    engine,
-    action: str,
-    language: str,
-) -> ActionResponse:
+async def _act_and_persist(*runtime_args: Any, user_id: str | None = None) -> ActionResponse:
     """Run a player action through the engine and persist the new state."""
-    try:
-        narration = await engine.process_action(action)
-    except Exception as exc:
-        if is_provider_auth_error(exc):
-            raise GameStartUnavailableError("LLM provider credentials rejected player action") from exc
-        raise
-    game_state, _, _ = engine.assert_running()
-    turn_number = game_state.turn_count
-    await persist_engine_state(repo, session_id, engine, turn_number=turn_number)
-    await repo.commit()
-    return ActionResponse(
-        narration=narration,
-        narration_html=render_narrator_html(
-            narration,
-            list(game_state.last_visible_entities),
-            language,
-        ),
-        turn_count=turn_number,
-        character=build_character_info(game_state),
-    )
+    return await ActionPersistence(
+        repo=runtime_args[0],
+        session_id=runtime_args[1],
+        engine=runtime_args[2],
+        action=runtime_args[3],
+        language=runtime_args[4],
+        user_id=user_id,
+    ).run()
 
 
 async def process_turn_for_player(
@@ -153,9 +140,20 @@ async def process_turn_for_player(
     Raises ``GameNotFoundError`` if the player has no game or the supplied
     ``game_id`` doesn't match — both yield 404 to avoid leaking existence.
     """
-    session_id, language = await owned_session_context(repo, player_id, game_id)
-    engine = await resume_session(repo, cfg, session_id, language)
-    if engine is None:
-        raise GameNotFoundError(player_id)
+    async with quota_locks.player_lock(player_id):
+        policy = beta_policy.BetaPolicy(repo, cfg)
+        await policy.ensure_open()
+        await policy.ensure_turn_quota(player_id)
+        session_id, language = await owned_session_context(repo, player_id, game_id)
+        engine = await resume_session(repo, cfg, session_id, language)
+        if engine is None:
+            raise GameNotFoundError(player_id)
 
-    return await _act_and_persist(repo, session_id, engine, action, language)
+        return await ActionPersistence(
+            repo=repo,
+            session_id=session_id,
+            engine=engine,
+            action=action,
+            language=language,
+            user_id=player_id,
+        ).run()

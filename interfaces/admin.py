@@ -9,6 +9,7 @@ from loguru import logger
 from config import Config
 from interfaces import (
     admin_route_helpers,
+    admin_reports,
     admin_routes,
     admin_routes_detail,
     admin_routes_entity,
@@ -34,6 +35,15 @@ async def _auth_middleware(request: web.Request, handler: Handler) -> web.Stream
 
 async def _healthz(_request: web.Request) -> web.Response:
     return web.json_response({"status": "ok"})
+
+
+def _setup_session_report_routes(app: web.Application) -> None:
+    """Register session detail and beta-cost report routes."""
+    app.router.add_get("/api/admin/beta/cost-summary", admin_reports.beta_cost_summary)
+    app.router.add_get("/api/sessions/{id}/scenes", admin_routes_detail.scenes)
+    app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes_detail.ai_calls)
+    app.router.add_get("/api/sessions/{id}/turn-events", admin_routes_entity.turn_events)
+    app.router.add_get("/api/sessions/{id}/models", admin_routes_detail.session_models)
 
 
 class AdminServer:
@@ -98,7 +108,4 @@ class AdminServer:
         self._app.router.add_get("/api/sessions/{id}/npcs", admin_routes_detail.npcs)
         self._app.router.add_get("/api/sessions/{id}/npcs/{npc_id}", admin_routes_entity.npc_detail)
         self._app.router.add_get("/api/sessions/{id}/locations", admin_routes_detail.locations)
-        self._app.router.add_get("/api/sessions/{id}/scenes", admin_routes_detail.scenes)
-        self._app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes_detail.ai_calls)
-        self._app.router.add_get("/api/sessions/{id}/turn-events", admin_routes_entity.turn_events)
-        self._app.router.add_get("/api/sessions/{id}/models", admin_routes_detail.session_models)
+        _setup_session_report_routes(self._app)

@@ -72,7 +72,12 @@ async def test_persist_engine_state_flushes_ai_logs() -> None:
         await handlers.persist_engine_state(ctx.repo, ctx.session_id, engine, turn_number=3)
 
     ctx.repo.save_game_state.assert_awaited_once()
-    ctx.repo.ai_logs.save.assert_awaited_once_with(logs, turn_number=3)
+    ctx.repo.ai_logs.save.assert_awaited_once_with(
+        logs,
+        turn_number=3,
+        user_id=None,
+        game_state_id=None,
+    )
 
 
 @allure.story("persist_engine_state")
