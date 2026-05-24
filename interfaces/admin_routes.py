@@ -40,6 +40,23 @@ async def list_sessions(request: web.Request) -> web.Response:
     return _json_response({"sessions": sessions})
 
 
+async def list_users(request: web.Request) -> web.Response:
+    """Return all user accounts with admin-facing aggregate counts."""
+    async with helpers.open_repo(request) as repo:
+        users = await repo.admin.list_users()
+    return _json_response({"users": users})
+
+
+async def user_detail(request: web.Request) -> web.Response:
+    """Return account metadata, usage totals, and sessions for one user."""
+    user_id = request.match_info["id"]
+    async with helpers.open_repo(request) as repo:
+        detail = await repo.admin.get_user_detail(user_id)
+    if not detail:
+        return _json_response({"error": "User not found"}, status=_HTTP_NOT_FOUND)
+    return _json_response(detail)
+
+
 async def session_detail(request: web.Request) -> web.Response:
     """Return details for a single session."""
     session_id = request.match_info[_SESSION_ID_PARAM]

@@ -178,6 +178,7 @@
   <h2>Storyteller</h2>
   <div class="sidebar-nav">
     <div id="nav-sessions" class="nav-link active" onclick="showView('sessions')">Sessions</div>
+    <div id="nav-users" class="nav-link" onclick="showView('users')">Users</div>
     <div id="nav-feedback" class="nav-link" onclick="showView('feedback')">Feedback</div>
     <div id="nav-settings" class="nav-link" onclick="showView('settings')">Settings</div>
   </div>
@@ -187,6 +188,9 @@
              placeholder="Search id / player…" oninput="onSearchInput()">
     </div>
     <div id="session-list"></div>
+  </div>
+  <div id="users-nav-content" style="display:none">
+    <div id="user-list"></div>
   </div>
 </div>
 
@@ -199,6 +203,7 @@ const API = '';
 let _settingsCatalog = [];
 let _settingsKeys = {};
 let currentSessionId = null;
+let currentUserId = null;
 let currentTab = 'overview';
 let currentNpcId = null;
 let currentNpcTab = 'state';
@@ -248,6 +253,93 @@ async function selectSession(id) {
   currentSessionId = id;
   loadSessions();
   renderTab();
+}
+
+async function loadUsers() {
+  const data = await fetchJSON('/api/admin/users');
+  const list = document.getElementById('user-list');
+  const users = data.users || [];
+  if (!users.length) {
+    list.innerHTML = '<div class="empty">No users</div>';
+    return;
+  }
+  list.innerHTML = users.map(u => {
+    const id = String(u.id || '');
+    const idShort = id.slice(0, 8);
+    const email = escapeHtml(u.email || idShort || 'Unknown user');
+    const sessions = u.session_count ?? 0;
+    const calls = u.call_count ?? 0;
+    const tokens = u.total_tokens ?? 0;
+    return `
+    <div class="session-item ${id === currentUserId ? 'active' : ''}" onclick="selectUser('${id}')">
+      <div class="chat-id">${email} ${u.is_admin ? '<span class="badge badge-playing">admin</span>' : ''}</div>
+      <div class="meta"><span class="session-id-short">${escapeHtml(idShort)}</span> | ${escapeHtml(u.plan || '-')}</div>
+      <div class="meta">${sessions} sessions | ${calls} calls | ${tokens} tokens</div>
+    </div>`;
+  }).join('');
+}
+
+async function selectUser(id) {
+  currentUserId = id;
+  await loadUsers();
+  await renderUserDetail();
+}
+
+async function openUserSession(id) {
+  currentSessionId = id;
+  currentTab = 'scenes';
+  showView('sessions');
+  await loadSessions();
+  await renderTab();
+}
+
+async function renderUserDetail() {
+  if (!currentUserId) return;
+  const main = document.getElementById('main');
+  main.innerHTML = '<div class="empty">Loading user…</div>';
+  try {
+    const data = await fetchJSON(`/api/admin/users/${currentUserId}`);
+    const account = data.account || {};
+    const usage = data.usage || {};
+    const sessions = data.sessions || [];
+    main.innerHTML = `<div class="card"><h3>User</h3><div class="kv">
+      <div class="label">Email</div><div>${escapeHtml(account.email || '')}</div>
+      <div class="label">Account ID</div><div><code>${escapeHtml(account.id || '')}</code></div>
+      <div class="label">Supabase ID</div><div><code>${escapeHtml(account.supabase_user_id || '')}</code></div>
+      <div class="label">Plan</div><div>${escapeHtml(account.plan || '-')}</div>
+      <div class="label">Admin</div><div>${account.is_admin ? 'yes' : 'no'}</div>
+      <div class="label">Created</div><div>${escapeHtml(account.created_at ? new Date(account.created_at).toLocaleString() : '-')}</div>
+      <div class="label">Updated</div><div>${escapeHtml(account.updated_at ? new Date(account.updated_at).toLocaleString() : '-')}</div>
+    </div></div>
+    <div class="card"><h3>AI Usage</h3><div class="kv">
+      <div class="label">Calls</div><div>${usage.call_count ?? 0}</div>
+      <div class="label">Prompt tokens</div><div>${usage.prompt_tokens ?? 0}</div>
+      <div class="label">Completion tokens</div><div>${usage.completion_tokens ?? 0}</div>
+      <div class="label">Total tokens</div><div>${usage.total_tokens ?? 0}</div>
+    </div></div>
+    <div class="card"><h3>Sessions</h3>${renderUserSessionsTable(sessions)}</div>`;
+  } catch (e) {
+    main.innerHTML = `<div class="empty">Error loading user: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderUserSessionsTable(sessions) {
+  if (!sessions.length) return '<div class="empty">No sessions for this user.</div>';
+  return `<table><tr><th>Session</th><th>Title</th><th>State</th><th>Turns</th><th>AI calls</th><th>Tokens</th><th>Created</th><th>Updated</th><th>Logs</th></tr>
+    ${sessions.map(s => {
+      const id = String(s.id || '');
+      return `<tr>
+        <td><span class="session-id-short">${escapeHtml(id.slice(0, 8))}</span></td>
+        <td>${escapeHtml(s.title || '-')}</td>
+        <td><span class="badge ${badgeClass(s.state)}">${escapeHtml(s.state || '-')}</span></td>
+        <td>${s.turn_count ?? 0}</td>
+        <td>${s.call_count ?? 0}</td>
+        <td>${s.total_tokens ?? 0}</td>
+        <td>${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString() : '-')}</td>
+        <td>${escapeHtml(s.updated_at ? new Date(s.updated_at).toLocaleString() : '-')}</td>
+        <td><span class="view-link" onclick="openUserSession('${id}')">Open logs</span></td>
+      </tr>`;
+    }).join('')}</table>`;
 }
 
 async function renderTab() {
@@ -968,14 +1060,24 @@ async function renderFeedbackView() {
 function showView(view) {
   currentView = view;
   document.getElementById('nav-sessions').classList.toggle('active', view === 'sessions');
+  document.getElementById('nav-users').classList.toggle('active', view === 'users');
   document.getElementById('nav-feedback').classList.toggle('active', view === 'feedback');
   document.getElementById('nav-settings').classList.toggle('active', view === 'settings');
   const sessionsNav = document.getElementById('sessions-nav-content');
+  const usersNav = document.getElementById('users-nav-content');
   if (sessionsNav) sessionsNav.style.display = view === 'sessions' ? '' : 'none';
+  if (usersNav) usersNav.style.display = view === 'users' ? '' : 'none';
   if (view === 'settings') {
     renderSettingsView();
   } else if (view === 'feedback') {
     renderFeedbackView();
+  } else if (view === 'users') {
+    loadUsers();
+    if (currentUserId) {
+      renderUserDetail();
+    } else {
+      document.getElementById('main').innerHTML = '<div class="placeholder">Select a user to inspect</div>';
+    }
   } else {
     const main = document.getElementById('main');
     if (currentSessionId) {

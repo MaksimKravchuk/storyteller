@@ -6,7 +6,9 @@ import uuid as _uuid
 
 import allure
 import pytest
+from sqlalchemy import insert
 
+from db import tables as tbl
 from tests.db.conftest import GameRepository
 
 pytestmark = pytest.mark.db
@@ -18,6 +20,71 @@ def _chat_id() -> int:
 
 def _player_id() -> str:
     return str(_uuid.uuid4())
+
+
+async def _create_account(async_session, email: str) -> dict:
+    account_rows = await async_session.execute(
+        insert(tbl.accounts).values(supabase_user_id=str(_uuid.uuid4()), email=email).returning(tbl.accounts),
+    )
+    return dict(account_rows.mappings().one())
+
+
+async def _log_ai_call(repo: GameRepository, session_id: str, user_id: str, prompt: int, completion: int) -> None:
+    await repo.ai_logs.save(
+        [
+            {
+                "session_id": session_id,
+                "agent_name": "Director",
+                "model": "gpt-test",
+                "system_prompt": "system",
+                "messages": [],
+                "response_content": "response",
+                "prompt_tokens": prompt,
+                "completion_tokens": completion,
+            },
+        ],
+        turn_number=1,
+        user_id=user_id,
+    )
+
+
+async def _create_account_pair(async_session) -> tuple[dict, dict]:
+    account = await _create_account(async_session, "player@example.com")
+    other_account = await _create_account(async_session, "other@example.com")
+    return account, other_account
+
+
+async def _create_list_user_sessions(repo: GameRepository, account: dict, other_account: dict) -> tuple[dict, dict]:
+    first = await repo.sessions.create_web(str(account["id"]))
+    second = await repo.sessions.create_web(str(account["id"]))
+    await repo.sessions.create_web(str(other_account["id"]))
+    return first, second
+
+
+async def _log_list_user_calls(repo: GameRepository, account: dict, first: dict, second: dict) -> None:
+    await _log_ai_call(repo, first["id"], str(account["id"]), 10, 3)
+    await _log_ai_call(repo, second["id"], str(account["id"]), 7, 2)
+
+
+async def _create_user_detail_sessions(
+    repo: GameRepository,
+    account: dict,
+    other_account: dict,
+) -> tuple[dict, dict]:
+    owned = await repo.sessions.create_web(str(account["id"]))
+    other = await repo.sessions.create_web(str(other_account["id"]))
+    return owned, other
+
+
+async def _log_user_detail_calls(
+    repo: GameRepository,
+    account: dict,
+    other_account: dict,
+    owned: dict,
+    other: dict,
+) -> None:
+    await _log_ai_call(repo, owned["id"], str(account["id"]), 11, 4)
+    await _log_ai_call(repo, other["id"], str(other_account["id"]), 100, 50)
 
 
 @allure.epic("Memory & Persistence")
@@ -83,6 +150,55 @@ class TestListSessionsFiltering:
 
         rows = await repo.admin.list_sessions(search="%")
         assert rows == []
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Admin queries")
+class TestUserManagement:
+    @allure.story("User list")
+    @allure.title("list_users returns accounts with session counts and aggregate AI usage")
+    @pytest.mark.asyncio
+    async def test_list_users_includes_session_and_usage_totals(self, repo: GameRepository, async_session) -> None:
+        account, other_account = await _create_account_pair(async_session)
+        first, second = await _create_list_user_sessions(repo, account, other_account)
+        await _log_list_user_calls(repo, account, first, second)
+
+        rows = await repo.admin.list_users()
+        user_row = next(row for row in rows if row["id"] == account["id"])
+
+        assert user_row["email"] == "player@example.com"
+        assert user_row["session_count"] == 2
+        assert user_row["call_count"] == 2
+        assert user_row["prompt_tokens"] == 17
+        assert user_row["completion_tokens"] == 5
+        assert user_row["total_tokens"] == 22
+
+    @allure.story("User detail")
+    @allure.title("get_user_detail returns account, usage totals, and sessions for only that account")
+    @pytest.mark.asyncio
+    async def test_get_user_detail_includes_only_that_accounts_sessions(
+        self, repo: GameRepository, async_session
+    ) -> None:
+        account, other_account = await _create_account_pair(async_session)
+        owned, other = await _create_user_detail_sessions(repo, account, other_account)
+        await _log_user_detail_calls(repo, account, other_account, owned, other)
+
+        detail = await repo.admin.get_user_detail(str(account["id"]))
+
+        assert detail is not None
+        assert detail["account"]["id"] == account["id"]
+        assert detail["usage"]["call_count"] == 1
+        assert detail["usage"]["total_tokens"] == 15
+        assert [session["id"] for session in detail["sessions"]] == [owned["id"]]
+        assert detail["sessions"][0]["call_count"] == 1
+        assert detail["sessions"][0]["total_tokens"] == 15
+
+    @allure.story("User detail")
+    @allure.title("get_user_detail returns None for an unknown account id")
+    @pytest.mark.asyncio
+    async def test_get_user_detail_unknown_user_returns_none(self, repo: GameRepository) -> None:
+        detail = await repo.admin.get_user_detail("00000000-0000-0000-0000-000000000000")
+        assert detail is None
 
 
 @allure.epic("Memory & Persistence")
