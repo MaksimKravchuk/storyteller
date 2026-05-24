@@ -18,7 +18,18 @@ Recommendation: target a Public Web Demo first.
 
 Why: the repo already has a FastAPI player UI, Docker/Fly deployment, and CI. A web demo lets us test the core experience without solving every distribution/store problem.
 
-## Proposed release: Public Web Demo v0.1
+## Current release target: Friends Beta v0.2
+
+Goal: invited friends can install Storyteller as a PWA, sign in with beta-approved accounts, start and continue stories across devices, submit actionable feedback, and play within controlled LLM cost limits.
+
+This supersedes Public Web Demo v0.1 as the active operating milestone. The public web demo work remains valuable foundation, but Friends Beta adds the missing production-shaped requirements: PWA installability, accounts, invite gate, account-owned stories, cost telemetry, quotas, and beta operations.
+
+Reference plans:
+
+- `docs/studio/09-founder-decision-register.md`
+- `docs/studio/10-friends-beta-gtd-plan.md`
+
+## Previous release foundation: Public Web Demo v0.1
 
 Goal: a new player can open the web UI, enter a setting, play a coherent text quest for several turns, and understand why Storyteller is different from a generic chatbot.
 
