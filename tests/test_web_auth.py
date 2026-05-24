@@ -315,7 +315,12 @@ def test_static_shell_includes_auth_controls(client: TestClient) -> None:
     assert script_response.status_code == _HTTP_OK
     assert 'id="auth-panel"' in index_response.text
     assert 'id="login-email"' in index_response.text
+    assert 'id="login-btn"' in index_response.text
+    assert 'id="signup-btn"' in index_response.text
     assert 'id="logout-btn"' in index_response.text
+    assert "Log in" in index_response.text
+    assert "Sign up" in index_response.text
     assert "supabase-js" in index_response.text
-    assert "signInWithOtp" in script_response.text
+    assert "sendMagicLink(false)" in script_response.text
+    assert "sendMagicLink(true)" in script_response.text
     assert "Authorization" in script_response.text
