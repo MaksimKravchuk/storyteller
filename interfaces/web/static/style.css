@@ -56,6 +56,63 @@ main {
   margin: 0 auto;
 }
 
+#stories-panel {
+  max-width: 820px;
+  margin: 0 auto 1.5rem;
+}
+
+.stories-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+#stories-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.story-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.75rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #444;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.story-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.story-meta span {
+  color: #9a937f;
+  font-size: 0.9rem;
+}
+
+.story-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.story-actions button,
+#library-new-game-btn {
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  color: #e8e4d8;
+  border: 1px solid #666;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.story-actions button:hover,
+#library-new-game-btn:hover { border-color: #e8e4d8; }
+
 #character-fields {
   margin: 1rem 0;
   padding: 0.75rem 1rem 1rem;

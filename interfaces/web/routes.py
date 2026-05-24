@@ -28,6 +28,7 @@ _STATIC_DIR = Path(__file__).parent / "static"
 _INDEX_HTML = _STATIC_DIR / "index.html"
 _START_UNAVAILABLE_DETAIL = "Storyteller is temporarily unable to start games. Please try again later."
 _START_FAILED_DETAIL = "Storyteller could not start this game. Please try another premise or try again."
+_NO_ACTIVE_GAME_DETAIL = "No active game"
 
 PlayerIdDep = Annotated[str, Depends(get_beta_player_id)]
 CfgDep = Annotated[Config, Depends(deps.get_cfg)]
@@ -61,7 +62,7 @@ async def get_current_game(
     """Return the caller's current game, or 404 if none exists."""
     snapshot = await service.get_current_snapshot(repo, cfg, player_id)
     if snapshot is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No active game")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_NO_ACTIVE_GAME_DETAIL)
     return snapshot
 
 
@@ -136,7 +137,7 @@ async def post_action(
     except service.GameNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No active game",
+            detail=_NO_ACTIVE_GAME_DETAIL,
         ) from exc
     except service.GameStartUnavailableError as exc:
         raise HTTPException(

@@ -1,4 +1,4 @@
-// Storyteller web client — vanilla fetch() against the FastAPI JSON API.
+// Storyteller web client - vanilla fetch() against the FastAPI JSON API.
 // No framework, no build step. Keeps all state in the DOM + currentGameId.
 
 (() => {
@@ -14,6 +14,10 @@
     logoutBtn: $("logout-btn"),
     authStatus: $("auth-status"),
     settingPanel: $("setting-panel"),
+    storiesPanel: $("stories-panel"),
+    storiesList: $("stories-list"),
+    storiesStatus: $("stories-status"),
+    libraryNewGameBtn: $("library-new-game-btn"),
     settingForm: $("setting-form"),
     settingInput: $("setting-input"),
     languageSelect: $("language-select"),
@@ -84,7 +88,7 @@
     const div = document.createElement("div");
     div.className = "turn " + role;
     // The server pre-renders both player input (escaped) and narrator output
-    // (markdown subset → safe HTML, with inline entity <span>s already wrapped
+    // (markdown subset -> safe HTML, with inline entity <span>s already wrapped
     // by formatting.entity_markup.wrap_entities), so innerHTML is safe here.
     div.innerHTML = html;
     els.log.appendChild(div);
@@ -106,7 +110,7 @@
     name.textContent = npc.name;
     const sep = document.createElement("span");
     sep.className = "npc-sep";
-    sep.textContent = "·";
+    sep.textContent = "*";
     const occupation = document.createElement("span");
     occupation.className = "npc-occupation";
     occupation.textContent = npc.occupation;
@@ -135,7 +139,7 @@
   function renderEmptyPlaceholder(listEl) {
     const li = document.createElement("li");
     li.className = "empty";
-    li.textContent = "— nothing yet —";
+    li.textContent = "- nothing yet -";
     listEl.appendChild(li);
   }
 
@@ -199,10 +203,11 @@
       appendTurnHTML(entry.role, entry.html);
     }
     // Seed prevCharacter with the snapshot itself so the first render produces
-    // zero "new" items — we don't want every entry to glow on load or reload.
+    // zero "new" items - we don't want every entry to glow on load or reload.
     prevCharacter = snapshot.character;
     renderCharacter(snapshot.character);
     hide(els.settingPanel);
+    if (els.storiesPanel) hide(els.storiesPanel);
     show(els.gamePanel);
     show(els.newGameBtn);
     els.actionInput.focus();
@@ -213,8 +218,55 @@
     prevCharacter = null;
     hide(els.gamePanel);
     hide(els.newGameBtn);
+    if (els.storiesPanel) hide(els.storiesPanel);
     show(els.settingPanel);
     els.settingInput.focus();
+  }
+
+  function showStoriesPanel() {
+    hide(els.settingPanel);
+    hide(els.gamePanel);
+    show(els.newGameBtn);
+    if (els.storiesPanel) show(els.storiesPanel);
+  }
+
+  function renderStoryRow(story) {
+    const li = document.createElement("li");
+    li.className = "story-row";
+    const meta = document.createElement("div");
+    meta.className = "story-meta";
+    const title = document.createElement("strong");
+    title.textContent = story.title || story.setting || "Untitled story";
+    const details = document.createElement("span");
+    details.textContent = (story.setting || "Unknown setting") + " * " + story.turn_count + " turns";
+    meta.append(title, details);
+    const actions = document.createElement("div");
+    actions.className = "story-actions";
+    const continueBtn = document.createElement("button");
+    continueBtn.type = "button";
+    continueBtn.dataset.continueGame = story.game_id;
+    continueBtn.textContent = "Continue";
+    const archiveBtn = document.createElement("button");
+    archiveBtn.type = "button";
+    archiveBtn.dataset.archiveGame = story.game_id;
+    archiveBtn.textContent = "Archive";
+    actions.append(continueBtn, archiveBtn);
+    li.append(meta, actions);
+    return li;
+  }
+
+  function renderStories(games) {
+    if (!els.storiesList) return;
+    els.storiesList.innerHTML = "";
+    if (!games || games.length === 0) {
+      showSettingPanel();
+      return;
+    }
+    for (const story of games) {
+      els.storiesList.appendChild(renderStoryRow(story));
+    }
+    setStatus(els.storiesStatus, "");
+    showStoriesPanel();
   }
 
   async function parseError(response) {
@@ -223,6 +275,24 @@
       return body.detail || response.statusText;
     } catch {
       return response.statusText || "Request failed";
+    }
+  }
+
+  async function loadStories() {
+    try {
+      const response = await apiFetch("/api/games");
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+      setOfflineNotice(false);
+      const data = await response.json();
+      renderStories(data.games || []);
+    } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
+      showSettingPanel();
+      setStatus(els.settingStatus, "Could not load stories: " + err.message);
+    } finally {
+      hide(els.loading);
     }
   }
 
@@ -307,7 +377,7 @@
   }
 
   async function onUseTemplate() {
-    setStatus(els.settingStatus, "Loading a character template…", "info");
+    setStatus(els.settingStatus, "Loading a character template...", "info");
     try {
       const response = await apiFetch("/api/character-template");
       if (!response.ok) {
@@ -333,7 +403,7 @@
     const character = gatherCharacter();
     setStatus(
       els.settingStatus,
-      "Building your AI text quest demo: researching the setting and writing the opening scene. This may take a minute…",
+      "Building your AI text quest demo: researching the setting and writing the opening scene. This may take a minute...",
       "info",
     );
     const button = els.settingForm.querySelector("button[type=submit]");
@@ -373,7 +443,7 @@
     els.actionInput.value = "";
     els.actionInput.disabled = true;
     els.actionSubmit.disabled = true;
-    setStatus(els.actionStatus, "The AI narrator is resolving your action…", "info");
+    setStatus(els.actionStatus, "The AI narrator is resolving your action...", "info");
     try {
       const response = await apiFetch(
         "/api/games/" + encodeURIComponent(currentGameId) + "/actions",
@@ -402,8 +472,50 @@
   }
 
   function onNewGame() {
-    if (!confirm("Start a new game? This will replace the current one.")) return;
     showSettingPanel();
+  }
+
+  async function continueStory(gameId) {
+    setStatus(els.storiesStatus, "Loading story...", "info");
+    try {
+      const response = await apiFetch("/api/games/" + encodeURIComponent(gameId));
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+      setOfflineNotice(false);
+      renderSnapshot(await response.json());
+    } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
+      setStatus(els.storiesStatus, "Could not continue story: " + err.message);
+    }
+  }
+
+  async function archiveStory(gameId) {
+    if (!confirm("Archive this story?")) return;
+    setStatus(els.storiesStatus, "Archiving story...", "info");
+    try {
+      const response = await apiFetch("/api/games/" + encodeURIComponent(gameId) + "/archive", { method: "POST" });
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+      setOfflineNotice(false);
+      await loadStories();
+    } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
+      setStatus(els.storiesStatus, "Could not archive story: " + err.message);
+    }
+  }
+
+  function onStoriesClick(event) {
+    const continueBtn = event.target.closest("button[data-continue-game]");
+    if (continueBtn) {
+      continueStory(continueBtn.dataset.continueGame || "");
+      return;
+    }
+    const archiveBtn = event.target.closest("button[data-archive-game]");
+    if (archiveBtn) {
+      archiveStory(archiveBtn.dataset.archiveGame || "");
+    }
   }
 
   function onNextActionClick(event) {
@@ -432,6 +544,12 @@
   els.settingForm.addEventListener("submit", onStartGame);
   els.actionForm.addEventListener("submit", onSubmitAction);
   els.newGameBtn.addEventListener("click", onNewGame);
+  if (els.libraryNewGameBtn) {
+    els.libraryNewGameBtn.addEventListener("click", onNewGame);
+  }
+  if (els.storiesList) {
+    els.storiesList.addEventListener("click", onStoriesClick);
+  }
   $("next-actions").addEventListener("click", onNextActionClick);
   if (els.settingExamples) {
     els.settingExamples.addEventListener("click", onSettingExampleClick);
@@ -451,5 +569,5 @@
   registerServiceWorker();
   setOfflineNotice(!navigator.onLine);
   initFoldableSections();
-  loadPublicConfig().finally(loadCurrent);
+  loadPublicConfig().finally(loadStories);
 })();

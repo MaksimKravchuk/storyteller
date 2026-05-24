@@ -99,6 +99,8 @@ sessions = Table(
     Column("web_player_id", _UUID_STR, nullable=True),
     Column("state", String(_LEN_SHORT), nullable=False, server_default="idle"),
     Column("language", String(_LEN_SHORT), nullable=False, server_default="English"),
+    Column("title", Text, nullable=True),
+    Column("archived_at", _TZ_TS, nullable=True),
     Column(_COL_CREATED_AT, TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
     Column("updated_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
     Index("idx_sessions_telegram_chat_id", "telegram_chat_id"),

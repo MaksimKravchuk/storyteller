@@ -16,6 +16,7 @@ from engine.game_engine import GameEngine
 from interfaces.web.character import build_character_info
 from interfaces.web.errors import GameNotFoundError
 from interfaces.web.schemas import CharacterCreationInput, GameSnapshot
+from interfaces.web.schemas_library import GameSummary
 from interfaces.web.transcript import build_transcript
 
 _DEFAULT_LANGUAGE = "English"
@@ -54,26 +55,26 @@ def session_language(session_row: Mapping[str, object]) -> str:
 
 async def owned_session_context(repo: GameRepository, player_id: str, game_id: str) -> tuple[str, str]:
     """Return the owned session id and language or raise a 404-safe error."""
-    session_row = await repo.sessions.get_latest_web(player_id)
+    session_row = await repo.web_games.get_by_game(player_id, game_id)
     if session_row is None:
         raise GameNotFoundError(player_id)
-    return await _validate_session_game(repo, session_row, player_id, game_id)
+    return str(session_row["id"]), session_language(session_row)
 
 
-async def _validate_session_game(
-    repo: GameRepository,
-    session_row: Mapping[str, object],
-    player_id: str,
-    game_id: str,
-) -> tuple[str, str]:
-    session_id = str(session_row["id"])
-    loaded = await repo.load_game_state(session_id)
-    if loaded is None:
-        raise GameNotFoundError(player_id)
-    game_state, _, _ = loaded
-    if str(game_state.uuid) != game_id:
-        raise GameNotFoundError(player_id)
-    return session_id, session_language(session_row)
+def _turn_count(row: Mapping[str, object]) -> int:
+    raw_value = row.get("turn_count")
+    return int(raw_value) if isinstance(raw_value, int) else 0
+
+
+def game_summary_from_row(row: Mapping[str, object]) -> GameSummary:
+    """Build a compact library summary from a joined session/game row."""
+    setting = str(row.get("setting") or "Untitled setting")
+    return GameSummary(
+        game_id=str(row["game_id"]),
+        title=str(row.get("title") or setting),
+        setting=setting,
+        turn_count=_turn_count(row),
+    )
 
 
 async def restore_engine(

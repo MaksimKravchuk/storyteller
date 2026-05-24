@@ -67,8 +67,10 @@ class SessionStore:
         return await _insert_row(self._session, telegram_chat_id=telegram_chat_id)
 
     async def get_latest_web(self, web_player_id: str) -> dict | None:
-        """Return the most recent session row for a web player, or None."""
-        return await _fetch_latest(self._session, tbl.sessions.c.web_player_id == web_player_id)
+        """Return the most recent non-archived session row for a web player, or None."""
+        where_clause = tbl.sessions.c.web_player_id == web_player_id
+        not_archived = tbl.sessions.c.archived_at.is_(None)
+        return await _fetch_latest(self._session, where_clause & not_archived)
 
     async def create_web(self, web_player_id: str) -> dict:
         """Insert a fresh session row for a web player and return it."""
@@ -89,6 +91,7 @@ class SessionStore:
             update_fields["language"] = language
         if not update_fields:
             return
+        update_fields["updated_at"] = func.clock_timestamp()
         where_clause = tbl.sessions.c.id == session_id
         stmt = update(tbl.sessions).where(where_clause).values(**update_fields)
         await self._session.execute(stmt)
