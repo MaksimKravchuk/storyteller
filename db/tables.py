@@ -309,6 +309,8 @@ ai_call_logs = Table(
         nullable=False,
     ),
     Column(_COL_TURN_NUMBER, Integer, nullable=True),
+    Column("user_id", Text, nullable=True),
+    Column(_COL_GAME_STATE_ID, _UUID_STR, nullable=True),
     Column("agent_name", String(_LEN_MEDIUM), nullable=False),
     Column("model", String(_LEN_LONG), nullable=False),
     Column("system_prompt", Text, nullable=False),
@@ -323,6 +325,9 @@ ai_call_logs = Table(
     Index("idx_ai_calls_session", _COL_SESSION_ID),
     Index("idx_ai_calls_session_turn", _COL_SESSION_ID, _COL_TURN_NUMBER),
     Index("idx_ai_calls_created", _COL_CREATED_AT),
+    Index("idx_ai_calls_user_created", "user_id", _COL_CREATED_AT),
+    Index("idx_ai_calls_model_created", "model", _COL_CREATED_AT),
+    Index("idx_ai_calls_game_state", _COL_GAME_STATE_ID),
 )
 
 turn_events = Table(

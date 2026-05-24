@@ -76,6 +76,20 @@ class SessionStore:
         """Insert a fresh session row for a web player and return it."""
         return await _insert_row(self._session, web_player_id=web_player_id)
 
+    async def count_active_web(self, web_player_id: str) -> int:
+        """Count active, non-archived web games for a player."""
+        stmt = (
+            select(func.count())
+            .select_from(tbl.sessions)
+            .where(
+                tbl.sessions.c.web_player_id == web_player_id,
+                tbl.sessions.c.archived_at.is_(None),
+                tbl.sessions.c.state == "playing",
+            )
+        )
+        query_result = await self._session.execute(stmt)
+        return int(query_result.scalar() or 0)
+
     async def update(
         self,
         session_id: str,

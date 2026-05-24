@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, AsyncIterator
 from uuid import UUID
@@ -30,7 +30,7 @@ def get_cfg(request: web.Request) -> Config:
 
 def _json_serial(unknown: Any) -> Any:
     """JSON serializer for objects not handled by default json."""
-    if isinstance(unknown, datetime):
+    if isinstance(unknown, (date, datetime)):
         return unknown.isoformat()
     if isinstance(unknown, UUID):
         return str(unknown)

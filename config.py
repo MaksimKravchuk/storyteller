@@ -31,6 +31,8 @@ _OPENROUTER_PREFIXES = (
 _DEFAULT_WEB_PORT = 8070
 _WEB_PORT_MIN = 1
 _WEB_PORT_MAX = 65535
+_DEFAULT_BETA_DAILY_TURNS = 20
+_DEFAULT_BETA_WEEKLY_TURNS = 50
 
 # Anchor the default ``.env`` to the project root (this file's directory)
 # rather than CWD, so that ``load_config()`` works regardless of where the
@@ -82,6 +84,16 @@ class Config(BaseSettings):
     supabase_jwt_issuer: str | None = None
     beta_auth_required: bool = False
     beta_invite_gate_enabled: bool = True
+
+    # Friends beta operating controls. These checks run before web gameplay
+    # invokes LLM-backed engine work.
+    beta_enabled: bool = True
+    beta_kill_message: str = "Storyteller beta is paused while we tune the experience. Please try again later."
+    beta_daily_turn_quota: int = Field(default=_DEFAULT_BETA_DAILY_TURNS, ge=0)
+    beta_weekly_turn_quota: int = Field(default=_DEFAULT_BETA_WEEKLY_TURNS, ge=0)
+    beta_max_active_games: int = Field(default=3, ge=0)
+    beta_global_budget_usd: str = "50"
+    model_pricing_json: str | None = None
 
 
 def load_config() -> Config:

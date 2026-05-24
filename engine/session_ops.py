@@ -25,13 +25,19 @@ async def persist_engine_state(
     session_id: str,
     engine: GameEngine,
     turn_number: int | None,
+    user_id: str | None = None,
 ) -> None:
     """Save game state and flush any buffered AI call logs."""
     game_state, knowledge_graph, event_manager = engine.assert_running()
     await repo.save_game_state(session_id, game_state, knowledge_graph, event_manager.all_events)
     ai_logs = get_and_clear_buffer()
     if ai_logs:
-        await repo.ai_logs.save(ai_logs, turn_number=turn_number)
+        await repo.ai_logs.save(
+            ai_logs,
+            turn_number=turn_number,
+            user_id=user_id,
+            game_state_id=_game_state_id(game_state),
+        )
     turn_events = get_and_clear_events()
     if turn_events:
         await repo.turn_events.save(
@@ -40,6 +46,14 @@ async def persist_engine_state(
             turn_number=turn_number,
             scene_number=game_state.scene_number,
         )
+
+
+def _game_state_id(game_state: object) -> str | None:
+    """Return a string game-state UUID when the runtime state exposes one."""
+    raw_uuid = getattr(game_state, "uuid", None)
+    if raw_uuid is None:
+        return None
+    return str(raw_uuid)
 
 
 def _bind_session_buffers(session_id: str) -> None:

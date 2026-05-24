@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import allure
 import pytest
 
@@ -107,3 +109,24 @@ class TestMaxCallSequence:
 
         null_max = await repo.ai_logs.max_call_sequence(test_session_id, turn_number=None)
         assert null_max == 7
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("AI call logs")
+class TestTurnCount:
+    @allure.story("Beta quotas")
+    @allure.title("turn_count_for_user counts same turn number in separate sessions")
+    @pytest.mark.asyncio
+    async def test_counts_turns_across_sessions(self, repo: GameRepository, test_session_id: str) -> None:
+        player_id = "11111111-1111-1111-1111-111111111111"
+        second_session = await repo.sessions.create_web(player_id)
+        await repo.ai_logs.save([_entry(test_session_id)], turn_number=1, user_id=player_id)
+        await repo.ai_logs.save([_entry(second_session["id"])], turn_number=1, user_id=player_id)
+
+        count = await repo.ai_logs.turn_count_for_user(
+            player_id,
+            start_at=datetime(2000, 1, 1, tzinfo=timezone.utc),
+            end_at=datetime(2100, 1, 1, tzinfo=timezone.utc),
+        )
+
+        assert count == 2
