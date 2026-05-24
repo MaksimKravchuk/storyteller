@@ -193,10 +193,33 @@ class TestSendJsonStrictMode:
         assert second_output.schema is None
         assert second_output.response_format == {"type": "json_object"}
 
+    @allure.story("Strict path recovery")
+    @allure.title(
+        "_send_json retries once when the strict provider returns malformed JSON and "
+        "recovers if the next strict response is valid",
+    )
+    @pytest.mark.asyncio
+    async def test_strict_mode_retries_malformed_json_once(self) -> None:
+        llm = MagicMock()
+        llm.model = "test-model"
+        llm.send_message = AsyncMock(
+            side_effect=[
+                _llm_response('{"count": 7'),
+                _llm_response(json.dumps({"count": 7})),
+            ],
+        )
+        performer = _make_performer(llm)
+
+        result = await performer._send_json(_PROMPT, response_model=_WidgetResponse)
+
+        assert isinstance(result, _WidgetResponse)
+        assert result.count == 7
+        assert llm.send_message.call_count == 2
+
     @allure.story("Strict path failure")
     @allure.title(
         "_send_json raises ValueError without retry when the strict response is structurally "
-        "invalid (provider violated its own contract)",
+        "valid but fails schema validation",
     )
     @pytest.mark.asyncio
     async def test_strict_mode_validation_failure_raises_without_retry(self) -> None:

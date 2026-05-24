@@ -7,14 +7,14 @@ import time
 from abc import ABC, abstractmethod
 from typing import Any, TypeVar, overload
 
-from cast._performer_retry import RetryContext as _RetryContext, _strip_markdown_fence
-from llm.base_client import BaseLLMClient, LLMJSONError, OutputFormat
-from llm.call_logger import (
-    agent_stack,
-    call_log_buffer,
-    current_session_id,
-    next_sequence,
+from cast._performer_retry import (
+    RetryContext as _RetryContext,
+    _strip_markdown_fence,
+    validate_strict_json,
+    validate_strict_retry_json,
 )
+from llm import call_logger
+from llm.base_client import BaseLLMClient, LLMJSONError, OutputFormat
 from llm.message import LLMResponse, Message, Role, Tool, ToolCall
 from loguru import logger
 from prompts.base_template import PromptTemplate
@@ -65,7 +65,7 @@ def _record_llm_call(
     messages: list[Message],
 ) -> None:
     """Log the LLM call and capture details for the admin dashboard."""
-    stack = agent_stack.get(None) or []
+    stack = call_logger.agent_stack.get(None) or []
     parent = stack[-2] if len(stack) >= 2 else None
     logger.info(
         "LLM | agent={} model={} parent={} | prompt_tokens={} completion_tokens={} duration_ms={}",
@@ -76,10 +76,10 @@ def _record_llm_call(
         response.usage.get("completion_tokens"),
         response.usage.get("duration_ms", 0),
     )
-    session_id = current_session_id.get(None)
+    session_id = call_logger.current_session_id.get(None)
     if session_id is None:
         return
-    buf = call_log_buffer.get(None) or []
+    buf = call_logger.call_log_buffer.get(None) or []
     buf.append(
         {
             "session_id": session_id,
@@ -91,10 +91,10 @@ def _record_llm_call(
             "prompt_tokens": response.usage.get("prompt_tokens"),
             "completion_tokens": response.usage.get("completion_tokens"),
             "parent_agent": parent,
-            "call_sequence": next_sequence(),
+            "call_sequence": call_logger.next_sequence(),
         }
     )
-    call_log_buffer.set(buf)
+    call_logger.call_log_buffer.set(buf)
 
 
 async def _retry_after_validation_failure(
@@ -182,14 +182,7 @@ async def _send_json_strict(
     response_model: type[BaseModelT],
     max_tokens: int | None = None,
 ) -> BaseModelT:
-    """Run the strict structured-outputs path and validate the response.
-
-    Module-level to keep the ``BasePerformer`` method count under the WPS
-    limit. Raises ``NotImplementedError`` when the provider does not support
-    strict structured outputs (caller falls back to the prompt path) and
-    ``LLMJSONError`` when the provider returns text that does not match the
-    schema (a contract violation, not a recoverable miss).
-    """
+    """Run strict structured outputs, retrying once only for malformed JSON."""
     output_format = OutputFormat(
         schema=response_model.model_json_schema(),
         schema_name=response_model.__name__,
@@ -202,14 +195,21 @@ async def _send_json_strict(
         output_format=output_format,
         overrides=overrides,
     )
-    raw = response.body
     try:
-        return response_model.model_validate(json.loads(raw))
-    except (json.JSONDecodeError, ValidationError) as exc:
-        raise LLMJSONError(
-            "Strict structured output failed validation: {0}".format(exc),
-            raw_response=raw,
-        ) from exc
+        return validate_strict_json(response.body, response_model)
+    except json.JSONDecodeError:
+        logger.warning(
+            "Strict structured output returned malformed JSON on attempt 1/{}; retrying",
+            2,
+        )
+    retry_response = await _call_llm(
+        performer,
+        user_message=user_message,
+        conversation=conversation,
+        output_format=output_format,
+        overrides=overrides,
+    )
+    return validate_strict_retry_json(retry_response.body, response_model)
 
 
 async def _call_llm(
@@ -299,9 +299,9 @@ class BasePerformer(ABC):
         Uses a ContextVar token so the previous stack is restored exactly,
         even if ``act()`` raises.
         """
-        existing_stack = agent_stack.get(None) or []
+        existing_stack = call_logger.agent_stack.get(None) or []
         new_stack = list(existing_stack) + [type(self).__name__]
-        token = agent_stack.set(new_stack)
+        token = call_logger.agent_stack.set(new_stack)
         start = time.monotonic()
         logger.info(
             "agent={} parent={} | start",
@@ -328,7 +328,7 @@ class BasePerformer(ABC):
             )
             return act_response
         finally:
-            agent_stack.reset(token)
+            call_logger.agent_stack.reset(token)
 
     # ------------------------------------------------------------------
     # Abstract interface
