@@ -15,6 +15,7 @@ from sqlalchemy import (
 from sqlalchemy import (
     Table,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
@@ -55,6 +56,40 @@ _LEN_LONG = 128
 
 # Reusable String type instances — avoid WPS204 "overused expression"
 _TINY_STR = String(_LEN_TINY)
+_SHORT_STR = String(_LEN_SHORT)
+_TZ_TS = TIMESTAMP(timezone=True)
+
+
+def _uuid_pk_column() -> Column:
+    """Create a UUID primary key column with the project default."""
+    return Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid())
+
+
+accounts = Table(
+    "accounts",
+    metadata,
+    _uuid_pk_column(),
+    Column("supabase_user_id", String(_LEN_LONG), nullable=False),
+    Column("email", Text, nullable=False),
+    Column("plan", _SHORT_STR, nullable=False, server_default="friend_beta"),
+    Column("is_admin", Boolean, nullable=False, server_default="false"),
+    Column(_COL_CREATED_AT, _TZ_TS, nullable=False, server_default=func.now()),
+    Column("updated_at", _TZ_TS, nullable=False, server_default=func.now()),
+    UniqueConstraint("supabase_user_id", name="uq_accounts_supabase_user_id"),
+)
+
+beta_invites = Table(
+    "beta_invites",
+    metadata,
+    _uuid_pk_column(),
+    Column("email", Text, nullable=False),
+    Column("status", _SHORT_STR, nullable=False, server_default="invited"),
+    Column("invited_by", _UUID_STR, nullable=True),
+    Column("invited_at", _TZ_TS, nullable=False, server_default=func.now()),
+    Column("accepted_at", _TZ_TS, nullable=True),
+    Column(_COL_CREATED_AT, _TZ_TS, nullable=False, server_default=func.now()),
+    UniqueConstraint("email", name="uq_beta_invites_email"),
+)
 
 sessions = Table(
     "sessions",

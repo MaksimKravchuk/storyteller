@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import (
+    repo_accounts,
     repo_admin,
     repo_ai_logs,
     repo_loader,
@@ -30,6 +31,7 @@ class GameRepository:
         self.turn_events = repo_turn_events.TurnEventStore(session)
         self.sessions = repo_sessions.SessionStore(session)
         self.settings = repo_settings.AdminSettingsStore(session)
+        self.accounts = repo_accounts.AccountStore(session)
 
     async def rollback(self) -> None:
         """Roll back the current transaction (use after a failed op to reuse the session)."""

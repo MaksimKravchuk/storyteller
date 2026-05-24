@@ -74,6 +74,15 @@ class Config(BaseSettings):
     # Web UI server
     web_port: int = Field(default=_DEFAULT_WEB_PORT, ge=_WEB_PORT_MIN, le=_WEB_PORT_MAX)
 
+    # Supabase Auth / beta gate. Defaults preserve local anonymous-cookie mode.
+    supabase_url: str | None = None
+    supabase_anon_key: str | None = None
+    supabase_jwks_url: str | None = None
+    supabase_jwt_audience: str = "authenticated"
+    supabase_jwt_issuer: str | None = None
+    beta_auth_required: bool = False
+    beta_invite_gate_enabled: bool = True
+
 
 def load_config() -> Config:
     """Load configuration from a ``.env`` file and/or environment variables.

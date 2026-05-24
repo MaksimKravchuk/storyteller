@@ -15,8 +15,8 @@ from fastapi.responses import FileResponse
 from config import Config
 from db.repository import GameRepository
 from defaults.player_character import TEMPLATE_CHARACTER
-from interfaces.web import pwa, schemas, service
-from interfaces.web.deps import get_cfg, get_player_id, get_repo
+from interfaces.web import deps, pwa, schemas, service
+from interfaces.web.beta_auth import get_beta_player_id
 from interfaces.web.readiness import readiness_payload
 from interfaces.web.service_helpers import StartGameParams
 
@@ -29,9 +29,9 @@ _INDEX_HTML = _STATIC_DIR / "index.html"
 _START_UNAVAILABLE_DETAIL = "Storyteller is temporarily unable to start games. Please try again later."
 _START_FAILED_DETAIL = "Storyteller could not start this game. Please try another premise or try again."
 
-PlayerIdDep = Annotated[str, Depends(get_player_id)]
-CfgDep = Annotated[Config, Depends(get_cfg)]
-RepoDep = Annotated[GameRepository, Depends(get_repo)]
+PlayerIdDep = Annotated[str, Depends(get_beta_player_id)]
+CfgDep = Annotated[Config, Depends(deps.get_cfg)]
+RepoDep = Annotated[GameRepository, Depends(deps.get_repo)]
 
 
 @router.get("/", include_in_schema=False)
@@ -97,7 +97,11 @@ async def start_game(
         ) from exc
 
 
-@router.get("/api/character-template", response_model=schemas.CharacterCreationInput)
+@router.get(
+    "/api/character-template",
+    response_model=schemas.CharacterCreationInput,
+    dependencies=[Depends(get_beta_player_id)],
+)
 async def get_character_template() -> schemas.CharacterCreationInput:
     """Return the canned template character for one-click anonymous start.
 

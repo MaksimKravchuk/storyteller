@@ -7,12 +7,14 @@ Split out to keep the public service module under wemake's
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Mapping
 
 from config import Config
 from db.repository import GameRepository
 from engine.factory import create_engine_from_state
 from engine.game_engine import GameEngine
 from interfaces.web.character import build_character_info
+from interfaces.web.errors import GameNotFoundError
 from interfaces.web.schemas import CharacterCreationInput, GameSnapshot
 from interfaces.web.transcript import build_transcript
 
@@ -45,9 +47,33 @@ def snapshot_from_engine(engine: GameEngine, language: str = _DEFAULT_LANGUAGE) 
     )
 
 
-def session_language(session_row: dict) -> str:
+def session_language(session_row: Mapping[str, object]) -> str:
     """Extract a language from a session row, defaulting to English."""
-    return session_row.get("language") or _DEFAULT_LANGUAGE
+    return str(session_row.get("language") or _DEFAULT_LANGUAGE)
+
+
+async def owned_session_context(repo: GameRepository, player_id: str, game_id: str) -> tuple[str, str]:
+    """Return the owned session id and language or raise a 404-safe error."""
+    session_row = await repo.sessions.get_latest_web(player_id)
+    if session_row is None:
+        raise GameNotFoundError(player_id)
+    return await _validate_session_game(repo, session_row, player_id, game_id)
+
+
+async def _validate_session_game(
+    repo: GameRepository,
+    session_row: Mapping[str, object],
+    player_id: str,
+    game_id: str,
+) -> tuple[str, str]:
+    session_id = str(session_row["id"])
+    loaded = await repo.load_game_state(session_id)
+    if loaded is None:
+        raise GameNotFoundError(player_id)
+    game_state, _, _ = loaded
+    if str(game_state.uuid) != game_id:
+        raise GameNotFoundError(player_id)
+    return session_id, session_language(session_row)
 
 
 async def restore_engine(

@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
+from interfaces.web.auth_routes import router as auth_router
 from interfaces.web.deps import player_id_middleware
 from interfaces.web.routes import router
 
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     fastapi_app = FastAPI(title="Storyteller Web", version="0.1.0")
     fastapi_app.add_exception_handler(Exception, _unhandled_exception_handler)
     fastapi_app.middleware("http")(player_id_middleware)
+    fastapi_app.include_router(auth_router)
     fastapi_app.include_router(router)
     fastapi_app.mount(
         "/static",

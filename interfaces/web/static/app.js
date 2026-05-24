@@ -8,6 +8,11 @@
 
   const els = {
     loading: $("loading"),
+    authPanel: $("auth-panel"),
+    loginForm: $("login-form"),
+    loginEmail: $("login-email"),
+    logoutBtn: $("logout-btn"),
+    authStatus: $("auth-status"),
     settingPanel: $("setting-panel"),
     settingForm: $("setting-form"),
     settingInput: $("setting-input"),
@@ -34,6 +39,8 @@
   };
 
   let currentGameId = null;
+  let supabaseClient = null;
+  let authRequired = false;
   // Snapshot of the last character payload, used to detect newly-arrived
   // items so they can briefly glow gold on the turn they appear.
   let prevCharacter = null;
@@ -219,9 +226,54 @@
     }
   }
 
+  async function authHeaders() {
+    if (!supabaseClient) return {};
+    const { data } = await supabaseClient.auth.getSession();
+    const token = data && data.session ? data.session.access_token : null;
+    return token ? { Authorization: "Bearer " + token } : {};
+  }
+
+  async function apiFetch(url, options) {
+    const opts = options || {};
+    const headers = Object.assign({}, opts.headers || {}, await authHeaders());
+    return fetch(url, Object.assign({}, opts, { headers }));
+  }
+
+  async function loadPublicConfig() {
+    const response = await fetch("/api/config/public");
+    if (!response.ok) return;
+    const cfg = await response.json();
+    authRequired = Boolean(cfg.beta_auth_required);
+    if (authRequired && cfg.supabase_url && cfg.supabase_anon_key && window.supabase) {
+      supabaseClient = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+      if (els.authPanel) show(els.authPanel);
+      const { data } = await supabaseClient.auth.getSession();
+      const signedIn = Boolean(data && data.session);
+      if (els.loginForm) els.loginForm.hidden = signedIn;
+      if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
+    }
+  }
+
+  async function onLogin(event) {
+    event.preventDefault();
+    if (!supabaseClient || !els.loginEmail) return;
+    const email = els.loginEmail.value.trim();
+    if (!email) return;
+    const { error } = await supabaseClient.auth.signInWithOtp({ email });
+    setStatus(els.authStatus, error ? error.message : "Check your email for a magic link.", error ? "" : "info");
+  }
+
+  async function onLogout() {
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
+    if (els.loginForm) els.loginForm.hidden = false;
+    if (els.logoutBtn) els.logoutBtn.hidden = true;
+    setStatus(els.authStatus, "Logged out.", "info");
+  }
+
   async function loadCurrent() {
     try {
-      const response = await fetch("/api/games/current");
+      const response = await apiFetch("/api/games/current");
       if (response.status === 404) {
         showSettingPanel();
         return;
@@ -257,7 +309,7 @@
   async function onUseTemplate() {
     setStatus(els.settingStatus, "Loading a character template…", "info");
     try {
-      const response = await fetch("/api/character-template");
+      const response = await apiFetch("/api/character-template");
       if (!response.ok) {
         throw new Error(await parseError(response));
       }
@@ -287,7 +339,7 @@
     const button = els.settingForm.querySelector("button[type=submit]");
     button.disabled = true;
     try {
-      const response = await fetch("/api/games", {
+      const response = await apiFetch("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ setting, language, character }),
@@ -323,7 +375,7 @@
     els.actionSubmit.disabled = true;
     setStatus(els.actionStatus, "The AI narrator is resolving your action…", "info");
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         "/api/games/" + encodeURIComponent(currentGameId) + "/actions",
         {
           method: "POST",
@@ -389,9 +441,15 @@
   }
   window.addEventListener("online", () => setOfflineNotice(false));
   window.addEventListener("offline", () => setOfflineNotice(true));
+  if (els.loginForm) {
+    els.loginForm.addEventListener("submit", onLogin);
+  }
+  if (els.logoutBtn) {
+    els.logoutBtn.addEventListener("click", onLogout);
+  }
 
   registerServiceWorker();
   setOfflineNotice(!navigator.onLine);
   initFoldableSections();
-  loadCurrent();
+  loadPublicConfig().finally(loadCurrent);
 })();
