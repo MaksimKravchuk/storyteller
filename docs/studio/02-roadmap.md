@@ -2,7 +2,9 @@
 
 Date: 2026-05-23
 Status: Draft
-Recommended next milestone: Public Web Demo v0.1
+Recommended next milestone: Friends Beta v0.2
+
+Friends Beta v0.2 builds on the Public Web Demo v0.1 foundation. The active release goal is now invite-only friend testing with PWA installability, Supabase Auth, account-owned stories, cost telemetry, quotas, and feedback capture.
 
 ## Milestone M0: Studio operating system
 
@@ -98,11 +100,42 @@ Tasks:
 Exit criteria:
 - Max approves public post and release notes.
 
+## Milestone M6: Friends Beta foundation
+
+Goal: make Storyteller usable by invited friends as an account-based PWA.
+
+Tasks:
+- Add PWA manifest, icons, service worker, and online-required offline state.
+- Add Supabase Auth integration and invite/allowlist gate.
+- Add account ownership for sessions/games.
+- Add a minimal "My stories" game library.
+
+Exit criteria:
+- Invited tester can install/open the app, sign in, start a game, reload on another device/browser, and continue a saved story.
+- Uninvited or unauthenticated users cannot consume beta gameplay budget.
+
+## Milestone M7: Friends Beta safety and operations
+
+Goal: make invite-only testing measurable, bounded, and actionable.
+
+Tasks:
+- Attribute AI token/cost logs to users and sessions.
+- Add beta plans/quotas and global kill switch.
+- Add in-app feedback tied to user/game/turn context.
+- Draft tester invite, install instructions, known limitations, and privacy/beta disclaimer.
+- Prepare Wave 1 release-candidate report.
+
+Exit criteria:
+- Max can see cost/usage/feedback for beta testers.
+- Quota and provider failures produce friendly player-facing messages.
+- Max approves Wave 1 invites.
+
 ## Suggested priority order
 
-1. M0: studio operating system
-2. M1: release candidate baseline
-3. Fix P0/P1 blockers from M1
-4. M2: core player loop hardening
-5. M3/M4 in parallel
-6. M5
+1. M0/M1: keep studio/release baseline current
+2. M6: Friends Beta foundation
+3. M7: Friends Beta safety and operations
+4. Fix P0/P1 blockers from beta QA
+5. Founder playtest gate
+6. Wave 1 invite-only beta
+7. Subscription hypothesis from real telemetry
