@@ -288,6 +288,57 @@ def test_static_client_explains_loading_states(client: TestClient) -> None:
 
 
 @allure.story("Static shell")
+@allure.title("GET / exposes PWA metadata, service worker registration, and offline copy")
+def test_get_index_exposes_pwa_metadata_and_offline_notice(client: TestClient) -> None:
+    response = client.get("/")
+
+    assert response.status_code == _HTTP_OK
+    assert '<link rel="manifest" href="/manifest.webmanifest" />' in response.text
+    assert '<meta name="theme-color" content="#1a1a1a" />' in response.text
+    assert 'id="offline-banner"' in response.text
+    assert "Storyteller needs an internet connection and model access to continue." in response.text
+
+    app_js = client.get("/static/app.js")
+    assert app_js.status_code == _HTTP_OK
+    assert "serviceWorker" in app_js.text
+    assert 'navigator.serviceWorker.register("/sw.js")' in app_js.text
+
+
+@allure.story("Static shell")
+@allure.title("GET /manifest.webmanifest serves installable app metadata")
+def test_get_manifest_serves_installable_metadata(client: TestClient) -> None:
+    response = client.get("/manifest.webmanifest")
+
+    assert response.status_code == _HTTP_OK
+    assert "application/manifest+json" in response.headers["content-type"]
+    manifest = response.json()
+    assert manifest["name"] == "Storyteller"
+    assert manifest["short_name"] == "Storyteller"
+    assert manifest["start_url"] == "/"
+    assert manifest["display"] == "standalone"
+    assert manifest["theme_color"] == "#1a1a1a"
+    assert manifest["background_color"] == "#1a1a1a"
+    assert {icon["src"] for icon in manifest["icons"]} == {
+        "/static/icons/icon-192.png",
+        "/static/icons/icon-512.png",
+    }
+
+
+@allure.story("Static shell")
+@allure.title("GET /sw.js serves a service worker that keeps gameplay online-required")
+def test_get_service_worker_serves_online_required_worker(client: TestClient) -> None:
+    response = client.get("/sw.js")
+
+    assert response.status_code == _HTTP_OK
+    assert "text/javascript" in response.headers["content-type"]
+    assert "STORYTELLER-PWA-CACHE" in response.text
+    assert "Storyteller needs an internet connection and model access to continue." in response.text
+    assert 'requestPath(request).startsWith("/api/")' in response.text
+    assert "PRECACHE_URLS.includes(requestPath(request))" in response.text
+    assert "caches.open" in response.text
+
+
+@allure.story("Static shell")
 @allure.title("GET /healthz returns 200 with a status:ok body and does not touch the repo")
 def test_healthz_returns_ok(client: TestClient, mock_repo) -> None:
     response = client.get("/healthz")

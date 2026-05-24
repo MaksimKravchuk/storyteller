@@ -15,12 +15,14 @@ from fastapi.responses import FileResponse
 from config import Config
 from db.repository import GameRepository
 from defaults.player_character import TEMPLATE_CHARACTER
-from interfaces.web import schemas, service
+from interfaces.web import pwa, schemas, service
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
 from interfaces.web.readiness import readiness_payload
 from interfaces.web.service_helpers import StartGameParams
 
 router = APIRouter()
+router.add_api_route("/manifest.webmanifest", pwa.manifest, include_in_schema=False)
+router.add_api_route("/sw.js", pwa.service_worker, include_in_schema=False)
 
 _STATIC_DIR = Path(__file__).parent / "static"
 _INDEX_HTML = _STATIC_DIR / "index.html"
