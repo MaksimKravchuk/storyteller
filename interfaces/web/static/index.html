@@ -18,7 +18,11 @@
       <form id="login-form">
         <label for="login-email">Email</label>
         <input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
-        <button type="submit" id="login-btn">Send magic link</button>
+        <div class="auth-actions">
+          <button type="submit" id="login-btn">Log in</button>
+          <button type="button" id="signup-btn">Sign up</button>
+        </div>
+        <p class="hint">Both flows send a Supabase magic link. Use the invited email address.</p>
       </form>
       <button id="logout-btn" type="button" hidden>Logout</button>
       <p id="auth-status" class="status"></p>

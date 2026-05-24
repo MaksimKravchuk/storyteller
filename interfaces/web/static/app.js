@@ -11,6 +11,7 @@
     authPanel: $("auth-panel"),
     loginForm: $("login-form"),
     loginEmail: $("login-email"),
+    signupBtn: $("signup-btn"),
     logoutBtn: $("logout-btn"),
     authStatus: $("auth-status"),
     settingPanel: $("setting-panel"),
@@ -319,23 +320,43 @@
     if (!response.ok) return;
     const cfg = await response.json();
     authRequired = Boolean(cfg.beta_auth_required);
-    if (authRequired && cfg.supabase_url && cfg.supabase_anon_key && window.supabase) {
-      supabaseClient = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
-      if (els.authPanel) show(els.authPanel);
-      const { data } = await supabaseClient.auth.getSession();
-      const signedIn = Boolean(data && data.session);
-      if (els.loginForm) els.loginForm.hidden = signedIn;
-      if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
+    if (!authRequired) return;
+    if (els.authPanel) show(els.authPanel);
+    if (!(cfg.supabase_url && cfg.supabase_anon_key && window.supabase)) {
+      setStatus(els.authStatus, "Login is not configured for this deployment yet.");
+      return;
     }
+    supabaseClient = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+    const { data } = await supabaseClient.auth.getSession();
+    const signedIn = Boolean(data && data.session);
+    if (els.loginForm) els.loginForm.hidden = signedIn;
+    if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
+  }
+
+  async function sendMagicLink(shouldCreateUser) {
+    if (!supabaseClient || !els.loginEmail) return;
+    const email = els.loginEmail.value.trim();
+    if (!email) return;
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: shouldCreateUser,
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    const successMessage = shouldCreateUser
+      ? "Check your email to finish signing up."
+      : "Check your email to log in.";
+    setStatus(els.authStatus, error ? error.message : successMessage, error ? "" : "info");
   }
 
   async function onLogin(event) {
     event.preventDefault();
-    if (!supabaseClient || !els.loginEmail) return;
-    const email = els.loginEmail.value.trim();
-    if (!email) return;
-    const { error } = await supabaseClient.auth.signInWithOtp({ email });
-    setStatus(els.authStatus, error ? error.message : "Check your email for a magic link.", error ? "" : "info");
+    await sendMagicLink(false);
+  }
+
+  async function onSignup() {
+    await sendMagicLink(true);
   }
 
   async function onLogout() {
@@ -600,6 +621,9 @@
   window.addEventListener("offline", () => setOfflineNotice(true));
   if (els.loginForm) {
     els.loginForm.addEventListener("submit", onLogin);
+  }
+  if (els.signupBtn) {
+    els.signupBtn.addEventListener("click", onSignup);
   }
   if (els.logoutBtn) {
     els.logoutBtn.addEventListener("click", onLogout);
