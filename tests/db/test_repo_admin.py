@@ -177,10 +177,15 @@ class TestUserManagement:
     @allure.title("get_user_detail returns account, usage totals, and sessions for only that account")
     @pytest.mark.asyncio
     async def test_get_user_detail_includes_only_that_accounts_sessions(
-        self, repo: GameRepository, async_session
+        self,
+        repo: GameRepository,
+        async_session,
+        populated_game_state,
     ) -> None:
         account, other_account = await _create_account_pair(async_session)
         owned, other = await _create_user_detail_sessions(repo, account, other_account)
+        game_state, knowledge_graph, events = populated_game_state
+        await repo.save_game_state(owned["id"], game_state, knowledge_graph, events)
         await _log_user_detail_calls(repo, account, other_account, owned, other)
 
         detail = await repo.admin.get_user_detail(str(account["id"]))
@@ -192,6 +197,9 @@ class TestUserManagement:
         assert [session["id"] for session in detail["sessions"]] == [owned["id"]]
         assert detail["sessions"][0]["call_count"] == 1
         assert detail["sessions"][0]["total_tokens"] == 15
+        assert detail["sessions"][0]["conversation_log"] == [{"speaker": "player", "text": "hello"}]
+        assert detail["sessions"][0]["scene_conversation_log"] == [{"speaker": "merchant", "text": "welcome"}]
+        assert detail["sessions"][0]["scene_action_log"] == []
 
     @allure.story("User detail")
     @allure.title("get_user_detail returns None for an unknown account id")
