@@ -23,6 +23,7 @@ from interfaces.web.schemas import ActionResponse, CharacterCreationInput, GameS
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
     StartGameParams,
+    owned_session_context,
     restore_engine,
     session_language,
     snapshot_from_engine,
@@ -148,16 +149,9 @@ async def process_turn_for_player(
     Raises ``GameNotFoundError`` if the player has no game or the supplied
     ``game_id`` doesn't match — both yield 404 to avoid leaking existence.
     """
-    session_row = await repo.sessions.get_latest_web(player_id)
-    if session_row is None:
-        raise GameNotFoundError(player_id)
-    session_id = session_row["id"]
-    language = session_language(session_row)
+    session_id, language = await owned_session_context(repo, player_id, game_id)
     engine = await resume_session(repo, cfg, session_id, language)
     if engine is None:
-        raise GameNotFoundError(player_id)
-    game_state, _, _ = engine.assert_running()
-    if str(game_state.uuid) != game_id:
         raise GameNotFoundError(player_id)
 
     return await _act_and_persist(repo, session_id, engine, action, language)

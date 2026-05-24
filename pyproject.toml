@@ -21,6 +21,8 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
     "pymorphy3>=2.0",
+    "pyjwt[crypto]>=2.8",
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]

@@ -14,6 +14,15 @@
 <body>
   <header>
     <h1>Storyteller</h1>
+    <section id="auth-panel" aria-label="Account access" hidden>
+      <form id="login-form">
+        <label for="login-email">Email</label>
+        <input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        <button type="submit" id="login-btn">Send magic link</button>
+      </form>
+      <button id="logout-btn" type="button" hidden>Logout</button>
+      <p id="auth-status" class="status"></p>
+    </section>
     <button id="new-game-btn" type="button" hidden>New game</button>
   </header>
 
@@ -154,6 +163,7 @@
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>
