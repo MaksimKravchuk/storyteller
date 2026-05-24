@@ -14,7 +14,7 @@ import allure
 import pytest
 from fastapi.testclient import TestClient
 
-from interfaces.web import service
+from interfaces.web import beta_auth, service
 from interfaces.web.app import app
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
 from interfaces.web.character_schemas import CharacterInfo
@@ -23,6 +23,7 @@ from interfaces.web.schemas import (
     GameSnapshot,
     TurnEntry,
 )
+
 from interfaces.web.transcript import (
     build_transcript,
     render_narrator_html,
@@ -456,6 +457,166 @@ def test_current_game_hides_database_exception_detail(non_raising_client: TestCl
 
 
 # ---------------------------------------------------------------------------
+# My Stories library
+# ---------------------------------------------------------------------------
+
+
+@allure.story("My Stories")
+@allure.title("GET /api/games lists only the caller's games")
+def test_list_games_returns_current_player_library(client: TestClient, mock_repo) -> None:
+    list_response = {"games": [{"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2}]}
+    list_mock = AsyncMock(return_value=list_response)
+    with patch("interfaces.web.routes_library.service_library.list_games_for_player", new=list_mock):
+        response = client.get("/api/games")
+    assert response.status_code == _HTTP_OK
+    assert response.json()["games"] == [
+        {"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2},
+    ]
+    list_mock.assert_awaited_once_with(mock_repo, _FIXED_PLAYER_ID)
+
+
+class _OwnedWebGames:
+    """Small in-memory web-game store that enforces owner filtering like SQL."""
+
+    def __init__(self) -> None:
+        self._rows = {
+            _FIXED_PLAYER_ID: [
+                {"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2},
+            ],
+            _ANOTHER_PLAYER_ID: [
+                {"game_id": "game-2", "title": "Mars", "setting": "Mars", "turn_count": 1},
+            ],
+        }
+        self.archived: list[tuple[str, str]] = []
+
+    async def list(self, player_id: str) -> list[dict[str, object]]:
+        """Return only rows owned by ``player_id``."""
+        return list(self._rows.get(player_id, []))
+
+    async def archive(self, player_id: str, game_id: str) -> bool:
+        """Archive only caller-owned rows."""
+        owned_rows = self._rows.get(player_id, [])
+        if not any(row["game_id"] == game_id for row in owned_rows):
+            return False
+        self.archived.append((player_id, game_id))
+        return True
+
+
+class _OwnedLibraryRepo:
+    """Repository double that lets route tests exercise service_library."""
+
+    def __init__(self) -> None:
+        self.web_games = _OwnedWebGames()
+        self.commit = AsyncMock()
+
+
+@pytest.fixture
+def owned_library_client(mock_cfg) -> Iterator[tuple[TestClient, _OwnedLibraryRepo]]:
+    """Return a client backed by a fake owner-enforcing repository."""
+    repo = _OwnedLibraryRepo()
+    app.dependency_overrides[get_cfg] = lambda: mock_cfg
+    app.dependency_overrides[get_repo] = lambda: repo
+    app.dependency_overrides[get_player_id] = lambda: "cookie-player"
+    app.dependency_overrides[beta_auth.get_beta_player_id] = lambda: _FIXED_PLAYER_ID
+    try:
+        yield TestClient(app), repo
+    finally:
+        app.dependency_overrides.clear()
+
+
+@allure.story("My Stories")
+@allure.title("GET /api/games uses beta account id and excludes other users' stories")
+def test_list_games_uses_account_id_for_ownership(
+    owned_library_client: tuple[TestClient, _OwnedLibraryRepo],
+) -> None:
+    test_client, _repo = owned_library_client
+
+    response = test_client.get("/api/games")
+
+    assert response.status_code == _HTTP_OK
+    assert response.json()["games"] == [
+        {"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2},
+    ]
+
+
+@allure.story("My Stories")
+@allure.title("POST /api/games/{id}/archive hides another user's story id")
+def test_archive_game_enforces_account_ownership(
+    owned_library_client: tuple[TestClient, _OwnedLibraryRepo],
+) -> None:
+    test_client, repo = owned_library_client
+
+    response = test_client.post("/api/games/game-2/archive")
+
+    assert response.status_code == _HTTP_NOT_FOUND
+    assert response.json()["detail"] == "No active game"
+    repo.commit.assert_not_awaited()
+
+
+@allure.story("My Stories")
+@allure.title("POST /api/games/{id}/archive commits the caller's own story")
+def test_archive_game_commits_owned_story(
+    owned_library_client: tuple[TestClient, _OwnedLibraryRepo],
+) -> None:
+    test_client, repo = owned_library_client
+
+    response = test_client.post("/api/games/game-1/archive")
+
+    assert response.status_code == 204
+    assert repo.web_games.archived == [(_FIXED_PLAYER_ID, "game-1")]
+    repo.commit.assert_awaited_once()
+
+
+@allure.story("My Stories")
+@allure.title("GET /api/games/{id} returns one owned game snapshot")
+def test_get_game_happy_path(client: TestClient) -> None:
+    snapshot = _sample_snapshot(game_id="game-1")
+    get_mock = AsyncMock(return_value=snapshot)
+    with patch("interfaces.web.routes_library.service_library.get_snapshot_for_player_game", new=get_mock):
+        response = client.get("/api/games/game-1")
+    assert response.status_code == _HTTP_OK
+    assert response.json()["game_id"] == "game-1"
+    assert get_mock.await_args is not None
+    assert get_mock.await_args.args[2:] == (_FIXED_PLAYER_ID, "game-1")
+
+
+@allure.story("My Stories")
+@allure.title("GET /api/games/{id} returns 404 for absent or foreign games")
+def test_get_game_hides_ownership_violations(client: TestClient) -> None:
+    get_mock = AsyncMock(return_value=None)
+    with patch("interfaces.web.routes_library.service_library.get_snapshot_for_player_game", new=get_mock):
+        response = client.get("/api/games/foreign-game")
+    assert response.status_code == _HTTP_NOT_FOUND
+    assert response.json()["detail"] == "No active game"
+    assert get_mock.await_args is not None
+    assert get_mock.await_args.args[2:] == (_FIXED_PLAYER_ID, "foreign-game")
+
+
+@allure.story("My Stories")
+@allure.title("POST /api/games/{id}/archive returns 404 for absent or foreign games")
+def test_archive_game_hides_ownership_violations(client: TestClient) -> None:
+    archive_mock = AsyncMock(return_value=False)
+    with patch("interfaces.web.routes_library.service_library.archive_game_for_player", new=archive_mock):
+        response = client.post("/api/games/foreign-game/archive")
+    assert response.status_code == _HTTP_NOT_FOUND
+    assert response.json()["detail"] == "No active game"
+    assert archive_mock.await_args is not None
+    assert archive_mock.await_args.args[1:] == (_FIXED_PLAYER_ID, "foreign-game")
+
+
+@allure.story("My Stories")
+@allure.title("POST /api/games/{id}/archive returns 204 when the caller owns the game")
+def test_archive_game_happy_path(client: TestClient) -> None:
+    archive_mock = AsyncMock(return_value=True)
+    with patch("interfaces.web.routes_library.service_library.archive_game_for_player", new=archive_mock):
+        response = client.post("/api/games/game-1/archive")
+    assert response.status_code == 204
+    assert response.content == b""
+    assert archive_mock.await_args is not None
+    assert archive_mock.await_args.args[1:] == (_FIXED_PLAYER_ID, "game-1")
+
+
+# ---------------------------------------------------------------------------
 # POST /api/games
 # ---------------------------------------------------------------------------
 
@@ -809,12 +970,8 @@ def _hit_two_clients_once() -> None:
 @allure.title("process_turn_for_player raises GameNotFoundError when game_id does not match the loaded game")
 async def test_process_turn_enforces_ownership() -> None:
     repo = AsyncMock()
-    repo.sessions = MagicMock()
-    repo.sessions.get_latest_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
-
-    loaded_state = MagicMock()
-    loaded_state.uuid = "real-game-id"
-    repo.load_game_state.return_value = (loaded_state, MagicMock(), [])
+    repo.web_games = MagicMock()
+    repo.web_games.get_by_game = AsyncMock(return_value=None)
 
     with pytest.raises(service.GameNotFoundError):
         await service.process_turn_for_player(
@@ -831,8 +988,8 @@ async def test_process_turn_enforces_ownership() -> None:
 @allure.title("process_turn_for_player raises GameNotFoundError when the player has no saved game")
 async def test_process_turn_raises_when_no_game() -> None:
     repo = AsyncMock()
-    repo.sessions = MagicMock()
-    repo.sessions.get_latest_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
+    repo.web_games = MagicMock()
+    repo.web_games.get_by_game = AsyncMock(return_value={"id": "sess-1", "language": "English"})
     repo.load_game_state.return_value = None
 
     with pytest.raises(service.GameNotFoundError):
@@ -864,8 +1021,8 @@ async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
 @allure.title("process_turn_for_player raises GameNotFoundError when the player has no session row at all")
 async def test_process_turn_raises_when_no_session() -> None:
     repo = AsyncMock()
-    repo.sessions = MagicMock()
-    repo.sessions.get_latest_web = AsyncMock(return_value=None)
+    repo.web_games = MagicMock()
+    repo.web_games.get_by_game = AsyncMock(return_value=None)
 
     with pytest.raises(service.GameNotFoundError):
         await service.process_turn_for_player(
@@ -988,8 +1145,8 @@ async def test_start_game_commits_before_returning_snapshot() -> None:
 @allure.title("process_turn_for_player commits the action before returning")
 async def test_process_turn_commits_before_returning_response() -> None:
     repo = AsyncMock()
-    repo.sessions = MagicMock()
-    repo.sessions.get_latest_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
+    repo.web_games = MagicMock()
+    repo.web_games.get_by_game = AsyncMock(return_value={"id": "sess-1", "language": "English"})
     repo.commit = AsyncMock()
 
     game_state = MagicMock()

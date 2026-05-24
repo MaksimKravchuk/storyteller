@@ -19,7 +19,11 @@ from interfaces.web.errors import (
     GameStartUnavailableError,
     is_provider_auth_error,
 )
-from interfaces.web.schemas import ActionResponse, CharacterCreationInput, GameSnapshot
+from interfaces.web.schemas import (
+    ActionResponse,
+    CharacterCreationInput,
+    GameSnapshot,
+)
 from interfaces.web.transcript import render_narrator_html
 from interfaces.web.service_helpers import (
     StartGameParams,

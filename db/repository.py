@@ -14,6 +14,7 @@ from db import (
     repo_settings,
     repo_turn_events,
 )
+from db import repo_web_games
 from knowledge import graph as graph_mod
 from models.game_state import GameState
 from timeline.event import GameEvent
@@ -30,6 +31,7 @@ class GameRepository:
         self.ai_logs = repo_ai_logs.AILogStore(session)
         self.turn_events = repo_turn_events.TurnEventStore(session)
         self.sessions = repo_sessions.SessionStore(session)
+        self._web_games = repo_web_games.WebGameStore(session)
         self.settings = repo_settings.AdminSettingsStore(session)
         self.accounts = repo_accounts.AccountStore(session)
 
@@ -57,3 +59,8 @@ class GameRepository:
     ) -> None:
         """Persist full game state to PG."""
         await self._saver.save(session_id, game_state, knowledge_graph, events)
+
+    @property
+    def web_games(self) -> repo_web_games.WebGameStore:
+        """Return web game library operations."""
+        return self._web_games
