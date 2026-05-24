@@ -14,7 +14,7 @@ import allure
 import pytest
 from fastapi.testclient import TestClient
 
-from interfaces.web import beta_auth, service
+from interfaces.web import auth_models, beta_auth, service, service_feedback
 from interfaces.web.app import app
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
 from interfaces.web.character_schemas import CharacterInfo
@@ -32,6 +32,7 @@ from interfaces.web.transcript import (
 
 _HTTP_OK = 200
 _HTTP_CREATED = 201
+_HTTP_ACCEPTED = 202
 _HTTP_NOT_FOUND = 404
 _HTTP_INTERNAL_SERVER_ERROR = 500
 _HTTP_SERVICE_UNAVAILABLE = 503
@@ -264,6 +265,101 @@ def test_get_index_exposes_next_action_suggestions(client: TestClient) -> None:
     assert 'data-action="look around"' in response.text
     assert 'data-action="talk to someone nearby"' in response.text
     assert 'data-action="check my inventory"' in response.text
+
+
+@allure.story("Beta feedback")
+@allure.title("GET / exposes the in-app beta feedback form")
+def test_get_index_exposes_beta_feedback_form(client: TestClient) -> None:
+    response = client.get("/")
+
+    assert response.status_code == _HTTP_OK
+    assert 'id="feedback-form"' in response.text
+    assert 'id="feedback-category"' in response.text
+    assert 'id="feedback-message"' in response.text
+
+
+@allure.story("Beta feedback")
+@allure.title("POST /api/games/{game_id}/feedback submits owned game feedback with user context")
+def test_post_feedback_submits_user_and_game_context(
+    client: TestClient,
+    mock_repo: AsyncMock,
+    mock_cfg: MagicMock,
+) -> None:
+    app.dependency_overrides[beta_auth.get_beta_player_context] = lambda: auth_models.PlayerFeedbackContext(
+        player_id=_FIXED_PLAYER_ID,
+        email="friend@example.com",
+    )
+    submit_mock = AsyncMock(return_value="feedback-123")
+
+    with patch.object(service_feedback, "submit_beta_feedback", new=submit_mock):
+        response = client.post(
+            "/api/games/game-abc/feedback",
+            json={"category": "bug", "message": "The scene repeated after I acted."},
+        )
+
+    assert response.status_code == _HTTP_ACCEPTED
+    assert response.json() == {"feedback_id": "feedback-123"}
+    submit_mock.assert_awaited_once_with(
+        mock_repo,
+        mock_cfg,
+        service_feedback.FeedbackSubmission(
+            player_id=_FIXED_PLAYER_ID,
+            email="friend@example.com",
+            game_id="game-abc",
+            category="bug",
+            message="The scene repeated after I acted.",
+        ),
+    )
+
+
+@allure.story("Beta feedback")
+@allure.title("POST /api/games/{game_id}/feedback returns 404 for unowned games")
+def test_post_feedback_rejects_unowned_game(client: TestClient) -> None:
+    submit_mock = AsyncMock(side_effect=service.GameNotFoundError(_FIXED_PLAYER_ID))
+
+    with patch.object(service_feedback, "submit_beta_feedback", new=submit_mock):
+        response = client.post(
+            "/api/games/foreign-game/feedback",
+            json={"category": "bug", "message": "This should not attach."},
+        )
+
+    assert response.status_code == _HTTP_NOT_FOUND
+    assert response.json()["detail"] == "No active game"
+
+
+@allure.story("Beta feedback")
+@allure.title("POST /api/games/{game_id}/feedback rejects blank messages")
+def test_post_feedback_rejects_blank_message(client: TestClient) -> None:
+    response = client.post(
+        "/api/games/game-abc/feedback",
+        json={"category": "bug", "message": "   "},
+    )
+
+    assert response.status_code == 422
+
+
+@allure.story("Beta feedback")
+@allure.title("Feedback service verifies game ownership before storing feedback")
+@pytest.mark.asyncio
+async def test_submit_beta_feedback_requires_owned_game(mock_repo: AsyncMock, mock_cfg: MagicMock) -> None:
+    mock_repo.web_games.get_by_game.return_value = None
+    mock_repo.feedback.create = AsyncMock()
+
+    with pytest.raises(service.GameNotFoundError):
+        await service_feedback.submit_beta_feedback(
+            mock_repo,
+            mock_cfg,
+            service_feedback.FeedbackSubmission(
+                player_id=_FIXED_PLAYER_ID,
+                email="friend@example.com",
+                game_id="foreign-game",
+                category="bug",
+                message="This should not attach.",
+            ),
+        )
+
+    mock_repo.web_games.get_by_game.assert_awaited_once_with(_FIXED_PLAYER_ID, "foreign-game")
+    mock_repo.feedback.create.assert_not_awaited()
 
 
 @allure.story("Static shell")

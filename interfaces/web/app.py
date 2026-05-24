@@ -17,6 +17,7 @@ from loguru import logger
 from interfaces.web.auth_routes import router as auth_router
 from interfaces.web.deps import player_id_middleware
 from interfaces.web.routes import router
+from interfaces.web.routes_feedback import router as feedback_router
 from interfaces.web.routes_library import router as library_router
 
 _STATIC_DIR = Path(__file__).parent / "static"
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
     fastapi_app.include_router(auth_router)
     fastapi_app.include_router(router)
     fastapi_app.include_router(library_router)
+    fastapi_app.include_router(feedback_router)
     fastapi_app.mount(
         "/static",
         StaticFiles(directory=_STATIC_DIR),

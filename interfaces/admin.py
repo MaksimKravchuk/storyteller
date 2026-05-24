@@ -13,6 +13,7 @@ from interfaces import (
     admin_routes,
     admin_routes_detail,
     admin_routes_entity,
+    admin_routes_feedback,
     admin_routes_settings,
 )
 
@@ -92,6 +93,8 @@ class AdminServer:
         self._app.router.add_get("/healthz", _healthz)
         self._app.router.add_get("/", admin_routes.dashboard)
         self._app.router.add_get("/api/sessions", admin_routes.list_sessions)
+        self._app.router.add_get("/api/admin/beta/feedback", admin_routes_feedback.list_feedback)
+        self._app.router.add_get("/api/admin/beta/feedback.csv", admin_routes_feedback.export_feedback_csv)
         self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)
         self._app.router.add_get("/api/sessions/{id}/conversation", admin_routes.conversation)
         self._setup_detail_routes()

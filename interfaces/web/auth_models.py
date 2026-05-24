@@ -22,3 +22,11 @@ class AuthenticatedUser:
     email: str
     plan: str
     is_admin: bool
+
+
+@dataclass(frozen=True)
+class PlayerFeedbackContext:
+    """Player identity attached to beta feedback submissions."""
+
+    player_id: str
+    email: str | None

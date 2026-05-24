@@ -178,6 +178,7 @@
   <h2>Storyteller</h2>
   <div class="sidebar-nav">
     <div id="nav-sessions" class="nav-link active" onclick="showView('sessions')">Sessions</div>
+    <div id="nav-feedback" class="nav-link" onclick="showView('feedback')">Feedback</div>
     <div id="nav-settings" class="nav-link" onclick="showView('settings')">Settings</div>
   </div>
   <div id="sessions-nav-content">
@@ -937,14 +938,44 @@ async function renderKnowledge(el) {
 // View switching (Sessions vs. Settings top-level nav)
 let currentView = 'sessions';
 
+async function renderFeedbackView() {
+  const main = document.getElementById('main');
+  main.innerHTML = '<div class="empty">Loading beta feedback…</div>';
+  try {
+    const data = await fetchJSON('/api/admin/beta/feedback');
+    const rows = data.feedback || [];
+    const exportLink = '<p><a href="/api/admin/beta/feedback.csv">Export CSV</a></p>';
+    if (!rows.length) {
+      main.innerHTML = `<div class="card"><h3>Beta Feedback</h3>${exportLink}<div class="empty">No feedback yet.</div></div>`;
+      return;
+    }
+    main.innerHTML = `<div class="card"><h3>Beta Feedback</h3>${exportLink}
+      <table><tr><th>Time</th><th>User</th><th>Game</th><th>Turn</th><th>Category</th><th>Message</th></tr>
+        ${rows.map(row => `<tr>
+          <td>${escapeHtml(new Date(row.created_at).toLocaleString())}</td>
+          <td>${escapeHtml(row.user_email || row.user_id || '')}</td>
+          <td><span class="session-id-short">${escapeHtml((row.game_id || '').slice(0, 8))}</span><br>${escapeHtml(row.setting || '')}</td>
+          <td>${row.turn_number ?? ''}</td>
+          <td>${escapeHtml(row.category || '')}</td>
+          <td>${escapeHtml(row.message || '')}</td>
+        </tr>`).join('')}
+      </table></div>`;
+  } catch (e) {
+    main.innerHTML = `<div class="empty">Error loading feedback: ${e.message}</div>`;
+  }
+}
+
 function showView(view) {
   currentView = view;
   document.getElementById('nav-sessions').classList.toggle('active', view === 'sessions');
+  document.getElementById('nav-feedback').classList.toggle('active', view === 'feedback');
   document.getElementById('nav-settings').classList.toggle('active', view === 'settings');
   const sessionsNav = document.getElementById('sessions-nav-content');
   if (sessionsNav) sessionsNav.style.display = view === 'sessions' ? '' : 'none';
   if (view === 'settings') {
     renderSettingsView();
+  } else if (view === 'feedback') {
+    renderFeedbackView();
   } else {
     const main = document.getElementById('main');
     if (currentSessionId) {

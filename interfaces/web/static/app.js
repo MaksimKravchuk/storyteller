@@ -33,6 +33,11 @@
     actionInput: $("action-input"),
     actionSubmit: $("action-submit"),
     actionStatus: $("action-status"),
+    feedbackForm: $("feedback-form"),
+    feedbackCategory: $("feedback-category"),
+    feedbackMessage: $("feedback-message"),
+    feedbackSubmit: $("feedback-submit"),
+    feedbackStatus: $("feedback-status"),
     newGameBtn: $("new-game-btn"),
     characterHeader: $("character-header"),
     inventoryList: $("inventory-list"),
@@ -471,6 +476,37 @@
     }
   }
 
+  async function onSubmitFeedback(event) {
+    event.preventDefault();
+    if (!currentGameId || !els.feedbackMessage) return;
+    const message = els.feedbackMessage.value.trim();
+    if (!message) return;
+    const category = els.feedbackCategory ? els.feedbackCategory.value : "other";
+    if (els.feedbackSubmit) els.feedbackSubmit.disabled = true;
+    setStatus(els.feedbackStatus, "Sending feedback...", "info");
+    try {
+      const response = await apiFetch(
+        "/api/games/" + encodeURIComponent(currentGameId) + "/feedback",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category, message }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+      setOfflineNotice(false);
+      els.feedbackMessage.value = "";
+      setStatus(els.feedbackStatus, "Thanks — beta feedback sent to Max.", "info");
+    } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
+      setStatus(els.feedbackStatus, "Could not send feedback: " + err.message);
+    } finally {
+      if (els.feedbackSubmit) els.feedbackSubmit.disabled = false;
+    }
+  }
+
   function onNewGame() {
     showSettingPanel();
   }
@@ -543,6 +579,9 @@
 
   els.settingForm.addEventListener("submit", onStartGame);
   els.actionForm.addEventListener("submit", onSubmitAction);
+  if (els.feedbackForm) {
+    els.feedbackForm.addEventListener("submit", onSubmitFeedback);
+  }
   els.newGameBtn.addEventListener("click", onNewGame);
   if (els.libraryNewGameBtn) {
     els.libraryNewGameBtn.addEventListener("click", onNewGame);
