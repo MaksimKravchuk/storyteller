@@ -30,6 +30,7 @@
     knownNpcsList: $("known-npcs-list"),
     recentEventsList: $("recent-events-list"),
     learnedFactsList: $("learned-facts-list"),
+    offlineBanner: $("offline-banner"),
   };
 
   let currentGameId = null;
@@ -54,6 +55,22 @@
   function setStatus(el, text, kind) {
     el.textContent = text || "";
     el.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function setOfflineNotice(showNotice) {
+    if (!els.offlineBanner) return;
+    els.offlineBanner.hidden = !showNotice;
+  }
+
+  function isNetworkError(err) {
+    return !navigator.onLine || err instanceof TypeError || err.message.includes("internet connection");
+  }
+
+  function registerServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // The app remains online-only/playable if registration is unavailable.
+    });
   }
 
   function appendTurnHTML(role, html) {
@@ -212,8 +229,10 @@
       if (!response.ok) {
         throw new Error(await parseError(response));
       }
+      setOfflineNotice(false);
       renderSnapshot(await response.json());
     } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
       showSettingPanel();
       setStatus(els.settingStatus, "Could not load current game: " + err.message);
     } finally {
@@ -242,12 +261,14 @@
       if (!response.ok) {
         throw new Error(await parseError(response));
       }
+      setOfflineNotice(false);
       const tpl = await response.json();
       if (els.charName) els.charName.value = tpl.name || "";
       if (els.charAppearance) els.charAppearance.value = tpl.appearance || "";
       if (els.charInventory) els.charInventory.value = (tpl.inventory || []).join(", ");
       setStatus(els.settingStatus, "");
     } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
       setStatus(els.settingStatus, "Could not load template: " + err.message);
     }
   }
@@ -274,9 +295,11 @@
       if (!response.ok) {
         throw new Error(await parseError(response));
       }
+      setOfflineNotice(false);
       renderSnapshot(await response.json());
       setStatus(els.settingStatus, "");
     } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
       setStatus(els.settingStatus, "Failed to start game: " + err.message);
     } finally {
       button.disabled = false;
@@ -311,11 +334,13 @@
       if (!response.ok) {
         throw new Error(await parseError(response));
       }
+      setOfflineNotice(false);
       const data = await response.json();
       appendTurnHTML("narrator", data.narration_html);
       renderCharacter(data.character);
       setStatus(els.actionStatus, "");
     } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
       setStatus(els.actionStatus, "Error: " + err.message);
     } finally {
       els.actionInput.disabled = false;
@@ -362,7 +387,11 @@
   if (els.useTemplateBtn) {
     els.useTemplateBtn.addEventListener("click", onUseTemplate);
   }
+  window.addEventListener("online", () => setOfflineNotice(false));
+  window.addEventListener("offline", () => setOfflineNotice(true));
 
+  registerServiceWorker();
+  setOfflineNotice(!navigator.onLine);
   initFoldableSections();
   loadCurrent();
 })();
