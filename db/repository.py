@@ -4,16 +4,8 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import (
-    repo_accounts,
-    repo_admin,
-    repo_ai_logs,
-    repo_loader,
-    repo_saver,
-    repo_sessions,
-    repo_settings,
-    repo_turn_events,
-)
+from db import repo_accounts, repo_admin, repo_ai_logs, repo_feedback, repo_loader
+from db import repo_saver, repo_sessions, repo_settings, repo_turn_events
 from db import repo_web_games
 from knowledge import graph as graph_mod
 from models.game_state import GameState
@@ -34,6 +26,7 @@ class GameRepository:
         self._web_games = repo_web_games.WebGameStore(session)
         self.settings = repo_settings.AdminSettingsStore(session)
         self.accounts = repo_accounts.AccountStore(session)
+        self._feedback = repo_feedback.FeedbackStore(session)
 
     async def rollback(self) -> None:
         """Roll back the current transaction (use after a failed op to reuse the session)."""
@@ -64,3 +57,8 @@ class GameRepository:
     def web_games(self) -> repo_web_games.WebGameStore:
         """Return web game library operations."""
         return self._web_games
+
+    @property
+    def feedback(self) -> repo_feedback.FeedbackStore:
+        """Return beta-feedback operations."""
+        return self._feedback

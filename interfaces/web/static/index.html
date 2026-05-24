@@ -150,6 +150,30 @@
             <button type="button" data-action="check my inventory">check my inventory</button>
           </div>
           <p id="action-status" class="status"></p>
+          <details class="feedback-box">
+            <summary>Send beta feedback</summary>
+            <form id="feedback-form">
+              <label for="feedback-category">Category</label>
+              <select id="feedback-category" name="category" required>
+                <option value="bug">Bug</option>
+                <option value="confusing">Confusing moment</option>
+                <option value="idea">Idea</option>
+                <option value="praise">Praise</option>
+                <option value="other">Other</option>
+              </select>
+              <label for="feedback-message">What should Max know?</label>
+              <textarea
+                id="feedback-message"
+                name="message"
+                rows="3"
+                maxlength="4000"
+                required
+                placeholder="What happened, what you expected, or what would make this better"
+              ></textarea>
+              <button type="submit" id="feedback-submit">Send feedback</button>
+            </form>
+            <p id="feedback-status" class="status"></p>
+          </details>
         </div>
         <aside class="character-col" id="character-panel" aria-label="Character">
           <h3>Character</h3>

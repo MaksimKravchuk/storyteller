@@ -53,10 +53,12 @@ _LEN_TINY = 16
 _LEN_SHORT = 32
 _LEN_MEDIUM = 64
 _LEN_LONG = 128
+_COL_USER_ID = "user_id"
 
 # Reusable String type instances — avoid WPS204 "overused expression"
 _TINY_STR = String(_LEN_TINY)
 _SHORT_STR = String(_LEN_SHORT)
+_SHORT_TEXT = String(_LEN_SHORT)
 _TZ_TS = TIMESTAMP(timezone=True)
 
 
@@ -97,8 +99,8 @@ sessions = Table(
     Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
     Column("telegram_chat_id", Integer, nullable=True),
     Column("web_player_id", _UUID_STR, nullable=True),
-    Column("state", String(_LEN_SHORT), nullable=False, server_default="idle"),
-    Column("language", String(_LEN_SHORT), nullable=False, server_default="English"),
+    Column("state", _SHORT_TEXT, nullable=False, server_default="idle"),
+    Column("language", _SHORT_TEXT, nullable=False, server_default="English"),
     Column("title", Text, nullable=True),
     Column("archived_at", _TZ_TS, nullable=True),
     Column(_COL_CREATED_AT, TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
@@ -309,7 +311,7 @@ ai_call_logs = Table(
         nullable=False,
     ),
     Column(_COL_TURN_NUMBER, Integer, nullable=True),
-    Column("user_id", Text, nullable=True),
+    Column(_COL_USER_ID, Text, nullable=True),
     Column(_COL_GAME_STATE_ID, _UUID_STR, nullable=True),
     Column("agent_name", String(_LEN_MEDIUM), nullable=False),
     Column("model", String(_LEN_LONG), nullable=False),
@@ -325,7 +327,7 @@ ai_call_logs = Table(
     Index("idx_ai_calls_session", _COL_SESSION_ID),
     Index("idx_ai_calls_session_turn", _COL_SESSION_ID, _COL_TURN_NUMBER),
     Index("idx_ai_calls_created", _COL_CREATED_AT),
-    Index("idx_ai_calls_user_created", "user_id", _COL_CREATED_AT),
+    Index("idx_ai_calls_user_created", _COL_USER_ID, _COL_CREATED_AT),
     Index("idx_ai_calls_model_created", "model", _COL_CREATED_AT),
     Index("idx_ai_calls_game_state", _COL_GAME_STATE_ID),
 )
@@ -385,4 +387,25 @@ admin_settings = Table(
     Column("provider", Text, nullable=False),
     Column("model_id", Text, nullable=False),
     Column("updated_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
+)
+
+beta_feedback = Table(
+    "beta_feedback",
+    metadata,
+    _uuid_pk_column(),
+    Column("user_id", _UUID_STR, nullable=False),
+    Column("user_email", Text, nullable=True),
+    Column(
+        "game_id",
+        _UUID_STR,
+        ForeignKey(_FK_GAME_STATES_ID, ondelete=_ON_DELETE_CASCADE),
+        nullable=False,
+    ),
+    Column(_COL_TURN_NUMBER, Integer, nullable=True),
+    Column("category", String(_LEN_SHORT), nullable=False),
+    Column("message", Text, nullable=False),
+    Column(_COL_CREATED_AT, _TZ_TS, nullable=False, server_default=func.now()),
+    Index("idx_beta_feedback_created", _COL_CREATED_AT),
+    Index("idx_beta_feedback_game", "game_id"),
+    Index("idx_beta_feedback_user_created", "user_id", _COL_CREATED_AT),
 )
