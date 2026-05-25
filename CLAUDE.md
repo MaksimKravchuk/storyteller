@@ -107,6 +107,14 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - Always refactor properly: extract helper functions, split modules, use package re-exports, introduce dataclasses, etc. The `fix-wps` skill in `.claude/skills/fix-wps/` has the playbook.
 - If a rule genuinely feels wrong for the codebase, present 2–3 refactor options and ask before modifying project config. Suppressions require explicit approval.
 
+## Default workflow: feature-factory
+
+For any non-trivial change in this repo — anything that touches `cast/`, `engine/`, `prompts/`, `db/`, `knowledge/`, `timeline/`, `models/`, `interfaces/`, or `research/`, and isn't a typo / comment / docs-only fix — run `/feature-factory <rough idea>` first. The skill runs the upstream chain (`codebase-researcher` → `story-writer` → `spec-writer`) with two human approval gates before any code is written: approve the user story, then approve the technical brief. The third approval gate is the PR review on GitHub.
+
+Skip the chain only for: typo and comment fixes, README/docs-only edits, test-only changes that follow an obvious pattern, and reverting a recently-introduced regression. If the change touches any `PromptSection` or `required_vars`, it is *not* trivial regardless of line count — run the chain. When in doubt, run it; the cost is one Researcher pass and a story you can approve in 30 seconds.
+
+The chain composes with the existing `decision-records` skill (the spec-writer flags whether a record is needed; the main session invokes `/decision-records` between brief approval and `gh pr create`) and with all existing PR-time gates (`simplify`, `pr-review-toolkit:review-pr`, `decision-records`, `prompt-audit`).
+
 ## Testing
 
 - For bug fixes, follow strict TDD: write the regression test first, **run pytest and watch it fail with the expected assertion error**, then fix the root cause and watch the same test pass. A test you never saw fail is not a regression test — it might be exercising the wrong path or asserting the wrong thing. Don't patch around symptoms.

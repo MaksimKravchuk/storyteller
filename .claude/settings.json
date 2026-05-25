@@ -22,6 +22,11 @@
           {
             "type": "command",
             "if": "Bash(git commit *)",
+            "command": ".claude/hooks/block-secrets.sh"
+          },
+          {
+            "type": "command",
+            "if": "Bash(git commit *)",
             "command": ".claude/hooks/require-skill.sh simplify \"Run /simplify on the staged changes — it reviews changed code for reuse, quality, and efficiency, then fixes any issues found.\" \"git commit\""
           },
           {
