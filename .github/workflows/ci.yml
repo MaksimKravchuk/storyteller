@@ -144,6 +144,11 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Required so ``tests/e2e/_select_agents.py`` can run
+          # ``git diff --name-only $BASE...HEAD`` to decide which
+          # real-LLM agent tests to invoke for this PR.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -156,24 +161,78 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --group dev --extra anthropic --extra openai
 
+      - name: Select e2e tests based on diff
+        id: select
+        env:
+          # On push to ``main`` run every real-LLM agent test
+          # unconditionally so canon coverage is checked before deploy.
+          # On PRs leave it empty so the matrix drives selection from
+          # the actual diff.
+          PYTEST_AGENT_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'all' || '' }}
+        run: |
+          set -euo pipefail
+          # PRs diff against the merge-base (``pull_request.base.sha``).
+          # Push events diff against ``github.event.before`` so a
+          # multi-commit push isn't reduced to "the last commit only".
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_REF="${{ github.event.before || 'HEAD^' }}"
+          fi
+          if [ -z "$BASE_REF" ]; then
+            echo "::error title=Selector base ref missing::cannot diff without a base SHA"
+            exit 1
+          fi
+          # Fail loud if the selector script itself crashes — a silent
+          # empty stdout would be indistinguishable from "no e2e needed".
+          if ! SELECTED=$(uv run python -m tests.e2e._select_agents --base "$BASE_REF"); then
+            echo "::error title=Selector failed::tests/e2e/_select_agents.py exited non-zero"
+            exit 1
+          fi
+          echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
+          if [ -z "$SELECTED" ]; then
+            echo "No agent-relevant files changed; e2e step will be skipped."
+          else
+            echo "Selected e2e files:"
+            for f in $SELECTED; do echo "  - $f"; done
+          fi
+
+      - name: Preflight — assert real-LLM secrets are present
+        if: steps.select.outputs.selected != ''
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # A missing or rotated secret would otherwise cause
+          # ``real_llm_for`` to ``pytest.skip`` every test and the e2e
+          # step would pass green with zero real-LLM coverage. Fail loud.
+          #
+          # Only OPENAI_API_KEY is asserted because every ``*_MODEL`` env
+          # var below is ``gpt-*`` (OpenAI). If a model changes to a
+          # Claude/DeepSeek/OpenRouter one, add the matching
+          # ``${<PROVIDER>_API_KEY:?...}`` assertion here too.
+          : "${OPENAI_API_KEY:?OPENAI_API_KEY secret is required for the e2e job}"
+
       - name: Run e2e tests
+        if: steps.select.outputs.selected != ''
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DIRECTOR_MODEL: gpt-5.4-mini
           AGENT_MODEL: gpt-5.4-nano
           NARRATOR_MODEL: gpt-5.4-mini
-        run: uv run pytest tests/e2e/ --alluredir=allure-results -v
+          DRAMATURGE_MODEL: gpt-5.4-nano
+        run: uv run pytest ${{ steps.select.outputs.selected }} --alluredir=allure-results -v
 
       - name: Upload Allure results
-        if: always()
+        if: always() && steps.select.outputs.selected != ''
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
           path: allure-results/
+          if-no-files-found: warn
 
       - name: Upload narrative quality logs
-        if: always()
+        if: always() && steps.select.outputs.selected != ''
         uses: actions/upload-artifact@v4
         with:
           name: narrative-quality-logs
@@ -181,7 +240,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Post narrative quality report on PR
-        if: always() && github.event_name == 'pull_request' && hashFiles('allure-results/narrative-report.md') != ''
+        if: always() && steps.select.outputs.selected != '' && github.event_name == 'pull_request' && hashFiles('allure-results/narrative-report.md') != ''
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: narrative-quality-report
