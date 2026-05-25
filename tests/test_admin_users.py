@@ -44,7 +44,81 @@ async def test_admin_users_returns_users_envelope() -> None:
 
     assert resp.status == _HTTP_OK
     assert body == {"users": users}
-    mock_repo.admin.list_users.assert_awaited_once_with()
+    mock_repo.admin.list_users.assert_awaited_once_with(email_query=None)
+
+
+@allure.story("User list")
+@allure.title("/api/admin/users?email_query=foo forwards the substring to the repository")
+@pytest.mark.asyncio
+async def test_admin_users_passes_email_query_to_repo() -> None:
+    mock_repo = AsyncMock()
+    mock_repo.admin.list_users.return_value = []
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get("/api/admin/users?email_query=foo")
+
+    assert resp.status == _HTTP_OK
+    mock_repo.admin.list_users.assert_awaited_once_with(email_query="foo")
+
+
+@allure.story("User detail")
+@allure.title("/api/admin/users/{id} returns the invites section in the payload")
+@pytest.mark.asyncio
+async def test_admin_user_detail_returns_invites_section() -> None:
+    payload = {
+        "account": {"id": _USER_ID, "email": "player@example.com"},
+        "usage": {"call_count": 0, "total_tokens": 0},
+        "sessions": [],
+        "invites": [{"email": "player@example.com", "status": "accepted"}],
+        "feedback": [],
+    }
+    mock_repo = AsyncMock()
+    mock_repo.admin.get_user_detail.return_value = payload
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get("/api/admin/users/{0}".format(_USER_ID))
+            body = await resp.json()
+
+    assert resp.status == _HTTP_OK
+    assert body["invites"] == [{"email": "player@example.com", "status": "accepted"}]
+
+
+@allure.story("User detail")
+@allure.title("/api/admin/users/{id} returns the feedback section in the payload")
+@pytest.mark.asyncio
+async def test_admin_user_detail_returns_feedback_section() -> None:
+    feedback = [{"id": "fb1", "category": "bug", "message": "issue"}]
+    payload = {
+        "account": {"id": _USER_ID, "email": "player@example.com"},
+        "usage": {"call_count": 0, "total_tokens": 0},
+        "sessions": [],
+        "invites": [],
+        "feedback": feedback,
+    }
+    mock_repo = AsyncMock()
+    mock_repo.admin.get_user_detail.return_value = payload
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get("/api/admin/users/{0}".format(_USER_ID))
+            body = await resp.json()
+
+    assert resp.status == _HTTP_OK
+    assert body["feedback"] == feedback
 
 
 @allure.story("User detail")

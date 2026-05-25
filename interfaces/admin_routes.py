@@ -42,8 +42,9 @@ async def list_sessions(request: web.Request) -> web.Response:
 
 async def list_users(request: web.Request) -> web.Response:
     """Return all user accounts with admin-facing aggregate counts."""
+    email_query = request.query.get("email_query") or None
     async with helpers.open_repo(request) as repo:
-        users = await repo.admin.list_users()
+        users = await repo.admin.list_users(email_query=email_query)
     return _json_response({"users": users})
 
 

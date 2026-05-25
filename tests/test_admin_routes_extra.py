@@ -84,6 +84,84 @@ async def test_session_detail_returns_404_when_not_found() -> None:
             assert body == {"error": "Session not found"}
 
 
+@allure.story("List sessions")
+@allure.title("list_sessions route surfaces account_email and account_id from the repository payload")
+@pytest.mark.asyncio
+async def test_list_sessions_returns_account_email_when_owner_exists() -> None:
+    rows = [
+        {
+            "id": _SESSION_ID,
+            "telegram_chat_id": None,
+            "web_player_id": "11111111-1111-1111-1111-111111111111",
+            "state": "playing",
+            "account_id": "11111111-1111-1111-1111-111111111111",
+            "account_email": "owner@example.com",
+        },
+    ]
+    mock_repo = AsyncMock()
+    mock_repo.admin.list_sessions.return_value = rows
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get("/api/sessions")
+            body = await resp.json()
+
+    assert resp.status == _HTTP_OK
+    assert body["sessions"][0]["account_email"] == "owner@example.com"
+    assert body["sessions"][0]["account_id"] == "11111111-1111-1111-1111-111111111111"
+
+
+@allure.story("List sessions")
+@allure.title("list_sessions route serializes orphan rows with null account fields")
+@pytest.mark.asyncio
+async def test_list_sessions_orphan_renders_null_account_email() -> None:
+    rows = [{"id": _SESSION_ID, "account_id": None, "account_email": None}]
+    mock_repo = AsyncMock()
+    mock_repo.admin.list_sessions.return_value = rows
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get("/api/sessions")
+            body = await resp.json()
+
+    assert resp.status == _HTTP_OK
+    assert body["sessions"][0]["account_email"] is None
+    assert body["sessions"][0]["account_id"] is None
+
+
+@allure.story("Session detail")
+@allure.title("session_detail route surfaces account_email inside the session sub-dict")
+@pytest.mark.asyncio
+async def test_session_detail_returns_account_email() -> None:
+    payload = {
+        "session": {"id": _SESSION_ID, "account_id": "abc", "account_email": "owner@example.com"},
+        "game_state": None,
+    }
+    mock_repo = AsyncMock()
+    mock_repo.admin.get_session_detail.return_value = payload
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get(_DETAIL_URL)
+            body = await resp.json()
+
+    assert resp.status == _HTTP_OK
+    assert body["session"]["account_email"] == "owner@example.com"
+    assert body["session"]["account_id"] == "abc"
+
+
 @allure.story("Conversation log")
 @allure.title("conversation route wraps the repository log list in a log envelope")
 @pytest.mark.asyncio

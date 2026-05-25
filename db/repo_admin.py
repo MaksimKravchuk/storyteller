@@ -83,8 +83,11 @@ class AdminQueries:
                 tbl.game_states.c.turn_count,
                 tbl.game_states.c.game_clock,
                 tbl.game_states.c.game_time,
+                tbl.accounts.c.id.label("account_id"),
+                tbl.accounts.c.email.label("account_email"),
             )
             .outerjoin(tbl.game_states, tbl.game_states.c.session_id == tbl.sessions.c.id)
+            .outerjoin(tbl.accounts, tbl.accounts.c.id == tbl.sessions.c.web_player_id)
             .order_by(tbl.sessions.c.updated_at.desc(), tbl.sessions.c.id.desc())
             .limit(limit)
             .offset(offset)
@@ -100,7 +103,23 @@ class AdminQueries:
 
     async def get_session_detail(self, session_id: str) -> dict | None:
         """Get full session detail for admin view."""
-        stmt = select(tbl.sessions).where(tbl.sessions.c.id == session_id)
+        stmt = (
+            select(
+                tbl.sessions.c.id,
+                tbl.sessions.c.telegram_chat_id,
+                tbl.sessions.c.web_player_id,
+                tbl.sessions.c.state,
+                tbl.sessions.c.language,
+                tbl.sessions.c.title,
+                tbl.sessions.c.archived_at,
+                tbl.sessions.c.created_at,
+                tbl.sessions.c.updated_at,
+                tbl.accounts.c.id.label("account_id"),
+                tbl.accounts.c.email.label("account_email"),
+            )
+            .outerjoin(tbl.accounts, tbl.accounts.c.id == tbl.sessions.c.web_player_id)
+            .where(tbl.sessions.c.id == session_id)
+        )
         session_row = (await self.session.execute(stmt)).mappings().first()
         if not session_row:
             return None

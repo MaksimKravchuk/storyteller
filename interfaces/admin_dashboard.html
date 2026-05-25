@@ -203,6 +203,10 @@
     <div id="session-list"></div>
   </div>
   <div id="users-nav-content" style="display:none">
+    <div class="sidebar-search-wrap">
+      <input id="user-search" class="sidebar-search" type="text"
+             placeholder="Search by email…" oninput="onUserSearchInput()">
+    </div>
     <div class="sidebar-search-wrap"><button class="copy-btn" onclick="currentUserId=null; loadUsers(); renderUsersHome()">Manage beta invites</button></div>
     <div id="user-list"></div>
   </div>
@@ -222,6 +226,7 @@ let currentTab = 'overview';
 let currentNpcId = null;
 let currentNpcTab = 'state';
 let searchDebounceTimer = null;
+let userSearchDebounceTimer = null;
 const SEARCH_DEBOUNCE_MS = 250;
 const ADMIN_TOKEN_KEY = 'storyteller.adminToken';
 
@@ -250,6 +255,16 @@ function currentSearchTerm() {
 function onSearchInput() {
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => loadSessions(currentSearchTerm()), SEARCH_DEBOUNCE_MS);
+}
+
+function currentUserSearchTerm() {
+  const el = document.getElementById('user-search');
+  return el ? el.value.trim() : '';
+}
+
+function onUserSearchInput() {
+  if (userSearchDebounceTimer) clearTimeout(userSearchDebounceTimer);
+  userSearchDebounceTimer = setTimeout(() => loadUsers(), SEARCH_DEBOUNCE_MS);
 }
 
 function badgeClass(state) {
@@ -285,15 +300,27 @@ async function loadSessions(search) {
   const list = document.getElementById('session-list');
   list.innerHTML = data.sessions.map(s => {
     const chatLabel = s.telegram_chat_id != null ? 'Chat ' + s.telegram_chat_id : 'Web';
-    const playerLabel = s.web_player_id ? ' | player ' + s.web_player_id.slice(0, 8) : '';
     const idShort = (s.id || '').slice(0, 8);
     return `
     <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
       <div class="chat-id">${chatLabel} <span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
-      <div class="meta"><span class="session-id-short">${idShort}</span>${playerLabel}</div>
+      <div class="meta"><span class="session-id-short">${idShort}</span> | ${renderOwnerLabel(s)}</div>
       <div class="meta">${s.language} | Turn ${s.turn_count ?? 0} | ${s.game_time ?? '-'}</div>
     </div>`;
   }).join('');
+}
+
+function renderOwnerLabel(s) {
+  if (s.account_email && s.account_id) {
+    return `<span class="view-link" onclick="event.stopPropagation(); openUserFromCrossLink('${s.account_id}')">${escapeHtml(s.account_email)}</span>`;
+  }
+  if (s.telegram_chat_id != null && !s.web_player_id) return 'Chat ' + s.telegram_chat_id;
+  return '—';
+}
+
+async function openUserFromCrossLink(accountId) {
+  currentUserId = accountId;
+  showView('users');
 }
 
 async function selectSession(id) {
@@ -303,7 +330,9 @@ async function selectSession(id) {
 }
 
 async function loadUsers() {
-  const data = await fetchJSON('/api/admin/users');
+  const term = currentUserSearchTerm();
+  const qs = term ? '?email_query=' + encodeURIComponent(term) : '';
+  const data = await fetchJSON('/api/admin/users' + qs);
   const list = document.getElementById('user-list');
   const users = data.users || [];
   if (!users.length) {
@@ -349,6 +378,8 @@ async function renderUserDetail() {
     const account = data.account || {};
     const usage = data.usage || {};
     const sessions = data.sessions || [];
+    const invites = data.invites || [];
+    const feedback = data.feedback || [];
     main.innerHTML = `<div class="card"><h3>User</h3><div class="kv">
       <div class="label">Email</div><div>${escapeHtml(account.email || '')}</div>
       <div class="label">Account ID</div><div><code>${escapeHtml(account.id || '')}</code></div>
@@ -364,10 +395,31 @@ async function renderUserDetail() {
       <div class="label">Completion tokens</div><div>${usage.completion_tokens ?? 0}</div>
       <div class="label">Total tokens</div><div>${usage.total_tokens ?? 0}</div>
     </div></div>
-    <div class="card"><h3>Sessions</h3>${renderUserSessionsTable(sessions)}</div>`;
+    <div class="card"><h3>Sessions</h3>${renderUserSessionsTable(sessions)}</div>
+    <div class="card"><h3>Invites</h3>${renderUserInvitesTable(invites)}</div>
+    <div class="card"><h3>Feedback</h3>${renderUserFeedbackTable(feedback)}</div>`;
   } catch (e) {
     main.innerHTML = `<div class="empty">Error loading user: ${escapeHtml(e.message)}</div>`;
   }
+}
+
+function renderUserInvitesTable(invites) {
+  if (!invites.length) return '<div class="empty">No invites for this email.</div>';
+  // User-detail invites carry no account_id, so renderInviteEmailCell falls through to plain text.
+  return renderBetaInvitesTable(invites);
+}
+
+function renderUserFeedbackTable(rows) {
+  if (!rows.length) return '<div class="empty">No feedback from this user.</div>';
+  return `<table><tr><th>Time</th><th>Game</th><th>Turn</th><th>Category</th><th>Message</th></tr>
+    ${rows.map(row => `<tr>
+      <td>${escapeHtml(row.created_at ? new Date(row.created_at).toLocaleString() : '-')}</td>
+      <td><span class="session-id-short">${escapeHtml((row.game_id || '').slice(0, 8))}</span><br>${escapeHtml(row.setting || '')}</td>
+      <td>${row.turn_number ?? ''}</td>
+      <td>${escapeHtml(row.category || '')}</td>
+      <td>${escapeHtml(row.message || '')}</td>
+    </tr>`).join('')}
+  </table>`;
 }
 
 function renderUserSessionsTable(sessions) {
@@ -434,12 +486,20 @@ function renderBetaInvitesTable(invites) {
   if (!invites.length) return '<div class="empty">No beta invites yet.</div>';
   return `<table><tr><th>Email</th><th>Status</th><th>Invited</th><th>Accepted</th></tr>
     ${invites.map(invite => `<tr>
-      <td>${escapeHtml(invite.email || '')}</td>
+      <td>${renderInviteEmailCell(invite)}</td>
       <td><span class="badge badge-idle">${escapeHtml(invite.status || '')}</span></td>
       <td>${escapeHtml(invite.invited_at ? new Date(invite.invited_at).toLocaleString() : '-')}</td>
       <td>${escapeHtml(invite.accepted_at ? new Date(invite.accepted_at).toLocaleString() : '-')}</td>
     </tr>`).join('')}
   </table>`;
+}
+
+function renderInviteEmailCell(invite) {
+  const email = escapeHtml(invite.email || '');
+  if (invite.account_id) {
+    return `<span class="view-link" onclick="openUserFromCrossLink('${invite.account_id}')">${email}</span>`;
+  }
+  return email;
 }
 
 async function submitBetaInvite(event) {
@@ -547,11 +607,12 @@ async function renderOverview(el) {
   const s = d.session, gs = d.game_state, p = d.player, st = d.setting;
   el.innerHTML = `
     <div class="card"><h3>Session</h3><div class="kv">
-      <div class="label">Chat ID</div><div>${s.telegram_chat_id}</div>
+      <div class="label">Chat ID</div><div>${s.telegram_chat_id ?? '—'}</div>
       <div class="label">State</div><div><span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
       <div class="label">Language</div><div>${s.language}</div>
       <div class="label">Created</div><div>${new Date(s.created_at).toLocaleString()}</div>
     </div></div>
+    ${renderSessionOwnerCard(s)}
     ${gs ? `<div class="card"><h3>Game State</h3><div class="kv">
       <div class="label">Turn</div><div>${gs.turn_count}</div>
       <div class="label">Game Clock</div><div>${gs.game_clock.toFixed(1)}h</div>
@@ -572,6 +633,20 @@ async function renderOverview(el) {
       <div class="label">Inventory</div><div>${(p.inventory||[]).join(', ') || 'empty'}</div>
       <div class="label">Appearance</div><div>${p.appearance || '-'}</div>
     </div></div>` : ''}`;
+}
+
+function renderSessionOwnerCard(s) {
+  const hasOwner = !!(s.account_id && s.account_email);
+  const emailCell = hasOwner ? escapeHtml(s.account_email) : '—';
+  const idCell = s.account_id ? `<code>${escapeHtml(s.account_id)}</code>` : '—';
+  const actionCell = hasOwner
+    ? `<span class="view-link" onclick="openUserFromCrossLink('${s.account_id}')">View user</span>`
+    : '—';
+  return `<div class="card"><h3>Owner</h3><div class="kv">
+    <div class="label">Email</div><div>${emailCell}</div>
+    <div class="label">Account ID</div><div>${idCell}</div>
+    <div class="label">Action</div><div>${actionCell}</div>
+  </div></div>`;
 }
 
 async function renderNPCs(el) {
@@ -1173,7 +1248,7 @@ async function renderFeedbackView() {
       <table><tr><th>Time</th><th>User</th><th>Game</th><th>Turn</th><th>Category</th><th>Message</th></tr>
         ${rows.map(row => `<tr>
           <td>${escapeHtml(new Date(row.created_at).toLocaleString())}</td>
-          <td>${escapeHtml(row.user_email || row.user_id || '')}</td>
+          <td>${renderFeedbackUserCell(row)}</td>
           <td><span class="session-id-short">${escapeHtml((row.game_id || '').slice(0, 8))}</span><br>${escapeHtml(row.setting || '')}</td>
           <td>${row.turn_number ?? ''}</td>
           <td>${escapeHtml(row.category || '')}</td>
@@ -1183,6 +1258,15 @@ async function renderFeedbackView() {
   } catch (e) {
     main.innerHTML = `<div class="empty">Error loading feedback: ${e.message}</div>`;
   }
+}
+
+function renderFeedbackUserCell(row) {
+  // D008: account_email is canonical (live JOIN); user_email is orphan fallback only.
+  if (row.account_email && row.user_id) {
+    return `<span class="view-link" onclick="openUserFromCrossLink('${row.user_id}')">${escapeHtml(row.account_email)}</span>`;
+  }
+  const fallback = row.user_email || row.user_id;
+  return fallback ? escapeHtml(fallback) : '—';
 }
 
 function showView(view) {
