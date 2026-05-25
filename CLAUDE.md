@@ -109,7 +109,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ## Default workflow: feature-factory
 
-For any non-trivial change in this repo — anything that touches `cast/`, `engine/`, `prompts/`, `db/`, `knowledge/`, `timeline/`, `models/`, `interfaces/`, or `research/`, and isn't a typo / comment / docs-only fix — run `/feature-factory <rough idea>` first. The skill runs the upstream chain (`codebase-researcher` → `story-writer` → `spec-writer`) with two human approval gates before any code is written: approve the user story, then approve the technical brief. The third approval gate is the PR review on GitHub.
+For any non-trivial change in this repo — anything that touches `cast/`, `engine/`, `prompts/`, `db/`, `knowledge/`, `timeline/`, `models/`, `interfaces/`, or `research/`, and isn't a typo / comment / docs-only fix — run `/feature-factory <rough idea>` first. The skill runs the upstream chain (`codebase-researcher` → `story-writer` → `spec-writer` → parallel QA review with `qa-tester` + `agent-qa-tester`) with three human approval gates before any code is written: approve the user story, approve the technical brief, approve the two QA test plans. The fourth approval gate is the PR review on GitHub.
 
 Skip the chain only for: typo and comment fixes, README/docs-only edits, test-only changes that follow an obvious pattern, and reverting a recently-introduced regression. If the change touches any `PromptSection` or `required_vars`, it is *not* trivial regardless of line count — run the chain. When in doubt, run it; the cost is one Researcher pass and a story you can approve in 30 seconds.
 
