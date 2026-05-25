@@ -75,6 +75,7 @@ jobs:
           set -o pipefail
           uv run pytest tests/ --ignore=tests/e2e -v \
             --cov --cov-report=xml --cov-report=term-missing \
+            --cov-fail-under=90 \
             --alluredir=allure-results-unit | tee pytest-coverage.txt
 
       - name: Upload coverage report
