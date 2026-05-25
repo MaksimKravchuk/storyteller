@@ -28,13 +28,12 @@ Do **not** use this skill for:
 
 ## Storage location
 
-Use the existing repo convention if one exists. Otherwise use:
+Use the existing repo convention for the decision type:
 
-```text
-docs/decisions/
-```
+- Founder/product/release decisions live in `docs/studio/09-founder-decision-register.md`.
+- Architecture or implementation ADRs may live in `docs/decisions/` when they need a standalone record.
 
-Suggested filename format:
+For standalone ADRs, use this filename format:
 
 ```text
 docs/decisions/0001-use-theater-style-agent-architecture.md
@@ -52,10 +51,10 @@ Before creating a new record, check for existing decision history:
 
 ```bash
 find docs . -iname '*decision*' -o -iname '*adr*'
-grep -R "ADR-\|## Decision\|docs/decisions" -n docs CLAUDE.md AGENTS.md .claude 2>/dev/null || true
+grep -R "ADR-\|## Decision\|docs/decisions\|Founder Decision Register" -n docs CLAUDE.md AGENTS.md .claude 2>/dev/null || true
 ```
 
-If a relevant ADR exists, update it or mark it superseded instead of creating a duplicate.
+For founder/product/release decisions, update `docs/studio/09-founder-decision-register.md` unless the decision needs a standalone ADR. If a relevant ADR or register entry exists, update it or mark it superseded instead of creating a duplicate.
 
 ### 2. Gather evidence
 
