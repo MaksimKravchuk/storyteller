@@ -46,7 +46,12 @@ class FeedbackStore:
         return str(feedback_result.scalar_one())
 
     async def list_recent(self, limit: int = _DEFAULT_LIMIT) -> list[dict[str, Any]]:
-        """Return recent feedback for admin review."""
+        """Return recent feedback for admin review.
+
+        ``account_email`` is resolved live via LEFT JOIN ``accounts`` on
+        ``user_id`` (D008 prescribes the JOIN-on-demand pattern); the
+        denormalized ``user_email`` is preserved as orphan fallback only.
+        """
         bounded_limit = max(1, min(limit, _MAX_LIMIT))
         stmt = (
             select(
@@ -60,10 +65,12 @@ class FeedbackStore:
                 tbl.beta_feedback.c.created_at,
                 tbl.sessions.c.id.label("session_id"),
                 tbl.settings.c.name.label("setting"),
+                tbl.accounts.c.email.label("account_email"),
             )
             .join(tbl.game_states, tbl.game_states.c.id == tbl.beta_feedback.c.game_id)
             .join(tbl.sessions, tbl.sessions.c.id == tbl.game_states.c.session_id)
             .outerjoin(tbl.settings, tbl.settings.c.game_state_id == tbl.game_states.c.id)
+            .outerjoin(tbl.accounts, tbl.accounts.c.id == tbl.beta_feedback.c.user_id)
             .order_by(desc(tbl.beta_feedback.c.created_at), desc(tbl.beta_feedback.c.id))
             .limit(bounded_limit)
         )

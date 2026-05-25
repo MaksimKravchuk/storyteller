@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import uuid as _uuid
+from datetime import datetime, timezone
 
 import allure
 import pytest
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 
 from db import tables as tbl
 from tests.db.conftest import GameRepository
@@ -27,6 +28,19 @@ async def _create_account(async_session, email: str) -> dict:
         insert(tbl.accounts).values(supabase_user_id=str(_uuid.uuid4()), email=email).returning(tbl.accounts),
     )
     return dict(account_rows.mappings().one())
+
+
+async def _game_id_for_session(async_session, session_id: str) -> str:
+    """Return the game_states.id row created by save_game_state for a session."""
+    result = await async_session.execute(
+        select(tbl.game_states.c.id).where(tbl.game_states.c.session_id == session_id),
+    )
+    return str(result.scalar_one())
+
+
+async def _insert_feedback(async_session, *, fields: dict) -> None:
+    """Insert a feedback row from a values dict (bypasses repo to control created_at)."""
+    await async_session.execute(insert(tbl.beta_feedback).values(**fields))
 
 
 async def _log_ai_call(repo: GameRepository, session_id: str, user_id: str, prompt: int, completion: int) -> None:
@@ -85,6 +99,21 @@ async def _log_user_detail_calls(
 ) -> None:
     await _log_ai_call(repo, owned["id"], str(account["id"]), 11, 4)
     await _log_ai_call(repo, other["id"], str(other_account["id"]), 100, 50)
+
+
+async def _seed_account_with_saved_game(
+    repo: GameRepository,
+    async_session,
+    populated_game_state,
+    email: str,
+) -> tuple[dict, str]:
+    """Seed an account, web session, and saved game state; return (account, game_id)."""
+    account = await _create_account(async_session, email)
+    session_row = await repo.sessions.create_web(str(account["id"]))
+    game_state, kg, events = populated_game_state
+    await repo.save_game_state(session_row["id"], game_state, kg, events)
+    game_id = await _game_id_for_session(async_session, session_row["id"])
+    return account, game_id
 
 
 @allure.epic("Memory & Persistence")
@@ -151,6 +180,53 @@ class TestListSessionsFiltering:
         rows = await repo.admin.list_sessions(search="%")
         assert rows == []
 
+    @allure.story("List sessions")
+    @allure.title("list_sessions joins the owning account's email and id when web_player_id matches")
+    @pytest.mark.asyncio
+    async def test_list_sessions_joins_account_email(
+        self,
+        repo: GameRepository,
+        async_session,
+    ) -> None:
+        account = await _create_account(async_session, "owner@example.com")
+        created = await repo.sessions.create_web(str(account["id"]))
+
+        rows = await repo.admin.list_sessions(web_player_id=str(account["id"]))
+        match = next(row for row in rows if row["id"] == created["id"])
+        assert match["account_email"] == "owner@example.com"
+        assert str(match["account_id"]) == str(account["id"])
+
+    @allure.story("List sessions")
+    @allure.title("list_sessions returns null account fields for sessions whose web_player_id has no matching account")
+    @pytest.mark.asyncio
+    async def test_list_sessions_account_email_null_for_orphan_session(
+        self,
+        repo: GameRepository,
+    ) -> None:
+        orphan_player_id = _player_id()
+        created = await repo.sessions.create_web(orphan_player_id)
+
+        rows = await repo.admin.list_sessions(web_player_id=orphan_player_id)
+        match = next(row for row in rows if row["id"] == created["id"])
+        assert match["account_id"] is None
+        assert match["account_email"] is None
+
+    @allure.story("List sessions")
+    @allure.title("list_sessions returns null account fields for telegram-only sessions")
+    @pytest.mark.asyncio
+    async def test_list_sessions_telegram_session_returns_null_account(
+        self,
+        repo: GameRepository,
+    ) -> None:
+        chat_id = _chat_id()
+        created = await repo.sessions.create_telegram(chat_id)
+
+        rows = await repo.admin.list_sessions(telegram_chat_id=chat_id)
+        match = next(row for row in rows if row["id"] == created["id"])
+        assert match["telegram_chat_id"] == chat_id
+        assert match["account_id"] is None
+        assert match["account_email"] is None
+
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Admin queries")
@@ -207,6 +283,98 @@ class TestUserManagement:
     async def test_get_user_detail_unknown_user_returns_none(self, repo: GameRepository) -> None:
         detail = await repo.admin.get_user_detail("00000000-0000-0000-0000-000000000000")
         assert detail is None
+
+    @allure.story("User list")
+    @allure.title("list_users(email_query=...) returns only accounts whose email matches the substring")
+    @pytest.mark.asyncio
+    async def test_list_users_email_query_filters_substring(self, repo: GameRepository, async_session) -> None:
+        alice = await _create_account(async_session, "alice@example.com")
+        await _create_account(async_session, "bob@example.com")
+
+        rows = await repo.admin.list_users(email_query="ali")
+        emails = {row["email"] for row in rows}
+        assert emails == {"alice@example.com"}
+        assert str(rows[0]["id"]) == str(alice["id"])
+
+    @allure.story("User list")
+    @allure.title("list_users(email_query=%) escapes LIKE wildcards literally instead of matching everything")
+    @pytest.mark.asyncio
+    async def test_list_users_email_query_escapes_like_wildcards(self, repo: GameRepository, async_session) -> None:
+        await _create_account(async_session, "alice@example.com")
+
+        rows = await repo.admin.list_users(email_query="%")
+        assert rows == []
+
+    @allure.story("User detail")
+    @allure.title("get_user_detail includes invites matching the account's email")
+    @pytest.mark.asyncio
+    async def test_get_user_detail_includes_invites_for_email(
+        self,
+        repo: GameRepository,
+        async_session,
+    ) -> None:
+        account = await _create_account(async_session, "invitee@example.com")
+        await async_session.execute(
+            insert(tbl.beta_invites).values(email="invitee@example.com", status="invited"),
+        )
+
+        detail = await repo.admin.get_user_detail(str(account["id"]))
+
+        assert detail is not None
+        assert len(detail["invites"]) == 1
+        assert detail["invites"][0]["email"] == "invitee@example.com"
+        assert detail["invites"][0]["status"] == "invited"
+        assert detail["invites"][0]["invited_at"] is not None
+
+    @allure.story("User detail")
+    @allure.title("get_user_detail returns empty invites list when no invite exists for the email")
+    @pytest.mark.asyncio
+    async def test_get_user_detail_invites_empty_when_no_match(
+        self,
+        repo: GameRepository,
+        async_session,
+    ) -> None:
+        account = await _create_account(async_session, "no-invite@example.com")
+
+        detail = await repo.admin.get_user_detail(str(account["id"]))
+
+        assert detail is not None
+        assert detail["invites"] == []
+
+    @allure.story("User detail")
+    @allure.title("get_user_detail includes feedback rows submitted by this account, newest first")
+    @pytest.mark.asyncio
+    async def test_get_user_detail_includes_feedback_for_user_id(
+        self,
+        repo: GameRepository,
+        async_session,
+        populated_game_state,
+    ) -> None:
+        account, game_id = await _seed_account_with_saved_game(
+            repo,
+            async_session,
+            populated_game_state,
+            "fb@example.com",
+        )
+        # Explicit created_at: same-transaction func.now() would tie and obscure DESC ordering.
+        older = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        newer = datetime(2025, 6, 1, tzinfo=timezone.utc)
+        common = {"user_id": account["id"], "game_id": game_id}
+        await _insert_feedback(
+            async_session, fields={**common, "category": "bug", "message": "first", "created_at": older}
+        )
+        await _insert_feedback(
+            async_session,
+            fields={**common, "category": "praise", "message": "second", "created_at": newer},
+        )
+
+        detail = await repo.admin.get_user_detail(str(account["id"]))
+
+        assert detail is not None
+        assert len(detail["feedback"]) == 2
+        # Newest-first ordering is load-bearing for admin review.
+        assert [row["message"] for row in detail["feedback"]] == ["second", "first"]
+        assert detail["feedback"][0]["category"] == "praise"
 
 
 @allure.epic("Memory & Persistence")
@@ -293,6 +461,23 @@ class TestSessionDetail:
         assert detail["event_count"] == len(events)
         assert detail["setting"] is not None
         assert detail["player"] is not None
+
+    @allure.story("Session detail")
+    @allure.title("get_session_detail surfaces the owning account's email when web_player_id matches")
+    @pytest.mark.asyncio
+    async def test_get_session_detail_joins_account_email(
+        self,
+        repo: GameRepository,
+        async_session,
+    ) -> None:
+        account = await _create_account(async_session, "owner@example.com")
+        created = await repo.sessions.create_web(str(account["id"]))
+
+        detail = await repo.admin.get_session_detail(created["id"])
+
+        assert detail is not None
+        assert detail["session"]["account_email"] == "owner@example.com"
+        assert str(detail["session"]["account_id"]) == str(account["id"])
 
 
 @allure.epic("Memory & Persistence")

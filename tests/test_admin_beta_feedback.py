@@ -62,6 +62,42 @@ async def test_admin_lists_beta_feedback(feedback_repo: AsyncMock) -> None:
 
 
 @allure.story("Beta feedback")
+@allure.title("Admin API surfaces the JOIN-resolved account_email on each feedback row")
+@pytest.mark.asyncio
+async def test_admin_lists_feedback_includes_account_email() -> None:
+    repo = AsyncMock()
+    repo.feedback.list_recent.return_value = [
+        {
+            "created_at": "2026-05-24T10:00:00+00:00",
+            "user_id": "11111111-1111-1111-1111-111111111111",
+            "user_email": "cached@old.example.com",
+            "account_email": "current@new.example.com",
+            "game_id": "game-abc",
+            "session_id": "session-abc",
+            "turn_number": 1,
+            "category": "bug",
+            "setting": "Rome",
+            "message": "Issue",
+        },
+    ]
+    app = AdminServer(MagicMock(), MagicMock(), port=0)._app
+    async with TestClient(TestServer(app)) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_route_helpers.GameRepository", return_value=repo),
+        ):
+            mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
+            mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
+            response = await client.get(_FEEDBACK_ROUTE)
+            payload = await response.json()
+
+    assert response.status == _HTTP_OK
+    # D008: both keys must reach the dashboard so the consumer can pick precedence.
+    assert payload["feedback"][0]["account_email"] == "current@new.example.com"
+    assert payload["feedback"][0]["user_email"] == "cached@old.example.com"
+
+
+@allure.story("Beta feedback")
 @allure.title("Admin API exports beta feedback as CSV")
 @pytest.mark.asyncio
 async def test_admin_exports_beta_feedback_csv(feedback_repo: AsyncMock) -> None:

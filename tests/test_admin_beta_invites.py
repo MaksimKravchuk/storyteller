@@ -51,6 +51,33 @@ async def test_admin_beta_invites_returns_invites_envelope() -> None:
 
 
 @allure.story("Beta invites")
+@allure.title("GET /api/admin/beta/invites preserves the account_id field on each row")
+@pytest.mark.asyncio
+async def test_admin_beta_invites_returns_account_id_field() -> None:
+    invites = [
+        {
+            "email": "tester@example.com",
+            "status": "invited",
+            "account_id": "22222222-2222-2222-2222-222222222222",
+        },
+    ]
+    mock_store = AsyncMock()
+    mock_store.list_invites.return_value = invites
+
+    async with TestClient(TestServer(_make_app())) as client:
+        with (
+            patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
+            patch("interfaces.admin_routes_beta_invites.BetaInviteStore", return_value=mock_store),
+        ):
+            _prime_get_db(mock_get_db)
+            resp = await client.get("/api/admin/beta/invites")
+            body = await resp.json()
+
+    assert resp.status == _HTTP_OK
+    assert body["invites"][0]["account_id"] == "22222222-2222-2222-2222-222222222222"
+
+
+@allure.story("Beta invites")
 @allure.title("POST /api/admin/beta/invites normalizes and commits invite")
 @pytest.mark.asyncio
 async def test_admin_beta_invites_post_normalizes_and_commits() -> None:
