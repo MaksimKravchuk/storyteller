@@ -318,7 +318,7 @@ Decision:
 
 - Add in-app feedback first; optionally mirror/triage to GitHub or a private chat later.
 - Required feedback payload:
-  - user id/email
+  - user id (do not duplicate email or other PII on the feedback row; look up account fields from the account record on demand to keep PII copies minimal per D007)
   - game id
   - turn number if available
   - category
@@ -422,4 +422,4 @@ Consequences / guardrails:
 Verification:
 
 - Release checklist requires Max approval before public release or tester expansion.
-- Agents stop and ask when an action would publish, invite, merge/deploy release-critical work, or materially increase spend.
+- Agents stop and ask when an action would publish, invite, merge/deploy release-critical work, or materially increase spend. "Materially increase spend" means any single action projected to consume ≥10% of the active LLM budget defined in D004, or any change that raises the per-user or global quota ceiling.

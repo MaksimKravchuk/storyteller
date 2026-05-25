@@ -30,8 +30,10 @@ Do **not** use this skill for:
 
 Use the existing repo convention for the decision type:
 
-- Founder/product/release decisions live in `docs/studio/09-founder-decision-register.md`.
-- Architecture or implementation ADRs may live in `docs/decisions/` when they need a standalone record.
+- **Founder/product/release decisions** live in `docs/studio/09-founder-decision-register.md`. They use the existing `Chosen | Defaulted | Max decision required | Deferred` status vocabulary and `D00N` numbering.
+- **Architecture or implementation decisions** may live in `docs/decisions/` when they need a standalone record. They use the ADR status vocabulary `Proposed | Accepted | Superseded | Rejected` and `0001-…` numbering.
+
+Do not mix the vocabularies (e.g. do not mark a founder register entry as `Accepted`, and do not mark a `docs/decisions/` ADR as `Max decision required`).
 
 For standalone ADRs, use this filename format:
 
@@ -50,8 +52,8 @@ Use the next unused number. Keep titles short, lowercase, and descriptive.
 Before creating a new record, check for existing decision history:
 
 ```bash
-find docs . -iname '*decision*' -o -iname '*adr*'
-grep -R "ADR-\|## Decision\|docs/decisions\|Founder Decision Register" -n docs CLAUDE.md AGENTS.md .claude 2>/dev/null || true
+find . -type f \( -iname '*decision*' -o -iname '*adr*' \)
+grep -RE "ADR-|## Decision|docs/decisions|Founder Decision Register" -n docs CLAUDE.md AGENTS.md .claude 2>/dev/null || true
 ```
 
 For founder/product/release decisions, update `docs/studio/09-founder-decision-register.md` unless the decision needs a standalone ADR. If a relevant ADR or register entry exists, update it or mark it superseded instead of creating a duplicate.
@@ -88,7 +90,7 @@ Use this template unless the repo already has a different ADR template:
 
 Date: YYYY-MM-DD
 Status: Proposed | Accepted | Superseded | Rejected
-Decision owner: <person/team/agent, optional>
+Decision owner: <person/team, optional — agents are not valid sole owners for product, release, audience, spend, or privacy decisions; those belong to Max>
 Related: <issues, PRs, files, prior ADRs>
 
 ## Context
@@ -151,7 +153,7 @@ What future agents must preserve:
 - ...
 ```
 
-If there is no general pointer yet, add or keep a short `CLAUDE.md`/`AGENTS.md` rule telling agents to inspect `docs/decisions/` before changing architecture, agent roles, prompt boundaries, persistence, release strategy, or player-facing behavior.
+If there is no general pointer yet, add or keep a short `CLAUDE.md`/`AGENTS.md` rule telling agents to inspect both `docs/decisions/` and `docs/studio/09-founder-decision-register.md` before changing architecture, agent roles, prompt boundaries, persistence, release strategy, or player-facing behavior.
 
 ## Good rationale pattern
 

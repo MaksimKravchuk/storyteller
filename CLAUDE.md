@@ -90,7 +90,8 @@ Player action → Director routes it → EventManager advances time → SceneBui
 ## Git Workflow
 
 - NEVER push directly to `main`. For every code change, create a feature branch (`feat/<topic>` or `fix/<topic>`), commit there, and open a PR with `gh pr create`. The only exception is when I explicitly say "push to main".
-- Before changing architecture, agent roles, prompt boundaries, persistence behavior, release strategy, or player-facing behavior, inspect accepted decision records in `docs/decisions/` and `docs/studio/09-founder-decision-register.md`. When making a new significant decision, use the `decision-records` skill and create or update a record covering context, decision, rationale, alternatives, consequences, verification, and future-agent guardrails.
+- Before changing architecture, agent roles, prompt boundaries, persistence behavior, release strategy, or player-facing behavior, inspect accepted decision records in `docs/decisions/` and `docs/studio/09-founder-decision-register.md`.
+- When making a new significant decision in any of those areas, use the `decision-records` skill and create or update a record covering context, decision, rationale, alternatives, consequences, verification, and future-agent guardrails.
 - Before every commit, run the full gauntlet and only commit if everything passes:
   ```bash
   uv run ruff check . && uv run ruff format --check . && uv run flake8 . && uv run mypy . && uv run pytest tests/ --ignore=tests/e2e --ignore=tests/benchmarks
