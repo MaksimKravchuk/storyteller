@@ -11,13 +11,16 @@ on:
       - 'docs/**'
   pull_request:
     branches: [main]
-    types: [opened, synchronize, ready_for_review, reopened]
+    types: [opened, synchronize, ready_for_review, reopened, labeled]
     paths-ignore:
       - '**.md'
       - 'benchmarks/results/**'
       - 'logs.json'
       - '.github/ISSUE_TEMPLATE/**'
       - 'docs/**'
+  # Manual trigger for the opt-in ``rubric`` job. Also re-runs the
+  # default jobs (lint/test/test-db/e2e); rubric is what gates on it.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -73,7 +76,7 @@ jobs:
       - name: Run unit tests with coverage and Allure
         run: |
           set -o pipefail
-          uv run pytest tests/ --ignore=tests/e2e -v \
+          uv run pytest tests/ --ignore=tests/e2e --ignore=tests/rubric -v \
             --cov --cov-report=xml --cov-report=term-missing \
             --alluredir=allure-results-unit | tee pytest-coverage.txt
 
@@ -245,6 +248,63 @@ jobs:
         with:
           header: narrative-quality-report
           path: allure-results/narrative-report.md
+
+  rubric:
+    # Opt-in rubric / LLM-as-judge tests. Runs only when the PR carries
+    # the ``run-rubric`` label or the workflow is dispatched manually —
+    # each invocation hits the full 6-model witness panel and costs
+    # several dollars in paid LLM calls, so default-on would be wasteful.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       contains(github.event.pull_request.labels.*.name, 'run-rubric'))
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev --extra anthropic --extra openai
+
+      - name: Preflight — assert real-LLM secrets are present
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # Without both providers, the witness panel collapses below
+          # MIN_PANEL_FOR_SIGNAL and every rubric test pytest.skips —
+          # which would otherwise read as a silent green build.
+          : "${OPENAI_API_KEY:?OPENAI_API_KEY secret is required for the rubric job}"
+          : "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY secret is required for the rubric job}"
+
+      - name: Run rubric tests
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DIRECTOR_MODEL: gpt-5.4-mini
+          AGENT_MODEL: gpt-5.4-nano
+          NARRATOR_MODEL: gpt-5.4-mini
+          DRAMATURGE_MODEL: gpt-5.4-nano
+        run: uv run pytest tests/rubric/ --alluredir=allure-results-rubric -v
+
+      - name: Upload Allure rubric results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-rubric
+          path: allure-results-rubric/
+          if-no-files-found: warn
 
   deploy:
     runs-on: ubuntu-latest

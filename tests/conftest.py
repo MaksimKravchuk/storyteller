@@ -16,7 +16,7 @@ from models.npc_card import NPCCard
 from models.setting import Setting
 
 _REQUIRED_ALLURE_LABELS = ("epic", "feature", "story")
-_ALLURE_EXEMPT_DIR_PARTS = ("e2e", "benchmarks")
+_ALLURE_EXEMPT_DIR_PARTS = ("e2e", "benchmarks", "rubric")
 _TAXONOMY_DOC = "tests/TEST_TAXONOMY.md"
 
 

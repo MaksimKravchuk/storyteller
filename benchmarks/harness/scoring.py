@@ -73,19 +73,26 @@ def _evidence_awarded(base_value: int, k_yes: int, n_total: int) -> int:
     return round(base_value * k_yes / n_total)
 
 
-async def score_evidence_element(
+async def score_text(
+    text: str,
     element: Element,
-    captured_turns: list[CapturedTurn],
     *,
     panel: list[PanelMember],
     cfg: Config,
 ) -> ElementScore:
-    """Evaluate an evidence-LLM element by polling every panel member."""
+    """Evaluate an evidence-LLM ``element`` against pre-rendered ``text``.
+
+    The primitive that ``score_evidence_element`` delegates to once it
+    has rendered scenario turns. Exposed directly so single-agent rubric
+    tests under ``tests/rubric/`` can score raw agent output (a chunk
+    of Narrator prose, an NPC card serialisation) without first
+    fabricating a ``CapturedTurn`` envelope around it.
+    """
     if not isinstance(element.check, EvidencePromptSpec):
         raise TypeError(
             "Evidence-LLM element {0!r} must provide an EvidencePromptSpec".format(element.id),
         )
-    call = JudgeCall(spec=element.check, turn_text=turn_text_for_spec(element.check, captured_turns))
+    call = JudgeCall(spec=element.check, turn_text=text)
     vote_list = list(
         await asyncio.gather(*(run_judge(member, call, cfg=cfg) for member in panel)),
     )
@@ -100,6 +107,30 @@ async def score_evidence_element(
         k_yes=k_yes,
         n_total=n_total,
         majority_verdict=majority,
+    )
+
+
+async def score_evidence_element(
+    element: Element,
+    captured_turns: list[CapturedTurn],
+    *,
+    panel: list[PanelMember],
+    cfg: Config,
+) -> ElementScore:
+    """Evaluate an evidence-LLM element by polling every panel member.
+
+    Thin wrapper over :func:`score_text` — renders the captured turn(s)
+    the element's :class:`EvidencePromptSpec` pins to, then scores.
+    """
+    if not isinstance(element.check, EvidencePromptSpec):
+        raise TypeError(
+            "Evidence-LLM element {0!r} must provide an EvidencePromptSpec".format(element.id),
+        )
+    return await score_text(
+        turn_text_for_spec(element.check, captured_turns),
+        element,
+        panel=panel,
+        cfg=cfg,
     )
 
 
