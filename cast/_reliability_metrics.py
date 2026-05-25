@@ -81,6 +81,17 @@ def record_schema_failure(agent: str, error: str) -> None:
     _bump(agent, "schema_failure")
 
 
+def record_judge_error(agent: str, attempt: int) -> None:
+    """Record one judge JSON-parse failure for ``agent``.
+
+    ``attempt`` is the 1-based attempt number; accepted for caller
+    self-documentation and ignored by the key. Every parse failure is
+    one increment regardless of which attempt produced it.
+    """
+    assert attempt >= 1
+    _bump(agent, "judge_error")
+
+
 def snapshot_counters() -> dict[tuple[str, str], int]:
     """Return a copy of the current counter map.
 

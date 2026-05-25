@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import time
 from dataclasses import dataclass
 
@@ -15,6 +14,7 @@ from benchmarks.harness._judge_vote import (
 )
 from benchmarks.harness.types._elements import EvidencePromptSpec
 from benchmarks.harness.types._scores import JudgeVote, PanelMember
+from cast._reliability_metrics import record_judge_error
 from config import Config, get_api_key_for_provider
 from defaults.models import ModelConfig
 from llm.factory import create_llm_client
@@ -22,6 +22,7 @@ from llm.message import Message, OutputFormat, Role
 
 _JUDGE_MAX_TOKENS = 400
 _JUDGE_TEMPERATURE: float = float(0)
+_JSON_REMINDER = "\n\nReply in valid JSON only."
 
 _SYSTEM_PROMPT = (
     "You are one of several independent witnesses evaluating a text-quest game transcript. "
@@ -58,6 +59,7 @@ async def _send_judge_prompt(
     call: JudgeCall,
     cfg: Config,
     temperature: float,
+    user_suffix: str = "",
 ) -> str:
     """Invoke the judge LLM and return its raw response body."""
     model_config = ModelConfig(
@@ -67,10 +69,13 @@ async def _send_judge_prompt(
         max_tokens=_JUDGE_MAX_TOKENS,
     )
     client = create_llm_client(model_config, api_key=get_api_key_for_provider(member.provider, cfg))
-    user_body = _USER_TEMPLATE.format(
-        brief=call.spec.scenario_brief,
-        question=call.spec.question,
-        turn_text=call.turn_text,
+    user_body = (
+        _USER_TEMPLATE.format(
+            brief=call.spec.scenario_brief,
+            question=call.spec.question,
+            turn_text=call.turn_text,
+        )
+        + user_suffix
     )
     response = await client.send_message(
         messages=[Message(role=Role.USER, body=user_body)],
@@ -82,7 +87,7 @@ async def _send_judge_prompt(
     return response.body
 
 
-def _log_judge_failure(member: PanelMember, stage: str, exc: BaseException) -> None:
+def _log_judge_failure(member: PanelMember, stage: str, exc: BaseException | None) -> None:
     """Emit a warning log identifying which judge failed and why."""
     logger.warning(
         "Benchmark judge {provider}/{model} failed during {stage}: {err_type}: {err}",
@@ -94,6 +99,35 @@ def _log_judge_failure(member: PanelMember, stage: str, exc: BaseException) -> N
     )
 
 
+def _try_parse_body(body: str) -> tuple[dict | None, Exception | None]:
+    """Return ``(payload, None)`` on success or ``(None, exc)`` on any parse failure."""
+    try:
+        return _parse_vote_payload(body), None
+    except ValueError as exc:
+        return None, exc
+
+
+async def _resample_once(
+    member: PanelMember,
+    call: JudgeCall,
+    cfg: Config,
+    temperature: float,
+    start: float,
+) -> tuple[dict | None, JudgeVote | None]:
+    """Retry the judge prompt once; return ``(payload, None)`` on success or ``(None, error_vote)``."""
+    try:
+        retry_body = await _send_judge_prompt(member, call, cfg, temperature, user_suffix=_JSON_REMINDER)
+    except Exception as send_exc:
+        _log_judge_failure(member, "retry-send", send_exc)
+        return None, _error_vote(member, _elapsed_ms(start), "parse error: unparseable judge response")
+    payload, parse_exc = _try_parse_body(retry_body)
+    if payload is None:
+        _log_judge_failure(member, "retry-parse", parse_exc)
+        record_judge_error(member.model_id, 2)
+        return None, _error_vote(member, _elapsed_ms(start), "parse error: unparseable judge response on retry")
+    return payload, None
+
+
 async def run_judge(
     member: PanelMember,
     call: JudgeCall,
@@ -101,23 +135,29 @@ async def run_judge(
     cfg: Config,
     temperature: float = _JUDGE_TEMPERATURE,
 ) -> JudgeVote:
-    """Dispatch one judge call and return its vote."""
+    """Dispatch one judge call and return its vote.
+
+    On a JSON-parse failure the prompt is retried once with a reminder
+    appended. ERROR is returned only when both attempts fail.
+    """
     start = time.monotonic()
     try:
         body = await _send_judge_prompt(member, call, cfg, temperature)
     except Exception as send_exc:
         _log_judge_failure(member, "send", send_exc)
         return _error_vote(member, _elapsed_ms(start), "send error: {0}".format(send_exc))
-    latency_ms = _elapsed_ms(start)
-    try:
-        payload = _parse_vote_payload(body)
-    except (ValueError, json.JSONDecodeError) as parse_exc:
+    payload, parse_exc = _try_parse_body(body)
+    if payload is None:
         _log_judge_failure(member, "parse", parse_exc)
-        return _error_vote(member, latency_ms, "parse error: {0}".format(parse_exc))
+        record_judge_error(member.model_id, 1)
+        payload, error_vote = await _resample_once(member, call, cfg, temperature, start)
+        if error_vote is not None:
+            return error_vote
+    assert payload is not None
     return _build_vote_from_payload(
         member.model_id,
         member.provider,
         payload,
         call.turn_text,
-        latency_ms,
+        _elapsed_ms(start),
     )
