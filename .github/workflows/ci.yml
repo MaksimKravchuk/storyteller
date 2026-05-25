@@ -201,13 +201,16 @@ jobs:
         if: steps.select.outputs.selected != ''
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           # A missing or rotated secret would otherwise cause
           # ``real_llm_for`` to ``pytest.skip`` every test and the e2e
           # step would pass green with zero real-LLM coverage. Fail loud.
+          #
+          # Only OPENAI_API_KEY is asserted because every ``*_MODEL`` env
+          # var below is ``gpt-*`` (OpenAI). If a model changes to a
+          # Claude/DeepSeek/OpenRouter one, add the matching
+          # ``${<PROVIDER>_API_KEY:?...}`` assertion here too.
           : "${OPENAI_API_KEY:?OPENAI_API_KEY secret is required for the e2e job}"
-          : "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY secret is required for the e2e job}"
 
       - name: Run e2e tests
         if: steps.select.outputs.selected != ''
