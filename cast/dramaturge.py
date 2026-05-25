@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from cast import _reliability_metrics as reliability_metrics
 from cast.base_performer_class import BasePerformer
 from cast.schemas.dramaturge_response import DramaturgeResponse
 from knowledge.graph import KnowledgeGraph
@@ -118,6 +119,7 @@ class Dramaturge(BasePerformer):
             raise
         except Exception:
             logger.exception("Dramaturge review failed; falling back to original narration")
+            reliability_metrics.record_fallback("dramaturge", "consistency_pass")
             return narration
         return await self._resolve_verdict(verdict, narration, context)
 
@@ -205,6 +207,7 @@ class Dramaturge(BasePerformer):
             raise
         except Exception:
             logger.exception("Dramaturge: entity escalation failed — narration already corrected")
+            reliability_metrics.record_fallback("dramaturge", "scene_dispatch")
 
     async def _run_escalations(
         self,
@@ -239,3 +242,4 @@ class Dramaturge(BasePerformer):
             raise
         except Exception:
             logger.exception("Dramaturge: ensure_fact escalation failed for {0!r}", entity)
+            reliability_metrics.record_fallback("dramaturge", "scene_finalize")

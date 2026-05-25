@@ -78,3 +78,4 @@ class ScenarioReport:
     engine_models: dict[str, str]
     started_at: str
     duration_seconds: float
+    reliability_counts: dict[str, dict[str, int]] = field(default_factory=dict)

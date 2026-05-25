@@ -6,7 +6,7 @@ import asyncio
 import json
 from uuid import UUID
 
-from cast import _data_miner_init as _dmi, base_performer_class as _bpc
+from cast import _data_miner_init as _dmi, _reliability_metrics as reliability_metrics, base_performer_class as _bpc
 from cast.schemas.setting_response import SearchTermsResponse, SettingResponse
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -113,6 +113,7 @@ class DataMiner(_bpc.BasePerformer):
                 return await self._fetch_and_store_fact(name, kind, graph)
             except Exception:
                 logger.exception("ensure_fact: failed to fetch Wikipedia summary for {!r}", name)
+                reliability_metrics.record_fallback("data_miner", "ensure_fact")
                 return None
 
     async def _fetch_and_store_fact(

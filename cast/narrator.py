@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from loguru import logger
 
 from cast import (
+    _reliability_metrics as reliability_metrics,
     narrator_aliases,
     narrator_dedup,
     narrator_labels,
@@ -141,6 +142,7 @@ class Narrator(BasePerformer):
                 "Narrator.act: collect_for_turn failed; proceeding without visible_entities (turn={0})",
                 getattr(game_state, "turn_count", "?"),
             )
+            reliability_metrics.record_fallback("narrator", "visible_entities")
             game_state.last_visible_entities = []
 
         self.set_context(**_build_narrator_context_kwargs(game_state, self._language, is_new_scene))

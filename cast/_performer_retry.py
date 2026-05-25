@@ -12,6 +12,7 @@ import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from cast._reliability_metrics import record_retry
 from llm.base_client import LLMJSONError
 from pydantic import ValidationError
 
@@ -52,6 +53,17 @@ def _strip_markdown_fence(text: str) -> str:
     stripped = text.strip()
     match = _MARKDOWN_FENCE_RE.match(stripped)
     return match.group(1).strip() if match else stripped
+
+
+def record_validation_retry(agent_name: str, attempt: int) -> None:
+    """Bookkeep one validation retry against the per-turn reliability counters.
+
+    Lives here so ``base_performer_class`` does not need a direct
+    ``_reliability_metrics`` import (keeps that module's import budget
+    inside its WPS201 limit). Phase 1 is metering-only: the recorder
+    is a no-op when no turn-scoped buffer is bound.
+    """
+    record_retry(agent_name, attempt)
 
 
 @dataclass(frozen=True)
