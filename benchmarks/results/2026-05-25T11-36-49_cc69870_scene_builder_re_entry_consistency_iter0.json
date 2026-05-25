@@ -1,0 +1,437 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 3252,
+      "index": 0,
+      "narration": "You survey the Forum Romanum from the centre, but there is no scene data to name any landmarks or fix your gaze on anything specific. *There is nothing here to take in from the raw material.*",
+      "player_action": "I survey the Forum Romanum from the centre, taking in the landmarks around me.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I survey the Forum Romanum from the centre and take in the landmarks around me.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [],
+        "object_interactions": [],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 31183,
+      "index": 1,
+      "narration": "You walk south down the **Vicus Tuscus**, following the street’s irregular stone blocks as they run away from the Forum Romanum. Low shopfronts and awnings line both sides, with painted shutters, hanging cloths, and bronze door knockers set above small stone thresholds. Two shallow drainage channels edge the road, and farther on a cluster of masonry posts holds up a projecting signboard marked with a painted emblem and a short list of services in dark pigment.\n\nYou pass a street shrine behind a lattice screen, with a few offerings on the stone ledge, then a covered produce stall with wicker baskets and amphorae beneath a striped canopy. At a corner, a narrow stair and archway lead up toward a back courtyard, with a chain hanging beside the entry as a barrier. The morning light catches dust drifting through the awnings while footsteps, wagon rumbles, and short bursts of vendor calls continue around you.\n\nAt the street edge, the oily-stained man stays at his stall with his bronze balance scale and counting tablet, the baker holds his tray of small loaves at the doorway, the pale man remains by his folding writing desk, and the broad-shouldered guard turns his head to follow you south while keeping his staff at ease.",
+      "player_action": "I walk south down the Vicus Tuscus.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I walk south down the Vicus Tuscus.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I remain at my stall, steadying the balance scale and watching the street as the buyer moves south, ready to serve the next customer.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Fabius Marcellus",
+            "npc_uuid": "974b4391-2d50-45cf-9d7f-6c4fc7dc81e8"
+          },
+          {
+            "action": "I stay at my doorway with the tray of small loaves, watching the street and the passing feet, ready to call out if anyone looks to buy.",
+            "action_type": "IDLE",
+            "npc_name": "Gaius Veturius Secundus",
+            "npc_uuid": "11f22d91-bcb6-450d-addb-452d6fabab90"
+          },
+          {
+            "action": "I remain at my folding desk by the street edge, watching the southbound traffic and waiting for a proper request to copy or record.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Livius Celer",
+            "npc_uuid": "9257bfc4-d69d-4473-abec-fb3649173ef8"
+          },
+          {
+            "action": "I remain at the corner and watch the street, turning my head to follow the man who went south, while keeping my staff at ease by my side.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Claudius Rutilianus",
+            "npc_uuid": "d2ab5129-f754-424e-b83f-3c1c41185a15"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Footsteps on stone, wagon rumbles in the distance, and vendors calling out in short bursts. The air smells of bread, olives, and briny garum, mixed with street dust. Light morning chatter rises from the awnings, punctuated by the scrape of baskets and the clink of amphora necks.",
+          "description": "The Vicus Tuscus runs south from the Forum Romanum, its street paved in irregular stone blocks and worn by cart traffic. Low shopfronts and awnings line both sides: painted wooden shutters, hanging cloths, and small stone thresholds with bronze door knockers. Near the edge of the road are two shallow drainage channels, their grates covered with coarse stone. A cluster of masonry posts supports a projecting signboard above one storefront; the board bears a painted emblem and a short list of services in dark pigment. Further along, a small shrine niche sits behind a street-level lattice screen, with a few offerings placed on a flat stone ledge. A covered produce stall opens toward the street with wicker baskets and amphorae arranged beneath a striped canopy. At a corner, a narrow stair and archway lead into a raised passage toward a back courtyard; a chain hangs beside the entry as a simple barrier. The morning light catches dust motes drifting through the shop awnings, and the street subtly funnels toward a busier junction ahead.",
+          "location_id": "00000000-0000-0000-0000-000000000000",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "merchant (olive-oil and garum vendor) with a small counting tablet and a scale at his stall",
+              "uuid": "974b4391-2d50-45cf-9d7f-6c4fc7dc81e8"
+            },
+            {
+              "role": "merchant (baker) calling out from a doorway with a tray of small loaves",
+              "uuid": "11f22d91-bcb6-450d-addb-452d6fabab90"
+            },
+            {
+              "role": "scribe (public clerk) seated at a folding desk outside a shop, offering to copy messages and take written requests",
+              "uuid": "9257bfc4-d69d-4473-abec-fb3649173ef8"
+            },
+            {
+              "role": "guard (Forum patrol) stationed near a storefront corner, watching foot traffic and keeping order",
+              "uuid": "d2ab5129-f754-424e-b83f-3c1c41185a15"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a painted wooden signboard listing services above a storefront",
+                "signboard",
+                "service sign"
+              ],
+              "uuid": "2cf22d79-aac6-4aa1-a5e0-bffb6246bb99"
+            },
+            {
+              "names": [
+                "a public notice board on a shop wall with wax-sealed slips",
+                "notice board",
+                "wax slips"
+              ],
+              "uuid": "3bd55381-b621-4a7b-9e5f-57ba89573567"
+            },
+            {
+              "names": [
+                "a small shrine niche behind a lattice screen with offerings on a stone ledge",
+                "street shrine",
+                "shrine niche"
+              ],
+              "uuid": "849af031-8ab7-4994-9808-738545e11c1f"
+            },
+            {
+              "names": [
+                "a produce stall canopy with wicker baskets and labeled amphorae arranged beneath it",
+                "produce stall",
+                "wicker baskets",
+                "amphorae"
+              ],
+              "uuid": "1a91da69-a7b6-43cf-b988-eb59fc43089e"
+            },
+            {
+              "names": [
+                "a narrow stair and archway entry leading to a raised passage and back courtyard",
+                "archway entry",
+                "stair",
+                "passage"
+              ],
+              "uuid": "d3aed004-5383-4742-813a-a37d8074e09f"
+            }
+          ],
+          "time_of_day": "morning",
+          "uuid": "48954b94-161a-4754-90ca-3c9855806c7d"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 4668,
+      "index": 2,
+      "narration": "**You linger** on the Vicus Tuscus and watch the shopkeepers work. The man in the oily-stained tunic keeps his hands near the bronze balance scale and gives you a brief, appraising look before settling back to his counting tablet. The lean baker in the soot-dusted apron stands a little straighter in his doorway, tray of small loaves held level, ready if you mean to buy.\n\nA pale man with ink-stained fingers looks up from his low folding writing desk, then stays poised with stylus and parchment. At the corner, the broad-shouldered guard in a wool cloak and bronze torque glinting keeps his post and watches you a moment longer. You remain there, unremarkable and empty-handed, while the street’s routine holds around you.",
+      "player_action": "I linger on the Vicus Tuscus for a moment, watching the shopkeepers.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I linger on the Vicus Tuscus for a moment, watching the shopkeepers.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I keep my hands on the counter near the scale and give the lingering passer a brief, appraising look, waiting to see whether they are a buyer or only counting stalls.",
+            "action_type": "IDLE",
+            "npc_name": "Lucius Fabius Marcellus",
+            "npc_uuid": "974b4391-2d50-45cf-9d7f-6c4fc7dc81e8"
+          },
+          {
+            "action": "I stand a little straighter in my doorway and give the watcher a calm look, tray held level, ready if they mean to buy.",
+            "action_type": "TALK",
+            "npc_name": "Gaius Veturius Secundus",
+            "npc_uuid": "11f22d91-bcb6-450d-addb-452d6fabab90"
+          },
+          {
+            "action": "I glance up from my desk, note the player’s lingering, and remain ready with stylus and parchment in case they wish to speak or dictate a request.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Livius Celer",
+            "npc_uuid": "9257bfc4-d69d-4473-abec-fb3649173ef8"
+          },
+          {
+            "action": "I keep my post at the corner and watch the player a moment longer, making no move unless they step into trouble.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Claudius Rutilianus",
+            "npc_uuid": "d2ab5129-f754-424e-b83f-3c1c41185a15"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "Oily-stained tunic, bronze balance scale, and a counting tablet at his stall",
+            "a lean baker in a soot-dusted apron holding a tray of small loaves",
+            "A pale man with ink-stained fingers and a low folding writing desk",
+            "a broad-shouldered guard in a wool cloak, bronze torque glinting"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 46892,
+      "index": 3,
+      "narration": "You return to **Vicus Tuscus** and look toward the Forum Romanum. The street runs north on worn stone blocks, then opens into a busier junction where marble and limestone façades show above the rooftops. Awning cloths and painted shutters line both sides, with bronze knockers and low thresholds marking the shopfronts. Two drainage channels run along the curb, their grates half clogged with grit.\n\nNear the center-left, a projecting `signboard` hangs over a storefront with a painted emblem and a short list of services in dark pigment. Farther on, a `shrine niche` sits behind a lattice screen, its stone ledge holding a few offerings: small wax cakes and a pinch of incense ash. On the right, the `stall` stands open under a striped canopy, with wicker baskets of greens and herbs and several amphorae beneath it. At the far end, the `stair` rises to a raised passage toward the Forum side, with a simple chain hanging beside it. You see a lean gate guard with a bronze torque and notched staff watching the traffic, a lean woman at the produce stall, a lean runner moving toward the Forum side, and a soot-streaked beggar by the drain.",
+      "player_action": "I head back to the Forum Romanum and look around again.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I head back to the Forum Romanum and look around again.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I stand at my post and watch the traffic into the Forum, turning my head slowly from the signboard to the stair and archway, noting who lingers and who passes through.",
+            "action_type": "IDLE",
+            "npc_name": "Marcus Livius Celer",
+            "npc_uuid": "63e567c7-917d-43e7-8a08-edacfc319db4"
+          },
+          {
+            "action": "I glance up from the greens, steady my scale with one hand, and watch the player’s return without calling out. My eyes track their pace and where they’re looking, ready to offer herbs if they stop.",
+            "action_type": "IDLE",
+            "npc_name": "Helvia Secunda",
+            "npc_uuid": "291d3b8b-274e-401f-8bdb-bda0a950ced6"
+          },
+          {
+            "action": "I keep to the right edge of the street and walk toward the Forum side at an even pace, eyes moving over the signboard, the shrine niche, and the raised passage before I decide whether to stop.",
+            "action_type": "MOVE",
+            "npc_name": "Quintus Aelius Tiro",
+            "npc_uuid": "234f5f40-06f9-44bb-a431-9dff17210cb4"
+          },
+          {
+            "action": "I pause near the projecting signboard and study the painted emblem and listed services, keeping to the edge of the foot traffic with my wax tablet in hand.",
+            "action_type": "MOVE",
+            "npc_name": "Lucius Valerius Pavo",
+            "npc_uuid": "f977905a-2217-40c7-8010-5a9872e5a1b8"
+          },
+          {
+            "action": "I stay by the drainage channel, cup in hand, and watch the flow of people toward the Forum, keeping my eyes on faces, purses, and anyone who looks worth a coin or a bit of news.",
+            "action_type": "IDLE",
+            "npc_name": "Aulus Bruttius Naso",
+            "npc_uuid": "66b360b5-8db6-420a-a66f-8107929fd036"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Footsteps and cart rumbles mingle with vendor calls; cloth awnings snap softly in the breeze. The smell of crushed herbs, damp stone, and incense ash drifts from the shrine and the produce stall. Occasional clinks of bronze and the scrape of sandals on worn blocks punctuate the louder Forum-bound movement.",
+          "description": "The Vicus Tuscus runs north toward the Forum Romanum, its irregular stone blocks worn smooth by cart wheels. The street funnels into a busier junction where the Forum’s marble and limestone façades become visible beyond the rooftops. Awning cloths and painted wooden shutters line both sides; small bronze door knockers and low stone thresholds mark shop entrances. Two shallow drainage channels run along the curb, their coarse-stone grates half clogged with grit. Near the center-left, a projecting signboard supported by masonry posts hangs over a storefront; the board shows a painted emblem and a short list of services in dark pigment. Farther ahead, a street-corner shrine niche sits behind a lattice screen at shoulder height, with a flat stone ledge holding a few offerings—small wax cakes and a pinch of incense ash. On the right side, a covered produce stall opens toward the road: wicker baskets of greens and herbs, and several amphorae arranged beneath a striped canopy. At the far end, a narrow stair and archway lead up into a raised passage toward the Forum side; a simple chain hangs beside the entry as a barrier. Morning light catches dust motes drifting through the shop awnings; the air is busy with foot traffic and the constant creak of awning ropes as people pass.",
+          "location_id": "00000000-0000-0000-0000-000000000000",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "guard (Forum gate attendant, stationed near the junction; watches for disturbances and can answer questions about where to find officials)",
+              "uuid": "63e567c7-917d-43e7-8a08-edacfc319db4"
+            },
+            {
+              "role": "merchant (produce seller at the striped-canopy stall; sells herbs and greens and overhears local talk)",
+              "uuid": "291d3b8b-274e-401f-8bdb-bda0a950ced6"
+            },
+            {
+              "role": "messenger runner (young courier weaving through traffic; carries folded notices for nearby offices)",
+              "uuid": "234f5f40-06f9-44bb-a431-9dff17210cb4"
+            },
+            {
+              "role": "beggar (street beggar near the drainage channel; asks for alms and may trade gossip for a small coin)",
+              "uuid": "66b360b5-8db6-420a-a66f-8107929fd036"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a projecting painted signboard listing services above a storefront",
+                "painted signboard",
+                "signboard"
+              ],
+              "uuid": "8bb6db3e-4184-49d0-a9c8-fcb042029cbe"
+            },
+            {
+              "names": [
+                "a street-corner shrine niche behind a lattice screen with offerings on a stone ledge",
+                "shrine niche",
+                "shrine"
+              ],
+              "uuid": "20bcbd83-a365-4eb2-ac5a-0f1d23f058f9"
+            },
+            {
+              "names": [
+                "a covered produce stall with wicker baskets and amphorae under a striped canopy",
+                "produce stall",
+                "stall"
+              ],
+              "uuid": "8302eef1-ff33-49f1-b230-c794f069328b"
+            },
+            {
+              "names": [
+                "the narrow stair and archway up into the raised passage toward the Forum, with a hanging chain barrier",
+                "archway stair",
+                "stair"
+              ],
+              "uuid": "8a52784c-5588-4d93-8b86-1f4514296806"
+            },
+            {
+              "names": [
+                "the drainage channels along the curb with coarse-stone grates",
+                "drainage channels",
+                "drain"
+              ],
+              "uuid": "d4c5971a-ca7f-4042-a4ad-79db8edc6734"
+            }
+          ],
+          "time_of_day": "morning",
+          "uuid": "f7532e59-783a-4e03-8e84-5cfb3c6550b9"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 91.78717325002071,
+  "element_scores": [
+    {
+      "awarded": 3,
+      "base_value": 3,
+      "element_id": "landmarks_persist",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Seeded Forum landmarks (rostra, Temple of Saturn, Basilica Julia) survive re-entry",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "all seeded Forum landmarks persisted across the round trip",
+      "votes": []
+    },
+    {
+      "awarded": 2,
+      "base_value": 2,
+      "element_id": "landmarks_not_duplicated",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Forum POI list does not duplicate on re-entry",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "Forum POI count stable across the round trip (3)",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "prose_consistent_on_return",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Re-entry narration mentions at least one seeded Forum landmark",
+      "majority_verdict": "NO",
+      "n_total": 2,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 2433,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "",
+          "quote_verified": false,
+          "reasoning": "The narration describes the Vicus Tuscus street with shopfronts, signboards, shrine niches, and stalls, but makes no mention of the rostra, Temple of Saturn, or Basilica Julia that were seeded in the Forum.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1323,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Near the center-left, a projecting `signboard` hangs over a storefront with a painted emblem and a short list of services in dark pigment.",
+          "quote_verified": true,
+          "reasoning": "The narration describes features like signboard, shrine niche, stall, and stair but does not mention any seeded landmarks (rostra, Temple of Saturn, Basilica Julia).",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 1,
+      "element_id": "no_contradictory_redescription",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Re-entry narration does not contradict the first visit's atmosphere",
+      "majority_verdict": "NO",
+      "n_total": 2,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 3126,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "There is nothing here to take in from the raw material.",
+          "quote_verified": true,
+          "reasoning": "Turn 0 narration explicitly states 'there is no scene data to name any landmarks or fix your gaze on anything specific' with no landmarks described, while the scenario brief indicates the Forum was seeded with three landmarks (rostra, Temple of Saturn, Basilica Julia) that should be present on re-entry, creating an unresolved contradiction.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1015,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "[...excerpt truncated...]",
+          "quote_verified": true,
+          "reasoning": "The provided re-entry narration (turn 3) is truncated and contains no prose details that contradict turn 0.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "cc69870e912590919a538607ce6af6779bc451f2",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "scene_builder_re_entry_consistency",
+  "scenario_label": "SceneBuilder preserves Forum landmarks when the player leaves and returns",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-05-25T11:36:49.382315+00:00",
+  "total_awarded": 5,
+  "total_base": 8
+}

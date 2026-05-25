@@ -1,0 +1,43 @@
+{
+  "element_pass_rates": [
+    {
+      "base_value": 3,
+      "element_id": "no_npc_hallucinated",
+      "iterations": 1,
+      "label": "Narrator does not invent NPCs to fill the empty atrium",
+      "passes": 0
+    },
+    {
+      "base_value": 2,
+      "element_id": "evocative_prose",
+      "iterations": 1,
+      "label": "Narrator uses concrete sensory detail rather than generic filler",
+      "passes": 0
+    },
+    {
+      "base_value": 2,
+      "element_id": "grounded_in_seed",
+      "iterations": 1,
+      "label": "Narrator stays within the seed scene's vocabulary",
+      "passes": 0
+    },
+    {
+      "base_value": 1,
+      "element_id": "prose_not_repetitive",
+      "iterations": 1,
+      "label": "Narrator varies sentence structure across turns",
+      "passes": 0
+    }
+  ],
+  "engine_git_sha": "1014177081afdf3f3769381993b04a3fb9d07d40",
+  "iteration_totals": [
+    0
+  ],
+  "iterations": 1,
+  "max_awarded": 0,
+  "mean_awarded": 0.0,
+  "min_awarded": 0,
+  "scenario_id": "narrator_prose_quiet_exploration",
+  "scenario_label": "Narrator prose stays evocative + grounded on a quiet, NPC-free exploration turn",
+  "total_base": 8
+}

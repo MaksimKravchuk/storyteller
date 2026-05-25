@@ -1,0 +1,43 @@
+{
+  "element_pass_rates": [
+    {
+      "base_value": 3,
+      "element_id": "landmarks_persist",
+      "iterations": 1,
+      "label": "Seeded Forum landmarks (rostra, Temple of Saturn, Basilica Julia) survive re-entry",
+      "passes": 1
+    },
+    {
+      "base_value": 2,
+      "element_id": "landmarks_not_duplicated",
+      "iterations": 1,
+      "label": "Forum POI list does not duplicate on re-entry",
+      "passes": 1
+    },
+    {
+      "base_value": 2,
+      "element_id": "prose_consistent_on_return",
+      "iterations": 1,
+      "label": "Re-entry narration mentions at least one seeded Forum landmark",
+      "passes": 0
+    },
+    {
+      "base_value": 1,
+      "element_id": "no_contradictory_redescription",
+      "iterations": 1,
+      "label": "Re-entry narration does not contradict the first visit's atmosphere",
+      "passes": 0
+    }
+  ],
+  "engine_git_sha": "cc69870e912590919a538607ce6af6779bc451f2",
+  "iteration_totals": [
+    5
+  ],
+  "iterations": 1,
+  "max_awarded": 5,
+  "mean_awarded": 5.0,
+  "min_awarded": 5,
+  "scenario_id": "scene_builder_re_entry_consistency",
+  "scenario_label": "SceneBuilder preserves Forum landmarks when the player leaves and returns",
+  "total_base": 8
+}
