@@ -1,0 +1,73 @@
+name: Benchmark gate (narrative PRs)
+
+# Automatic narration benchmark check triggered by pull requests that touch
+# narrative-affecting code paths.  Each run hits paid LLMs:
+#
+#   Cost estimate (3-judge panel, 1 iteration, 5 scenarios):
+#   - ~15 scenario × judge dispatch calls (5 scenarios × ~1 element avg × 3 judges)
+#   - Typical spend: ~$0.02–$0.10 per PR push depending on element count and models
+#   - A concurrency cancel-in-progress block below ensures only the HEAD commit
+#     of each PR actually incurs cost.
+#
+# REQUIRED STATUS CHECK SETUP (manual step):
+#   Do NOT enable "benchmark-on-pr / benchmark" as a required branch-protection
+#   check.  Because of the `paths:` filter, the workflow never runs on PRs that
+#   don't touch the listed files, which would leave those PRs blocked forever
+#   waiting for a status that never arrives.  Instead treat this as an advisory
+#   gate: review the job result in the Checks tab before merging narrative PRs.
+#
+# FORK PRs:
+#   This workflow uses `pull_request` (not `pull_request_target`), so secrets
+#   are NOT available to forks.  Benchmark LLM calls will fail silently for
+#   external fork PRs — that is expected and safe.
+
+on:
+  pull_request:
+    paths:
+      - "cast/**"
+      - "prompts/**"
+      - "engine/**"
+      - "benchmarks/scenarios/**"
+
+concurrency:
+  group: benchmark-on-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev --extra anthropic --extra openai
+
+      - name: Run benchmark harness (1 iteration, 3-judge panel)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DIRECTOR_MODEL: gpt-5.4-mini
+          AGENT_MODEL: gpt-5.4-nano
+          NARRATOR_MODEL: gpt-5.4-mini
+        run: |
+          set -euo pipefail
+          uv run python -m benchmarks run --iterations 1 --max-judges 3
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-pr-${{ github.event.pull_request.number }}
+          path: benchmarks/results/
+          if-no-files-found: warn
