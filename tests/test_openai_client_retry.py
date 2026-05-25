@@ -47,15 +47,6 @@ def _user_msg(body: str = "hi") -> msg.Message:
     return msg.Message(role=msg.Role.USER, body=body)
 
 
-def _install_sdk_mock() -> tuple[MagicMock, AsyncMock]:
-    sdk_class = MagicMock()
-    sdk_instance = MagicMock()
-    create_mock = AsyncMock(return_value=_make_response())
-    sdk_instance.chat.completions.create = create_mock
-    sdk_class.return_value = sdk_instance
-    return sdk_class, create_mock
-
-
 @allure.epic("Engine & LLM Infrastructure")
 @allure.feature("OpenAI client — retry/backoff")
 class TestOpenAIClientRetry:
