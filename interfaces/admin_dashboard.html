@@ -193,6 +193,7 @@
     <div id="nav-sessions" class="nav-link active" onclick="showView('sessions')">Sessions</div>
     <div id="nav-users" class="nav-link" onclick="showView('users')">Users</div>
     <div id="nav-feedback" class="nav-link" onclick="showView('feedback')">Feedback</div>
+    <div id="nav-reliability" class="nav-link" onclick="showView('reliability')">Reliability</div>
     <div id="nav-settings" class="nav-link" onclick="showView('settings')">Settings</div>
   </div>
   <div id="sessions-nav-content">
@@ -1274,6 +1275,7 @@ function showView(view) {
   document.getElementById('nav-sessions').classList.toggle('active', view === 'sessions');
   document.getElementById('nav-users').classList.toggle('active', view === 'users');
   document.getElementById('nav-feedback').classList.toggle('active', view === 'feedback');
+  document.getElementById('nav-reliability').classList.toggle('active', view === 'reliability');
   document.getElementById('nav-settings').classList.toggle('active', view === 'settings');
   const sessionsNav = document.getElementById('sessions-nav-content');
   const usersNav = document.getElementById('users-nav-content');
@@ -1283,6 +1285,8 @@ function showView(view) {
     renderSettingsView();
   } else if (view === 'feedback') {
     renderFeedbackView();
+  } else if (view === 'reliability') {
+    renderReliabilityView();
   } else if (view === 'users') {
     loadUsers();
     if (currentUserId) {
@@ -1298,6 +1302,88 @@ function showView(view) {
       main.innerHTML = '<div class="placeholder">Select a session to inspect</div>';
     }
   }
+}
+
+const _RELIABILITY_WINDOWS = ['24h', '7d', '30d'];
+let _reliabilityWindow = '24h';
+
+async function renderReliabilityView() {
+  const main = document.getElementById('main');
+  main.innerHTML = '<div class="empty">Loading reliability data…</div>';
+  try {
+    const data = await fetchJSON('/api/admin/reliability?window=' + _reliabilityWindow);
+    main.innerHTML = renderReliabilityHtml(data);
+  } catch (e) {
+    main.innerHTML = `<div class="empty">Error loading reliability: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function _reliabilityWindowButtons() {
+  return _RELIABILITY_WINDOWS.map(w =>
+    `<button class="copy-btn${w === _reliabilityWindow ? ' active' : ''}"
+             style="${w === _reliabilityWindow ? 'background:#e94560;color:#fff;border-color:#e94560' : ''}"
+             onclick="switchReliabilityWindow('${w}')">${w}</button>`
+  ).join('');
+}
+
+function switchReliabilityWindow(w) {
+  _reliabilityWindow = w;
+  renderReliabilityView();
+}
+
+function _groupReliabilityRows(rows) {
+  const byAgent = {};
+  for (const row of rows) {
+    if (!byAgent[row.agent]) byAgent[row.agent] = {};
+    byAgent[row.agent][row.event_type] = row.total;
+  }
+  return byAgent;
+}
+
+function renderReliabilityHtml(data) {
+  const rows = data.rows || [];
+  const windowLabel = data.window || _reliabilityWindow;
+  const windowControls = `<div class="settings-row" style="margin-bottom:14px">${_reliabilityWindowButtons()}</div>`;
+
+  if (!rows.length) {
+    return `<div class="card"><h3>Reliability — ${escapeHtml(windowLabel)}</h3>
+      ${windowControls}
+      <div class="empty">No reliability snapshots in the last ${escapeHtml(windowLabel)}.</div>
+    </div>`;
+  }
+
+  const eventTypes = [...new Set(rows.map(r => r.event_type))].sort();
+  const byAgent = _groupReliabilityRows(rows);
+  const agents = Object.keys(byAgent).sort();
+
+  const headerCols = eventTypes.map(et =>
+    `<th style="text-align:right">${escapeHtml(et)}</th>`
+  ).join('');
+
+  const bodyRows = agents.map(agent => {
+    const cells = eventTypes.map(et => {
+      const val = byAgent[agent][et] || 0;
+      const style = val > 0 ? 'color:#ff8a80;font-weight:600' : 'color:#666';
+      return `<td style="text-align:right;${style}">${val}</td>`;
+    }).join('');
+    return `<tr>
+      <td><span class="agent-badge agent-${escapeHtml(agent)}">${escapeHtml(agent)}</span></td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  return `<div class="card"><h3>Reliability — ${escapeHtml(windowLabel)}</h3>
+    ${windowControls}
+    <p class="token-help" style="margin-bottom:12px">
+      Per-agent fallback / retry / schema-failure counts summed from
+      <code>turn_events.payload</code> reliability snapshots.
+      Non-zero cells are highlighted in red.
+    </p>
+    <table>
+      <tr><th>Agent</th>${headerCols}</tr>
+      ${bodyRows}
+    </table>
+  </div>`;
 }
 
 async function renderSettingsView() {

@@ -17,6 +17,7 @@ from interfaces import (
     admin_routes_feedback,
     admin_routes_settings,
 )
+from interfaces import admin_routes_reliability
 
 _HTTP_UNAUTHORIZED = 401
 
@@ -48,10 +49,11 @@ def _setup_session_report_routes(app: web.Application) -> None:
     app.router.add_get("/api/sessions/{id}/models", admin_routes_detail.session_models)
 
 
-def _setup_beta_feedback_routes(app: web.Application) -> None:
-    """Register admin beta feedback routes."""
+def _setup_beta_and_reliability_routes(app: web.Application) -> None:
+    """Register admin beta-feedback and reliability dashboard routes."""
     app.router.add_get("/api/admin/beta/feedback", admin_routes_feedback.list_feedback)
     app.router.add_get("/api/admin/beta/feedback.csv", admin_routes_feedback.export_feedback_csv)
+    app.router.add_get("/api/admin/reliability", admin_routes_reliability.reliability_summary)
 
 
 def _setup_user_routes(app: web.Application) -> None:
@@ -109,7 +111,7 @@ class AdminServer:
         self._app.router.add_get("/", admin_routes.dashboard)
         self._app.router.add_get("/api/sessions", admin_routes.list_sessions)
         _setup_user_routes(self._app)
-        _setup_beta_feedback_routes(self._app)
+        _setup_beta_and_reliability_routes(self._app)
         self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)
         self._app.router.add_get("/api/sessions/{id}/conversation", admin_routes.conversation)
         self._setup_detail_routes()
