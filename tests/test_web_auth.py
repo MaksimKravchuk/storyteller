@@ -298,7 +298,6 @@ def test_public_config_exposes_public_supabase_values_only(client: TestClient) -
     assert response.json() == {
         "supabase_url": "https://example.supabase.co",
         "supabase_publishable_key": "sb_publishable_test_key",
-        "supabase_anon_key": "sb_publishable_test_key",
         "beta_auth_required": True,
         "beta_invite_gate_enabled": True,
     }
@@ -341,5 +340,5 @@ def test_static_shell_includes_auth_controls(client: TestClient) -> None:
     assert "supabase-js" in index_response.text
     assert "sendMagicLink(false)" in script_response.text
     assert "sendMagicLink(true)" in script_response.text
-    assert "cfg.supabase_publishable_key || cfg.supabase_anon_key" in script_response.text
+    assert "cfg.supabase_publishable_key" in script_response.text
     assert "Authorization" in script_response.text
