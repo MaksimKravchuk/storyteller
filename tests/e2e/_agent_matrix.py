@@ -21,21 +21,55 @@ from __future__ import annotations
 
 from fnmatch import fnmatch
 from types import MappingProxyType
-from typing import Iterable, Mapping
+from typing import Iterable, Literal, Mapping
+
+# The closed set of agent keys. Spelt as a ``Literal`` so callers like
+# ``real_llm_for(agent: AgentKey)`` catch typos at type-check time —
+# the failure mode the matrix is otherwise vulnerable to is a typo'd
+# key that silently drops through ``set & known`` filtering and leaves
+# the e2e step empty.
+AgentKey = Literal[
+    "director",
+    "narrator",
+    "scene_builder",
+    "npc_generator",
+    "data_miner",
+    "actor",
+    "dramaturge",
+    "world_chronicler",
+]
+
+# Per-agent key constants. Each string literal lives here once, so the
+# per-agent test-file map, the singleton frozensets below, and any
+# debug/log line all read from a single source — flake8's repeated-literal
+# rule (WPS226) stays satisfied and a rename has one site.
+_KEY_DIRECTOR: AgentKey = "director"
+_KEY_NARRATOR: AgentKey = "narrator"
+_KEY_SCENE_BUILDER: AgentKey = "scene_builder"
+_KEY_NPC_GENERATOR: AgentKey = "npc_generator"
+_KEY_DATA_MINER: AgentKey = "data_miner"
+_KEY_ACTOR: AgentKey = "actor"
+_KEY_DRAMATURGE: AgentKey = "dramaturge"
+_KEY_WORLD_CHRONICLER: AgentKey = "world_chronicler"
 
 # A single (glob, agent-set) rule in the matrix.
 Rule = tuple[str, frozenset[str]]
 
+# Typed as ``Mapping[str, str]`` rather than ``Mapping[AgentKey, str]``
+# because :func:`selected_test_files` validates arbitrary string input;
+# the Literal narrowing happens at the :func:`real_llm_for` boundary
+# instead, and the import-time drift assert in ``_real_llm.py`` catches
+# this dict drifting from ``ALL_AGENTS``.
 AGENT_TO_TEST_FILE: Mapping[str, str] = MappingProxyType(
     {
-        "director": "tests/e2e/test_director_agentic_delegation.py",
-        "narrator": "tests/e2e/test_narrator_real.py",
-        "scene_builder": "tests/e2e/test_scene_builder_real.py",
-        "npc_generator": "tests/e2e/test_npc_generator_real.py",
-        "data_miner": "tests/e2e/test_data_miner_real.py",
-        "actor": "tests/e2e/test_actor_real.py",
-        "dramaturge": "tests/e2e/test_dramaturge_real.py",
-        "world_chronicler": "tests/e2e/test_world_chronicler_real.py",
+        _KEY_DIRECTOR: "tests/e2e/test_director_agentic_delegation.py",
+        _KEY_NARRATOR: "tests/e2e/test_narrator_real.py",
+        _KEY_SCENE_BUILDER: "tests/e2e/test_scene_builder_real.py",
+        _KEY_NPC_GENERATOR: "tests/e2e/test_npc_generator_real.py",
+        _KEY_DATA_MINER: "tests/e2e/test_data_miner_real.py",
+        _KEY_ACTOR: "tests/e2e/test_actor_real.py",
+        _KEY_DRAMATURGE: "tests/e2e/test_dramaturge_real.py",
+        _KEY_WORLD_CHRONICLER: "tests/e2e/test_world_chronicler_real.py",
     },
 )
 
@@ -47,16 +81,16 @@ ALL_AGENTS: frozenset[str] = frozenset(AGENT_TO_TEST_FILE.keys())
 #
 # Per-agent singletons are named constants so the rules table reads as
 # data, not inline ``frozenset`` literals.
-_DIRECTOR: frozenset[str] = frozenset(("director",))
-_NARRATOR: frozenset[str] = frozenset(("narrator",))
-_SCENE_BUILDER: frozenset[str] = frozenset(("scene_builder",))
-_NPC_GENERATOR: frozenset[str] = frozenset(("npc_generator",))
-_DATA_MINER: frozenset[str] = frozenset(("data_miner",))
-_ACTOR: frozenset[str] = frozenset(("actor",))
-_DRAMATURGE: frozenset[str] = frozenset(("dramaturge",))
-_WORLD_CHRONICLER: frozenset[str] = frozenset(("world_chronicler",))
-_NARRATOR_AND_CHRONICLER: frozenset[str] = frozenset(("narrator", "world_chronicler"))
-_ACTOR_AND_DIRECTOR: frozenset[str] = frozenset(("actor", "director"))
+_DIRECTOR: frozenset[str] = frozenset((_KEY_DIRECTOR,))
+_NARRATOR: frozenset[str] = frozenset((_KEY_NARRATOR,))
+_SCENE_BUILDER: frozenset[str] = frozenset((_KEY_SCENE_BUILDER,))
+_NPC_GENERATOR: frozenset[str] = frozenset((_KEY_NPC_GENERATOR,))
+_DATA_MINER: frozenset[str] = frozenset((_KEY_DATA_MINER,))
+_ACTOR: frozenset[str] = frozenset((_KEY_ACTOR,))
+_DRAMATURGE: frozenset[str] = frozenset((_KEY_DRAMATURGE,))
+_WORLD_CHRONICLER: frozenset[str] = frozenset((_KEY_WORLD_CHRONICLER,))
+_NARRATOR_AND_CHRONICLER: frozenset[str] = frozenset((_KEY_NARRATOR, _KEY_WORLD_CHRONICLER))
+_ACTOR_AND_DIRECTOR: frozenset[str] = frozenset((_KEY_ACTOR, _KEY_DIRECTOR))
 
 PATH_TRIGGERS: tuple[Rule, ...] = (
     # ── Cross-cutting: any change here invalidates every agent ──
@@ -78,13 +112,16 @@ PATH_TRIGGERS: tuple[Rule, ...] = (
     (".github/workflows/ci.yml", ALL_AGENTS),
     ("tests/conftest.py", ALL_AGENTS),
     ("tests/base_performer_helpers.py", ALL_AGENTS),
+    # Shared fixture scaffolding for the e2e suite — a change here
+    # can shift behaviour across the matrix.
+    ("tests/director_helpers.py", ALL_AGENTS),
+    ("tests/_uuid_helpers.py", ALL_AGENTS),
     # ── Director ──
     ("cast/director*.py", _DIRECTOR),
     ("cast/schemas/action_plan*.py", _DIRECTOR),
     ("cast/schemas/_action_plan*.py", _DIRECTOR),
     ("cast/schemas/plan_access.py", _DIRECTOR),
     ("prompts/director_prompts*.py", _DIRECTOR),
-    ("tests/director_helpers.py", _DIRECTOR),
     ("tests/e2e/test_director_agentic_delegation.py", _DIRECTOR),
     # ── Narrator (shares turn_outputs schema with WorldChronicler) ──
     ("cast/narrator*.py", _NARRATOR),
@@ -165,6 +202,17 @@ def select_agents(changed_paths: Iterable[str]) -> set[str]:
 
 
 def selected_test_files(agents: Iterable[str]) -> list[str]:
-    """Return the sorted list of e2e test file paths for these agent keys."""
-    known = (agent for agent in agents if agent in AGENT_TO_TEST_FILE)
-    return sorted({AGENT_TO_TEST_FILE[agent] for agent in known})
+    """Return the sorted list of e2e test file paths for these agent keys.
+
+    Raises ``KeyError`` on any unknown agent — silent dropping would let
+    a typo in :data:`PATH_TRIGGERS` (e.g. ``frozenset(("naration",))``)
+    or in ``PYTEST_AGENT_TESTS`` evaporate the e2e step's coverage with
+    no signal.
+    """
+    materialised = list(agents)
+    unknown = sorted(set(materialised) - set(AGENT_TO_TEST_FILE))
+    if unknown:
+        raise KeyError(
+            "Unknown agent keys: {0}. Known: {1}".format(unknown, sorted(AGENT_TO_TEST_FILE)),
+        )
+    return sorted({AGENT_TO_TEST_FILE[agent] for agent in materialised})

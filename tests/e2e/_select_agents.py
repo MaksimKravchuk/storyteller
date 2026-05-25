@@ -9,10 +9,13 @@ The ``PYTEST_AGENT_TESTS`` environment variable overrides the diff:
 
 - ``all``        → every e2e test file
 - ``none``       → no test files (empty stdout)
-- ``a,b,c``      → only those agent keys
+- ``a,b,c``      → only those agent keys (KeyError on unknown tokens)
 - unset / empty  → diff-driven via :func:`select_agents`
 
-Invoke as ``python tests/e2e/_select_agents.py --base origin/main``.
+Invoke as ``python -m tests.e2e._select_agents --base origin/main``.
+The module-form invocation avoids any ``sys.path`` bootstrap and keeps
+``flake8 E402`` clean — direct ``python tests/e2e/_select_agents.py``
+is unsupported.
 """
 
 from __future__ import annotations
@@ -21,16 +24,8 @@ import argparse
 import os
 import subprocess
 import sys
-from pathlib import Path
 
-# Make the package importable when this script is invoked directly from
-# the repo root (e.g. by a CI shell step).
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
-
-from tests.e2e._agent_matrix import (  # noqa: E402  (import after sys.path tweak)
-    AGENT_TO_TEST_FILE,
+from tests.e2e._agent_matrix import (
     ALL_AGENTS,
     select_agents,
     selected_test_files,
@@ -47,9 +42,16 @@ def _changed_paths(base: str) -> list[str]:
 
 
 def _parse_csv_override(override: str) -> set[str]:
-    """Return the agent keys in a comma-separated override, dropping unknowns."""
-    tokens = (token.strip() for token in override.split(","))
-    return {token for token in tokens if token in AGENT_TO_TEST_FILE}
+    """Return the agent keys in ``override`` (comma-separated).
+
+    Returned as ``set[str]`` rather than ``set[AgentKey]`` because the
+    Literal narrowing can't be expressed without a runtime cast and the
+    project forbids ``# type: ignore``. ``selected_test_files`` raises
+    ``KeyError`` on any unknown key, so a typo in
+    ``PYTEST_AGENT_TESTS=narator,actor`` still fails the CI step loudly
+    rather than silently selecting only ``actor``.
+    """
+    return {token.strip() for token in override.split(",") if token.strip()}
 
 
 def _resolve_agents(override: str, base: str) -> set[str]:
@@ -61,7 +63,7 @@ def _resolve_agents(override: str, base: str) -> set[str]:
         return set()
     if normalised:
         return _parse_csv_override(normalised)
-    return select_agents(_changed_paths(base))
+    return set(select_agents(_changed_paths(base)))
 
 
 def main() -> int:

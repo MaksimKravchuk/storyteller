@@ -52,7 +52,8 @@ class TestNarratorRealModel:
         # Register Quintus both as an NPCCard in game_state.npcs (so the
         # alias resolver can look him up) and on the player's known list
         # (so the gate emits his proper name rather than a "the steward"
-        # placeholder). Production wires both up in DirectorExecution.
+        # placeholder). Production wires both up through
+        # ``cast.director_execution.PlanExecutor`` during the turn flow.
         quintus = npc_mod.NPCCard(name=_NPC_NAME, occupation="steward")
         quintus.uuid = _QUINTUS_ID
         game_state.npcs[_QUINTUS_ID] = quintus

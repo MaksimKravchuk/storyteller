@@ -19,19 +19,21 @@ import pytest
 
 import config as config_mod
 from llm import factory as llm_factory
+from tests.e2e._agent_matrix import ALL_AGENTS, AgentKey
 
 if TYPE_CHECKING:
     from llm.base_client import BaseLLMClient
 
-# The four agents not in this set share the catch-all ``agent_model`` knob.
+# Performers without a dedicated ``*_model`` knob share this catch-all.
 _AGENT_MODEL_ATTR = "agent_model"
 
 # Maps an agent key (also used by the dependency matrix and the test-file
 # naming convention) to the attribute on :class:`config.Config` that
-# names its model. Director/Narrator/Dramaturge have dedicated knobs; the
-# remaining four performers share ``agent_model`` because that is how
-# :mod:`engine.factory` wires them today.
-AGENT_TO_MODEL_ATTR: Mapping[str, str] = MappingProxyType(
+# names its model. Director/Narrator/Dramaturge have dedicated knobs;
+# the remaining performers share ``agent_model``, which is the model
+# :mod:`engine.engine_wiring` uses for everything except the Director's
+# own router LLM.
+AGENT_TO_MODEL_ATTR: Mapping[AgentKey, str] = MappingProxyType(
     {
         "director": "director_model",
         "narrator": "narrator_model",
@@ -44,8 +46,18 @@ AGENT_TO_MODEL_ATTR: Mapping[str, str] = MappingProxyType(
     },
 )
 
+# Drift guard: the two key sets MUST stay in lockstep. Without this,
+# adding an agent in one map and forgetting the other type-checks
+# silently and shows up only as a runtime ``KeyError`` deep in CI.
+assert AGENT_TO_MODEL_ATTR.keys() == ALL_AGENTS, (
+    "AGENT_TO_MODEL_ATTR keys drifted from ALL_AGENTS: missing={0}, extra={1}".format(
+        ALL_AGENTS - AGENT_TO_MODEL_ATTR.keys(),
+        AGENT_TO_MODEL_ATTR.keys() - ALL_AGENTS,
+    )
+)
 
-def real_llm_for(agent: str) -> "BaseLLMClient":
+
+def real_llm_for(agent: AgentKey) -> "BaseLLMClient":
     """Create the configured LLM client for ``agent``, or ``pytest.skip`` it.
 
     The skip message names which environment variable to set so a missing

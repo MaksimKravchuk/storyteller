@@ -170,8 +170,25 @@ jobs:
           # the actual diff.
           PYTEST_AGENT_TESTS: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'all' || '' }}
         run: |
-          BASE_REF="${{ github.event.pull_request.base.sha || 'HEAD^' }}"
-          SELECTED=$(uv run python tests/e2e/_select_agents.py --base "$BASE_REF")
+          set -euo pipefail
+          # PRs diff against the merge-base (``pull_request.base.sha``).
+          # Push events diff against ``github.event.before`` so a
+          # multi-commit push isn't reduced to "the last commit only".
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_REF="${{ github.event.before || 'HEAD^' }}"
+          fi
+          if [ -z "$BASE_REF" ]; then
+            echo "::error title=Selector base ref missing::cannot diff without a base SHA"
+            exit 1
+          fi
+          # Fail loud if the selector script itself crashes — a silent
+          # empty stdout would be indistinguishable from "no e2e needed".
+          if ! SELECTED=$(uv run python -m tests.e2e._select_agents --base "$BASE_REF"); then
+            echo "::error title=Selector failed::tests/e2e/_select_agents.py exited non-zero"
+            exit 1
+          fi
           echo "selected=$SELECTED" >> "$GITHUB_OUTPUT"
           if [ -z "$SELECTED" ]; then
             echo "No agent-relevant files changed; e2e step will be skipped."
@@ -179,6 +196,18 @@ jobs:
             echo "Selected e2e files:"
             for f in $SELECTED; do echo "  - $f"; done
           fi
+
+      - name: Preflight — assert real-LLM secrets are present
+        if: steps.select.outputs.selected != ''
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # A missing or rotated secret would otherwise cause
+          # ``real_llm_for`` to ``pytest.skip`` every test and the e2e
+          # step would pass green with zero real-LLM coverage. Fail loud.
+          : "${OPENAI_API_KEY:?OPENAI_API_KEY secret is required for the e2e job}"
+          : "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY secret is required for the e2e job}"
 
       - name: Run e2e tests
         if: steps.select.outputs.selected != ''
