@@ -959,6 +959,18 @@ wheels = [
 ]
 
 [[package]]
+name = "hypothesis"
+version = "6.152.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sortedcontainers" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/de/c8/857f2a57812b22d14c4615e7c7e5b5b8808e7b0a6a330ffab0eaad15a91c/hypothesis-6.152.10.tar.gz", hash = "sha256:313245552fcdfbc9a37787293eda783da18c2baac280626c922b2c7fd2aa1e26", size = 471995, upload-time = "2026-05-25T20:31:24.492Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/8c/2ad9a273f80550b08cbe2a94e7816a09488dcf1e0e4b450a50d39f8d7497/hypothesis-6.152.10-py3-none-any.whl", hash = "sha256:7479246f2ea941d0f82fdc64fd17397f35d951a4253597cac9fc69eda93a4ea8", size = 538155, upload-time = "2026-05-25T20:31:22.423Z" },
+]
+
+[[package]]
 name = "identify"
 version = "2.6.18"
 source = { registry = "https://pypi.org/simple" }
@@ -2027,6 +2039,15 @@ wheels = [
 ]
 
 [[package]]
+name = "sortedcontainers"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594, upload-time = "2021-05-16T22:03:42.897Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
+]
+
+[[package]]
 name = "sqlalchemy"
 version = "2.0.48"
 source = { registry = "https://pypi.org/simple" }
@@ -2142,6 +2163,7 @@ dev = [
     { name = "allure-pytest" },
     { name = "flake8" },
     { name = "httpx" },
+    { name = "hypothesis" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -2186,6 +2208,7 @@ dev = [
     { name = "allure-pytest", specifier = ">=2.13" },
     { name = "flake8", specifier = ">=7.3.0" },
     { name = "httpx", specifier = ">=0.27" },
+    { name = "hypothesis", specifier = ">=6.0" },
     { name = "mypy", specifier = ">=1.0" },
     { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "pytest", specifier = ">=7.0" },
