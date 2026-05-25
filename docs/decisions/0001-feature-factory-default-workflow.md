@@ -44,7 +44,7 @@ Rejected because: the plugin agents are generic; the storyteller-specific risk c
 
 Add a PreToolUse hook on `Edit/Write/MultiEdit` that denies the first edit in production directories per session until `/feature-factory` has run. Strongest form of "default."
 
-Rejected because: the repo already has four PR-time skill gates (simplify, pr-review-toolkit, decision-records, prompt-audit) plus three other Bash gates (require-prompt-audit, check-git-push, protect-migrations). Stacking another universal pre-edit gate would compress to noise and habituate retry-to-bypass on every session start. Documentation + slash command is the lightest defaulting that still names the workflow; the existing PR-time validator chain catches whatever the upstream chain misses.
+Rejected because: the repo already has four PR-time gates (`require-skill simplify` on `git commit`, `require-skill pr-review-toolkit_review-pr` on `gh pr create`, `require-skill decision-records` on `gh pr create`, `require-prompt-audit.sh` on `gh pr create`) plus three other Bash gates (`block-secrets.sh` on `git commit` — this PR, `check-git-push.sh` on `git push`, `protect-migrations.sh` on Edit/Write to committed Alembic revisions). Stacking another universal pre-edit gate would compress to noise and habituate retry-to-bypass on every session start. Documentation + slash command is the lightest defaulting that still names the workflow; the existing PR-time validator chain catches whatever the upstream chain misses.
 
 ### Alternative 3: Status quo (main session plays all roles)
 
