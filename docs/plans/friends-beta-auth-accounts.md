@@ -69,7 +69,7 @@ Migration policy:
 Update `config.py` and `.env.example` with non-secret placeholders:
 
 - `SUPABASE_URL`: public project URL, e.g. `https://<project-ref>.supabase.co`.
-- `SUPABASE_ANON_KEY`: public browser key used by `supabase-js`; safe to expose but still do not hard-code real values.
+- `SUPABASE_PUBLISHABLE_KEY`: public browser key (format `sb_publishable_*`) used by `supabase-js`; safe to expose but do not hard-code real values. Legacy `SUPABASE_ANON_KEY` / `SUPABASE_KEY` are still accepted as fallbacks in `Config.public_supabase_key` for local dev.
 - `SUPABASE_JWKS_URL`: optional override; default derived as `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`.
 - `SUPABASE_JWT_AUDIENCE`: default `authenticated`.
 - `SUPABASE_JWT_ISSUER`: optional override; default `{SUPABASE_URL}/auth/v1`.
