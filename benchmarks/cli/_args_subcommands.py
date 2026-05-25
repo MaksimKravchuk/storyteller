@@ -76,6 +76,16 @@ def _register_calibrate_parser(sub: argparse._SubParsersAction) -> None:
         default=None,
         help="Cap panel size (defaults to harness-wide maximum).",
     )
+    calibrate_cmd.add_argument(
+        "--compare-to-baselines",
+        action="store_true",
+        default=False,
+        help=(
+            "After calibrating, compare new stdev values against the previous "
+            ".calibration.json and print a drift table. Exits with code 1 when "
+            "any scenario drifts >=50%%."
+        ),
+    )
 
 
 def _register_reliability_report_parser(sub: argparse._SubParsersAction) -> None:

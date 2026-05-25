@@ -1,0 +1,66 @@
+name: Monthly noise-floor recalibration
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+jobs:
+  recalibrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python via uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --group dev --extra openai --extra anthropic
+
+      - name: Run calibration with drift comparison
+        id: calibrate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set +e
+          uv run python -m benchmarks calibrate --iterations 5 --max-judges 3 --compare-to-baselines > calibration_output.txt 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat calibration_output.txt
+
+      - name: File drift alert issue
+        if: steps.calibrate.outputs.exit_code == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY=$(cat calibration_output.txt)
+          gh issue create \
+            --title "noise floor drift detected ($(date -u '+%Y-%m-%d'))" \
+            --body "## Noise-floor drift alert
+
+Calibration detected ≥50% stdev drift in at least one scenario.
+
+\`\`\`
+${BODY}
+\`\`\`
+
+Re-run \`benchmarks calibrate\` locally and investigate before merging new benchmarks." \
+            --label "benchmarks"
+
+      - name: Archive calibration JSON
+        if: steps.calibrate.outputs.exit_code == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: calibration-${{ github.run_id }}
+          path: benchmarks/baselines/.calibration.json
+          if-no-files-found: warn
+
+      - name: Fail job on drift
+        if: steps.calibrate.outputs.exit_code == '1'
+        run: exit 1

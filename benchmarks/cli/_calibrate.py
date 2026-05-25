@@ -10,7 +10,10 @@ Calibrate is intentionally opt-in (CLI-only, never on CI) — it hits paid LLMs.
 from __future__ import annotations
 
 import argparse
+import sys
 
+from benchmarks.cli._calibrate_drift import compute_drift_table, format_drift_table, has_drift_alert
+from benchmarks.cli._calibrate_io import CalibrationEntry, read_calibration
 from benchmarks.cli._calibrate_persist import CalibrationResult, persist_calibration
 from benchmarks.cli._jobs import RunContext, build_context, expand_jobs
 from benchmarks.harness.aggregate import aggregate_reports
@@ -63,11 +66,23 @@ def build_calibration_results(reports: list[ScenarioReport], ctx: RunContext) ->
     ]
 
 
+def _report_drift(
+    old_entries: dict[str, CalibrationEntry],
+    calibration_results: list[CalibrationResult],
+) -> int:
+    """Compare old calibration entries against fresh results; return exit code."""
+    drift_rows = compute_drift_table(old_entries, calibration_results)
+    sys.stdout.write(format_drift_table(drift_rows))
+    return 1 if has_drift_alert(drift_rows) else 0
+
+
 async def calibrate_command(args: argparse.Namespace) -> int:
     """Execute the ``calibrate`` subcommand."""
     ctx = build_context(args)
-    jobs = expand_jobs(args)
-    reports = await _run_scenarios(jobs, ctx)
+    old_entries = read_calibration() if args.compare_to_baselines else {}
+    reports = await _run_scenarios(expand_jobs(args), ctx)
     calibration_results = build_calibration_results(reports, ctx)
     persist_calibration(calibration_results)
+    if args.compare_to_baselines:
+        return _report_drift(old_entries, calibration_results)
     return 0

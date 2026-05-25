@@ -221,12 +221,59 @@ class TestRunScenariosMocked:
         )
 
         exit_code = await _calibrate.calibrate_command(
-            argparse.Namespace(iterations=3, scenario=None, judges=None, max_judges=None),
+            argparse.Namespace(
+                iterations=3,
+                scenario=None,
+                judges=None,
+                max_judges=None,
+                compare_to_baselines=False,
+            ),
         )
 
         assert exit_code == 0
         payload = json.loads(_calibrate_io.calibration_path().read_text(encoding="utf-8"))
         assert "memory" in payload
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Benchmark harness")
+class TestCalibrateCommandDriftIntegration:
+    @pytest.mark.asyncio
+    @allure.story("Calibrate")
+    @allure.title("calibrate_command reads old calibration before persisting, returns 1 on drift")
+    async def test_compare_to_baselines_detects_drift(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.setattr(baselines, "baselines_dir", lambda: tmp_path)
+        _calibrate_io.write_calibration(
+            {
+                "memory": _calibrate_io.CalibrationEntry(
+                    mean=7.0,
+                    stdev=2.0,
+                    iterations=3,
+                    engine_git_sha="deadbee1",
+                    models={},
+                ),
+            }
+        )
+        monkeypatch.setattr("benchmarks.cli._calibrate.run_scenario_once", _RecordingRunner([]))
+        monkeypatch.setattr("benchmarks.cli._calibrate.build_context", lambda args: _ctx())
+        sentinel = type("Stub", (), {"id": "memory"})()
+        monkeypatch.setattr(
+            "benchmarks.cli._calibrate.expand_jobs",
+            lambda args: [(sentinel, 0), (sentinel, 1), (sentinel, 2)],
+        )
+
+        exit_code = await _calibrate.calibrate_command(
+            argparse.Namespace(
+                iterations=3,
+                scenario=None,
+                judges=None,
+                max_judges=None,
+                compare_to_baselines=True,
+            ),
+        )
+
+        assert exit_code == 1
+        assert "YES" in capsys.readouterr().out
 
 
 @allure.epic("Engine & LLM Infrastructure")
