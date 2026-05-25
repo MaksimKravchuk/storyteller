@@ -322,11 +322,12 @@
     authRequired = Boolean(cfg.beta_auth_required);
     if (!authRequired) return;
     if (els.authPanel) show(els.authPanel);
-    if (!(cfg.supabase_url && cfg.supabase_anon_key && window.supabase)) {
+    const supabaseBrowserKey = cfg.supabase_publishable_key || cfg.supabase_anon_key;
+    if (!(cfg.supabase_url && supabaseBrowserKey && window.supabase)) {
       setStatus(els.authStatus, "Login is not configured for this deployment yet.");
       return;
     }
-    supabaseClient = window.supabase.createClient(cfg.supabase_url, cfg.supabase_anon_key);
+    supabaseClient = window.supabase.createClient(cfg.supabase_url, supabaseBrowserKey);
     const { data } = await supabaseClient.auth.getSession();
     const signedIn = Boolean(data && data.session);
     if (els.loginForm) els.loginForm.hidden = signedIn;

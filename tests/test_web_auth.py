@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Any, Iterator
 from unittest import mock
 
 import allure
@@ -40,7 +40,7 @@ def auth_cfg() -> Config:
         beta_auth_required=True,
         beta_invite_gate_enabled=True,
         supabase_url="https://example.supabase.co",
-        supabase_anon_key="public-anon-key",
+        supabase_publishable_key="sb_publishable_test_key",
         supabase_jwks_url="https://example.supabase.co/auth/v1/.well-known/jwks.json",
         supabase_jwt_issuer="https://example.supabase.co/auth/v1",
     )
@@ -297,12 +297,30 @@ def test_public_config_exposes_public_supabase_values_only(client: TestClient) -
     assert response.status_code == _HTTP_OK
     assert response.json() == {
         "supabase_url": "https://example.supabase.co",
-        "supabase_anon_key": "public-anon-key",
+        "supabase_publishable_key": "sb_publishable_test_key",
+        "supabase_anon_key": "sb_publishable_test_key",
         "beta_auth_required": True,
         "beta_invite_gate_enabled": True,
     }
     assert "jwks" not in response.text.lower()
     assert "issuer" not in response.text.lower()
+
+
+@allure.story("Runtime public config")
+@allure.title("Config resolves browser Supabase key from modern, legacy, or Fly secret names")
+@pytest.mark.parametrize(
+    ("config_kwargs", "expected"),
+    [
+        ({"supabase_publishable_key": "sb_publishable_test_key"}, "sb_publishable_test_key"),
+        ({"supabase_anon_key": "legacy-anon-key"}, "legacy-anon-key"),
+        ({"supabase_key": "fly-existing-key"}, "fly-existing-key"),
+    ],
+)
+def test_public_supabase_key_supports_modern_legacy_and_fly_secret_names(
+    config_kwargs: dict[str, Any],
+    expected: str,
+) -> None:
+    assert Config(**config_kwargs).public_supabase_key == expected
 
 
 @allure.story("Static shell")
@@ -323,4 +341,5 @@ def test_static_shell_includes_auth_controls(client: TestClient) -> None:
     assert "supabase-js" in index_response.text
     assert "sendMagicLink(false)" in script_response.text
     assert "sendMagicLink(true)" in script_response.text
+    assert "cfg.supabase_publishable_key || cfg.supabase_anon_key" in script_response.text
     assert "Authorization" in script_response.text

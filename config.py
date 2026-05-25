@@ -78,7 +78,9 @@ class Config(BaseSettings):
 
     # Supabase Auth / beta gate. Defaults preserve local anonymous-cookie mode.
     supabase_url: str | None = None
+    supabase_publishable_key: str | None = None
     supabase_anon_key: str | None = None
+    supabase_key: str | None = None
     supabase_jwks_url: str | None = None
     supabase_jwt_audience: str = "authenticated"
     supabase_jwt_issuer: str | None = None
@@ -94,6 +96,11 @@ class Config(BaseSettings):
     beta_max_active_games: int = Field(default=3, ge=0)
     beta_global_budget_usd: str = "50"
     model_pricing_json: str | None = None
+
+    @property
+    def public_supabase_key(self) -> str | None:
+        """Return the browser-safe Supabase key, preferring modern naming."""
+        return self.supabase_publishable_key or self.supabase_anon_key or self.supabase_key
 
 
 def load_config() -> Config:

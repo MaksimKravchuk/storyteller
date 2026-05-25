@@ -29,9 +29,11 @@ CurrentUserDep = Annotated[AuthenticatedUser, Depends(current_user)]
 @router.get("/api/config/public")
 async def get_public_config(cfg: CfgDep) -> dict[str, str | bool | None]:
     """Return public browser config; never include server-side JWT settings."""
+    public_supabase_key = cfg.public_supabase_key
     return {
         "supabase_url": cfg.supabase_url,
-        "supabase_anon_key": cfg.supabase_anon_key,
+        "supabase_publishable_key": public_supabase_key,
+        "supabase_anon_key": public_supabase_key,
         "beta_auth_required": cfg.beta_auth_required,
         "beta_invite_gate_enabled": cfg.beta_invite_gate_enabled,
     }
