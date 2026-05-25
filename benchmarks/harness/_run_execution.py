@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
+from benchmarks.harness import _reliability_capture as reliability_capture
 from benchmarks.harness.scoring import score_scenario
 from benchmarks.harness.snapshots import snapshot
 from benchmarks.harness.transcript import NarratorCapture
@@ -14,8 +15,12 @@ from benchmarks.harness.types._captures import CapturedTurn
 from engine.factory import create_engine_from_state
 
 if TYPE_CHECKING:
-    from benchmarks.harness.types._scenarios import Scenario, ScenarioState
-    from benchmarks.harness.types._scores import ElementScore, PanelMember
+    from benchmarks.harness.types import _scenarios, _scores
+
+    Scenario = _scenarios.Scenario
+    ScenarioState = _scenarios.ScenarioState
+    ElementScore = _scores.ElementScore
+    PanelMember = _scores.PanelMember
 
 
 @dataclass(frozen=True)
@@ -26,6 +31,7 @@ class _ExecutionResult:
     captured_turns: list[CapturedTurn]
     started_at: str
     duration_seconds: float
+    reliability_counts: dict[str, dict[str, int]]
 
 
 async def _prepare_engine(
@@ -104,7 +110,13 @@ async def _run_script(
     scenario: Scenario,
     cfg: Any,
 ) -> tuple[list[CapturedTurn], list[Any]]:
-    """Build the engine, restore state, drive every scripted turn."""
+    """Build the engine, restore state, drive every scripted turn.
+
+    Resets the reliability counters before the script runs so the
+    snapshot captured by :func:`execute_scenario` reflects only this
+    scenario's silent fallbacks and validation retries.
+    """
+    reliability_capture.reset_for_scenario()
     scenario_state = scenario.build_state()
     engine, capture = await _prepare_engine(cfg, scenario_state)
     return await _drive_turns(engine, capture, scenario, scenario_state)
@@ -125,4 +137,5 @@ async def execute_scenario(
         captured_turns=turns,
         started_at=started_at,
         duration_seconds=time.monotonic() - run_start,
+        reliability_counts=reliability_capture.collect_reliability_counts(),
     )

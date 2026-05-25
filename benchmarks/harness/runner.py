@@ -72,4 +72,5 @@ def _build_report(
         engine_models=_engine_model_summary(options.cfg),
         started_at=execution.started_at,
         duration_seconds=execution.duration_seconds,
+        reliability_counts=execution.reliability_counts,
     )

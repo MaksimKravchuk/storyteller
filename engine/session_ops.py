@@ -9,12 +9,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from cast import _reliability_metrics as reliability_metrics
 from config import Config
 from engine.factory import create_engine, create_engine_from_state
 from engine.game_engine import GameEngine
 from engine.model_overrides import load_role_overrides
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
-from llm.turn_event_logger import get_and_clear_events, reset_events
+from llm.turn_event_logger import get_and_clear_events, record_turn_event, reset_events
 
 if TYPE_CHECKING:
     from db.repository import GameRepository
@@ -38,6 +39,7 @@ async def persist_engine_state(
             user_id=user_id,
             game_state_id=_game_state_id(game_state),
         )
+    _flush_reliability_snapshot()
     turn_events = get_and_clear_events()
     if turn_events:
         await repo.turn_events.save(
@@ -46,6 +48,37 @@ async def persist_engine_state(
             turn_number=turn_number,
             scene_number=game_state.scene_number,
         )
+
+
+def _flush_reliability_snapshot() -> None:
+    """Append the turn's reliability counters to the turn-event buffer.
+
+    Counters are persisted via the existing ``turn_events`` channel
+    (no DB migration) — the ``ai_call_logs`` table has only typed
+    columns, so the ``turn_events.payload`` JSONB column is the
+    natural piggyback target for arbitrary per-turn metering blobs.
+    No-op when no counters were recorded this turn so we don't pollute
+    the event stream on quiet turns.
+    """
+    counters = reliability_metrics.snapshot_counters()
+    if not counters:
+        return
+    record_turn_event(
+        "reliability_snapshot",
+        {"counters": _serialise_counters(counters)},
+    )
+
+
+_CounterMap = dict[tuple[str, str], int]
+_CounterRow = dict[str, object]
+
+
+def _serialise_counters(counters: _CounterMap) -> list[_CounterRow]:
+    """Render counter map as a JSON-safe list of records."""
+    return [
+        {"agent": agent, "event_type": event_type, "count": count}
+        for (agent, event_type), count in sorted(counters.items())
+    ]
 
 
 def _game_state_id(game_state: object) -> str | None:
@@ -61,6 +94,7 @@ def _bind_session_buffers(session_id: str) -> None:
     current_session_id.set(session_id)
     reset_buffer()
     reset_events()
+    reliability_metrics.reset_counters()
 
 
 async def begin_session(

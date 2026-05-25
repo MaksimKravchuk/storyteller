@@ -10,6 +10,7 @@ from typing import Any, TypeVar, overload
 from cast._performer_retry import (
     RetryContext as _RetryContext,
     _strip_markdown_fence,
+    record_validation_retry,
     validate_strict_json,
     validate_strict_retry_json,
 )
@@ -116,6 +117,7 @@ async def _retry_after_validation_failure(
         ctx.retries + 1,
         errors_preview,
     )
+    record_validation_retry(type(performer).__name__, ctx.attempt + 1)
     if ctx.attempt >= ctx.retries:
         raise LLMJSONError(
             "Agent failed schema validation after {0} attempts. Errors: {1}".format(

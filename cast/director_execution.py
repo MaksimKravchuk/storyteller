@@ -16,6 +16,7 @@ from cast import (
     director_witness,
     npc_ticker as npc_ticker_mod,
 )
+from cast import _reliability_metrics as reliability_metrics
 from cast.constants import SCENE_CHANGING_ACTIONS, TURN_COUNTING_ACTIONS
 from cast.schemas import (
     chronicler_response as chronicler_schema,
@@ -23,9 +24,10 @@ from cast.schemas import (
     turn_outputs,
 )
 from loguru import logger
-from models import world_state as world_state_mod
-from models.game_state import GameState
+from models import game_state as game_state_mod, world_state as world_state_mod
 from timeline import event as event_mod, event_manager as event_manager_mod
+
+GameState = game_state_mod.GameState
 
 GameEvent = event_mod.GameEvent
 EventManager = event_manager_mod.EventManager
@@ -335,6 +337,7 @@ class PlanExecutor:
             raise
         except Exception:
             logger.exception("Dramaturge execute() raised unexpectedly; returning raw Narrator output")
+            reliability_metrics.record_fallback("director", "dramaturge_execute")
             return narration
 
     async def _advance_world_state(
@@ -653,6 +656,7 @@ class PlanExecutor:
                 getattr(outgoing_scene, "location_id", None),
                 len(self._gs.scene_action_log),
             )
+            reliability_metrics.record_fallback("director", "scene_consolidation")
 
     async def _examine_items(self, targets: list[str], player_action: str) -> list[str]:
         """Examine items from scene or NPC inventories via the ItemGenerator."""
