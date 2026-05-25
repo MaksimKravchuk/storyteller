@@ -8,12 +8,11 @@ from unittest import mock
 import allure
 import pytest
 
-import config as config_mod
 from cast import director as director_mod
 from knowledge import memory as memory_mod
-from llm import factory as llm_factory
 from models import npc_card as npc_mod, scene as scene_mod
 from tests import _uuid_helpers as uuid_helpers, actor_helpers, director_helpers
+from tests.e2e._real_llm import real_llm_for
 from timeline import event_manager as event_manager_mod
 
 _GUARD_ID = uuid_helpers.make_uuid("agentic-guard")
@@ -23,20 +22,10 @@ _KEY_NPC_GENERATOR = "npc_generator"
 _KEY_NARRATOR = "narrator"
 
 
-def _real_director_llm():
-    """Create the configured Director LLM client, or skip when credentials are absent."""
-    config = config_mod.load_config()
-    model_config = config_mod.resolve_model_config(config.director_model)
-    api_key = config_mod.get_api_key_for_provider(model_config.provider, config)
-    if not api_key:
-        pytest.skip("No Director LLM API key configured — skipping real-model delegation smoke test")
-    return llm_factory.create_llm_client(model_config, api_key=api_key)
-
-
 def _make_spy_director(game_state, cast):
     """Build a Director with a real router LLM and mocked performer agents."""
     return director_mod.Director(
-        llm_client=_real_director_llm(),
+        llm_client=real_llm_for("director"),
         game_state=game_state,
         event_manager=event_manager_mod.EventManager(game_state=game_state, knowledge_graph=game_state.knowledge_graph),
         memory_manager=mock.MagicMock(spec=memory_mod.MemoryManager),
