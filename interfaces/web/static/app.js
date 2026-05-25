@@ -322,7 +322,7 @@
     authRequired = Boolean(cfg.beta_auth_required);
     if (!authRequired) return;
     if (els.authPanel) show(els.authPanel);
-    const supabaseBrowserKey = cfg.supabase_publishable_key || cfg.supabase_anon_key;
+    const supabaseBrowserKey = cfg.supabase_publishable_key;
     if (!(cfg.supabase_url && supabaseBrowserKey && window.supabase)) {
       setStatus(els.authStatus, "Login is not configured for this deployment yet.");
       return;
