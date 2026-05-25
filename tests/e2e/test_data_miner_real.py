@@ -33,11 +33,19 @@ _MEDICI_SUMMARY = (
 
 
 async def _fake_get_summary(term: str) -> dict[str, str]:
-    """Return a canned Florence/Medici summary keyed by case-insensitive substring."""
+    """Return a canned Florence/Medici summary keyed by case-insensitive substring.
+
+    Unmatched terms (e.g. "Guelphs and Ghibellines", which the LLM
+    legitimately picks alongside the primary entities) get an empty
+    placeholder rather than an exception — the test's loud-failure
+    signal lives in the call-args assertion of
+    ``test_real_model_surfaces_wikipedia_fact``, which proves at least
+    one Florence/Medici/Lorenzo term hit the mock.
+    """
     lower = term.lower()
     if "medici" in lower or "lorenzo" in lower:
         return {"title": _DISTINCTIVE_NAME, "summary": _MEDICI_SUMMARY}
-    if "florence" in lower or "florentine" in lower or "italy" in lower:
+    if "florence" in lower or "florentine" in lower or "italy" in lower or "renaissance" in lower:
         return {"title": "Florence", "summary": _FLORENCE_SUMMARY}
     return {"title": term, "summary": "(no detail available)"}
 
@@ -62,13 +70,25 @@ class TestDataMinerRealModel:
     @allure.title("A real DataMiner model surfaces a mocked Wikipedia fact in the final Setting")
     @pytest.mark.asyncio
     async def test_real_model_surfaces_wikipedia_fact(self):
+        wiki = _mock_wikipedia_with_florence()
         miner = DataMiner(
             llm_client=real_llm_for("data_miner"),
-            wikipedia_client=_mock_wikipedia_with_florence(),
+            wikipedia_client=wiki,
             language="English",
         )
 
         setting = await miner.act("Medieval Florence in the 1480s during Lorenzo de Medici's rule.")
+
+        # Independent proof the DataMiner actually consulted the mock
+        # for a Lorenzo-bearing term — pins the failure mode "research
+        # call skipped entirely" to a distinct assertion from the
+        # downstream haystack check.
+        called_terms = [call.args[0].lower() for call in wiki.get_summary.call_args_list]
+        assert any("lorenzo" in term or "medici" in term or "florence" in term for term in called_terms), (
+            "DataMiner did not query Wikipedia for any Florence/Medici/Lorenzo term; called: {0}".format(
+                called_terms,
+            )
+        )
 
         assert isinstance(setting, Setting)
         assert setting.name.strip(), "Setting has empty name"

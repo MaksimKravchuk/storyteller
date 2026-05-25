@@ -12,18 +12,22 @@ from __future__ import annotations
 import allure
 import pytest
 
-from cast.scene_builder import SceneBuilder
+from cast.scene_builder import _GENERIC_SOCIAL_ROLES, SceneBuilder
 from models.scene import Scene, SceneNPC
 from tests import director_helpers
 from tests.e2e._real_llm import real_llm_for
 
 _LANDMARK_KEYWORDS = ("lighthouse", "pharos")
+# These two strings are crafted to match production's marker tuples in
+# ``cast/scene_builder.py``: ``_OPENING_ACTION_MARKERS`` ("look around")
+# and ``_SOCIAL_PREMISE_MARKERS`` ("investigation", "witnesses",
+# "rumor"). Without the markers the deterministic Aurelia fallback
+# never fires and the test silently depends on the LLM alone.
 _SOCIAL_PREMISE = (
-    "Players must investigate a missing senator by speaking to witnesses, "
-    "checking alibis and chasing rumours in the city."
+    "Players must investigate a missing senator by questioning witnesses, "
+    "checking alibis and chasing rumors in the city."
 )
-_SOCIAL_OPENING_ACTION = "I begin my investigation in the marketplace, asking around for any leads."
-_GENERIC_SOCIAL_ROLES = {"bystander", "passerby", "merchant", "stallholder", "citizen"}
+_SOCIAL_OPENING_ACTION = "I look around the marketplace to begin my investigation."
 
 
 @allure.epic("AI Agent Orchestration")

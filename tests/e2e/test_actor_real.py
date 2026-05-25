@@ -71,7 +71,11 @@ _NPC_TURN_PROMPT = (
     "Decide what you do this turn while a stranger is loitering near the city gate at night. "
     "Respond with the action JSON only."
 )
-_ALLOWED_ACTION_TYPES = {"MOVE", "ATTACK", "TALK", "IDLE", "INTERACT", "GUARD", "FLEE", "INVESTIGATE"}
+# The enum the actor system prompt documents at
+# ``prompts/actor_prompts.py:161``. Must be kept in sync if the prompt
+# vocabulary changes — a prompt drift this test should catch is exactly
+# the model emitting a new type the assertion would mark as a violation.
+_ALLOWED_ACTION_TYPES = frozenset(("ATTACK", "TALK", "MOVE", "IDLE", "STEALTH", "PERSUADE", "DECEIVE", "INTIMIDATE"))
 
 
 def _empty_query_engine() -> KnowledgeQueryEngine:
@@ -132,7 +136,10 @@ class TestActorRealModel:
         # keys. Failure mode this catches: the action system-prompt swap
         # not taking effect, so the model returns the dialogue envelope
         # shape instead.
-        payload = json.loads(reply.text)
+        try:
+            payload = json.loads(reply.text)
+        except json.JSONDecodeError as exc:
+            pytest.fail(f"NPC-turn actor returned non-JSON text: {reply.text!r} (decode error: {exc})")
         assert {"action", "type", "target"}.issubset(payload.keys()), (
             "Action JSON missing required keys; got: {0!r}".format(payload)
         )
