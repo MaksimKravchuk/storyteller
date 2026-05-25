@@ -44,17 +44,23 @@ def _make_setting() -> Setting:
 
 
 def _make_forum() -> Location:
-    return Location(
+    forum = Location(
         name="Forum Romanum",
         description=_FORUM_DESCRIPTION,
         location_type="plaza",
         tags=["public", "political", "outdoor"],
         points_of_interest=[PointOfInterest(names=[name]) for name in FORUM_POIS],
     )
+    # Pin the UUID so ``elements.py`` can look the location up by the
+    # ``FORUM_UUID`` constant after the engine has stepped the scenario;
+    # the default ``uuid4()`` factory would let the random key drift away
+    # from the constant and silently make every Forum-keyed check miss.
+    forum.uuid = FORUM_UUID
+    return forum
 
 
 def _make_vicus() -> Location:
-    return Location(
+    vicus = Location(
         name="Vicus Tuscus",
         description=_VICUS_TUSCUS_DESCRIPTION,
         location_type="street",
@@ -64,6 +70,8 @@ def _make_vicus() -> Location:
             PointOfInterest(names=["fish-sauce booth"]),
         ],
     )
+    vicus.uuid = VICUS_TUSCUS_UUID
+    return vicus
 
 
 def _make_initial_scene(location_id: UUID) -> Scene:

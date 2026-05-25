@@ -44,7 +44,7 @@ def _make_setting() -> Setting:
 
 
 def _make_location() -> Location:
-    return Location(
+    location = Location(
         name="Temple of Vesta market plaza",
         description=_LOCATION_DESCRIPTION,
         location_type="plaza",
@@ -55,6 +55,10 @@ def _make_location() -> Location:
             PointOfInterest(names=["fig-tree"]),
         ],
     )
+    # Pin to ``MARKET_UUID`` so future location-keyed checks (none today)
+    # can look it up by the constant rather than a drifting ``uuid4()``.
+    location.uuid = MARKET_UUID
+    return location
 
 
 def _make_scene(location_id: UUID) -> Scene:

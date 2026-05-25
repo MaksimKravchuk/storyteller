@@ -39,7 +39,7 @@ def _make_setting() -> Setting:
 
 
 def _make_location() -> Location:
-    return Location(
+    location = Location(
         name="Townhouse atrium",
         description=_LOCATION_DESCRIPTION,
         location_type="building",
@@ -50,6 +50,10 @@ def _make_location() -> Location:
             PointOfInterest(names=["oil lamp"]),
         ],
     )
+    # Pin to ``ATRIUM_UUID`` so future location-keyed checks (none today)
+    # can look it up by the constant rather than a drifting ``uuid4()``.
+    location.uuid = ATRIUM_UUID
+    return location
 
 
 def _make_scene(location_id: UUID) -> Scene:
