@@ -17,6 +17,9 @@ on:
           - ""
           - "memory_follow_up_marcus"
           - "autonomy_three_guards_tavern"
+          - "narrator_prose_quiet_exploration"
+          - "scene_builder_re_entry_consistency"
+          - "npc_generator_role_fidelity"
       iterations:
         description: "Iterations per scenario"
         required: false
