@@ -17,9 +17,10 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+_DAYS_IN_MONTH = 30
 _ONE_DAY = timedelta(hours=24)
 _ONE_WEEK = timedelta(days=7)
-_ONE_MONTH = timedelta(days=30)  # noqa: WPS432 — 30 is the window name, not a magic literal
+_ONE_MONTH = timedelta(days=_DAYS_IN_MONTH)
 
 _WINDOW_DELTAS: tuple[tuple[str, timedelta], ...] = (
     ("24h", _ONE_DAY),
