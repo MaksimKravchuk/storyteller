@@ -11,6 +11,7 @@ from interfaces import (
     admin_route_helpers,
     admin_reports,
     admin_routes,
+    admin_routes_beta_invites,
     admin_routes_detail,
     admin_routes_entity,
     admin_routes_feedback,
@@ -57,6 +58,8 @@ def _setup_user_routes(app: web.Application) -> None:
     """Register admin user-management routes."""
     app.router.add_get("/api/admin/users", admin_routes.list_users)
     app.router.add_get("/api/admin/users/{id}", admin_routes.user_detail)
+    app.router.add_get("/api/admin/beta/invites", admin_routes_beta_invites.list_beta_invites)
+    app.router.add_post("/api/admin/beta/invites", admin_routes_beta_invites.create_beta_invite)
 
 
 class AdminServer:
