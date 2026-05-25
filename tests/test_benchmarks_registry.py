@@ -48,13 +48,16 @@ class TestScenarioRegistry:
 @allure.feature("Benchmark harness")
 class TestScenarioBuildState:
     @allure.story("Scenario state builder")
-    @allure.title("Every registered scenario build_state() returns a fresh GameState with a current_scene and NPCs")
+    @allure.title("Every registered scenario build_state() returns a fresh GameState with a current_scene")
     def test_build_state_yields_usable_state(self):
+        # Most scenarios seed NPCs, but solo-exploration scenarios (e.g.
+        # ``narrator_prose_quiet_exploration``) intentionally ship zero —
+        # part of the rubric is whether the Narrator hallucinates anyone.
+        # ``current_scene`` is the universal sanity contract here.
         for scenario in ALL_SCENARIOS:
             state = scenario.build_state()
 
             assert state.game_state.current_scene is not None, scenario.id
-            assert state.game_state.npcs, "{0} has no NPCs".format(scenario.id)
 
     @allure.story("Scenario state builder")
     @allure.title(
