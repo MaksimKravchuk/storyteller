@@ -47,6 +47,18 @@ def _setup_session_report_routes(app: web.Application) -> None:
     app.router.add_get("/api/sessions/{id}/models", admin_routes_detail.session_models)
 
 
+def _setup_beta_feedback_routes(app: web.Application) -> None:
+    """Register admin beta feedback routes."""
+    app.router.add_get("/api/admin/beta/feedback", admin_routes_feedback.list_feedback)
+    app.router.add_get("/api/admin/beta/feedback.csv", admin_routes_feedback.export_feedback_csv)
+
+
+def _setup_user_routes(app: web.Application) -> None:
+    """Register admin user-management routes."""
+    app.router.add_get("/api/admin/users", admin_routes.list_users)
+    app.router.add_get("/api/admin/users/{id}", admin_routes.user_detail)
+
+
 class AdminServer:
     """Lightweight admin dashboard for inspecting Storyteller sessions."""
 
@@ -93,8 +105,8 @@ class AdminServer:
         self._app.router.add_get("/healthz", _healthz)
         self._app.router.add_get("/", admin_routes.dashboard)
         self._app.router.add_get("/api/sessions", admin_routes.list_sessions)
-        self._app.router.add_get("/api/admin/beta/feedback", admin_routes_feedback.list_feedback)
-        self._app.router.add_get("/api/admin/beta/feedback.csv", admin_routes_feedback.export_feedback_csv)
+        _setup_user_routes(self._app)
+        _setup_beta_feedback_routes(self._app)
         self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)
         self._app.router.add_get("/api/sessions/{id}/conversation", admin_routes.conversation)
         self._setup_detail_routes()

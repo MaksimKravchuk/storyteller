@@ -5,38 +5,15 @@ from __future__ import annotations
 from functools import partial
 from typing import Any
 
-from sqlalchemy import String, cast, or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import Select
 
 from db import repo_admin_helpers as helpers
 from db import repo_admin_npc
+from db import repo_admin_users
 from db import tables as tbl
 
 _COL_ID = "id"
-# Single-character backslash used as the LIKE escape character.
-_BACKSLASH = "\\"
-_LIKE_WILDCARDS = (_BACKSLASH, "%", "_")
-
-
-def _escape_like(term: str) -> str:
-    """Escape LIKE wildcards so pasted UUIDs don't behave as patterns."""
-    escaped = term
-    for char in _LIKE_WILDCARDS:
-        escaped = escaped.replace(char, "{0}{1}".format(_BACKSLASH, char))
-    return escaped
-
-
-def _apply_search_filter(stmt: Select, search: str) -> Select:
-    """Add an ILIKE substring filter over id / web_player_id / telegram_chat_id."""
-    pattern = "%{0}%".format(_escape_like(search))
-    columns = (
-        tbl.sessions.c.id,
-        tbl.sessions.c.web_player_id,
-        tbl.sessions.c.telegram_chat_id,
-    )
-    predicates = [cast(col, String).ilike(pattern, escape=_BACKSLASH) for col in columns]
-    return stmt.where(or_(*predicates))
 
 
 async def fetch_events(session: AsyncSession, session_id: str) -> list[dict]:
@@ -81,6 +58,8 @@ class AdminQueries:
         # instance from tests & helpers) while admin code can still
         # ``await repo.admin.get_knowledge_graph(sid)``.
         self.get_knowledge_graph = partial(fetch_knowledge_graph, session)
+        self.list_users = partial(repo_admin_users.list_users, session)
+        self.get_user_detail = partial(repo_admin_users.get_user_detail, session)
 
     async def list_sessions(
         self,
@@ -115,7 +94,7 @@ class AdminQueries:
         if telegram_chat_id is not None:
             stmt = stmt.where(tbl.sessions.c.telegram_chat_id == telegram_chat_id)
         if search:
-            stmt = _apply_search_filter(stmt, search)
+            stmt = repo_admin_users.apply_search_filter(stmt, search)
         sessions_query = await self.session.execute(stmt)
         return list(map(helpers._row_dict, sessions_query.mappings()))
 
