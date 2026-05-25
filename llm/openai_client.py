@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+import asyncio
+from collections.abc import Awaitable, Callable, Mapping
 from typing import TYPE_CHECKING, Any
 
 from loguru import logger
@@ -20,6 +21,46 @@ if TYPE_CHECKING:
 
 _ALLOWED_CONTROL = frozenset("\t\n\r")
 _SYSTEM_PROMPT_LOG_CHARS = 200
+
+# Bounded backoff for OpenAI 5xx and transient network errors. Mirrors the
+# shape of ``llm.anthropic_client._call_with_retry`` for provider parity.
+_RETRY_MAX_ATTEMPTS = 3
+_RETRY_BASE_DELAY = 2.0
+
+
+async def _call_with_retry(
+    create: Callable[[], Awaitable[Any]],
+    max_attempts: int = _RETRY_MAX_ATTEMPTS,
+    base_delay: float = _RETRY_BASE_DELAY,
+    attempt: int = 0,
+) -> Any:
+    """Invoke ``create`` with bounded exponential backoff on OpenAI 5xx and transient errors.
+
+    Retries on :class:`openai.InternalServerError` (5xx) and
+    :class:`openai.APIConnectionError` (includes :class:`openai.APITimeoutError`).
+    Backoff is ``base_delay * 2**attempt``. Other errors (4xx, validation) propagate
+    immediately. Implemented via tail recursion so the retry loop carries its own
+    attempt counter without an ``await`` inside a ``for`` loop body.
+    """
+    from cast import _reliability_metrics
+    from openai import APIConnectionError, InternalServerError
+
+    try:
+        return await create()
+    except (InternalServerError, APIConnectionError) as exc:
+        if attempt + 1 >= max_attempts:
+            raise
+        delay = base_delay * (2**attempt)
+        _reliability_metrics.record_retry("openai_client", attempt + 1)
+        logger.warning(
+            "OpenAI transient error (attempt {}/{}); retrying in {}s: {}",
+            attempt + 1,
+            max_attempts,
+            delay,
+            exc,
+        )
+        await asyncio.sleep(delay)
+    return await _call_with_retry(create, max_attempts, base_delay, attempt + 1)
 
 
 def _is_printable(ch: str) -> bool:
@@ -103,7 +144,7 @@ class OpenAIClient(BaseLLMClient):
             output_format,
         )
         try:
-            response = await self._client.chat.completions.create(**kwargs)
+            response = await _call_with_retry(lambda: self._client.chat.completions.create(**kwargs))
         except self._api_status_error as exc:
             self._log_api_error(exc, kwargs, system_prompt)
             raise
