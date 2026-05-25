@@ -1,0 +1,311 @@
+{
+  "captured_turns": [
+    {
+      "duration_ms": 20391,
+      "index": 0,
+      "narration": "You step into the atrium and look around slowly. **Wet marble** catches the dim lamplight in patches, and the rest of the room falls away into shadow. The central impluvium sits still, its shallow water holding thin highlights. Beyond it, four low columns stand at a distance, their bases lost in darkness.\n\nA wiry guard in a dark belted tunic, bronze ring, and leather bracers remains at the inner doorway, watching you without speaking. Near one side, a wall niche holds the oil lamp, with the bronze oil-ladle hanging beside it. Along the far wall, a wax-sealed notice board and a small painted tablet sit at eye level, both slick with night air. The inner door is shut, a curtained passage leads off to the side corridor, and a shuttered window gives only a faint cold glimmer from above. You hear faint dripping from somewhere within the basin’s plumbing, and a settling creak comes from the doorway.",
+      "player_action": "I step into the atrium and look around slowly.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I step into the atrium and look around slowly.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I remain at the inner doorway and watch the player’s movement without speaking, keeping my hands clear and my posture set for a quiet challenge if needed.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Aelius Marcellus",
+            "npc_uuid": "e456f246-e6f9-472e-8d59-0e53b86ea615"
+          }
+        ],
+        "object_interactions": [],
+        "scene": {
+          "ambient_description": "Still night air; faint dripping from somewhere within the basin’s plumbing; wet marble holds onto coolness that seems to mute sound. Occasional creak from settling wood in the doorway. Smell of damp stone and old oil from the lamp. The only light is a low, wavering pool from the oil lamp that dies into shadow.",
+          "description": "An atrium of a modest early-principate townhouse, entered through a dark doorway that leaves the interior utterly still. The marble floor is wet in patches, reflecting dim lamplight pooled around a central impluvium. The impluvium is a shallow stone basin with a simple rim and a faint sheen of water; the water’s surface is almost motionless, catching thin highlights from above. Four low columns frame the space at a distance, their bases lost in shadow. Beyond the atrium, a wooden door stands shut to the inner rooms, and a curtained passage leads toward the side corridor. To one side, a small wall niche holds a single oil lamp with a covered spout; beside it hangs a bronze oil-ladle on a hook. Near the impluvium, a floor drain grate is set into the marble, its bars dark with damp. Along the far wall, a small painted tablet and a wax-sealed notice board are mounted at eye level, both slick with night air. A narrow stair or step platform rises slightly toward the upper landing, where a shuttered window admits only a faint, cold glimmer from outside. The lamplight fades before reaching the far corners, leaving the room’s edges hard to read.",
+          "location_id": "00000000-0000-0000-0000-000000000000",
+          "narrated_text": "",
+          "npcs_present": [
+            {
+              "role": "household guard, quiet watch at the inner doorway (keeps the atrium secured and can be asked about who entered last)",
+              "uuid": "e456f246-e6f9-472e-8d59-0e53b86ea615"
+            }
+          ],
+          "points_of_interest": [
+            {
+              "names": [
+                "a central impluvium with wet marble pooling around it",
+                "impluvium",
+                "basin"
+              ],
+              "uuid": "362f3667-bcc4-4b76-9db0-f8ca2d7900be"
+            },
+            {
+              "names": [
+                "a wax-sealed notice board mounted on the far wall",
+                "notice board",
+                "board"
+              ],
+              "uuid": "42a5af67-b640-449d-a5e1-7f6d1c8f35b9"
+            },
+            {
+              "names": [
+                "a small painted household tablet on the wall near the notice board",
+                "painted tablet",
+                "tablet"
+              ],
+              "uuid": "2bcf6e8a-b155-45a5-9bb7-6a9ca6482612"
+            },
+            {
+              "names": [
+                "the shuttered window and cold glimmer beyond the upper landing",
+                "shuttered window",
+                "window"
+              ],
+              "uuid": "8efdeb3e-fbbd-4554-a774-7cd556e1e7dd"
+            },
+            {
+              "names": [
+                "the inner wooden door leading from the atrium to the rest of the house",
+                "inner door",
+                "door"
+              ],
+              "uuid": "26f02b11-47c0-4b42-b463-ea5d6170a6b3"
+            },
+            {
+              "names": [
+                "a floor drain grate beside the impluvium, dark with damp",
+                "floor drain grate",
+                "drain grate"
+              ],
+              "uuid": "07d84101-c12a-4b7d-84fa-a32a0ecc0c77"
+            },
+            {
+              "names": [
+                "a wall-mounted oil lamp and bronze oil-ladle hook near a niche",
+                "wall oil lamp",
+                "oil lamp"
+              ],
+              "uuid": "1591932a-2245-4f0b-9086-dc242624481f"
+            }
+          ],
+          "time_of_day": "night",
+          "uuid": "00ff5e0f-72d9-424d-b889-7dc5153f4967"
+        },
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 5246,
+      "index": 1,
+      "narration": "You walk to the impluvium and trail your fingers through the shallow water. Small ripples spread across the surface, and disturbed streaks follow where your fingers pass. Droplets cling to your fingertips before sliding back into the basin.\n\nThe **wiry guard** stays at the inner doorway, silent. He watches the ripples settle, his eyes on you and the water both, marking the disturbance and waiting for your next movement.",
+      "player_action": "I walk to the impluvium and trail my fingers in the water.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I walk to the impluvium and trail my fingers in the water.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I watch the ripples settle, then keep my place at the inner doorway without speaking. My eyes stay on the player and the water both, marking the disturbance and waiting for the next movement.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Aelius Marcellus",
+            "npc_uuid": "e456f246-e6f9-472e-8d59-0e53b86ea615"
+          }
+        ],
+        "object_interactions": [
+          "You place your hand in the shallow water of the impluvium and trail your fingers across the surface. Small ripples spread outward and the water surface shows disturbed streaks where your fingers pass, with droplets clinging to your fingertips before sliding back in."
+        ],
+        "scene": null,
+        "wait": false,
+        "wait_context": null,
+        "wait_reason": null,
+        "witnessed_events": []
+      }
+    },
+    {
+      "duration_ms": 4325,
+      "index": 2,
+      "narration": "You stand still and listen to the night. **Wet marble** holds the dim lamplight in patches, and the atrium stays hushed around the still impluvium. The shallow water keeps its surface, with only the earlier disturbed streaks left behind where your fingers passed.\n\nNearby, the wiry guard in a dark belted tunic, bronze ring, and leather bracers remains at the inner doorway, watching you in silence and scanning the atrium and the impluvium. You do not move, and he does not break his post. The house keeps its closed-doors quiet, and the waiting settles into the room.",
+      "player_action": "I stand still and listen to the night.",
+      "turn_outputs": {
+        "completed_events": [],
+        "dialogue": [],
+        "intent": "I stand still and listen to the night.",
+        "item_examination": [],
+        "new_npcs": [],
+        "npc_departures": [],
+        "npc_turns": [
+          {
+            "action": "I hold my post at the inner doorway and watch the player in silence, making no move beyond a careful scan of the atrium and the impluvium.",
+            "action_type": "IDLE",
+            "npc_name": "Titus Aelius Marcellus",
+            "npc_uuid": "e456f246-e6f9-472e-8d59-0e53b86ea615"
+          }
+        ],
+        "object_interactions": [],
+        "scene": null,
+        "wait": true,
+        "wait_context": {
+          "active_threads": [],
+          "hours_waited": 0.1,
+          "imminent_events": [],
+          "on_shift_npcs": [
+            "a wiry guard in a dark belted tunic, bronze ring and leather bracers"
+          ]
+        },
+        "wait_reason": "voluntary",
+        "witnessed_events": []
+      }
+    }
+  ],
+  "duration_seconds": 39.906291124993004,
+  "element_scores": [
+    {
+      "awarded": 0,
+      "base_value": 3,
+      "element_id": "no_npc_hallucinated",
+      "evidence_quote": "npc_turn from 'Titus Aelius Marcellus' on turn 0",
+      "k_yes": 0,
+      "kind": "deterministic",
+      "label": "Narrator does not invent NPCs to fill the empty atrium",
+      "majority_verdict": null,
+      "n_total": 0,
+      "reason": "hallucinated NPC activity: npc_turn from 'Titus Aelius Marcellus' on turn 0; npc_turn from 'Titus Aelius Marcellus' on turn 1; npc_turn from 'Titus Aelius Marcellus' on turn 2",
+      "votes": []
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "evocative_prose",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator uses concrete sensory detail rather than generic filler",
+      "majority_verdict": "NO",
+      "n_total": 2,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 6173,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Wet marble catches the dim lamplight in patches, and the rest of the room falls away into shadow. The central impluvium sits still, its shallow water holding thin highlights. Beyond it, four low columns stand at a distance, their bases lost in darkness. You hear faint dripping from somewhere within the basin's plumbing, and a settling creak comes from the doorway. Small ripples spread across the surface, and disturbed streaks follow where your fingers pass. Droplets cling to your fingertips before sliding back into the basin.",
+          "quote_verified": false,
+          "reasoning": "The narration uses at least two distinct sensory channels: sight (wet marble catching lamplight, visual details of columns and objects) and touch (fingers trailing in water, droplets clinging to fingertips), plus sound (faint dripping, settling creak, hushed quiet). (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1810,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Wet marble catches the dim lamplight in patches, and the rest of the room falls away into shadow. You hear faint dripping from somewhere within the basin’s plumbing, and a settling creak comes from the doorway.",
+          "quote_verified": false,
+          "reasoning": "The narration uses multiple sensory channels with concrete imagery, including sight (wet marble, lamplight, shadows) and sound (faint dripping, settling creak) and touch (trailing fingers, droplets clinging). (quote not found in turn text)",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 2,
+      "element_id": "grounded_in_seed",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator stays within the seed scene's vocabulary",
+      "majority_verdict": "NO",
+      "n_total": 2,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1975,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "Wet marble catches the dim lamplight in patches, and the rest of the room falls away into shadow. The central impluvium sits still, its shallow water holding thin highlights.",
+          "quote_verified": false,
+          "reasoning": "The narration consistently references seed scene details (wet marble, lamplight, impluvium, shallow water, oil lamp, oil-ladle) while introducing invented elements (columns, guard NPC, notice board, painted tablet, curtained passage, shuttered window) not in the seed. (quote not found in turn text)",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 1470,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Beyond it, four low columns stand at a distance, their bases lost in darkness.\n\nA wiry guard in a dark belted tunic, bronze ring, and leather bracers remains at the inner doorway, watching you without speaking. Near one side, a wall niche holds the oil lamp, with the bronze oil-ladle hanging beside it.",
+          "quote_verified": true,
+          "reasoning": "The narration adds architectural details not present in the seed scene, including four low columns and a wall niche with an oil-ladle.",
+          "verdict": "NO"
+        }
+      ]
+    },
+    {
+      "awarded": 0,
+      "base_value": 1,
+      "element_id": "prose_not_repetitive",
+      "evidence_quote": null,
+      "k_yes": 0,
+      "kind": "evidence_llm",
+      "label": "Narrator varies sentence structure across turns",
+      "majority_verdict": "NO",
+      "n_total": 2,
+      "reason": null,
+      "votes": [
+        {
+          "error": null,
+          "latency_ms": 1630,
+          "model_id": "claude-haiku-4-5-20251001",
+          "provider": "anthropic",
+          "quote": "**Wet marble** catches the dim lamplight in patches",
+          "quote_verified": true,
+          "reasoning": "The phrase 'Wet marble' appears verbatim in both TURN 0 and TURN 2, and 'wiry guard' appears in both TURN 1 and TURN 2, violating the requirement to avoid repeating descriptive phrases.",
+          "verdict": "NO"
+        },
+        {
+          "error": null,
+          "latency_ms": 963,
+          "model_id": "gpt-5.4-nano",
+          "provider": "openai",
+          "quote": "Wet marble",
+          "quote_verified": true,
+          "reasoning": "The narration repeats the exact descriptive phrase \"Wet marble\" in multiple turns.",
+          "verdict": "NO"
+        }
+      ]
+    }
+  ],
+  "engine_git_sha": "1014177081afdf3f3769381993b04a3fb9d07d40",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iteration": 0,
+  "panel": [
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "provider": "anthropic"
+    },
+    {
+      "model_id": "gpt-5.4-nano",
+      "provider": "openai"
+    }
+  ],
+  "scenario_id": "narrator_prose_quiet_exploration",
+  "scenario_label": "Narrator prose stays evocative + grounded on a quiet, NPC-free exploration turn",
+  "skipped_panel_candidates": [],
+  "started_at": "2026-05-25T11:19:45.783651+00:00",
+  "total_awarded": 0,
+  "total_base": 8
+}
