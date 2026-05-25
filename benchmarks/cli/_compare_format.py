@@ -12,16 +12,18 @@ _LABEL_COL_WIDTH = 40
 _KEY_MEAN = "mean_awarded"
 _KEY_MIN = "min_awarded"
 _KEY_MAX = "max_awarded"
+_KEY_STDEV = "stdev_awarded"
 
 
 def format_header(tag: str, aggregate: dict) -> str:
     """Format the baseline/current header line."""
-    return "{0}: {1} iter={2}  mean={3:.2f}/{4}  range=[{5}, {6}]".format(
+    return "{0}: {1} iter={2}  mean={3:.2f}/{4}  stdev={5:.2f}  range=[{6}, {7}]".format(
         tag,
         aggregate["scenario_id"],
         aggregate["iterations"],
         aggregate[_KEY_MEAN],
         aggregate["total_base"],
+        aggregate.get(_KEY_STDEV, float(0)),
         aggregate[_KEY_MIN],
         aggregate[_KEY_MAX],
     )

@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import math
 from collections import OrderedDict
 
 from benchmarks.harness.types._aggregates import ElementPassRate, ScenarioAggregate
 from benchmarks.harness.types._scores import ElementScore, ScenarioReport
+
+
+def _population_stdev(totals: list[int]) -> float:
+    """Compute the population standard deviation of ``totals`` (0 on N<=1)."""
+    if len(totals) <= 1:
+        return float(0)
+    mean = sum(totals) / len(totals)
+    squared_deviations = [(total - mean) ** 2 for total in totals]
+    variance = sum(squared_deviations) / len(totals)
+    return math.sqrt(variance)
 
 
 def element_passed(score: ElementScore) -> bool:
@@ -68,4 +79,5 @@ def aggregate_reports(reports: list[ScenarioReport]) -> ScenarioAggregate:
         max_awarded=max(totals),
         element_pass_rates=_pass_rates(reports),
         iteration_totals=totals,
+        stdev_awarded=_population_stdev(totals),
     )

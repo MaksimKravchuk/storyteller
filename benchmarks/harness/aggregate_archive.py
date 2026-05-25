@@ -28,6 +28,7 @@ def _render_markdown(aggregate: ScenarioAggregate, sha: str) -> str:
         "- Engine SHA: `{0}`".format(sha or "nosha"),
         "- Total base: {0}".format(aggregate.total_base),
         "- Mean awarded: {0:.2f}".format(aggregate.mean_awarded),
+        "- Stdev: {0:.2f}".format(aggregate.stdev_awarded),
         "- Range: [{0}, {1}]".format(aggregate.min_awarded, aggregate.max_awarded),
         "- Per-iteration totals: {0}".format(aggregate.iteration_totals),
         "",
@@ -49,8 +50,13 @@ def _render_markdown(aggregate: ScenarioAggregate, sha: str) -> str:
     return "\n".join(lines)
 
 
-def write_aggregate(aggregate: ScenarioAggregate, sha: str) -> tuple[Path, Path]:
+def write_aggregate(
+    aggregate: ScenarioAggregate,
+    sha: str,
+    engine_models: dict[str, str] | None = None,
+) -> tuple[Path, Path]:
     """Persist a JSON + markdown aggregate next to the per-iteration files."""
     payload = asdict(aggregate)
     payload["engine_git_sha"] = sha
+    payload["engine_models"] = dict(engine_models or {})
     return write_pair(_aggregate_stem(aggregate, sha), payload, _render_markdown(aggregate, sha))

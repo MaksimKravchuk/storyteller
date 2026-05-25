@@ -125,6 +125,21 @@ class TestAggregateReports:
         assert result.mean_awarded == pytest.approx(4.0)
         assert result.min_awarded == 4
         assert result.max_awarded == 4
+        assert result.stdev_awarded == pytest.approx(float(0))
+
+    @allure.story("Aggregation")
+    @allure.title("aggregate_reports computes population stdev across iteration totals")
+    def test_stdev_population(self):
+        # totals = [3, 5, 4], mean = 4, variance = (1+1+0)/3 = 2/3, stdev = sqrt(2/3)
+        reports = [
+            _report(iteration=0, awarded=3, element_scores=[]),
+            _report(iteration=1, awarded=5, element_scores=[]),
+            _report(iteration=2, awarded=4, element_scores=[]),
+        ]
+
+        result = aggregate_reports(reports)
+
+        assert result.stdev_awarded == pytest.approx((2 / 3) ** 0.5)
 
     @allure.story("Aggregation")
     @allure.title("aggregate_reports rejects empty input so callers cannot silently produce a nonsensical summary")
@@ -167,6 +182,7 @@ class TestWriteAggregate:
                 ElementPassRate(element_id="e1", label="recall", base_value=3, passes=2, iterations=3),
             ],
             iteration_totals=[3, 4, 5],
+            stdev_awarded=(2 / 3) ** 0.5,
         )
 
         json_path, md_path = write_aggregate(aggregate, "deadbee1")
@@ -180,3 +196,5 @@ class TestWriteAggregate:
         md_content = md_path.read_text(encoding="utf-8")
         assert "Scenario One" in md_content
         assert "recall" in md_content
+        assert "Stdev:" in md_content
+        assert payload["stdev_awarded"] == pytest.approx((2 / 3) ** 0.5)

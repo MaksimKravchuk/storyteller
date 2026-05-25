@@ -38,6 +38,33 @@ def classify_range(
     return _NOISE
 
 
+def classify_stdev_overlap(
+    baseline_mean: float,
+    baseline_stdev: float,
+    current_mean: float,
+    current_stdev: float,
+    *,
+    sigma_multiplier: float = 1.0,
+) -> Classification:
+    """Classify by whether the k-sigma bands around the means overlap.
+
+    Regression: current's upper band sits below baseline's lower band.
+    Improvement: current's lower band sits above baseline's upper band.
+    Otherwise: bands overlap → noise. This is the primary verdict for
+    ``iterations >= 3`` (where stdev is meaningful); ``classify_range`` remains
+    the fallback for smaller samples.
+    """
+    current_upper = current_mean + sigma_multiplier * current_stdev
+    current_lower = current_mean - sigma_multiplier * current_stdev
+    baseline_upper = baseline_mean + sigma_multiplier * baseline_stdev
+    baseline_lower = baseline_mean - sigma_multiplier * baseline_stdev
+    if current_upper < baseline_lower:
+        return _REGRESSION
+    if current_lower > baseline_upper:
+        return _IMPROVEMENT
+    return _NOISE
+
+
 def classify_pass_rate(pair: PassRatePair) -> PassRateClassification:
     """Classify a per-element pass-rate delta by whether it crosses the 50% line."""
     # Signal is a crossing of the strict-majority threshold: movements that stay

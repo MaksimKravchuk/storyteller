@@ -58,3 +58,28 @@ class TestFinaliseAggregates:
 
         assert aggregates == []
         assert capsys.readouterr().out == ""
+
+    @allure.story("Run orchestration")
+    @allure.title("engine_models from the per-iteration reports is propagated into the aggregate JSON")
+    def test_engine_models_propagated(self, tmp_path, monkeypatch):
+        import json
+
+        monkeypatch.setattr("benchmarks.harness.archive.results_dir", lambda: tmp_path)
+        first = dataclasses.replace(
+            _report("s1", 0),
+            engine_models={"director_model": "gpt-5.4-mini", "narrator_model": "gpt-5.4-mini"},
+        )
+        second = dataclasses.replace(
+            _report("s1", 1),
+            engine_models={"director_model": "gpt-5.4-mini", "narrator_model": "gpt-5.4-mini"},
+        )
+
+        finalise_aggregates([first, second], sha="cafe123")
+
+        json_files = sorted(tmp_path.glob("*_aggregate.json"))
+        assert json_files, "expected an aggregate JSON in tmp_path"
+        payload = json.loads(json_files[0].read_text(encoding="utf-8"))
+        assert payload["engine_models"] == {
+            "director_model": "gpt-5.4-mini",
+            "narrator_model": "gpt-5.4-mini",
+        }
