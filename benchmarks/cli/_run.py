@@ -9,24 +9,24 @@ from typing import AsyncIterator
 
 from benchmarks.cli._aggregate_flow import finalise_aggregates
 from benchmarks.cli._jobs import RunContext, build_context, expand_jobs
+from benchmarks.cli._run_compare import auto_compare_exit_code
 from benchmarks.cli._summary import print_summary_table
 from benchmarks.harness.archive import write_report
 from benchmarks.harness.runner import RunOptions, run_scenario_once
-from benchmarks.harness.types._scenarios import Scenario
-from benchmarks.harness.types._scores import ScenarioReport
+from benchmarks.harness.types import _scenarios, _scores
 
 
 @dataclass(frozen=True)
 class _CompletedIteration:
     """Result of one iteration, bundled to keep local-variable counts low."""
 
-    scenario: Scenario
+    scenario: _scenarios.Scenario
     iteration: int
-    report: ScenarioReport
+    report: _scores.ScenarioReport
 
 
 async def _iterate_runs(
-    jobs: list[tuple[Scenario, int]],
+    jobs: list[tuple[_scenarios.Scenario, int]],
     ctx: RunContext,
 ) -> AsyncIterator[_CompletedIteration]:
     """Yield completed iterations in sequential order."""
@@ -62,10 +62,12 @@ async def run_command(args: argparse.Namespace) -> int:
     """Execute the ``run`` subcommand."""
     ctx = build_context(args)
     jobs = expand_jobs(args)
-    completed: list[ScenarioReport] = []
+    completed: list[_scores.ScenarioReport] = []
     async for done in _iterate_runs(jobs, ctx):
         _record_iteration(done)
         completed.append(done.report)
     aggregates = finalise_aggregates(completed, ctx.sha)
     print_summary_table(aggregates)
-    return 0
+    if args.no_compare:
+        return 0
+    return auto_compare_exit_code(args, aggregates)

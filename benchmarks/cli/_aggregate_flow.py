@@ -21,25 +21,31 @@ def _group_by_scenario(reports: list[ScenarioReport]) -> OrderedDict[str, list[S
     return grouped
 
 
+def _archive_and_log(scenario_reports: list[ScenarioReport], sha: str) -> ScenarioAggregate:
+    """Aggregate one scenario, write its archive pair, log the summary line."""
+    aggregate = aggregate_reports(scenario_reports)
+    _, md_path = write_aggregate(
+        aggregate,
+        sha,
+        engine_models=dict(scenario_reports[0].engine_models),
+    )
+    sys.stdout.write(
+        _AGGREGATE_LINE.format(
+            aggregate.scenario_id,
+            aggregate.iterations,
+            aggregate.mean_awarded,
+            aggregate.min_awarded,
+            aggregate.max_awarded,
+            md_path,
+        )
+        + "\n",
+    )
+    return aggregate
+
+
 def finalise_aggregates(
     reports: list[ScenarioReport],
     sha: str,
 ) -> list[ScenarioAggregate]:
     """Aggregate per-scenario, archive the aggregates, and return them in order."""
-    aggregates: list[ScenarioAggregate] = []
-    for scenario_id, scenario_reports in _group_by_scenario(reports).items():
-        aggregate = aggregate_reports(scenario_reports)
-        _, md_path = write_aggregate(aggregate, sha)
-        sys.stdout.write(
-            _AGGREGATE_LINE.format(
-                scenario_id,
-                aggregate.iterations,
-                aggregate.mean_awarded,
-                aggregate.min_awarded,
-                aggregate.max_awarded,
-                md_path,
-            )
-            + "\n"
-        )
-        aggregates.append(aggregate)
-    return aggregates
+    return [_archive_and_log(scenario_reports, sha) for scenario_reports in _group_by_scenario(reports).values()]

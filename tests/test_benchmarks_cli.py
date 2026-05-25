@@ -14,9 +14,10 @@ from benchmarks.cli._compare_classify import PassRatePair, classify_pass_rate, c
 from benchmarks.cli._jobs import _parse_judge_overrides
 
 
-def _aggregate_payload(*, scenario_id="memory", mean=7.0, low=6, high=8, element_pass_rates=None):
+def _aggregate_payload(*, scenario_id="memory", mean=7.0, low_high=(6, 8), stdev=0.5, element_pass_rates=None):
     """Build a synthetic aggregate payload for compare_command tests."""
     iterations = 3
+    low, high = low_high
     return {
         "scenario_id": scenario_id,
         "scenario_label": scenario_id,
@@ -25,6 +26,7 @@ def _aggregate_payload(*, scenario_id="memory", mean=7.0, low=6, high=8, element
         "mean_awarded": mean,
         "min_awarded": low,
         "max_awarded": high,
+        "stdev_awarded": stdev,
         "iteration_totals": [low, high, high],
         "element_pass_rates": element_pass_rates
         or [
@@ -80,6 +82,46 @@ class TestRunArgs:
             parse_args(["run", "--iterations", "0"])
         with pytest.raises(SystemExit):
             parse_args(["run", "--iterations", "-3"])
+
+    @allure.story("CLI parsing")
+    @allure.title("run defaults --no-compare and --update-baselines-on-improvement to False")
+    def test_compare_flags_default_false(self):
+        args = parse_args(["run"])
+        assert args.no_compare is False
+        assert args.update_baselines_on_improvement is False
+
+    @allure.story("CLI parsing")
+    @allure.title("--no-compare and --update-baselines-on-improvement flip to True when passed")
+    def test_compare_flags_flip(self):
+        args = parse_args(["run", "--no-compare", "--update-baselines-on-improvement"])
+        assert args.no_compare is True
+        assert args.update_baselines_on_improvement is True
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Benchmark harness")
+class TestPinAndBaselinesArgs:
+    @allure.story("CLI parsing")
+    @allure.title("pin requires a scenario_id positional and a --from path")
+    def test_pin_args(self):
+        args = parse_args(["pin", "memory_follow_up_marcus", "--from", "/tmp/agg.json"])
+        assert args.command == "pin"
+        assert args.scenario_id == "memory_follow_up_marcus"
+        assert args.from_path == "/tmp/agg.json"
+
+    @allure.story("CLI parsing")
+    @allure.title("baselines list is recognised as a nested subcommand")
+    def test_baselines_list(self):
+        args = parse_args(["baselines", "list"])
+        assert args.command == "baselines"
+        assert args.baselines_action == "list"
+
+    @allure.story("CLI parsing")
+    @allure.title("calibrate defaults --iterations to 5 (vs run's 3) so noise estimates are stable")
+    def test_calibrate_default_iterations(self):
+        args = parse_args(["calibrate"])
+        assert args.command == "calibrate"
+        assert args.iterations == 5
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -142,8 +184,7 @@ class TestCompareCommand:
         _write_aggregate(
             baseline,
             mean=8.0,
-            low=7,
-            high=9,
+            low_high=(7, 9),
             element_pass_rates=[
                 {"element_id": "e1", "label": "recall", "base_value": 3, "passes": 3, "iterations": 3},
             ],
@@ -151,8 +192,7 @@ class TestCompareCommand:
         _write_aggregate(
             current,
             mean=3.0,
-            low=2,
-            high=4,
+            low_high=(2, 4),
             element_pass_rates=[
                 {"element_id": "e1", "label": "recall", "base_value": 3, "passes": 0, "iterations": 3},
             ],
@@ -165,6 +205,7 @@ class TestCompareCommand:
         assert exit_code == 0
         assert "Baseline:" in out
         assert "Current" in out
+        assert "stdev=" in out
         assert "regression" in out
         assert "recall" in out
         assert "3/3 → 0/3" in out
@@ -174,8 +215,8 @@ class TestCompareCommand:
     def test_scenario_verdict_noise_on_overlap(self, tmp_path, capsys):
         baseline = tmp_path / "baseline.json"
         current = tmp_path / "current.json"
-        _write_aggregate(baseline, mean=7.0, low=6, high=8)
-        _write_aggregate(current, mean=7.5, low=7, high=9)
+        _write_aggregate(baseline, mean=7.0, low_high=(6, 8))
+        _write_aggregate(current, mean=7.5, low_high=(7, 9))
         args = argparse.Namespace(baseline=str(baseline), current=str(current))
 
         compare_command(args)
