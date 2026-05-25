@@ -71,7 +71,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - **`db/`** — Async SQLAlchemy + asyncpg with Alembic migrations; `GameRepository` is the single persistence access point; domain↔ORM conversion in `converters.py`
 - **`interfaces/`** — Telegram bot, admin dashboard, and FastAPI web UI (`interfaces/web/`)
 - **`research/`** — Async Wikipedia client
-- **`benchmarks/`** — Deterministic narration benchmark harness (opt-in, hits paid LLMs). Fixed scenarios drive the engine through `create_engine_from_state()`; captured `TurnOutputs` + `GameState` snapshots are scored against an ISU-style rubric with a six-model witness panel for evidence-LLM elements. Results archive to `benchmarks/results/` as JSON + markdown for release-over-release comparison. Entry point: `uv run python -m benchmarks run`.
+- **`benchmarks/`** — Deterministic narration benchmark harness (opt-in, hits paid LLMs). Fixed scenarios drive the engine through `create_engine_from_state()`; captured `TurnOutputs` + `GameState` snapshots are scored against an ISU-style rubric with a six-model witness panel for evidence-LLM elements. Results archive to `benchmarks/results/` as JSON + markdown for release-over-release comparison. Entry point: `uv run python -m benchmarks run`. Also runs automatically on PRs touching `cast/`, `prompts/`, `engine/`, or `benchmarks/scenarios/` via `.github/workflows/benchmark-on-pr.yml` (1 iteration, 3-judge panel, ~$0.02–$0.10 per push).
 
 ### Configuration
 
