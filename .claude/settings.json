@@ -32,6 +32,11 @@
           {
             "type": "command",
             "if": "Bash(gh pr create *)",
+            "command": ".claude/hooks/require-skill.sh decision-records \"Definition of Done: if this PR touches architecture, agent roles, prompt boundaries, persistence behavior, release strategy, or player-facing behavior, inspect docs/decisions/ and docs/studio/09-founder-decision-register.md and confirm accepted constraints are preserved. If it makes a new significant decision in any of those areas, run /decision-records to create or update a record before opening the PR. If this PR touches none of those surfaces, retry to bypass.\" \"gh pr create\""
+          },
+          {
+            "type": "command",
+            "if": "Bash(gh pr create *)",
             "command": ".claude/hooks/require-prompt-audit.sh"
           },
           {
