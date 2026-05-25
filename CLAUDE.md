@@ -109,7 +109,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ## Default workflow: stakeholder mode
 
-The user operates as **stakeholder**, not project manager. They state a task with success criteria; the assistant plans, implements, and ships a working demo. No mid-flight approval gates. The PR is the single approval gate before merge.
+The user operates as **stakeholder**, not project manager. They state a task with success criteria; the assistant plans, implements, and ships a working demo. **No upstream story / brief / QA-plan approvals.** The surviving gates are: (a) the pre-commit gauntlet from the Git Workflow section, (b) decision-record inspection + invocation per Git Workflow when the change touches the listed boundaries, and (c) the PR review before merge.
 
 **Ambiguity rule:** when something load-bearing is genuinely ambiguous mid-task, stop and ask. Cosmetic / reversible choices are decided silently.
 
@@ -120,6 +120,7 @@ When a task decomposes into **independent** units of work (different modules, no
 - Use the Agent tool with `isolation: "worktree"` for each parallel unit, or `TeamCreate` for fan-out across multiple sub-agents. Each worktree returns its path + branch.
 - After all parallel units finish, consolidate the changes into a single feature branch (`feat/<topic>` or `fix/<topic>`), resolve any cross-worktree conflicts there, then open **one PR** with all the changes.
 - Use sequential execution when units genuinely depend on each other (one's output feeds another, shared file edits, ordering-sensitive tests). Don't fabricate parallelism by forcing real dependencies into separate worktrees.
+- If `isolation: "worktree"` and `TeamCreate` are unavailable in the current harness, fall back to sequential execution on a single feature branch rather than skipping the consolidation rule.
 
 ### Demo Contract — what to ship at the end
 
@@ -130,6 +131,11 @@ The assistant picks the demo form based on what the change touches (multiple may
 | Backend / engine / db / knowledge / timeline / models            | PR link + green CI gauntlet (ruff, format, flake8, mypy, pytest).                     |
 | `interfaces/web/`, admin dashboard, telegram bot                 | Boot the app, exercise the feature, paste screenshots in the PR.                      |
 | `cast/`, `prompts/`, narrative-affecting engine paths            | Run deterministic benchmarks via the `run-benchmarks` skill, post before/after.       |
+| `db/migrations/` (alembic)                                       | Run `alembic upgrade head` against a scratch DB; paste the affected table schema.     |
+| `research/` (Wikipedia client and similar live integrations)     | Recorded request/response or stubbed integration run — CI green alone is insufficient.|
+| `benchmarks/scenarios/` additions                                | Run the new scenario once, post the rubric output in the PR.                          |
+| `tests/`-only changes                                            | Green CI is sufficient — no further demo.                                             |
+| `docs/`, `.claude/`, `CLAUDE.md`, `README*`                      | PR link only — no demo expected.                                                      |
 
 Git workflow from the section above still applies: feature branch → PR with `gh pr create`, never direct push to `main`.
 
@@ -138,7 +144,9 @@ Git workflow from the section above still applies: feature branch → PR with `g
 Run `/feature-factory <idea>` (Researcher → Story → Spec → parallel QA review) **only** when *any* of these apply, and ask the user to confirm before starting it:
 
 - Touches any `PromptSection` or `required_vars` — prompt-variable wiring has silently broken before.
-- Cross-cuts ≥ 3 of `cast/`, `engine/`, `prompts/`, `db/`, `knowledge/`, `timeline/`, `models/`, `interfaces/`, `research/`.
+- Adds a model field that a downstream consumer is expected to read in the *same* change (the `NPCCard.known_names_for_player` → Narrator-prompt regression class: supplier-side test passing ≠ consumer-side wiring exists).
+- Edits a prompt in either `prompts/*_en.py` or `prompts/*_ru.py` without an equivalent edit to its locale pair (locale-parity drift).
+- Cross-cuts ≥ 3 of `cast/`, `engine/`, `prompts/`, `db/`, `knowledge/`, `timeline/`, `models/`, `interfaces/`, `research/` — *or* touches both `cast/` and `prompts/` in the same change.
 - Introduces a new agent, a schema migration, or a release-affecting change.
 - Touches anything covered by an accepted decision record in `docs/decisions/` or `docs/studio/09-founder-decision-register.md`.
 
@@ -162,7 +170,7 @@ Don't assume. Don't hide confusion. Surface tradeoffs.
 - State assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+- If something is unclear, stop. Name what's confusing. Ask. (See "Default workflow: stakeholder mode → Ambiguity rule" for the load-bearing-vs-cosmetic split that governs *when* to interrupt.)
 
 ### 2. Simplicity First
 Minimum code that solves the problem. Nothing speculative.
