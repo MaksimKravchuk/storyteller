@@ -107,13 +107,44 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - Always refactor properly: extract helper functions, split modules, use package re-exports, introduce dataclasses, etc. The `fix-wps` skill in `.claude/skills/fix-wps/` has the playbook.
 - If a rule genuinely feels wrong for the codebase, present 2–3 refactor options and ask before modifying project config. Suppressions require explicit approval.
 
-## Default workflow: feature-factory
+## Default workflow: stakeholder mode
 
-For any non-trivial change in this repo — anything that touches `cast/`, `engine/`, `prompts/`, `db/`, `knowledge/`, `timeline/`, `models/`, `interfaces/`, or `research/`, and isn't a typo / comment / docs-only fix — run `/feature-factory <rough idea>` first. The skill runs the upstream chain (`codebase-researcher` → `story-writer` → `spec-writer` → parallel QA review with `qa-tester` + `agent-qa-tester`) with three human approval gates before any code is written: approve the user story, approve the technical brief, approve the two QA test plans. The fourth approval gate is the PR review on GitHub.
+The user operates as **stakeholder**, not project manager. They state a task with success criteria; the assistant plans, implements, and ships a working demo. No mid-flight approval gates. The PR is the single approval gate before merge.
 
-Skip the chain only for: typo and comment fixes, README/docs-only edits, test-only changes that follow an obvious pattern, and reverting a recently-introduced regression. If the change touches any `PromptSection` or `required_vars`, it is *not* trivial regardless of line count — run the chain. When in doubt, run it; the cost is one Researcher pass and a story you can approve in 30 seconds.
+**Ambiguity rule:** when something load-bearing is genuinely ambiguous mid-task, stop and ask. Cosmetic / reversible choices are decided silently.
 
-The chain composes with the existing `decision-records` skill (the spec-writer flags whether a record is needed; the main session invokes `/decision-records` between brief approval and `gh pr create`) and with all existing PR-time gates (`simplify`, `pr-review-toolkit:review-pr`, `decision-records`, `prompt-audit`).
+### Parallel execution via git worktrees
+
+When a task decomposes into **independent** units of work (different modules, no shared file edits, no ordering dependency), run them in parallel via isolated git worktrees rather than sequentially:
+
+- Use the Agent tool with `isolation: "worktree"` for each parallel unit, or `TeamCreate` for fan-out across multiple sub-agents. Each worktree returns its path + branch.
+- After all parallel units finish, consolidate the changes into a single feature branch (`feat/<topic>` or `fix/<topic>`), resolve any cross-worktree conflicts there, then open **one PR** with all the changes.
+- Use sequential execution when units genuinely depend on each other (one's output feeds another, shared file edits, ordering-sensitive tests). Don't fabricate parallelism by forcing real dependencies into separate worktrees.
+
+### Demo Contract — what to ship at the end
+
+The assistant picks the demo form based on what the change touches (multiple may apply):
+
+| Change touches                                                   | Demo                                                                                  |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Backend / engine / db / knowledge / timeline / models            | PR link + green CI gauntlet (ruff, format, flake8, mypy, pytest).                     |
+| `interfaces/web/`, admin dashboard, telegram bot                 | Boot the app, exercise the feature, paste screenshots in the PR.                      |
+| `cast/`, `prompts/`, narrative-affecting engine paths            | Run deterministic benchmarks via the `run-benchmarks` skill, post before/after.       |
+
+Git workflow from the section above still applies: feature branch → PR with `gh pr create`, never direct push to `main`.
+
+### Escalation to feature-factory (opt-in)
+
+Run `/feature-factory <idea>` (Researcher → Story → Spec → parallel QA review) **only** when *any* of these apply, and ask the user to confirm before starting it:
+
+- Touches any `PromptSection` or `required_vars` — prompt-variable wiring has silently broken before.
+- Cross-cuts ≥ 3 of `cast/`, `engine/`, `prompts/`, `db/`, `knowledge/`, `timeline/`, `models/`, `interfaces/`, `research/`.
+- Introduces a new agent, a schema migration, or a release-affecting change.
+- Touches anything covered by an accepted decision record in `docs/decisions/` or `docs/studio/09-founder-decision-register.md`.
+
+The user can always force factory with `factory <idea>` or `/feature-factory <idea>`, or suppress escalation for one task with "stakeholder mode" / "just do it".
+
+The `decision-records` skill is still required for the boundary changes listed in the Git Workflow section; invoke `/decision-records` between implementation and `gh pr create`. PR-time gates (`simplify`, `pr-review-toolkit:review-pr`, `decision-records`, `prompt-audit`) remain unchanged.
 
 ## Testing
 
