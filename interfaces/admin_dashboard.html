@@ -174,12 +174,21 @@
   .inv-chip { display: inline-block; background: #453015; color: #ffb347; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px; }
   .view-link { color: #7c83ff; cursor: pointer; text-decoration: underline; }
   .view-link:hover { color: #aab0ff; }
+  .token-wrap { padding: 10px 12px; border-bottom: 1px solid #0f3460; font-size: 12px; }
+  .token-wrap label { display: block; color: #999; margin-bottom: 5px; }
+  .token-wrap input { width: 100%; padding: 7px 9px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 12px; }
+  .token-help { color: #999; margin: 8px 0; line-height: 1.35; }
 </style>
 </head>
 <body>
 
 <div class="sidebar">
   <h2>Storyteller</h2>
+  <div class="token-wrap">
+    <label for="admin-token-input">Admin API token</label>
+    <input id="admin-token-input" type="password" placeholder="Bearer token" oninput="saveAdminToken(this.value)">
+    <div class="token-help">Saved locally. Leave blank when ADMIN_TOKEN is not configured.</div>
+  </div>
   <div class="sidebar-nav">
     <div id="nav-sessions" class="nav-link active" onclick="showView('sessions')">Sessions</div>
     <div id="nav-users" class="nav-link" onclick="showView('users')">Users</div>
@@ -194,6 +203,7 @@
     <div id="session-list"></div>
   </div>
   <div id="users-nav-content" style="display:none">
+    <div class="sidebar-search-wrap"><button class="copy-btn" onclick="currentUserId=null; loadUsers(); renderUsersHome()">Manage beta invites</button></div>
     <div id="user-list"></div>
   </div>
 </div>
@@ -213,6 +223,24 @@ let currentNpcId = null;
 let currentNpcTab = 'state';
 let searchDebounceTimer = null;
 const SEARCH_DEBOUNCE_MS = 250;
+const ADMIN_TOKEN_KEY = 'storyteller.adminToken';
+
+function getAdminToken() {
+  return localStorage.getItem(ADMIN_TOKEN_KEY) || '';
+}
+
+function saveAdminToken(token) {
+  const value = (token || '').trim();
+  if (value) localStorage.setItem(ADMIN_TOKEN_KEY, value);
+  else localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+function authHeaders(extra) {
+  const headers = Object.assign({}, extra || {});
+  const token = getAdminToken();
+  if (token) headers.Authorization = 'Bearer ' + token;
+  return headers;
+}
 
 function currentSearchTerm() {
   const el = document.getElementById('session-search');
@@ -230,9 +258,24 @@ function badgeClass(state) {
   return 'badge-awaiting';
 }
 
-async function fetchJSON(url) {
-  const res = await fetch(API + url);
-  return res.json();
+async function fetchJSON(url, options) {
+  const opts = Object.assign({}, options || {});
+  opts.headers = authHeaders(opts.headers);
+  const res = await fetch(API + url, opts);
+  const data = await res.json();
+  if (res.status === 401) {
+    const token = prompt('Admin token required. Paste ADMIN_TOKEN:');
+    if (token) {
+      saveAdminToken(token);
+      opts.headers = authHeaders(options?.headers);
+      const retry = await fetch(API + url, opts);
+      const retryData = await retry.json();
+      if (!retry.ok) throw new Error(retryData.error || `HTTP ${retry.status}`);
+      return retryData;
+    }
+  }
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
 }
 
 async function loadSessions(search) {
@@ -364,6 +407,67 @@ function renderUserLogGroup(label, entries) {
   return `<details class="user-log-group"><summary>${escapeHtml(label)} (${entries.length})</summary>
     ${entries.map(entry => `<pre class="user-log-entry">${escapeHtml(JSON.stringify(entry, null, 2))}</pre>`).join('')}
   </details>`;
+}
+
+async function renderUsersHome() {
+  const main = document.getElementById('main');
+  main.innerHTML = '<div class="empty">Loading beta invites…</div>';
+  try {
+    const data = await fetchJSON('/api/admin/beta/invites');
+    const invites = data.invites || [];
+    main.innerHTML = `<div class="card"><h3>Beta Invites</h3>
+      <p class="token-help">Invite or re-enable beta testers without using the Fly shell.</p>
+      <form onsubmit="submitBetaInvite(event)" class="settings-row" style="margin-top:10px">
+        <label for="beta-invite-email" class="label" style="align-self:center">Tester email</label>
+        <input id="beta-invite-email" type="email" placeholder="tester@example.com" required>
+        <button type="submit">Invite tester</button>
+      </form>
+      <div id="beta-invite-banner" class="settings-banner" style="display:none"></div>
+      ${renderBetaInvitesTable(invites)}
+    </div>`;
+  } catch (e) {
+    main.innerHTML = `<div class="empty">Error loading beta invites: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function renderBetaInvitesTable(invites) {
+  if (!invites.length) return '<div class="empty">No beta invites yet.</div>';
+  return `<table><tr><th>Email</th><th>Status</th><th>Invited</th><th>Accepted</th></tr>
+    ${invites.map(invite => `<tr>
+      <td>${escapeHtml(invite.email || '')}</td>
+      <td><span class="badge badge-idle">${escapeHtml(invite.status || '')}</span></td>
+      <td>${escapeHtml(invite.invited_at ? new Date(invite.invited_at).toLocaleString() : '-')}</td>
+      <td>${escapeHtml(invite.accepted_at ? new Date(invite.accepted_at).toLocaleString() : '-')}</td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+async function submitBetaInvite(event) {
+  event.preventDefault();
+  const input = document.getElementById('beta-invite-email');
+  const banner = document.getElementById('beta-invite-banner');
+  const email = (input?.value || '').trim();
+  if (!email) return;
+  try {
+    const data = await fetchJSON('/api/admin/beta/invites', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email}),
+    });
+    if (banner) {
+      banner.className = 'settings-banner ok';
+      banner.textContent = `Invited ${data.invite.email}`;
+      banner.style.display = '';
+    }
+    if (input) input.value = '';
+    setTimeout(renderUsersHome, 500);
+  } catch (e) {
+    if (banner) {
+      banner.className = 'settings-banner err';
+      banner.textContent = e.message;
+      banner.style.display = '';
+    }
+  }
 }
 
 async function renderTab() {
@@ -1100,7 +1204,7 @@ function showView(view) {
     if (currentUserId) {
       renderUserDetail();
     } else {
-      document.getElementById('main').innerHTML = '<div class="placeholder">Select a user to inspect</div>';
+      renderUsersHome();
     }
   } else {
     const main = document.getElementById('main');
@@ -1241,16 +1345,11 @@ async function saveModel(role) {
     return;
   }
   try {
-    const res = await fetch('/api/settings/models', {
+    await fetchJSON('/api/settings/models', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({role, provider, model_id: modelId}),
     });
-    const data = await res.json();
-    if (!res.ok) {
-      showBanner(role, data.error || `HTTP ${res.status}`, false);
-      return;
-    }
     showBanner(role, `Saved: ${provider} / ${modelId}`, true);
     setTimeout(renderSettingsView, 600);
   } catch (e) {
@@ -1259,6 +1358,8 @@ async function saveModel(role) {
 }
 
 // Auto-refresh session list every 5s (preserving the active search)
+const adminTokenInput = document.getElementById('admin-token-input');
+if (adminTokenInput) adminTokenInput.value = getAdminToken();
 loadSessions();
 setInterval(() => { if (currentView === 'sessions') loadSessions(currentSearchTerm()); }, 5000);
 </script>
