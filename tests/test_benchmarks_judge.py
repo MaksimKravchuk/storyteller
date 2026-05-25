@@ -383,15 +383,14 @@ class TestRunJudge:
         assert "connection refused" in vote.error
 
     @allure.story("Judge dispatch")
-    @allure.title("run_judge surfaces unparseable bodies as ERROR votes tagged with a parse-error reason")
+    @allure.title("run_judge retries once on parse failure; both fail → ERROR, mock called twice")
     @pytest.mark.asyncio
     async def test_parse_failure_becomes_error_vote(self):
-        with patch(
-            "benchmarks.harness.judge._send_judge_prompt",
-            new=AsyncMock(return_value="nothing structured here"),
-        ):
+        mock = AsyncMock(return_value="nothing structured here")
+        with patch("benchmarks.harness.judge._send_judge_prompt", new=mock):
             vote = await run_judge(_panel_member(), _judge_call(), cfg=_cfg())
 
         assert vote.verdict == "ERROR"
         assert vote.error is not None
         assert "parse error" in vote.error
+        assert mock.call_count == 2
