@@ -10,12 +10,12 @@ Threshold policy (codifies what the Plan agent's design recommended):
 
 - Per-element awarded points use the existing proportional formula
   ``round(base_value * k_yes / n_total)`` from ``benchmarks.harness.scoring``.
+  There is no separate per-element pass gate — the awarded value flows
+  directly into the rubric total.
 - A test passes when ``sum(awarded) >= round(PASS_FRACTION * sum(base_value))``,
-  i.e. **70%** of the rubric's total base value. Tolerates one weak
-  element on a balanced rubric without forcing 100% pass-through.
-- Per-element pass internally requires ``k_yes / n_total >= 2/3`` — on
-  a full 6-judge panel that's 4-of-6, tolerating a single dissent;
-  noise-level robust.
+  i.e. **70%** of the rubric's total base value. On a multi-element
+  rubric this tolerates one weak element — a 3×base=2 rubric needs 4-of-6
+  awarded, so one element returning 0 is still survivable.
 - Collapsed panel (every element returned PANEL_COLLAPSED) → ``pytest.skip``.
   No signal, not regression.
 - Panel below the signal floor (``MIN_PANEL_FOR_SIGNAL = 3`` members)

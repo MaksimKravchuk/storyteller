@@ -28,6 +28,10 @@ concurrency:
 
 jobs:
   lint:
+    # Skip on ``labeled`` events that aren't ``run-rubric`` — adding an
+    # unrelated label (bug, wip, etc.) shouldn't re-fire the full suite.
+    # The ``rubric`` job stays gated on the label itself further below.
+    if: github.event.action != 'labeled' || github.event.label.name == 'run-rubric'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -54,6 +58,7 @@ jobs:
         run: uv run flake8 .
 
   test:
+    if: github.event.action != 'labeled' || github.event.label.name == 'run-rubric'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -108,6 +113,7 @@ jobs:
         run: uv run mypy .
 
   test-db:
+    if: github.event.action != 'labeled' || github.event.label.name == 'run-rubric'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -140,8 +146,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: >-
-      github.event_name == 'push' ||
-      github.event.pull_request.draft == false
+      (github.event.action != 'labeled' || github.event.label.name == 'run-rubric') &&
+      (github.event_name == 'push' ||
+       github.event.pull_request.draft == false)
     permissions:
       contents: read
       pull-requests: write
