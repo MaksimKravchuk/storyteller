@@ -176,3 +176,67 @@ async def test_create_engine_from_state_does_not_apply_overrides(simple_setting)
     assert resolver.call_count == 3
     assert engine._director_model is AI_MODELS.gpt5_4_mini
     assert engine._narrator_model is AI_MODELS.gpt5_4_mini
+
+
+_PINNED_TEMP = float(0)  # benchmark-mode pinned temperature (T=0 for run-to-run determinism)
+_PARTIAL_TEMP = 0.1
+
+
+@allure.story("create_engine — temperature pinning")
+@allure.title("temperature_override mutates each role's ModelConfig.temperature")
+def test_create_engine_applies_temperature_override() -> None:
+    """A temperature_override dict pins each named role's temperature."""
+    cfg = _make_config()
+    cfg.dramaturge_enabled = True
+    with patch(
+        "engine.factory.resolve_model_config",
+        side_effect=_resolver_side_effect,
+    ):
+        engine = create_engine(
+            cfg,
+            temperature_override={
+                "director": _PINNED_TEMP,
+                "agent": _PARTIAL_TEMP,
+                "narrator": _PINNED_TEMP,
+                "dramaturge": _PINNED_TEMP,
+            },
+        )
+
+    assert engine._director_model.temperature == pytest.approx(_PINNED_TEMP)
+    assert engine._agent_model.temperature == pytest.approx(_PARTIAL_TEMP)
+    assert engine._narrator_model.temperature == pytest.approx(_PINNED_TEMP)
+    assert engine._dramaturge_model is not None
+    assert engine._dramaturge_model.temperature == pytest.approx(_PINNED_TEMP)
+
+
+@allure.story("create_engine — temperature pinning")
+@allure.title("Roles missing from temperature_override keep their ModelConfig defaults")
+def test_create_engine_partial_temperature_override() -> None:
+    """Unmentioned roles keep the temperature their ModelConfig carries."""
+    cfg = _make_config()
+    with patch(
+        "engine.factory.resolve_model_config",
+        side_effect=_resolver_side_effect,
+    ):
+        engine = create_engine(cfg, temperature_override={"narrator": _PINNED_TEMP})
+
+    assert engine._narrator_model.temperature == pytest.approx(_PINNED_TEMP)
+    # Other roles unchanged from the AI_MODELS defaults.
+    assert engine._director_model.temperature == pytest.approx(AI_MODELS.gpt5_4_mini.temperature)
+    assert engine._agent_model.temperature == pytest.approx(AI_MODELS.gpt5_4_nano.temperature)
+
+
+@allure.story("create_engine — temperature pinning")
+@allure.title("No temperature_override leaves every ModelConfig temperature at its default")
+def test_create_engine_no_temperature_override_is_noop() -> None:
+    """Omitting the kwarg must preserve production-time temperatures."""
+    cfg = _make_config()
+    with patch(
+        "engine.factory.resolve_model_config",
+        side_effect=_resolver_side_effect,
+    ):
+        engine = create_engine(cfg)
+
+    assert engine._director_model is AI_MODELS.gpt5_4_mini
+    assert engine._agent_model is AI_MODELS.gpt5_4_nano
+    assert engine._narrator_model is AI_MODELS.gpt5_4_mini

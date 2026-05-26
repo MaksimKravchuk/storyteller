@@ -7,12 +7,15 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
-from benchmarks.harness import _reliability_capture as reliability_capture
+from benchmarks.harness import (
+    _reliability_capture as reliability_capture,
+    _temperature_override as temperature_override,
+)
 from benchmarks.harness.scoring import score_scenario
 from benchmarks.harness.snapshots import snapshot
 from benchmarks.harness.transcript import NarratorCapture
 from benchmarks.harness.types._captures import CapturedTurn
-from engine.factory import create_engine_from_state
+from engine.factory import create_engine
 
 if TYPE_CHECKING:
     from benchmarks.harness.types import _scenarios, _scores
@@ -38,9 +41,17 @@ async def _prepare_engine(
     cfg: Any,
     scenario_state: ScenarioState,
 ) -> tuple[Any, NarratorCapture]:
-    """Restore the engine from the seeded state and install the capture hook."""
-    engine = await create_engine_from_state(
+    """Restore the engine from the seeded state and install the capture hook.
+
+    Reads ``BENCHMARK_TEMPERATURE_OVERRIDE`` / ``BENCHMARK_<ROLE>_TEMPERATURE``
+    env vars and pins engine LLM temperatures when set. Production callers never
+    set these vars, so the override is harness-scoped.
+    """
+    engine = create_engine(
         cfg,
+        temperature_override=temperature_override.load_temperature_overrides(),
+    )
+    await engine.restore_session(
         scenario_state.game_state,
         scenario_state.game_state.knowledge_graph,
         scenario_state.events,
