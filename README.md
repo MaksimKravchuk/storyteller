@@ -26,8 +26,9 @@ Each agent is a "performer" directed by the Director agent, which coordinates th
 cp .env.example .env
 # fill in your API key(s) in .env
 
-docker build -t storyteller .
-docker run -it --env-file .env storyteller
+docker compose up -d
+# Web UI: http://localhost:8070
+# Admin:  http://localhost:8080
 ```
 
 ### Local (uv)
@@ -37,7 +38,7 @@ uv sync --extra openai --extra anthropic
 cp .env.example .env
 # fill in your API key(s) in .env
 
-uv run python main.py
+uv run uvicorn interfaces.web.app:app --reload --host 127.0.0.1 --port 8070
 ```
 
 ## Configuration
@@ -57,19 +58,9 @@ Copy `.env.example` to `.env` and set your values:
 
 Provider is auto-detected from model name: `gpt-*` → OpenAI, `claude-*` → Anthropic.
 
-## Example session
+## Play
 
-```
-Describe your desired setting: Rome, 1st century AD, during the reign of Augustus
-
-Researching setting and generating opening scene...
-
-The Forum Romanum stretches before you as dawn breaks over the Palatine Hill...
-
-> I approach the merchant stalls near the Temple of Saturn
-
-The smell of fish sauce and fresh bread mingles in the morning air...
-```
+Open the web UI and start a story from the browser. The web client is the supported player interface.
 
 ## Requirements
 

@@ -74,7 +74,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --extra dev --extra openai --extra anthropic --extra telegram
+        run: uv sync --frozen --extra dev --extra openai --extra anthropic
 
       - name: Run unit tests with coverage and Allure
         run: |
@@ -168,7 +168,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.scope.outputs.in_scope == 'true'
-        run: uv sync --frozen --extra dev --extra openai --extra anthropic --extra telegram
+        run: uv sync --frozen --extra dev --extra openai --extra anthropic
 
       - name: Run mutmut on pilot scope
         if: steps.scope.outputs.in_scope == 'true'

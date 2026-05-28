@@ -1,4 +1,4 @@
-"""Production entry point — runs the Telegram bot, admin dashboard, and web UI."""
+"""Production entry point — runs the admin dashboard and web UI."""
 
 import asyncio
 import logging
@@ -10,7 +10,6 @@ from loguru import logger
 from config import load_config
 from db import engine as db_engine
 from interfaces.admin import AdminServer
-from interfaces.telegram_bot import build_bot
 from interfaces.web.runner import build_web_server
 from log_scrubbing import scrub_log_record
 
@@ -25,7 +24,7 @@ _LOG_FORMAT = (
 
 
 class _InterceptHandler(logging.Handler):
-    """Route stdlib logging (telegram, aiohttp, …) through loguru."""
+    """Route stdlib logging (aiohttp, uvicorn, ...) through loguru."""
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
@@ -67,46 +66,11 @@ def _run_migrations() -> None:
     logger.info("Migrations complete.")
 
 
-async def _run_telegram_bot(cfg, session_factory) -> None:
-    """Initialize, start, and poll the Telegram bot until shutdown."""
-    bot = build_bot(cfg, session_factory)
-    async with bot:
-        await bot.initialize()
-        await bot.start()
-        assert bot.updater is not None  # noqa: S101
-        await bot.updater.start_polling()
-        logger.info("Telegram bot polling started.")
-        await asyncio.Event().wait()
-
-
-async def _run_until_first_completes(tasks: list[asyncio.Task]) -> None:
-    """Await tasks in parallel; when one finishes (or fails), cancel the rest.
-
-    Used so a clean uvicorn shutdown (SIGTERM → server.serve() returns) also
-    stops the telegram bot's infinite polling loop, instead of waiting for
-    Fly's SIGKILL.
-    """
-    done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-    for pending_task in pending:
-        pending_task.cancel()
-    if pending:
-        await asyncio.gather(*pending, return_exceptions=True)
-    # Re-raise the first non-cancelled exception, if any, so the parent logs it.
-    for finished in done:
-        if not finished.cancelled() and finished.exception() is not None:
-            raise finished.exception()  # type: ignore[misc]
-
-
-async def _run_servers(cfg, session_factory) -> None:
-    """Run the web UI and (optionally) the telegram bot until one finishes."""
+async def _run_server(cfg) -> None:
+    """Run the web UI until shutdown."""
     web_server = build_web_server(cfg.web_port)
-    tasks = [asyncio.create_task(web_server.serve(), name="web")]
-    if cfg.telegram_bot_token:
-        tasks.append(asyncio.create_task(_run_telegram_bot(cfg, session_factory), name="telegram"))
-        logger.info("Booting web UI on :{} and Telegram bot polling.", cfg.web_port)
-    else:
-        logger.warning("TELEGRAM_BOT_TOKEN not set — bot disabled, admin + web only.")
-    await _run_until_first_completes(tasks)
+    logger.info("Booting web UI on :{}.", cfg.web_port)
+    await web_server.serve()
 
 
 async def main() -> None:
@@ -123,7 +87,7 @@ async def main() -> None:
     await admin.start()
 
     try:
-        await _run_servers(cfg, session_factory)
+        await _run_server(cfg)
     except Exception:
         logger.exception("Fatal error in main loop")
         raise

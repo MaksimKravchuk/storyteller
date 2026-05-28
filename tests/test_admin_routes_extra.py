@@ -91,7 +91,6 @@ async def test_list_sessions_returns_account_email_when_owner_exists() -> None:
     rows = [
         {
             "id": _SESSION_ID,
-            "telegram_chat_id": None,
             "web_player_id": "11111111-1111-1111-1111-111111111111",
             "state": "playing",
             "account_id": "11111111-1111-1111-1111-111111111111",

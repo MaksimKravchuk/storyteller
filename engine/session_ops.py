@@ -1,8 +1,7 @@
-"""Shared session-lifecycle helpers used by both web and telegram interfaces.
+"""Shared session-lifecycle helpers used by web-facing game flows.
 
-Each interface used to inline the same recipe for starting / resuming an
-engine and for persisting state at the end of a turn. These helpers lift
-that recipe into one place so the interface modules stay thin.
+These helpers keep the recipe for starting / resuming an engine and
+persisting state at the end of a turn in one place.
 """
 
 from __future__ import annotations

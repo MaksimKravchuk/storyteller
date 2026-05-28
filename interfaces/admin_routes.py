@@ -13,12 +13,10 @@ _DEFAULT_OFFSET = "0"
 
 def _session_list_filters(request: web.Request) -> dict:
     """Parse optional ``list_sessions`` filter/pagination params from the query string."""
-    telegram_chat_id_raw = request.query.get("telegram_chat_id")
     return {
         "limit": int(request.query.get("limit", _DEFAULT_LIMIT)),
         "offset": int(request.query.get("offset", _DEFAULT_OFFSET)),
         "web_player_id": request.query.get("web_player_id") or None,
-        "telegram_chat_id": int(telegram_chat_id_raw) if telegram_chat_id_raw else None,
         "search": request.query.get("search") or None,
     }
 

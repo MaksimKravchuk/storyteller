@@ -12,7 +12,7 @@ This procedure is for preparing and operating the Fly.io deployment. Agents may 
 
 - Runtime config lives in `fly.toml`.
 - The Docker image runs `uv run python run_server.py`.
-- `run_server.py` applies Alembic migrations, starts the admin dashboard on port 8080, starts the player web UI on port 8070, and starts Telegram polling only when `TELEGRAM_BOT_TOKEN` is set.
+- `run_server.py` applies Alembic migrations, starts the admin dashboard on port 8080, and starts the player web UI on port 8070.
 - GitHub Actions deploys on push to `main` when the `CI` workflow runs and the `lint`, `test`, and `test-db` jobs pass.
 - The `CI` workflow ignores docs-only changes, so this documentation PR by itself does not publish a Fly deploy.
 - The deploy job runs `flyctl deploy --remote-only` with the GitHub Actions secret `FLY_API_TOKEN`.
@@ -34,9 +34,8 @@ Fly app secrets / runtime environment:
 - `ANTHROPIC_API_KEY`
 - `ADMIN_TOKEN`
 
-Optional Fly app secrets / runtime environment, depending on enabled providers and surfaces:
+Optional Fly app secrets / runtime environment, depending on enabled providers:
 
-- `TELEGRAM_BOT_TOKEN`
 - `OPENROUTER_API_KEY`
 - `DEEPSEEK_API_KEY`
 - `DIRECTOR_MODEL`

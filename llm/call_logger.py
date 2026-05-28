@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextvars
 from typing import Any
 
-# Set by the Telegram bot handler before calling engine methods.
+# Set by web request handlers before calling engine methods.
 current_session_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("current_session_id", default=None)
 
 # Accumulates log entry dicts during a turn; flushed to DB afterward.

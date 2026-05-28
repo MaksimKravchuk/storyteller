@@ -75,7 +75,6 @@ async def user_sessions(session: AsyncSession, account_id: str) -> list[dict]:
     stmt = (
         select(
             tbl.sessions.c.id,
-            tbl.sessions.c.telegram_chat_id,
             tbl.sessions.c.web_player_id,
             tbl.sessions.c.state,
             tbl.sessions.c.language,

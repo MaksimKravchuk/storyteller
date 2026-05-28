@@ -13,11 +13,6 @@ Install:
 uv sync --group dev --extra openai --extra anthropic
 ```
 
-Run CLI:
-```bash
-uv run python main.py
-```
-
 Run web UI:
 ```bash
 uv run uvicorn interfaces.web.app:app --reload --host 127.0.0.1 --port 8070
@@ -62,7 +57,7 @@ uv run python -m benchmarks run
 - llm/: provider abstraction
 - prompts/: composable prompt templates
 - db/: persistence and ORM/domain converters
-- interfaces/: web UI, admin, Telegram
+- interfaces/: web UI and admin
 - benchmarks/: narration-quality benchmark harness
 
 ## Development rules

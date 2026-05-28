@@ -157,18 +157,8 @@ async def repo(async_session):
 @pytest_asyncio.fixture
 async def test_session_id(repo) -> str:
     """Create a fresh sessions row and return its id."""
-    chat_id = _random_chat_id()
-    row = await repo.sessions.create_telegram(chat_id)
+    row = await repo.sessions.create_web(str(_uuid.uuid4()))
     return row["id"]
-
-
-_CHAT_ID_BITS = 31  # 32-bit signed positive range for telegram_chat_id
-_CHAT_ID_MASK = (1 << _CHAT_ID_BITS) - 1
-
-
-def _random_chat_id() -> int:
-    """Return a deterministic-ish random int unique per call."""
-    return int(_uuid.uuid4().int & _CHAT_ID_MASK)
 
 
 # ---------------------------------------------------------------------------

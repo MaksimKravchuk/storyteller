@@ -1,11 +1,15 @@
-"""Data shapes and markdown rendering for narrative quality reports."""
+"""Narrative quality report model and markdown renderer."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
+
+_AVERAGE_PRECISION = 2
 
 
 @dataclass(frozen=True)
 class RubricScore:
-    """One rubric's graded result."""
+    """One judge score for a narrative-quality rubric."""
 
     rubric: str
     score: int
@@ -15,60 +19,54 @@ class RubricScore:
 
 @dataclass(frozen=True)
 class NarrativeReport:
-    """Aggregate grade for one full session across every rubric."""
+    """Complete narrative-quality report returned by the judge."""
 
     model: str
     scores: tuple[RubricScore, ...]
 
     @property
     def average(self) -> float:
-        denominator = max(len(self.scores), 1)
-        return sum(rs.score for rs in self.scores) / denominator
+        """Return the arithmetic mean score, or zero when empty."""
+        if not self.scores:
+            return 0
+        return sum(rubric_score.score for rubric_score in self.scores) / len(self.scores)
 
 
 def render_markdown_report(report: NarrativeReport, setting: str) -> str:
-    """Render a PR-comment-friendly markdown summary of a narrative report."""
-    judge_model = report.model
-    average_line = f"**Average score:** {report.average:.1f} / 10"
-    lines: list[str] = [
-        "## Narrative Quality Report",
+    """Render a human-readable markdown report for Allure/CI artifacts."""
+    lines = [
+        "# Narrative Quality Report",
         "",
-        f"**Setting:** {setting}",
-        f"**Judge model:** {judge_model}",
-        average_line,
+        f"- Setting: `{setting}`",
+        f"- Judge model: `{report.model}`",
+        "- Average score: **{0}/10**".format(_format_average(report.average)),
         "",
-        "| Rubric | Score | Summary |",
-        "| --- | --- | --- |",
+        "## Scores",
     ]
-    for rs in report.scores:
-        lines.append(_format_score_row(rs))
-
-    issue_lines = _collect_issue_lines(report)
-    if issue_lines:
-        lines.append("")
-        lines.append("### Issues flagged")
-        lines.extend(issue_lines)
-
+    for score in report.scores:
+        lines.extend(_rubric_lines(score))
+    issues = _collect_issue_lines(report)
+    if issues:
+        lines.extend(["", "## Issues", *issues])
     return "\n".join(lines)
 
 
-def _format_score_row(rs: RubricScore) -> str:
-    rubric_name = rs.rubric.title()
-    rubric_score = rs.score
-    summary = _one_line(rs.reasoning)
-    return f"| {rubric_name} | {rubric_score}/10 | {summary} |"
+def _rubric_lines(score: RubricScore) -> list[str]:
+    return [
+        "",
+        f"### {score.rubric}: {score.score}/10",
+        "",
+        score.reasoning,
+    ]
 
 
-def _one_line(phrase: str) -> str:
-    collapsed = " ".join(phrase.split())
-    return collapsed.replace("|", r"\|")
+def _format_average(score: float) -> str:
+    return format(score, f".{_AVERAGE_PRECISION}f")
 
 
 def _collect_issue_lines(report: NarrativeReport) -> list[str]:
-    issue_lines: list[str] = []
-    for rs in report.scores:
-        rubric_label = rs.rubric.title()
-        for issue in rs.issues:
-            cleaned = _one_line(issue)
-            issue_lines.append(f"- **{rubric_label}:** {cleaned}")
-    return issue_lines
+    lines: list[str] = []
+    for score in report.scores:
+        for issue in score.issues:
+            lines.append(f"- **{score.rubric}:** {issue}")
+    return lines

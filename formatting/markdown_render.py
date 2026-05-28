@@ -1,4 +1,4 @@
-"""Convert a tight Markdown subset into plain text / Telegram HTML / HTML.
+"""Convert a tight Markdown subset into HTML.
 
 The Narrator is instructed to emit only this subset:
 
@@ -17,8 +17,6 @@ import re
 from html import escape
 from typing import Callable
 
-from formatting.platform import ClientPlatform
-
 _CODE_SPAN_RE = re.compile(r"`([^`\n]+)`")
 _BOLD_RE = re.compile(r"\*\*(.+?)\*\*", re.DOTALL)
 _ITALIC_STAR_RE = re.compile(r"(?<!\*)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\*)")
@@ -27,35 +25,12 @@ _PARAGRAPH_SPLIT_RE = re.compile(r"\n\s*\n")
 
 _KIND_TEXT = "text"
 _KIND_CODE = "code"
-_KEEP_GROUP = r"\1"
-
-
-def to_plain(md: str) -> str:
-    """Strip Markdown markers and return human-readable text."""
-    return _render_paragraphs(md, _strip_inline, joiner="\n\n", para_open="", para_close="")
-
-
-def to_telegram_html(md: str) -> str:
-    """Render Markdown into the Telegram HTML subset (<b>, <i>, <code>)."""
-    inline = _make_html_inline(bold="b", italic="i", code="code")
-    return _render_paragraphs(md, inline, joiner="\n\n", para_open="", para_close="")
 
 
 def to_html(md: str) -> str:
     """Render Markdown into standalone HTML with <p> paragraphs."""
     inline = _make_html_inline(bold="strong", italic="em", code="code")
     return _render_paragraphs(md, inline, joiner="\n", para_open="<p>", para_close="</p>")
-
-
-def render(md: str, platform: ClientPlatform) -> str:
-    """Render ``md`` into the markup expected by ``platform``."""
-    if platform is ClientPlatform.PLAIN:
-        return to_plain(md)
-    if platform is ClientPlatform.TELEGRAM_HTML:
-        return to_telegram_html(md)
-    if platform is ClientPlatform.HTML:
-        return to_html(md)
-    raise ValueError("Unknown client platform: {0!r}".format(platform))
 
 
 def _render_paragraphs(
@@ -101,20 +76,6 @@ def _wrap_tag(tag: str) -> Callable[[re.Match[str]], str]:
         return "<{0}>{1}</{0}>".format(tag, match.group(1))
 
     return replace
-
-
-def _strip_inline(chunk: str) -> str:
-    """Drop Markdown markers; leave content (and code spans) intact."""
-    parts: list[str] = []
-    for kind, body in _split_code_spans(chunk):
-        if kind == _KIND_CODE:
-            parts.append(body)
-            continue
-        stripped = _BOLD_RE.sub(_KEEP_GROUP, body)
-        stripped = _ITALIC_STAR_RE.sub(_KEEP_GROUP, stripped)
-        stripped = _ITALIC_UNDER_RE.sub(_KEEP_GROUP, stripped)
-        parts.append(stripped)
-    return "".join(parts)
 
 
 def _split_code_spans(chunk: str) -> list[tuple[str, str]]:

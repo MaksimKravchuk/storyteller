@@ -1,8 +1,7 @@
 """Build a uvicorn ``Server`` for the player web UI.
 
-Extracted so ``run_server.py`` can embed the web UI alongside the telegram
-bot and admin dashboard without pulling ``uvicorn`` into its own import
-graph (it stays just under the wemake import budget).
+Extracted so ``run_server.py`` can embed the web UI alongside the admin
+dashboard without pulling ``uvicorn`` into its own import graph.
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ def build_web_server(port: int) -> uvicorn.Server:
 
     Logging is intentionally left to the caller's loguru intercept handler
     (``log_config=None``) so the web UI's request lines flow through the
-    same sink as the telegram bot and admin dashboard.
+    same sink as the admin dashboard.
     """
     config = uvicorn.Config(
         _WEB_APP_TARGET,

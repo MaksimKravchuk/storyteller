@@ -300,11 +300,10 @@ async function loadSessions(search) {
   const data = await fetchJSON('/api/sessions' + qs);
   const list = document.getElementById('session-list');
   list.innerHTML = data.sessions.map(s => {
-    const chatLabel = s.telegram_chat_id != null ? 'Chat ' + s.telegram_chat_id : 'Web';
     const idShort = (s.id || '').slice(0, 8);
     return `
     <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
-      <div class="chat-id">${chatLabel} <span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
+      <div class="chat-id">Web <span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
       <div class="meta"><span class="session-id-short">${idShort}</span> | ${renderOwnerLabel(s)}</div>
       <div class="meta">${s.language} | Turn ${s.turn_count ?? 0} | ${s.game_time ?? '-'}</div>
     </div>`;
@@ -315,7 +314,6 @@ function renderOwnerLabel(s) {
   if (s.account_email && s.account_id) {
     return `<span class="view-link" onclick="event.stopPropagation(); openUserFromCrossLink('${s.account_id}')">${escapeHtml(s.account_email)}</span>`;
   }
-  if (s.telegram_chat_id != null && !s.web_player_id) return 'Chat ' + s.telegram_chat_id;
   return '—';
 }
 
@@ -608,7 +606,6 @@ async function renderOverview(el) {
   const s = d.session, gs = d.game_state, p = d.player, st = d.setting;
   el.innerHTML = `
     <div class="card"><h3>Session</h3><div class="kv">
-      <div class="label">Chat ID</div><div>${s.telegram_chat_id ?? '—'}</div>
       <div class="label">State</div><div><span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
       <div class="label">Language</div><div>${s.language}</div>
       <div class="label">Created</div><div>${new Date(s.created_at).toLocaleString()}</div>

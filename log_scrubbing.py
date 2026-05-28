@@ -1,12 +1,12 @@
 """Scrub secrets from log messages before they hit any sink.
 
-Exposes a loguru patcher so every log record emitted by the application —
-production bots, the CLI, and tests — is run through a redaction pass.
+Exposes a loguru patcher so every log record emitted by the application and
+tests is run through a redaction pass.
 The guarantee is pipeline-level: any sink (stderr, file, network)
 downstream of the patcher receives already-scrubbed messages.
 
-Call :func:`install_scrubber` once at process start (``run_server.py``,
-``main.py``, test conftest). It is idempotent — calling it again replaces
+Call :func:`install_scrubber` once at process start (``run_server.py`` or
+test conftest). It is idempotent — calling it again replaces
 the patcher reference with the same function, which is a no-op.
 """
 
@@ -49,7 +49,6 @@ _SECRET_ENV_VARS: tuple[str, ...] = (
     "ANTHROPIC_API_KEY",
     "GITHUB_TOKEN",
     "FLY_API_TOKEN",
-    "TELEGRAM_BOT_TOKEN",
     "DATABASE_URL",
 )
 

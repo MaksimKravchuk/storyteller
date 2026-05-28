@@ -67,14 +67,12 @@ class AdminQueries:
         offset: int = 0,
         *,
         web_player_id: str | None = None,
-        telegram_chat_id: int | None = None,
         search: str | None = None,
     ) -> list[dict]:
         """List sessions with basic game info, optionally filtered by player identity."""
         stmt = (
             select(
                 tbl.sessions.c.id,
-                tbl.sessions.c.telegram_chat_id,
                 tbl.sessions.c.web_player_id,
                 tbl.sessions.c.state,
                 tbl.sessions.c.language,
@@ -94,8 +92,6 @@ class AdminQueries:
         )
         if web_player_id is not None:
             stmt = stmt.where(tbl.sessions.c.web_player_id == web_player_id)
-        if telegram_chat_id is not None:
-            stmt = stmt.where(tbl.sessions.c.telegram_chat_id == telegram_chat_id)
         if search:
             stmt = repo_admin_users.apply_search_filter(stmt, search)
         sessions_query = await self.session.execute(stmt)
@@ -106,7 +102,6 @@ class AdminQueries:
         stmt = (
             select(
                 tbl.sessions.c.id,
-                tbl.sessions.c.telegram_chat_id,
                 tbl.sessions.c.web_player_id,
                 tbl.sessions.c.state,
                 tbl.sessions.c.language,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import allure
 import pytest
@@ -236,6 +237,25 @@ class TestChroniclerResponseSchemaDefaults:
         draft = WorldThreadDraft(description="something", category="cultural")
         assert draft.involved_locations == []
         assert draft.involved_npcs == []
+
+    @allure.story("Schema defaults")
+    @allure.title("ChroniclerResponse accepts syntactically valid non-v4 reference UUIDs")
+    def test_response_accepts_non_v4_reference_uuid(self):
+        non_v4_uuid = UUID("3c1d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f")
+
+        response = ChroniclerResponse.model_validate(
+            {
+                "new_threads": [
+                    {
+                        "description": "Brutus presses Marcus in the taberna",
+                        "category": "political",
+                        "involved_npcs": [str(non_v4_uuid)],
+                    },
+                ],
+            },
+        )
+
+        assert response.new_threads[0].involved_npcs == [non_v4_uuid]
 
 
 @allure.epic("Narrative Delivery")

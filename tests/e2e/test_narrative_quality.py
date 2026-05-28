@@ -1,22 +1,18 @@
-"""E2E test: drive a 10-turn session and grade its narrative quality.
+"""E2E test: drive a live engine session and grade narrative quality."""
 
-Soft report only — the test passes as long as the judge returns valid
-JSON scores for all six rubrics. The markdown report is printed to
-stdout, attached to Allure, and written to ``allure-results/`` so a CI
-workflow can pick it up for a PR comment.
-"""
+from __future__ import annotations
 
 import json
 import pathlib
 import sys
 
 import allure
+import pytest
 
 from tests.e2e.narrative_report import NarrativeReport, render_markdown_report
 from tests.e2e.narrative_session_driver import play_session
-from tests.e2e.narrative_test_agent import NarrativeTestAgent
+from tests.e2e.narrative_test_agent import RUBRICS, NarrativeTestAgent
 
-_EXPECTED_RUBRIC_COUNT = 6
 _MIN_VALID_SCORE = 1
 _MAX_VALID_SCORE = 10
 _AVERAGE_PRECISION = 2
@@ -31,10 +27,11 @@ _ARTIFACT_PATHS: tuple[pathlib.Path, ...] = (
 @allure.feature("Narrative Quality")
 @allure.story("End-to-end Evaluation")
 @allure.severity(allure.severity_level.NORMAL)
-def test_narrative_quality(game_process):
-    judge = NarrativeTestAgent()
-    transcript = play_session(game_process)
-    report = judge.evaluate_session(transcript)
+@pytest.mark.asyncio
+async def test_narrative_quality() -> None:
+    """Drive a live web-era engine session and publish judge scores."""
+    transcript = await play_session()
+    report = await NarrativeTestAgent().evaluate_session(transcript)
     _publish_report(report, transcript.setting)
     _assert_report_shape(report)
 
@@ -43,16 +40,8 @@ def _publish_report(report: NarrativeReport, setting: str) -> None:
     markdown = render_markdown_report(report, setting)
     sys.stdout.write(f"{markdown}\n")
     sys.stdout.flush()
-    allure.attach(
-        markdown,
-        name="narrative-report.md",
-        attachment_type=allure.attachment_type.TEXT,
-    )
-    allure.attach(
-        json.dumps(_report_to_dict(report), indent=2),
-        name="narrative-scores",
-        attachment_type=allure.attachment_type.JSON,
-    )
+    allure.attach(markdown, name="narrative-report.md", attachment_type=allure.attachment_type.TEXT)
+    allure.attach(json.dumps(_report_to_dict(report), indent=2), name="narrative-scores")
     _write_artifact(markdown)
 
 
@@ -62,12 +51,12 @@ def _report_to_dict(report: NarrativeReport) -> dict:
         "average": round(report.average, _AVERAGE_PRECISION),
         "scores": [
             {
-                "rubric": rs.rubric,
-                "score": rs.score,
-                "reasoning": rs.reasoning,
-                "issues": list(rs.issues),
+                "rubric": item.rubric,
+                "score": item.score,
+                "reasoning": item.reasoning,
+                "issues": list(item.issues),
             }
-            for rs in report.scores
+            for item in report.scores
         ],
     }
 
@@ -86,17 +75,11 @@ def _write_artifact_file(target_path: pathlib.Path, markdown: str) -> None:
 
 
 def _attach_artifact_error(target_path: pathlib.Path, exc: OSError) -> None:
-    reason = str(exc)
-    body = f"Failed to write {target_path}: {reason}"
-    leaf = target_path.name
-    allure.attach(
-        body,
-        name=f"artifact-error-{leaf}",
-        attachment_type=allure.attachment_type.TEXT,
-    )
+    body = f"Failed to write {target_path}: {exc}"
+    allure.attach(body, name=f"artifact-error-{target_path.name}", attachment_type=allure.attachment_type.TEXT)
 
 
 def _assert_report_shape(report: NarrativeReport) -> None:
-    assert len(report.scores) == _EXPECTED_RUBRIC_COUNT
-    for rubric_score in report.scores:
-        assert _MIN_VALID_SCORE <= rubric_score.score <= _MAX_VALID_SCORE
+    assert len(report.scores) == len(RUBRICS)
+    for score in report.scores:
+        assert _MIN_VALID_SCORE <= score.score <= _MAX_VALID_SCORE

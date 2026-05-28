@@ -15,10 +15,6 @@ from tests.db.conftest import GameRepository
 pytestmark = pytest.mark.db
 
 
-def _chat_id() -> int:
-    return int(_uuid.uuid4().int & 0x7FFFFFFF)
-
-
 def _player_id() -> str:
     return str(_uuid.uuid4())
 
@@ -137,24 +133,11 @@ class TestListSessionsFiltering:
         assert [row["id"] for row in rows] == [second["id"], first["id"]]
 
     @allure.story("List sessions")
-    @allure.title("list_sessions(telegram_chat_id=...) narrows to that chat's rows only")
-    @pytest.mark.asyncio
-    async def test_filters_to_telegram_chat(self, repo: GameRepository) -> None:
-        chat_id = _chat_id()
-        other_chat_id = _chat_id()
-        await repo.sessions.create_telegram(chat_id)
-        await repo.sessions.create_telegram(other_chat_id)
-
-        rows = await repo.admin.list_sessions(telegram_chat_id=chat_id)
-        assert len(rows) == 1
-        assert rows[0]["telegram_chat_id"] == chat_id
-
-    @allure.story("List sessions")
     @allure.title("list_sessions(search=<uuid prefix>) matches on sessions.id substring")
     @pytest.mark.asyncio
     async def test_search_matches_session_id_prefix(self, repo: GameRepository) -> None:
-        row = await repo.sessions.create_telegram(_chat_id())
-        await repo.sessions.create_telegram(_chat_id())
+        row = await repo.sessions.create_web(_player_id())
+        await repo.sessions.create_web(_player_id())
         prefix = str(row["id"])[:8]
 
         rows = await repo.admin.list_sessions(search=prefix)
@@ -175,7 +158,7 @@ class TestListSessionsFiltering:
     @allure.title("list_sessions(search=%) treats LIKE wildcards literally instead of matching everything")
     @pytest.mark.asyncio
     async def test_search_escapes_like_wildcards(self, repo: GameRepository) -> None:
-        await repo.sessions.create_telegram(_chat_id())
+        await repo.sessions.create_web(_player_id())
 
         rows = await repo.admin.list_sessions(search="%")
         assert rows == []
@@ -208,22 +191,6 @@ class TestListSessionsFiltering:
 
         rows = await repo.admin.list_sessions(web_player_id=orphan_player_id)
         match = next(row for row in rows if row["id"] == created["id"])
-        assert match["account_id"] is None
-        assert match["account_email"] is None
-
-    @allure.story("List sessions")
-    @allure.title("list_sessions returns null account fields for telegram-only sessions")
-    @pytest.mark.asyncio
-    async def test_list_sessions_telegram_session_returns_null_account(
-        self,
-        repo: GameRepository,
-    ) -> None:
-        chat_id = _chat_id()
-        created = await repo.sessions.create_telegram(chat_id)
-
-        rows = await repo.admin.list_sessions(telegram_chat_id=chat_id)
-        match = next(row for row in rows if row["id"] == created["id"])
-        assert match["telegram_chat_id"] == chat_id
         assert match["account_id"] is None
         assert match["account_email"] is None
 
@@ -393,7 +360,7 @@ class TestNPCDetail:
         await repo.save_game_state(test_session_id, game_state, kg, events)
         some_npc_id = next(iter(game_state.npcs))
 
-        other_session = await repo.sessions.create_telegram(_chat_id())
+        other_session = await repo.sessions.create_web(_player_id())
 
         detail = await repo.admin.get_npc_detail(other_session["id"], some_npc_id)
         assert detail is None

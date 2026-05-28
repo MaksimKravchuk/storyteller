@@ -31,10 +31,10 @@ Epics reflect **what the app does for the player/operator**, not the Python pack
 | **Scene & Exploration** | SceneBuilder, locations, scope-filtered knowledge, scene tracking |
 | **NPC Interaction** | NPCGenerator, Actor, personality/mood, dialogue routing, NPC turns, director context formatting |
 | **Combat & Action Resolution** | Dice (combat + contest), contested actions, combat routing, retaliation, physical status |
-| **Narrative Delivery** | Narrator prose generation, Markdown rendering, client-specific formatting |
+| **Narrative Delivery** | Narrator prose generation, Markdown rendering, web formatting |
 | **Game Timeline** | EventManager, time costs, scheduled effects, wait action, turn counting, scene transitions |
 | **Memory & Persistence** | GameState fields, domain models, scene history, database engine, repository, converters |
-| **Player Interfaces** | CLI, Telegram bot, admin dashboard, auth |
+| **Player Interfaces** | Web UI, admin dashboard, auth |
 | **Engine & LLM Infrastructure** | GameEngine public API, BasePerformer, call chain tracking, LLM provider layer, prompt templating, config |
 
 ---
@@ -80,7 +80,7 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 | File | Feature | Example story |
 |---|---|---|
 | `test_narrator.py` | Narrator | "Scene type selection", "Dialogue rendering" |
-| `test_markdown_render.py` | Markdown rendering | "Telegram HTML", "Plain text", "HTML output" |
+| `test_markdown_render.py` | Markdown rendering | "HTML output" |
 
 ### Game Timeline
 
@@ -108,10 +108,8 @@ Find the test file you're editing in the table; use the epic/feature combo exact
 
 | File | Feature | Example story |
 |---|---|---|
-| `test_cli.py` | CLI | "Game start flow", "Action input" |
 | `test_admin.py` | Admin dashboard | "No-auth mode", "Session listing" |
 | `test_admin_auth.py` | Admin authentication | "Token required", "Token accepted" |
-| `test_telegram_wait.py` | Telegram bot | "Wait command registration" |
 | `test_web_api.py` | Web UI | "Transcript building", "Current game lookup", "Start game", "Submit action", "Cookie bootstrap", "Ownership enforcement" |
 | `test_web_schemas.py` | Web UI | "Character info schema" |
 | `test_web_character.py` | Web UI | "Character info builder" |

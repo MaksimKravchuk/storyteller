@@ -17,7 +17,6 @@ Primary stack:
 - uv package/dependency management
 - FastAPI web UI at interfaces/web/app.py
 - aiohttp admin service
-- optional Telegram bot
 - async SQLAlchemy + asyncpg + Alembic
 - PostgreSQL in docker-compose
 - NetworkX knowledge graph
@@ -38,7 +37,7 @@ Important modules:
 - llm/: provider abstraction
 - prompts/: composable prompt templates
 - db/: persistence and ORM/domain converters
-- interfaces/: web, admin, Telegram
+- interfaces/: web, admin
 - benchmarks/: narration-quality benchmark harness
 
 ## Existing commands
@@ -46,11 +45,6 @@ Important modules:
 Install:
 ```bash
 uv sync --group dev --extra openai --extra anthropic
-```
-
-Run CLI game:
-```bash
-uv run python main.py
 ```
 
 Run player web UI:
@@ -129,7 +123,7 @@ The next release should be run like a product release, not a code-only milestone
    - Main branch push deploys to Fly.io. Agents must never push directly to main without explicit human approval.
 
 5. Secret/publishing risk
-   - API keys, Telegram token, Fly token, and GitHub secrets must stay outside chat and code.
+   - API keys, Fly token, and GitHub secrets must stay outside chat and code.
 
 6. Scope risk
    - The game can expand infinitely. A release charter with explicit non-goals is mandatory.
