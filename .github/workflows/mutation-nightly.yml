@@ -45,7 +45,8 @@ jobs:
         # The aggregate stats above say *how many* survived; this list says *which*,
         # so the next session can triage without re-running the whole pilot locally.
         if: always()
-        run: uv run mutmut results | grep ': survived' > mutants/survivors.txt || true
+        run: |
+          uv run mutmut results | grep ': survived' > mutants/survivors.txt || true
 
       - name: Upload mutmut artifact
         if: always()
