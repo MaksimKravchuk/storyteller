@@ -17,6 +17,10 @@ _PAST_MIDNIGHT_HOURS = 25
 _ACCUMULATED_CLOCK = 12.0
 _HALF_DAY_HOURS = 6
 _NIGHT_HOURS = 3
+_DAWN_BOUNDARY = 6.0
+_NOON_BOUNDARY = 12.0
+_EVENING_BOUNDARY = 18.0
+_FULL_DAY_HOURS = 24.0
 
 
 @allure.epic("Memory & Persistence")
@@ -90,6 +94,26 @@ class TestGameStateClockAdvance:
         game_state.advance_clock(_HALF_DAY_HOURS)
         game_state.advance_clock(_HALF_DAY_HOURS)
         assert game_state.game_clock == _ACCUMULATED_CLOCK
+
+    @allure.story("Clock advance")
+    @allure.title("Time-of-day boundaries are exclusive lower edges: 6h is morning, 12h afternoon, 18h evening")
+    def test_time_of_day_boundaries_are_exclusive(self, game_state):
+        # Each boundary pins a `<` against its `<=` mutant: at exactly the edge
+        # the later bucket must win (6→morning not night, 12→afternoon, 18→evening).
+        game_state.advance_clock(_DAWN_BOUNDARY)
+        assert game_state.game_time == "morning"
+        game_state.advance_clock(_NOON_BOUNDARY - _DAWN_BOUNDARY)
+        assert game_state.game_time == "afternoon"
+        game_state.advance_clock(_EVENING_BOUNDARY - _NOON_BOUNDARY)
+        assert game_state.game_time == "evening"
+
+    @allure.story("Clock advance")
+    @allure.title("A clock of exactly 24h wraps to 0 (midnight → night), confirming the modulo-24 reduction")
+    def test_clock_wraps_at_exactly_24_hours(self, game_state):
+        # Pins `new_clock % 24`: 24 % 24 == 0 → night, whereas 24 % 25 == 24 → evening.
+        game_state.advance_clock(_FULL_DAY_HOURS)
+        assert game_state.game_clock == _FULL_DAY_HOURS
+        assert game_state.game_time == "night"
 
 
 @allure.epic("Memory & Persistence")

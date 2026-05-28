@@ -419,6 +419,19 @@ class TestUnknownEffectFallsBackToEmptySlots:
 
         assert derived == slots_mod.EMPTY_SLOTS
 
+    @allure.story("Effect slots")
+    @allure.title("CHANGE_STATUS with no status key yields a None outcome (the absent-status default is empty)")
+    def test_change_status_without_status_leaves_outcome_none(self) -> None:
+        # Pins the `edata.get(status, "")` default in _slots_for_status: a missing
+        # status must normalise to "" → outcome None, never a placeholder or a crash.
+        effect = event_mod.EventEffect(effect_type="CHANGE_STATUS", target_id="x", effect_data={})
+
+        derived = effect_slots_mod.slots_for_effect(effect, "Marcus")
+
+        assert derived.action == "changed_status"
+        assert derived.outcome is None
+        assert derived.subject == "Marcus"
+
 
 # ---------------------------------------------------------------------------
 # Consumer seam: object-interaction witness memories

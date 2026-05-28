@@ -285,6 +285,15 @@ class TestAddKnowledgeEffect:
         )
         assert graph.all_nodes() == []
 
+    @allure.story("Add knowledge")
+    @allure.title("ADD_KNOWLEDGE writes nothing when the content key is absent entirely")
+    def test_missing_content_key_is_noop(self):
+        graph = KnowledgeGraph()
+        EffectApplier(_empty_game_state(), graph).apply(
+            EventEffect(effect_type="ADD_KNOWLEDGE", target_id="", effect_data={"scope": "city"})
+        )
+        assert graph.all_nodes() == []
+
 
 @allure.epic("Game Timeline")
 @allure.feature("Effect application")
@@ -365,3 +374,282 @@ class TestUnknownEffect:
         EffectApplier(gs, KnowledgeGraph()).apply(
             EventEffect(effect_type="SPAWN_NPC", target_id="", effect_data={"npc_request": "merchant"}),
         )
+
+
+_OTHER_ID = make_uuid("some-other-id")
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestNpcIdResolution:
+    """The npc_id effect_data key takes priority; target_id is only the fallback.
+
+    Tests where target_id == npc_id cannot tell the two apart — these pin
+    the resolution by making them differ, and by omitting npc_id entirely.
+    """
+
+    @allure.story("npc_id resolution")
+    @allure.title("ADD_ITEM applies to the npc_id NPC even when target_id points elsewhere")
+    def test_add_item_prefers_npc_id_over_target_id(self):
+        npc = NPCCard(name="Marcus", occupation="guard")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="ADD_ITEM",
+                target_id=str(_OTHER_ID),
+                effect_data={"npc_id": str(npc.uuid), "item": "sword"},
+            )
+        )
+        assert npc.inventory == ["sword"]
+
+    @allure.story("npc_id resolution")
+    @allure.title("ADD_ITEM falls back to target_id when no npc_id key is present")
+    def test_add_item_falls_back_to_target_id(self):
+        npc = NPCCard(name="Marcus", occupation="guard")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="ADD_ITEM", target_id=str(npc.uuid), effect_data={"item": "sword"})
+        )
+        assert npc.inventory == ["sword"]
+
+    @allure.story("npc_id resolution")
+    @allure.title("ADD_ITEM with no item key is a no-op (the absent-item default is falsy)")
+    def test_add_item_missing_item_key_is_noop(self):
+        npc = NPCCard(name="Marcus", occupation="guard")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="ADD_ITEM", target_id=str(npc.uuid), effect_data={"npc_id": str(npc.uuid)})
+        )
+        assert npc.inventory == []
+
+    @allure.story("npc_id resolution")
+    @allure.title("REMOVE_ITEM applies to the npc_id NPC even when target_id points elsewhere")
+    def test_remove_item_prefers_npc_id_over_target_id(self):
+        npc = NPCCard(name="Marcus", occupation="guard", inventory=["sword"])
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="REMOVE_ITEM",
+                target_id=str(_OTHER_ID),
+                effect_data={"npc_id": str(npc.uuid), "item": "sword"},
+            )
+        )
+        assert npc.inventory == []
+
+    @allure.story("npc_id resolution")
+    @allure.title("REMOVE_ITEM falls back to target_id when no npc_id key is present")
+    def test_remove_item_falls_back_to_target_id(self):
+        npc = NPCCard(name="Marcus", occupation="guard", inventory=["sword"])
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="REMOVE_ITEM", target_id=str(npc.uuid), effect_data={"item": "sword"})
+        )
+        assert npc.inventory == []
+
+    @allure.story("npc_id resolution")
+    @allure.title("CHANGE_STATUS applies to the npc_id NPC even when target_id points elsewhere")
+    def test_change_status_prefers_npc_id_over_target_id(self):
+        npc = NPCCard(name="Guard", occupation="guard", physical_status="healthy")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="CHANGE_STATUS",
+                target_id=str(_OTHER_ID),
+                effect_data={"npc_id": str(npc.uuid), "status": "wounded"},
+            )
+        )
+        assert npc.physical_status == "wounded"
+
+    @allure.story("npc_id resolution")
+    @allure.title("CHANGE_STATUS falls back to target_id when no npc_id key is present")
+    def test_change_status_falls_back_to_target_id(self):
+        npc = NPCCard(name="Guard", occupation="guard", physical_status="healthy")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="CHANGE_STATUS", target_id=str(npc.uuid), effect_data={"status": "wounded"})
+        )
+        assert npc.physical_status == "wounded"
+
+    @allure.story("npc_id resolution")
+    @allure.title("CHANGE_STATUS with no status key leaves the NPC's status untouched")
+    def test_change_status_missing_status_key_is_noop(self):
+        npc = NPCCard(name="Guard", occupation="guard", physical_status="healthy")
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="CHANGE_STATUS", target_id=str(npc.uuid), effect_data={"npc_id": str(npc.uuid)})
+        )
+        assert npc.physical_status == "healthy"
+
+    @allure.story("npc_id resolution")
+    @allure.title("MOVE_NPC moves the npc_id NPC even when target_id points elsewhere")
+    def test_move_npc_prefers_npc_id_over_target_id(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
+        gs = _make_game_state_with_npc(npc)
+        gs.locations[_LOC_1] = Location(name="Gate")
+        gs.locations[_LOC_2] = Location(name="Forum")
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="MOVE_NPC",
+                target_id=str(_OTHER_ID),
+                effect_data={"npc_id": str(npc.uuid), "to_location_id": str(_LOC_2)},
+            )
+        )
+        assert npc.location_id == _LOC_2
+
+    @allure.story("npc_id resolution")
+    @allure.title("MOVE_NPC falls back to target_id when no npc_id key is present")
+    def test_move_npc_falls_back_to_target_id(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
+        gs = _make_game_state_with_npc(npc)
+        gs.locations[_LOC_1] = Location(name="Gate")
+        gs.locations[_LOC_2] = Location(name="Forum")
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="MOVE_NPC",
+                target_id=str(npc.uuid),
+                effect_data={"to_location_id": str(_LOC_2)},
+            )
+        )
+        assert npc.location_id == _LOC_2
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestChangeAttributeDefaults:
+    @allure.story("Attribute defaults")
+    @allure.title("CHANGE_ATTRIBUTE with no value key writes the numeric default of 0")
+    def test_missing_value_defaults_to_zero(self):
+        npc = NPCCard(name="Marcus", occupation="guard", attributes={"strength": 5})
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="CHANGE_ATTRIBUTE", target_id=str(npc.uuid), effect_data={"attribute": "strength"})
+        )
+        assert npc.attributes["strength"] == 0
+
+    @allure.story("Attribute defaults")
+    @allure.title("CHANGE_ATTRIBUTE with no attribute key is a no-op")
+    def test_missing_attribute_key_is_noop(self):
+        npc = NPCCard(name="Marcus", occupation="guard", attributes={"strength": 5})
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="CHANGE_ATTRIBUTE", target_id=str(npc.uuid), effect_data={"value": 9})
+        )
+        assert npc.attributes == {"strength": 5}
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestMoveAndRemoveLocationGuards:
+    @allure.story("Stale location")
+    @allure.title("MOVE_NPC tolerates an NPC whose current location is no longer registered")
+    def test_move_npc_with_stale_origin_does_not_raise(self):
+        # npc.location_id (_LOC_2) is NOT in gs.locations — the `is not None AND in locations`
+        # guard must short-circuit on the membership half rather than index a missing key.
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_2)
+        gs = _make_game_state_with_npc(npc)
+        gs.locations[_LOC_1] = Location(name="Gate")
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="MOVE_NPC",
+                target_id=str(npc.uuid),
+                effect_data={"npc_id": str(npc.uuid), "to_location_id": str(_LOC_1)},
+            )
+        )
+        assert npc.location_id == _LOC_1
+        assert npc.uuid in gs.locations[_LOC_1].npcs_present
+
+    @allure.story("Scene role")
+    @allure.title("MOVE_NPC into the scene labels the arrival with the NPC's occupation, not their name")
+    def test_arrival_scene_role_is_occupation(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_1)
+        gs = _make_game_state_with_npc(npc)
+        gs.locations[_LOC_1] = Location(name="Gate")
+        gs.locations[_LOC_2] = Location(name="Forum")
+        gs.current_scene = Scene(location_id=_LOC_2)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="MOVE_NPC",
+                target_id=str(npc.uuid),
+                effect_data={"npc_id": str(npc.uuid), "to_location_id": str(_LOC_2)},
+            )
+        )
+        arrival = next(snpc for snpc in gs.current_scene.npcs_present if snpc.uuid == npc.uuid)
+        assert arrival.role == "guard"
+
+    @allure.story("Stale location")
+    @allure.title("REMOVE_NPC tolerates an NPC whose current location is no longer registered")
+    def test_remove_npc_with_stale_location_does_not_raise(self):
+        npc = NPCCard(name="Marcus", occupation="guard", location_id=_LOC_2)
+        gs = _make_game_state_with_npc(npc)
+        gs.locations[_LOC_1] = Location(name="Gate")
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="REMOVE_NPC", target_id=str(npc.uuid), effect_data={}),
+        )
+        assert npc.uuid not in gs.npcs
+
+
+def _state_with_location(loc_id) -> GameState:
+    gs = _empty_game_state()
+    gs.locations[loc_id] = Location(name="Workshop")
+    return gs
+
+
+@allure.epic("Game Timeline")
+@allure.feature("Effect application")
+class TestObjectDamageResolution:
+    @allure.story("Object damage")
+    @allure.title("APPLY_OBJECT_DAMAGE uses the location_id key over target_id when both are present")
+    def test_prefers_location_id_key_over_target_id(self):
+        gs = _state_with_location(_LOC_1)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="APPLY_OBJECT_DAMAGE",
+                target_id=str(_OTHER_ID),
+                effect_data={"location_id": str(_LOC_1), "object_key": "window", "state_description": "shattered"},
+            )
+        )
+        assert gs.locations[_LOC_1].object_states == {"window": "shattered"}
+
+    @allure.story("Object damage")
+    @allure.title("APPLY_OBJECT_DAMAGE with no object_key records nothing")
+    def test_missing_object_key_records_nothing(self):
+        gs = _state_with_location(_LOC_1)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="APPLY_OBJECT_DAMAGE",
+                target_id=str(_LOC_1),
+                effect_data={"state_description": "shattered"},
+            )
+        )
+        assert gs.locations[_LOC_1].object_states == {}
+
+    @allure.story("Object damage")
+    @allure.title("APPLY_OBJECT_DAMAGE with no state_description records nothing")
+    def test_missing_state_description_records_nothing(self):
+        gs = _state_with_location(_LOC_1)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(
+                effect_type="APPLY_OBJECT_DAMAGE",
+                target_id=str(_LOC_1),
+                effect_data={"object_key": "window"},
+            )
+        )
+        assert gs.locations[_LOC_1].object_states == {}

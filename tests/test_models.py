@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from models.base_model import StorytellerBase
 from models.character import Character
 from models.location import Location
-from models.npc_card import NPCCard
+from models.npc_card import NPCCard, _dedup_preserving_order
 from models.setting import Setting
 
 _DAGGER = "dagger"
@@ -80,6 +80,8 @@ class TestCharacter:
         char.update_attribute("strength", 7)
         assert char.get_attribute("strength") == 7
         assert char.get_attribute("wisdom", default=5) == 5
+        # Pin the `default: int = 0` signature default (no explicit default passed).
+        assert char.get_attribute("missing") == 0
 
     @allure.story("Character inventory")
     @allure.title("Character inventory supports adding and removing items")
@@ -110,6 +112,15 @@ class TestNPCCard:
     @allure.title("A new NPCCard defaults to a 'neutral' current mood")
     def test_current_mood_default(self, sample_npc):
         assert sample_npc.current_mood == "neutral"
+
+    @allure.story("Alias dedup")
+    @allure.title("_dedup_preserving_order drops blanks and duplicates while keeping first-seen order")
+    def test_dedup_preserving_order(self):
+        # Pins both the `not stripped or stripped in seen` skip and the `seen.add(stripped)`
+        # bookkeeping: a real duplicate and a blank must both be dropped, order preserved.
+        assert _dedup_preserving_order(["Marcus", "Marcus"]) == ["Marcus"]
+        assert _dedup_preserving_order(["", "Marcus"]) == ["Marcus"]
+        assert _dedup_preserving_order(["Marcus", "the guard", "Marcus"]) == ["Marcus", "the guard"]
 
 
 @allure.epic("Narrative Delivery")
@@ -248,6 +259,14 @@ class TestLocation:
         second = Location(name="B")
         first.object_states["shutter"] = "splintered"
         assert second.object_states == {}
+
+    @allure.story("Points of interest")
+    @allure.title("POI name cleaning drops whitespace-only aliases instead of keeping a blank entry")
+    def test_poi_names_drop_whitespace_only_alias(self):
+        # Pins clean_names' `name and name.strip()` filter against the `or` mutant,
+        # which would let a whitespace-only alias through as an empty string.
+        loc = Location(name="Forum", points_of_interest=[{"names": ["   ", "Statue"]}])
+        assert loc.points_of_interest[0].names == ["Statue"]
 
 
 @allure.epic("Memory & Persistence")

@@ -182,3 +182,67 @@ class TestAdvanceTime:
         completed = mgr.advance_time(1.0)
 
         assert completed == []
+
+    @allure.story("Scheduled effects")
+    @allure.title("advance_time() does not fire a still-pending event sitting exactly on clock_before")
+    def test_pending_event_on_lower_bound_does_not_fire(self):
+        # A PENDING event whose completes_at == clock_before must stay pending:
+        # pins `> clock_before` against the `>= clock_before` mutant, which the
+        # already-completed-event test cannot reach (the status guard short-circuits it).
+        gs = _make_state()
+        mgr = EventManager(gs, gs.knowledge_graph)
+        mgr.advance_time(2.0)  # no events; clock is now 2.0
+        event = GameEvent(name="Bell", scheduled_at=2.0, duration=0)  # completes_at == 2.0
+        mgr.schedule(event)
+
+        completed = mgr.advance_time(1.0)  # window is (2.0, 3.0]
+
+        assert completed == []
+        assert event.status == EventStatus.PENDING
+
+    @allure.story("Scheduled effects")
+    @allure.title("advance_time() leaves a future event untouched and does not fire it early")
+    def test_future_event_outside_window_is_not_fired(self):
+        # Pins the `and` joining the two window bounds: a far-future event fails the
+        # upper bound, so an `or` mutant would wrongly fire it on the lower bound.
+        gs = _make_state()
+        mgr = EventManager(gs, gs.knowledge_graph)
+        event = GameEvent(name="Eclipse", scheduled_at=0, duration=100)
+        mgr.schedule(event)
+
+        completed = mgr.advance_time(2.0)
+
+        assert completed == []
+        assert event.status == EventStatus.PENDING
+
+    @allure.story("Scheduled effects")
+    @allure.title("advance_time() never fires a cancelled event even when its window elapses")
+    def test_cancelled_event_in_window_is_not_fired(self):
+        # Pins the `status == PENDING and is_in_window` join: an `or` mutant would
+        # fire the cancelled event because it falls inside the window.
+        gs = _make_state()
+        mgr = EventManager(gs, gs.knowledge_graph)
+        event = GameEvent(name="Raid", scheduled_at=0, duration=1)
+        mgr.schedule(event)
+        mgr.cancel(event.uuid)
+
+        completed = mgr.advance_time(5.0)
+
+        assert completed == []
+        assert event.status == EventStatus.CANCELLED
+
+    @allure.story("Scheduled effects")
+    @allure.title("advance_time() returns simultaneously-windowed events sorted by completion time")
+    def test_completed_events_returned_in_completion_order(self):
+        # Pins the `key=lambda event: event.completes_at` sort: events are scheduled
+        # out of order, so a no-op/None key would return them in insertion order.
+        gs = _make_state()
+        mgr = EventManager(gs, gs.knowledge_graph)
+        later = GameEvent(name="Later", scheduled_at=0, duration=2)
+        earlier = GameEvent(name="Earlier", scheduled_at=0, duration=1)
+        mgr.schedule(later)
+        mgr.schedule(earlier)
+
+        completed = mgr.advance_time(3.0)
+
+        assert [event.name for event in completed] == ["Earlier", "Later"]
