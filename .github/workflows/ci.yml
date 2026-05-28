@@ -126,14 +126,6 @@ jobs:
           # Needed so the diff-scope step can compare against the merge-base.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-
       - name: Check if PR touches mutation-testing pilot scope
         id: scope
         run: |
@@ -158,6 +150,21 @@ jobs:
             echo "$CHANGED"
             echo "in_scope=true" >> "$GITHUB_OUTPUT"
           fi
+
+      # setup-python + setup-uv must come AFTER the scope check.
+      # If they run first and the scope check then skips everything,
+      # the setup-uv post-action fails on cache cleanup
+      # ("Cache path … does not exist on disk") because nothing was
+      # installed.
+      - uses: actions/setup-python@v5
+        if: steps.scope.outputs.in_scope == 'true'
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        if: steps.scope.outputs.in_scope == 'true'
+        with:
+          enable-cache: true
 
       - name: Install dependencies
         if: steps.scope.outputs.in_scope == 'true'
