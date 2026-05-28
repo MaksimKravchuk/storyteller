@@ -166,6 +166,7 @@ The `decision-records` skill is still required for the boundary changes listed i
   - **macOS gotcha:** the bare `Run locally` recipe segfaults under `os.fork()` against the project's C-extension stack on Python 3.14. Pin Python 3.11 and disable fork-safety. One-time setup: `UV_PROJECT_ENVIRONMENT=.venv-mutmut uv sync --python 3.11 --group dev --extra openai --extra anthropic --extra telegram`. Then run: `UV_PROJECT_ENVIRONMENT=.venv-mutmut env OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES uv run --python 3.11 mutmut run --max-children 4 && UV_PROJECT_ENVIRONMENT=.venv-mutmut uv run --python 3.11 mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
   - **Missing-module errors:** if mutmut raises `ModuleNotFoundError` or `FileNotFoundError`, add the missing path to `[tool.mutmut].also_copy`.
   - **Ratchet:** a nightly full run (`.github/workflows/mutation-nightly.yml`) uploads the report as an artifact; bump the threshold only after several nights of higher scores.
+  - **Run on demand in CI** (any branch, no local setup): `gh workflow run mutation-nightly.yml --ref <branch>` or `gh workflow run ci.yml --ref <branch>` (the latter runs the full CI including the mutation job in report-only mode). Watch with `gh run watch`. Download the report artifact with `gh run download --name mutmut-full-report` (nightly) or `--name mutmut-report` (ci.yml).
 
 ## Working Style
 

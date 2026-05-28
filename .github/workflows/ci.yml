@@ -18,6 +18,12 @@ on:
       - 'logs.json'
       - '.github/ISSUE_TEMPLATE/**'
       - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      run_mutation:
+        description: 'Run the mutation-testing job (full pilot scope, no threshold gating)'
+        type: boolean
+        default: true
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -108,7 +114,9 @@ jobs:
   mutation:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    if: github.event_name == 'pull_request'
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_mutation)
     permissions:
       contents: read
       pull-requests: write
@@ -130,6 +138,12 @@ jobs:
         id: scope
         run: |
           set -euo pipefail
+          # Manual dispatch always runs the full pilot scope — no diff to check.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual dispatch; running full pilot scope."
+            echo "in_scope=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           BASE_REF="${{ github.event.pull_request.base.sha }}"
           # git's default pathspec ``*`` matches across ``/``, so
           # ``models/*.py`` captures nested files too. ``__init__.py``
@@ -178,7 +192,8 @@ jobs:
           echo "score=${SCORE}" >> "$GITHUB_OUTPUT"
 
       - name: Enforce mutation-score threshold
-        if: steps.scope.outputs.in_scope == 'true'
+        # PR runs are the gate; manual dispatch is report-only.
+        if: steps.scope.outputs.in_scope == 'true' && github.event_name == 'pull_request'
         env:
           # Calibrated from the introduction-PR baseline of 79.8% (540 killed / 677 checked).
           # Threshold = floor(baseline) - 2. Bump only after a sustained nightly improvement;
