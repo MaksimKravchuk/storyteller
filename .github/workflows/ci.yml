@@ -18,6 +18,12 @@ on:
       - 'logs.json'
       - '.github/ISSUE_TEMPLATE/**'
       - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      run_mutation:
+        description: 'Run the mutation-testing job (full pilot scope, no threshold gating)'
+        type: boolean
+        default: true
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -104,6 +110,120 @@ jobs:
 
       - name: Run type checking
         run: uv run mypy .
+
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: >-
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_mutation)
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Needed so the diff-scope step can compare against the merge-base.
+          fetch-depth: 0
+
+      - name: Check if PR touches mutation-testing pilot scope
+        id: scope
+        run: |
+          set -euo pipefail
+          # Manual dispatch always runs the full pilot scope — no diff to check.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual dispatch; running full pilot scope."
+            echo "in_scope=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          # git's default pathspec ``*`` matches across ``/``, so
+          # ``models/*.py`` captures nested files too. ``__init__.py``
+          # is mutation-irrelevant and excluded.
+          CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- \
+            'models/*.py' 'timeline/*.py' ':(exclude)**/__init__.py')
+          if [ -z "$CHANGED" ]; then
+            echo "No pilot-scope files changed; skipping mutation testing."
+            echo "in_scope=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Pilot-scope files changed:"
+            echo "$CHANGED"
+            echo "in_scope=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # setup-python + setup-uv must come AFTER the scope check.
+      # If they run first and the scope check then skips everything,
+      # the setup-uv post-action fails on cache cleanup
+      # ("Cache path … does not exist on disk") because nothing was
+      # installed.
+      - uses: actions/setup-python@v5
+        if: steps.scope.outputs.in_scope == 'true'
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        if: steps.scope.outputs.in_scope == 'true'
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        if: steps.scope.outputs.in_scope == 'true'
+        run: uv sync --frozen --extra dev --extra openai --extra anthropic --extra telegram
+
+      - name: Run mutmut on pilot scope
+        if: steps.scope.outputs.in_scope == 'true'
+        # No mutants/ cache. A restore-keys fallback would let a silent
+        # mutmut crash (masked by ``|| true``) gate the PR on the prior
+        # cached run's stats. Cold rebuild is ~10 min on Linux at this
+        # scope and keeps the gate honest.
+        # ``|| true`` is intentional: mutmut returns non-zero whenever
+        # mutants survive. The threshold-enforce step below is the gate.
+        run: uv run mutmut run --max-children 4 || true
+
+      - name: Export mutation score
+        if: steps.scope.outputs.in_scope == 'true'
+        id: score
+        run: |
+          set -euo pipefail
+          uv run mutmut export-cicd-stats
+          cat mutants/mutmut-cicd-stats.json
+          KILLED=$(jq '.killed' mutants/mutmut-cicd-stats.json)
+          SURVIVED=$(jq '.survived' mutants/mutmut-cicd-stats.json)
+          TOTAL_CHECKED=$((KILLED + SURVIVED))
+          if [ "$TOTAL_CHECKED" -eq 0 ]; then
+            echo "::error title=No mutants checked::mutmut produced no killed+survived mutants — runner likely failed"
+            exit 1
+          fi
+          SCORE=$(awk -v k="$KILLED" -v t="$TOTAL_CHECKED" 'BEGIN { printf "%.1f", (k * 100.0) / t }')
+          echo "Mutation score: ${SCORE}% (${KILLED} killed / ${TOTAL_CHECKED} checked)"
+          echo "score=${SCORE}" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce mutation-score threshold
+        # PR runs are the gate; manual dispatch is report-only.
+        if: steps.scope.outputs.in_scope == 'true' && github.event_name == 'pull_request'
+        env:
+          # Calibrated from the introduction-PR baseline of 79.8% (540 killed / 677 checked).
+          # Threshold = floor(baseline) - 2. Bump only after a sustained nightly improvement;
+          # see CLAUDE.md "Mutation testing (pilot)" for ratchet rules.
+          THRESHOLD: "77"
+        run: |
+          SCORE="${{ steps.score.outputs.score }}"
+          awk -v s="$SCORE" -v t="$THRESHOLD" 'BEGIN {
+            if (s+0 < t+0) {
+              printf "Mutation score %s%% is below threshold %s%%\n", s, t
+              exit 1
+            }
+            printf "Mutation score %s%% meets threshold %s%%\n", s, t
+          }'
+
+      - name: Upload mutmut artifact
+        if: always() && steps.scope.outputs.in_scope == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutmut-report
+          path: |
+            mutants/mutmut-cicd-stats.json
+          retention-days: 14
 
   test-db:
     runs-on: ubuntu-latest

@@ -1,0 +1,51 @@
+name: Mutation testing (nightly)
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # 04:00 UTC every day
+  workflow_dispatch:
+
+jobs:
+  full-mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra dev --extra openai --extra anthropic --extra telegram
+
+      - name: Run mutmut on full pilot scope
+        # ``|| true`` is intentional: mutmut returns non-zero whenever
+        # mutants survive. This job does not gate, only reports.
+        run: uv run mutmut run --max-children 4 || true
+
+      - name: Export mutation score
+        run: |
+          set -euo pipefail
+          uv run mutmut export-cicd-stats
+          cat mutants/mutmut-cicd-stats.json
+          KILLED=$(jq '.killed' mutants/mutmut-cicd-stats.json)
+          SURVIVED=$(jq '.survived' mutants/mutmut-cicd-stats.json)
+          TOTAL_CHECKED=$((KILLED + SURVIVED))
+          if [ "$TOTAL_CHECKED" -gt 0 ]; then
+            SCORE=$(awk -v k="$KILLED" -v t="$TOTAL_CHECKED" 'BEGIN { printf "%.1f", (k * 100.0) / t }')
+            echo "Nightly mutation score: ${SCORE}% (${KILLED} killed / ${TOTAL_CHECKED} checked)"
+          fi
+
+      - name: Upload mutmut artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutmut-full-report
+          path: |
+            mutants/mutmut-cicd-stats.json
+          retention-days: 30

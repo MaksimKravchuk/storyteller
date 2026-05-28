@@ -28,3 +28,7 @@ codespeak.json
 resp.json
 # CodeSpeak
 .codespeak/ignored/
+# mutmut mutation testing
+mutants/
+mutmut-results.txt
+.venv-mutmut/

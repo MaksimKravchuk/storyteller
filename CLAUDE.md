@@ -160,6 +160,13 @@ The `decision-records` skill is still required for the boundary changes listed i
 - Test at the consumer-side integration seam, not just the supplier. A test that asserts a model method returns the right value does not prove the consumer actually uses it. When a contract says "*X receives Y*", add a test that reads X's input boundary and asserts Y appears there. Past regressions in this repo (NPC alias list reaching `NPCCard.known_names_for_player` but never reaching the Narrator's prompt body) all lived in this gap — supplier well-tested, consumer wiring un-tested.
 - Maintain 90%+ unit test coverage. When adding new modules, add tests in the same PR.
 - E2E tests under `tests/e2e/` must carry Allure annotations following the project taxonomy.
+- **Mutation testing (pilot):** PRs that touch `models/` or `timeline/` run `mutmut` on the full pilot scope and must clear the mutation-score threshold.
+  - **Threshold:** 77% (baseline 79.8%, threshold = baseline − 2 for run-to-run noise). Score is `killed / (killed + survived)` from `mutants/mutmut-cicd-stats.json`.
+  - **Run locally:** `uv run mutmut run --max-children 4 && uv run mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
+  - **macOS gotcha:** the bare `Run locally` recipe segfaults under `os.fork()` against the project's C-extension stack on Python 3.14. Pin Python 3.11 and disable fork-safety. One-time setup: `UV_PROJECT_ENVIRONMENT=.venv-mutmut uv sync --python 3.11 --group dev --extra openai --extra anthropic --extra telegram`. Then run: `UV_PROJECT_ENVIRONMENT=.venv-mutmut env OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES uv run --python 3.11 mutmut run --max-children 4 && UV_PROJECT_ENVIRONMENT=.venv-mutmut uv run --python 3.11 mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
+  - **Missing-module errors:** if mutmut raises `ModuleNotFoundError` or `FileNotFoundError`, add the missing path to `[tool.mutmut].also_copy`.
+  - **Ratchet:** a nightly full run (`.github/workflows/mutation-nightly.yml`) uploads the report as an artifact; bump the threshold only after several nights of higher scores.
+  - **Run on demand in CI** (any branch, no local setup): `gh workflow run mutation-nightly.yml --ref <branch>` or `gh workflow run ci.yml --ref <branch>` (the latter runs the full CI including the mutation job in report-only mode). Watch with `gh run watch`. Download the report artifact with `gh run download --name mutmut-full-report` (nightly) or `--name mutmut-report` (ci.yml).
 
 ## Working Style
 
