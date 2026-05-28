@@ -163,7 +163,7 @@ The `decision-records` skill is still required for the boundary changes listed i
 - **Mutation testing (pilot):** PRs that touch `models/` or `timeline/` run `mutmut` on the full pilot scope and must clear the mutation-score threshold.
   - **Threshold:** 77% (baseline 79.8%, threshold = baseline − 2 for run-to-run noise). Score is `killed / (killed + survived)` from `mutants/mutmut-cicd-stats.json`.
   - **Run locally:** `uv run mutmut run --max-children 4 && uv run mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
-  - **macOS gotcha:** prepend `env OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` to avoid fork-related segfaults, and pin Python 3.11 (e.g. `UV_PROJECT_ENVIRONMENT=.venv-mutmut uv sync --python 3.11 --group dev --extra openai --extra anthropic`) — Python 3.14 + the project's C-extension stack is currently unstable under `os.fork()`.
+  - **macOS gotcha:** the bare `Run locally` recipe segfaults under `os.fork()` against the project's C-extension stack on Python 3.14. Pin Python 3.11 and disable fork-safety. One-time setup: `UV_PROJECT_ENVIRONMENT=.venv-mutmut uv sync --python 3.11 --group dev --extra openai --extra anthropic --extra telegram`. Then run: `UV_PROJECT_ENVIRONMENT=.venv-mutmut env OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES uv run --python 3.11 mutmut run --max-children 4 && UV_PROJECT_ENVIRONMENT=.venv-mutmut uv run --python 3.11 mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
   - **Missing-module errors:** if mutmut raises `ModuleNotFoundError` or `FileNotFoundError`, add the missing path to `[tool.mutmut].also_copy`.
   - **Ratchet:** a nightly full run (`.github/workflows/mutation-nightly.yml`) uploads the report as an artifact; bump the threshold only after several nights of higher scores.
 

@@ -24,6 +24,8 @@ jobs:
         run: uv sync --frozen --extra dev --extra openai --extra anthropic --extra telegram
 
       - name: Run mutmut on full pilot scope
+        # ``|| true`` is intentional: mutmut returns non-zero whenever
+        # mutants survive. This job does not gate, only reports.
         run: uv run mutmut run --max-children 4 || true
 
       - name: Export mutation score

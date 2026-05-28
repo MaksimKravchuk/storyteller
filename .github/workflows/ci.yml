@@ -149,17 +149,14 @@ jobs:
         if: steps.scope.outputs.in_scope == 'true'
         run: uv sync --frozen --extra dev --extra openai --extra anthropic --extra telegram
 
-      - name: Cache mutmut mutants directory
-        if: steps.scope.outputs.in_scope == 'true'
-        uses: actions/cache@v4
-        with:
-          path: mutants/
-          key: mutmut-${{ runner.os }}-${{ hashFiles('models/**/*.py', 'timeline/**/*.py', 'tests/conftest.py', 'pyproject.toml') }}
-          restore-keys: |
-            mutmut-${{ runner.os }}-
-
       - name: Run mutmut on pilot scope
         if: steps.scope.outputs.in_scope == 'true'
+        # No mutants/ cache. A restore-keys fallback would let a silent
+        # mutmut crash (masked by ``|| true``) gate the PR on the prior
+        # cached run's stats. Cold rebuild is ~10 min on Linux at this
+        # scope and keeps the gate honest.
+        # ``|| true`` is intentional: mutmut returns non-zero whenever
+        # mutants survive. The threshold-enforce step below is the gate.
         run: uv run mutmut run --max-children 4 || true
 
       - name: Export mutation score
