@@ -12,8 +12,9 @@ entities from scratch.
 from __future__ import annotations
 
 from typing import Literal
+from uuid import UUID
 
-from pydantic import UUID4, BaseModel, Field
+from pydantic import BaseModel, Field
 
 from models.goal import GoalKind
 
@@ -23,8 +24,8 @@ class WorldThreadDraft(BaseModel):
 
     description: str
     category: Literal["personal", "political", "natural", "economic", "social", "cultural"]
-    involved_locations: list[UUID4] = Field(default_factory=list)
-    involved_npcs: list[UUID4] = Field(default_factory=list)
+    involved_locations: list[UUID] = Field(default_factory=list)
+    involved_npcs: list[UUID] = Field(default_factory=list)
 
 
 class WorldThreadUpdate(BaseModel):
@@ -36,7 +37,7 @@ class WorldThreadUpdate(BaseModel):
     ``last_advanced_scene`` without closing the thread.
     """
 
-    thread_uuid: UUID4
+    thread_uuid: UUID
     status: Literal["open", "resolved", "abandoned"] | None = None
 
 
@@ -52,7 +53,7 @@ class ScheduledEventDraft(BaseModel):
 
     name: str
     hours_from_now: float
-    location_id: UUID4 | None = None
+    location_id: UUID | None = None
     scope: Literal["local", "remote"] = "remote"
     on_complete_description: str = ""
 
@@ -68,11 +69,11 @@ class GoalDraft(BaseModel):
     progress; only the actor's death or a paired ``GoalUpdate`` does.
     """
 
-    npc_uuid: UUID4
+    npc_uuid: UUID
     kind: GoalKind
     description: str
-    target_uuid: UUID4 | None = None
-    source_thread_uuid: UUID4 | None = None
+    target_uuid: UUID | None = None
+    source_thread_uuid: UUID | None = None
 
 
 class GoalUpdate(BaseModel):
@@ -83,7 +84,7 @@ class GoalUpdate(BaseModel):
     appended to the goal's progress notes for traceability.
     """
 
-    npc_uuid: UUID4
+    npc_uuid: UUID
     status: Literal["abandoned", "blocked"]
     reason: str | None = None
 

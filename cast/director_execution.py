@@ -367,8 +367,10 @@ class PlanExecutor:
                     description=draft.description,
                     category=draft.category,
                     introduced_scene=scene_number,
-                    involved_locations=list(draft.involved_locations),
-                    involved_npcs=list(draft.involved_npcs),
+                    involved_locations=[
+                        location_id for location_id in draft.involved_locations if location_id in self._gs.locations
+                    ],
+                    involved_npcs=[npc_uuid for npc_uuid in draft.involved_npcs if npc_uuid in self._gs.npcs],
                     last_advanced_scene=scene_number,
                 ),
             )

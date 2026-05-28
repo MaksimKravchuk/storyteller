@@ -20,7 +20,14 @@ import pytest
 from cast import director_dialogue, director_events, director_execution, director_retaliation, npc_ticker, npc_turn
 from cast.schemas import chronicler_response as chronicler_schema
 from knowledge import graph as graph_mod, memory as memory_mod
-from models import game_state as gs_mod, scene as scene_mod, setting as setting_mod, world_state as world_state_mod
+from models import (
+    game_state as gs_mod,
+    location as location_mod,
+    npc_card as npc_card_mod,
+    scene as scene_mod,
+    setting as setting_mod,
+    world_state as world_state_mod,
+)
 from tests.director_helpers import make_uuid, route_plan
 from timeline.event_manager import EventManager
 
@@ -119,6 +126,36 @@ class TestPlanExecutorChroniclerGate:
         assert gs.world_state.last_chronicled_scene == gs.scene_number
         pending = event_mgr.get_pending_events()
         assert any(ev.name == "Courier arrives with news" for ev in pending)
+
+    @allure.story("Chronicler gate")
+    @allure.title("PlanExecutor filters unknown entity references from new Chronicler threads")
+    @pytest.mark.asyncio
+    async def test_chronicler_new_thread_filters_unknown_entity_refs(self):
+        executor, gs, chronicler, _event_mgr = _make_plan_executor_pieces(with_chronicler=True)
+        known_location_id = make_uuid("known-location")
+        known_npc_id = make_uuid("known-npc")
+        gs.locations[known_location_id] = location_mod.Location(uuid=known_location_id, name="Forum")
+        gs.npcs[known_npc_id] = npc_card_mod.NPCCard(uuid=known_npc_id, name="Brutus")
+        assert chronicler is not None
+        chronicler.execute.return_value = chronicler_schema.ChroniclerResponse(
+            new_threads=[
+                chronicler_schema.WorldThreadDraft(
+                    description="Brutus presses Marcus in the taberna",
+                    category="political",
+                    involved_locations=[known_location_id, make_uuid("unknown-location")],
+                    involved_npcs=[known_npc_id, make_uuid("unknown-npc")],
+                ),
+            ],
+        )
+
+        await executor.execute_plan(
+            plan=route_plan("EXPLORE", delegate=["scene_builder"]),
+            player_action="explore the forum",
+            completed_events=[],
+        )
+
+        assert gs.world_state.threads[0].involved_locations == [known_location_id]
+        assert gs.world_state.threads[0].involved_npcs == [known_npc_id]
 
     @allure.story("Chronicler gate")
     @allure.title("PlanExecutor skips the chronicler entirely when world_chronicler is None")
