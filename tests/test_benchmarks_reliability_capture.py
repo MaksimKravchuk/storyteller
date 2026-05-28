@@ -24,7 +24,7 @@ def test_reset_for_scenario_initialises_empty_map() -> None:
 
 
 @allure.story("Benchmarks collect")
-@allure.title("collect_reliability_counts renders counters into nested {agent: {event_type: count}}")
+@allure.title("collect_reliability_counts renders counters into nested per-agent shape")
 def test_collect_reliability_counts_nested_shape() -> None:
     reliability_capture.reset_for_scenario()
     reliability_metrics.record_fallback("dramaturge", "consistency_pass")
