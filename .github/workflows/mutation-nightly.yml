@@ -41,6 +41,12 @@ jobs:
             echo "Nightly mutation score: ${SCORE}% (${KILLED} killed / ${TOTAL_CHECKED} checked)"
           fi
 
+      - name: Dump surviving mutants
+        # The aggregate stats above say *how many* survived; this list says *which*,
+        # so the next session can triage without re-running the whole pilot locally.
+        if: always()
+        run: uv run mutmut results | grep ': survived' > mutants/survivors.txt || true
+
       - name: Upload mutmut artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,4 +54,5 @@ jobs:
           name: mutmut-full-report
           path: |
             mutants/mutmut-cicd-stats.json
+            mutants/survivors.txt
           retention-days: 30
