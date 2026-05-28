@@ -16,7 +16,7 @@ Storyteller is a multi-agent system, and the agent layer rightly attracts the no
 
 - A new `Plan` subclass in `cast/director_tools.py` that the executor in `cast/director.py` / `cast/director_routing.py` doesn't dispatch — caught only when a player accidentally triggers it in production.
 - A new field on a model in `models/` that never reaches a `db/converters/*.py` round-trip, so save/load silently drops it.
-- A new FastAPI route in `interfaces/web/routes.py` (or Telegram handler in `interfaces/telegram_handlers.py`) that doesn't validate payload shape before the LLM sees it.
+- A new FastAPI route in `interfaces/web/routes.py` that doesn't validate payload shape before the LLM sees it.
 - A new `KnowledgeGraph` edge convention or `EventManager` effect whose ordering is implicit and reorders under load.
 - A new `PromptSection` added to `prompts/<agent>_prompts.py` with no `prompts/<agent>_prompts_ru.py` counterpart — feature works in English, silently degrades for Russian users.
 - A new async fan-out in `BasePerformer._send_tool` whose timeouts/cancellations aren't asserted.
@@ -80,13 +80,13 @@ Recommend: extend `tests/test_db_converters.py` with one assertion per new field
 
 ### 3. Validation & error paths at user-input boundaries
 
-Surface: `interfaces/telegram_handlers.py`, `interfaces/web/routes.py`, `interfaces/admin.py` + `interfaces/admin_routes*.py`. Anything that turns raw external input into a typed call into the engine.
+Surface: `interfaces/web/routes.py`, `interfaces/admin.py` + `interfaces/admin_routes*.py`. Anything that turns raw external input into a typed call into the engine.
 
 Check:
 
 - Every new entry point validates input shape (Pydantic model, manual checks) and rejects malformed payloads with a deterministic error *before* the LLM ever sees them.
 - Auth, rate-limit, and idempotency-key checks (if applicable to this entry point's neighbors) are present.
-- Errors raised inside the engine surface as the right HTTP status / Telegram reply — not silent 500s, not unhandled exceptions reaching the user.
+- Errors raised inside the engine surface as the right HTTP status and response body — not silent 500s, not unhandled exceptions reaching the user.
 
 Recommend: parameterized tests for malformed payloads (missing fields, wrong types, oversized strings, empty strings, control characters). Assert the status code / reply shape, not the message body — message bodies drift, contracts don't.
 

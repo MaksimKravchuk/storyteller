@@ -15,7 +15,6 @@ dependencies = [
     "asyncpg>=0.29",
     "alembic>=1.13",
     "loguru>=0.7",
-    "click>=8.1",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
     "fastapi>=0.110",
@@ -28,7 +27,6 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=1.0"]
 anthropic = ["anthropic>=0.25"]
-telegram = ["python-telegram-bot>=21.0"]
 dev = ["pytest", "pytest-asyncio", "mypy", "flake8", "wemake-python-styleguide"]
 
 [tool.mypy]
@@ -38,10 +36,6 @@ exclude = ["alembic/", "mutants/", ".venv-mutmut/"]
 [[tool.mypy.overrides]]
 module = ["llm.*", "research.*"]
 ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = ["interfaces.telegram_bot"]
-disable_error_code = ["union-attr"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["benchmarks", "cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "log_scrubbing.py", "models", "prompts", "research", "timeline"]
@@ -74,7 +68,7 @@ addopts = "-m 'not db and not benchmark'"
 
 [tool.coverage.run]
 source = ["cast", "engine", "models", "knowledge", "timeline", "llm", "prompts", "db", "interfaces", "research", "formatting"]
-omit = ["tests/*", "alembic/*", "main.py"]
+omit = ["tests/*", "alembic/*"]
 
 [tool.coverage.report]
 fail_under = 90
@@ -103,7 +97,6 @@ also_copy = [
   "knowledge",
   "llm",
   "log_scrubbing.py",
-  "main.py",
   "prompts",
   "research",
   "run_server.py",
@@ -116,14 +109,13 @@ pytest_add_cli_args = [
   # Hypothesis fuzz: mutmut re-runs the suite per mutant, which the
   # ``differing_executors`` health-check trips on.
   "--ignore=tests/test_director_routing_fuzz.py",
-  # FastAPI / aiohttp / telegram I/O tests: mutmut force-disables
+  # FastAPI / aiohttp I/O tests: mutmut force-disables
   # ``pytest-randomly``, which exposes test-ordering-dependent state
   # contamination in these integration suites. Mutating ``models/`` and
   # ``timeline/`` does not benefit from re-running these anyway — none
   # of them target the algorithmic surface mutmut covers.
   "--ignore-glob=tests/test_admin*.py",
   "--ignore-glob=tests/test_web*.py",
-  "--ignore-glob=tests/test_telegram*.py",
 ]
 do_not_mutate = [
   "**/__init__.py",

@@ -16,10 +16,6 @@ def _player_id() -> str:
     return str(_uuid.uuid4())
 
 
-def _chat_id() -> int:
-    return int(_uuid.uuid4().int & 0x7FFFFFFF)
-
-
 @allure.epic("Memory & Persistence")
 @allure.feature("Game repository")
 class TestWebSessionLifecycle:
@@ -31,7 +27,6 @@ class TestWebSessionLifecycle:
         row = await repo.sessions.create_web(player_id)
 
         assert str(row["web_player_id"]) == player_id
-        assert row["telegram_chat_id"] is None
         assert row["state"] == "idle"
         assert row["language"] == "English"
         assert row["id"]
@@ -64,20 +59,3 @@ class TestWebSessionLifecycle:
         latest = await repo.sessions.get_latest_web(player_id)
         assert latest is not None
         assert latest["id"] == newest["id"]
-
-
-@allure.epic("Memory & Persistence")
-@allure.feature("Game repository")
-class TestWebAndTelegramCoexist:
-    @allure.story("Web session bootstrap")
-    @allure.title("Telegram and web sessions coexist as independent rows in the sessions table")
-    @pytest.mark.asyncio
-    async def test_telegram_and_web_sessions_are_independent(self, repo: GameRepository) -> None:
-        tg_row = await repo.sessions.create_telegram(_chat_id())
-        web_row = await repo.sessions.create_web(_player_id())
-
-        assert tg_row["id"] != web_row["id"]
-        assert tg_row["telegram_chat_id"] is not None
-        assert tg_row["web_player_id"] is None
-        assert web_row["telegram_chat_id"] is None
-        assert web_row["web_player_id"] is not None

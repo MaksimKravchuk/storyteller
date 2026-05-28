@@ -97,7 +97,6 @@ sessions = Table(
     "sessions",
     metadata,
     Column(_COL_ID, _UUID_STR, primary_key=True, server_default=func.gen_random_uuid()),
-    Column("telegram_chat_id", Integer, nullable=True),
     Column("web_player_id", _UUID_STR, nullable=True),
     Column("state", _SHORT_TEXT, nullable=False, server_default="idle"),
     Column("language", _SHORT_TEXT, nullable=False, server_default="English"),
@@ -105,7 +104,6 @@ sessions = Table(
     Column("archived_at", _TZ_TS, nullable=True),
     Column(_COL_CREATED_AT, TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
     Column("updated_at", TIMESTAMP(timezone=True), nullable=False, server_default=func.now()),
-    Index("idx_sessions_telegram_chat_id", "telegram_chat_id"),
     Index("idx_sessions_web_player_id", "web_player_id"),
 )
 

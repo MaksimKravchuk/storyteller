@@ -21,7 +21,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --frozen --extra dev --extra openai --extra anthropic --extra telegram
+        run: uv sync --frozen --extra dev --extra openai --extra anthropic
 
       - name: Run mutmut on full pilot scope
         # ``|| true`` is intentional: mutmut returns non-zero whenever

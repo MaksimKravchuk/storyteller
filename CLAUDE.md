@@ -12,16 +12,13 @@ Storyteller is an AI-powered text quest engine using a theater-style multi-agent
 # Install (use uv)
 uv sync --group dev --extra openai --extra anthropic
 
-# Run locally
-uv run python main.py
-
 # Run the player web UI (FastAPI + vanilla HTML)
 uv run uvicorn interfaces.web.app:app --reload --host 127.0.0.1 --port 8070
 
 # Run the full stack with Docker Compose (postgres + storyteller)
 # The `storyteller` container runs run_server.py, which boots
-# uvicorn (web UI), aiohttp (admin), and the telegram bot in one process.
-docker compose up -d            # postgres + storyteller (web + admin + bot)
+# uvicorn (web UI) and aiohttp (admin) in one process.
+docker compose up -d            # postgres + storyteller (web + admin)
 # Web UI:    http://localhost:8070
 # Admin:     http://localhost:8080
 # Stop:      docker compose down
@@ -45,8 +42,8 @@ uv run python -m benchmarks compare <baseline.json> <current.json>
 uv run pytest tests/benchmarks -m benchmark -v
 
 # Run single test
-uv run pytest tests/test_cli.py -v
-uv run pytest tests/test_cli.py::test_function_name -v
+uv run pytest tests/test_web_api.py -v
+uv run pytest tests/test_web_api.py::test_function_name -v
 ```
 
 ## Architecture
@@ -69,7 +66,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 - **`llm/`** — Provider-agnostic LLM layer; OpenAI, Anthropic, OpenRouter, and DeepSeek clients with factory auto-detection from model name (`gpt-*`→OpenAI, `claude-*`→Anthropic)
 - **`prompts/`** — Composable `PromptTemplate` with `PromptSection`s and variable interpolation; sections with missing vars are skipped
 - **`db/`** — Async SQLAlchemy + asyncpg with Alembic migrations; `GameRepository` is the single persistence access point; domain↔ORM conversion in `converters.py`
-- **`interfaces/`** — Telegram bot, admin dashboard, and FastAPI web UI (`interfaces/web/`)
+- **`interfaces/`** — Admin dashboard and FastAPI web UI (`interfaces/web/`)
 - **`research/`** — Async Wikipedia client
 - **`benchmarks/`** — Deterministic narration benchmark harness (opt-in, hits paid LLMs). Fixed scenarios drive the engine through `create_engine_from_state()`; captured `TurnOutputs` + `GameState` snapshots are scored against an ISU-style rubric with a six-model witness panel for evidence-LLM elements. Results archive to `benchmarks/results/` as JSON + markdown for release-over-release comparison. Entry point: `uv run python -m benchmarks run`. Also runs automatically on PRs touching `cast/`, `prompts/`, `engine/`, or `benchmarks/scenarios/` via `.github/workflows/benchmark-on-pr.yml` (1 iteration, 3-judge panel, ~$0.02–$0.10 per push).
 
@@ -129,7 +126,7 @@ The assistant picks the demo form based on what the change touches (multiple may
 | Change touches                                                   | Demo                                                                                  |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | Backend / engine / db / knowledge / timeline / models            | PR link + green CI gauntlet (ruff, format, flake8, mypy, pytest).                     |
-| `interfaces/web/`, admin dashboard, telegram bot                 | Boot the app, exercise the feature, paste screenshots in the PR.                      |
+| `interfaces/web/`, admin dashboard                               | Boot the app, exercise the feature, paste screenshots in the PR.                      |
 | `cast/`, `prompts/`, narrative-affecting engine paths            | Run deterministic benchmarks via the `run-benchmarks` skill, post before/after.       |
 | `db/migrations/` (alembic)                                       | Run `alembic upgrade head` against a scratch DB; paste the affected table schema.     |
 | `research/` (Wikipedia client and similar live integrations)     | Recorded request/response or stubbed integration run — CI green alone is insufficient.|
@@ -163,7 +160,7 @@ The `decision-records` skill is still required for the boundary changes listed i
 - **Mutation testing (pilot):** PRs that touch `models/` or `timeline/` run `mutmut` on the full pilot scope and must clear the mutation-score threshold.
   - **Threshold:** 77% (baseline 79.8%, threshold = baseline − 2 for run-to-run noise). Score is `killed / (killed + survived)` from `mutants/mutmut-cicd-stats.json`.
   - **Run locally:** `uv run mutmut run --max-children 4 && uv run mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
-  - **macOS gotcha:** the bare `Run locally` recipe segfaults under `os.fork()` against the project's C-extension stack on Python 3.14. Pin Python 3.11 and disable fork-safety. One-time setup: `UV_PROJECT_ENVIRONMENT=.venv-mutmut uv sync --python 3.11 --group dev --extra openai --extra anthropic --extra telegram`. Then run: `UV_PROJECT_ENVIRONMENT=.venv-mutmut env OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES uv run --python 3.11 mutmut run --max-children 4 && UV_PROJECT_ENVIRONMENT=.venv-mutmut uv run --python 3.11 mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
+  - **macOS gotcha:** the bare `Run locally` recipe segfaults under `os.fork()` against the project's C-extension stack on Python 3.14. Pin Python 3.11 and disable fork-safety. One-time setup: `UV_PROJECT_ENVIRONMENT=.venv-mutmut uv sync --python 3.11 --group dev --extra openai --extra anthropic`. Then run: `UV_PROJECT_ENVIRONMENT=.venv-mutmut env OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES uv run --python 3.11 mutmut run --max-children 4 && UV_PROJECT_ENVIRONMENT=.venv-mutmut uv run --python 3.11 mutmut export-cicd-stats && cat mutants/mutmut-cicd-stats.json`.
   - **Missing-module errors:** if mutmut raises `ModuleNotFoundError` or `FileNotFoundError`, add the missing path to `[tool.mutmut].also_copy`.
   - **Ratchet:** a nightly full run (`.github/workflows/mutation-nightly.yml`) uploads the report as an artifact; bump the threshold only after several nights of higher scores.
   - **Run on demand in CI** (any branch, no local setup): `gh workflow run mutation-nightly.yml --ref <branch>` or `gh workflow run ci.yml --ref <branch>` (the latter runs the full CI including the mutation job in report-only mode). Watch with `gh run watch`. Download the report artifact with `gh run download --name mutmut-full-report` (nightly) or `--name mutmut-report` (ci.yml).

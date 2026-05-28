@@ -118,8 +118,8 @@ class Actor(BasePerformer):
         """Call the LLM envelope path, with a graceful fallback on JSON failure.
 
         Without this fallback, three consecutive malformed LLM responses
-        bubble an :class:`LLMJSONError` all the way to the web/telegram
-        interface and surface as an opaque 500 — killing the scene on one
+        bubble an :class:`LLMJSONError` all the way to the web interface
+        and surface as an opaque 500 — killing the scene on one
         bad batch of tokens.
         """
         try:

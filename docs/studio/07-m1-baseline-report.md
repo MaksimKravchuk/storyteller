@@ -93,7 +93,6 @@ Runtime notes:
 - Alembic migrations ran successfully.
 - Admin dashboard started on port 8080.
 - Web UI health endpoint passed on port 8070.
-- Telegram bot disabled because `TELEGRAM_BOT_TOKEN` is not set; this is expected for local smoke.
 
 Logs:
 - /tmp/storyteller-m1-docker-smoke.log

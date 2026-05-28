@@ -58,14 +58,6 @@ class SessionStore:
     def __init__(self, db_session: AsyncSession) -> None:
         self._session = db_session
 
-    async def get_latest_telegram(self, telegram_chat_id: int) -> dict | None:
-        """Return the most recent session row for a telegram chat, or None."""
-        return await _fetch_latest(self._session, tbl.sessions.c.telegram_chat_id == telegram_chat_id)
-
-    async def create_telegram(self, telegram_chat_id: int) -> dict:
-        """Insert a fresh session row for a telegram chat and return it."""
-        return await _insert_row(self._session, telegram_chat_id=telegram_chat_id)
-
     async def get_latest_web(self, web_player_id: str) -> dict | None:
         """Return the most recent non-archived session row for a web player, or None."""
         where_clause = tbl.sessions.c.web_player_id == web_player_id

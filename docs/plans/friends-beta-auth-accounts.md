@@ -62,7 +62,6 @@ Migration policy:
 
 - Do not attempt to guess ownership of existing anonymous-cookie sessions.
 - Existing rows get `account_id = NULL` and remain invisible to authenticated beta library endpoints unless a later explicit migration/claim flow is approved.
-- Telegram sessions continue to use `telegram_chat_id` and should not require `account_id`.
 
 ## Environment/config plan
 

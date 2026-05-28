@@ -25,12 +25,11 @@ def _escape_like(term: str) -> str:
 
 
 def apply_search_filter(stmt: Select, search: str) -> Select:
-    """Add an ILIKE substring filter over id / web_player_id / telegram_chat_id."""
+    """Add an ILIKE substring filter over id / web_player_id."""
     pattern = "%{0}%".format(_escape_like(search))
     columns = (
         tbl.sessions.c.id,
         tbl.sessions.c.web_player_id,
-        tbl.sessions.c.telegram_chat_id,
     )
     predicates = [cast(col, String).ilike(pattern, escape=_BACKSLASH) for col in columns]
     return stmt.where(or_(*predicates))

@@ -70,9 +70,6 @@ class Config(BaseSettings):
     # contradict historical canon or prior in-scene dialogue.
     dramaturge_enabled: bool = False
 
-    # Telegram
-    telegram_bot_token: str | None = None
-
     # Web UI server
     web_port: int = Field(default=_DEFAULT_WEB_PORT, ge=_WEB_PORT_MIN, le=_WEB_PORT_MAX)
 

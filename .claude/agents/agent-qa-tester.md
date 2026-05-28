@@ -78,7 +78,7 @@ Recommend: a `clarification_threshold_<feature>` scenario with an ambiguity ladd
 
 ### 3. Prompt-injection robustness
 
-Surface: every user/world-derived text path reaching an LLM prompt body. Entry points: `interfaces/telegram_handlers.py`, `interfaces/web/routes.py`, `interfaces/admin.py` + `interfaces/admin_routes*.py`. Indirect paths: `models/` fields that feed `prompts/*_prompts.py` via `.render()` kwargs — NPC names, location descriptions, KG node text in `knowledge/graph.py`, locale labels in `prompts/locales.py`.
+Surface: every user/world-derived text path reaching an LLM prompt body. Entry points: `interfaces/web/routes.py`, `interfaces/admin.py` + `interfaces/admin_routes*.py`. Indirect paths: `models/` fields that feed `prompts/*_prompts.py` via `.render()` kwargs — NPC names, location descriptions, KG node text in `knowledge/graph.py`, locale labels in `prompts/locales.py`.
 
 Check:
 

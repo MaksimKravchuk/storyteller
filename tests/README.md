@@ -3,7 +3,7 @@
 Storyteller is AI-developed, so we rely on automated tests — both for regression protection and as executable product spec. The test suite is split into two layers:
 
 - **Unit tests** — fast, deterministic, run on every push. Target ≥90% line coverage.
-- **End-to-end tests** — subprocess-driven CLI scenarios with `TesterAgent` verification. Require `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`.
+- **End-to-end tests** — live-provider agent checks. Require `OPENAI_API_KEY` / `ANTHROPIC_API_KEY`.
 
 ## Running tests
 
@@ -73,5 +73,5 @@ Open the **Behaviors** tab — you should see a three-level tree `epic → featu
 | `tests/director_helpers.py` | `make_director`, `make_game_state`, `make_mock_agent`, `setup_npc`. Use these before hand-rolling Director test setup. |
 | `tests/base_performer_helpers.py`, `tests/base_performer_nested.py` | Shared mocks for BasePerformer / call-chain tests. |
 | `tests/_db_stubs.py` | Stubs `db.engine` in `sys.modules` so unit tests don't open real database connections. |
-| `tests/e2e/` | Subprocess-based CLI tests. Separate conftest; **not** subject to the unit-test enforcement hook. |
+| `tests/e2e/` | Live-provider E2E tests. Separate conftest; **not** subject to the unit-test enforcement hook. |
 | `tests/TEST_TAXONOMY.md` | Allure epic/feature reference. Source of truth for labels. |
