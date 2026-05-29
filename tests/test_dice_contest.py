@@ -12,6 +12,7 @@ from cast.dice import (
     ContestOutcome,
     ContestRoll,
     ContestType,
+    contest_roll_to_dict,
     roll_contest,
 )
 
@@ -37,6 +38,11 @@ _ROLL_EIGHTEEN = 18
 
 _FUZZ_SEED = 12345
 _FUZZ_ITERATIONS = 200
+
+# random.Random(31)'s first randint(1, 20) is 1 → actor_roll == 1.
+_SEED_ACTOR_ONE = 31
+# random.Random(15)'s second randint(1, 20) is 1 → target_roll == 1.
+_SEED_TARGET_ONE = 15
 
 
 class _FakeRng:
@@ -246,11 +252,26 @@ class TestRollContestBoundaries:
         assert result.outcome == ContestOutcome.TARGET_DOMINATES
 
     @allure.story("Boundary conditions")
+    @allure.title("A margin of exactly -5 in the actor's favor stays ACTOR_SUCCEEDS (not yet dominating)")
+    def test_boundary_actor_succeeds_at_minus_five(self):
+        # target total = 10 + 0 = 10, actor total = 15 + 0 = 15, diff = -5
+        result = roll_contest(ContestType.COMBAT, 0, _SKILL_ZERO, _rng=_rng(actor=_ROLL_FIFTEEN, target=_ROLL_TEN))
+        assert result.outcome == ContestOutcome.ACTOR_SUCCEEDS
+
+    @allure.story("Boundary conditions")
     @allure.title("A margin of -6 in the actor's favor promotes the outcome to ACTOR_DOMINATES")
     def test_boundary_actor_dominates_at_minus_six(self):
         # target total = 7 + 0 = 7, actor total = 13 + 0 = 13, diff = -6
         result = roll_contest(ContestType.COMBAT, 0, _SKILL_ZERO, _rng=_rng(actor=_ROLL_THIRTEEN, target=_ROLL_SEVEN))
         assert result.outcome == ContestOutcome.ACTOR_DOMINATES
+
+    @allure.story("Boundary conditions")
+    @allure.title("The actor's skill bonus is added to (not subtracted from) the actor total")
+    def test_actor_skill_added_to_actor_total(self):
+        # actor total = 10 + 5 = 15, target total = 10 + 0 = 10, diff = -5 → ACTOR_SUCCEEDS.
+        # If the skill were subtracted, actor total = 5, diff = +5 → TARGET_DOMINATES.
+        result = roll_contest(ContestType.COMBAT, _SKILL_MID, _SKILL_ZERO, _rng=_rng(actor=_ROLL_TEN, target=_ROLL_TEN))
+        assert result.outcome == ContestOutcome.ACTOR_SUCCEEDS
 
 
 @allure.epic("Combat & Action Resolution")
@@ -315,6 +336,30 @@ class TestContestRollDescription:
         desc = roll.description.lower()
         assert any(word in desc for word in ("blow", "hit", "attack", "overwhelm", "strike", "devastat"))
 
+    @allure.story("Narrative descriptions")
+    @allure.title("Social contest types use the social description text, distinct from the stealth text")
+    def test_social_type_uses_social_not_stealth_descriptions(self):
+        persuasion_desc = ContestRoll(
+            contest_type=ContestType.PERSUASION,
+            outcome=ContestOutcome.ACTOR_DOMINATES,
+            actor_roll=_ROLL_TEN,
+            target_roll=_ROLL_TEN,
+            actor_bonus=0,
+            target_bonus=0,
+        ).description
+        stealth_desc = ContestRoll(
+            contest_type=ContestType.STEALTH,
+            outcome=ContestOutcome.ACTOR_DOMINATES,
+            actor_roll=_ROLL_TEN,
+            target_roll=_ROLL_TEN,
+            actor_bonus=0,
+            target_bonus=0,
+        ).description
+        # The social branch must NOT collapse into the stealth branch.
+        assert persuasion_desc != stealth_desc
+        assert "convinced" in persuasion_desc
+        assert "invisible" in stealth_desc
+
 
 @allure.epic("Combat & Action Resolution")
 @allure.feature("Contest dice")
@@ -377,3 +422,44 @@ class TestRollContestStatistics:
             result = roll_contest(ContestType.COMBAT, _SKILL_ZERO, _SKILL_MID, _rng=random.Random(seed))
             outcomes.add(result.outcome)
         assert len(outcomes) >= 3
+
+    @allure.story("Statistical properties")
+    @allure.title("The actor d20 spans the full 1..20 range — a seeded actor_roll of exactly 1 is reachable")
+    def test_actor_roll_can_be_one(self):
+        # Seed 31's first randint(1, 20) is 1: proves the actor lower bound is 1, not 2.
+        result = roll_contest(ContestType.COMBAT, _SKILL_ZERO, _SKILL_ZERO, _rng=random.Random(_SEED_ACTOR_ONE))
+        assert result.actor_roll == 1
+
+    @allure.story("Statistical properties")
+    @allure.title("The target d20 spans the full 1..20 range — a seeded target_roll of exactly 1 is reachable")
+    def test_target_roll_can_be_one(self):
+        # Seed 15's second randint(1, 20) is 1: proves the target lower bound is 1, not 2.
+        result = roll_contest(ContestType.COMBAT, _SKILL_ZERO, _SKILL_ZERO, _rng=random.Random(_SEED_TARGET_ONE))
+        assert result.target_roll == 1
+
+
+@allure.epic("Combat & Action Resolution")
+@allure.feature("Contest dice")
+class TestContestRollToDict:
+    """contest_roll_to_dict serializes every field under its exact JSON key."""
+
+    @allure.story("Serialization")
+    @allure.title("contest_roll_to_dict emits the exact key set with each value placed under the right key")
+    def test_serializes_every_field_under_exact_key(self):
+        roll = ContestRoll(
+            contest_type=ContestType.PERSUASION,
+            outcome=ContestOutcome.ACTOR_SUCCEEDS,
+            actor_roll=_ROLL_EIGHT,
+            target_roll=_ROLL_TWELVE,
+            actor_bonus=_SKILL_LOW,
+            target_bonus=_SKILL_SEVEN,
+        )
+        assert contest_roll_to_dict(roll) == {
+            "contest_type": "persuasion",
+            "outcome": "actor_succeeds",
+            "actor_roll": _ROLL_EIGHT,
+            "target_roll": _ROLL_TWELVE,
+            "actor_bonus": _SKILL_LOW,
+            "target_bonus": _SKILL_SEVEN,
+            "description": roll.description,
+        }

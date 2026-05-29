@@ -39,6 +39,10 @@ _ROLL_EIGHTEEN = 18
 _FUZZ_SEED = 12345
 _FUZZ_ITERATIONS = 200
 
+# random.Random(31)'s first randint(1, 20) yields 1 — used to prove the
+# aggression d20 lower bound is 1 (not 2).
+_SEED_ROLL_ONE_FIRST = 31
+
 _ATTACK_RATE_LOW = 700
 _ATTACK_RATE_HIGH = 900
 
@@ -262,3 +266,11 @@ class TestAggressionRollProperties:
         assert agg.roll == _ROLL_TWELVE
         assert agg.mood == _HOSTILE
         assert agg.threshold == _HOSTILE_THRESHOLD
+
+    @allure.story("Aggression thresholds")
+    @allure.title("Aggression d20 rolls the full 1..20 range — a seeded roll of exactly 1 is reachable")
+    def test_aggression_can_roll_one(self):
+        # Seed 31's first randint(1, 20) is 1: proves the lower bound is 1, not 2.
+        agg = roll_aggression(_HOSTILE, _rng=random.Random(_SEED_ROLL_ONE_FIRST))
+        assert agg is not None
+        assert agg.roll == 1
