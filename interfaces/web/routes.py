@@ -15,11 +15,9 @@ from fastapi.responses import FileResponse
 from config import Config
 from db.repository import GameRepository
 from defaults.player_character import TEMPLATE_CHARACTER
-from interfaces.web import deps, pwa, schemas, service
+from interfaces.web import action_errors, deps, pwa, schemas, service
 from interfaces.web.beta_auth import get_beta_player_id
 from interfaces.web.readiness import readiness_payload
-from interfaces.web.service_helpers import StartGameParams
-from safety.moderator import SafetyRejectedError
 
 router = APIRouter()
 router.add_api_route("/manifest.webmanifest", pwa.manifest, include_in_schema=False)
@@ -143,25 +141,5 @@ async def post_action(
             game_id,
             body.action,
         )
-    except service.BetaAccessDeniedError as exc:
-        status_code = (
-            status.HTTP_503_SERVICE_UNAVAILABLE
-            if exc.reason in {"beta_disabled", "global_budget_exhausted"}
-            else _HTTP_TOO_MANY_REQUESTS
-        )
-        raise HTTPException(status_code=status_code, detail=exc.message) from exc
-    except service.GameNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=_NO_ACTIVE_GAME_DETAIL,
-        ) from exc
-    except service.GameStartUnavailableError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=_START_UNAVAILABLE_DETAIL,
-        ) from exc
-    except SafetyRejectedError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=exc.refusal_message,
-        ) from exc
+    except action_errors.ACTION_ERRORS as exc:
+        raise action_errors.to_http_exception(exc) from exc

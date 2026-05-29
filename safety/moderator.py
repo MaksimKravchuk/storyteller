@@ -2,7 +2,7 @@
 
 Inbound (player) text that crosses the threshold for any category is
 rejected with :class:`SafetyRejectedError`; the HTTP route translates
-this to a 4xx and the Telegram surface sends the user-facing refusal.
+this to a 4xx carrying the user-facing refusal message.
 Outbound (narrator) text that crosses the threshold is replaced with
 the safe-fallback string and the original prose is dropped on the floor
 — never returned to the player.
