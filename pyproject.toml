@@ -113,6 +113,7 @@ also_copy = [
   "prompts",
   "research",
   "run_server.py",
+  "safety",
 ]
 pytest_add_cli_args = [
   "--no-cov",
@@ -141,6 +142,10 @@ pytest_add_cli_args = [
   # of them target the algorithmic surface mutmut covers.
   "--ignore-glob=tests/test_admin*.py",
   "--ignore-glob=tests/test_web*.py",
+  # Same class as test_web*.py — the safety web-route test drives the FastAPI
+  # app via TestClient and hits the Starlette BaseHTTPMiddleware async-teardown
+  # crash ("No response returned") under mutmut's in-process pytest runner.
+  "--ignore=tests/test_safety_web_api.py",
 ]
 do_not_mutate = [
   "**/__init__.py",

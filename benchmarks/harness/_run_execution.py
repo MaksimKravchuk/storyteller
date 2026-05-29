@@ -47,6 +47,11 @@ async def _prepare_engine(
     env vars and pins engine LLM temperatures when set. Production callers never
     set these vars, so the override is harness-scoped.
     """
+    # Benchmarks score narration on curated, deterministic scenarios. The
+    # content-safety moderator would reject some scripted player actions (e.g.
+    # combat premises) and is irrelevant to narration scoring, so it is disabled
+    # for the harness — measure narration, not moderation.
+    cfg = cfg.model_copy(update={"safety_enabled": False})
     engine = create_engine(
         cfg,
         temperature_override=temperature_override.load_temperature_overrides(),
