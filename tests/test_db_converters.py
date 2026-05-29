@@ -199,13 +199,25 @@ class TestNPCConverter:
     def test_legacy_dict_relationships_upcast(self):
         npc = npc_card.NPCCard(name="Legacy")
         row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
-        row["relationships"] = {"npc-enemy": "murderous_enemy", "npc-friend": "trusted friend"}
+        row["relationships"] = {
+            "npc-enemy": "murderous_enemy",
+            "npc-friend": "trusted friend",
+            "npc-blank": "",
+        }
 
         restored = npc_conv.row_to_npc(row)
-        assert len(restored.relationships) == 2
+        assert len(restored.relationships) == 3
         by_target = {r.target_uuid: r for r in restored.relationships}
+        # Hostile label -> ENEMY with the fixed -3 intensity; the label becomes the note.
         assert by_target["npc-enemy"].kind == RelationshipKind.ENEMY
+        assert by_target["npc-enemy"].intensity == -3
+        assert by_target["npc-enemy"].note == "murderous_enemy"
+        # Non-hostile label -> NEUTRAL with neutral (0) intensity.
         assert by_target["npc-friend"].kind == RelationshipKind.NEUTRAL
+        assert by_target["npc-friend"].intensity == 0
+        assert by_target["npc-friend"].note == "trusted friend"
+        # Empty label collapses to an empty note (not a sentinel).
+        assert by_target["npc-blank"].note == ""
 
     @allure.story("Backwards compatibility")
     @allure.title("row_to_npc defaults goal columns to None on legacy rows lacking those columns")
@@ -424,3 +436,14 @@ class TestGameEventConverter:
 
         restored = ev_conv.row_to_game_event(row)
         assert restored.effects[0].effect_data == {"status": "wounded"}
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_game_event defaults effect_data to an empty dict when neither key is present")
+    def test_effect_missing_data_defaults_empty(self):
+        event_obj = timeline_event.GameEvent(name="bare", scheduled_at=0, duration=1)
+        row = ev_conv.game_event_to_row(event_obj, GAME_STATE_ID)
+        # Legacy row whose effect carries neither "effect_data" nor "params".
+        row["effects"] = [{"effect_type": "CHANGE_STATUS", "target_id": "npc-1"}]
+
+        restored = ev_conv.row_to_game_event(row)
+        assert restored.effects[0].effect_data == {}

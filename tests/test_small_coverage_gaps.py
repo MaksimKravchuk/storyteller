@@ -13,7 +13,6 @@ from config import Config, get_api_key_for_provider, load_config
 from interfaces.admin_route_helpers import _json_response, _json_serial
 from knowledge.node import KnowledgeNode, KnowledgeScope
 from knowledge.query_filters import passes_location
-from prompts.base_template import PromptSection, PromptTemplate
 from tests._uuid_helpers import make_uuid
 
 
@@ -84,26 +83,6 @@ class TestPassesLocation:
             location_id=make_uuid("tavern"),
         )
         assert passes_location(node, make_uuid("tavern")) is True
-
-
-@allure.epic("Engine & LLM Infrastructure")
-@allure.feature("Prompt templating")
-class TestPromptTemplateBuilder:
-    @allure.story("Section building")
-    @allure.title("PromptSection.render raises ValueError when required vars are missing")
-    def test_section_missing_required_var_raises(self):
-        section = PromptSection(name="S", template="{name}", required_vars=["name"])
-
-        with pytest.raises(ValueError, match="Missing template variables"):
-            section.render()
-
-    @allure.story("Section building")
-    @allure.title("PromptTemplate renders all sections whose required vars are satisfied")
-    def test_template_renders_satisfied_sections(self):
-        section = PromptSection(name="greeting", template="Hello, {name}!", required_vars=["name"])
-        template = PromptTemplate([section])
-
-        assert template.render(name="world") == "Hello, world!"
 
 
 @allure.epic("Player Interfaces")

@@ -85,9 +85,20 @@ line-length = 120
 exclude = ["alembic/", ".venv/", ".venv-mutmut/", "mutants/", "__pycache__", ".git"]
 
 [tool.mutmut]
-paths_to_mutate = ["models/", "timeline/"]
+paths_to_mutate = [
+  "models/",
+  "timeline/",
+  "db/converters/",
+  "cast/dice.py",
+  "prompts/base_template.py",
+  "knowledge/",
+]
 tests_dir = ["tests/"]
 mutate_only_covered_lines = true
+# ``knowledge`` is no longer ``also_copy``'d — it now lives in
+# ``paths_to_mutate`` (its async/IO modules are excluded via ``do_not_mutate``).
+# ``cast`` / ``db`` / ``prompts`` stay here: only one file / sub-package of each
+# is mutated, and the rest of the package must still be import-reachable.
 also_copy = [
   "alembic",
   "alembic.ini",
@@ -100,7 +111,6 @@ also_copy = [
   "engine",
   "formatting",
   "interfaces",
-  "knowledge",
   "llm",
   "log_scrubbing.py",
   "main.py",
@@ -127,4 +137,9 @@ pytest_add_cli_args = [
 ]
 do_not_mutate = [
   "**/__init__.py",
+  # ``knowledge/`` async/IO modules: their survived mutants need a judge, not an
+  # ``assert`` (same reasoning that keeps LLM-driven code out of the pilot).
+  "knowledge/memory.py",
+  "knowledge/scene_consolidation.py",
+  "knowledge/scene_summary_phase.py",
 ]

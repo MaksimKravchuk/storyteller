@@ -319,6 +319,38 @@ class TestQueryEngineNpcContext:
         assert filt.max_scope == KnowledgeScope.LOCAL
 
     @allure.story("NPC context building")
+    @allure.title("build_npc_filter maps every knowledge_scope string to its KnowledgeScope")
+    @pytest.mark.parametrize(
+        ("scope_string", "expected_scope"),
+        [
+            ("local", KnowledgeScope.LOCAL),
+            ("city", KnowledgeScope.CITY),
+            ("region", KnowledgeScope.REGION),
+            ("country", KnowledgeScope.COUNTRY),
+            ("world", KnowledgeScope.WORLD),
+        ],
+    )
+    def test_build_npc_filter_scope_mapping(self, scope_string, expected_scope):
+        npc = Character(name="Mapper", knowledge_scope=scope_string)
+        engine = KnowledgeQueryEngine(KnowledgeGraph())
+
+        assert engine.build_npc_filter(npc).max_scope == expected_scope
+
+    @allure.story("NPC context building")
+    @allure.title("build_npc_filter defaults education to 3 and passes location_id and npc uuid through")
+    def test_build_npc_filter_defaults_and_passthrough(self):
+        location_id = make_uuid("market")
+        npc = Character(name="Plain", knowledge_scope="local", location_id=location_id)
+        engine = KnowledgeQueryEngine(KnowledgeGraph())
+
+        filt = engine.build_npc_filter(npc)
+
+        # No "education" attribute -> the call-site default of 3 is used.
+        assert filt.max_education_required == 3
+        assert filt.location_id == location_id
+        assert filt.npc_id == npc.uuid
+
+    @allure.story("NPC context building")
     @allure.title(
         "get_context_for_npc on an empty graph returns a fallback 'don't have any specific knowledge' message"
     )
@@ -326,7 +358,8 @@ class TestQueryEngineNpcContext:
         engine = KnowledgeQueryEngine(empty_graph)
         npc = Character(name="Joe", knowledge_scope="world")
         ctx = engine.get_context_for_npc(npc)
-        assert "don't have any specific knowledge" in ctx
+        # Exact equality (not substring) so the literal wording is asserted.
+        assert ctx == "You don't have any specific knowledge about this topic."
 
     @allure.story("NPC context building")
     @allure.title("RUMOR-sourced knowledge items are prefixed with '[Rumour]' in the generated NPC context string")
@@ -339,6 +372,39 @@ class TestQueryEngineNpcContext:
         )
         ctx = engine.get_context_for_npc(npc)
         assert "[Rumour]" in ctx
+
+    @allure.story("NPC context building")
+    @allure.title("get_context_for_npc sorts nodes by source priority and prefixes each line")
+    def test_get_context_sorted_and_prefixed(self, empty_graph):
+        # Inserted in NON-priority order so a broken sort key surfaces as wrong
+        # output order. FACT has no prefix entry, so its empty-string default is
+        # exercised; the exact block covers sort key, per-source prefix, "\n" join.
+        rumour = KnowledgeNode(
+            text="Gold lies in the hills.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.RUMOR,
+        )
+        fact = KnowledgeNode(
+            text="The gate is iron.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.FACT,
+        )
+        personal = KnowledgeNode(
+            text="I forged that gate myself.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+        )
+        for node in (rumour, fact, personal):
+            empty_graph.add_node(node)
+        npc = Character(name="Sage", knowledge_scope="world", attributes={"education": 10})
+
+        ctx = KnowledgeQueryEngine(empty_graph).get_context_for_npc(npc)
+
+        assert ctx == (
+            "- [Personal experience] I forged that gate myself.\n"
+            "- The gate is iron.\n"
+            "- [Rumour] Gold lies in the hills."
+        )
 
 
 def _attach_memory(

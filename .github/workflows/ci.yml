@@ -113,7 +113,9 @@ jobs:
 
   mutation:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Expanded pilot scope (~1.9k mutants) runs longer than the original
+    # models/+timeline (~680); 45 min leaves headroom over the cold-rebuild cost.
+    timeout-minutes: 45
     if: >-
       github.event_name == 'pull_request' ||
       (github.event_name == 'workflow_dispatch' && inputs.run_mutation)
@@ -137,11 +139,19 @@ jobs:
             exit 0
           fi
           BASE_REF="${{ github.event.pull_request.base.sha }}"
-          # git's default pathspec ``*`` matches across ``/``, so
-          # ``models/*.py`` captures nested files too. ``__init__.py``
-          # is mutation-irrelevant and excluded.
+          # git's default pathspec ``*`` matches across ``/``, so ``models/*.py``
+          # captures nested files too. ``__init__.py`` and the knowledge async/IO
+          # modules are not mutated (see ``do_not_mutate`` in pyproject.toml), so a
+          # change touching only those must not trigger the gate. Keep this list in
+          # sync with ``[tool.mutmut].paths_to_mutate``.
           CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- \
-            'models/*.py' 'timeline/*.py' ':(exclude)**/__init__.py')
+            'models/*.py' 'timeline/*.py' \
+            'db/converters/*.py' 'cast/dice.py' 'prompts/base_template.py' \
+            'knowledge/*.py' \
+            ':(exclude)**/__init__.py' \
+            ':(exclude)knowledge/memory.py' \
+            ':(exclude)knowledge/scene_consolidation.py' \
+            ':(exclude)knowledge/scene_summary_phase.py')
           if [ -z "$CHANGED" ]; then
             echo "No pilot-scope files changed; skipping mutation testing."
             echo "in_scope=false" >> "$GITHUB_OUTPUT"
@@ -202,10 +212,12 @@ jobs:
         # PR runs are the gate; manual dispatch is report-only.
         if: steps.scope.outputs.in_scope == 'true' && github.event_name == 'pull_request'
         env:
-          # Calibrated from the introduction-PR baseline of 79.8% (540 killed / 677 checked).
-          # Threshold = floor(baseline) - 2. Bump only after a sustained nightly improvement;
-          # see CLAUDE.md "Mutation testing (pilot)" for ratchet rules.
-          THRESHOLD: "77"
+          # Gate for the expanded scope (models/, timeline/, db/converters/, cast/dice.py,
+          # prompts/base_template.py, knowledge/ non-async). 90 is a stakeholder-set floor,
+          # deliberately below the measured baseline so run-to-run noise does not flap it.
+          # Bump only after a sustained nightly improvement. See ADR-0004 (extension) and
+          # CLAUDE.md "Mutation testing (pilot)" for the baseline figure and ratchet rules.
+          THRESHOLD: "90"
         run: |
           SCORE="${{ steps.score.outputs.score }}"
           awk -v s="$SCORE" -v t="$THRESHOLD" 'BEGIN {
