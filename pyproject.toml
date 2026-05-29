@@ -129,6 +129,14 @@ pytest_add_cli_args = [
   # of them target the algorithmic surface mutmut covers.
   "--ignore-glob=tests/test_admin*.py",
   "--ignore-glob=tests/test_web*.py",
+  # Prompt consumer-seam contract: instantiates real async performers whose
+  # import graph now spans the expanded mutation surface (knowledge/, config.py,
+  # cast/dice.py). Under mutmut's in-process ``pytest.main()`` stats runner
+  # (pytest-randomly force-disabled), pytest_asyncio's event-loop-policy
+  # teardown raises and aborts stats collection. The test targets prompt
+  # rendering, not the deterministic-core mutation surface, so ignoring it
+  # costs no kill signal — same rationale as the admin/web/fuzz ignores above.
+  "--ignore=tests/prompts/test_consumer_seam_contract.py",
 ]
 do_not_mutate = [
   "**/__init__.py",
