@@ -10,7 +10,7 @@ from engine.session_ops import persist_engine_state
 from interfaces.web.character import build_character_info
 from interfaces.web.errors import GameStartUnavailableError, is_provider_auth_error
 from interfaces.web.schemas import ActionResponse
-from interfaces.web.transcript import render_narrator_html
+from interfaces.web.transcript import player_visible_turn_count, render_narrator_html
 from models.player_character_input import PlayerCharacterInput
 
 
@@ -52,12 +52,11 @@ class ActionPersistence:
         """Run a player action through the engine and persist the new state."""
         narration = await self._process_action()
         game_state, _, _ = self.engine.assert_running()
-        turn_number = game_state.turn_count
         await persist_engine_state(
             self.repo,
             self.session_id,
             self.engine,
-            turn_number=turn_number,
+            turn_number=game_state.turn_count,
             user_id=self.user_id,
         )
         await self.repo.commit()
@@ -68,7 +67,7 @@ class ActionPersistence:
                 list(game_state.last_visible_entities),
                 self.language,
             ),
-            turn_count=turn_number,
+            turn_count=player_visible_turn_count(game_state.conversation_log),
             character=build_character_info(game_state),
         )
 
