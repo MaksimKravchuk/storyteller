@@ -119,6 +119,14 @@ class TestWorldStateConverter:
         assert payload["world_mood"] == "uneasy and watchful"
         assert payload["last_chronicled_scene"] == 4
         assert len(payload["threads"]) == 2
+        # mode="json" serialisation: thread UUIDs and involved-location UUIDs are plain
+        # JSON strings in the payload, not UUID objects (which the JSONB column cannot store).
+        assert isinstance(payload["threads"][0]["uuid"], str)
+        assert all(isinstance(loc, str) for loc in payload["threads"][0]["involved_locations"])
+        assert payload["threads"][0]["involved_locations"] == [
+            str(make_uuid("loc-1")),
+            str(make_uuid("loc-2")),
+        ]
 
         restored = conv_world_state.dict_to_world_state(payload)
         assert restored.world_mood == "uneasy and watchful"
