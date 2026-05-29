@@ -320,41 +320,149 @@ button[type="submit"]:disabled {
 .status.info { color: #8c8; }
 
 /* ============================================================
- * Character column — illuminated-margin sidebar.
- * Keeps the existing Georgia / dark literary palette and reuses
- * the narrator-bold gold (#f5c878) as the single warm accent.
+ * Dashboard — bottom-sheet panels on mobile, docked rail on desktop.
+ * Authored mobile-first: the base rules target the phone (the primary
+ * platform); the min-width query layers on the desktop rail. Reuses the
+ * dark literary palette and the narrator-bold gold (#f5c878) accent.
  * ============================================================ */
 
 .game-grid {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 2.5rem;
-  align-items: start;
+  display: block;
 }
 
-.character-col {
-  border-left: 1px solid rgba(245, 200, 120, 0.18);
-  padding-left: 1.5rem;
-  max-height: calc(100vh - 6rem);
+/* Reserve space for the fixed bottom tab bar + the device safe-area inset. */
+#game-panel {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
+
+/* Keep the read->type loop reachable just above the tab bar on mobile. */
+#action-form {
+  position: sticky;
+  bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  background: #1a1a1a;
+  padding: 0.5rem 0;
+  z-index: 5;
+}
+
+/* ── Bottom tab bar (mobile) ───────────────────────────── */
+#panel-toolbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  background: #222;
+  border-top: 1px solid #444;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 30;
+}
+
+#panel-toolbar button {
+  flex: 1;
+  min-height: 48px; /* >= 44px touch target */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  color: #9a937f;
+  font-family: inherit;
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.3rem 0.15rem;
+}
+
+#panel-toolbar button .tab-glyph {
+  font-size: 1.15rem;
+  line-height: 1;
+  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
+}
+
+#panel-toolbar button[aria-selected="true"] {
+  color: #f5c878;
+}
+
+#panel-toolbar button[aria-selected="true"] .tab-glyph {
+  text-shadow: 0 0 10px rgba(245, 200, 120, 0.35);
+}
+
+#panel-toolbar button:focus-visible {
+  outline: 1px solid rgba(245, 200, 120, 0.55);
+  outline-offset: -2px;
+}
+
+/* ── Backdrop + slide-up sheet (mobile) ────────────────── */
+#panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 25;
+}
+
+#dashboard.sheet-open #panel-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#panel-host {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(3.5rem + env(safe-area-inset-bottom));
+  max-height: calc(100dvh - 9rem);
   overflow-y: auto;
+  background: #1f1f1f;
+  border-top: 1px solid rgba(245, 200, 120, 0.25);
+  border-radius: 14px 14px 0 0;
+  padding: 1.1rem 1.25rem 1.5rem;
+  transform: translateY(115%);
+  transition: transform 0.25s ease;
+  z-index: 26;
 }
 
-.character-col h3,
-.character-col h4,
-.character-col h5 {
+#dashboard.sheet-open #panel-host {
+  transform: translateY(0);
+}
+
+#panel-close {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.8rem;
+  width: 2rem;
+  height: 2rem;
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 50%;
+  color: #c8c0a8;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+#panel-close:hover { border-color: #e8e4d8; }
+
+/* ── Shared panel typography (re-scoped from the old sidebar) ── */
+#panel-host h3,
+#panel-host h4 {
   font-weight: normal;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   font-family: Georgia, "Times New Roman", serif;
 }
 
-.character-col h3 {
-  font-size: 0.7rem;
+#panel-host h3 {
+  font-size: 0.72rem;
   color: #a39880;
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.6rem;
 }
 
-.character-col h4 {
+#panel-host h4 {
   font-size: 0.78rem;
   color: #c8c0a8;
   margin: 1.4rem 0 0.6rem;
@@ -362,15 +470,8 @@ button[type="submit"]:disabled {
   border-bottom: 1px solid rgba(245, 200, 120, 0.14);
 }
 
-.character-col h5 {
-  font-size: 0.68rem;
-  color: #8a8270;
-  margin: 0.9rem 0 0.35rem;
-}
-
 /* ── Foldable headings ───────────────────────────────── */
-.character-col h4.is-foldable,
-.character-col h5.is-foldable {
+#panel-host h4.is-foldable {
   cursor: pointer;
   user-select: none;
   display: flex;
@@ -378,8 +479,7 @@ button[type="submit"]:disabled {
   justify-content: space-between;
 }
 
-.character-col h4.is-foldable::after,
-.character-col h5.is-foldable::after {
+#panel-host h4.is-foldable::after {
   content: "▾";
   display: inline-block;
   font-size: 0.65rem;
@@ -390,13 +490,11 @@ button[type="submit"]:disabled {
   letter-spacing: 0;
 }
 
-.character-col h4.is-foldable.is-folded::after,
-.character-col h5.is-foldable.is-folded::after {
+#panel-host h4.is-foldable.is-folded::after {
   transform: rotate(-90deg);
 }
 
-.character-col h4.is-foldable.is-folded + ul,
-.character-col h5.is-foldable.is-folded + ul {
+#panel-host h4.is-foldable.is-folded + ul {
   display: none;
 }
 
@@ -434,22 +532,18 @@ button[type="submit"]:disabled {
   text-transform: lowercase;
 }
 
-.character-col ul {
+#panel-host ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 10rem;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(245, 200, 120, 0.2) transparent;
 }
 
-.character-col li {
+#panel-host li {
   font-size: 0.92rem;
   line-height: 1.5;
 }
 
-.character-col .empty {
+#panel-host .empty {
   font-style: italic;
   color: #6a655a;
   padding: 0.3rem 0;
@@ -586,6 +680,108 @@ button[type="submit"]:disabled {
   margin-top: 0.15rem;
 }
 
+/* ── Map panel ─────────────────────────────────────────── */
+.map-breadcrumb {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  color: #8a8270;
+  letter-spacing: 0.04em;
+}
+
+.map-current-name {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #f5c878;
+  text-shadow: 0 0 12px rgba(245, 200, 120, 0.15);
+}
+
+.map-current-name.empty {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #6a655a;
+  text-shadow: none;
+}
+
+.map-current-type {
+  margin: 0.1rem 0 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6a655a;
+}
+
+#map-connections li.map-node {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(245, 200, 120, 0.08);
+}
+
+.map-node-name { color: #9bb8d8; }
+
+.map-node-type {
+  color: #6a655a;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  align-self: center;
+}
+
+/* ── People & Time panel ───────────────────────────────── */
+.world-clock {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #f5c878;
+}
+
+#people-list li.person-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+}
+
+.person-label { color: #f5c878; }
+
+.person-row.is-stranger .person-label {
+  color: #c8c0a8;
+  font-style: italic;
+}
+
+.person-role {
+  color: #6a655a;
+  font-size: 0.78rem;
+  font-style: italic;
+  align-self: center;
+}
+
+/* ── Knowledge source filter ───────────────────────────── */
+#knowledge-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+
+#knowledge-filter button {
+  padding: 0.2rem 0.55rem;
+  background: rgba(255, 255, 255, 0.03);
+  color: #c8c0a8;
+  border: 1px solid #4d493f;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+#knowledge-filter button[aria-pressed="true"] {
+  color: #f5c878;
+  border-color: rgba(245, 200, 120, 0.55);
+}
+
 /* Reveal animation for entries that arrived this turn. */
 @keyframes character-reveal {
   from {
@@ -600,13 +796,15 @@ button[type="submit"]:disabled {
   }
 }
 
-.character-col li.is-new {
+#panel-host li.is-new {
   animation: character-reveal 0.55s ease-out both;
   animation-delay: calc(var(--stagger, 0) * 40ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .character-col li.is-new { animation: none; }
+  #panel-host li.is-new { animation: none; }
+  #panel-host { transition: none; }
+  #panel-backdrop { transition: none; }
 }
 
 /* Inline entity spans inserted by formatting.entity_markup.wrap_entities. */
@@ -618,17 +816,63 @@ button[type="submit"]:disabled {
 .turn.narrator .poi[data-kind="poi"]  { color: #f5c878; }
 .turn.narrator .poi[data-kind="item"] { color: #c8f5b4; }
 
-@media (max-width: 720px) {
+/* ── Desktop enhancement: dock the dashboard as a tabbed side-rail. ── */
+@media (min-width: 721px) {
   .game-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2.5rem;
+    align-items: start;
   }
-  .character-col {
-    max-height: none;
-    border-left: none;
-    border-top: 1px solid rgba(245, 200, 120, 0.18);
-    padding-left: 0;
-    padding-top: 1.25rem;
-    margin-top: 1rem;
+
+  #game-panel { padding-bottom: 1.5rem; }
+
+  #action-form {
+    position: static;
+    background: transparent;
+    padding: 0;
+    bottom: auto;
+    z-index: auto;
+  }
+
+  #dashboard {
+    border-left: 1px solid rgba(245, 200, 120, 0.18);
+    padding-left: 1.5rem;
+  }
+
+  #panel-toolbar {
+    position: static;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    background: transparent;
+    border-top: none;
+    border-bottom: 1px solid rgba(245, 200, 120, 0.18);
+    padding: 0 0 0.5rem;
+    z-index: auto;
+  }
+
+  #panel-toolbar button {
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 0.3rem;
+    min-height: 0;
+    font-size: 0.58rem;
+    padding: 0.3rem 0.45rem;
+  }
+
+  #panel-toolbar button .tab-glyph { font-size: 0.85rem; }
+
+  #panel-backdrop,
+  #panel-close { display: none; }
+
+  #panel-host {
+    position: static;
+    transform: none;
+    transition: none;
+    border-radius: 0;
+    border-top: none;
+    padding: 1rem 0 0;
+    max-height: calc(100vh - 9rem);
+    overflow-y: auto;
   }
 }

@@ -101,6 +101,13 @@ def _snapshot() -> schemas.GameSnapshot:
             recent_events=[],
             learned_facts=[],
         ),
+        world=schemas.WorldView.model_validate(
+            {
+                "map": {"current": None, "connections": [], "breadcrumb": []},
+                "people": [],
+                "clock": {"day": 1, "time_of_day": "morning", "hour": 0},
+            },
+        ),
     )
 
 

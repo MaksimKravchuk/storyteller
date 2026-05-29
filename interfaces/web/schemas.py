@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 
 from interfaces.web.character_schemas import CharacterInfo
+from interfaces.web.world_schemas import WorldView
 
 _SETTING_MAX_CHARS = 500
 _ACTION_MAX_CHARS = 2000
@@ -93,6 +94,7 @@ class GameSnapshot(BaseModel):
     transcript: list[TurnEntry]
     turn_count: int
     character: CharacterInfo
+    world: WorldView
 
 
 class ActionResponse(BaseModel):
@@ -107,3 +109,4 @@ class ActionResponse(BaseModel):
     narration_html: str
     turn_count: int
     character: CharacterInfo
+    world: WorldView

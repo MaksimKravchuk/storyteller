@@ -22,6 +22,7 @@ from interfaces.web.schemas import (
     ActionResponse,
     GameSnapshot,
     TurnEntry,
+    WorldView,
 )
 
 from interfaces.web.transcript import (
@@ -94,6 +95,30 @@ def _empty_character() -> CharacterInfo:
     )
 
 
+def _empty_world() -> WorldView:
+    return WorldView.model_validate(
+        {
+            "map": {"current": None, "connections": [], "breadcrumb": []},
+            "people": [],
+            "clock": {"day": 1, "time_of_day": "morning", "hour": 0},
+        },
+    )
+
+
+def _sample_world() -> WorldView:
+    return WorldView.model_validate(
+        {
+            "map": {
+                "current": {"id": "loc-forum", "name": "Forum Romanum", "location_type": "district"},
+                "connections": [{"id": "loc-tavern", "name": "The Tavern", "location_type": "building"}],
+                "breadcrumb": [{"id": "loc-rome", "name": "Rome", "location_type": "city"}],
+            },
+            "people": [{"label": "a stern guard", "role": "guard", "known": False}],
+            "clock": {"day": 2, "time_of_day": "afternoon", "hour": 14},
+        },
+    )
+
+
 def _sample_snapshot(game_id: str = "game-abc", turn_count: int = 0) -> GameSnapshot:
     narrator_text = "The forum stretches before you."
     return GameSnapshot(
@@ -108,6 +133,7 @@ def _sample_snapshot(game_id: str = "game-abc", turn_count: int = 0) -> GameSnap
         ],
         turn_count=turn_count,
         character=_empty_character(),
+        world=_sample_world(),
     )
 
 
@@ -528,6 +554,11 @@ def test_current_game_returns_snapshot(client: TestClient) -> None:
     assert first_entry["role"] == "narrator"
     assert first_entry["text"] == "The forum stretches before you."
     assert first_entry["html"] == "<p>The forum stretches before you.</p>"
+    # Consumer seam: the WorldView reaches the snapshot JSON on load.
+    world_map = body["world"]["map"]
+    assert world_map["current"]["name"] == "Forum Romanum"
+    assert world_map["breadcrumb"][0]["name"] == "Rome"
+    assert body["world"]["clock"]["day"] == 2
 
 
 @allure.story("Current game lookup")
@@ -671,7 +702,10 @@ def test_get_game_happy_path(client: TestClient) -> None:
     with patch("interfaces.web.routes_library.service_library.get_snapshot_for_player_game", new=get_mock):
         response = client.get("/api/games/game-1")
     assert response.status_code == _HTTP_OK
-    assert response.json()["game_id"] == "game-1"
+    body = response.json()
+    assert body["game_id"] == "game-1"
+    # Consumer seam: continuing a story serves the WorldView through the route.
+    assert body["world"]["map"]["current"]["name"] == "Forum Romanum"
     assert get_mock.await_args is not None
     assert get_mock.await_args.args[2:] == (_FIXED_PLAYER_ID, "game-1")
 
@@ -732,7 +766,10 @@ def test_start_game_happy_path(client: TestClient) -> None:
     with patch.object(service, "start_game_for_player", new=start_mock):
         response = client.post("/api/games", json={"setting": "Rome", "language": "Russian"})
     assert response.status_code == _HTTP_CREATED
-    assert response.json()["game_id"] == snapshot.game_id
+    body = response.json()
+    assert body["game_id"] == snapshot.game_id
+    # Consumer seam: the opening snapshot carries the WorldView for the dashboard.
+    assert body["world"]["map"]["current"]["name"] == "Forum Romanum"
     start_mock.assert_awaited_once()
     params = _params_from_call(start_mock)
     assert params.player_id == _FIXED_PLAYER_ID
@@ -875,6 +912,7 @@ def test_post_action_happy_path(client: TestClient) -> None:
         narration_html=render_narrator_html("**Pieter** waves."),
         turn_count=3,
         character=_empty_character(),
+        world=_sample_world(),
     )
     process_mock = AsyncMock(return_value=action_response)
     with patch.object(service, "process_turn_for_player", new=process_mock):
@@ -884,6 +922,12 @@ def test_post_action_happy_path(client: TestClient) -> None:
     assert body["narration"] == "**Pieter** waves."
     assert body["narration_html"] == "<p><strong>Pieter</strong> waves.</p>"
     assert body["turn_count"] == 3
+    # Consumer seam: the WorldView reaches the action response JSON, not just the DTO.
+    world_map = body["world"]["map"]
+    assert world_map["current"]["name"] == "Forum Romanum"
+    assert world_map["connections"][0]["name"] == "The Tavern"
+    assert body["world"]["people"][0]["label"] == "a stern guard"
+    assert body["world"]["clock"] == {"day": 2, "time_of_day": "afternoon", "hour": 14}
 
 
 @allure.story("Player smoke")
@@ -931,6 +975,7 @@ def _smoke_turn_response(narration: str, turn_count: int) -> ActionResponse:
         narration_html=render_narrator_html(narration),
         turn_count=turn_count,
         character=_empty_character(),
+        world=_empty_world(),
     )
 
 
@@ -1163,7 +1208,12 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     )
     # MagicMock coerces the kwarg ``name`` to the mock's own name; re-set it explicitly.
     game_state.player.name = "Player"
+    game_state.player.location_id = None
     game_state.npcs = {}
+    game_state.locations = {}
+    game_state.current_scene = None
+    game_state.game_clock = float(0)
+    game_state.game_time = "morning"
 
     engine = MagicMock()
     engine.start_game = AsyncMock()
@@ -1215,7 +1265,12 @@ async def test_start_game_commits_before_returning_snapshot() -> None:
         learned_facts=set(),
     )
     game_state.player.name = "Player"
+    game_state.player.location_id = None
     game_state.npcs = {}
+    game_state.locations = {}
+    game_state.current_scene = None
+    game_state.game_clock = float(0)
+    game_state.game_time = "morning"
 
     engine = MagicMock()
     engine.start_game = AsyncMock()
@@ -1260,7 +1315,12 @@ async def test_process_turn_commits_before_returning_response() -> None:
         learned_facts=set(),
     )
     game_state.player.name = "Player"
+    game_state.player.location_id = None
     game_state.npcs = {}
+    game_state.locations = {}
+    game_state.current_scene = None
+    game_state.game_clock = float(0)
+    game_state.game_time = "morning"
     repo.load_game_state = AsyncMock(return_value=(game_state, MagicMock(), []))
 
     engine = MagicMock()
