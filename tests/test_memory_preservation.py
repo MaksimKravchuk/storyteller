@@ -296,6 +296,63 @@ def test_empty_text_memory_is_skipped() -> None:
 
 
 @allure.story("preserve_departing_npc_memories")
+@allure.title("A memory with literally empty text is skipped (empty-string fallback must stay empty)")
+def test_zero_length_text_memory_is_skipped() -> None:
+    game_state = _build_city_state()
+    graph = game_state.knowledge_graph
+    _add_session_memory(graph, _BARTENDER_ID, text="")
+
+    created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)
+
+    # An empty string is falsy, so the `(text or "")` fallback applies; that
+    # fallback must be an empty string so `.strip()` stays falsy and the
+    # memory is skipped — not coerced into a truthy placeholder.
+    assert created_ids == []
+
+
+@allure.story("preserve_departing_npc_memories")
+@allure.title("Propagated hearsay nodes carry the departure game_clock as their timestamp")
+def test_hearsay_timestamp_is_game_clock() -> None:
+    game_state = _build_city_state()
+    departure_clock = float(42)
+    game_state.game_clock = departure_clock
+    graph = game_state.knowledge_graph
+    _add_session_memory(graph, _BARTENDER_ID)
+
+    created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)
+
+    assert len(created_ids) == 2
+    for hearsay_id in created_ids:
+        hearsay = graph.get_node(hearsay_id)
+        assert hearsay is not None
+        # game_clock threads all the way to the hearsay node timestamp; a
+        # dropped/None game_time would surface here.
+        assert hearsay.timestamp == departure_clock
+
+
+@allure.story("preserve_departing_npc_memories")
+@allure.title("A propagatable memory with no timestamp sorts as oldest without raising")
+def test_untimestamped_memory_sorts_as_oldest() -> None:
+    game_state = _build_city_state()
+    graph = game_state.knowledge_graph
+    # An eligible session memory whose timestamp is None must drop to the
+    # bottom of the newest-first sort via the float("-inf") sentinel — a
+    # broken sentinel (float(None) / float("XX-infXX")) would raise.
+    undated = _add_session_memory(graph, _BARTENDER_ID, text="undated event", timestamp=None)
+    dated = _add_session_memory(graph, _BARTENDER_ID, text="dated event", timestamp=5.0)
+
+    created_ids = preserve_departing_npc_memories(graph, game_state, _BARTENDER_ID, _TAVERN_ID)
+
+    propagated_texts = set()
+    for uid in created_ids:
+        node = graph.get_node(uid)
+        assert node is not None
+        propagated_texts.add(node.text)
+    assert undated.text in propagated_texts
+    assert dated.text in propagated_texts
+
+
+@allure.story("preserve_departing_npc_memories")
 @allure.title("Isolated scene with no recipients still tags memories to avoid re-scanning")
 def test_no_recipients_still_tags_memories() -> None:
     game_state = GameState(setting=_setting(), knowledge_graph=KnowledgeGraph())

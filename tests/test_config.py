@@ -62,6 +62,15 @@ class TestResolveModelConfig:
         assert cfg.provider == "anthropic"
 
     @allure.story("Provider auto-detection")
+    @allure.title("A hyphenless claude model id (no dash after 'claude') still resolves to anthropic")
+    def test_hyphenless_claude_model_resolves_to_anthropic(self):
+        # Exercises the bare "claude" prefix element (not the "claude-" element):
+        # a dashless id like "claude3" must still detect anthropic, else it
+        # falls through to the openai default.
+        cfg = resolve_model_config("claude3")
+        assert cfg.provider == "anthropic"
+
+    @allure.story("Provider auto-detection")
     @allure.title("resolve_model_config falls back to openai for unknown model id prefixes")
     def test_unknown_model_uses_openai_fallback(self):
         cfg = resolve_model_config("llama-3")
@@ -103,6 +112,23 @@ class TestOpenRouterDetection:
             "anthropic": False,
             "openrouter": True,
             "deepseek": False,
+        }
+
+    @allure.story("API-key status")
+    @allure.title("list_api_key_status reads the anthropic and deepseek keys (True when each is set)")
+    def test_list_api_key_status_anthropic_and_deepseek_true(self):
+        cfg = Config(
+            openai_api_key=None,
+            anthropic_api_key="an-key",
+            openrouter_api_key=None,
+            deepseek_api_key="ds-key",
+        )
+        status = list_api_key_status(cfg)
+        assert status == {
+            "openai": False,
+            "anthropic": True,
+            "openrouter": False,
+            "deepseek": True,
         }
 
     @allure.story("API-key status")

@@ -79,22 +79,35 @@ line-length = 120
 exclude = ["alembic/", ".venv/", ".venv-mutmut/", "mutants/", "__pycache__", ".git"]
 
 [tool.mutmut]
-paths_to_mutate = ["models/", "timeline/"]
+# Pilot scope (ADR-0004) plus the deterministic-core expansion (ADR-0005):
+# knowledge/ graph logic, db/converters/ domain<->ORM bridge, cast/dice.py
+# contest math, and config.py provider detection. All are non-LLM and
+# already unit-tested, so a survived mutant maps cleanly to a missing assert.
+paths_to_mutate = [
+  "models/",
+  "timeline/",
+  "knowledge/",
+  "db/converters/",
+  "cast/dice.py",
+  "config.py",
+]
 tests_dir = ["tests/"]
 mutate_only_covered_lines = true
+# Copied verbatim so imports resolve, but not mutated. ``cast`` and ``db``
+# stay here for the sibling modules of the mutated sub-paths (cast/dice.py,
+# db/converters/); mutmut copies copy_also without clobbering the already
+# written mutant files, so the overlap is safe (verified via the mutants/ tree).
 also_copy = [
   "alembic",
   "alembic.ini",
   "benchmarks",
   "cast",
-  "config.py",
   "costs",
   "db",
   "defaults",
   "engine",
   "formatting",
   "interfaces",
-  "knowledge",
   "llm",
   "log_scrubbing.py",
   "prompts",
@@ -103,6 +116,18 @@ also_copy = [
 ]
 pytest_add_cli_args = [
   "--no-cov",
+  # Deselect async tests from every mutmut pytest invocation (coverage
+  # gather, stats, per-mutant). Under mutmut's in-process ``pytest.main()``
+  # runner, pytest_asyncio's event-loop-policy teardown raises
+  # ``TypeError: loop must be an instance of AbstractEventLoop`` and aborts
+  # the stats phase (killed=0). The expanded mutation surface (knowledge/,
+  # config.py) widened the trampolined import graph enough to trip it where
+  # the models/+timeline/ pilot did not. The mutated modules are pure and
+  # densely covered by *sync* tests, so deselecting async tests keeps the
+  # kill signal while sidestepping the teardown bug. ``-m`` is last-wins, so
+  # this supersedes the ``addopts`` marker expression rather than conflicting.
+  "-m",
+  "not db and not benchmark and not asyncio",
   "--ignore=tests/e2e",
   "--ignore=tests/benchmarks",
   "--ignore=tests/db",
@@ -119,4 +144,10 @@ pytest_add_cli_args = [
 ]
 do_not_mutate = [
   "**/__init__.py",
+  # LLM-driven knowledge modules: a survived mutant here needs a judge,
+  # not an assert (ADR-0004 Alternative-2 reasoning), so they are copied
+  # for imports but kept out of the mutation surface.
+  "knowledge/memory.py",
+  "knowledge/scene_consolidation.py",
+  "knowledge/scene_summary_phase.py",
 ]

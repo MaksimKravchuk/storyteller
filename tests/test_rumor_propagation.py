@@ -7,6 +7,7 @@ from uuid import UUID
 import allure
 
 from knowledge import graph as _graph, node as _node, query as _query, rumor as _rumor
+from knowledge.rumor_scope import non_witness_city_npcs
 from models.game_state import GameState
 from models.location import Location
 from models.npc_card import NPCCard
@@ -218,6 +219,53 @@ def test_region_scope_also_propagates() -> None:
 
 
 @allure.story("propagate_rumors")
+@allure.title("Propagated rumor hearsay carries the current game_clock as its timestamp")
+def test_rumor_hearsay_timestamp_is_game_clock() -> None:
+    game_state = _build_city_state()
+    rumor_clock = float(73)
+    game_state.game_clock = rumor_clock
+    graph = game_state.knowledge_graph
+
+    created_ids = propagate_rumors(graph, game_state, [_make_event(scope="city")])
+
+    assert len(created_ids) == 1
+    hearsay = graph.get_node(created_ids[0])
+    assert hearsay is not None
+    # The event's game_clock must reach the hearsay timestamp; a dropped /
+    # None game_time would surface here.
+    assert hearsay.timestamp == rumor_clock
+
+
+@allure.story("propagate_rumors")
+@allure.title("An NPC standing at the event location is excluded even when absent from the witness list")
+def test_npc_at_event_location_excluded_from_recipients() -> None:
+    game_state = _build_city_state()
+    lurker_id = make_uuid("npc-lurker")
+    # The lurker's location_id is the Forum (the event site) but they are not
+    # listed in the Forum's npcs_present, so they never enter the witness list.
+    # They must still be excluded as a recipient because they share the event
+    # location — proving the event_location_id reaches the listener filter.
+    game_state.npcs[lurker_id] = NPCCard(
+        uuid=lurker_id,
+        name="Lurker",
+        occupation="loiterer",
+        knowledge_scope="city",
+        attributes={"education": 2, "social_status": 2},
+        location_id=_FORUM_ID,
+    )
+    graph = game_state.knowledge_graph
+
+    created_ids = propagate_rumors(graph, game_state, [_make_event(scope="city")])
+
+    # Only the absent tavern NPC receives the rumor — the Forum lurker does not.
+    assert len(created_ids) == 1
+    assert _hearsay_nodes_at(graph, _FORUM_ID) == []
+    hearsay = graph.get_node(created_ids[0])
+    assert hearsay is not None
+    assert hearsay.location_id == _TAVERN_ID
+
+
+@allure.story("propagate_rumors")
 @allure.title("Events with no location_id are ignored")
 def test_event_without_location_is_ignored() -> None:
     """Location-less events have no city anchor, so propagation is skipped."""
@@ -232,3 +280,91 @@ def test_event_without_location_is_ignored() -> None:
     )
 
     assert propagate_rumors(graph, game_state, [event]) == []
+
+
+_REGION_ID = make_uuid("loc-region")
+_SUBROOM_ID = make_uuid("loc-subroom")
+_OUTSIDER_ID = make_uuid("npc-outsider")
+_DEEP_ID = make_uuid("npc-deep")
+
+
+def _npc_at(location_id: UUID) -> NPCCard:
+    return NPCCard(name="Resident", occupation="local", knowledge_scope="city", location_id=location_id)
+
+
+@allure.story("non_witness_city_npcs")
+@allure.title("A city that itself has a parent region still anchors the walk so same-city siblings are reached")
+def test_city_root_anchors_at_city_with_parent() -> None:
+    game_state = GameState(setting=_setting(), knowledge_graph=KnowledgeGraph())
+    game_state.locations[_REGION_ID] = Location(name="Latium", location_type="region", parent_location_id=None)
+    game_state.locations[_CITY_ID] = Location(name="Rome", location_type="city", parent_location_id=_REGION_ID)
+    game_state.locations[_FORUM_ID] = Location(
+        name="Forum",
+        location_type="plaza",
+        parent_location_id=_CITY_ID,
+    )
+    game_state.locations[_TAVERN_ID] = Location(
+        name="Tavern",
+        location_type="building",
+        parent_location_id=_CITY_ID,
+    )
+    # A sibling-building resident in the same city Rome.
+    game_state.npcs[_OUTSIDER_ID] = _npc_at(_TAVERN_ID)
+
+    recipients = non_witness_city_npcs(game_state, _FORUM_ID, [])
+    recipient_ids = {npc_id for npc_id, _loc in recipients}
+
+    # The walk must recognise Rome as the city anchor (a city node counts even
+    # though it has a parent region), so the tavern sibling is reachable. If
+    # the anchor fell back to the Forum itself, the tavern resident would be
+    # wrongly excluded.
+    assert _OUTSIDER_ID in recipient_ids
+
+
+@allure.story("non_witness_city_npcs")
+@allure.title("The city-anchor walk terminates on a parent cycle instead of looping forever")
+def test_city_root_terminates_on_cycle() -> None:
+    loc_a = make_uuid("loc-cycle-a")
+    loc_b = make_uuid("loc-cycle-b")
+    game_state = GameState(setting=_setting(), knowledge_graph=KnowledgeGraph())
+    # Two non-city locations whose parents point at each other form a cycle.
+    game_state.locations[loc_a] = Location(name="A", location_type="building", parent_location_id=loc_b)
+    game_state.locations[loc_b] = Location(name="B", location_type="building", parent_location_id=loc_a)
+
+    # The visited-set guard must break the cycle and return a result; without
+    # it this call would loop forever.
+    recipients = non_witness_city_npcs(game_state, loc_a, [])
+
+    assert recipients == []
+
+
+@allure.story("non_witness_city_npcs")
+@allure.title("Reachability spans multiple nesting levels regardless of location insertion order")
+def test_reachable_descendants_spans_deep_nesting() -> None:
+    game_state = GameState(setting=_setting(), knowledge_graph=KnowledgeGraph())
+    game_state.locations[_CITY_ID] = Location(name="Rome", location_type="city", parent_location_id=None)
+    game_state.locations[_FORUM_ID] = Location(
+        name="Forum",
+        location_type="plaza",
+        parent_location_id=_CITY_ID,
+    )
+    # Insert the grandchild subroom BEFORE its parent building so the
+    # fixed-point walk must run a second pass to reach it. If the loop exits
+    # after a single pass, the deep NPC is wrongly dropped.
+    game_state.locations[_SUBROOM_ID] = Location(
+        name="Back room",
+        location_type="building",
+        parent_location_id=_TAVERN_ID,
+    )
+    game_state.locations[_TAVERN_ID] = Location(
+        name="Tavern",
+        location_type="building",
+        parent_location_id=_CITY_ID,
+    )
+    game_state.npcs[_DEEP_ID] = _npc_at(_SUBROOM_ID)
+
+    recipients = non_witness_city_npcs(game_state, _FORUM_ID, [])
+    recipient_ids = {npc_id for npc_id, _loc in recipients}
+
+    # The deeply-nested NPC shares the city and must be reached.
+    assert _DEEP_ID in recipient_ids

@@ -17,7 +17,12 @@ from knowledge.node import (
     KnowledgeScope,
     KnowledgeSource,
 )
-from knowledge.query import KnowledgeFilter, KnowledgeQueryEngine
+from knowledge.query import (
+    KnowledgeFilter,
+    KnowledgeQueryEngine,
+    _RECENCY_TAU_HOURS,
+    _memory_score,
+)
 from models.character import Character
 from tests._uuid_helpers import make_uuid
 
@@ -196,6 +201,14 @@ class TestKnowledgeGraphNodes:
         nodes = populated_graph.all_nodes()
         assert len(nodes) == 3
 
+    @allure.story("Node CRUD")
+    @allure.title("register_actor_node stores the passed label as a networkx node attribute")
+    def test_register_actor_node_stores_label(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        # The debug label must be persisted verbatim on the node — neither
+        # dropped nor coerced to None.
+        assert empty_graph.digraph.nodes[_NPC_1]["label"] == "Guard"
+
 
 @allure.epic("Scene & Exploration")
 @allure.feature("Knowledge graph")
@@ -228,6 +241,64 @@ class TestKnowledgeGraphEdges:
     @allure.title("get_edges_from returns an empty list for a node id that does not exist in the graph")
     def test_get_edges_from_nonexistent_returns_empty(self, empty_graph):
         assert empty_graph.get_edges_from("ghost") == []
+
+    @allure.story("Edge CRUD")
+    @allure.title("get_edges_from preserves the exact edge_type stored on each outgoing edge")
+    def test_get_edges_from_preserves_stored_edge_type(self, empty_graph):
+        n1 = KnowledgeNode(text="A")
+        n2 = KnowledgeNode(text="B")
+        empty_graph.add_node(n1)
+        empty_graph.add_node(n2)
+        empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.TOLD_BY)
+        edges = empty_graph.get_edges_from(n1.uuid)
+        # The stored TOLD_BY must survive the round-trip — a fallback to a
+        # different default (e.g. WITNESSED or None) would corrupt it.
+        assert edges == [(n2.uuid, EdgeType.TOLD_BY)]
+
+    @allure.story("Edge CRUD")
+    @allure.title("get_edges_from falls back to WITNESSED for an edge stored without an edge_type")
+    def test_get_edges_from_defaults_missing_edge_type_to_witnessed(self, empty_graph):
+        n1 = KnowledgeNode(text="A")
+        n2 = KnowledgeNode(text="B")
+        empty_graph.add_node(n1)
+        empty_graph.add_node(n2)
+        # A raw edge with no ``edge_type`` attribute exercises the ``.get``
+        # default branch, which must resolve to WITNESSED (not None).
+        empty_graph.digraph.add_edge(n1.uuid, n2.uuid)
+        edges = empty_graph.get_edges_from(n1.uuid)
+        assert edges == [(n2.uuid, EdgeType.WITNESSED)]
+
+    @allure.story("Edge flags")
+    @allure.title("edge_has_flag returns False for a from_id that is not in the graph at all")
+    def test_edge_has_flag_missing_from_id_returns_false(self, empty_graph):
+        n2 = KnowledgeNode(text="B")
+        empty_graph.add_node(n2)
+        # `from_id` absent: the short-circuit must return False rather than
+        # indexing digraph[from_id] and raising KeyError.
+        assert empty_graph.edge_has_flag("ghost-from", n2.uuid, "any_flag") is False
+
+    @allure.story("Edge flags")
+    @allure.title("edge_has_flag round-trips a flag set by flag_edge and reads False when unset")
+    def test_flag_edge_then_edge_has_flag(self, empty_graph):
+        n1 = KnowledgeNode(text="A")
+        n2 = KnowledgeNode(text="B")
+        empty_graph.add_node(n1)
+        empty_graph.add_node(n2)
+        empty_graph.add_edge(n1.uuid, n2.uuid, EdgeType.WITNESSED)
+        assert empty_graph.edge_has_flag(n1.uuid, n2.uuid, "seen") is False
+        empty_graph.flag_edge(n1.uuid, n2.uuid, "seen")
+        assert empty_graph.edge_has_flag(n1.uuid, n2.uuid, "seen") is True
+
+    @allure.story("Edge flags")
+    @allure.title("flag_edge is a silent no-op when the from_id exists but the to_id edge does not")
+    def test_flag_edge_noop_when_edge_absent(self, empty_graph):
+        present = KnowledgeNode(text="present")
+        empty_graph.add_node(present)
+        # `present` is in the graph but has no edge to this target — flag_edge
+        # must not raise (a short-circuit using `or` would index the missing
+        # edge and raise KeyError).
+        empty_graph.flag_edge(present.uuid, "ghost-to", "seen")
+        assert empty_graph.edge_has_flag(present.uuid, "ghost-to", "seen") is False
 
 
 @allure.epic("Scene & Exploration")
@@ -291,6 +362,44 @@ class TestQueryEngineFilters:
         assert low_node.uuid in matched_uuids
         assert high_node.uuid not in matched_uuids
 
+    @allure.story("Query engine filters")
+    @allure.title("A node whose required_education equals the filter limit is visible (inclusive bound)")
+    def test_query_education_at_boundary_is_visible(self, empty_graph):
+        at_bound = KnowledgeNode(text="Exactly at the limit", required_education=3)
+        empty_graph.add_node(at_bound)
+        engine = KnowledgeQueryEngine(empty_graph)
+        matched_uuids = {node.uuid for node in engine.query(KnowledgeFilter(max_education_required=3))}
+        # required_education == max must pass: the comparison is <=, not <.
+        assert at_bound.uuid in matched_uuids
+
+    @allure.story("Query engine filters")
+    @allure.title("A LOCAL node at a different location is excluded when the filter pins a location_id")
+    def test_query_local_node_excluded_by_location(self, empty_graph):
+        here = make_uuid("loc-here")
+        elsewhere = make_uuid("loc-elsewhere")
+        local_here = KnowledgeNode(text="here", scope=KnowledgeScope.LOCAL, location_id=here)
+        local_elsewhere = KnowledgeNode(text="elsewhere", scope=KnowledgeScope.LOCAL, location_id=elsewhere)
+        empty_graph.add_node(local_here)
+        empty_graph.add_node(local_elsewhere)
+        engine = KnowledgeQueryEngine(empty_graph)
+        matched_uuids = {node.uuid for node in engine.query(KnowledgeFilter(location_id=here))}
+        # The filter's location_id must reach passes_location: the LOCAL node
+        # anchored elsewhere is gated out, the matching one stays.
+        assert local_here.uuid in matched_uuids
+        assert local_elsewhere.uuid not in matched_uuids
+
+    @allure.story("Query engine filters")
+    @allure.title("A located LOCAL node stays visible when the filter carries no location_id")
+    def test_query_local_node_visible_without_filter_location(self, empty_graph):
+        somewhere = make_uuid("loc-somewhere")
+        local_node = KnowledgeNode(text="anchored", scope=KnowledgeScope.LOCAL, location_id=somewhere)
+        empty_graph.add_node(local_node)
+        engine = KnowledgeQueryEngine(empty_graph)
+        # filt.location_id is None while the node has a location: the "either
+        # side falsy" guard must short-circuit to visible.
+        matched_uuids = {node.uuid for node in engine.query(KnowledgeFilter())}
+        assert local_node.uuid in matched_uuids
+
 
 @allure.epic("Scene & Exploration")
 @allure.feature("Knowledge graph")
@@ -310,6 +419,32 @@ class TestQueryEngineNpcContext:
         assert filt.max_education_required == 6
 
     @allure.story("NPC context building")
+    @allure.title("build_npc_filter maps the 'city' and 'country' scope strings to their KnowledgeScope")
+    def test_build_npc_filter_maps_city_and_country(self):
+        graph = KnowledgeGraph()
+        engine = KnowledgeQueryEngine(graph)
+        city_npc = Character(name="Citizen", knowledge_scope="city")
+        country_npc = Character(name="Noble", knowledge_scope="country")
+        # The scope_map keys must be the exact lowercase strings — a mangled
+        # key would silently fall through to the LOCAL default.
+        assert engine.build_npc_filter(city_npc).max_scope == KnowledgeScope.CITY
+        assert engine.build_npc_filter(country_npc).max_scope == KnowledgeScope.COUNTRY
+
+    @allure.story("NPC context building")
+    @allure.title("build_npc_filter defaults missing education to 3 and copies location_id and npc_id verbatim")
+    def test_build_npc_filter_copies_identity_fields(self):
+        npc_location = make_uuid("npc-loc")
+        npc = Character(name="Local", knowledge_scope="local", location_id=npc_location)
+        graph = KnowledgeGraph()
+        engine = KnowledgeQueryEngine(graph)
+        filt = engine.build_npc_filter(npc)
+        # No education attribute set → the literal default 3 must apply.
+        assert filt.max_education_required == 3
+        # location_id and npc_id are threaded through, not dropped/nulled.
+        assert filt.location_id == npc_location
+        assert filt.npc_id == npc.uuid
+
+    @allure.story("NPC context building")
     @allure.title("An unknown knowledge_scope string on a Character falls back to LOCAL scope in the filter")
     def test_npc_filter_unknown_scope_defaults_local(self):
         npc = Character(name="Mystery", knowledge_scope="galaxy")
@@ -326,7 +461,43 @@ class TestQueryEngineNpcContext:
         engine = KnowledgeQueryEngine(empty_graph)
         npc = Character(name="Joe", knowledge_scope="world")
         ctx = engine.get_context_for_npc(npc)
-        assert "don't have any specific knowledge" in ctx
+        # Exact text and casing matter: this is the literal fallback line.
+        assert ctx == "You don't have any specific knowledge about this topic."
+
+    @allure.story("NPC context building")
+    @allure.title("get_context_for_npc renders a FACT node with no source prefix and an empty-string default")
+    def test_get_context_fact_node_has_no_prefix(self, empty_graph):
+        empty_graph.add_node(KnowledgeNode(text="Rome is ancient", scope=KnowledgeScope.WORLD))
+        engine = KnowledgeQueryEngine(empty_graph)
+        npc = Character(name="Scholar", knowledge_scope="world", attributes={"education": 10})
+        ctx = engine.get_context_for_npc(npc)
+        # FACT is absent from the prefix map, so it falls back to "" — the
+        # line is exactly "- <text>" with no "None"/placeholder prefix.
+        assert ctx == "- Rome is ancient"
+
+    @allure.story("NPC context building")
+    @allure.title("get_context_for_npc orders PERSONAL_EXPERIENCE ahead of RUMOR and joins lines with a newline")
+    def test_get_context_orders_by_source_priority(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        # Add a RUMOR first, then the personal memory, so insertion order is
+        # the reverse of the desired priority order — only a correct
+        # priority-keyed sort produces personal-before-rumor.
+        empty_graph.add_node(
+            KnowledgeNode(text="conspiracy afoot", scope=KnowledgeScope.WORLD, source=KnowledgeSource.RUMOR),
+        )
+        memory = KnowledgeNode(
+            text="I saw it myself",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=1.0,
+        )
+        empty_graph.add_node(memory)
+        empty_graph.add_edge(_NPC_1, memory.uuid, EdgeType.WITNESSED)
+        npc = Character(name="Watcher", knowledge_scope="world", attributes={"education": 10})
+        npc.uuid = _NPC_1
+        ctx = KnowledgeQueryEngine(empty_graph).get_context_for_npc(npc)
+        expected = "\n".join(["- [Personal experience] I saw it myself", "- [Rumour] conspiracy afoot"])
+        assert ctx == expected
 
     @allure.story("NPC context building")
     @allure.title("RUMOR-sourced knowledge items are prefixed with '[Rumour]' in the generated NPC context string")
@@ -359,6 +530,46 @@ def _attach_memory(
     memory_id = graph.add_node(memory)
     graph.add_edge(npc_id, memory_id, EdgeType.WITNESSED)
     return memory
+
+
+@allure.epic("Scene & Exploration")
+@allure.feature("Knowledge graph")
+class TestQueryEnginePersonalMemoryInclusion:
+    @allure.story("Query engine filters")
+    @allure.title("A query with npc_id appends a personal memory that the scope/education filters would exclude")
+    def test_query_includes_npc_personal_memory(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        # required_education far above the filter limit means _node_matches
+        # rejects it, so its presence is solely due to append_personal_memories
+        # running for the npc_id.
+        memory = KnowledgeNode(
+            text="I watched the secret duel",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            required_education=9,
+            timestamp=1.0,
+        )
+        empty_graph.add_node(memory)
+        empty_graph.add_edge(_NPC_1, memory.uuid, EdgeType.WITNESSED)
+        engine = KnowledgeQueryEngine(empty_graph)
+        filt = KnowledgeFilter(max_education_required=2, npc_id=_NPC_1)
+        matched_uuids = {node.uuid for node in engine.query(filt)}
+        assert memory.uuid in matched_uuids
+
+    @allure.story("Query engine filters")
+    @allure.title("A scope-matched world fact plus an NPC's personal memory both appear without duplication")
+    def test_query_personal_memory_not_duplicated(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        world_fact = KnowledgeNode(text="The empire is vast", scope=KnowledgeScope.WORLD)
+        empty_graph.add_node(world_fact)
+        memory = _attach_memory(empty_graph, _NPC_1, "I watched the duel", timestamp=1.0)
+        engine = KnowledgeQueryEngine(empty_graph)
+        matched = engine.query(KnowledgeFilter(npc_id=_NPC_1))
+        matched_uuids = [node.uuid for node in matched]
+        assert world_fact.uuid in matched_uuids
+        # The personal memory is appended exactly once (the "not already in
+        # the result" guard must keep it, and not re-add scope-matched nodes).
+        assert matched_uuids.count(memory.uuid) == 1
 
 
 @allure.epic("Memory & Persistence")
@@ -434,6 +645,132 @@ class TestQueryEngineGetMemoriesHeldBy:
 
 @allure.epic("Memory & Persistence")
 @allure.feature("Memory query")
+class TestResolveSubjectIdentityCount:
+    @allure.story("resolve_subject_identity")
+    @allure.title("resolve_subject_identity returns the total count of memories it backfilled")
+    def test_returns_count_of_all_updated(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        first = _attach_memory(empty_graph, _NPC_1, "the stranger paid me", timestamp=1.0)
+        second = _attach_memory(empty_graph, _NPC_1, "the stranger left town", timestamp=2.0)
+        subject = make_uuid("subject-x")
+
+        updated = empty_graph.resolve_subject_identity(
+            holder_id=_NPC_1,
+            subject_id=subject,
+            predicate=lambda node: "stranger" in node.text,
+        )
+
+        # Two anonymous matches resolved → the counter must accumulate to 2,
+        # not be reset to a constant 1.
+        assert updated == 2
+        assert empty_graph.get_node(first.uuid).subject_id == subject
+        assert empty_graph.get_node(second.uuid).subject_id == subject
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Memory query")
+class TestGetMemoriesAboutConceptBoundary:
+    @allure.story("get_memories_about_concept")
+    @allure.title("A tag whose similarity exactly equals the threshold still matches (inclusive bound)")
+    def test_exact_threshold_match_is_inclusive(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        memory = KnowledgeNode(
+            text="I learned to spark light without flame",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=1.0,
+            tags=["light_without_flame"],
+        )
+        empty_graph.add_node(memory)
+        empty_graph.add_edge(_NPC_1, memory.uuid, EdgeType.WITNESSED)
+        engine = KnowledgeQueryEngine(empty_graph)
+        # An identical tag scores ratio 1.0; at threshold 1.0 the comparison
+        # must be >= (inclusive), so the memory is still returned.
+        matched = engine.get_memories_about_concept(_NPC_1, "light_without_flame", fuzzy_threshold=1.0)
+        assert [mem.uuid for mem in matched] == [memory.uuid]
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Memory query")
+class TestGetMemoriesAboutSubjectLimit:
+    @allure.story("get_memories_about_subject")
+    @allure.title("get_memories_about_subject caps the result at an explicit limit")
+    def test_explicit_limit_caps_results(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        subject = make_uuid("subject-y")
+        for idx in range(3):
+            memory = KnowledgeNode(
+                text="encounter-{0}".format(idx),
+                scope=KnowledgeScope.LOCAL,
+                source=KnowledgeSource.PERSONAL_EXPERIENCE,
+                timestamp=float(idx),
+                subject_id=subject,
+            )
+            empty_graph.add_node(memory)
+            empty_graph.add_edge(_NPC_1, memory.uuid, EdgeType.WITNESSED)
+
+        engine = KnowledgeQueryEngine(empty_graph)
+        # limit is not None, so the result must be sliced down to 2.
+        assert len(engine.get_memories_about_subject(_NPC_1, subject, limit=2)) == 2
+        # limit None returns every match.
+        assert len(engine.get_memories_about_subject(_NPC_1, subject)) == 3
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Memory query")
+class TestMemoryScoreBlend:
+    @allure.story("Salience+recency blend")
+    @allure.title("A memory at age zero scores salience*0.7 + 1.0*0.3 with the exact recency coefficient")
+    def test_score_at_zero_age(self):
+        now = 100.0
+        memory = KnowledgeNode(
+            text="fresh",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=now,
+            salience=0.5,
+        )
+        # age = 0 → recency_factor = 1 - 0/72 = 1.0, so the recency term is the
+        # full 0.3 weight (the `2 - age/tau` mutant would push it to 0.6). A
+        # half-window check below pins the division form.
+        expected = 0.7 * 0.5 + 0.3
+        assert _memory_score(memory, now) == pytest.approx(expected)
+
+    @allure.story("Salience+recency blend")
+    @allure.title("A memory aged half the recency window decays its recency factor to 0.5")
+    def test_score_at_half_window_age(self):
+        now = 100.0
+        half_window = now - (_RECENCY_TAU_HOURS / 2)
+        memory = KnowledgeNode(
+            text="half-old",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=half_window,
+            salience=0.5,
+        )
+        # age = 36h, tau = 72h → recency_factor = 1 - 36/72 = 0.5. The
+        # `age * tau` mutant would give 1 - 36*72 (huge negative → floored to
+        # 0), and the `2 - age/tau` mutant would give 1.5 — both differ.
+        assert _memory_score(memory, now) == pytest.approx(0.7 * 0.5 + 0.3 * 0.5)
+
+    @allure.story("Salience+recency blend")
+    @allure.title("A memory with no timestamp contributes zero recency and is held up by salience alone")
+    def test_score_without_timestamp(self):
+        no_ts = KnowledgeNode(
+            text="undated",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=None,
+            salience=0.4,
+        )
+        # With no timestamp the recency factor stays at its zero starting value
+        # (a None start would raise inside the 0.3 * recency blend), so the
+        # score is salience-weighted only.
+        assert _memory_score(no_ts, float(0)) == pytest.approx(0.7 * 0.4)
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Memory query")
 class TestWitnessMemoryIndex:
     @allure.story("Witness-memory index")
     @allure.title("personal_memories_for returns indexed PERSONAL_EXPERIENCE nodes for the witness")
@@ -479,6 +816,33 @@ class TestWitnessMemoryIndex:
 
         assert empty_graph.personal_memories_for(_NPC_1) == []
         assert empty_graph.get_node(memory.uuid) is not None
+
+    @allure.story("Witness-memory index")
+    @allure.title("Removing a witness's only memory drops the now-empty witness key from the index")
+    def test_remove_only_memory_evicts_empty_witness_key(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        memory = _attach_memory(empty_graph, _NPC_1, "the only thing I saw", timestamp=1.0)
+        assert _NPC_1 in empty_graph._witness_memory_index
+
+        empty_graph.remove_node(memory.uuid)
+
+        # The witness's set is now empty, so the witness key itself must be
+        # discarded from the index — not left dangling with a stale id.
+        assert _NPC_1 not in empty_graph._witness_memory_index
+
+    @allure.story("Witness-memory index")
+    @allure.title("Removing one of a witness's two memories keeps the witness key and the surviving memory")
+    def test_remove_one_of_two_memories_keeps_witness(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        keep = _attach_memory(empty_graph, _NPC_1, "kept", timestamp=1.0)
+        drop = _attach_memory(empty_graph, _NPC_1, "dropped", timestamp=2.0)
+
+        empty_graph.remove_node(drop.uuid)
+
+        # Only the dropped id is discarded; the witness key and the surviving
+        # memory id must remain (a discard(None) would leave the dropped id in
+        # place instead).
+        assert empty_graph._witness_memory_index[_NPC_1] == {keep.uuid}
 
     @allure.story("Witness-memory index")
     @allure.title("Removing a memory shared by two witnesses evicts it from both index entries")
@@ -540,6 +904,31 @@ class TestWitnessMemoryIndex:
 
         restored_memories = restored.personal_memories_for(_NPC_1)
         assert [mem.uuid for mem in restored_memories] == [memory.uuid]
+
+    @allure.story("Witness-memory index")
+    @allure.title("rebuild_witness_memory_index skips a non-PERSONAL target but still indexes a later valid memory")
+    def test_rebuild_skips_witnessed_fact_target(self, empty_graph):
+        empty_graph.register_actor_node(_NPC_1, label="Guard")
+        fact = KnowledgeNode(text="fact", scope=KnowledgeScope.LOCAL, source=KnowledgeSource.FACT)
+        memory = KnowledgeNode(
+            text="real memory",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            timestamp=1.0,
+        )
+        empty_graph.add_node(fact)
+        empty_graph.add_node(memory)
+        # Bypass add_edge's indexing by writing edges directly. The FACT edge
+        # is inserted BEFORE the valid memory edge so the rebuild's reject
+        # branch must `continue` (skip just the FACT) rather than `break`
+        # (which would also drop the valid memory that follows).
+        empty_graph.digraph.add_edge(_NPC_1, fact.uuid, edge_type=EdgeType.WITNESSED)
+        empty_graph.digraph.add_edge(_NPC_1, memory.uuid, edge_type=EdgeType.WITNESSED)
+        empty_graph.rebuild_witness_memory_index()
+
+        # The FACT target requires BOTH "target present" AND "source personal",
+        # so it stays out; the valid PERSONAL memory after it is still indexed.
+        assert [mem.uuid for mem in empty_graph.personal_memories_for(_NPC_1)] == [memory.uuid]
 
     @allure.story("Witness-memory index")
     @allure.title("KnowledgeQueryEngine._personal_memories_for delegates to the graph index")

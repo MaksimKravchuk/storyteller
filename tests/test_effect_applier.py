@@ -452,6 +452,19 @@ class TestNpcIdResolution:
         assert npc.inventory == []
 
     @allure.story("npc_id resolution")
+    @allure.title("REMOVE_ITEM with no item key uses an empty (falsy) default and removes nothing")
+    def test_remove_item_missing_item_key_removes_nothing(self):
+        # Pins the empty-string default: a non-empty default would be matched against
+        # inventory and could drop an item when the effect carries no "item" key at all.
+        npc = NPCCard(name="Marcus", occupation="guard", inventory=["XXXX"])
+        gs = _make_game_state_with_npc(npc)
+
+        EffectApplier(gs, KnowledgeGraph()).apply(
+            EventEffect(effect_type="REMOVE_ITEM", target_id=str(npc.uuid), effect_data={"npc_id": str(npc.uuid)})
+        )
+        assert npc.inventory == ["XXXX"]
+
+    @allure.story("npc_id resolution")
     @allure.title("CHANGE_STATUS applies to the npc_id NPC even when target_id points elsewhere")
     def test_change_status_prefers_npc_id_over_target_id(self):
         npc = NPCCard(name="Guard", occupation="guard", physical_status="healthy")

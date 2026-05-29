@@ -84,6 +84,9 @@ class TestLocationConverter:
 
         row = loc_conv.location_to_row(loc, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
+        # points_of_interest dumped with mode="json": each POI's UUID is a plain str, not a UUID.
+        assert isinstance(row["points_of_interest"][0]["uuid"], str)
+        assert [poi["names"][0] for poi in row["points_of_interest"]] == ["fountain", "statue"]
 
         restored = loc_conv.row_to_location(row)
         assert restored.uuid == loc.uuid
@@ -128,6 +131,11 @@ class TestNPCConverter:
 
         row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
         assert row["game_state_id"] == GAME_STATE_ID
+        # relationships_to_row dumps with mode="json": the relationship's own UUID must be a
+        # plain JSON str, not a UUID object — mode=None/other modes leave it a UUID.
+        rel_row = row["relationships"][0]
+        assert isinstance(rel_row["uuid"], str)
+        assert rel_row["kind"] == "friend"
 
         restored = npc_conv.row_to_npc(row)
         assert restored.uuid == npc.uuid
@@ -177,6 +185,9 @@ class TestNPCConverter:
         assert row["life_goal"]["kind"] == "kill"
         assert row["life_goal"]["scope"] == "life"
         assert row["tactical_goal"]["scope"] == "tactical"
+        # mode="json" must JSON-serialise the goal's UUID target to a plain str, not a UUID object.
+        assert isinstance(row["life_goal"]["target_uuid"], str)
+        assert row["life_goal"]["target_uuid"] == str(make_uuid("npc-9"))
 
         restored = npc_conv.row_to_npc(row)
         assert restored.life_goal == npc.life_goal
@@ -206,6 +217,27 @@ class TestNPCConverter:
         by_target = {r.target_uuid: r for r in restored.relationships}
         assert by_target["npc-enemy"].kind == RelationshipKind.ENEMY
         assert by_target["npc-friend"].kind == RelationshipKind.NEUTRAL
+        # Hostile labels upcast to intensity -3; non-hostile to 0 — guards the signed branch.
+        assert by_target["npc-enemy"].intensity == -3
+        assert by_target["npc-friend"].intensity == 0
+        # The legacy label is preserved verbatim as the relationship note.
+        assert by_target["npc-enemy"].note == "murderous_enemy"
+        assert by_target["npc-friend"].note == "trusted friend"
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_npc upcasts a legacy relationship with a falsy label to an empty-string note")
+    def test_legacy_dict_relationships_falsy_label(self):
+        npc = npc_card.NPCCard(name="Legacy")
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        row["relationships"] = {"npc-blank": None, "npc-empty": ""}
+
+        restored = npc_conv.row_to_npc(row)
+        by_target = {r.target_uuid: r for r in restored.relationships}
+        # A falsy legacy label normalises to "" (not a placeholder) and stays NEUTRAL.
+        assert by_target["npc-blank"].note == ""
+        assert by_target["npc-empty"].note == ""
+        assert by_target["npc-blank"].kind == RelationshipKind.NEUTRAL
+        assert by_target["npc-blank"].intensity == 0
 
     @allure.story("Backwards compatibility")
     @allure.title("row_to_npc defaults goal columns to None on legacy rows lacking those columns")
@@ -274,6 +306,9 @@ class TestSceneConverter:
         assert row["is_current"] is True
         assert row["scene_number"] == 3
         assert row["npcs_present"] == [{"role": "guard", "uuid": str(make_uuid("npc-1"))}]
+        # points_of_interest dumped with mode="json": each POI's UUID is a plain str, not a UUID.
+        assert isinstance(row["points_of_interest"][0]["uuid"], str)
+        assert row["points_of_interest"][0]["names"] == ["well"]
 
         restored = sc_conv.row_to_scene(row)
         assert restored.uuid == original.uuid
@@ -292,6 +327,9 @@ class TestSceneConverter:
     def test_legacy_string_npcs_present(self):
         original = scene.Scene(location_id=make_uuid("loc-1"))
         row = sc_conv.scene_to_row(original, GAME_STATE_ID)
+        # Default-arg contract: an unflagged scene is not current and carries scene number 0.
+        assert row["is_current"] is False
+        assert row["scene_number"] == 0
         legacy_uuid_str = str(make_uuid("npc-legacy-uuid"))
         row["npcs_present"] = [legacy_uuid_str]
 
@@ -322,6 +360,8 @@ class TestKnowledgeConverter:
         assert row["game_state_id"] == GAME_STATE_ID
         assert row["canon"] == "session"
         assert row["salience"] == pytest.approx(0.85)
+        # The scope column is stored lowercased (rehydration re-uppercases it before lookup).
+        assert row["scope"] == "country"
 
         restored = kn_conv.row_to_knowledge_node(row)
         assert restored.uuid == node.uuid
@@ -373,7 +413,7 @@ class TestGameEventConverter:
             duration=2,
             owner_id=make_uuid("npc-1"),
             location_id=make_uuid("loc-1"),
-            scope="local",
+            scope="city",
             effects=[effect],
             on_complete_description="The guard arrives at the gate.",
         )
@@ -393,7 +433,8 @@ class TestGameEventConverter:
         assert restored.completes_at == pytest.approx(12)
         assert restored.owner_id == make_uuid("npc-1")
         assert restored.location_id == make_uuid("loc-1")
-        assert restored.scope == "local"
+        # A non-default scope must survive rehydration (the default would be "local").
+        assert restored.scope == "city"
         assert restored.status == timeline_event.EventStatus.COMPLETED
         assert len(restored.effects) == 1
         assert restored.effects[0].effect_type == "MOVE_NPC"
@@ -424,3 +465,31 @@ class TestGameEventConverter:
 
         restored = ev_conv.row_to_game_event(row)
         assert restored.effects[0].effect_data == {"status": "wounded"}
+
+    @allure.story("Round-trip")
+    @allure.title("row_to_game_event reads the stored completes_at instead of recomputing it")
+    def test_completes_at_read_not_recomputed(self):
+        event_obj = timeline_event.GameEvent(name="late", scheduled_at=10, duration=2)
+        # Stored completion deliberately diverges from scheduled_at + duration (=12).
+        event_obj.completes_at = 99
+        row = ev_conv.game_event_to_row(event_obj, GAME_STATE_ID)
+        assert row["completes_at"] == pytest.approx(99)
+
+        restored = ev_conv.row_to_game_event(row)
+        assert restored.completes_at == pytest.approx(99)
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_game_event defaults effect_data to {} when neither effect_data nor params exist")
+    def test_effect_data_defaults_to_empty_dict(self):
+        event_obj = timeline_event.GameEvent(
+            name="bare-effect",
+            scheduled_at=0,
+            duration=1,
+            effects=[timeline_event.EventEffect(effect_type="REST", target_id="npc-1", effect_data={})],
+        )
+        row = ev_conv.game_event_to_row(event_obj, GAME_STATE_ID)
+        # Legacy row whose effect carries neither "effect_data" nor "params".
+        row["effects"] = [{"effect_type": "REST", "target_id": "npc-1"}]
+
+        restored = ev_conv.row_to_game_event(row)
+        assert restored.effects[0].effect_data == {}
