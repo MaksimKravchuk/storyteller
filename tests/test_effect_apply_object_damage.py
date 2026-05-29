@@ -147,3 +147,39 @@ class TestApplyObjectDamageEffect:
         applier.apply(effect)
 
         assert gs.locations[_LOCATION_ID].object_states == {}
+
+    @allure.story("No-op on missing target")
+    @allure.title("APPLY_OBJECT_DAMAGE on an unknown location warns with both the location_id and target_id")
+    def test_unknown_location_warning_names_both_ids(self, loguru_sink):
+        # Drives the same unknown-location branch as test_noop_when_location_missing
+        # (no new lines covered), but asserts the warning *content* so the
+        # message-template and interpolated-arg mutations on that branch die
+        # instead of surviving as "warning-only" no-ops.
+        gs = _make_game_state_with_location()
+        applier = EffectApplier(gs, KnowledgeGraph())
+
+        nonexistent = make_uuid("nonexistent")
+        effect = EventEffect(
+            effect_type=_EFFECT_TYPE,
+            target_id=str(nonexistent),
+            effect_data={
+                "location_id": str(nonexistent),
+                "object_key": _OBJECT_KEY,
+                "state_description": _STATE_DESC,
+            },
+        )
+        applier.apply(effect)
+
+        warnings = [rec for rec in loguru_sink if rec["level"].name == "WARNING"]
+        assert len(warnings) == 1
+        # loguru renders the message eagerly, so record["message"] is the
+        # final string with the {0}/{1} slots already interpolated.
+        rendered = warnings[0]["message"]
+        # startswith (not substring) so a message wrapped with extra chars
+        # (e.g. "XX...XX") cannot pass.
+        assert rendered.startswith("APPLY_OBJECT_DAMAGE dropped: unknown location_id=")
+        # location_id and target_id are distinct interpolation slots; both
+        # carry the id here, so it must appear *twice* — kills the
+        # ``location_id``->None and ``target_id``->None arg mutations as
+        # well as the message-template string mutations.
+        assert rendered.count(str(nonexistent)) == 2
