@@ -17,7 +17,7 @@ from interfaces.web.character import build_character_info
 from interfaces.web.errors import GameNotFoundError
 from interfaces.web.schemas import CharacterCreationInput, GameSnapshot
 from interfaces.web.schemas_library import GameSummary
-from interfaces.web.transcript import build_transcript
+from interfaces.web.transcript import build_transcript, player_visible_turn_count
 
 _DEFAULT_LANGUAGE = "English"
 
@@ -43,7 +43,7 @@ def snapshot_from_engine(engine: GameEngine, language: str = _DEFAULT_LANGUAGE) 
         game_id=str(game_state.uuid),
         setting=game_state.setting.name,
         transcript=build_transcript(game_state.conversation_log, language),
-        turn_count=game_state.turn_count,
+        turn_count=player_visible_turn_count(game_state.conversation_log),
         character=build_character_info(game_state),
     )
 
