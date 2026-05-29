@@ -102,7 +102,7 @@ What future agents must preserve:
 - `.github/workflows/mutation-nightly.yml` — full expanded scope, report-only, uploads `mutmut-cicd-stats.json` + `survivors.txt`.
 - **Baseline evidence (Linux, authoritative):** nightly `mutation-nightly.yml` run **26643646713** on `feat/mutmut-expand-deterministic-core` — `killed=1789, survived=49, timeout=5, segfault=0` ⇒ 97.33%. Earlier runs `26624204620` / `26626539174` aborted with `killed=0` (the pre-fix teardown crash); run `26640637171` scored 91.62% mid-kill-work — together they evidence both the crash and the deselection fix.
 - Reproduce on demand (flake-free, Linux): `gh workflow run mutation-nightly.yml --ref feat/mutmut-expand-deterministic-core`, then `gh run download --name mutmut-full-report`. macOS local cannot run the stats phase for any scope (ADR-0004 gotcha).
-- `CLAUDE.md` → Testing → "Mutation testing (pilot)" — update the threshold/scope wording to match this ADR when the PR lands.
+- `CLAUDE.md` → Testing → "Mutation testing" — threshold/scope wording updated to match this ADR (scope = the deterministic core, threshold 95, baseline 97.33%, async-deselect + macOS stats-phase caveats).
 
 ## Related files
 
