@@ -3,7 +3,7 @@
 Date: 2026-05-28
 Status: Accepted
 Decision owner: Max
-Related: PR #294 (pilot introduction), PR #296 (score raised 79.8% → 96.6%), `docs/decisions/0002-prompt-consumer-seam-contract-tests.md`, `docs/decisions/0002-benchmark-auto-compare-and-ratchet.md`, `CLAUDE.md` (Testing → Mutation testing section)
+Related: PR #294 (pilot introduction), PR #296 (score raised 79.8% → 96.6%), `docs/decisions/0002-prompt-consumer-seam-contract-tests.md`, `docs/decisions/0002-benchmark-auto-compare-and-ratchet.md`, `CLAUDE.md` (Testing → Mutation testing section); **extended by `docs/decisions/0005-mutation-testing-deterministic-core-expansion.md`** (scope grown to the full deterministic core, threshold recalibrated to 95)
 
 ## Context
 
@@ -78,7 +78,7 @@ What future agents must preserve:
 - **Do not satisfy the gate by suppression.** No `# noqa` / `# pragma: no cover` / `# type: ignore`, and do not add equivalent mutants to a mutmut ignore. Refactor (behavior-preserving) or document.
 - **Prefer kills via stronger assertions on already-covered lines.** Because `mutate_only_covered_lines = true`, do not chase score by covering new lines — that grows the denominator and can lower the score.
 - **Keep the PR gate scoped to pilot *source* changes** and the nightly **report-only**. Do not make the nightly gate, and do not run the full pilot on every PR.
-- **Expanding the pilot scope beyond `models/` + `timeline/` is a new decision** — supersede or extend this ADR, and recalibrate the baseline/threshold for the new scope before gating on it.
+- **Expanding the pilot scope beyond `models/` + `timeline/` is a new decision** — supersede or extend this ADR, and recalibrate the baseline/threshold for the new scope before gating on it. (Done in ADR-0005: scope grown to the full deterministic core; threshold recalibrated to 95 off a 97.33% Linux baseline.)
 
 ## Verification / tests
 

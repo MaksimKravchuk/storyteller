@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       run_mutation:
-        description: 'Run the mutation-testing job (full pilot scope, no threshold gating)'
+        description: 'Run the mutation-testing job (full deterministic-core scope, no threshold gating)'
         type: boolean
         default: true
 
@@ -126,27 +126,35 @@ jobs:
           # Needed so the diff-scope step can compare against the merge-base.
           fetch-depth: 0
 
-      - name: Check if PR touches mutation-testing pilot scope
+      - name: Check if PR touches mutation-testing scope
         id: scope
         run: |
           set -euo pipefail
-          # Manual dispatch always runs the full pilot scope — no diff to check.
+          # Manual dispatch always runs the full mutation scope — no diff to check.
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "Manual dispatch; running full pilot scope."
+            echo "Manual dispatch; running full mutation scope."
             echo "in_scope=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           BASE_REF="${{ github.event.pull_request.base.sha }}"
           # git's default pathspec ``*`` matches across ``/``, so
-          # ``models/*.py`` captures nested files too. ``__init__.py``
-          # is mutation-irrelevant and excluded.
+          # ``models/*.py`` captures nested files too. ``__init__.py`` and
+          # the LLM-driven knowledge modules (kept out of the mutation
+          # surface via ``do_not_mutate`` in pyproject) are
+          # mutation-irrelevant and excluded so a PR touching only them does
+          # not pay the mutmut cost. Mutation scope = ADR-0005.
           CHANGED=$(git diff --name-only "$BASE_REF"...HEAD -- \
-            'models/*.py' 'timeline/*.py' ':(exclude)**/__init__.py')
+            'models/*.py' 'timeline/*.py' 'knowledge/*.py' \
+            'db/converters/*.py' 'cast/dice.py' 'config.py' \
+            ':(exclude)**/__init__.py' \
+            ':(exclude)knowledge/memory.py' \
+            ':(exclude)knowledge/scene_consolidation.py' \
+            ':(exclude)knowledge/scene_summary_phase.py')
           if [ -z "$CHANGED" ]; then
-            echo "No pilot-scope files changed; skipping mutation testing."
+            echo "No mutation-scope files changed; skipping mutation testing."
             echo "in_scope=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Pilot-scope files changed:"
+            echo "Mutation-scope files changed:"
             echo "$CHANGED"
             echo "in_scope=true" >> "$GITHUB_OUTPUT"
           fi
@@ -170,7 +178,7 @@ jobs:
         if: steps.scope.outputs.in_scope == 'true'
         run: uv sync --frozen --extra dev --extra openai --extra anthropic
 
-      - name: Run mutmut on pilot scope
+      - name: Run mutmut on full mutation scope
         if: steps.scope.outputs.in_scope == 'true'
         # No mutants/ cache. A restore-keys fallback would let a silent
         # mutmut crash (masked by ``|| true``) gate the PR on the prior
@@ -202,10 +210,11 @@ jobs:
         # PR runs are the gate; manual dispatch is report-only.
         if: steps.scope.outputs.in_scope == 'true' && github.event_name == 'pull_request'
         env:
-          # Calibrated from the introduction-PR baseline of 79.8% (540 killed / 677 checked).
-          # Threshold = floor(baseline) - 2. Bump only after a sustained nightly improvement;
-          # see CLAUDE.md "Mutation testing (pilot)" for ratchet rules.
-          THRESHOLD: "77"
+          # Calibrated from the deterministic-core baseline of 97.33% (1789 killed / 1838 checked,
+          # Linux nightly run 26643646713 — ADR-0005). Threshold = floor(baseline) - 2.
+          # Bump only after a sustained nightly improvement; see CLAUDE.md
+          # "Mutation testing" and docs/decisions/0005 for scope + ratchet rules.
+          THRESHOLD: "95"
         run: |
           SCORE="${{ steps.score.outputs.score }}"
           awk -v s="$SCORE" -v t="$THRESHOLD" 'BEGIN {
