@@ -183,10 +183,17 @@ def get_schedule_for(occupation: str | None) -> DailySchedule:
     return _DEFAULT_SCHEDULES.get(key, _ALWAYS_PRESENT)
 
 
-def _departure_line(npc: Any, slot: NPCScheduleSlot) -> str:
-    """Render a departure line that reads naturally under ``Someone departs:``."""
-    occupation = (npc.occupation or "").strip()
-    label = "{0} ({1})".format(npc.name, occupation) if occupation else npc.name
+def _departure_line(npc: Any, slot: NPCScheduleSlot, game_state: GameState) -> str:
+    """Render a departure line that reads naturally under ``Someone departs:``.
+
+    The label is gated on ``player.known_npcs`` via
+    :meth:`NPCCard.label_for_player` — the same gate the on-shift and
+    scene ``people visible`` producers already use — so an NPC the
+    player has not met departs as their ``short_descriptor`` (or
+    ``occupation`` fallback), never their proper name. An introduced
+    NPC keeps the ``"Name (Occupation)"`` shape.
+    """
+    label = npc.label_for_player(game_state, npc.occupation or "resident")
     activity = slot.activity or "steps away"
     return "{0} {1}".format(label, activity)
 
@@ -329,4 +336,4 @@ class NPCTicker:
         slot = get_schedule_for(npc.occupation).get(time_of_day)
         if slot is None or slot.present:
             return None
-        return _departure_line(npc, slot)
+        return _departure_line(npc, slot, self._gs)

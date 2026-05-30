@@ -44,10 +44,12 @@ def _make_game_state(game_time: str = "morning") -> GameState:
     return gs
 
 
-def _add_npc(gs: GameState, uuid: UUID, name: str, occupation: str) -> NPCCard:
+def _add_npc(gs: GameState, uuid: UUID, name: str, occupation: str, *, introduced: bool = False) -> NPCCard:
     npc = NPCCard(name=name, occupation=occupation)
     npc.uuid = uuid
     gs.npcs[uuid] = npc
+    if introduced:
+        gs.player.known_npcs.add(uuid)
     return npc
 
 
@@ -163,7 +165,7 @@ class TestNPCTickerEvictions:
     @allure.title("A bartender in the tavern in the morning is evicted with an activity line")
     def test_bartender_evicted_in_morning(self):
         gs = _make_game_state(game_time="morning")
-        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender", introduced=True)
         scene = _set_scene(gs, _BARTENDER_UUID)
 
         outputs = TurnOutputs()
@@ -179,7 +181,7 @@ class TestNPCTickerEvictions:
     @allure.title("A guard is evicted at night with the night-watch activity line")
     def test_guard_evicted_at_night(self):
         gs = _make_game_state(game_time="night")
-        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard", introduced=True)
         scene = _set_scene(gs, _GUARD_UUID)
 
         outputs = TurnOutputs()
@@ -224,8 +226,8 @@ class TestNPCTickerEvictions:
     def test_mixed_scene_partial_eviction(self):
         gs = _make_game_state(game_time="night")
         _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")  # present at night → stays
-        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")  # absent at night → evicted
-        _add_npc(gs, _BAKER_UUID, "Bruno", "baker")  # absent at night → evicted
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard", introduced=True)  # absent at night → evicted
+        _add_npc(gs, _BAKER_UUID, "Bruno", "baker", introduced=True)  # absent at night → evicted
         scene = _set_scene(gs, _BARTENDER_UUID, _GUARD_UUID, _BAKER_UUID)
 
         outputs = TurnOutputs()
@@ -240,7 +242,7 @@ class TestNPCTickerEvictions:
     @allure.title("tick() extends an existing npc_departures list without replacing it")
     def test_extends_existing_departures(self):
         gs = _make_game_state(game_time="night")
-        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard", introduced=True)
         _set_scene(gs, _GUARD_UUID)
 
         outputs = TurnOutputs(npc_departures=["A stranger slips out the back door"])
@@ -300,8 +302,8 @@ class TestNPCTickerSkipUuids:
     @allure.title("skip_uuids shields only the listed NPCs; others are still evicted")
     def test_skip_uuids_partial_shield(self):
         gs = _make_game_state(game_time="night")
-        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")  # absent at night → would be evicted
-        _add_npc(gs, _BAKER_UUID, "Bruno", "baker")  # absent at night → would be evicted
+        _add_npc(gs, _GUARD_UUID, "Lucia", "guard")  # absent at night → would be evicted (shielded below)
+        _add_npc(gs, _BAKER_UUID, "Bruno", "baker", introduced=True)  # absent at night → evicted
         scene = _set_scene(gs, _GUARD_UUID, _BAKER_UUID)
 
         outputs = TurnOutputs()
@@ -323,6 +325,62 @@ class TestNPCTickerSkipUuids:
 
         assert scene.npcs_present == []
         assert len(outputs.npc_departures) == 1
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC schedule ticker")
+class TestNPCTickerNameGating:
+    """Departure lines must gate proper names on ``player.known_npcs``.
+
+    Regression: :func:`cast.npc_ticker._departure_line` built the label
+    from the raw ``npc.name``, bypassing the ``known_npcs`` gate that
+    every other Narrator-bound producer (``new_npcs``, on-shift labels,
+    scene ``people visible``) already enforces — so an unintroduced
+    NPC's proper name leaked into the Narrator's ``Someone departs:``
+    line before the player had ever met them.
+    """
+
+    @allure.story("Name gating")
+    @allure.title("An unintroduced NPC's departure line hides the proper name behind the role")
+    def test_unintroduced_departure_hides_name(self):
+        gs = _make_game_state(game_time="morning")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")  # never introduced to the player
+        _set_scene(gs, _BARTENDER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        line = outputs.npc_departures[0]
+        assert "Marco" not in line
+        assert "bartender" in line
+        assert "asleep" in line
+
+    @allure.story("Name gating")
+    @allure.title("An unintroduced NPC with a short_descriptor departs as that descriptor")
+    def test_unintroduced_departure_uses_descriptor(self):
+        gs = _make_game_state(game_time="morning")
+        npc = _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        npc.short_descriptor = "a curly-haired man"
+        _set_scene(gs, _BARTENDER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        line = outputs.npc_departures[0]
+        assert "Marco" not in line
+        assert line.startswith("a curly-haired man")
+
+    @allure.story("Name gating")
+    @allure.title("An introduced NPC's departure line still shows the Name (Occupation) shape")
+    def test_introduced_departure_shows_name(self):
+        gs = _make_game_state(game_time="morning")
+        _add_npc(gs, _BARTENDER_UUID, "Marco", "bartender", introduced=True)  # player has met Marco
+        _set_scene(gs, _BARTENDER_UUID)
+
+        outputs = TurnOutputs()
+        NPCTicker(gs).tick(outputs)
+
+        assert outputs.npc_departures[0].startswith("Marco (bartender)")
 
 
 @allure.epic("NPC Interaction")

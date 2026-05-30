@@ -41,10 +41,19 @@ _BARTENDER_UUID = make_uuid("npc-bartender")
 _GUARD_UUID = make_uuid("npc-guard")
 
 
-def _register_npc(gs: gs_mod.GameState, uuid: UUID, name: str, occupation: str) -> NPCCard:
+def _register_npc(
+    gs: gs_mod.GameState,
+    uuid: UUID,
+    name: str,
+    occupation: str,
+    *,
+    introduced: bool = False,
+) -> NPCCard:
     npc = NPCCard(name=name, occupation=occupation)
     npc.uuid = uuid
     gs.npcs[uuid] = npc
+    if introduced:
+        gs.player.known_npcs.add(uuid)
     return npc
 
 
@@ -122,7 +131,7 @@ class TestPlanExecutorTickerGate:
     @pytest.mark.asyncio
     async def test_bartender_evicted_on_talk_in_morning(self):
         executor, gs, narrator, _chronicler = _build_executor(game_time="morning")
-        _register_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        _register_npc(gs, _BARTENDER_UUID, "Marco", "bartender", introduced=True)
         scene = _seed_tavern_scene(gs, _BARTENDER_UUID)
 
         await executor.execute_plan(
@@ -136,6 +145,30 @@ class TestPlanExecutorTickerGate:
         outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
         assert len(outputs_sent.npc_departures) == 1
         assert outputs_sent.npc_departures[0].startswith("Marco (bartender)")
+
+    @allure.story("Ticker gate")
+    @allure.title("An unintroduced evicted NPC reaches the Narrator as a descriptor, never a proper name")
+    @pytest.mark.asyncio
+    async def test_unintroduced_departure_gated_at_narrator_seam(self):
+        # Consumer-seam regression: the gate must hold on the TurnOutputs
+        # the Narrator actually receives, not just inside the Ticker unit.
+        # Marco is registered but never introduced (uuid absent from
+        # player.known_npcs), so his departure must surface as his role.
+        executor, gs, narrator, _chronicler = _build_executor(game_time="morning")
+        _register_npc(gs, _BARTENDER_UUID, "Marco", "bartender")
+        scene = _seed_tavern_scene(gs, _BARTENDER_UUID)
+
+        await executor.execute_plan(
+            plan=route_plan("TALK", delegate=[], targets=[]),
+            player_action="look around the tavern",
+            completed_events=[],
+        )
+
+        assert scene.npcs_present == []
+        outputs_sent: turn_outputs.TurnOutputs = narrator.execute.call_args.kwargs["input_data"]
+        assert len(outputs_sent.npc_departures) == 1
+        assert "Marco" not in outputs_sent.npc_departures[0]
+        assert "bartender" in outputs_sent.npc_departures[0]
 
     @allure.story("Ticker gate")
     @allure.title("PlanExecutor skips the ticker entirely when there is no current scene")
@@ -181,7 +214,7 @@ class TestPlanExecutorTickerGate:
             game_time="night",
             with_chronicler=True,
         )
-        _register_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        _register_npc(gs, _GUARD_UUID, "Lucia", "guard", introduced=True)
         # Force raw_outputs.scene to be set so the chronicler gate opens; we do
         # this by asking the mocked scene_builder to return a scene with the
         # existing guard still in it and running a MOVE action (MOVE is one of
@@ -250,7 +283,7 @@ class TestPlanExecutorSameTurnEvictionSkip:
         # in the scene. An already-registered guard standing in a night
         # tavern should still get evicted by the schedule.
         executor, gs, narrator, _chronicler = _build_executor(game_time="night")
-        lucia = _register_npc(gs, _GUARD_UUID, "Lucia", "guard")
+        lucia = _register_npc(gs, _GUARD_UUID, "Lucia", "guard", introduced=True)
         assert lucia.occupation == "guard"
 
         # Scene rebuilds to include the existing guard (pre-initialised
