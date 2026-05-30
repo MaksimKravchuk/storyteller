@@ -111,7 +111,10 @@
   .agent-flow-bar select { padding: 6px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 13px; }
   .agent-flow-hint { font-size: 11px; color: #666; }
   .agent-flow-canvas { overflow-x: auto; background: #0f1a30; border: 1px solid #0f3460; border-radius: 8px; padding: 8px; }
+  .agent-flow-node { cursor: pointer; }
   .agent-flow-node rect { rx: 8; stroke: #0f3460; stroke-width: 1.5; }
+  .agent-flow-node:hover rect { stroke: #ffffff; }
+  #agent-flow-detail { margin-top: 12px; }
   .agent-flow-node text { font-family: -apple-system, sans-serif; }
   .agent-flow-node .node-name { font-size: 13px; font-weight: 600; }
   .agent-flow-node .node-sub { font-size: 10px; fill: #1a1a2e; opacity: 0.75; }
@@ -624,9 +627,10 @@ async function renderAgentFlow(el) {
       <div class="agent-flow-bar">
         <label for="agent-flow-turn">Show</label>
         <select id="agent-flow-turn" onchange="changeAgentFlowTurn(this.value)">${turnOpts}</select>
-        <span class="agent-flow-hint">Directed graph of observed agent → agent calls (from telemetry, read-only). Edge labels = call counts.</span>
+        <span class="agent-flow-hint">Directed graph of observed agent → agent calls (from telemetry, read-only). Edge labels = call counts. Click a node to inspect its prompts &amp; responses.</span>
       </div>
       <div class="agent-flow-canvas" id="agent-flow-graph"></div>
+      <div id="agent-flow-detail"></div>
     </div>`;
   drawAgentFlow();
 }
@@ -686,6 +690,8 @@ function _layoutDepths(nodes, edges) {
 function drawAgentFlow() {
   const container = document.getElementById('agent-flow-graph');
   if (!container || !window.__agentFlow) return;
+  const detail = document.getElementById('agent-flow-detail');
+  if (detail) detail.innerHTML = '';  // reset drill-down when the turn filter changes
   const { calls, turn } = window.__agentFlow;
   const filtered = turn === 'all' ? calls : calls.filter(c => String(c.turn_number) === String(turn));
   if (!filtered.length) {
@@ -731,8 +737,8 @@ function drawAgentFlow() {
     const p = pos.get(n.name);
     const models = [...n.models].join(', ');
     const sub = `${n.count} call${n.count === 1 ? '' : 's'}`;
-    return `<g class="agent-flow-node" transform="translate(${p.x},${p.y})">
-      <title>${escapeHtml(n.name)}\n${sub}\n${escapeHtml(models)}</title>
+    return `<g class="agent-flow-node" data-agent="${escapeHtml(n.name)}" transform="translate(${p.x},${p.y})" onclick="selectAgentNode('${escapeHtml(n.name)}')">
+      <title>${escapeHtml(n.name)}\n${sub}\n${escapeHtml(models)}\nClick to inspect prompts &amp; responses</title>
       <rect width="${NODE_W}" height="${NODE_H}" rx="8" fill="${agentColor(n.name)}"/>
       <text class="node-name" x="${NODE_W / 2}" y="22" text-anchor="middle" fill="#0f1a30">${escapeHtml(n.name)}</text>
       <text class="node-sub" x="${NODE_W / 2}" y="38" text-anchor="middle">${sub}</text>
@@ -749,6 +755,28 @@ function drawAgentFlow() {
       ${edgeSvg}
       ${nodeSvg}
     </svg>`;
+}
+
+function selectAgentNode(name) {
+  if (!window.__agentFlow) return;
+  // Highlight the chosen node, dim the rest.
+  document.querySelectorAll('#agent-flow-graph .agent-flow-node rect').forEach(r => {
+    const selected = r.parentNode.getAttribute('data-agent') === name;
+    r.setAttribute('stroke', selected ? '#ffffff' : '#0f3460');
+    r.setAttribute('stroke-width', selected ? '3' : '1.5');
+  });
+  const { calls, turn } = window.__agentFlow;
+  const matching = calls.filter(c =>
+    c.agent_name === name && (turn === 'all' || String(c.turn_number) === String(turn))
+  );
+  const turnNum = turn === 'all' ? null : Number(turn);
+  const scope = turn === 'all' ? 'all turns' : `turn ${turn}`;
+  const panel = document.getElementById('agent-flow-detail');
+  panel.innerHTML = `
+    <div class="card">
+      <h3>${escapeHtml(name)} — ${matching.length} call${matching.length === 1 ? '' : 's'} (${scope})</h3>
+      ${renderAiCallEntries(matching, turnNum) || '<div class="empty">No calls for this agent in the selected scope.</div>'}
+    </div>`;
 }
 
 function switchTab(tab) { currentTab = tab; renderTab(); }
