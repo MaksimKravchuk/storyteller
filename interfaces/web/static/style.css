@@ -418,6 +418,8 @@ button[type="submit"]:disabled {
   bottom: calc(3.5rem + env(safe-area-inset-bottom));
   max-height: calc(100dvh - 9rem);
   overflow-y: auto;
+  /* Keep the sheet's own scroll from chaining to the page behind it. */
+  overscroll-behavior: contain;
   background: #1f1f1f;
   border-top: 1px solid rgba(245, 200, 120, 0.25);
   border-radius: 14px 14px 0 0;
@@ -429,6 +431,17 @@ button[type="submit"]:disabled {
 
 #dashboard.sheet-open #panel-host {
   transform: translateY(0);
+}
+
+/* Freeze the page behind an open bottom-sheet so it can't scroll through the
+ * overlay. position:fixed is the iOS-safe lock (overflow:hidden alone leaks on
+ * Safari); app.js records the scroll offset on open and restores it on close. */
+body.sheet-locked {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 #panel-close {

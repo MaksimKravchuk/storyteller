@@ -704,6 +704,24 @@
 
   // ── Dashboard panels (tabbed rail on desktop, bottom-sheet on mobile) ──
 
+  // Background scroll-lock for the mobile bottom-sheet. position:fixed holds the
+  // page still (iOS ignores overflow:hidden on the body alone); we stash the
+  // scroll offset on lock and restore it on unlock so opening/closing a sheet
+  // never moves the transcript behind it.
+  let lockedScrollY = 0;
+
+  function lockBodyScroll() {
+    lockedScrollY = window.scrollY;
+    document.body.style.top = "-" + lockedScrollY + "px";
+    document.body.classList.add("sheet-locked");
+  }
+
+  function unlockBodyScroll() {
+    document.body.classList.remove("sheet-locked");
+    document.body.style.top = "";
+    window.scrollTo(0, lockedScrollY);
+  }
+
   function selectPanel(name) {
     activePanel = name;
     els.panelHost.querySelectorAll(".panel").forEach((panel) => {
@@ -720,17 +738,29 @@
     });
   }
 
-  function openPanel(name) {
-    selectPanel(name);
-    if (isMobile()) {
-      els.dashboard.classList.add("sheet-open");
-      sheetOpen = true;
+  // Single owner of the mobile-sheet transition: the sheet-open class, the
+  // sheetOpen flag, and the background scroll-lock always move together, so no
+  // open/close path can flip one without the others. The early return is the one
+  // "only on a real transition" guard — re-locking would re-capture scrollY as 0
+  // once the body is position:fixed.
+  function setSheetOpen(open) {
+    if (open === sheetOpen) return;
+    sheetOpen = open;
+    els.dashboard.classList.toggle("sheet-open", open);
+    if (open) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
     }
   }
 
+  function openPanel(name) {
+    selectPanel(name);
+    if (isMobile()) setSheetOpen(true);
+  }
+
   function closePanel() {
-    els.dashboard.classList.remove("sheet-open");
-    sheetOpen = false;
+    setSheetOpen(false);
     deselectTabs();
     const btn = els.panelToolbar.querySelector('button[data-panel="' + activePanel + '"]');
     if (btn) btn.focus();
@@ -760,9 +790,9 @@
 
   function onBreakpointChange() {
     if (!isMobile()) {
-      // Desktop rail is always visible; drop any mobile sheet state.
-      els.dashboard.classList.remove("sheet-open");
-      sheetOpen = false;
+      // Desktop rail is always visible; drop any mobile sheet state (which also
+      // releases the scroll-lock if a sheet was open when the bp was crossed).
+      setSheetOpen(false);
       selectPanel(activePanel);
     } else if (!sheetOpen) {
       deselectTabs();
