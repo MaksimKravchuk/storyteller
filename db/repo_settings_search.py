@@ -55,17 +55,20 @@ def _validate_field(name: str, setting_value: str) -> None:
 
 def _key_in_search():
     """SQL predicate matching every stored ``search.*`` key."""
-    return tbl.admin_settings.c.key.in_([_search_key(name) for name in SEARCH_FIELDS])
+    keys = [_search_key(name) for name in SEARCH_FIELDS]
+    return tbl.admin_settings.c.key.in_(keys)
+
+
+def _row_to_pair(row) -> tuple[str, str]:
+    return _name_from_key(row[_COL_KEY]), row[_COL_VALUE]
 
 
 async def read_search(session: AsyncSession) -> dict[str, str]:
     """Return ``{name: value}`` for every stored ``search.*`` setting."""
-    stmt = select(tbl.admin_settings.c.key, tbl.admin_settings.c.model_id).where(_key_in_search())
-    rows = (await session.execute(stmt)).mappings().all()
-    mapping: dict[str, str] = {}
-    for row in rows:
-        mapping[_name_from_key(row[_COL_KEY])] = row[_COL_VALUE]
-    return mapping
+    stmt = select(tbl.admin_settings.c.key, tbl.admin_settings.c.model_id)
+    stmt = stmt.where(_key_in_search())
+    rows = await session.execute(stmt)
+    return dict(_row_to_pair(row) for row in rows.mappings().all())
 
 
 async def write_search(session: AsyncSession, name: str, setting_value: str) -> None:
@@ -82,4 +85,5 @@ async def write_search(session: AsyncSession, name: str, setting_value: str) -> 
 
 async def delete_search(session: AsyncSession) -> None:
     """Delete every stored ``search.*`` setting, reverting to env/defaults."""
-    await session.execute(delete(tbl.admin_settings).where(_key_in_search()))
+    stmt = delete(tbl.admin_settings).where(_key_in_search())
+    await session.execute(stmt)
