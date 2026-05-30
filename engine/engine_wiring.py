@@ -57,12 +57,17 @@ def wire_director(
     knowledge_graph: graph_mod.KnowledgeGraph,
     language: str,
     data_miner: typing.Any | None = None,
+    search_client: typing.Any | None = None,
 ) -> director_mod.Director:
     """Create the Director with all its agent dependencies.
 
     When ``clients.dramaturge`` is set, a :class:`Dramaturge` consistency
     oracle is added to the cast; otherwise the dramaturge stays ``None``
     and the PlanExecutor skips the post-Narrator review pass entirely.
+
+    ``search_client`` is the configured research backend; it is threaded
+    into the fallback :class:`DataMiner` so a restored session researches
+    through the same provider a fresh game would.
     """
     dramaturge: typing.Any | None = None
     if clients.dramaturge is not None:
@@ -78,7 +83,8 @@ def wire_director(
         scene_builder=scene_builder_mod.SceneBuilder(llm_client=clients.agent, language=language),
         narrator=narrator_mod.Narrator(llm_client=clients.narrator, language=language),
         npc_generator=npc_gen_mod.NPCGenerator(llm_client=clients.agent, language=language),
-        data_miner=data_miner or data_miner_mod.DataMiner(llm_client=clients.agent, language=language),
+        data_miner=data_miner
+        or data_miner_mod.DataMiner(llm_client=clients.agent, language=language, search_client=search_client),
         item_generator=item_gen_mod.ItemGenerator(llm_client=clients.agent, language=language),
         world_chronicler=world_chronicler_mod.WorldChronicler(llm_client=clients.agent, language=language),
         dramaturge=dramaturge,

@@ -14,7 +14,7 @@ import allure
 import pytest
 from fastapi.testclient import TestClient
 
-from interfaces.web import auth_models, beta_auth, service, service_feedback
+from interfaces.web import auth_models, beta_auth, runtime, service, service_feedback
 from interfaces.web.app import app
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
 from interfaces.web.character_schemas import CharacterInfo
@@ -1155,6 +1155,72 @@ async def test_act_and_persist_raises_when_engine_has_no_game_state() -> None:
 
     with pytest.raises(RuntimeError, match="Game not started"):
         await service._act_and_persist(repo, "sess-1", engine, "look", "English")
+
+
+class _NonMonotonicTurnEngine:
+    """Test double that appends actions while exposing non-monotonic engine counts."""
+
+    def __init__(self, game_state: MagicMock) -> None:
+        self._game_state = game_state
+        self._underlying_counts = [0, 1, 1]
+        self._narrations = ["You look around.", "You think it over.", "You wait."]
+
+    async def process_action(self, action: str) -> str:
+        self._game_state.turn_count = self._underlying_counts.pop(0)
+        narration = self._narrations.pop(0)
+        self._game_state.conversation_log.append(
+            {
+                "player_action": action,
+                "response": narration,
+                "turn": self._game_state.turn_count,
+            },
+        )
+        return narration
+
+    def assert_running(self) -> tuple[MagicMock, MagicMock, MagicMock]:
+        return self._game_state, MagicMock(), MagicMock(all_events=[])
+
+
+@pytest.mark.asyncio
+@allure.story("Submit action")
+@allure.title("ActionPersistence returns monotonic player-visible turn counts")
+async def test_act_and_persist_returns_monotonic_player_visible_turn_counts() -> None:
+    repo = AsyncMock()
+    game_state = MagicMock()
+    game_state.uuid = "game-abc"
+    game_state.setting.name = "Rome"
+    game_state.conversation_log = [{"response": "Opening scene.", "turn": 0}]
+    game_state.turn_count = 0
+    game_state.last_visible_entities = []
+    game_state.player = MagicMock(
+        appearance="",
+        physical_status="healthy",
+        inventory=[],
+        known_npcs=set(),
+        player_event_log=[],
+        learned_facts=set(),
+    )
+    game_state.player.name = "Player"
+    game_state.player.location_id = None
+    game_state.npcs = {}
+    game_state.locations = {}
+    game_state.current_scene = None
+    game_state.game_clock = float(0)
+    game_state.game_time = "morning"
+
+    snapshot_engine = MagicMock()
+    snapshot_engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
+    engine = _NonMonotonicTurnEngine(game_state)
+    opening_turn_count = service.snapshot_from_engine(snapshot_engine).turn_count
+
+    with patch.object(runtime, "persist_engine_state", new=AsyncMock()) as persist_mock:
+        first_response = await service._act_and_persist(repo, "sess-1", engine, "look", "English")
+        second_response = await service._act_and_persist(repo, "sess-1", engine, "think", "English")
+        third_response = await service._act_and_persist(repo, "sess-1", engine, "wait", "English")
+
+    assert opening_turn_count == 0
+    assert [first_response.turn_count, second_response.turn_count, third_response.turn_count] == [1, 2, 3]
+    assert [call.kwargs["turn_number"] for call in persist_mock.await_args_list] == [0, 1, 1]
 
 
 @pytest.mark.asyncio

@@ -63,8 +63,9 @@ env_files = [".env"]
 markers = [
     "db: requires a real Postgres (testcontainers)",
     "benchmark: opt-in narration benchmarks that hit paid LLMs (see benchmarks/)",
+    "live: opt-in live external-API smoke tests (require provider secrets, hit the network)",
 ]
-addopts = "-m 'not db and not benchmark'"
+addopts = "-m 'not db and not benchmark and not live'"
 
 [tool.coverage.run]
 source = ["cast", "engine", "models", "knowledge", "timeline", "llm", "prompts", "db", "interfaces", "research", "formatting"]
@@ -113,6 +114,7 @@ also_copy = [
   "prompts",
   "research",
   "run_server.py",
+  "safety",
 ]
 pytest_add_cli_args = [
   "--no-cov",
@@ -141,6 +143,10 @@ pytest_add_cli_args = [
   # of them target the algorithmic surface mutmut covers.
   "--ignore-glob=tests/test_admin*.py",
   "--ignore-glob=tests/test_web*.py",
+  # Same class as test_web*.py — the safety web-route test drives the FastAPI
+  # app via TestClient and hits the Starlette BaseHTTPMiddleware async-teardown
+  # crash ("No response returned") under mutmut's in-process pytest runner.
+  "--ignore=tests/test_safety_web_api.py",
 ]
 do_not_mutate = [
   "**/__init__.py",

@@ -54,6 +54,11 @@ def render_player_html(text: str) -> str:
     return escape(text or "", quote=False)
 
 
+def player_visible_turn_count(conversation_log: list[dict]) -> int:
+    """Count successful player actions visible in web/API turn history."""
+    return sum(1 for entry in conversation_log if entry.get("player_action"))
+
+
 def build_transcript(conversation_log: list[dict], language: str = _DEFAULT_LANGUAGE) -> list[TurnEntry]:
     """Convert ``GameState.conversation_log`` entries into flat TurnEntry pairs.
 

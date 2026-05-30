@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from config import Config, resolve_model_config
 from defaults.models import (
@@ -14,6 +14,8 @@ from defaults.models import (
     ModelConfig,
 )
 from engine.game_engine import GameEngine
+from research.search_factory import create_search_client
+from safety.factory import build_moderator
 
 if TYPE_CHECKING:
     from knowledge.graph import KnowledgeGraph
@@ -42,12 +44,30 @@ def _apply_temperature(model_config: ModelConfig, temperature: float | None) -> 
     return dataclasses.replace(model_config, temperature=temperature)
 
 
+def _resolve_search_client(cfg: Config, search_override: Any) -> Any:
+    """Build the search client, letting a DB ``search_override`` win over env.
+
+    The override (from :func:`engine.search_settings.load_search_override`)
+    supplies the provider and, when present, its credentials; anything it
+    leaves unset falls back to the ``cfg.search_*`` env defaults.
+    """
+    provider = cfg.search_provider
+    tavily_api_key = cfg.tavily_api_key
+    searxng_base_url = cfg.searxng_base_url
+    if search_override is not None and search_override.provider:
+        provider = search_override.provider
+        tavily_api_key = search_override.tavily_api_key or tavily_api_key
+        searxng_base_url = search_override.searxng_base_url or searxng_base_url
+    return create_search_client(provider, tavily_api_key=tavily_api_key, searxng_base_url=searxng_base_url)
+
+
 def create_engine(
     cfg: Config,
     language: str = "English",
     overrides: dict[str, ModelConfig] | None = None,
     *,
     temperature_override: dict[str, float] | None = None,
+    search_override: Any = None,
 ) -> GameEngine:
     """Build a GameEngine from application config.
 
@@ -68,6 +88,7 @@ def create_engine(
         PROVIDER_OPENROUTER: cfg.openrouter_api_key,
         PROVIDER_DEEPSEEK: cfg.deepseek_api_key,
     }
+    search_client = _resolve_search_client(cfg, search_override)
     return GameEngine(
         director_model=_apply_temperature(
             _resolve_model("director", cfg.director_model, cfg, overrides),
@@ -89,6 +110,8 @@ def create_engine(
         else None,
         api_keys=api_keys,
         language=language,
+        moderator=build_moderator(cfg),
+        search_client=search_client,
     )
 
 

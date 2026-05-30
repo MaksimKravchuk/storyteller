@@ -36,5 +36,21 @@ services:
       retries: 5
       start_period: 30s
 
+  # Optional self-hosted search backend for the Data Miner. Profile-gated so it
+  # does NOT start with a bare `docker compose up`. Start it with:
+  #   docker compose --profile search up -d searxng
+  # then set SEARCH_PROVIDER=searxng and SEARXNG_BASE_URL=http://searxng:8080
+  # (or http://localhost:8888 from the host).
+  searxng:
+    image: searxng/searxng:latest
+    profiles: ["search"]
+    environment:
+      SEARXNG_BASE_URL: http://localhost:8888/
+    ports:
+      - "8888:8080"
+    volumes:
+      - searxng_data:/etc/searxng
+
 volumes:
   pgdata:
+  searxng_data:

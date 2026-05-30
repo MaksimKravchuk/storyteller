@@ -14,7 +14,7 @@ from models.scene import Scene, SceneNPC
 from tests._uuid_helpers import make_uuid
 
 _SEND_JSON = "_send_json"
-_EXPECTED_SUMMARY_CAP = 500
+_EXPECTED_SUMMARY_CAP = 1500
 
 
 def _full_scene_payload() -> SceneResponse:
@@ -89,10 +89,10 @@ class TestSceneBuilder:
         assert scene.time_of_day == game_state.game_time
 
     @allure.story("Context truncation")
-    @allure.title("SceneBuilder truncates the setting summary to 500 characters before injecting it into the prompt")
+    @allure.title("SceneBuilder truncates the setting summary to 1500 characters before injecting it into the prompt")
     @pytest.mark.asyncio
     async def test_setting_summary_truncation(self, game_state) -> None:
-        game_state.setting.summary = "x" * 1200
+        game_state.setting.summary = "x" * 2000
         builder = SceneBuilder(llm_client=MagicMock())
         with patch.object(builder, _SEND_JSON, new=AsyncMock(return_value=SceneResponse())):
             await builder.act("look", {"game_state": game_state})

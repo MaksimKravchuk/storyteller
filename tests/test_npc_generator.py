@@ -18,9 +18,9 @@ from tests._uuid_helpers import make_uuid
 _GHOST_LOCATION_TEXT = str(UNKNOWN_SCENE_LOCATION)
 
 _SEND_JSON = "_send_json"
-_SETTING_CAP = 500
+_SETTING_CAP = 1500
 _SCENE_CAP = 200
-_SOCIAL_CAP = 300
+_SOCIAL_CAP = 800
 
 
 def _full_npc_payload(name: str) -> NPCResponse:
@@ -239,7 +239,7 @@ class TestNPCGenerator:
     @allure.title("NPCGenerator truncates setting summary, scene description, and social structure to their caps")
     @pytest.mark.asyncio
     async def test_context_truncation(self, game_state) -> None:
-        game_state.setting.summary = "s" * 1200
+        game_state.setting.summary = "s" * 2000
         game_state.setting.social_structure = "h" * 1200
         game_state.current_scene = Scene(location_id=make_uuid("x"), description="d" * 1200)
         gen = NPCGenerator(llm_client=MagicMock())

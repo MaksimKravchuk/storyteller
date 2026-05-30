@@ -34,6 +34,10 @@ _WEB_PORT_MAX = 65535
 _DEFAULT_BETA_DAILY_TURNS = 20
 _DEFAULT_BETA_WEEKLY_TURNS = 50
 
+_SAFETY_HIGH = "HIGH"
+_SAFETY_MEDIUM = "MEDIUM"
+_SAFETY_LOW = "LOW"
+
 # Anchor the default ``.env`` to the project root (this file's directory)
 # rather than CWD, so that ``load_config()`` works regardless of where the
 # process was launched from. python-dotenv's ``find_dotenv()`` used to
@@ -57,6 +61,15 @@ class Config(BaseSettings):
     anthropic_api_key: str | None = None
     openrouter_api_key: str | None = None
     deepseek_api_key: str | None = None
+
+    # Search backend for the Data Miner's world research. ``wikipedia`` (the
+    # default) needs no configuration. ``tavily`` requires ``tavily_api_key``;
+    # ``searxng`` requires ``searxng_base_url`` pointing at a self-hosted
+    # instance. Selection is fail-fast: a missing key/URL raises at engine
+    # construction rather than silently falling back to Wikipedia.
+    search_provider: str = "wikipedia"
+    tavily_api_key: str | None = None
+    searxng_base_url: str | None = None
 
     # Model selection per agent role
     director_model: str = _GPT5_4_MINI
@@ -93,6 +106,24 @@ class Config(BaseSettings):
     beta_max_active_games: int = Field(default=3, ge=0)
     beta_global_budget_usd: str = "50"
     model_pricing_json: str | None = None
+
+    # Content safety — when enabled (default) the engine runs every player
+    # action through inbound moderation and every narrator response through
+    # outbound moderation. The OpenAI moderation API is consulted when an
+    # ``openai_api_key`` is configured; a prompt-injection heuristic is
+    # always on. Per-category thresholds accept severity names
+    # (``NONE`` / ``LOW`` / ``MEDIUM`` / ``HIGH``); unknown values log a
+    # warning and fall back to safe defaults — see
+    # ``safety.thresholds.ModerationThresholds``.
+    safety_enabled: bool = True
+    safety_threshold_violence: str = _SAFETY_HIGH
+    safety_threshold_sexual: str = _SAFETY_HIGH
+    safety_threshold_sexual_minors: str = _SAFETY_LOW
+    safety_threshold_harassment: str = _SAFETY_HIGH
+    safety_threshold_hate: str = _SAFETY_MEDIUM
+    safety_threshold_self_harm: str = _SAFETY_MEDIUM
+    safety_threshold_illicit: str = _SAFETY_HIGH
+    safety_threshold_prompt_injection: str = _SAFETY_MEDIUM
 
     @property
     def public_supabase_key(self) -> str | None:

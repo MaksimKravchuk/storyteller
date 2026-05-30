@@ -17,7 +17,7 @@ from interfaces import (
     admin_routes_feedback,
     admin_routes_settings,
 )
-from interfaces import admin_routes_reliability
+from interfaces import admin_routes_reliability, admin_routes_settings_search
 
 _HTTP_UNAUTHORIZED = 401
 
@@ -121,6 +121,9 @@ class AdminServer:
         self._app.router.add_get("/api/settings/keys", admin_routes_settings.get_keys)
         self._app.router.add_get("/api/settings/models", admin_routes_settings.get_models)
         self._app.router.add_post("/api/settings/models", admin_routes_settings.set_model)
+        self._app.router.add_get("/api/settings/search", admin_routes_settings_search.get_search)
+        self._app.router.add_post("/api/settings/search", admin_routes_settings_search.set_search)
+        self._app.router.add_delete("/api/settings/search", admin_routes_settings_search.clear_search)
 
     def _setup_detail_routes(self) -> None:
         self._app.router.add_get("/api/sessions/{id}/knowledge", admin_routes_detail.knowledge)

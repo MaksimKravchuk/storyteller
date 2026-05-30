@@ -165,3 +165,22 @@ class TestDeepSeekDetection:
     def test_get_api_key_returns_deepseek(self):
         cfg = Config(deepseek_api_key="ds-key-123")
         assert get_api_key_for_provider("deepseek", cfg) == "ds-key-123"
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Defaults & model config")
+class TestSearchProviderConfig:
+    @allure.story("Search provider config")
+    @allure.title("search_provider defaults to wikipedia with no Tavily key or SearXNG URL declared")
+    def test_search_defaults(self):
+        fields = Config.model_fields
+        assert fields["search_provider"].default == "wikipedia"
+        assert fields["tavily_api_key"].default is None
+        assert fields["searxng_base_url"].default is None
+
+    @allure.story("Search provider config")
+    @allure.title("search_provider and its credentials are overridable via constructor kwargs")
+    def test_search_overrides(self):
+        cfg = Config(search_provider="searxng", searxng_base_url="http://localhost:8888")
+        assert cfg.search_provider == "searxng"
+        assert cfg.searxng_base_url == "http://localhost:8888"
