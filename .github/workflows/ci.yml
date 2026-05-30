@@ -111,6 +111,12 @@ jobs:
       - name: Run type checking
         run: uv run mypy .
 
+      - name: Tavily live smoke test (opt-in; skipped without the secret)
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+        run: uv run pytest tests/test_tavily_live.py -m live -v
+
   mutation:
     runs-on: ubuntu-latest
     timeout-minutes: 25

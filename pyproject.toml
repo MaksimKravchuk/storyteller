@@ -63,8 +63,9 @@ env_files = [".env"]
 markers = [
     "db: requires a real Postgres (testcontainers)",
     "benchmark: opt-in narration benchmarks that hit paid LLMs (see benchmarks/)",
+    "live: opt-in live external-API smoke tests (require provider secrets, hit the network)",
 ]
-addopts = "-m 'not db and not benchmark'"
+addopts = "-m 'not db and not benchmark and not live'"
 
 [tool.coverage.run]
 source = ["cast", "engine", "models", "knowledge", "timeline", "llm", "prompts", "db", "interfaces", "research", "formatting"]

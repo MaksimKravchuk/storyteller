@@ -29,6 +29,9 @@ def _make_config() -> MagicMock:
     cfg.anthropic_api_key = "anthropic-key"
     cfg.openrouter_api_key = "openrouter-key"
     cfg.deepseek_api_key = "deepseek-key"
+    cfg.search_provider = "wikipedia"
+    cfg.tavily_api_key = None
+    cfg.searxng_base_url = None
     return cfg
 
 

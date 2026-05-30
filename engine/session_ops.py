@@ -13,6 +13,7 @@ from config import Config
 from engine.factory import create_engine, create_engine_from_state
 from engine.game_engine import GameEngine
 from engine.model_overrides import load_role_overrides
+from engine.search_settings import load_search_override
 from llm.call_logger import current_session_id, get_and_clear_buffer, reset_buffer
 from llm.turn_event_logger import get_and_clear_events, record_turn_event, reset_events
 
@@ -105,7 +106,8 @@ async def begin_session(
     """Bind buffers to the session and build a fresh engine for a new game."""
     _bind_session_buffers(session_id)
     overrides = await load_role_overrides(repo)
-    return create_engine(cfg, language=language, overrides=overrides)
+    search_override = await load_search_override(repo)
+    return create_engine(cfg, language=language, overrides=overrides, search_override=search_override)
 
 
 async def resume_session(

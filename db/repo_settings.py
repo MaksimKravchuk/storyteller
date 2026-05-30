@@ -1,6 +1,7 @@
 """Admin-settings store — operator-mutable key-value overrides.
 
-Currently used only for per-role model overrides. Kept outside
+Holds per-role model overrides and the operator-managed search-provider
+settings (delegated to :mod:`db.repo_settings_search`). Kept outside
 ``repo_admin`` because that module is read-only; writes live here.
 """
 
@@ -12,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from db import repo_settings_search as _search
 from db import tables as tbl
 from defaults.models import (
     PROVIDER_ANTHROPIC,
@@ -90,3 +92,15 @@ class AdminSettingsStore:
             set_={"provider": provider, "model_id": model_id, "updated_at": func.now()},
         )
         await self._session.execute(stmt)
+
+    async def search_overrides(self) -> dict[str, str]:
+        """Return ``{name: value}`` for every stored search-provider setting."""
+        return await _search.read_search(self._session)
+
+    async def save_search(self, name: str, setting_value: str) -> None:
+        """Upsert one search-provider setting (provider / tavily_api_key / searxng_base_url)."""
+        await _search.write_search(self._session, name, setting_value)
+
+    async def clear_search(self) -> None:
+        """Delete every stored search-provider setting, reverting to env/defaults."""
+        await _search.delete_search(self._session)

@@ -15,7 +15,7 @@ from knowledge.scene_state import all_scene_deltas
 from models.scene import PointOfInterest, Scene, SceneNPC, coerce_point_of_interest
 from prompts.scene_builder_prompts import get_scene_builder_prompts
 
-_SETTING_SUMMARY_MAX = 500
+_SETTING_SUMMARY_MAX = 1500
 _OPENING_ACTION_MARKERS = (
     "look around",
     "starting scene",

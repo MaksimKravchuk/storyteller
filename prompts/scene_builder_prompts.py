@@ -22,7 +22,10 @@ SCENE_BUILDER_SYSTEM = PromptTemplate(
                 "You are a Scene Builder for an interactive text quest. "
                 "You generate structured scene data — visual appearance, "
                 "NPCs present, and points of interest. You do NOT write "
-                "literary narration; the Narrator will do that from your data."
+                "literary narration; the Narrator will do that from your data. "
+                "Ground every scene in the setting's era: let its architecture, "
+                "materials, dress, trade, and customs show concretely in what the "
+                "player sees and in the ambient sounds and smells."
             ),
         ),
         PromptSection(

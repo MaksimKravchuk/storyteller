@@ -14,9 +14,9 @@ from cast.schemas.npc_response import NPCGoalDraft, NPCResponse
 from models.npc_card import NPCCard
 from prompts.npc_generator_prompts import get_npc_generator_prompts
 
-_SETTING_SUMMARY_MAX = 500
+_SETTING_SUMMARY_MAX = 1500
 _SCENE_DESC_MAX = 200
-_SOCIAL_STRUCTURE_MAX = 300
+_SOCIAL_STRUCTURE_MAX = 800
 _SHORT_DESCRIPTOR_MAX = 80
 
 

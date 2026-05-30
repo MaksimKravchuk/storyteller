@@ -86,7 +86,7 @@ class _StartGameHarness:
             patch("engine.game_engine.wire_director", return_value=self.director),
         )
         self.populate_mock = self._stack.enter_context(
-            patch("engine.game_engine.populate_graph_from_setting"),
+            patch("engine.game_engine.graph_populator.populate_graph_from_setting"),
         )
         return self
 
