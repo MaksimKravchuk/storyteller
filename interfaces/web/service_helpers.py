@@ -13,7 +13,7 @@ from config import Config
 from db.repository import GameRepository
 from engine.factory import create_engine_from_state
 from engine.game_engine import GameEngine
-from interfaces.web.character import build_character_info
+from interfaces.web import character, world
 from interfaces.web.errors import GameNotFoundError
 from interfaces.web.schemas import CharacterCreationInput, GameSnapshot
 from interfaces.web.schemas_library import GameSummary
@@ -44,7 +44,8 @@ def snapshot_from_engine(engine: GameEngine, language: str = _DEFAULT_LANGUAGE) 
         setting=game_state.setting.name,
         transcript=build_transcript(game_state.conversation_log, language),
         turn_count=player_visible_turn_count(game_state.conversation_log),
-        character=build_character_info(game_state),
+        character=character.build_character_info(game_state),
+        world=world.build_world_view(game_state),
     )
 
 

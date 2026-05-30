@@ -45,8 +45,22 @@
     knownNpcsList: $("known-npcs-list"),
     recentEventsList: $("recent-events-list"),
     learnedFactsList: $("learned-facts-list"),
+    dashboard: $("dashboard"),
+    panelToolbar: $("panel-toolbar"),
+    panelHost: $("panel-host"),
+    panelBackdrop: $("panel-backdrop"),
+    panelClose: $("panel-close"),
+    knowledgeFilter: $("knowledge-filter"),
+    mapBreadcrumb: $("map-breadcrumb"),
+    mapCurrent: $("map-current"),
+    mapConnections: $("map-connections"),
+    peopleList: $("people-list"),
+    worldClock: $("world-clock"),
     offlineBanner: $("offline-banner"),
   };
+
+  const mobileQuery = window.matchMedia("(max-width: 720px)");
+  const isMobile = () => mobileQuery.matches;
 
   let currentGameId = null;
   let supabaseClient = null;
@@ -54,6 +68,15 @@
   // Snapshot of the last character payload, used to detect newly-arrived
   // items so they can briefly glow gold on the turn they appear.
   let prevCharacter = null;
+  // Same delta trick for the world payload (map + people).
+  let prevWorld = null;
+  // Knowledge panel: client-side source filter ("ALL" or a FactSource value).
+  let factFilter = "ALL";
+  let allFacts = [];
+  let prevFacts = null;
+  // Which dashboard panel is selected, and whether the mobile sheet is open.
+  let activePanel = "character";
+  let sheetOpen = false;
 
   const FACT_TITLES = {
     FACT: "fact",
@@ -65,6 +88,8 @@
   const identityKey = (value) => value;
   const npcKey = (npc) => npc.name;
   const factKey = (fact) => fact.text;
+  const mapNodeKey = (node) => node.id;
+  const personKey = (person) => person.label;
 
   function show(el) { el.hidden = false; }
   function hide(el) { el.hidden = true; }
@@ -191,6 +216,15 @@
     }
   }
 
+  // Knowledge panel: render learned facts through the active source filter.
+  // ``prevForDelta`` is the set used to decide which rows glow as "new":
+  // the previous turn's facts on a turn update, or the current facts on a
+  // filter-only re-render (so toggling a filter never re-triggers the glow).
+  function renderFacts(prevForDelta) {
+    const facts = factFilter === "ALL" ? allFacts : allFacts.filter((fact) => fact.source === factFilter);
+    renderList(els.learnedFactsList, facts, prevForDelta, renderLearnedFact, factKey);
+  }
+
   function renderCharacter(character) {
     if (!character) return;
     renderCharacterHeader(character);
@@ -198,8 +232,73 @@
     renderList(els.inventoryList, character.inventory, prev.inventory, renderInventoryItem, identityKey);
     renderList(els.knownNpcsList, character.known_npcs, prev.known_npcs, renderKnownNpc, npcKey);
     renderList(els.recentEventsList, character.recent_events, prev.recent_events, renderRecentEvent, identityKey);
-    renderList(els.learnedFactsList, character.learned_facts, prev.learned_facts, renderLearnedFact, factKey);
+    allFacts = character.learned_facts || [];
+    renderFacts(prev.learned_facts);
     prevCharacter = character;
+  }
+
+  function renderConnectionNode(node) {
+    const li = document.createElement("li");
+    li.className = "map-node";
+    const name = document.createElement("span");
+    name.className = "map-node-name";
+    name.textContent = node.name;
+    const type = document.createElement("span");
+    type.className = "map-node-type";
+    type.textContent = node.location_type;
+    li.append(name, type);
+    return li;
+  }
+
+  function renderPerson(person) {
+    const li = document.createElement("li");
+    li.className = "person-row " + (person.known ? "is-known" : "is-stranger");
+    const label = document.createElement("span");
+    label.className = "person-label";
+    label.textContent = person.label;
+    const role = document.createElement("span");
+    role.className = "person-role";
+    role.textContent = person.role;
+    li.append(label, role);
+    return li;
+  }
+
+  function renderMapCurrent(current) {
+    els.mapCurrent.innerHTML = "";
+    const name = document.createElement("p");
+    name.className = "map-current-name";
+    const type = document.createElement("p");
+    type.className = "map-current-type";
+    if (current) {
+      name.textContent = current.name;
+      type.textContent = current.location_type;
+    } else {
+      name.textContent = "- location unknown -";
+      name.classList.add("empty");
+    }
+    els.mapCurrent.append(name, type);
+  }
+
+  function renderMap(map) {
+    const crumbs = (map.breadcrumb || []).map((node) => node.name);
+    els.mapBreadcrumb.textContent = crumbs.join("  ›  ");
+    renderMapCurrent(map.current);
+    const prevConnections = prevWorld && prevWorld.map ? prevWorld.map.connections : null;
+    renderList(els.mapConnections, map.connections, prevConnections, renderConnectionNode, mapNodeKey);
+  }
+
+  function renderPeopleTime(world) {
+    const clock = world.clock || {};
+    els.worldClock.textContent = "Day " + (clock.day || 1) + " · " + (clock.time_of_day || "");
+    const prevPeople = prevWorld ? prevWorld.people : null;
+    renderList(els.peopleList, world.people, prevPeople, renderPerson, personKey);
+  }
+
+  function renderWorld(world) {
+    if (!world) return;
+    renderMap(world.map);
+    renderPeopleTime(world);
+    prevWorld = world;
   }
 
   function renderSnapshot(snapshot) {
@@ -208,10 +307,12 @@
     for (const entry of snapshot.transcript) {
       appendTurnHTML(entry.role, entry.html);
     }
-    // Seed prevCharacter with the snapshot itself so the first render produces
-    // zero "new" items - we don't want every entry to glow on load or reload.
+    // Seed prevCharacter/prevWorld with the snapshot itself so the first render
+    // produces zero "new" items - we don't want every entry to glow on load.
     prevCharacter = snapshot.character;
     renderCharacter(snapshot.character);
+    prevWorld = snapshot.world;
+    renderWorld(snapshot.world);
     hide(els.settingPanel);
     if (els.storiesPanel) hide(els.storiesPanel);
     show(els.gamePanel);
@@ -222,6 +323,7 @@
   function showSettingPanel() {
     currentGameId = null;
     prevCharacter = null;
+    prevWorld = null;
     hide(els.gamePanel);
     hide(els.newGameBtn);
     if (els.storiesPanel) hide(els.storiesPanel);
@@ -487,6 +589,7 @@
       const data = await response.json();
       appendTurnHTML("narrator", data.narration_html);
       renderCharacter(data.character);
+      renderWorld(data.world);
       setStatus(els.actionStatus, "");
     } catch (err) {
       if (isNetworkError(err)) setOfflineNotice(true);
@@ -591,12 +694,92 @@
   }
 
   function initFoldableSections() {
-    document.querySelectorAll(".character-col h4, .character-col h5").forEach((heading) => {
+    document.querySelectorAll("#panel-host h4").forEach((heading) => {
       const list = heading.nextElementSibling;
       if (!list || list.tagName !== "UL") return;
       heading.classList.add("is-foldable");
       heading.addEventListener("click", () => heading.classList.toggle("is-folded"));
     });
+  }
+
+  // ── Dashboard panels (tabbed rail on desktop, bottom-sheet on mobile) ──
+
+  function selectPanel(name) {
+    activePanel = name;
+    els.panelHost.querySelectorAll(".panel").forEach((panel) => {
+      panel.hidden = panel.dataset.panel !== name;
+    });
+    els.panelToolbar.querySelectorAll("button[data-panel]").forEach((btn) => {
+      btn.setAttribute("aria-selected", String(btn.dataset.panel === name));
+    });
+  }
+
+  function deselectTabs() {
+    els.panelToolbar.querySelectorAll("button[data-panel]").forEach((btn) => {
+      btn.setAttribute("aria-selected", "false");
+    });
+  }
+
+  function openPanel(name) {
+    selectPanel(name);
+    if (isMobile()) {
+      els.dashboard.classList.add("sheet-open");
+      sheetOpen = true;
+    }
+  }
+
+  function closePanel() {
+    els.dashboard.classList.remove("sheet-open");
+    sheetOpen = false;
+    deselectTabs();
+    const btn = els.panelToolbar.querySelector('button[data-panel="' + activePanel + '"]');
+    if (btn) btn.focus();
+  }
+
+  function onToolbarClick(event) {
+    const btn = event.target.closest("button[data-panel]");
+    if (!btn) return;
+    const name = btn.dataset.panel;
+    // On mobile, tapping the already-open tab toggles the sheet shut.
+    if (isMobile() && sheetOpen && name === activePanel) {
+      closePanel();
+      return;
+    }
+    openPanel(name);
+  }
+
+  function onFactFilterClick(event) {
+    const btn = event.target.closest("button[data-fact-filter]");
+    if (!btn) return;
+    factFilter = btn.dataset.factFilter;
+    els.knowledgeFilter.querySelectorAll("button[data-fact-filter]").forEach((other) => {
+      other.setAttribute("aria-pressed", String(other === btn));
+    });
+    renderFacts(allFacts);
+  }
+
+  function onBreakpointChange() {
+    if (!isMobile()) {
+      // Desktop rail is always visible; drop any mobile sheet state.
+      els.dashboard.classList.remove("sheet-open");
+      sheetOpen = false;
+      selectPanel(activePanel);
+    } else if (!sheetOpen) {
+      deselectTabs();
+    }
+  }
+
+  function initDashboard() {
+    selectPanel("character");
+    if (isMobile()) deselectTabs();
+    els.panelToolbar.addEventListener("click", onToolbarClick);
+    if (els.knowledgeFilter) els.knowledgeFilter.addEventListener("click", onFactFilterClick);
+    if (els.panelClose) els.panelClose.addEventListener("click", closePanel);
+    if (els.panelBackdrop) els.panelBackdrop.addEventListener("click", closePanel);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && sheetOpen) closePanel();
+    });
+    mobileQuery.addEventListener("change", onBreakpointChange);
   }
 
   els.settingForm.addEventListener("submit", onStartGame);
@@ -633,5 +816,6 @@
   registerServiceWorker();
   setOfflineNotice(!navigator.onLine);
   initFoldableSections();
+  initDashboard();
   loadPublicConfig().finally(loadStories);
 })();
