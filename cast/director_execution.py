@@ -177,8 +177,16 @@ class PlanExecutor:
         plan: Any,
         player_action: str,
         completed_events: list[GameEvent],
+        *,
+        run_npc_turns: bool = True,
     ) -> str:
-        """Delegate to agents based on the routing plan and assemble output."""
+        """Delegate to agents based on the routing plan and assemble output.
+
+        ``run_npc_turns`` is set ``False`` only for the synthetic opening
+        turn (see :meth:`Director.act`), which builds and narrates the
+        scene but must not run NPC autonomous turns — the player has not
+        yet acted, so no Actor should fire on turn zero.
+        """
         raw_outputs = turn_outputs.TurnOutputs(intent=plan.intent)
         action_type = plan.action_type
         is_aggressive = plan_access.is_aggressive(plan)
@@ -197,7 +205,8 @@ class PlanExecutor:
         if local_events:
             raw_outputs.completed_events = [ev.on_complete_description or ev.name for ev in local_events]
 
-        await self._resolve_npc_turns(action_type, player_action, raw_outputs, is_aggressive)
+        if run_npc_turns:
+            await self._resolve_npc_turns(action_type, player_action, raw_outputs, is_aggressive)
         self._npc_ticker.tick(raw_outputs, skip_uuids=new_uuids)
         # Tactical TTL sweep follows the NPC ticker so any NPC the ticker
         # just evicted is no longer in scene when expiry conditions are

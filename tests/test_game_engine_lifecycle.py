@@ -38,8 +38,13 @@ def _make_director_mock(reply: str) -> MagicMock:
     return director
 
 
-async def _record_synthetic_opening_turn(engine: GameEngine, input_data: str) -> str:
-    """Simulate Director.act appending the old synthetic opening prompt to player history."""
+async def _record_synthetic_opening_turn(engine: GameEngine, input_data: str, context: dict | None = None) -> str:
+    """Simulate Director.act appending the synthetic opening prompt to player history.
+
+    Accepts ``context`` because ``start_game`` now flags the opening turn
+    via ``director.execute(prompt, context={"opening": True})``; the stub
+    ignores it and records the same history the real opening path would.
+    """
     game_state, _, _ = engine.assert_running()
     game_state.turn_count = 1
     game_state.round_number = 1
