@@ -59,16 +59,15 @@ def _key_in_search():
     return tbl.admin_settings.c.key.in_(keys)
 
 
-def _row_to_pair(row) -> tuple[str, str]:
-    return _name_from_key(row[_COL_KEY]), row[_COL_VALUE]
-
-
 async def read_search(session: AsyncSession) -> dict[str, str]:
     """Return ``{name: value}`` for every stored ``search.*`` setting."""
     stmt = select(tbl.admin_settings.c.key, tbl.admin_settings.c.model_id)
     stmt = stmt.where(_key_in_search())
-    rows = await session.execute(stmt)
-    return dict(_row_to_pair(row) for row in rows.mappings().all())
+    result = await session.execute(stmt)
+    mapping: dict[str, str] = {}
+    for row in result.mappings().all():
+        mapping[_name_from_key(row[_COL_KEY])] = row[_COL_VALUE]
+    return mapping
 
 
 async def write_search(session: AsyncSession, name: str, setting_value: str) -> None:
