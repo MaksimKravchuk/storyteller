@@ -13,7 +13,7 @@ from cast.known_npcs import mark_player_text_introductions
 from cast import npc_background_tick
 from cast.npc_ticker import NPCTicker
 from cast.npc_turn import NPCTurnResolver
-from cast.schemas.action_plan import ClarificationRequest, WaitPlan
+from cast.schemas.action_plan import ClarificationRequest, ExplorePlan, WaitPlan
 from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
 from models import game_state as gs_mod
@@ -21,6 +21,24 @@ from prompts.director_prompts import get_director_prompts
 from timeline import event as event_mod, event_manager as event_manager_mod
 
 _DEFAULT_CLARIFICATION = "Could you be more specific about what you want to do?"
+
+# Fixed intent for the synthetic opening turn. The opening prompt is
+# engine-authored, never a player utterance, so it does not route through
+# the LLM and carries this canned intent for the Narrator's context.
+_OPENING_SCENE_INTENT = "Survey and describe the opening scene."
+
+
+def _build_opening_plan() -> ExplorePlan:
+    """Return the fixed no-target EXPLORE plan for the synthetic opening turn.
+
+    Bypassing the LLM router keeps the opening deterministic and inert on
+    the NPC side: a no-target EXPLORE with an empty ``delegate_to`` leaves
+    the dialogue path unentered (no targets, no ``actor`` delegate), so the
+    synthetic prompt is never fed to an Actor as if the player addressed an
+    NPC. NPC autonomous turns are suppressed separately via the
+    ``run_npc_turns`` flag on :meth:`PlanExecutor.execute_plan`.
+    """
+    return ExplorePlan(intent=_OPENING_SCENE_INTENT)
 
 
 class Director(BasePerformer):
@@ -96,11 +114,21 @@ class Director(BasePerformer):
     # ------------------------------------------------------------------
 
     async def act(self, input_data: str, context: dict | None = None) -> str:
-        """Process a player action and return the narrated response."""
-        self._ctx.sync_context(self)
+        """Process a player action and return the narrated response.
 
-        forced_wait = self._check_forced_wait(input_data)
-        plan: RouteResult = await self._router.route_action(input_data) if forced_wait is None else forced_wait
+        ``context['opening']`` marks the synthetic opening turn (new-game
+        creation). The engine-authored opening prompt is not a player
+        utterance — no NPC was addressed and the player has not yet acted —
+        so it skips the LLM action router for a fixed no-target EXPLORE plan
+        and suppresses NPC autonomous turns. Turn zero therefore only builds
+        and narrates the scene; no Actor runs (neither dialogue nor an
+        autonomous turn), fixing the double Actor call on game start.
+        """
+        self._ctx.sync_context(self)
+        is_opening = bool((context or {}).get("opening"))
+
+        forced_plan = _build_opening_plan() if is_opening else self._check_forced_wait(input_data)
+        plan: RouteResult = await self._router.route_action(input_data) if forced_plan is None else forced_plan
 
         if isinstance(plan, ClarificationRequest):
             self._router.save_pending_clarification(input_data, plan)
@@ -108,11 +136,10 @@ class Director(BasePerformer):
 
         self._game_state.pending_clarification = None
         mark_player_text_introductions(input_data, self._game_state)
-        action_type = plan.action_type
-        completed = await self._advance_clock_and_tick_background(action_type, plan.time_cost_override)
-        narrated = await self._executor.execute_plan(plan, input_data, completed)
+        completed = await self._advance_clock_and_tick_background(plan.action_type, plan.time_cost_override)
+        narrated = await self._executor.execute_plan(plan, input_data, completed, run_npc_turns=not is_opening)
 
-        self._ctx.append_turn_logs(input_data, narrated, action_type)
+        self._ctx.append_turn_logs(input_data, narrated, plan.action_type)
         return narrated
 
     def register_actor(self, npc_uuid: UUID, actor: Any) -> None:

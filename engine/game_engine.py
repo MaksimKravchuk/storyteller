@@ -145,7 +145,7 @@ class GameEngine:
             self._language,
             data_miner,
         )
-        opening_narration = await self._director.execute(_OPENING_SCENE_PROMPT)
+        opening_narration = await self._director.execute(_OPENING_SCENE_PROMPT, context={"opening": True})
         _hide_opening_prompt_from_player_history(self._game_state)
         return opening_narration
 
