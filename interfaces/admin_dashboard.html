@@ -1586,17 +1586,18 @@ async function renderSettingsView() {
   const main = document.getElementById('main');
   main.innerHTML = '<div class="empty">Loading settings…</div>';
   try {
-    const [keys, models] = await Promise.all([
+    const [keys, models, search] = await Promise.all([
       fetchJSON('/api/settings/keys'),
       fetchJSON('/api/settings/models'),
+      fetchJSON('/api/settings/search'),
     ]);
-    main.innerHTML = renderSettingsHtml(keys, models);
+    main.innerHTML = renderSettingsHtml(keys, models, search);
   } catch (e) {
     main.innerHTML = `<div class="empty">Error loading settings: ${e.message}</div>`;
   }
 }
 
-function renderSettingsHtml(keys, models) {
+function renderSettingsHtml(keys, models, search) {
   _settingsCatalog = models.catalog || [];
   _settingsKeys = keys || {};
 
@@ -1650,7 +1651,7 @@ function renderSettingsHtml(keys, models) {
     }).join('')}
   </div>`;
 
-  return keysCard + rolesCard;
+  return keysCard + renderSearchCard(search) + rolesCard;
 }
 
 function _buildModelOptions(provider, currentModelId) {
@@ -1695,6 +1696,77 @@ function showBanner(role, message, ok) {
   banner.className = `settings-banner ${ok ? 'ok' : 'err'} settings-banner-${role}`;
   banner.textContent = message;
   banner.style.display = '';
+}
+
+function renderSearchCard(search) {
+  const s = search || {};
+  const providers = s.providers || ['wikipedia', 'tavily', 'searxng'];
+  const cur = s.provider || 'wikipedia';
+  const opts = providers.map(p =>
+    `<option value="${escapeHtml(p)}" ${p === cur ? 'selected' : ''}>${escapeHtml(p)}</option>`
+  ).join('');
+  const keyHint = s.tavily_api_key_set ? 'configured — leave blank to keep' : 'tvly-...';
+  return `<div class="card"><h3>Search Provider</h3>
+    <div class="settings-role" data-search="1">
+      <div class="current">Current: <code>${escapeHtml(cur)}</code>
+        &nbsp;<span class="badge badge-${s.source === 'db' ? 'playing' : 'idle'}">source: ${escapeHtml(s.source || 'env')}</span>
+      </div>
+      <div class="settings-row">
+        <select id="search-provider">${opts}</select>
+      </div>
+      <div class="settings-row">
+        <input type="password" id="search-tavily-key" placeholder="Tavily API key (${escapeHtml(keyHint)})">
+      </div>
+      <div class="settings-row">
+        <input type="text" id="search-searxng-url" placeholder="SearXNG base URL" value="${escapeHtml(s.searxng_base_url || '')}">
+      </div>
+      <div class="settings-row">
+        <button onclick="saveSearch()">Save</button>
+        <button onclick="clearSearch()">Reset to default</button>
+      </div>
+      <div id="search-banner" class="settings-banner" style="display:none"></div>
+    </div>
+  </div>`;
+}
+
+function showSearchBanner(message, ok) {
+  const banner = document.getElementById('search-banner');
+  if (!banner) {
+    return;
+  }
+  banner.textContent = message;
+  banner.className = 'settings-banner ' + (ok ? 'ok' : 'err');
+  banner.style.display = 'block';
+}
+
+async function saveSearch() {
+  const provider = document.getElementById('search-provider').value;
+  const tavily = (document.getElementById('search-tavily-key').value || '').trim();
+  const searxng = (document.getElementById('search-searxng-url').value || '').trim();
+  const body = {provider};
+  if (tavily) { body.tavily_api_key = tavily; }
+  if (searxng) { body.searxng_base_url = searxng; }
+  try {
+    await fetchJSON('/api/settings/search', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    showSearchBanner(`Saved: ${provider}`, true);
+    setTimeout(renderSettingsView, 600);
+  } catch (e) {
+    showSearchBanner(e.message, false);
+  }
+}
+
+async function clearSearch() {
+  try {
+    await fetchJSON('/api/settings/search', {method: 'DELETE'});
+    showSearchBanner('Reset to env/default', true);
+    setTimeout(renderSettingsView, 600);
+  } catch (e) {
+    showSearchBanner(e.message, false);
+  }
 }
 
 async function saveModel(role) {

@@ -95,3 +95,30 @@ What future agents must preserve:
 - `prompts/data_miner_prompts.py`, `prompts/data_miner_prompts_ru.py`
 - `cast/npc_generator.py`, `cast/scene_builder.py`, `cast/item_generator.py`
 - `tests/test_search_clients.py`, `tests/test_search_factory.py`, `tests/test_data_miner_search_seam.py`
+
+
+## Update — operator-managed provider via admin settings
+
+**Context.** The initial decision selected the search provider from env
+(`SEARCH_PROVIDER` / `TAVILY_API_KEY` / `SEARXNG_BASE_URL`), which requires a
+restart to change. Operators asked to manage the provider at runtime from the
+admin dashboard, the way per-role model overrides already work.
+
+**Decision.** The provider selection **and** its credentials are now persisted
+in the existing `admin_settings` key/value table under the `search.` key prefix
+(`db/repo_settings_search.SearchSettingsStore`) — no migration. A new-game
+engine build reads them via `engine.search_settings.load_search_override` and
+passes a `search_override` to `create_engine`, which wins over the env defaults
+(any field the override leaves unset falls back to env). Restored games keep the
+provider they started with, mirroring the model-override behaviour. Admin
+endpoints `GET/POST/DELETE /api/settings/search` plus a dashboard card provide
+full management including deletion.
+
+**Secret-at-rest tradeoff.** Unlike the LLM API keys (which stay env-only and
+are never persisted), the operator explicitly chose to store the Tavily key /
+SearXNG URL in the database so they are fully manageable from the dashboard.
+Mitigations: the key is **masked** in the admin view (`GET` returns only
+`tavily_api_key_set: bool`, never the value; the non-secret SearXNG URL is shown
+in clear), selecting a provider whose credential is absent fails with a 400, and
+the value is length-bounded. Future hardening (encryption-at-rest for the
+credential column) is a known follow-up if the threat model tightens.
