@@ -47,10 +47,10 @@ def _name_from_key(stored_key: str) -> str:
 def _validate_field(name: str, setting_value: str) -> None:
     if name not in SEARCH_FIELDS:
         raise ValueError("unknown search field: {0}".format(name))
-    if name == _COL_PROVIDER and setting_value not in ALLOWED_SEARCH_PROVIDERS:
-        raise ValueError("unknown search provider: {0}".format(setting_value))
     if not setting_value or len(setting_value) > _SEARCH_VALUE_MAX_LENGTH:
         raise ValueError("search value must be 1..{0} chars".format(_SEARCH_VALUE_MAX_LENGTH))
+    if name == _COL_PROVIDER and setting_value not in ALLOWED_SEARCH_PROVIDERS:
+        raise ValueError("unknown search provider: {0}".format(setting_value))
 
 
 def _key_in_search():
