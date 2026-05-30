@@ -14,6 +14,7 @@ from defaults.models import (
     ModelConfig,
 )
 from engine.game_engine import GameEngine
+from research.search_factory import create_search_client
 from safety.factory import build_moderator
 
 if TYPE_CHECKING:
@@ -69,6 +70,11 @@ def create_engine(
         PROVIDER_OPENROUTER: cfg.openrouter_api_key,
         PROVIDER_DEEPSEEK: cfg.deepseek_api_key,
     }
+    search_client = create_search_client(
+        cfg.search_provider,
+        tavily_api_key=cfg.tavily_api_key,
+        searxng_base_url=cfg.searxng_base_url,
+    )
     return GameEngine(
         director_model=_apply_temperature(
             _resolve_model("director", cfg.director_model, cfg, overrides),
@@ -91,6 +97,7 @@ def create_engine(
         api_keys=api_keys,
         language=language,
         moderator=build_moderator(cfg),
+        search_client=search_client,
     )
 
 

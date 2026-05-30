@@ -62,6 +62,15 @@ class Config(BaseSettings):
     openrouter_api_key: str | None = None
     deepseek_api_key: str | None = None
 
+    # Search backend for the Data Miner's world research. ``wikipedia`` (the
+    # default) needs no configuration. ``tavily`` requires ``tavily_api_key``;
+    # ``searxng`` requires ``searxng_base_url`` pointing at a self-hosted
+    # instance. Selection is fail-fast: a missing key/URL raises at engine
+    # construction rather than silently falling back to Wikipedia.
+    search_provider: str = "wikipedia"
+    tavily_api_key: str | None = None
+    searxng_base_url: str | None = None
+
     # Model selection per agent role
     director_model: str = _GPT5_4_MINI
     agent_model: str = _GPT5_4_NANO

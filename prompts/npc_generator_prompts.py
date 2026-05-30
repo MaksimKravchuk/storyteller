@@ -22,7 +22,10 @@ NPC_GENERATOR_SYSTEM = PromptTemplate(
                 "You are an NPC Generator for an interactive text quest. "
                 "You create detailed, historically plausible character cards. "
                 "Each NPC should feel like a real person with their own life, "
-                "goals, and limitations — not a plot device."
+                "goals, and limitations — not a plot device. Let each NPC belong "
+                "to the setting's era and social structure: their dress, trade, "
+                "manners, and speech should fit this time and place rather than a "
+                "generic stranger."
             ),
         ),
         PromptSection(

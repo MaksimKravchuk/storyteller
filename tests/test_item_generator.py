@@ -15,7 +15,7 @@ from cast.schemas.item_response import (
 )
 
 _SEND_JSON = "_send_json"
-_SETTING_CAP = 500
+_SETTING_CAP = 1500
 
 
 def _expanded_two() -> ItemListResponse:
@@ -111,10 +111,10 @@ class TestItemGenerator:
         assert description == "torch"
 
     @allure.story("Context truncation")
-    @allure.title("ItemGenerator truncates the setting summary to 500 characters before rendering the system prompt")
+    @allure.title("ItemGenerator truncates the setting summary to 1500 characters before rendering the system prompt")
     @pytest.mark.asyncio
     async def test_setting_summary_truncation(self, game_state) -> None:
-        game_state.setting.summary = "z" * 1200
+        game_state.setting.summary = "z" * 2000
         gen = ItemGenerator(llm_client=MagicMock())
         with patch.object(gen, _SEND_JSON, new=AsyncMock(return_value=_expanded_two())):
             await gen.act(

@@ -5,13 +5,13 @@ from __future__ import annotations
 from cast.data_miner import DataMiner
 from cast.director import Director
 from defaults.models import AI_MODELS, ModelConfig
+from engine import graph_populator, location_init
 from engine.engine_wiring import LLMClients, create_llm_clients, restore_actors, wire_director
-from engine.graph_populator import populate_graph_from_setting
-from engine.location_init import materialise_setting_locations
 from engine.moderation import Moderator, moderate_input, moderate_output
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState, PlayerState
 from models.player_character_input import PlayerCharacterInput
+from research.base_search_client import BaseSearchClient
 from timeline import event as event_mod, event_manager as event_manager_mod
 
 _OPENING_SCENE_PROMPT = (
@@ -78,6 +78,7 @@ class GameEngine:
         api_keys: dict[str, str | None] | None = None,
         language: str = "English",
         moderator: Moderator | None = None,
+        search_client: "BaseSearchClient | None" = None,
     ):
         self._director_model = director_model
         self._agent_model = agent_model
@@ -86,6 +87,7 @@ class GameEngine:
         self._api_keys: dict[str, str | None] = api_keys or {}
         self._language = language
         self._moderator = moderator
+        self._search_client = search_client
 
         self._director: Director | None = None
         self._game_state: GameState | None = None
@@ -117,13 +119,17 @@ class GameEngine:
         """
         clients = self._make_clients()
 
-        data_miner = DataMiner(llm_client=clients.agent, language=self._language)
+        data_miner = DataMiner(
+            llm_client=clients.agent,
+            language=self._language,
+            search_client=self._search_client,
+        )
         setting = await data_miner.execute(setting_description)
 
         self._knowledge_graph = KnowledgeGraph()
-        populate_graph_from_setting(self._knowledge_graph, setting)
+        graph_populator.populate_graph_from_setting(self._knowledge_graph, setting)
         self._game_state = GameState(setting=setting, knowledge_graph=self._knowledge_graph)
-        materialise_setting_locations(self._game_state)
+        location_init.materialise_setting_locations(self._game_state)
         if character is not None:
             _apply_character_to_player(self._game_state.player, character)
         self._event_manager = event_manager_mod.EventManager(
@@ -190,6 +196,7 @@ class GameEngine:
             self._event_manager,
             self._knowledge_graph,
             self._language,
+            search_client=self._search_client,
         )
         restore_actors(self._director, self._game_state, self._knowledge_graph, clients.agent, self._language)
 

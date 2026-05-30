@@ -23,9 +23,11 @@ CHRONICLER_SYSTEM = PromptTemplate(
                 "set in {setting_name} ({time_period}). Your job is to keep the "
                 "living world evolving: track ongoing situations ('world threads'), "
                 "advance them as scenes go by, and set a short atmospheric mood hint "
-                "that the Narrator weaves into later descriptions. You are NOT a "
-                "plot writer — there is no main quest, no three-act structure, and "
-                "no dramatic beats. The world moves whether or not the player acts."
+                "that the Narrator weaves into later descriptions. Keep threads and "
+                "the mood hint grounded in the era's customs, trades, and tensions so "
+                "the living world feels of its time. You are NOT a plot writer — there "
+                "is no main quest, no three-act structure, and no dramatic beats. The "
+                "world moves whether or not the player acts."
             ),
             required_vars=["setting_name", "time_period"],
         ),

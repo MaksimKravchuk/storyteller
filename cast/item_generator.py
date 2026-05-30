@@ -13,7 +13,7 @@ from cast.schemas.item_response import (
 from llm.turn_event_logger import record_turn_event
 from prompts.item_generator_prompts import get_item_generator_prompts
 
-_SETTING_SUMMARY_MAX = 500
+_SETTING_SUMMARY_MAX = 1500
 
 
 class ItemGenerator(BasePerformer):

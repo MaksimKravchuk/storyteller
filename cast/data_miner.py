@@ -13,13 +13,20 @@ from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from llm.base_client import BaseLLMClient
 from loguru import logger
 from models.setting import Setting
-from research.wikipedia_client import WikipediaClient
+from research.base_search_client import BaseSearchClient, SearchResult
 
 # The synthesised ``Setting`` JSON (key persons, events, locations, traditions,
 # technologies, plus prose summary) routinely exceeds the global 2048 default
 # and gets truncated mid-stream, breaking JSON parsing. 8000 leaves headroom
 # for non-trivial real-world settings without paying for unbounded output.
 _RESEARCH_MAX_TOKENS = 8000
+# Number of search hits folded into a single FACT node by ``ensure_fact``.
+_FACT_RESULT_LIMIT = 3
+
+
+def _result_to_dict(hit: SearchResult) -> dict[str, str]:
+    """Flatten a search hit into the JSON shape fed to the synthesis prompt."""
+    return {"title": hit.title, "url": hit.url, "snippet": hit.snippet}
 
 
 class DataMiner(_bpc.BasePerformer):
@@ -31,7 +38,8 @@ class DataMiner(_bpc.BasePerformer):
         self,
         *,
         llm_client: BaseLLMClient,
-        wikipedia_client: WikipediaClient | None = None,
+        wikipedia_client: _dmi.WikipediaClient | None = None,
+        search_client: BaseSearchClient | None = None,
         language: str = "English",
     ):
         prompts = _dmi.resolve_prompts(language)
@@ -41,7 +49,10 @@ class DataMiner(_bpc.BasePerformer):
         )
         self._search_terms_template = prompts.search_terms
         self._research_template = prompts.research
-        self.wikipedia = _dmi.resolve_wikipedia_client(wikipedia_client)
+        self._search = _dmi.resolve_search_client(search_client, wikipedia_client)
+        # Backward-compat alias: the underlying WikipediaClient on the default
+        # backend (``None`` for Tavily/SearXNG, which have no Wikipedia client).
+        self.wikipedia = getattr(self._search, "wikipedia", None)
         self._fact_cache: dict[str, UUID] = {}  # entity name → node UUID
         self._fact_locks: dict[str, asyncio.Lock] = {}  # per-entity asyncio lock
         self.set_context(language=language)
@@ -55,11 +66,8 @@ class DataMiner(_bpc.BasePerformer):
         # Step 1: Ask the LLM what to search for
         search_terms = await self._extract_search_terms(input_data)
 
-        # Step 2: Fetch Wikipedia summaries concurrently
-        summaries = await asyncio.gather(
-            *(self.wikipedia.get_summary(term) for term in search_terms),
-        )
-        raw_articles: dict[str, dict] = dict(zip(search_terms, summaries))
+        # Step 2: Fetch research results for every term concurrently
+        raw_articles = await self._gather_research(search_terms)
 
         # Step 3: Synthesise into a Setting via LLM
         research_prompt = self._research_template.format(
@@ -95,11 +103,14 @@ class DataMiner(_bpc.BasePerformer):
     ) -> KnowledgeNode | None:
         """Look up or create a world-scoped FACT node for ``name``.
 
-        On a cache miss, fetches the Wikipedia summary for ``name`` and writes
-        a new ``KnowledgeNode`` to ``graph`` with ``scope=WORLD`` and
-        ``source=FACT``.  Uses a per-entity ``asyncio.Lock`` so that concurrent
-        callers for the same name deduplicate to exactly one Wikipedia fetch.
-        Returns ``None`` on any failure without raising.
+        On a cache miss, searches the configured backend for ``name`` and
+        writes a new ``KnowledgeNode`` to ``graph`` with ``scope=WORLD`` and
+        ``source=FACT``. The node text is the top result's snippet on the
+        Wikipedia backend (a single encyclopedic extract) or the top three
+        snippets concatenated on a multi-result backend (Tavily, SearXNG).
+        Uses a per-entity ``asyncio.Lock`` so concurrent callers for the same
+        name deduplicate to exactly one fetch. Returns ``None`` on any failure
+        without raising.
         """
         cached = self._fact_cache.get(name)
         if cached is not None:
@@ -112,7 +123,7 @@ class DataMiner(_bpc.BasePerformer):
             try:
                 return await self._fetch_and_store_fact(name, kind, graph)
             except Exception:
-                logger.exception("ensure_fact: failed to fetch Wikipedia summary for {!r}", name)
+                logger.exception("ensure_fact: failed to fetch research summary for {!r}", name)
                 reliability_metrics.record_fallback("data_miner", "ensure_fact")
                 return None
 
@@ -122,19 +133,29 @@ class DataMiner(_bpc.BasePerformer):
         kind: str | None,
         graph: KnowledgeGraph,
     ) -> KnowledgeNode | None:
-        summary = await self.wikipedia.get_summary(name)
-        extract = summary.get("extract", "")
-        if not extract:
-            logger.warning("ensure_fact: empty Wikipedia result for {!r}", name)
+        hits = await self._search.search(name, max_results=_FACT_RESULT_LIMIT)
+        snippets = [hit.snippet for hit in hits[:_FACT_RESULT_LIMIT] if hit.snippet]
+        text = "\n\n".join(snippets)
+        if not text:
+            logger.warning("ensure_fact: empty search result for {!r}", name)
             return None
         node = KnowledgeNode(
-            text=extract,
+            text=text,
             scope=KnowledgeScope.WORLD,
             source=KnowledgeSource.FACT,
             tags=list(filter(None, ["historical_fact", kind])),
         )
         self._fact_cache[name] = graph.add_node(node)
         return node
+
+    async def _gather_research(self, search_terms: list[str]) -> dict[str, list[dict]]:
+        """Search every term concurrently and flatten the hits per term."""
+        searches = [self._search.search(term) for term in search_terms]
+        per_term = await asyncio.gather(*searches)
+        raw: dict[str, list[dict]] = {}
+        for term, hits in zip(search_terms, per_term):
+            raw[term] = [_result_to_dict(hit) for hit in hits]
+        return raw
 
     async def _extract_search_terms(self, description: str) -> list[str]:
         """Ask the LLM to generate Wikipedia search terms."""
