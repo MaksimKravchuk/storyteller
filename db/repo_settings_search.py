@@ -63,9 +63,9 @@ async def read_search(session: AsyncSession) -> dict[str, str]:
     """Return ``{name: value}`` for every stored ``search.*`` setting."""
     stmt = select(tbl.admin_settings.c.key, tbl.admin_settings.c.model_id)
     stmt = stmt.where(_key_in_search())
-    result = await session.execute(stmt)
+    query_result = await session.execute(stmt)
     mapping: dict[str, str] = {}
-    for row in result.mappings().all():
+    for row in query_result.mappings().all():
         mapping[_name_from_key(row[_COL_KEY])] = row[_COL_VALUE]
     return mapping
 
