@@ -105,21 +105,57 @@
   .agent-WorldChronicler { background: #2d3515; color: #c8d55b; }
   .agent-ItemGenerator { background: #15402d; color: #5bd5a8; }
 
-  /* Agent-flow graph */
-  .agent-flow-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  /* Agent-flow graph (n8n-style: HTML nodes layered over an SVG edge canvas) */
+  .agent-flow-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
   .agent-flow-bar label { font-size: 12px; color: #999; }
   .agent-flow-bar select { padding: 6px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 13px; }
-  .agent-flow-hint { font-size: 11px; color: #666; }
-  .agent-flow-canvas { overflow-x: auto; background: #0f1a30; border: 1px solid #0f3460; border-radius: 8px; padding: 8px; }
-  .agent-flow-node { cursor: pointer; }
-  .agent-flow-node rect { rx: 8; stroke: #0f3460; stroke-width: 1.5; }
-  .agent-flow-node:hover rect { stroke: #ffffff; }
-  #agent-flow-detail { margin-top: 12px; }
-  .agent-flow-node text { font-family: -apple-system, sans-serif; }
-  .agent-flow-node .node-name { font-size: 13px; font-weight: 600; }
-  .agent-flow-node .node-sub { font-size: 10px; fill: #1a1a2e; opacity: 0.75; }
-  .agent-flow-edge { stroke: #5b6abf; stroke-width: 1.5; fill: none; opacity: 0.7; }
+  .agent-flow-hint { font-size: 11px; color: #666; flex: 1 1 200px; }
+  .agent-flow-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 11px; color: #aab0c4; margin-bottom: 10px; }
+  .agent-flow-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .agent-flow-legend .sw { width: 18px; height: 14px; border-radius: 4px; display: inline-block; }
+  .agent-flow-legend .sw-llm { background: linear-gradient(135deg,#b57cff,#5b9bd5); }
+  .agent-flow-legend .sw-det { background: #1b2a48; border: 1.5px solid #5bd5c8; }
+  .agent-flow-legend .ln { width: 22px; height: 0; border-top: 2px solid #5b6abf; }
+  .agent-flow-legend .ln-det { border-top: 2px dashed #5bd5c8; }
+
+  .agent-flow-canvas { position: relative; overflow: auto; max-height: 70vh; background:
+    linear-gradient(#0c1426 0 0) padding-box,
+    radial-gradient(circle at center, #16264a 1px, transparent 1px) 0 0 / 22px 22px;
+    background-color: #0c1426; border: 1px solid #0f3460; border-radius: 8px; }
+  .agent-flow-stage { position: relative; }
+  .agent-flow-edges { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
+  .agent-flow-edge { fill: none; stroke: #44508f; stroke-width: 1.6; opacity: 0.85; }
+  .agent-flow-edge--det { stroke: #2f7d77; stroke-dasharray: 5 4; }
+  .agent-flow-edge.hot { stroke: #ffffff; opacity: 1; stroke-width: 2.4; }
   .agent-flow-edge-label { font-size: 10px; fill: #aab0ff; }
+
+  .flow-node { position: absolute; box-sizing: border-box; border-radius: 9px; cursor: pointer;
+    background: #16213e; border: 1px solid #2a3b66; padding: 7px 9px; overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .08s, box-shadow .08s; }
+  .flow-node:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.5); }
+  .flow-node.selected { outline: 2px solid #fff; outline-offset: 1px; }
+  .flow-node.dim { opacity: 0.32; }
+  .flow-node__head { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+  .flow-node__pill { font-size: 8px; font-weight: 700; letter-spacing: .5px; padding: 1px 5px; border-radius: 6px; }
+  .flow-node__icon { font-size: 13px; line-height: 1; }
+  .flow-node__title { font-size: 12.5px; font-weight: 600; color: #f0f2ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flow-node__model { font-size: 9.5px; color: #8a93b8; font-family: ui-monospace, Menlo, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flow-node__out { font-size: 10px; color: #c3c9e0; margin-top: 3px; line-height: 1.25; max-height: 26px; overflow: hidden; }
+  .flow-node__foot { font-size: 9px; color: #6f7aa0; margin-top: 4px; display: flex; justify-content: space-between; gap: 6px; }
+  /* Non-deterministic (LLM) family: warm, agent-coloured left stripe */
+  .flow-node--llm { border-left: 4px solid var(--agent, #8a8fc4); }
+  .flow-node--llm .flow-node__pill { background: var(--agent, #8a8fc4); color: #0f1a30; }
+  /* Deterministic family: cool steel, hard edge, teal accent */
+  .flow-node--det { background: #131f38; border: 1px solid #2c4a66; border-left: 4px solid #5bd5c8; border-radius: 5px; }
+  .flow-node--det .flow-node__pill { background: #0d3b39; color: #5bd5c8; border: 1px solid #2f7d77; }
+  .flow-node--det .flow-node__title { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+  .flow-node--lane { background: #101a30; border: 1px dashed #3a4a72; }
+  .flow-node--lane .flow-node__pill { background: #1b2440; color: #8a93b8; }
+  #agent-flow-detail { margin-top: 12px; }
+  .det-payload { background: #0c1426; border: 1px solid #2c4a66; border-radius: 6px; padding: 10px 12px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #c3c9e0; white-space: pre-wrap; overflow-x: auto; }
+  .det-kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 12px; margin-bottom: 10px; }
+  .det-kv dt { color: #5bd5c8; font-family: ui-monospace, Menlo, monospace; }
+  .det-kv dd { margin: 0; color: #e0e0e0; }
 
   /* Scene view */
   .scene-block { background: #0f1a30; border: 1px solid #0f3460; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
@@ -601,7 +637,18 @@ async function renderSessionModels(el) {
   </div>`;
 }
 
-// ---- Agent-flow graph (read-only visualisation of who calls whom) ----
+// ---- Agent-flow graph (n8n-style per-turn pipeline: LLM vs deterministic nodes) ----
+//
+// Two telemetry streams feed this view, both per-turn:
+//   * /ai-calls     — non-deterministic LLM calls (agent_name, model, parent_agent,
+//                     call_sequence, prompt/response). These form the call tree.
+//   * /turn-events  — deterministic ops (clock_advance, dice_*, hostility_*, item_*).
+//                     Each carries the agent_name that was active when it fired, so we
+//                     attach it as a leaf on that agent's LLM node (or an "Engine" lane
+//                     when no agent owns it).
+// The two streams have independent ordering counters and batch-flushed timestamps, so
+// we do NOT interleave them into one global timeline — the LLM call tree is the skeleton
+// and deterministic events hang off the agent that produced them.
 
 const AGENT_COLORS = {
   Director: '#e94560', Narrator: '#5b9bd5', SceneBuilder: '#5bd58a', Actor: '#b57cff',
@@ -610,24 +657,86 @@ const AGENT_COLORS = {
 };
 function agentColor(name) { return AGENT_COLORS[name] || '#8a8fc4'; }
 
+function _firstLine(s) {
+  if (!s) return '';
+  const t = String(s).trim();
+  const nl = t.indexOf('\n');
+  return nl >= 0 ? t.slice(0, nl) : t;
+}
+function _truncate(s, n) { s = s || ''; return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+function _fmtDur(ms) { return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : ms + 'ms'; }
+function _llmFoot(c) {
+  const tok = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
+  const parts = [];
+  if (tok.length) parts.push(tok.join('+') + ' tok');
+  if (c.duration_ms != null) parts.push(_fmtDur(c.duration_ms));
+  return parts.join(' · ');
+}
+function _fmtVal(v) {
+  if (v == null) return '—';
+  if (Array.isArray(v)) return v.length ? v.join(', ') : '[]';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
+// Per-event-type icon + title + one-line "data produced" summary for deterministic nodes.
+function _detMeta(ev) {
+  const p = ev.payload || {};
+  switch (ev.event_type) {
+    case 'clock_advance': return { icon: '🕐', title: 'Clock advance', summary: _clockSummary(p) };
+    case 'dice_contest': return { icon: '🎲', title: 'Dice contest', summary: `${p.outcome || 'contest'} — actor ${p.actor_roll ?? '?'}+${p.actor_bonus ?? 0} vs ${p.target_roll ?? '?'}+${p.target_bonus ?? 0}` };
+    case 'dice_combat': return { icon: '⚔️', title: 'Dice combat', summary: `${p.outcome || 'combat'} — player ${p.player_roll ?? '?'} vs npc ${p.npc_roll ?? '?'}+${p.npc_bonus ?? 0}` };
+    case 'dice_aggression': return { icon: '⚔️', title: 'Aggression roll', summary: `${p.mood || '?'} — d20 ${p.roll ?? '?'} vs ${p.threshold ?? '?'} → ${p.will_attack ? 'attacks' : 'holds'}` };
+    case 'item_list': return { icon: '📦', title: 'Item expansion', summary: (p.expanded || []).join(', ') || 'items' };
+    case 'item_examine': return { icon: '🔍', title: 'Examine item', summary: p.item_name || 'item' };
+    case 'object_interaction': return { icon: '🛠️', title: 'Object interaction', summary: p.object_name || 'object' };
+    case 'hostility_bump': return { icon: '🔥', title: 'Hostility bump', summary: `${p.npc_name || 'npc'} +${p.severity ?? ''}` };
+    case 'hostility_unknown_severity': return { icon: '🔥', title: 'Hostility (unknown)', summary: `${p.npc_name || 'npc'} ${p.severity ?? ''}` };
+    case 'hostility_mood_downgrade_blocked': return { icon: '🛡️', title: 'Mood floor held', summary: `${p.npc_name || 'npc'}: ${p.attempted_mood || '?'} blocked` };
+    case 'hostility_mood_unknown': return { icon: '❓', title: 'Mood unknown', summary: `${p.npc_name || 'npc'} ${p.attempted_mood || ''}` };
+    case 'hostility_resolve_miss': return { icon: '❓', title: 'Aggro resolve miss', summary: `${(p.targets || []).length} target(s)` };
+    default: return { icon: '⚙', title: ev.event_type, summary: _truncate(JSON.stringify(p), 80) };
+  }
+}
+function _clockSummary(p) {
+  const h = p.hours;
+  const hStr = h == null ? '?' : '+' + (+h).toFixed(2).replace(/\.?0+$/, '') + 'h';
+  const completed = p.completed_events || [];
+  if (completed.length) return `${hStr} · completes ${completed.join(', ')}`;
+  return h ? hStr : 'no time passed';
+}
+
 async function renderAgentFlow(el) {
-  const d = await fetchJSON(`/api/sessions/${currentSessionId}/ai-calls`);
-  const calls = d.ai_calls || [];
-  if (!calls.length) {
-    el.innerHTML = '<div class="empty">No AI calls recorded for this session yet.</div>';
+  const [aiData, evData] = await Promise.all([
+    fetchJSON(`/api/sessions/${currentSessionId}/ai-calls`),
+    fetchJSON(`/api/sessions/${currentSessionId}/turn-events`),
+  ]);
+  const calls = aiData.ai_calls || [];
+  const events = evData.turn_events || [];
+  if (!calls.length && !events.length) {
+    el.innerHTML = '<div class="empty">No AI calls or events recorded for this session yet.</div>';
     return;
   }
-  const turns = [...new Set(calls.map(c => c.turn_number).filter(t => t != null))].sort((a, b) => a - b);
-  window.__agentFlow = { calls, turn: 'all' };
-  const turnOpts = ['<option value="all">All turns</option>']
-    .concat(turns.map(t => `<option value="${t}">Turn ${t}</option>`)).join('');
+  const turns = [...new Set([...calls.map(c => c.turn_number), ...events.map(e => e.turn_number)].filter(t => t != null))]
+    .sort((a, b) => a - b);
+  // Default to the latest turn so the rich per-turn pipeline is what loads first.
+  const defaultTurn = turns.length ? String(turns[turns.length - 1]) : 'all';
+  window.__agentFlow = { calls, events, turn: defaultTurn, nodes: [] };
+  const turnOpts = ['<option value="all">All turns (overview)</option>']
+    .concat(turns.map(t => `<option value="${t}"${String(t) === defaultTurn ? ' selected' : ''}>Turn ${t}</option>`)).join('');
   el.innerHTML = `
     <div class="card">
-      <h3>Agent call flow</h3>
+      <h3>Agent flow</h3>
       <div class="agent-flow-bar">
         <label for="agent-flow-turn">Show</label>
         <select id="agent-flow-turn" onchange="changeAgentFlowTurn(this.value)">${turnOpts}</select>
-        <span class="agent-flow-hint">Directed graph of observed agent → agent calls (from telemetry, read-only). Edge labels = call counts. Click a node to inspect its prompts &amp; responses.</span>
+        <span class="agent-flow-hint">Pick a turn to trace its pipeline left→right. Each node shows the data it produced — click to inspect. "All turns" shows call counts across the session.</span>
+      </div>
+      <div class="agent-flow-legend">
+        <span class="lg"><span class="sw sw-llm"></span> LLM node — non-deterministic</span>
+        <span class="lg"><span class="sw sw-det"></span> Deterministic node — clock / dice / rules</span>
+        <span class="lg"><span class="ln"></span> agent call</span>
+        <span class="lg"><span class="ln ln-det"></span> deterministic op</span>
       </div>
       <div class="agent-flow-canvas" id="agent-flow-graph"></div>
       <div id="agent-flow-detail"></div>
@@ -640,51 +749,129 @@ function changeAgentFlowTurn(value) {
   drawAgentFlow();
 }
 
-function _aggregateAgentFlow(calls) {
-  const nodes = new Map();
-  const edges = new Map();
-  for (const c of calls) {
-    const node = nodes.get(c.agent_name) || { name: c.agent_name, count: 0, models: new Set() };
-    node.count += 1;
-    if (c.model) node.models.add(c.model);
-    nodes.set(c.agent_name, node);
-    if (c.parent_agent) {
-      if (!nodes.has(c.parent_agent)) nodes.set(c.parent_agent, { name: c.parent_agent, count: 0, models: new Set() });
-      const key = `${c.parent_agent} ${c.agent_name}`;
-      edges.set(key, (edges.get(key) || 0) + 1);
+// Build the per-turn graph: LLM call tree + deterministic events as leaves on their agent.
+function _buildTurnGraph(calls, events) {
+  const nodes = [];
+  const edges = [];
+  const lastLlmByAgent = new Map();  // agent_name -> most recent LLM node this turn
+
+  [...calls].sort((a, b) => (a.call_sequence ?? 0) - (b.call_sequence ?? 0)).forEach((c, i) => {
+    const seq = c.call_sequence ?? i;
+    const node = {
+      id: `llm-${i}`, kind: 'llm', agent: c.agent_name, color: agentColor(c.agent_name),
+      title: c.agent_name, model: c.model || '',
+      out: _truncate(_firstLine(c.response_content), 90), foot: _llmFoot(c),
+      order: seq, call: c,
+    };
+    nodes.push(node);
+    // Attach to the most recent earlier LLM node from the parent agent (call tree).
+    if (c.parent_agent && lastLlmByAgent.has(c.parent_agent)) {
+      edges.push({ from: lastLlmByAgent.get(c.parent_agent).id, to: node.id, kind: 'llm' });
     }
-  }
+    lastLlmByAgent.set(c.agent_name, node);
+  });
+
+  const laneByAgent = new Map();
+  [...events].sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)).forEach((ev, i) => {
+    if (ev.event_type === 'reliability_snapshot') return;  // turn-level telemetry, not a pipeline node
+    const meta = _detMeta(ev);
+    const node = {
+      id: `det-${i}`, kind: 'det', agent: ev.agent_name || 'Engine', icon: meta.icon,
+      title: meta.title, out: _truncate(meta.summary, 90),
+      foot: `deterministic · #${ev.sequence ?? i}`, order: 1000 + (ev.sequence ?? i), event: ev,
+    };
+    nodes.push(node);
+    let host = ev.agent_name ? lastLlmByAgent.get(ev.agent_name) : null;
+    if (!host) {  // no owning LLM call — host on a synthetic deterministic lane
+      const laneKey = ev.agent_name || 'Engine';
+      host = laneByAgent.get(laneKey);
+      if (!host) {
+        // Synthetic index id (never embed agent_name in the id — it reaches onclick/data-id raw).
+        host = { id: `lane-${laneByAgent.size}`, kind: 'lane', agent: laneKey, icon: '⚙',
+          title: laneKey, out: 'deterministic engine ops', foot: 'lane', order: -1, events: [] };
+        nodes.push(host);
+        laneByAgent.set(laneKey, host);
+      }
+      host.events.push(ev);
+    }
+    edges.push({ from: host.id, to: node.id, kind: 'det' });
+  });
   return { nodes, edges };
 }
 
-function _layoutDepths(nodes, edges) {
-  // BFS depth from roots. A visited-set keeps cycles/self-edges finite and
-  // stops them from inflating every column (longest-path relaxation diverges).
-  const children = new Map();
-  const indegree = new Map();
-  for (const name of nodes.keys()) { children.set(name, []); indegree.set(name, 0); }
-  for (const key of edges.keys()) {
-    const [parent, child] = key.split(' ');
-    if (parent === child) continue;  // ignore self-edges for layering
-    children.get(parent).push(child);
-    indegree.set(child, indegree.get(child) + 1);
-  }
-  let roots = [...indegree.keys()].filter(name => indegree.get(name) === 0);
-  if (!roots.length) {  // pure cycle with no external entry: seed with the busiest node
-    roots = [[...nodes.values()].sort((a, b) => b.count - a.count)[0].name];
-  }
-  const depth = new Map();
-  const queue = roots.map(name => { depth.set(name, 0); return name; });
-  while (queue.length) {
-    const name = queue.shift();
-    for (const child of children.get(name)) {
-      if (!depth.has(child)) { depth.set(child, depth.get(name) + 1); queue.push(child); }
+// Build the all-turns overview: one node per agent with call counts, weighted edges.
+function _buildAggregateGraph(calls) {
+  const agents = new Map();
+  const weights = new Map();
+  let i = 0;
+  // Synthetic index ids (ag-0, ag-1, …) so agent_name never reaches onclick/data-id raw.
+  const ensure = name => {
+    if (!agents.has(name)) { agents.set(name, { count: 0, models: new Set(), order: i, id: `ag-${i}` }); i += 1; }
+    return agents.get(name);
+  };
+  for (const c of calls) {
+    const a = ensure(c.agent_name);
+    a.count += 1;
+    if (c.model) a.models.add(c.model);
+    if (c.parent_agent) {
+      ensure(c.parent_agent);
+      const key = `${c.parent_agent}\u0001${c.agent_name}`;
+      weights.set(key, (weights.get(key) || 0) + 1);
     }
   }
-  for (const name of nodes.keys()) {  // disconnected node lands in column 0
-    if (!depth.has(name)) depth.set(name, 0);
+  const nodes = [...agents.entries()].map(([name, a]) => ({
+    id: a.id, kind: 'llm', agent: name, color: agentColor(name), title: name,
+    model: [...a.models].join(', '), out: '', foot: `${a.count} call${a.count === 1 ? '' : 's'}`,
+    order: a.order, aggAgent: name,
+  }));
+  const edges = [...weights.entries()].map(([key, w]) => {
+    const [parent, child] = key.split('\u0001');
+    return { from: agents.get(parent).id, to: agents.get(child).id, kind: 'llm', weight: w };
+  });
+  return { nodes, edges };
+}
+
+// Layered left→right layout: BFS depth from roots, stack rows within each column.
+function _layoutFlow(nodes, edges) {
+  const ids = new Set(nodes.map(n => n.id));
+  const children = new Map(nodes.map(n => [n.id, []]));
+  const indeg = new Map(nodes.map(n => [n.id, 0]));
+  for (const e of edges) {
+    if (e.from === e.to || !ids.has(e.from) || !ids.has(e.to)) continue;
+    children.get(e.from).push(e.to);
+    indeg.set(e.to, indeg.get(e.to) + 1);
   }
-  return depth;
+  let roots = nodes.filter(n => indeg.get(n.id) === 0).map(n => n.id);
+  if (!roots.length && nodes.length) roots = [nodes[0].id];
+  const depth = new Map();
+  const queue = [...roots];
+  roots.forEach(r => depth.set(r, 0));
+  while (queue.length) {
+    const id = queue.shift();
+    for (const child of children.get(id) || []) {
+      if (!depth.has(child)) { depth.set(child, depth.get(id) + 1); queue.push(child); }
+    }
+  }
+  const columns = new Map();
+  for (const n of nodes) {
+    const d = depth.has(n.id) ? depth.get(n.id) : 0;
+    if (!columns.has(d)) columns.set(d, []);
+    columns.get(d).push(n);
+  }
+  const NODE_W = 196, NODE_H = 82, COL_W = 256, ROW_GAP = 18, PAD = 28;
+  let maxRows = 0;
+  const maxDepth = Math.max(0, ...columns.keys());
+  for (const [d, list] of columns) {
+    list.sort((a, b) => a.order - b.order);
+    maxRows = Math.max(maxRows, list.length);
+    list.forEach((n, row) => {
+      n.x = PAD + d * COL_W; n.y = PAD + row * (NODE_H + ROW_GAP); n.w = NODE_W; n.h = NODE_H;
+    });
+  }
+  return {
+    width: PAD * 2 + maxDepth * COL_W + NODE_W,
+    height: PAD * 2 + Math.max(maxRows, 1) * NODE_H + Math.max(maxRows - 1, 0) * ROW_GAP,
+  };
 }
 
 function drawAgentFlow() {
@@ -692,91 +879,115 @@ function drawAgentFlow() {
   if (!container || !window.__agentFlow) return;
   const detail = document.getElementById('agent-flow-detail');
   if (detail) detail.innerHTML = '';  // reset drill-down when the turn filter changes
-  const { calls, turn } = window.__agentFlow;
-  const filtered = turn === 'all' ? calls : calls.filter(c => String(c.turn_number) === String(turn));
-  if (!filtered.length) {
-    container.innerHTML = '<div class="empty">No AI calls for this turn.</div>';
-    return;
+  const { calls, events, turn } = window.__agentFlow;
+  let graph;
+  if (turn === 'all') {
+    graph = _buildAggregateGraph(calls);
+    if (!graph.nodes.length) { container.innerHTML = '<div class="empty">No AI calls recorded yet.</div>'; return; }
+  } else {
+    const tc = calls.filter(c => String(c.turn_number) === String(turn));
+    const te = events.filter(e => String(e.turn_number) === String(turn));
+    if (!tc.length && !te.length) { container.innerHTML = '<div class="empty">No activity recorded for this turn.</div>'; return; }
+    graph = _buildTurnGraph(tc, te);
   }
-  const { nodes, edges } = _aggregateAgentFlow(filtered);
-  const depth = _layoutDepths(nodes, edges);
-
-  // Group nodes into columns by depth, lay out rows within each column.
-  const columns = new Map();
-  for (const name of nodes.keys()) {
-    const dep = depth.get(name);
-    if (!columns.has(dep)) columns.set(dep, []);
-    columns.get(dep).push(name);
-  }
-  const COL_W = 230, NODE_W = 160, NODE_H = 52, ROW_GAP = 28, PAD = 24;
-  const pos = new Map();
-  let maxRows = 0;
-  for (const [dep, names] of columns) {
-    names.sort();
-    maxRows = Math.max(maxRows, names.length);
-    names.forEach((name, row) => {
-      pos.set(name, { x: PAD + dep * COL_W, y: PAD + row * (NODE_H + ROW_GAP) });
-    });
-  }
-  const width = PAD * 2 + (columns.size - 1) * COL_W + NODE_W;
-  const height = PAD * 2 + Math.max(maxRows, 1) * NODE_H + Math.max(maxRows - 1, 0) * ROW_GAP;
-
-  const edgeSvg = [...edges.entries()].map(([key, weight]) => {
-    const [parent, child] = key.split(' ');
-    const a = pos.get(parent), b = pos.get(child);
-    if (!a || !b) return '';
-    const x1 = a.x + NODE_W, y1 = a.y + NODE_H / 2;
-    const x2 = b.x, y2 = b.y + NODE_H / 2;
-    const mx = (x1 + x2) / 2;
-    const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
-    return `<path class="agent-flow-edge" d="${path}" marker-end="url(#af-arrow)"/>
-      <text class="agent-flow-edge-label" x="${mx}" y="${(y1 + y2) / 2 - 4}" text-anchor="middle">${weight}</text>`;
-  }).join('');
-
-  const nodeSvg = [...nodes.values()].map(n => {
-    const p = pos.get(n.name);
-    const models = [...n.models].join(', ');
-    const sub = `${n.count} call${n.count === 1 ? '' : 's'}`;
-    return `<g class="agent-flow-node" data-agent="${escapeHtml(n.name)}" transform="translate(${p.x},${p.y})" onclick="selectAgentNode('${escapeHtml(n.name)}')">
-      <title>${escapeHtml(n.name)}\n${sub}\n${escapeHtml(models)}\nClick to inspect prompts &amp; responses</title>
-      <rect width="${NODE_W}" height="${NODE_H}" rx="8" fill="${agentColor(n.name)}"/>
-      <text class="node-name" x="${NODE_W / 2}" y="22" text-anchor="middle" fill="#0f1a30">${escapeHtml(n.name)}</text>
-      <text class="node-sub" x="${NODE_W / 2}" y="38" text-anchor="middle">${sub}</text>
-    </g>`;
-  }).join('');
-
-  container.innerHTML = `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <marker id="af-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-          <path d="M0,0 L8,4 L0,8 Z" fill="#5b6abf"/>
-        </marker>
-      </defs>
-      ${edgeSvg}
-      ${nodeSvg}
-    </svg>`;
+  const { width, height } = _layoutFlow(graph.nodes, graph.edges);
+  window.__agentFlow.nodes = graph.nodes;
+  _paintFlow(container, graph, width, height);
 }
 
-function selectAgentNode(name) {
-  if (!window.__agentFlow) return;
-  // Highlight the chosen node, dim the rest.
-  document.querySelectorAll('#agent-flow-graph .agent-flow-node rect').forEach(r => {
-    const selected = r.parentNode.getAttribute('data-agent') === name;
-    r.setAttribute('stroke', selected ? '#ffffff' : '#0f3460');
-    r.setAttribute('stroke-width', selected ? '3' : '1.5');
-  });
-  const { calls, turn } = window.__agentFlow;
-  const matching = calls.filter(c =>
-    c.agent_name === name && (turn === 'all' || String(c.turn_number) === String(turn))
-  );
-  const turnNum = turn === 'all' ? null : Number(turn);
-  const scope = turn === 'all' ? 'all turns' : `turn ${turn}`;
-  const panel = document.getElementById('agent-flow-detail');
-  panel.innerHTML = `
-    <div class="card">
-      <h3>${escapeHtml(name)} — ${matching.length} call${matching.length === 1 ? '' : 's'} (${scope})</h3>
-      ${renderAiCallEntries(matching, turnNum) || '<div class="empty">No calls for this agent in the selected scope.</div>'}
+function _paintFlow(container, graph, width, height) {
+  const byId = new Map(graph.nodes.map(n => [n.id, n]));
+  const edgeSvg = graph.edges.map(e => {
+    const a = byId.get(e.from), b = byId.get(e.to);
+    if (!a || !b || a.x == null || b.x == null) return '';
+    const x1 = a.x + a.w, y1 = a.y + a.h / 2, x2 = b.x, y2 = b.y + b.h / 2, mx = (x1 + x2) / 2;
+    const cls = e.kind === 'det' ? 'agent-flow-edge agent-flow-edge--det' : 'agent-flow-edge';
+    const path = `<path class="${cls}" data-from="${e.from}" data-to="${e.to}" d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" marker-end="url(#af-arrow)"/>`;
+    const label = e.weight ? `<text class="agent-flow-edge-label" x="${mx}" y="${(y1 + y2) / 2 - 4}" text-anchor="middle">${e.weight}</text>` : '';
+    return path + label;
+  }).join('');
+  const nodesHtml = graph.nodes.map(_flowNodeHtml).join('');
+  container.innerHTML = `
+    <div class="agent-flow-stage" style="width:${width}px;height:${height}px">
+      <svg class="agent-flow-edges" width="${width}" height="${height}">
+        <defs><marker id="af-arrow" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+          <path d="M0,0 L9,4.5 L0,9 Z" fill="#5b6abf"/></marker></defs>
+        ${edgeSvg}
+      </svg>
+      ${nodesHtml}
     </div>`;
+}
+
+function _flowNodeHtml(n) {
+  const style = `left:${n.x}px;top:${n.y}px;width:${n.w}px;min-height:${n.h}px;--agent:${n.color || '#8a8fc4'}`;
+  const out = n.out ? `<div class="flow-node__out">${escapeHtml(n.out)}</div>` : '';
+  if (n.kind === 'llm') {
+    return `<div class="flow-node flow-node--llm" data-id="${n.id}" style="${style}" onclick="selectFlowNode('${n.id}')">
+      <div class="flow-node__head"><span class="flow-node__pill">LLM</span><span class="flow-node__icon">✨</span><span class="flow-node__title">${escapeHtml(n.title)}</span></div>
+      ${n.model ? `<div class="flow-node__model">${escapeHtml(n.model)}</div>` : ''}
+      ${out}
+      <div class="flow-node__foot"><span>${escapeHtml(n.foot || '')}</span></div>
+    </div>`;
+  }
+  if (n.kind === 'lane') {
+    return `<div class="flow-node flow-node--lane" data-id="${n.id}" style="${style}" onclick="selectFlowNode('${n.id}')">
+      <div class="flow-node__head"><span class="flow-node__pill">LANE</span><span class="flow-node__icon">${n.icon || '⚙'}</span><span class="flow-node__title">${escapeHtml(n.title)}</span></div>
+      ${out}
+      <div class="flow-node__foot"><span>${(n.events || []).length} op${(n.events || []).length === 1 ? '' : 's'}</span></div>
+    </div>`;
+  }
+  return `<div class="flow-node flow-node--det" data-id="${n.id}" style="${style}" onclick="selectFlowNode('${n.id}')">
+    <div class="flow-node__head"><span class="flow-node__pill">DET</span><span class="flow-node__icon">${n.icon || '⚙'}</span><span class="flow-node__title">${escapeHtml(n.title)}</span></div>
+    ${out}
+    <div class="flow-node__foot"><span>${escapeHtml(n.foot || '')}</span></div>
+  </div>`;
+}
+
+function selectFlowNode(id) {
+  if (!window.__agentFlow) return;
+  document.querySelectorAll('#agent-flow-graph .flow-node').forEach(el => {
+    const sel = el.getAttribute('data-id') === id;
+    el.classList.toggle('selected', sel);
+    el.classList.toggle('dim', !sel);
+  });
+  document.querySelectorAll('#agent-flow-graph .agent-flow-edge').forEach(p => {
+    const hot = p.getAttribute('data-from') === id || p.getAttribute('data-to') === id;
+    p.classList.toggle('hot', hot);
+  });
+  const node = (window.__agentFlow.nodes || []).find(n => n.id === id);
+  const panel = document.getElementById('agent-flow-detail');
+  if (panel) panel.innerHTML = node ? _renderFlowDetail(node) : '';
+}
+
+function _renderFlowDetail(node) {
+  if (node.kind === 'det') return _detDetailCard(node.event);
+  if (node.kind === 'lane') {
+    const evs = node.events || [];
+    const body = evs.map(_detDetailCard).join('') || '<div class="empty">No events.</div>';
+    return `<div class="card"><h3>${escapeHtml(node.title)} — ${evs.length} deterministic op${evs.length === 1 ? '' : 's'}</h3>${body}</div>`;
+  }
+  if (node.aggAgent) {
+    const matching = (window.__agentFlow.calls || []).filter(c => c.agent_name === node.aggAgent);
+    return `<div class="card"><h3>${escapeHtml(node.aggAgent)} — ${matching.length} call${matching.length === 1 ? '' : 's'} (all turns)</h3>
+      ${renderAiCallEntries(matching, null) || '<div class="empty">No calls.</div>'}</div>`;
+  }
+  const c = node.call;
+  const scope = c.turn_number != null ? `turn ${c.turn_number}` : 'setup';
+  return `<div class="card"><h3>${escapeHtml(node.title)} — call #${c.call_sequence ?? ''} (${scope})</h3>
+    ${renderAiCallEntries([c], c.turn_number)}</div>`;
+}
+
+function _detDetailCard(ev) {
+  const meta = _detMeta(ev);
+  const p = ev.payload || {};
+  const rows = Object.entries(p).map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(_fmtVal(v))}</dd>`).join('');
+  const origin = ev.agent_name ? `emitted by ${escapeHtml(ev.agent_name)} · ` : '';
+  return `<div class="card">
+    <h3>${meta.icon} ${escapeHtml(meta.title)} <span style="color:#5bd5c8;font-size:12px;font-weight:400;">· deterministic</span></h3>
+    <div style="font-size:12px;color:#8a93b8;margin-bottom:8px;">${origin}seq #${ev.sequence ?? ''}</div>
+    ${rows ? `<dl class="det-kv">${rows}</dl>` : ''}
+    <div class="det-payload">${escapeHtml(JSON.stringify(p, null, 2))}</div>
+  </div>`;
 }
 
 function switchTab(tab) { currentTab = tab; renderTab(); }

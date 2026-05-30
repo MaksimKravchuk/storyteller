@@ -16,6 +16,7 @@ from cast.npc_turn import NPCTurnResolver
 from cast.schemas.action_plan import ClarificationRequest, ExplorePlan, WaitPlan
 from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
+from llm.turn_event_logger import record_turn_event
 from models import game_state as gs_mod
 from prompts.director_prompts import get_director_prompts
 from timeline import event as event_mod, event_manager as event_manager_mod
@@ -160,7 +161,19 @@ class Director(BasePerformer):
         time_override: float | None,
     ) -> list[event_mod.GameEvent]:
         """Advance the clock, run the off-scene NPC goal tick, and return completed events."""
+        clock_before = self._game_state.game_clock
         completed, hours_advanced = self._events.advance_and_resolve(action_type, time_override)
+        record_turn_event(
+            "clock_advance",
+            {
+                "action_type": action_type,
+                "hours": hours_advanced,
+                "clock_before": clock_before,
+                "clock_after": self._game_state.game_clock,
+                "completed_events": [event.name for event in completed],
+            },
+            agent_name="Director",
+        )
         await self._background_ticker.tick(hours_advanced)
         return completed
 
