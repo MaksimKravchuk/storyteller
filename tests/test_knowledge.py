@@ -28,12 +28,24 @@ from tests._uuid_helpers import make_uuid
 
 _NPC_1 = make_uuid("npc-1")
 _NPC_2 = make_uuid("npc-2")
+_NPC_3 = make_uuid("npc-3")
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 _POLITICS = "politics"
+
+
+def _local_character(name: str, npc_id: UUID, location_id: UUID) -> Character:
+    npc = Character(
+        name=name,
+        knowledge_scope="local",
+        attributes={"education": 10},
+        location_id=location_id,
+    )
+    npc.uuid = npc_id
+    return npc
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +266,26 @@ class TestKnowledgeGraphEdges:
         # The stored TOLD_BY must survive the round-trip — a fallback to a
         # different default (e.g. WITNESSED or None) would corrupt it.
         assert edges == [(n2.uuid, EdgeType.TOLD_BY)]
+
+    @allure.story("Edge metadata")
+    @allure.title("add_edge treats edge_type as reserved even if metadata contains the same key")
+    def test_add_edge_metadata_cannot_override_edge_type(self, empty_graph):
+        n1 = KnowledgeNode(text="A")
+        n2 = KnowledgeNode(text="B")
+        empty_graph.add_node(n1)
+        empty_graph.add_node(n2)
+        empty_graph.add_edge(
+            n1.uuid,
+            n2.uuid,
+            EdgeType.TOLD_BY,
+            metadata={
+                "edge_type": EdgeType.WITNESSED,
+                "recipient_id": _NPC_1,
+            },
+        )
+
+        assert empty_graph.get_edges_from(n1.uuid) == [(n2.uuid, EdgeType.TOLD_BY)]
+        assert empty_graph.get_edge_metadata(n1.uuid, n2.uuid) == {"recipient_id": _NPC_1}
 
     @allure.story("Edge CRUD")
     @allure.title("get_edges_from falls back to WITNESSED for an edge stored without an edge_type")
@@ -570,6 +602,136 @@ class TestQueryEnginePersonalMemoryInclusion:
         # The personal memory is appended exactly once (the "not already in
         # the result" guard must keep it, and not re-add scope-matched nodes).
         assert matched_uuids.count(memory.uuid) == 1
+
+
+@allure.epic("Knowledge Graph")
+@allure.feature("Knowledge query")
+class TestRecipientOwnedHearsayVisibility:
+    @allure.story("HEARSAY ownership")
+    @allure.title("Recipient-owned HEARSAY is visible only to the recipient NPC")
+    def test_recipient_owned_hearsay_visible_only_to_recipient_context(self, empty_graph):
+        location_id = make_uuid("shared-location")
+        hearsay = KnowledgeNode(
+            text="Only Livia heard the guard's warning.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            location_id=location_id,
+        )
+        empty_graph.add_node(hearsay)
+        empty_graph.add_edge(
+            hearsay.uuid,
+            make_uuid("rumor-source"),
+            EdgeType.TOLD_BY,
+            metadata={"recipient_id": _NPC_1},
+        )
+        engine = KnowledgeQueryEngine(empty_graph)
+
+        recipient_context = engine.get_context_for_npc(_local_character("Livia", _NPC_1, location_id))
+        nonrecipient_context = engine.get_context_for_npc(_local_character("Claudia", _NPC_2, location_id))
+
+        assert hearsay.text in recipient_context
+        assert hearsay.text not in nonrecipient_context
+
+    @allure.story("HEARSAY ownership")
+    @allure.title("A HEARSAY node with several recipient edges is visible to every matching recipient")
+    def test_hearsay_with_multiple_recipient_edges_is_visible_to_any_matching_recipient(self, empty_graph):
+        location_id = make_uuid("shared-location")
+        hearsay = KnowledgeNode(
+            text="Livia and Claudia both heard the guard's warning.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            location_id=location_id,
+        )
+        empty_graph.add_node(hearsay)
+        empty_graph.add_edge(
+            hearsay.uuid,
+            make_uuid("rumor-source-livia"),
+            EdgeType.TOLD_BY,
+            metadata={"recipient_id": _NPC_1},
+        )
+        empty_graph.add_edge(
+            hearsay.uuid,
+            make_uuid("rumor-source-claudia"),
+            EdgeType.TOLD_BY,
+            metadata={"recipient_id": _NPC_2},
+        )
+        engine = KnowledgeQueryEngine(empty_graph)
+
+        first_context = engine.get_context_for_npc(_local_character("Livia", _NPC_1, location_id))
+        second_context = engine.get_context_for_npc(_local_character("Claudia", _NPC_2, location_id))
+        third_context = engine.get_context_for_npc(_local_character("Julia", _NPC_3, location_id))
+
+        assert hearsay.text in first_context
+        assert hearsay.text in second_context
+        assert hearsay.text not in third_context
+
+    @allure.story("HEARSAY ownership")
+    @allure.title("Legacy HEARSAY without recipient_id remains location-visible")
+    def test_legacy_hearsay_without_recipient_id_remains_location_visible(self, empty_graph):
+        location_id = make_uuid("shared-location")
+        hearsay = KnowledgeNode(
+            text="Everyone at the tavern heard the old rumor.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            location_id=location_id,
+        )
+        empty_graph.add_node(hearsay)
+        empty_graph.add_edge(hearsay.uuid, make_uuid("rumor-source"), EdgeType.TOLD_BY)
+        engine = KnowledgeQueryEngine(empty_graph)
+
+        first_context = engine.get_context_for_npc(_local_character("Livia", _NPC_1, location_id))
+        second_context = engine.get_context_for_npc(_local_character("Claudia", _NPC_2, location_id))
+
+        assert hearsay.text in first_context
+        assert hearsay.text in second_context
+
+    @allure.story("HEARSAY ownership")
+    @allure.title("Generic location queries keep recipient-owned HEARSAY visible")
+    def test_generic_location_query_keeps_recipient_owned_hearsay_visible(self, empty_graph):
+        location_id = make_uuid("shared-location")
+        hearsay = KnowledgeNode(
+            text="Livia heard the guard's warning.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            location_id=location_id,
+        )
+        empty_graph.add_node(hearsay)
+        empty_graph.add_edge(
+            hearsay.uuid,
+            make_uuid("rumor-source"),
+            EdgeType.TOLD_BY,
+            metadata={"recipient_id": _NPC_1},
+        )
+
+        matched = KnowledgeQueryEngine(empty_graph).query(
+            KnowledgeFilter(max_scope=KnowledgeScope.LOCAL, location_id=location_id),
+        )
+
+        assert [node.uuid for node in matched] == [hearsay.uuid]
+
+    @allure.story("HEARSAY ownership")
+    @allure.title("Malformed recipient metadata does not match an NPC-scoped query")
+    def test_malformed_recipient_metadata_does_not_match_npc_query(self, empty_graph):
+        location_id = make_uuid("shared-location")
+        hearsay = KnowledgeNode(
+            text="A malformed recipient id should not leak this rumor.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            location_id=location_id,
+        )
+        empty_graph.add_node(hearsay)
+        empty_graph.add_edge(
+            hearsay.uuid,
+            make_uuid("rumor-source"),
+            EdgeType.TOLD_BY,
+            metadata={"recipient_id": "not-a-uuid"},
+        )
+
+        context = KnowledgeQueryEngine(empty_graph).get_context_for_npc(
+            _local_character("Livia", _NPC_1, location_id),
+        )
+
+        assert hearsay.text not in context
 
 
 @allure.epic("Memory & Persistence")

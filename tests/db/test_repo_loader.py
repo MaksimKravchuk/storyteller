@@ -8,7 +8,10 @@ import sqlalchemy
 
 from db import tables as tbl
 from db.repo_loader_helpers import load_knowledge_graph
-from knowledge.node import EdgeType, KnowledgeScope
+from knowledge.graph import KnowledgeGraph
+from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge.query import KnowledgeQueryEngine
+from tests._uuid_helpers import make_uuid
 from tests.db.conftest import GameRepository
 
 pytestmark = pytest.mark.db
@@ -115,3 +118,120 @@ class TestLoadKnowledgeGraph:
         assert EdgeType.TOLD_BY in edge_types
         assert EdgeType.TOLD_BY in edge_types
         assert EdgeType.WITNESSED in edge_types
+
+    @allure.story("Knowledge graph")
+    @allure.title("load reconstructs actor-root WITNESSED edges into the personal-memory index")
+    @pytest.mark.asyncio
+    async def test_actor_root_witnessed_edge_rebuilds_memory_index_after_reload(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, _kg, events = populated_game_state
+        npc_id = next(iter(game_state.npcs))
+        kg = KnowledgeGraph()
+        kg.register_actor_node(npc_id, label="Guard")
+        memory = KnowledgeNode(
+            text="The guard saw the player hide a blade.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            canon=CanonSource.SESSION,
+        )
+        kg.add_node(memory)
+        kg.add_edge(npc_id, memory.uuid, EdgeType.WITNESSED)
+        kg.flag_edge(npc_id, memory.uuid, "propagated_on_departure")
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        _loaded_state, loaded_kg, _loaded_events = loaded
+        memories = KnowledgeQueryEngine(loaded_kg).get_memories_held_by(npc_id)
+        assert [node.text for node in memories] == [memory.text]
+        assert loaded_kg.edge_has_flag(npc_id, memory.uuid, "propagated_on_departure") is True
+
+    @allure.story("Knowledge graph")
+    @allure.title("load preserves TOLD_BY recipient metadata for HEARSAY visibility")
+    @pytest.mark.asyncio
+    async def test_told_by_metadata_preserves_recipient_visibility_after_reload(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, _kg, events = populated_game_state
+        location_id = next(iter(game_state.locations))
+        recipient_id, nonrecipient_id = list(game_state.npcs)[:2]
+        game_state.npcs[recipient_id].location_id = location_id
+        game_state.npcs[nonrecipient_id].location_id = location_id
+        game_state.npcs[recipient_id].knowledge_scope = "local"
+        game_state.npcs[nonrecipient_id].knowledge_scope = "local"
+        game_state.npcs[recipient_id].attributes["education"] = 10
+        game_state.npcs[nonrecipient_id].attributes["education"] = 10
+        kg = KnowledgeGraph()
+        hearsay = KnowledgeNode(
+            text="Only the recipient heard about the hidden passage.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            canon=CanonSource.SESSION,
+            location_id=location_id,
+        )
+        kg.add_node(hearsay)
+        kg.add_edge(
+            hearsay.uuid,
+            make_uuid("rumor-source"),
+            EdgeType.TOLD_BY,
+            metadata={"recipient_id": recipient_id},
+        )
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        loaded_state, loaded_kg, _loaded_events = loaded
+        engine = KnowledgeQueryEngine(loaded_kg)
+        recipient_context = engine.get_context_for_npc(loaded_state.npcs[recipient_id])
+        nonrecipient_context = engine.get_context_for_npc(loaded_state.npcs[nonrecipient_id])
+        assert hearsay.text in recipient_context
+        assert hearsay.text not in nonrecipient_context
+
+    @allure.story("Knowledge graph")
+    @allure.title("load keeps legacy unowned HEARSAY location-visible after save/reload")
+    @pytest.mark.asyncio
+    async def test_legacy_told_by_without_recipient_stays_location_visible_after_reload(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, _kg, events = populated_game_state
+        location_id = next(iter(game_state.locations))
+        first_npc_id, second_npc_id = list(game_state.npcs)[:2]
+        game_state.npcs[first_npc_id].location_id = location_id
+        game_state.npcs[second_npc_id].location_id = location_id
+        game_state.npcs[first_npc_id].knowledge_scope = "local"
+        game_state.npcs[second_npc_id].knowledge_scope = "local"
+        game_state.npcs[first_npc_id].attributes["education"] = 10
+        game_state.npcs[second_npc_id].attributes["education"] = 10
+        kg = KnowledgeGraph()
+        hearsay = KnowledgeNode(
+            text="Everyone at the baths heard the senator's rumor.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            canon=CanonSource.SESSION,
+            location_id=location_id,
+        )
+        kg.add_node(hearsay)
+        kg.add_edge(hearsay.uuid, make_uuid("legacy-rumor-source"), EdgeType.TOLD_BY)
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        loaded_state, loaded_kg, _loaded_events = loaded
+        engine = KnowledgeQueryEngine(loaded_kg)
+        first_context = engine.get_context_for_npc(loaded_state.npcs[first_npc_id])
+        second_context = engine.get_context_for_npc(loaded_state.npcs[second_npc_id])
+        assert hearsay.text in first_context
+        assert hearsay.text in second_context

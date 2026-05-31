@@ -89,6 +89,7 @@ async def _drive_actor(game_state: GameState, client: AsyncMock, language: str) 
     await actor.act(
         input_data="What are you doing here?",
         context={
+            "game_state": game_state,
             "location_name": state_mod.FORUM_LOCATION_NAME,
             "goal_target_name": target.name,
         },

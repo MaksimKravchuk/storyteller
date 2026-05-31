@@ -48,7 +48,7 @@ _KNOWLEDGE_RU = PromptSection(
 
 _MEMORY_RU = PromptSection(
     name="memory",
-    template=("Что ты помнишь о прошлом общении с этим человеком:\n{past_memories}"),
+    template=("Релевантные воспоминания, на которые ты можешь опираться:\n{past_memories}"),
     required_vars=["past_memories"],
 )
 

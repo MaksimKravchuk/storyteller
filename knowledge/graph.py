@@ -10,6 +10,8 @@ import networkx as nx
 from knowledge.node import EdgeType, KnowledgeNode, KnowledgeSource
 
 _NODE_DATA_KEY = "data"
+_EDGE_TYPE_KEY = "edge_type"
+GraphEdge = tuple[UUID, UUID, EdgeType, dict[str, Any]]
 
 
 class KnowledgeGraph:
@@ -88,7 +90,9 @@ class KnowledgeGraph:
         on every Actor turn, and a missed entry silently degrades
         per-NPC memory coverage.
         """
-        self.digraph.add_edge(from_id, to_id, edge_type=edge_type, **(metadata or {}))
+        edge_attrs = _edge_metadata(metadata or {})
+        edge_attrs[_EDGE_TYPE_KEY] = edge_type
+        self.digraph.add_edge(from_id, to_id, **edge_attrs)
         self._maybe_index_witness_edge(from_id, to_id, edge_type)
 
     # ------------------------------------------------------------------
@@ -108,8 +112,21 @@ class KnowledgeGraph:
         if node_id not in self.digraph:
             return []
         return [
-            (target, edge_attrs.get("edge_type", EdgeType.WITNESSED))
+            (target, _edge_type_from_attrs(edge_attrs))
             for _, target, edge_attrs in self.digraph.out_edges(node_id, data=True)
+        ]
+
+    def get_edge_metadata(self, from_id: UUID, to_id: UUID) -> dict[str, Any]:
+        """Return metadata for ``from_id → to_id``, excluding the stored edge type."""
+        if from_id not in self.digraph or to_id not in self.digraph[from_id]:
+            return {}
+        return _edge_metadata(self.digraph[from_id][to_id])
+
+    def all_edges(self) -> list[GraphEdge]:
+        """Return every graph edge, including data-less actor root edges."""
+        return [
+            (source_id, target_id, _edge_type_from_attrs(edge_attrs), _edge_metadata(edge_attrs))
+            for source_id, target_id, edge_attrs in self.digraph.out_edges(data=True)
         ]
 
     def edge_has_flag(self, from_id: UUID, to_id: UUID, flag: str) -> bool:
@@ -186,7 +203,7 @@ class KnowledgeGraph:
         self._witness_memory_index = rebuilt
 
     def _is_witnessed_personal_memory(self, target_id: UUID, edge_attrs: dict[str, Any]) -> bool:
-        if edge_attrs.get("edge_type") != EdgeType.WITNESSED:
+        if _edge_type_from_attrs(edge_attrs) != EdgeType.WITNESSED:
             return False
         target_node = self.get_node(target_id)
         return target_node is not None and target_node.source == KnowledgeSource.PERSONAL_EXPERIENCE
@@ -213,3 +230,14 @@ class KnowledgeGraph:
                 empty_witnesses.append(witness_id)
         for witness_id in empty_witnesses:
             self._witness_memory_index.pop(witness_id, None)
+
+
+def _edge_type_from_attrs(edge_attrs: dict[str, Any]) -> EdgeType:
+    raw_type = edge_attrs.get(_EDGE_TYPE_KEY, EdgeType.WITNESSED)
+    if isinstance(raw_type, EdgeType):
+        return raw_type
+    return EdgeType(raw_type)
+
+
+def _edge_metadata(edge_attrs: dict[str, Any]) -> dict[str, Any]:
+    return {key: attr_value for key, attr_value in edge_attrs.items() if key != _EDGE_TYPE_KEY}

@@ -10,6 +10,9 @@ import pytest
 from sqlalchemy import insert, select
 
 from db import tables as tbl
+from knowledge.graph import KnowledgeGraph
+from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
+from tests._uuid_helpers import make_uuid
 from tests.db.conftest import GameRepository
 
 pytestmark = pytest.mark.db
@@ -383,6 +386,70 @@ class TestNPCDetail:
         assert detail["npc"]["id"] == npc_id
         assert detail["memory_nodes"] == []
         assert detail["memory_edges"] == []
+
+    @allure.story("NPC detail")
+    @allure.title("get_npc_detail returns persisted memory edges rooted at the NPC UUID")
+    @pytest.mark.asyncio
+    async def test_returns_persisted_root_memory_edges(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, _kg, events = populated_game_state
+        npc_id = next(iter(game_state.npcs))
+        kg = KnowledgeGraph()
+        kg.register_actor_node(npc_id, label="Guard")
+        memory = KnowledgeNode(
+            text="The guard saw the player hide a blade.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            canon=CanonSource.SESSION,
+        )
+        kg.add_node(memory)
+        kg.add_edge(npc_id, memory.uuid, EdgeType.WITNESSED)
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        detail = await repo.admin.get_npc_detail(test_session_id, npc_id)
+        assert detail is not None
+        assert [node["id"] for node in detail["memory_nodes"]] == [memory.uuid]
+        assert len(detail["memory_edges"]) == 1
+        assert detail["memory_edges"][0]["from_node_id"] == npc_id
+        assert detail["memory_edges"][0]["to_node_id"] == memory.uuid
+
+    @allure.story("NPC detail")
+    @allure.title("Admin knowledge graph keeps recipient-owned HEARSAY metadata unfiltered")
+    @pytest.mark.asyncio
+    async def test_admin_knowledge_graph_keeps_recipient_metadata_unfiltered(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, _kg, events = populated_game_state
+        recipient_id = next(iter(game_state.npcs))
+        kg = KnowledgeGraph()
+        hearsay = KnowledgeNode(
+            text="Only one NPC heard this rumor.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.HEARSAY,
+            canon=CanonSource.SESSION,
+        )
+        kg.add_node(hearsay)
+        kg.add_edge(
+            hearsay.uuid,
+            make_uuid("rumor-source"),
+            EdgeType.TOLD_BY,
+            metadata={"recipient_id": recipient_id},
+        )
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        graph = await repo.admin.get_knowledge_graph(test_session_id)
+        assert [node["id"] for node in graph["nodes"]] == [hearsay.uuid]
+        assert len(graph["edges"]) == 1
+        assert graph["edges"][0]["metadata_"] == {"recipient_id": str(recipient_id)}
 
 
 @allure.epic("Memory & Persistence")
