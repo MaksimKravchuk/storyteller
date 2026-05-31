@@ -9,17 +9,28 @@ name: Benchmark gate (narrative PRs)
 #   - A concurrency cancel-in-progress block below ensures only the HEAD commit
 #     of each PR actually incurs cost.
 #
+# WHAT THIS POSTS (advisory, see ADR-0009):
+#   1. Score verdict — the auto-compare result of `benchmarks run` against the
+#      git-tracked pinned baselines (ADR-0002). Shows `no_baseline` until a
+#      scenario is pinned; that is non-blocking by design.
+#   2. Per-element score deltas — `benchmarks compare` for each pinned scenario.
+#   3. Narration diff — `benchmarks narration-diff` between the previous main
+#      version (downloaded from the `benchmark-baseline` artifact, CONTENT ONLY)
+#      and this PR's fresh run.
+#
 # REQUIRED STATUS CHECK SETUP (manual step):
 #   Do NOT enable "benchmark-on-pr / benchmark" as a required branch-protection
 #   check.  Because of the `paths:` filter, the workflow never runs on PRs that
 #   don't touch the listed files, which would leave those PRs blocked forever
 #   waiting for a status that never arrives.  Instead treat this as an advisory
-#   gate: review the job result in the Checks tab before merging narrative PRs.
+#   gate: read the posted comment before merging narrative PRs.  The job stays
+#   green even on a regression — the comment is the signal, not the check.
 #
 # FORK PRs:
 #   This workflow uses `pull_request` (not `pull_request_target`), so secrets
-#   are NOT available to forks.  Benchmark LLM calls will fail silently for
-#   external fork PRs — that is expected and safe.
+#   are NOT available to forks and the GITHUB_TOKEN is read-only.  Benchmark LLM
+#   calls and the PR comment will fail silently for external fork PRs — that is
+#   expected and safe.
 
 on:
   pull_request:
@@ -39,6 +50,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+      actions: read # download the benchmark-baseline artifact from a prior main run
+      pull-requests: write # post the advisory comparison comment
     steps:
       - uses: actions/checkout@v4
 
@@ -53,7 +66,18 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --group dev --extra anthropic --extra openai
 
+      - name: Clear stale committed results
+        # The checkout carries historical benchmarks/results/*.json; drop them so
+        # the run output, narration diff, and uploaded artifact are this PR only.
+        run: find benchmarks/results -type f ! -name '.gitkeep' -delete
+
       - name: Run benchmark harness (1 iteration, 3-judge panel)
+        # Advisory: capture the auto-compare verdict but never fail the job on a
+        # regression. The posted comment is the signal; the check stays green.
+        # `continue-on-error` keeps the job green if the harness exits 1, and the
+        # explicit `set +e` neutralises the runner's default `bash -e` so the
+        # exit-code line still prints (the CLI's own exit-1 gate is untouched).
+        continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -61,8 +85,85 @@ jobs:
           AGENT_MODEL: gpt-5.4-nano
           NARRATOR_MODEL: gpt-5.4-mini
         run: |
-          set -euo pipefail
-          uv run python -m benchmarks run --iterations 1 --max-judges 3
+          set +e
+          set -o pipefail
+          uv run python -m benchmarks run --iterations 1 --max-judges 3 | tee bench_stdout.txt
+          echo "benchmark exit code: ${PIPESTATUS[0]}"
+          exit 0
+
+      - name: Download previous-version baseline content
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          mkdir -p prev_content
+          run_id=$(gh run list --workflow benchmark-baseline.yml --branch main \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)
+          if [ -n "${run_id:-}" ]; then
+            gh run download "$run_id" --name benchmark-baseline --dir prev_content \
+              || echo "baseline artifact download failed (expired or missing)"
+          else
+            echo "no successful benchmark-baseline run found on main yet"
+          fi
+
+      - name: Build comparison comment
+        if: always()
+        run: |
+          # `set +e`: best-effort comment assembly. A non-zero from any sub-command
+          # (e.g. narration-diff) must not abort the `{ } > comment.md` block under
+          # the runner's default `bash -e` and leave a truncated comment.
+          set +e
+          # Resolve where upload-artifact placed the baseline files: at the artifact
+          # root (prev_content/) or under a preserved prefix. Falls back to the empty
+          # prev_content dir so narration-diff degrades to "no baseline" cleanly.
+          prev_dir="prev_content"
+          found="$(find prev_content -name '*_iter*.json' 2>/dev/null | head -1)"
+          if [ -n "$found" ]; then
+            prev_dir="$(dirname "$found")"
+          fi
+          {
+            echo "## 🎭 Benchmark comparison (previous main → this PR)"
+            echo
+            echo "### Score verdict (vs git-tracked baselines)"
+            echo '```'
+            grep '^\[auto-compare\]' bench_stdout.txt \
+              || echo "(no auto-compare output — see job log)"
+            echo '```'
+            echo
+            echo "<details><summary>Per-element score deltas</summary>"
+            echo
+            echo '```'
+            for cur in benchmarks/results/*_aggregate.json; do
+              [ -e "$cur" ] || continue
+              sid=$(jq -r '.scenario_id // empty' "$cur")
+              [ -n "$sid" ] || continue
+              base="benchmarks/baselines/${sid}.json"
+              [ -e "$base" ] || continue
+              jq '.aggregate' "$base" > /tmp/base_agg.json
+              uv run python -m benchmarks compare /tmp/base_agg.json "$cur" || true
+            done
+            echo '```'
+            echo
+            echo "</details>"
+            echo
+            uv run python -m benchmarks narration-diff "$prev_dir" benchmarks/results \
+              || echo "_(narration diff unavailable)_"
+            echo
+            echo "_Full results for both versions are attached as workflow artifacts._"
+            echo "_Advisory only — this check never blocks the merge (ADR-0002 / ADR-0009)._"
+          } > comment.md
+
+      - name: Post comparison comment
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          pr="${{ github.event.pull_request.number }}"
+          gh pr comment "$pr" --edit-last --body-file comment.md \
+            || gh pr comment "$pr" --body-file comment.md \
+            || echo "comment skipped (fork PR / read-only token)"
 
       - name: Upload benchmark results
         if: always()

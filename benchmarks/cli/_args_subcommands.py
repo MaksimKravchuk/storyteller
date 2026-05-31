@@ -19,11 +19,12 @@ def _positive_int(raw: str) -> int:
 
 
 def register_extra_subcommands(sub: argparse._SubParsersAction) -> None:
-    """Register pin, baselines, calibrate, and reliability-report subcommands."""
+    """Register pin, baselines, calibrate, reliability-report, narration-diff subcommands."""
     _register_pin_parser(sub)
     _register_baselines_parser(sub)
     _register_calibrate_parser(sub)
     _register_reliability_report_parser(sub)
+    _register_narration_diff_parser(sub)
 
 
 def _register_pin_parser(sub: argparse._SubParsersAction) -> None:
@@ -98,4 +99,22 @@ def _register_reliability_report_parser(sub: argparse._SubParsersAction) -> None
         "path",
         type=str,
         help="Per-iteration JSON archive file or directory containing one or more.",
+    )
+
+
+def _register_narration_diff_parser(sub: argparse._SubParsersAction) -> None:
+    """Register the ``narration-diff`` subcommand."""
+    narration_cmd = sub.add_parser(
+        "narration-diff",
+        help="Render a markdown narration diff between two result directories.",
+    )
+    narration_cmd.add_argument(
+        "previous",
+        type=str,
+        help="Directory of previous-version per-iteration result JSONs.",
+    )
+    narration_cmd.add_argument(
+        "current",
+        type=str,
+        help="Directory of current-version per-iteration result JSONs.",
     )

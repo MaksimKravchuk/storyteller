@@ -9,6 +9,7 @@ from typing import Any, Callable, Coroutine, Mapping
 from benchmarks.cli._baselines import baselines_command
 from benchmarks.cli._calibrate import calibrate_command
 from benchmarks.cli._compare import compare_command
+from benchmarks.cli._narration_diff import narration_diff_command
 from benchmarks.cli._pin import pin_command
 from benchmarks.cli._reliability_report import reliability_report_command
 from benchmarks.cli._run import run_command
@@ -23,6 +24,7 @@ SYNC_COMMANDS: Mapping[str, SyncHandler] = MappingProxyType(
         "pin": pin_command,
         "baselines": baselines_command,
         "reliability-report": reliability_report_command,
+        "narration-diff": narration_diff_command,
     },
 )
 
