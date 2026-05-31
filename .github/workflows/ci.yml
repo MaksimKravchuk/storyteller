@@ -257,6 +257,22 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --group dev
 
+      - name: Ensure Docker daemon is ready
+        run: |
+          set -euo pipefail
+          if command -v systemctl >/dev/null 2>&1; then
+            sudo systemctl start docker || true
+          fi
+          for attempt in {1..12}; do
+            if docker info >/dev/null 2>&1; then
+              docker version
+              exit 0
+            fi
+            echo "Docker daemon is not ready yet (attempt ${attempt}/12)."
+            sleep 5
+          done
+          docker info
+
       - name: Run DB-backed tests
         env:
           TESTCONTAINERS_RYUK_DISABLED: "true"
