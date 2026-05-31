@@ -1,0 +1,72 @@
+name: Benchmark baseline (main)
+
+# Produces the "previous version" full-content artifact that the narrative-PR
+# benchmark gate (benchmark-on-pr.yml) downloads to render its narration diff.
+# Runs on every push to main that touches narrative-affecting paths, mirroring
+# the PR gate's trigger so the baseline content tracks what the gate measures.
+#
+# IMPORTANT — this artifact is CONTENT ONLY. It feeds the human-readable
+# narration diff in the PR comment; it is NOT the pass/fail reference. Per
+# ADR-0002 the score gate compares against the git-tracked baselines under
+# benchmarks/baselines/ (visible in the PR diff). See ADR-0009.
+#
+# Each run hits paid LLMs (~$0.02–$0.10 per push); --no-compare keeps it
+# observational (no exit-1 gate on main).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cast/**"
+      - "prompts/**"
+      - "engine/**"
+      - "benchmarks/scenarios/**"
+
+concurrency:
+  group: benchmark-baseline
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --group dev --extra anthropic --extra openai
+
+      - name: Clear stale committed results
+        # The checkout carries historical benchmarks/results/*.json; drop them so
+        # the uploaded artifact contains only this run's fresh content.
+        run: find benchmarks/results -type f ! -name '.gitkeep' -delete
+
+      - name: Run benchmark harness (baseline content, no gate)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DIRECTOR_MODEL: gpt-5.4-mini
+          AGENT_MODEL: gpt-5.4-nano
+          NARRATOR_MODEL: gpt-5.4-mini
+        run: |
+          set -euo pipefail
+          uv run python -m benchmarks run --iterations 1 --max-judges 3 --no-compare
+
+      - name: Upload baseline content
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-baseline
+          path: benchmarks/results/
+          if-no-files-found: warn
+          retention-days: 90
