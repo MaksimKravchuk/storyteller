@@ -19,6 +19,14 @@ _SSL_ENABLED_MODES = frozenset(
 
 _SSL_DISABLED_MODES = frozenset(("disable", "allow"))
 
+# Managed Postgres (Fly) and its proxy silently drop idle TCP connections, and a
+# request cancelled mid-query (client disconnect) can hand a broken asyncpg
+# connection back to the pool. Without a liveness check the next request to draw
+# that connection 500s inside ``session.execute`` — the beta-auth incident.
+# ``pool_pre_ping`` validates a connection before use; ``pool_recycle`` retires
+# old ones proactively so they never go stale in the first place.
+_POOL_RECYCLE_SECONDS = 1800
+
 
 def _strip_sslmode(url_string: str) -> Tuple[str, str | None]:
     """Remove ``sslmode`` from a database URL query string."""
@@ -49,9 +57,15 @@ def _adapt_url_for_asyncpg(database_url: str) -> Tuple[str, dict]:
 
 
 def create_async_engine(database_url: str):
-    """Create an async SQLAlchemy engine."""
+    """Create an async SQLAlchemy engine with pooled-connection liveness checks."""
     url, connect_args = _adapt_url_for_asyncpg(database_url)
-    return _create_engine(url, echo=False, connect_args=connect_args)
+    return _create_engine(
+        url,
+        echo=False,
+        connect_args=connect_args,
+        pool_pre_ping=True,
+        pool_recycle=_POOL_RECYCLE_SECONDS,
+    )
 
 
 def create_session_factory(engine) -> async_sessionmaker[AsyncSession]:

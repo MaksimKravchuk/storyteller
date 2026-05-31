@@ -123,6 +123,23 @@ class TestEngineAndGetDb:
         assert isinstance(engine, AsyncEngine)
 
     @allure.story("Engine creation")
+    @allure.title("create_async_engine enables pool_pre_ping so broken pooled connections are replaced, not 500ed")
+    def test_create_async_engine_enables_pool_pre_ping(self):
+        """A pooled connection left in a broken state (managed PG idle-drop,
+        an asyncpg operation interrupted by a client disconnect) must be
+        detected and recycled before a request uses it — otherwise the next
+        request to draw it 500s inside ``session.execute``. ``pool_pre_ping``
+        is the lever that guarantees the liveness check."""
+        engine = _real_engine.create_async_engine("postgresql+asyncpg://u:p@host/db")
+        assert engine.pool._pre_ping is True
+
+    @allure.story("Engine creation")
+    @allure.title("create_async_engine sets a finite pool_recycle so stale connections are proactively retired")
+    def test_create_async_engine_sets_pool_recycle(self):
+        engine = _real_engine.create_async_engine("postgresql+asyncpg://u:p@host/db")
+        assert engine.pool._recycle > 0
+
+    @allure.story("Engine creation")
     @allure.title("create_session_factory returns a callable async_sessionmaker bound to the engine")
     def test_create_session_factory_returns_sessionmaker(self):
         from sqlalchemy.ext.asyncio import async_sessionmaker

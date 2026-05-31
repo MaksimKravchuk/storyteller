@@ -2,16 +2,29 @@
 
 from __future__ import annotations
 
+import io
+
 import allure
 import pytest
 from loguru import logger
 
 from log_scrubbing import (
+    LOGURU_DIAGNOSE_ENABLED,
     REDACTED,
     install_scrubber,
     scrub_log_record,
     scrub_secrets,
 )
+
+
+def _raise_with_secret_local(api_key: str) -> None:
+    """Raise with ``api_key`` bound as a frame local.
+
+    loguru's ``diagnose=True`` renders every frame's local values into the
+    formatted traceback, so this is exactly the shape that leaked
+    ``Config(openai_api_key=...)`` into production logs.
+    """
+    raise ValueError("boom")
 
 
 class _ConfigureSpy:
@@ -181,3 +194,41 @@ class TestInstallScrubber:
         assert len(spy.calls) == 2
         for call_kwargs in spy.calls:
             assert call_kwargs == {"patcher": scrub_log_record}
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Log scrubbing")
+class TestTracebackDiagnoseSecretSafety:
+    """The message patcher cannot reach loguru's diagnose traceback rendering;
+    production sinks must disable ``diagnose`` instead."""
+
+    @allure.story("Traceback secret safety")
+    @allure.title("Production keeps loguru diagnose disabled")
+    def test_production_diagnose_is_disabled(self) -> None:
+        assert LOGURU_DIAGNOSE_ENABLED is False
+
+    @allure.story("Traceback secret safety")
+    @allure.title("The production diagnose setting logs the exception but never renders the secret frame-local")
+    def test_diagnose_disabled_sink_does_not_leak_secret(self) -> None:
+        secret = "sk-proj-{0}".format("A" * 40)
+        captured = self._capture_exception_log(secret, diagnose=LOGURU_DIAGNOSE_ENABLED)
+        assert "boom" in captured
+        assert secret not in captured
+
+    @allure.story("Traceback secret safety")
+    @allure.title("Control: with diagnose enabled the same secret WOULD leak, proving the guard is load-bearing")
+    def test_diagnose_enabled_sink_would_leak_secret(self) -> None:
+        secret = "sk-proj-{0}".format("B" * 40)
+        captured = self._capture_exception_log(secret, diagnose=True)
+        assert secret in captured
+
+    def _capture_exception_log(self, secret: str, *, diagnose: bool) -> str:
+        sink = io.StringIO()
+        handler_id = logger.add(sink, level="DEBUG", colorize=False, backtrace=False, diagnose=diagnose)
+        try:
+            _raise_with_secret_local(secret)
+        except ValueError:
+            logger.opt(exception=True).error("request failed")
+        finally:
+            logger.remove(handler_id)
+        return sink.getvalue()
