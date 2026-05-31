@@ -14,6 +14,7 @@ from unittest.mock import AsyncMock
 
 from cast import director_context, player_context
 from cast.actor_config import format_past_memories, goal_prompt_vars
+from cast.actor_memory import format_accessible_knowledge, select_actor_memories
 from cast.hostility import format_hostile_actions_summary
 from knowledge.query import KnowledgeQueryEngine
 from knowledge.scene_state import all_scene_deltas
@@ -81,12 +82,15 @@ def _actor_identity_kwargs(guard: Any, language: str) -> dict[str, str]:
 def _actor_optional_kwargs(
     guard: Any,
     target: Any,
+    game_state: GameState,
     knowledge_query: KnowledgeQueryEngine,
 ) -> dict[str, str]:
     """Vars for the optional Actor sections (knowledge, memory, hostility, goal)."""
     optional: dict[str, str] = {
-        "accessible_knowledge": knowledge_query.get_context_for_npc(guard),
-        "past_memories": format_past_memories(knowledge_query.get_memories_held_by(guard.uuid)),
+        "accessible_knowledge": format_accessible_knowledge(knowledge_query, guard),
+        "past_memories": format_past_memories(
+            select_actor_memories(guard, knowledge_query, {"game_state": game_state}),
+        ),
         "hostility_level": str(guard.hostility_level),
         "recent_hostile_actions_summary": format_hostile_actions_summary(guard.recent_hostile_actions),
     }
@@ -103,7 +107,7 @@ def actor_kwargs(game_state: GameState, language: str) -> dict[str, str]:
     knowledge_query = KnowledgeQueryEngine(game_state.knowledge_graph)
     return {
         **_actor_identity_kwargs(guard, language),
-        **_actor_optional_kwargs(guard, target, knowledge_query),
+        **_actor_optional_kwargs(guard, target, game_state, knowledge_query),
     }
 
 

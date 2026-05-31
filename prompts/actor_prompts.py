@@ -48,7 +48,7 @@ _KNOWLEDGE = PromptSection(
 
 _MEMORY = PromptSection(
     name="memory",
-    template=("What you remember about your past interactions with this person:\n{past_memories}"),
+    template=("These are relevant memories you may draw on:\n{past_memories}"),
     required_vars=["past_memories"],
 )
 

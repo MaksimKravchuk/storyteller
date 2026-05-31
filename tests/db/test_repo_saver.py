@@ -11,7 +11,7 @@ import sqlalchemy
 
 from db import tables as tbl
 from knowledge.graph import KnowledgeGraph
-from knowledge.node import EdgeType, KnowledgeNode
+from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models.game_state import GameState
 from models.scene import Scene
 from tests.db.conftest import GameRepository
@@ -238,3 +238,94 @@ class TestEdgeTypeRoundTrip:
 
         assert await _count(async_session, tbl.locations, game_state.uuid) == len(game_state.locations)
         assert await _count(async_session, tbl.npcs, game_state.uuid) == len(game_state.npcs)
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("State saver")
+class TestKnowledgeEdgePersistence:
+    @allure.story("Knowledge edges")
+    @allure.title("Actor-root WITNESSED edges persist even when the actor root has no knowledge-node row")
+    @pytest.mark.asyncio
+    async def test_actor_root_witnessed_edges_persist_from_dataless_nodes(
+        self,
+        repo: GameRepository,
+        async_session,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, _kg, events = populated_game_state
+        npc_id = next(iter(game_state.npcs))
+        kg = KnowledgeGraph()
+        kg.register_actor_node(npc_id, label="Guard")
+        memory = KnowledgeNode(
+            text="The guard saw the player hide a blade.",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            canon=CanonSource.SESSION,
+        )
+        kg.add_node(memory)
+        kg.add_edge(npc_id, memory.uuid, EdgeType.WITNESSED)
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        node_rows = await async_session.execute(
+            sqlalchemy.select(tbl.knowledge_nodes.c.id).where(
+                tbl.knowledge_nodes.c.game_state_id == game_state.uuid,
+            ),
+        )
+        node_ids = {row["id"] for row in node_rows.mappings()}
+        assert memory.uuid in node_ids
+        assert npc_id not in node_ids
+
+        edge_rows = await async_session.execute(
+            sqlalchemy.select(tbl.knowledge_edges).where(
+                tbl.knowledge_edges.c.game_state_id == game_state.uuid,
+                tbl.knowledge_edges.c.from_node_id == npc_id,
+                tbl.knowledge_edges.c.to_node_id == memory.uuid,
+            ),
+        )
+        persisted = edge_rows.mappings().one()
+        assert persisted["edge_type"] == EdgeType.WITNESSED.value
+
+    @allure.story("Knowledge edges")
+    @allure.title("Edge metadata persists all non-edge_type attributes in JSON-safe form")
+    @pytest.mark.asyncio
+    async def test_edge_metadata_persists_all_attrs_except_edge_type(
+        self,
+        repo: GameRepository,
+        async_session,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, _kg, events = populated_game_state
+        recipient_id = next(iter(game_state.npcs))
+        kg = KnowledgeGraph()
+        source = KnowledgeNode(text="source")
+        target = KnowledgeNode(text="target")
+        kg.add_node(source)
+        kg.add_node(target)
+        kg.add_edge(
+            source.uuid,
+            target.uuid,
+            EdgeType.TOLD_BY,
+            metadata={
+                "recipient_id": recipient_id,
+                "propagated_on_departure": True,
+            },
+        )
+
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        rows = await async_session.execute(
+            sqlalchemy.select(tbl.knowledge_edges).where(
+                tbl.knowledge_edges.c.game_state_id == game_state.uuid,
+                tbl.knowledge_edges.c.from_node_id == source.uuid,
+                tbl.knowledge_edges.c.to_node_id == target.uuid,
+            ),
+        )
+        metadata = rows.mappings().one()["metadata_"]
+        assert metadata == {
+            "recipient_id": str(recipient_id),
+            "propagated_on_departure": True,
+        }
+        assert "edge_type" not in metadata

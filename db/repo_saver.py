@@ -88,15 +88,14 @@ async def _save_knowledge(session: AsyncSession, game_state_id: str, knowledge_g
         tbl.knowledge_edges,
         game_state_id,
         [
-            {
-                "game_state_id": game_state_id,
-                "from_node_id": node.uuid,
-                "to_node_id": target_id,
-                "edge_type": edge_type.value,
-                "metadata_": {},
-            }
-            for node in nodes
-            for target_id, edge_type in knowledge_graph.get_edges_from(node.uuid)
+            conv_knowledge.knowledge_edge_to_row(
+                game_state_id,
+                from_id,
+                target_id,
+                edge_type,
+                metadata,
+            )
+            for from_id, target_id, edge_type, metadata in knowledge_graph.all_edges()
         ],
     )
 

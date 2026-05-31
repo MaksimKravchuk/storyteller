@@ -61,12 +61,13 @@ class KnowledgeFilter:
     npc_id: UUID | None = None  # Include personal memories for this NPC
 
 
-def _node_matches(node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
+def _node_matches(graph: KnowledgeGraph, node: KnowledgeNode, filt: KnowledgeFilter) -> bool:
     """Return True if a node passes all filter criteria."""
     checks = (
         query_filters.passes_scope(node, filt.max_scope),
         query_filters.passes_education(node, filt.max_education_required),
         query_filters.passes_location(node, filt.location_id),
+        query_filters.passes_hearsay_ownership(graph, node, filt.npc_id),
     )
     return all(checks)
 
@@ -124,7 +125,10 @@ class KnowledgeQueryEngine:
 
     def query(self, filt: KnowledgeFilter) -> list[KnowledgeNode]:
         """Return all knowledge nodes matching ``filt``."""
-        matching_nodes = [node for node in self._graph.all_nodes() if _node_matches(node, filt)]
+        matching_nodes: list[KnowledgeNode] = []
+        for node in self._graph.all_nodes():
+            if _node_matches(self._graph, node, filt):
+                matching_nodes.append(node)
 
         if filt.npc_id:
             query_filters.append_personal_memories(self._graph, filt.npc_id, matching_nodes)

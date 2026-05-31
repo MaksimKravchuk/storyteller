@@ -9,6 +9,14 @@ from prompts.actor_prompts_ru import ACTOR_SYSTEM_DIALOGUE_RU
 from tests.actor_helpers import render_actor_system
 
 
+def _section_template(template, name: str) -> str:
+    return next(section.template for section in template._sections if section.name == name)
+
+
+def _section_required_vars(template, name: str) -> list[str]:
+    return next(section.required_vars for section in template._sections if section.name == name)
+
+
 @allure.epic("NPC Interaction")
 @allure.feature("Actor prompt template")
 class TestActorPromptPhysicalStatus:
@@ -34,6 +42,27 @@ class TestActorPromptPhysicalStatus:
     def test_prompt_contains_behavioral_rule(self):
         rendered = render_actor_system()
         assert "unconscious" in rendered.lower()
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Actor prompt template")
+class TestActorPromptMemorySection:
+    @allure.story("Memory section")
+    @allure.title("Actor memory section keeps the same required var in English and Russian")
+    def test_memory_section_required_vars_remain_past_memories(self):
+        assert _section_required_vars(ACTOR_SYSTEM_DIALOGUE, "memory") == ["past_memories"]
+        assert _section_required_vars(ACTOR_SYSTEM_DIALOGUE_RU, "memory") == ["past_memories"]
+
+    @allure.story("Memory section")
+    @allure.title("Actor memory section describes memories as relevant recall, not only past interaction")
+    def test_memory_section_wording_mentions_relevant_memories(self):
+        english = _section_template(ACTOR_SYSTEM_DIALOGUE, "memory")
+        russian = _section_template(ACTOR_SYSTEM_DIALOGUE_RU, "memory")
+
+        assert "relevant memories you may draw on" in english
+        assert "past interactions with this person" not in english
+        assert "Релевантные воспоминания, на которые ты можешь опираться" in russian
+        assert "прошлом общении с этим человеком" not in russian
 
 
 @allure.epic("NPC Interaction")

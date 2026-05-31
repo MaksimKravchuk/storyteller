@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from cast.actor_config import format_past_memories, goal_prompt_vars
+from cast.actor_memory import format_accessible_knowledge, select_actor_memories
 from cast.base_performer_class import BasePerformer, LLMJSONError
 from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
 from cast.schemas.actor_reply import ActorEnvelope, ActorReply
@@ -17,6 +18,17 @@ from prompts.actor_prompts import get_actor_prompts
 _MEMORY_LIMIT = 5
 _FALLBACK_NARRATION = "..."
 _SALVAGE_NARRATION_MAX = 500
+_OPTIONAL_CONTEXT_KEYS = (
+    "past_memories",
+    "hostility_level",
+    "recent_hostile_actions_summary",
+    "goal_kind",
+    "goal_target",
+    "goal_turns_pursued",
+    "goal_description",
+    "goal_last_action",
+    "goal_progress_notes",
+)
 
 
 class Actor(BasePerformer):
@@ -61,7 +73,7 @@ class Actor(BasePerformer):
         carries no name-reveal signal.
         """
         # Build knowledge context for this NPC
-        accessible_knowledge = self.knowledge_query.get_context_for_npc(self.npc)
+        accessible_knowledge = format_accessible_knowledge(self.knowledge_query, self.npc)
 
         self.set_context(
             npc_name=self.npc.name,
@@ -99,6 +111,11 @@ class Actor(BasePerformer):
     def reset_conversation(self) -> None:
         """Clear conversation history (e.g. when player walks away)."""
         self._conversation.clear()
+
+    def clear_optional_context(self) -> None:
+        """Drop optional prompt vars before rendering the next turn."""
+        for context_key in _OPTIONAL_CONTEXT_KEYS:
+            self._system_prompt_vars.pop(context_key, None)
 
     async def _act_npc_turn(self, input_data: str) -> ActorReply:
         """Action-mode dispatch: raw action JSON in, no envelope, no conversation state.
@@ -147,10 +164,11 @@ def _apply_optional_sections(actor: Actor, context: dict) -> None:
     PromptTemplate omits optional sections whose required vars were
     not set on the context.
 
-    Lives outside the :class:`Actor` class so it does not contribute
-    to that class's method count budget.
+    Most optional wiring lives outside the :class:`Actor` class so the
+    prompt-selection logic stays isolated from the performer control flow.
     """
-    past_memories = actor.knowledge_query.get_memories_held_by(actor.npc.uuid, limit=_MEMORY_LIMIT)
+    actor.clear_optional_context()
+    past_memories = select_actor_memories(actor.npc, actor.knowledge_query, context, limit=_MEMORY_LIMIT)
     if past_memories:
         actor.set_context(past_memories=format_past_memories(past_memories))
     if actor.npc.hostility_level > 0 or actor.npc.recent_hostile_actions:

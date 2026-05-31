@@ -164,6 +164,31 @@ def test_hearsay_surfaces_in_absent_npc_context() -> None:
 
 
 @allure.story("propagate_rumors")
+@allure.title("Propagated HEARSAY does not leak to a later co-located non-recipient")
+def test_propagated_hearsay_does_not_leak_to_later_colocated_nonrecipient() -> None:
+    game_state = _build_city_state()
+    graph = game_state.knowledge_graph
+    propagate_rumors(graph, game_state, [_make_event(scope="city")])
+    late_arrival_id = make_uuid("npc-late-arrival")
+    game_state.npcs[late_arrival_id] = NPCCard(
+        uuid=late_arrival_id,
+        name="Julia",
+        biography="A patron who arrived after the rumor was told.",
+        occupation="patron",
+        knowledge_scope="city",
+        attributes={"education": 3, "social_status": 3},
+        location_id=_TAVERN_ID,
+    )
+
+    engine = KnowledgeQueryEngine(graph)
+    recipient_context = engine.get_context_for_npc(game_state.npcs[_ABSENT_ID])
+    nonrecipient_context = engine.get_context_for_npc(game_state.npcs[late_arrival_id])
+
+    assert _EVENT_TEXT in recipient_context
+    assert _EVENT_TEXT not in nonrecipient_context
+
+
+@allure.story("propagate_rumors")
 @allure.title("LOCAL-scope events do not propagate beyond the original witness")
 def test_local_scope_does_not_propagate() -> None:
     """A LOCAL-scope event produces no HEARSAY nodes anywhere in the graph."""
