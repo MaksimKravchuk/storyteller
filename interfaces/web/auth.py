@@ -12,6 +12,7 @@ from jwt import PyJWKClient
 
 from config import Config
 from interfaces.web.auth_models import AuthenticatedUser, SupabaseClaims
+from interfaces.web.errors import guard_account_query
 
 _AUTH_PREFIX = "Bearer "
 _AUTH_REQUIRED_DETAIL = "Authentication required"
@@ -51,10 +52,10 @@ async def get_current_user(request: Request, cfg: Config, repo: Any) -> Authenti
     if not claims.email:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=_EMAIL_REQUIRED_DETAIL)
     if cfg.beta_invite_gate_enabled is not False:
-        invited = await repo.accounts.is_email_invited(claims.email)
+        invited = await guard_account_query(repo.accounts.is_email_invited, claims.email)
         if not invited:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=_INVITE_REQUIRED_DETAIL)
-    account = await repo.accounts.get_or_create_for_invited_user(claims.sub, claims.email)
+    account = await guard_account_query(repo.accounts.get_or_create_for_invited_user, claims.sub, claims.email)
     return _authenticated_user(account, claims)
 
 

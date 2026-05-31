@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from config import Config
-from interfaces.web import auth, schemas, service
+from interfaces.web import auth, errors, schemas, service
 from interfaces.web.app import app
 from interfaces.web.auth_models import SupabaseClaims
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
@@ -20,6 +20,7 @@ _HTTP_OK = 200
 _HTTP_CREATED = 201
 _HTTP_UNAUTHORIZED = 401
 _HTTP_FORBIDDEN = 403
+_HTTP_SERVICE_UNAVAILABLE = 503
 
 _ACCOUNT_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 _LEGACY_PLAYER_ID = "11111111-1111-1111-1111-111111111111"
@@ -147,6 +148,29 @@ def test_start_game_rejects_uninvited_user_without_calling_service(
     assert response.status_code == _HTTP_FORBIDDEN
     assert response.json()["detail"] == "Invite required"
     verify_mock.assert_awaited_once()
+    start_mock.assert_not_awaited()
+
+
+@allure.story("Invite gate")
+@allure.title("POST /api/games returns 503 (not a raw 500) when the invite-check DB query fails")
+def test_start_game_returns_503_when_invite_check_db_errors(
+    client: TestClient,
+    mock_repo: mock.MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A DB-layer failure in the shared auth dependency (the prod incident:
+    ``is_email_invited`` → ``beta_invites`` SELECT throwing at execute) must
+    surface as a clean, retryable 503 — never a raw 500 that dumps a
+    diagnostic traceback — and must not reach the game service."""
+    mock_repo.accounts.is_email_invited.side_effect = errors.SQLAlchemyError("connection is closed")
+    verify_mock = mock.AsyncMock(return_value=SupabaseClaims(sub=_USER_ID, email=_USER_EMAIL))
+    monkeypatch.setattr("interfaces.web.auth.verify_supabase_token", verify_mock)
+    start_mock = mock.AsyncMock(return_value=_snapshot())
+
+    with mock.patch.object(service, "start_game_for_player", new=start_mock):
+        response = client.post("/api/games", json={"setting": "Rome"}, headers=_auth_headers())
+
+    assert response.status_code == _HTTP_SERVICE_UNAVAILABLE
     start_mock.assert_not_awaited()
 
 

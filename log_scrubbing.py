@@ -21,6 +21,14 @@ from loguru import logger
 
 REDACTED = "***REDACTED***"
 
+# loguru renders each frame's local VALUES into the formatted traceback when
+# ``diagnose`` is enabled — a sink-time path the patcher below never sees, so a
+# frame holding ``Config(openai_api_key=...)`` leaks the key into logs despite
+# scrub_log_record. Production handlers must keep diagnose disabled. (``backtrace``
+# renders no values and stays at loguru's default — not a leak vector, still
+# useful for debugging.)
+LOGURU_DIAGNOSE_ENABLED = False
+
 _PatternRule = tuple[re.Pattern[str], str]
 
 # Order matters: specific patterns first, otherwise the generic ``sk-...``

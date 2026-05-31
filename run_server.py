@@ -11,7 +11,7 @@ from config import load_config
 from db import engine as db_engine
 from interfaces.admin import AdminServer
 from interfaces.web.runner import build_web_server
-from log_scrubbing import scrub_log_record
+from log_scrubbing import LOGURU_DIAGNOSE_ENABLED, scrub_log_record
 
 _ADMIN_PORT = 8080
 _LOG_FORMAT = (
@@ -50,7 +50,15 @@ class _InterceptHandler(logging.Handler):
 
 
 logger.configure(
-    handlers=[{"sink": sys.stdout, "format": _LOG_FORMAT, "level": "DEBUG", "colorize": True}],
+    handlers=[
+        {
+            "sink": sys.stdout,
+            "format": _LOG_FORMAT,
+            "level": "DEBUG",
+            "colorize": True,
+            "diagnose": LOGURU_DIAGNOSE_ENABLED,
+        },
+    ],
     extra={"session_id": "-"},
     patcher=scrub_log_record,
 )
