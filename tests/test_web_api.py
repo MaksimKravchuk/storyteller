@@ -14,13 +14,15 @@ import allure
 import pytest
 from fastapi.testclient import TestClient
 
-from interfaces.web import auth_models, beta_auth, runtime, service, service_feedback
+from interfaces.web import auth_models, beta_auth, player_gestures, runtime, service, service_feedback
 from interfaces.web.app import app
 from interfaces.web.deps import get_cfg, get_player_id, get_repo
 from interfaces.web.character_schemas import CharacterInfo
 from interfaces.web.schemas import (
+    ActionRequest,
     ActionResponse,
     GameSnapshot,
+    PlayerGesture,
     TurnEntry,
     WorldView,
 )
@@ -283,14 +285,16 @@ def test_get_index_serves_html(client: TestClient) -> None:
 
 
 @allure.story("Static shell")
-@allure.title("GET / exposes player-visible next-action suggestions in the core loop")
-def test_get_index_exposes_next_action_suggestions(client: TestClient) -> None:
+@allure.title("GET / exposes the Story/Character/Map tab bar for the play screen")
+def test_get_index_exposes_play_tabbar(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == _HTTP_OK
-    assert 'id="next-actions"' in response.text
-    assert 'data-action="look around"' in response.text
-    assert 'data-action="talk to someone nearby"' in response.text
-    assert 'data-action="check my inventory"' in response.text
+    assert 'id="tabbar"' in response.text
+    assert 'data-pane="story"' in response.text
+    assert 'data-pane="character"' in response.text
+    assert 'data-pane="map"' in response.text
+    # The "Try next" chips were removed when the play screen went interactive.
+    assert 'id="next-actions"' not in response.text
 
 
 @allure.story("Beta feedback")
@@ -930,6 +934,54 @@ def test_post_action_happy_path(client: TestClient) -> None:
     assert body["world"]["clock"] == {"day": 2, "time_of_day": "afternoon", "hour": 14}
 
 
+@allure.story("Submit action")
+@allure.title("POST /api/games/{id}/actions accepts a structured gesture and returns action_html")
+def test_post_action_accepts_gesture(client: TestClient) -> None:
+    action_response = ActionResponse(
+        narration="Marcus turns to you.",
+        narration_html=render_narrator_html("Marcus turns to you."),
+        action_html="talk to Marcus",
+        turn_count=1,
+        character=_empty_character(),
+        world=_sample_world(),
+    )
+    process_mock = AsyncMock(return_value=action_response)
+    with patch.object(service, "process_turn_for_player", new=process_mock):
+        response = client.post(
+            "/api/games/game-abc/actions",
+            json={"gesture": {"intent": "talk", "entity_kind": "npc", "entity_id": "npc-1"}},
+        )
+    assert response.status_code == _HTTP_OK
+    assert response.json()["action_html"] == "talk to Marcus"
+    # The route hands the whole ActionRequest (carrying the gesture) to the service.
+    assert process_mock.await_args is not None
+    request_arg = process_mock.await_args.args[4]
+    assert isinstance(request_arg, ActionRequest)
+    assert request_arg.gesture == PlayerGesture(intent="talk", entity_kind="npc", entity_id="npc-1")
+
+
+@allure.story("Submit action")
+@allure.title("POST /api/games/{id}/actions rejects an invalid intent×kind gesture at the request boundary")
+def test_post_action_rejects_invalid_gesture_pair(client: TestClient) -> None:
+    response = client.post(
+        "/api/games/game-abc/actions",
+        json={"gesture": {"intent": "talk", "entity_kind": "poi", "entity_id": "poi-1"}},
+    )
+    assert response.status_code == _HTTP_UNPROCESSABLE
+
+
+@allure.story("Submit action")
+@allure.title("POST /api/games/{id}/actions maps an unresolvable gesture to 422")
+def test_post_action_gesture_resolution_error_maps_to_422(client: TestClient) -> None:
+    process_mock = AsyncMock(side_effect=player_gestures.GestureResolutionError("stale id"))
+    with patch.object(service, "process_turn_for_player", new=process_mock):
+        response = client.post(
+            "/api/games/game-abc/actions",
+            json={"gesture": {"intent": "move", "entity_kind": "location", "entity_id": "gone"}},
+        )
+    assert response.status_code == _HTTP_UNPROCESSABLE
+
+
 @allure.story("Player smoke")
 @allure.title("Web API smoke starts a story and plays five turns with an NPC interaction and no raw traceback")
 def test_player_web_api_smoke_start_five_turns_and_npc_interaction(client: TestClient) -> None:
@@ -963,7 +1015,7 @@ def test_player_web_api_smoke_start_five_turns_and_npc_interaction(client: TestC
     assert start_response.status_code == _HTTP_CREATED
     assert [response.status_code for response in action_responses] == [_HTTP_OK for _action in actions]
     assert process_mock.await_count == len(actions)
-    assert [call.args[4] for call in process_mock.await_args_list] == actions
+    assert [call.args[4].action for call in process_mock.await_args_list] == actions
     assert "Pieter" in action_responses[2].json()["narration"]
     assert action_responses[-1].json()["turn_count"] == 5
     _assert_no_raw_traceback([start_response.text, *(response.text for response in action_responses)])
@@ -1120,7 +1172,7 @@ async def test_process_turn_enforces_ownership() -> None:
             cfg=MagicMock(),
             player_id=_ANOTHER_PLAYER_ID,
             game_id="wrong-game-id",
-            action="look",
+            request=ActionRequest(action="look"),
         )
 
 
@@ -1139,7 +1191,7 @@ async def test_process_turn_raises_when_no_game() -> None:
             cfg=MagicMock(),
             player_id=_FIXED_PLAYER_ID,
             game_id="game-abc",
-            action="look",
+            request=ActionRequest(action="look"),
         )
 
 
@@ -1220,6 +1272,8 @@ async def test_act_and_persist_returns_monotonic_player_visible_turn_counts() ->
 
     assert opening_turn_count == 0
     assert [first_response.turn_count, second_response.turn_count, third_response.turn_count] == [1, 2, 3]
+    # The action the engine ran is echoed back HTML-escaped so gesture turns can render it.
+    assert [first_response.action_html, second_response.action_html] == ["look", "think"]
     assert [call.kwargs["turn_number"] for call in persist_mock.await_args_list] == [0, 1, 1]
 
 
@@ -1237,7 +1291,7 @@ async def test_process_turn_raises_when_no_session() -> None:
             cfg=MagicMock(),
             player_id=_FIXED_PLAYER_ID,
             game_id="game-abc",
-            action="look",
+            request=ActionRequest(action="look"),
         )
 
 
@@ -1399,7 +1453,7 @@ async def test_process_turn_commits_before_returning_response() -> None:
             cfg=MagicMock(),
             player_id=_FIXED_PLAYER_ID,
             game_id="game-abc",
-            action="look",
+            request=ActionRequest(action="look"),
         )
 
     assert response.narration == "You look around."

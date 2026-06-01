@@ -283,34 +283,6 @@ button[type="submit"]:disabled {
 
 #action-form input { flex: 1; margin: 0; }
 
-#next-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: center;
-  margin-top: 0.55rem;
-  color: #9a937f;
-  font-size: 0.85rem;
-}
-
-#next-actions button {
-  padding: 0.25rem 0.55rem;
-  background: rgba(255, 255, 255, 0.03);
-  color: #c8c0a8;
-  border: 1px solid #4d493f;
-  border-radius: 999px;
-  font-family: inherit;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-#next-actions button:hover,
-#next-actions button:focus {
-  color: #f5c878;
-  border-color: rgba(245, 200, 120, 0.55);
-  outline: none;
-}
-
 .status {
   min-height: 1.2em;
   font-size: 0.9rem;
@@ -320,13 +292,14 @@ button[type="submit"]:disabled {
 .status.info { color: #8c8; }
 
 /* ============================================================
- * Dashboard — bottom-sheet panels on mobile, docked rail on desktop.
- * Authored mobile-first: the base rules target the phone (the primary
- * platform); the min-width query layers on the desktop rail. Reuses the
- * dark literary palette and the narrator-bold gold (#f5c878) accent.
+ * Play screen — Story / Character / Map panes with a bottom tab bar.
+ * Authored mobile-first: one pane is visible at a time and the tab bar
+ * switches them; the min-width query docks Character/Map as a side-rail
+ * with Story always visible. Reuses the dark literary palette and the
+ * narrator-bold gold (#f5c878) accent.
  * ============================================================ */
 
-.game-grid {
+.play-body {
   display: block;
 }
 
@@ -335,8 +308,25 @@ button[type="submit"]:disabled {
   padding-bottom: calc(4rem + env(safe-area-inset-bottom));
 }
 
-/* Keep the read->type loop reachable just above the tab bar on mobile. */
-#action-form {
+/* Only the active pane is shown on mobile. */
+.play-pane {
+  display: none;
+}
+
+.play-pane[data-pane-active] {
+  display: block;
+}
+
+/* Character / Map panes scroll inside themselves above the tab bar. */
+.pane-scroll {
+  max-height: calc(100dvh - 7rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 1rem;
+}
+
+/* Compact composer, kept reachable just above the tab bar on mobile. */
+.composer {
   position: sticky;
   bottom: calc(3.5rem + env(safe-area-inset-bottom));
   background: #1a1a1a;
@@ -345,7 +335,7 @@ button[type="submit"]:disabled {
 }
 
 /* ── Bottom tab bar (mobile) ───────────────────────────── */
-#panel-toolbar {
+#tabbar {
   position: fixed;
   left: 0;
   right: 0;
@@ -357,9 +347,10 @@ button[type="submit"]:disabled {
   z-index: 30;
 }
 
-#panel-toolbar button {
+#tabbar .tab {
   flex: 1;
   min-height: 48px; /* >= 44px touch target */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -376,106 +367,107 @@ button[type="submit"]:disabled {
   padding: 0.3rem 0.15rem;
 }
 
-#panel-toolbar button .tab-glyph {
-  font-size: 1.15rem;
-  line-height: 1;
-  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
+#tabbar .tic {
+  line-height: 0;
+  color: inherit;
 }
 
-#panel-toolbar button[aria-selected="true"] {
+#tabbar .tab.on {
   color: #f5c878;
 }
 
-#panel-toolbar button[aria-selected="true"] .tab-glyph {
-  text-shadow: 0 0 10px rgba(245, 200, 120, 0.35);
+#tabbar .tab.on .tic {
+  filter: drop-shadow(0 0 6px rgba(245, 200, 120, 0.4));
 }
 
-#panel-toolbar button:focus-visible {
+#tabbar .tab:focus-visible {
   outline: 1px solid rgba(245, 200, 120, 0.55);
   outline-offset: -2px;
 }
 
-/* ── Backdrop + slide-up sheet (mobile) ────────────────── */
-#panel-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 25;
-}
-
-#dashboard.sheet-open #panel-backdrop {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-#panel-host {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(3.5rem + env(safe-area-inset-bottom));
-  max-height: calc(100dvh - 9rem);
-  overflow-y: auto;
-  /* Keep the sheet's own scroll from chaining to the page behind it. */
-  overscroll-behavior: contain;
-  background: #1f1f1f;
-  border-top: 1px solid rgba(245, 200, 120, 0.25);
-  border-radius: 14px 14px 0 0;
-  padding: 1.1rem 1.25rem 1.5rem;
-  transform: translateY(115%);
-  transition: transform 0.25s ease;
-  z-index: 26;
-}
-
-#dashboard.sheet-open #panel-host {
-  transform: translateY(0);
-}
-
-/* Freeze the page behind an open bottom-sheet so it can't scroll through the
- * overlay. position:fixed is the iOS-safe lock (overflow:hidden alone leaks on
- * Safari); app.js records the scroll offset on open and restores it on close. */
-body.sheet-locked {
-  position: fixed;
-  left: 0;
-  right: 0;
-  width: 100%;
-  overflow: hidden;
-}
-
-#panel-close {
+/* "Has new" dot: unseen Character/Map updates surface as a gold pip. */
+#tabbar .tab.has-new::after {
+  content: "";
   position: absolute;
-  top: 0.6rem;
-  right: 0.8rem;
-  width: 2rem;
-  height: 2rem;
-  background: transparent;
-  border: 1px solid #555;
+  top: 0.5rem;
+  right: 50%;
+  margin-right: -0.95rem;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
+  background: #f5c878;
+  box-shadow: 0 0 6px rgba(245, 200, 120, 0.6);
+}
+
+/* ── In-prose entity popover ───────────────────────────── */
+.ent-pop {
+  position: fixed;
+  z-index: 40;
+  min-width: 9rem;
+  background: #1f1f1f;
+  border: 1px solid rgba(245, 200, 120, 0.3);
+  border-radius: 10px;
+  padding: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.ent-pop.open {
+  opacity: 1;
+  transform: none;
+}
+
+.ep-title {
+  margin: 0 0 0.4rem;
+  padding: 0 0.2rem 0.35rem;
+  font-size: 0.85rem;
+  color: #f5c878;
+  border-bottom: 1px solid rgba(245, 200, 120, 0.16);
+}
+
+.ent-pop .ep-act {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   color: #c8c0a8;
+  font-family: inherit;
   font-size: 0.9rem;
   cursor: pointer;
 }
 
-#panel-close:hover { border-color: #e8e4d8; }
+.ent-pop .ep-act:hover,
+.ent-pop .ep-act:focus-visible {
+  background: rgba(245, 200, 120, 0.1);
+  color: #f5c878;
+  outline: none;
+}
 
-/* ── Shared panel typography (re-scoped from the old sidebar) ── */
-#panel-host h3,
-#panel-host h4 {
+/* ── Shared pane typography (re-scoped from the old sidebar) ── */
+.pane-scroll h3,
+.pane-scroll h4 {
   font-weight: normal;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   font-family: Georgia, "Times New Roman", serif;
 }
 
-#panel-host h3 {
+.pane-scroll h3 {
   font-size: 0.72rem;
   color: #a39880;
-  margin: 0 0 0.6rem;
+  margin: 1.4rem 0 0.6rem;
 }
 
-#panel-host h4 {
+.pane-scroll h3:first-child {
+  margin-top: 0;
+}
+
+.pane-scroll h4 {
   font-size: 0.78rem;
   color: #c8c0a8;
   margin: 1.4rem 0 0.6rem;
@@ -484,7 +476,7 @@ body.sheet-locked {
 }
 
 /* ── Foldable headings ───────────────────────────────── */
-#panel-host h4.is-foldable {
+.pane-scroll h4.is-foldable {
   cursor: pointer;
   user-select: none;
   display: flex;
@@ -492,7 +484,7 @@ body.sheet-locked {
   justify-content: space-between;
 }
 
-#panel-host h4.is-foldable::after {
+.pane-scroll h4.is-foldable::after {
   content: "▾";
   display: inline-block;
   font-size: 0.65rem;
@@ -503,11 +495,11 @@ body.sheet-locked {
   letter-spacing: 0;
 }
 
-#panel-host h4.is-foldable.is-folded::after {
+.pane-scroll h4.is-foldable.is-folded::after {
   transform: rotate(-90deg);
 }
 
-#panel-host h4.is-foldable.is-folded + ul {
+.pane-scroll h4.is-foldable.is-folded + ul {
   display: none;
 }
 
@@ -545,18 +537,18 @@ body.sheet-locked {
   text-transform: lowercase;
 }
 
-#panel-host ul {
+.pane-scroll ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-#panel-host li {
+.pane-scroll li {
   font-size: 0.92rem;
   line-height: 1.5;
 }
 
-#panel-host .empty {
+.pane-scroll .empty {
   font-style: italic;
   color: #6a655a;
   padding: 0.3rem 0;
@@ -723,22 +715,60 @@ body.sheet-locked {
   color: #6a655a;
 }
 
-#map-connections li.map-node {
+/* ── Connective-rail map rows (current "here" + tappable neighbours) ── */
+.map-here-rail {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.map-place {
   display: flex;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.4rem 0;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 0.2rem;
   border-bottom: 1px solid rgba(245, 200, 120, 0.08);
 }
 
-.map-node-name { color: #9bb8d8; }
+.map-place .mp-dot {
+  color: rgba(155, 184, 216, 0.55);
+  font-size: 0.7rem;
+  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
+}
 
-.map-node-type {
+.map-place .mp-name {
+  color: #9bb8d8;
+  flex: 1;
+}
+
+.map-place .mp-note {
   color: #6a655a;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  align-self: center;
+}
+
+.map-place .mp-go {
+  color: rgba(245, 200, 120, 0.7);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+/* Tappable neighbours travel on click. */
+#map-connections li.map-place {
+  cursor: pointer;
+}
+
+#map-connections li.map-place:hover .mp-name,
+#map-connections li.map-place:active .mp-name {
+  color: #f5c878;
+}
+
+/* The current place reads as the gold anchor of the rail. */
+.map-place.here .mp-dot { color: rgba(245, 200, 120, 0.7); }
+.map-place.here .mp-name {
+  color: #f5c878;
+  text-shadow: 0 0 12px rgba(245, 200, 120, 0.15);
 }
 
 /* ── People & Time panel ───────────────────────────────── */
@@ -809,38 +839,61 @@ body.sheet-locked {
   }
 }
 
-#panel-host li.is-new {
+.pane-scroll li.is-new {
   animation: character-reveal 0.55s ease-out both;
   animation-delay: calc(var(--stagger, 0) * 40ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #panel-host li.is-new { animation: none; }
-  #panel-host { transition: none; }
-  #panel-backdrop { transition: none; }
+  .pane-scroll li.is-new { animation: none; }
+  .ent-pop { transition: none; }
 }
 
-/* Inline entity spans inserted by formatting.entity_markup.wrap_entities. */
+/* Inline entity spans inserted by formatting.entity_markup.wrap_entities —
+ * now interactive: a tap opens the gesture popover. */
 .turn.narrator .poi {
   border-bottom: 1px dotted currentColor;
-  cursor: help;
+  cursor: pointer;
+}
+.turn.narrator .poi:active {
+  color: #f5c878;
 }
 .turn.narrator .poi[data-kind="npc"]  { color: #b4dcff; }
 .turn.narrator .poi[data-kind="poi"]  { color: #f5c878; }
 .turn.narrator .poi[data-kind="item"] { color: #c8f5b4; }
 
-/* ── Desktop enhancement: dock the dashboard as a tabbed side-rail. ── */
+/* ── Desktop enhancement: Story stays in the main column; Character/Map dock
+ * as a side-rail driven by the same data-pane-active toggle. ── */
 @media (min-width: 721px) {
-  .game-grid {
+  .play-body {
     display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 2.5rem;
+    grid-template-columns: 1fr 320px;
+    grid-template-rows: auto 1fr;
+    column-gap: 2.5rem;
+    row-gap: 0.75rem;
     align-items: start;
   }
 
   #game-panel { padding-bottom: 1.5rem; }
 
-  #action-form {
+  /* Story is always visible and owns the main column across both rows. */
+  #pane-story {
+    display: block;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  /* Character + Map share the rail (row 2, under the tab switcher); only the
+   * active one shows. */
+  #pane-character,
+  #pane-map {
+    grid-column: 2;
+    grid-row: 2;
+    border-left: 1px solid rgba(245, 200, 120, 0.18);
+    padding-left: 1.5rem;
+  }
+
+  .composer {
     position: static;
     background: transparent;
     padding: 0;
@@ -848,44 +901,37 @@ body.sheet-locked {
     z-index: auto;
   }
 
-  #dashboard {
-    border-left: 1px solid rgba(245, 200, 120, 0.18);
-    padding-left: 1.5rem;
+  .pane-scroll {
+    max-height: calc(100vh - 6rem);
   }
 
-  #panel-toolbar {
+  /* The tab bar becomes a slim rail switcher; the Story tab is redundant
+   * (Story is always shown) so it is hidden. */
+  #tabbar {
     position: static;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    border-bottom: 1px solid rgba(245, 200, 120, 0.18);
+    padding-bottom: 0.5rem;
     flex-wrap: wrap;
     gap: 0.25rem;
     background: transparent;
     border-top: none;
-    border-bottom: 1px solid rgba(245, 200, 120, 0.18);
-    padding: 0 0 0.5rem;
+    padding: 0;
     z-index: auto;
   }
 
-  #panel-toolbar button {
+  #tabbar .tab[data-pane="story"] {
+    display: none;
+  }
+
+  #tabbar .tab {
     flex: 0 0 auto;
     flex-direction: row;
     gap: 0.3rem;
     min-height: 0;
     font-size: 0.58rem;
     padding: 0.3rem 0.45rem;
-  }
-
-  #panel-toolbar button .tab-glyph { font-size: 0.85rem; }
-
-  #panel-backdrop,
-  #panel-close { display: none; }
-
-  #panel-host {
-    position: static;
-    transform: none;
-    transition: none;
-    border-radius: 0;
-    border-top: none;
-    padding: 1rem 0 0;
-    max-height: calc(100vh - 9rem);
-    overflow-y: auto;
   }
 }

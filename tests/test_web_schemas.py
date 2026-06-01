@@ -7,7 +7,14 @@ import pytest
 from pydantic import ValidationError
 
 from interfaces.web.character_schemas import CharacterInfo, KnownNPC, RememberedFact
-from interfaces.web.schemas import ActionResponse, CharacterCreationInput, GameSnapshot, StartGameRequest
+from interfaces.web.schemas import (
+    ActionRequest,
+    ActionResponse,
+    CharacterCreationInput,
+    GameSnapshot,
+    PlayerGesture,
+    StartGameRequest,
+)
 from interfaces.web.world_schemas import LocationNode, MapView, ScenePerson, WorldClock, WorldView
 
 _STORY_SCHEMA = "Character info schema"
@@ -90,6 +97,80 @@ def test_action_response_exposes_character() -> None:
         world=_sample_world(),
     )
     assert response.character == character
+
+
+@allure.story(_STORY_SCHEMA)
+@allure.title("ActionResponse.action_html defaults to None and round-trips when set")
+def test_action_response_action_html() -> None:
+    without = ActionResponse(
+        narration="", narration_html="", turn_count=1, character=_sample_character(), world=_sample_world()
+    )
+    assert without.action_html is None
+    with_html = ActionResponse(
+        narration="",
+        narration_html="",
+        action_html="talk to Marcus",
+        turn_count=1,
+        character=_sample_character(),
+        world=_sample_world(),
+    )
+    assert with_html.action_html == "talk to Marcus"
+
+
+@allure.story(_STORY_SCHEMA)
+@allure.title("ActionRequest accepts a lone free-text action or a lone gesture")
+def test_action_request_accepts_exactly_one() -> None:
+    assert ActionRequest(action="look around").gesture is None
+    gesture = PlayerGesture(intent="talk", entity_kind="npc", entity_id="npc-1")
+    assert ActionRequest(gesture=gesture).action is None
+
+
+@allure.story(_STORY_SCHEMA)
+@allure.title("ActionRequest rejects both, neither, or a blank action")
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"action": "look", "gesture": {"intent": "talk", "entity_kind": "npc", "entity_id": "npc-1"}},
+        {"action": "   "},
+    ],
+)
+def test_action_request_xor(payload: dict) -> None:
+    with pytest.raises(ValidationError):
+        ActionRequest.model_validate(payload)
+
+
+@allure.story(_STORY_SCHEMA)
+@allure.title("PlayerGesture accepts every allowed intent×kind pair")
+@pytest.mark.parametrize(
+    ("intent", "entity_kind"),
+    [
+        ("examine", "npc"),
+        ("examine", "poi"),
+        ("examine", "item"),
+        ("talk", "npc"),
+        ("move", "location"),
+    ],
+)
+def test_player_gesture_allows_valid_pairs(intent: str, entity_kind: str) -> None:
+    gesture = PlayerGesture.model_validate({"intent": intent, "entity_kind": entity_kind, "entity_id": "e-1"})
+    assert (gesture.intent, gesture.entity_kind) == (intent, entity_kind)
+
+
+@allure.story(_STORY_SCHEMA)
+@allure.title("PlayerGesture rejects mismatched intent×kind pairs and a blank entity_id")
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"intent": "talk", "entity_kind": "poi", "entity_id": "e-1"},
+        {"intent": "move", "entity_kind": "npc", "entity_id": "e-1"},
+        {"intent": "examine", "entity_kind": "location", "entity_id": "e-1"},
+        {"intent": "talk", "entity_kind": "npc", "entity_id": ""},
+    ],
+)
+def test_player_gesture_rejects_invalid(payload: dict) -> None:
+    with pytest.raises(ValidationError):
+        PlayerGesture.model_validate(payload)
 
 
 @allure.story(_STORY_SCHEMA)
