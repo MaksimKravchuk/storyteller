@@ -9,10 +9,23 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from interfaces.web.character_schemas import CharacterInfo
 from interfaces.web.world_schemas import WorldView
+
+# Allowed (intent, entity_kind) pairs for a structured player gesture. A
+# tap can only ever mean one verb per target kind, so the matrix is fixed
+# here rather than inferred per request.
+_ALLOWED_GESTURE_PAIRS: frozenset[tuple[str, str]] = frozenset(
+    (
+        ("examine", "npc"),
+        ("examine", "poi"),
+        ("examine", "item"),
+        ("talk", "npc"),
+        ("move", "location"),
+    )
+)
 
 _SETTING_MAX_CHARS = 500
 _ACTION_MAX_CHARS = 2000
@@ -59,10 +72,43 @@ class StartGameRequest(BaseModel):
     character: CharacterCreationInput | None = None
 
 
-class ActionRequest(BaseModel):
-    """Body for ``POST /api/games/{game_id}/actions``."""
+class PlayerGesture(BaseModel):
+    """A language-neutral tap on an in-prose entity or a map place.
 
-    action: str = Field(min_length=1, max_length=_ACTION_MAX_CHARS)
+    The client never composes a phrase — it sends *what was tapped*
+    (``entity_kind`` + the opaque ``entity_id`` the server emitted) and
+    *what it means* (``intent``). The server resolves the target's
+    player-visible name and composes the action in the session language.
+    """
+
+    intent: Literal["examine", "talk", "move"]
+    entity_kind: Literal["npc", "poi", "item", "location"]
+    entity_id: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _check_intent_kind(self) -> "PlayerGesture":
+        if (self.intent, self.entity_kind) not in _ALLOWED_GESTURE_PAIRS:
+            raise ValueError(f"intent '{self.intent}' is not valid for entity_kind '{self.entity_kind}'")
+        return self
+
+
+class ActionRequest(BaseModel):
+    """Body for ``POST /api/games/{game_id}/actions``.
+
+    Carries **exactly one** of a free-text ``action`` or a structured
+    ``gesture``. The free-text path is unchanged for existing clients.
+    """
+
+    action: str | None = Field(default=None, max_length=_ACTION_MAX_CHARS)
+    gesture: PlayerGesture | None = None
+
+    @model_validator(mode="after")
+    def _check_exactly_one(self) -> "ActionRequest":
+        if (self.action is None) == (self.gesture is None):
+            raise ValueError("provide exactly one of 'action' or 'gesture'")
+        if self.action is not None and not self.action.strip():
+            raise ValueError("'action' must not be blank")
+        return self
 
 
 class TurnEntry(BaseModel):
@@ -102,11 +148,15 @@ class ActionResponse(BaseModel):
 
     ``narration`` is the raw markdown text the engine produced;
     ``narration_html`` is the same value pre-rendered for browser clients
-    with inline entity spans already baked in.
+    with inline entity spans already baked in. ``action_html`` is the
+    HTML-escaped player line the server actually ran — needed for gesture
+    turns, where the client never composed the phrase itself; free-text
+    clients ignore it because they already echoed the player's input.
     """
 
     narration: str
     narration_html: str
+    action_html: str | None = None
     turn_count: int
     character: CharacterInfo
     world: WorldView

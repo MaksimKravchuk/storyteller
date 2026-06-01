@@ -14,7 +14,7 @@ from loguru import logger
 from config import Config
 from db.repository import GameRepository
 from engine.session_ops import begin_session, resume_session
-from interfaces.web import beta_policy, quota_locks
+from interfaces.web import beta_policy, player_gestures, quota_locks
 from interfaces.web.errors import (
     GameNotFoundError,
     GameStartFailedError,
@@ -23,6 +23,7 @@ from interfaces.web.errors import (
 )
 from interfaces.web.runtime import ActionPersistence, StartPersistence
 from interfaces.web.schemas import (
+    ActionRequest,
     ActionResponse,
     CharacterCreationInput,
     GameSnapshot,
@@ -133,9 +134,14 @@ async def process_turn_for_player(
     cfg: Config,
     player_id: str,
     game_id: str,
-    action: str,
+    request: ActionRequest,
 ) -> ActionResponse:
-    """Process a player action on an existing game.
+    """Process a player turn on an existing game.
+
+    ``request`` carries exactly one of a free-text ``action`` or a
+    structured ``gesture`` (enforced by :class:`ActionRequest`); a gesture
+    is resolved against current state and composed into the session-language
+    phrase before running the unchanged turn pipeline.
 
     Raises ``GameNotFoundError`` if the player has no game or the supplied
     ``game_id`` doesn't match — both yield 404 to avoid leaking existence.
@@ -149,11 +155,17 @@ async def process_turn_for_player(
         if engine is None:
             raise GameNotFoundError(player_id)
 
+        if request.gesture is None:
+            # ActionRequest guarantees a non-blank action whenever no gesture is set.
+            phrase = request.action or ""
+        else:
+            phrase = player_gestures.compose_player_gesture(engine.assert_running()[0], language, request.gesture)
+
         return await ActionPersistence(
             repo=repo,
             session_id=session_id,
             engine=engine,
-            action=action,
+            action=phrase,
             language=language,
             user_id=player_id,
         ).run()

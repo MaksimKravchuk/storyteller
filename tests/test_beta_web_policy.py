@@ -11,6 +11,7 @@ import pytest
 
 from config import Config
 from interfaces.web import service
+from interfaces.web.schemas import ActionRequest
 
 _PLAYER_ID = "11111111-1111-1111-1111-111111111111"
 _GAME_ID = "22222222-2222-2222-2222-222222222222"
@@ -75,7 +76,7 @@ async def test_daily_turn_quota_blocks_action_before_resume() -> None:
     resume_mock = AsyncMock()
     with patch.object(service, "resume_session", new=resume_mock):
         with pytest.raises(service.BetaAccessDeniedError) as exc_info:
-            await service.process_turn_for_player(repo, cfg, _PLAYER_ID, _GAME_ID, "look")
+            await service.process_turn_for_player(repo, cfg, _PLAYER_ID, _GAME_ID, ActionRequest(action="look"))
 
     assert exc_info.value.reason == "daily_turn_quota"
     resume_mock.assert_not_awaited()
@@ -92,7 +93,7 @@ async def test_allowed_action_reaches_resume_after_quota_checks() -> None:
     resume_mock = AsyncMock(return_value=None)
     with patch.object(service, "resume_session", new=resume_mock):
         with pytest.raises(service.GameNotFoundError):
-            await service.process_turn_for_player(repo, cfg, _PLAYER_ID, _GAME_ID, "look")
+            await service.process_turn_for_player(repo, cfg, _PLAYER_ID, _GAME_ID, ActionRequest(action="look"))
 
     assert repo.ai_logs.turn_count_for_user.await_count == 2
     resume_mock.assert_awaited_once()
@@ -122,7 +123,7 @@ async def test_global_budget_blocks_action_before_resume() -> None:
     resume_mock = AsyncMock()
     with patch.object(service, "resume_session", new=resume_mock):
         with pytest.raises(service.BetaAccessDeniedError) as exc_info:
-            await service.process_turn_for_player(repo, cfg, _PLAYER_ID, _GAME_ID, "look")
+            await service.process_turn_for_player(repo, cfg, _PLAYER_ID, _GAME_ID, ActionRequest(action="look"))
 
     assert exc_info.value.reason == "global_budget_exhausted"
     resume_mock.assert_not_awaited()

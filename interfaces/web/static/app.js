@@ -45,11 +45,8 @@
     knownNpcsList: $("known-npcs-list"),
     recentEventsList: $("recent-events-list"),
     learnedFactsList: $("learned-facts-list"),
-    dashboard: $("dashboard"),
-    panelToolbar: $("panel-toolbar"),
-    panelHost: $("panel-host"),
-    panelBackdrop: $("panel-backdrop"),
-    panelClose: $("panel-close"),
+    tabbar: $("tabbar"),
+    entPop: $("ent-pop"),
     knowledgeFilter: $("knowledge-filter"),
     mapBreadcrumb: $("map-breadcrumb"),
     mapCurrent: $("map-current"),
@@ -59,8 +56,8 @@
     offlineBanner: $("offline-banner"),
   };
 
-  const mobileQuery = window.matchMedia("(max-width: 720px)");
-  const isMobile = () => mobileQuery.matches;
+  const desktopQuery = window.matchMedia("(min-width: 721px)");
+  const isDesktop = () => desktopQuery.matches;
 
   let currentGameId = null;
   let supabaseClient = null;
@@ -74,9 +71,8 @@
   let factFilter = "ALL";
   let allFacts = [];
   let prevFacts = null;
-  // Which dashboard panel is selected, and whether the mobile sheet is open.
-  let activePanel = "character";
-  let sheetOpen = false;
+  // Which play-screen pane is selected (Story / Character / Map).
+  let activePane = "story";
 
   const FACT_TITLES = {
     FACT: "fact",
@@ -235,19 +231,39 @@
     allFacts = character.learned_facts || [];
     renderFacts(prev.learned_facts);
     prevCharacter = character;
+    flagPaneIfNew("character");
+  }
+
+  // Build the shared dot/name/note row used by both the current place and
+  // the (tappable) connected places. ``connection`` rows carry the location
+  // id and a "go" affordance so a tap can drive a move gesture.
+  function makeMapPlace(node, connection) {
+    const li = document.createElement("li");
+    li.className = "map-place" + (connection ? "" : " here");
+    const dot = document.createElement("span");
+    dot.className = "mp-dot";
+    dot.setAttribute("aria-hidden", "true");
+    dot.textContent = "◆";
+    const name = document.createElement("span");
+    name.className = "mp-name";
+    name.textContent = node.name;
+    const note = document.createElement("span");
+    note.className = "mp-note";
+    note.textContent = node.location_type;
+    li.append(dot, name, note);
+    if (connection) {
+      li.dataset.locId = node.id;
+      const go = document.createElement("span");
+      go.className = "mp-go";
+      go.setAttribute("aria-hidden", "true");
+      go.textContent = "go ›";
+      li.append(go);
+    }
+    return li;
   }
 
   function renderConnectionNode(node) {
-    const li = document.createElement("li");
-    li.className = "map-node";
-    const name = document.createElement("span");
-    name.className = "map-node-name";
-    name.textContent = node.name;
-    const type = document.createElement("span");
-    type.className = "map-node-type";
-    type.textContent = node.location_type;
-    li.append(name, type);
-    return li;
+    return makeMapPlace(node, true);
   }
 
   function renderPerson(person) {
@@ -265,18 +281,17 @@
 
   function renderMapCurrent(current) {
     els.mapCurrent.innerHTML = "";
-    const name = document.createElement("p");
-    name.className = "map-current-name";
-    const type = document.createElement("p");
-    type.className = "map-current-type";
-    if (current) {
-      name.textContent = current.name;
-      type.textContent = current.location_type;
-    } else {
-      name.textContent = "- location unknown -";
-      name.classList.add("empty");
+    if (!current) {
+      const empty = document.createElement("p");
+      empty.className = "map-current-name empty";
+      empty.textContent = "- location unknown -";
+      els.mapCurrent.appendChild(empty);
+      return;
     }
-    els.mapCurrent.append(name, type);
+    const ul = document.createElement("ul");
+    ul.className = "map-here-rail";
+    ul.appendChild(makeMapPlace(current, false));
+    els.mapCurrent.appendChild(ul);
   }
 
   function renderMap(map) {
@@ -299,6 +314,7 @@
     renderMap(world.map);
     renderPeopleTime(world);
     prevWorld = world;
+    flagPaneIfNew("map");
   }
 
   function renderSnapshot(snapshot) {
@@ -317,6 +333,9 @@
     if (els.storiesPanel) hide(els.storiesPanel);
     show(els.gamePanel);
     show(els.newGameBtn);
+    // Land on the transcript after (re)loading a game on mobile; on desktop the
+    // Story column is always visible so the rail keeps its current pane.
+    if (!isDesktop()) selectPane("story");
     els.actionInput.focus();
   }
 
@@ -563,13 +582,17 @@
     return div.innerHTML;
   }
 
-  async function onSubmitAction(event) {
-    event.preventDefault();
-    const action = els.actionInput.value.trim();
-    if (!action || !currentGameId) return;
-    // Echo the player line immediately while the engine works.
-    appendTurnHTML("player", escapeHTML(action));
-    els.actionInput.value = "";
+  // The single render path for every turn entry point: the free-text
+  // composer, an in-prose entity tap, and a map place tap. ``body`` is the
+  // POST payload (``{action}`` or ``{gesture}``); ``optimisticEcho`` is the
+  // player line to echo immediately for free-text (the client knows it).
+  // Gesture turns pass no echo and render the server-composed ``action_html``
+  // instead, since the phrase is composed server-side in the session language.
+  async function submitTurn(body, optimisticEcho) {
+    if (!currentGameId) return;
+    selectPane("story");
+    closePopover();
+    if (optimisticEcho) appendTurnHTML("player", escapeHTML(optimisticEcho));
     els.actionInput.disabled = true;
     els.actionSubmit.disabled = true;
     setStatus(els.actionStatus, "The AI narrator is resolving your action...", "info");
@@ -579,7 +602,7 @@
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action }),
+          body: JSON.stringify(body),
         },
       );
       if (!response.ok) {
@@ -587,6 +610,7 @@
       }
       setOfflineNotice(false);
       const data = await response.json();
+      if (!optimisticEcho && data.action_html) appendTurnHTML("player", data.action_html);
       appendTurnHTML("narrator", data.narration_html);
       renderCharacter(data.character);
       renderWorld(data.world);
@@ -599,6 +623,14 @@
       els.actionSubmit.disabled = false;
       els.actionInput.focus();
     }
+  }
+
+  function onSubmitAction(event) {
+    event.preventDefault();
+    const action = els.actionInput.value.trim();
+    if (!action || !currentGameId) return;
+    els.actionInput.value = "";
+    submitTurn({ action }, action);
   }
 
   async function onSubmitFeedback(event) {
@@ -679,13 +711,6 @@
     }
   }
 
-  function onNextActionClick(event) {
-    const button = event.target.closest("button[data-action]");
-    if (!button) return;
-    els.actionInput.value = button.dataset.action || "";
-    els.actionInput.focus();
-  }
-
   function onSettingExampleClick(event) {
     const button = event.target.closest("button[data-setting-example]");
     if (!button) return;
@@ -694,7 +719,7 @@
   }
 
   function initFoldableSections() {
-    document.querySelectorAll("#panel-host h4").forEach((heading) => {
+    document.querySelectorAll(".pane-scroll h4").forEach((heading) => {
       const list = heading.nextElementSibling;
       if (!list || list.tagName !== "UL") return;
       heading.classList.add("is-foldable");
@@ -702,80 +727,48 @@
     });
   }
 
-  // ── Dashboard panels (tabbed rail on desktop, bottom-sheet on mobile) ──
+  // ── Play screen: Story / Character / Map panes + entity popover ──
 
-  // Background scroll-lock for the mobile bottom-sheet. position:fixed holds the
-  // page still (iOS ignores overflow:hidden on the body alone); we stash the
-  // scroll offset on lock and restore it on unlock so opening/closing a sheet
-  // never moves the transcript behind it.
-  let lockedScrollY = 0;
-
-  function lockBodyScroll() {
-    lockedScrollY = window.scrollY;
-    document.body.style.top = "-" + lockedScrollY + "px";
-    document.body.classList.add("sheet-locked");
+  function paneEl(name) {
+    return document.querySelector('.play-pane[data-pane="' + name + '"]');
   }
 
-  function unlockBodyScroll() {
-    document.body.classList.remove("sheet-locked");
-    document.body.style.top = "";
-    window.scrollTo(0, lockedScrollY);
+  function setBadge(pane, on) {
+    const tab = els.tabbar.querySelector('.tab[data-pane="' + pane + '"]');
+    if (tab) tab.classList.toggle("has-new", on);
   }
 
-  function selectPanel(name) {
-    activePanel = name;
-    els.panelHost.querySelectorAll(".panel").forEach((panel) => {
-      panel.hidden = panel.dataset.panel !== name;
+  // Light a tab's "has-new" dot when its pane gained entries this turn and the
+  // player isn't already looking at it. ``renderList`` marks fresh rows
+  // ``.is-new``; we reuse that signal rather than recomputing the delta.
+  function flagPaneIfNew(pane) {
+    if (activePane === pane) return;
+    const el = paneEl(pane);
+    if (el && el.querySelector(".is-new")) setBadge(pane, true);
+  }
+
+  function selectPane(name) {
+    activePane = name;
+    document.querySelectorAll(".play-pane").forEach((pane) => {
+      if (pane.dataset.pane === name) {
+        pane.setAttribute("data-pane-active", "");
+      } else {
+        pane.removeAttribute("data-pane-active");
+      }
     });
-    els.panelToolbar.querySelectorAll("button[data-panel]").forEach((btn) => {
-      btn.setAttribute("aria-selected", String(btn.dataset.panel === name));
+    els.tabbar.querySelectorAll(".tab[data-pane]").forEach((tab) => {
+      const selected = tab.dataset.pane === name;
+      tab.classList.toggle("on", selected);
+      tab.setAttribute("aria-selected", String(selected));
     });
+    setBadge(name, false);
+    closePopover();
+    if (name === "story") els.log.scrollTop = els.log.scrollHeight;
   }
 
-  function deselectTabs() {
-    els.panelToolbar.querySelectorAll("button[data-panel]").forEach((btn) => {
-      btn.setAttribute("aria-selected", "false");
-    });
-  }
-
-  // Single owner of the mobile-sheet transition: the sheet-open class, the
-  // sheetOpen flag, and the background scroll-lock always move together, so no
-  // open/close path can flip one without the others. The early return is the one
-  // "only on a real transition" guard — re-locking would re-capture scrollY as 0
-  // once the body is position:fixed.
-  function setSheetOpen(open) {
-    if (open === sheetOpen) return;
-    sheetOpen = open;
-    els.dashboard.classList.toggle("sheet-open", open);
-    if (open) {
-      lockBodyScroll();
-    } else {
-      unlockBodyScroll();
-    }
-  }
-
-  function openPanel(name) {
-    selectPanel(name);
-    if (isMobile()) setSheetOpen(true);
-  }
-
-  function closePanel() {
-    setSheetOpen(false);
-    deselectTabs();
-    const btn = els.panelToolbar.querySelector('button[data-panel="' + activePanel + '"]');
-    if (btn) btn.focus();
-  }
-
-  function onToolbarClick(event) {
-    const btn = event.target.closest("button[data-panel]");
-    if (!btn) return;
-    const name = btn.dataset.panel;
-    // On mobile, tapping the already-open tab toggles the sheet shut.
-    if (isMobile() && sheetOpen && name === activePanel) {
-      closePanel();
-      return;
-    }
-    openPanel(name);
+  function onTabClick(event) {
+    const tab = event.target.closest(".tab[data-pane]");
+    if (tab) selectPane(tab.dataset.pane);
   }
 
   function onFactFilterClick(event) {
@@ -788,28 +781,82 @@
     renderFacts(allFacts);
   }
 
-  function onBreakpointChange() {
-    if (!isMobile()) {
-      // Desktop rail is always visible; drop any mobile sheet state (which also
-      // releases the scroll-lock if a sheet was open when the bp was crossed).
-      setSheetOpen(false);
-      selectPanel(activePanel);
-    } else if (!sheetOpen) {
-      deselectTabs();
-    }
+  // ── In-prose entity popover ──
+  // Tapping a .poi span offers the verbs valid for its kind; picking one runs
+  // a structured gesture (the server composes the localized action phrase).
+  const ENTITY_VERBS = {
+    npc: [{ label: "Look closer", intent: "examine" }, { label: "Talk", intent: "talk" }],
+    poi: [{ label: "Investigate", intent: "examine" }],
+    item: [{ label: "Investigate", intent: "examine" }],
+  };
+
+  function closePopover() {
+    els.entPop.hidden = true;
+    els.entPop.classList.remove("open");
+    els.entPop.innerHTML = "";
   }
 
-  function initDashboard() {
-    selectPanel("character");
-    if (isMobile()) deselectTabs();
-    els.panelToolbar.addEventListener("click", onToolbarClick);
+  function openPopover(span) {
+    const kind = span.dataset.kind;
+    const id = span.dataset.id;
+    const verbs = ENTITY_VERBS[kind];
+    if (!verbs || !id) return;
+    els.entPop.innerHTML = "";
+    const title = document.createElement("p");
+    title.className = "ep-title";
+    title.textContent = span.textContent;
+    els.entPop.appendChild(title);
+    for (const verb of verbs) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ep-act";
+      btn.textContent = verb.label;
+      btn.addEventListener("click", () => {
+        submitTurn({ gesture: { intent: verb.intent, entity_kind: kind, entity_id: id } });
+      });
+      els.entPop.appendChild(btn);
+    }
+    // Position near the tapped word, viewport-relative (position:fixed), then
+    // reveal so the entry transition runs after layout.
+    const rect = span.getBoundingClientRect();
+    els.entPop.hidden = false;
+    const width = els.entPop.offsetWidth;
+    const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
+    els.entPop.style.left = left + "px";
+    els.entPop.style.top = rect.bottom + 6 + "px";
+    requestAnimationFrame(() => els.entPop.classList.add("open"));
+  }
+
+  function onLogClick(event) {
+    const span = event.target.closest(".poi");
+    if (span && els.log.contains(span)) {
+      openPopover(span);
+      return;
+    }
+    closePopover();
+  }
+
+  function onMapPlaceClick(event) {
+    const row = event.target.closest(".map-place[data-loc-id]");
+    if (!row) return;
+    submitTurn({ gesture: { intent: "move", entity_kind: "location", entity_id: row.dataset.locId } });
+  }
+
+  function initPlayScreen() {
+    selectPane(isDesktop() ? "character" : "story");
+    els.tabbar.addEventListener("click", onTabClick);
     if (els.knowledgeFilter) els.knowledgeFilter.addEventListener("click", onFactFilterClick);
-    if (els.panelClose) els.panelClose.addEventListener("click", closePanel);
-    if (els.panelBackdrop) els.panelBackdrop.addEventListener("click", closePanel);
+    els.log.addEventListener("click", onLogClick);
+    els.log.addEventListener("scroll", closePopover);
+    els.mapConnections.addEventListener("click", onMapPlaceClick);
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && sheetOpen) closePanel();
+      if (event.key === "Escape") closePopover();
     });
-    mobileQuery.addEventListener("change", onBreakpointChange);
+    // On desktop the rail must show a panel (Story lives in the main column),
+    // so promote Story selection to Character when the viewport widens.
+    desktopQuery.addEventListener("change", () => {
+      if (isDesktop() && activePane === "story") selectPane("character");
+    });
   }
 
   els.settingForm.addEventListener("submit", onStartGame);
@@ -824,7 +871,6 @@
   if (els.storiesList) {
     els.storiesList.addEventListener("click", onStoriesClick);
   }
-  $("next-actions").addEventListener("click", onNextActionClick);
   if (els.settingExamples) {
     els.settingExamples.addEventListener("click", onSettingExampleClick);
   }
@@ -846,6 +892,6 @@
   registerServiceWorker();
   setOfflineNotice(!navigator.onLine);
   initFoldableSections();
-  initDashboard();
+  initPlayScreen();
   loadPublicConfig().finally(loadStories);
 })();

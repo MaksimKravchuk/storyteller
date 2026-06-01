@@ -23,6 +23,7 @@ from cast import (
     director_routing,
     narrator as narrator_mod,
     narrator_labels as narrator_labels_mod,
+    player_gesture_phrases as gesture_phrases_mod,
     schemas as _cast_schemas,
 )
 from knowledge.graph import KnowledgeGraph
@@ -189,6 +190,35 @@ class TestNarratorLabels:
     def test_unknown_language_falls_back(self) -> None:
         fallback = narrator_labels_mod.get_narrator_labels("Esperanto")
         english = narrator_labels_mod.get_narrator_labels("English")
+        assert fallback is english
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("Localization")
+class TestGesturePhrases:
+    @allure.story("Gesture phrases")
+    @allure.title("Russian and English gesture phrases are distinct and localized")
+    def test_phrases_differ_per_locale(self) -> None:
+        english = gesture_phrases_mod.get_gesture_phrases("English")
+        russian = gesture_phrases_mod.get_gesture_phrases("Russian")
+        assert english.talk == "talk to {0}"
+        assert russian.talk == "поговорить с {0}"
+        assert english.move != russian.move
+        assert russian.examine.startswith("осмотреть")
+
+    @allure.story("Gesture phrases")
+    @allure.title("Every gesture phrase carries the {0} target slot in both locales")
+    def test_phrases_carry_target_slot(self) -> None:
+        for language in ("English", "Russian"):
+            phrases = gesture_phrases_mod.get_gesture_phrases(language)
+            for template in (phrases.examine, phrases.talk, phrases.move):
+                assert "{0}" in template
+
+    @allure.story("Gesture phrases")
+    @allure.title("Unknown language falls back to English gesture phrases")
+    def test_unknown_language_falls_back(self) -> None:
+        fallback = gesture_phrases_mod.get_gesture_phrases("Esperanto")
+        english = gesture_phrases_mod.get_gesture_phrases("English")
         assert fallback is english
 
 

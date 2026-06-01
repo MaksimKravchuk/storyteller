@@ -10,7 +10,7 @@ from engine.session_ops import persist_engine_state
 from interfaces.web.character import build_character_info
 from interfaces.web.errors import GameStartUnavailableError, is_provider_auth_error
 from interfaces.web.schemas import ActionResponse
-from interfaces.web.transcript import player_visible_turn_count, render_narrator_html
+from interfaces.web.transcript import player_visible_turn_count, render_narrator_html, render_player_html
 from interfaces.web.world import build_world_view
 from models.player_character_input import PlayerCharacterInput
 
@@ -68,6 +68,7 @@ class ActionPersistence:
                 list(game_state.last_visible_entities),
                 self.language,
             ),
+            action_html=render_player_html(self.action),
             turn_count=player_visible_turn_count(game_state.conversation_log),
             character=build_character_info(game_state),
             world=build_world_view(game_state),

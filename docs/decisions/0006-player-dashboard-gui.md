@@ -3,6 +3,7 @@
 Date: 2026-05-29
 Status: Proposed
 Decision owner: Max (release/product direction)
+Amended by: `docs/decisions/0010-language-neutral-player-action-contract.md` (§6 and Alternative 4 — map nodes and in-prose entities become actionable via a language-neutral structured contract)
 Related: extends `docs/decisions/0004-retire-telegram-and-cli-player-clients.md` and `docs/studio/09-founder-decision-register.md` (D006 — PWA offline behavior); `interfaces/web/world.py`, `interfaces/web/world_schemas.py`, `interfaces/web/schemas.py`, `interfaces/web/static/`, `models/npc_card.py`
 
 ## Context
@@ -26,7 +27,7 @@ Add a player dashboard GUI with Map, Inventory, Knowledge, and People & Time pan
 3. **Map is a connected-locations graph, not a coordinate map.** It renders the current location, its connected/known neighbours, and an ancestor breadcrumb (outermost first, e.g. Rome → Forum). It deliberately does *not* attempt spatial geometry, because the backend has no coordinates.
 4. **New data rides a `WorldView` DTO on the existing payloads, not a separate endpoint.** `WorldView` (built by `interfaces/web/world.py`, mirroring `character.py`) is attached to both `GameSnapshot` and `ActionResponse`. Map / People / Clock are the only *new* data; Inventory and Knowledge continue to ride on the existing `CharacterInfo`. This keeps the world view per-turn-fresh and atomically consistent with the narration it accompanies.
 5. **NPC name-gating routes only through `NPCCard.label_for_player`.** The People panel's `ScenePerson.label` is produced exclusively by `label_for_player(game_state, role_fallback)`; there is no second name-resolution path in the world builder.
-6. **v1 map nodes are informational only.** Nodes display the world; they carry no movement affordance. The engine exposes no movement contract to bind a click to, and synthesizing an English "go to <place>" verb would break non-English play. Movement-from-map is explicitly deferred.
+6. **v1 map nodes are informational only.** Nodes display the world; they carry no movement affordance. The engine exposes no movement contract to bind a click to, and synthesizing an English "go to <place>" verb would break non-English play. Movement-from-map is explicitly deferred. *(Amended by ADR-0010: map nodes and in-prose entities are now actionable via a language-neutral structured `{intent, entity_kind, entity_id}` contract whose action phrase is composed server-side in the session language — the deferred affordance, without the English-verb shortcut this clause forbids.)*
 
 This ADR is **Proposed**, not self-accepted: it extends the supported player surface and touches PWA/release posture, which are Max's call (ADR-0004, founder-register D006).
 

@@ -132,10 +132,10 @@
     </section>
 
     <section id="game-panel" hidden>
-      <div class="game-grid">
-        <div class="transcript-col">
+      <div class="play-body">
+        <section class="play-pane" id="pane-story" data-pane="story" role="tabpanel" aria-label="Story" data-pane-active>
           <div id="log" aria-live="polite"></div>
-          <form id="action-form">
+          <form id="action-form" class="composer">
             <input
               id="action-input"
               name="action"
@@ -147,12 +147,6 @@
             />
             <button type="submit" id="action-submit">Act</button>
           </form>
-          <div id="next-actions" aria-label="Suggested next actions">
-            <span>Try next:</span>
-            <button type="button" data-action="look around">look around</button>
-            <button type="button" data-action="talk to someone nearby">talk to someone nearby</button>
-            <button type="button" data-action="check my inventory">check my inventory</button>
-          </div>
           <p id="action-status" class="status"></p>
           <details class="feedback-box">
             <summary>Send beta feedback</summary>
@@ -178,71 +172,60 @@
             </form>
             <p id="feedback-status" class="status"></p>
           </details>
-        </div>
-        <div id="dashboard" class="dashboard-col" aria-label="Game dashboard">
-          <div id="panel-backdrop"></div>
-          <nav id="panel-toolbar" role="tablist" aria-label="Game panels">
-            <button id="tab-character" type="button" role="tab" data-panel="character" aria-selected="false" aria-controls="panel-character">
-              <span class="tab-glyph" aria-hidden="true">&#9787;</span><span class="tab-label">Character</span>
-            </button>
-            <button id="tab-map" type="button" role="tab" data-panel="map" aria-selected="false" aria-controls="panel-map">
-              <span class="tab-glyph" aria-hidden="true">&#9678;</span><span class="tab-label">Map</span>
-            </button>
-            <button id="tab-inventory" type="button" role="tab" data-panel="inventory" aria-selected="false" aria-controls="panel-inventory">
-              <span class="tab-glyph" aria-hidden="true">&#9670;</span><span class="tab-label">Inventory</span>
-            </button>
-            <button id="tab-knowledge" type="button" role="tab" data-panel="knowledge" aria-selected="false" aria-controls="panel-knowledge">
-              <span class="tab-glyph" aria-hidden="true">&#10059;</span><span class="tab-label">Knowledge</span>
-            </button>
-            <button id="tab-people" type="button" role="tab" data-panel="people" aria-selected="false" aria-controls="panel-people">
-              <span class="tab-glyph" aria-hidden="true">&#9719;</span><span class="tab-label">People</span>
-            </button>
-          </nav>
-          <div id="panel-host">
-            <button id="panel-close" type="button" aria-label="Close panel">&#10005;</button>
+        </section>
 
-            <section class="panel" id="panel-character" data-panel="character" role="tabpanel" aria-labelledby="tab-character">
-              <h3>Character</h3>
-              <div id="character-header"></div>
-              <h4>Recent events</h4>
-              <ul id="recent-events-list"></ul>
-              <h4>People you know</h4>
-              <ul id="known-npcs-list"></ul>
-            </section>
-
-            <section class="panel" id="panel-map" data-panel="map" role="tabpanel" aria-labelledby="tab-map" hidden>
-              <h3>Map</h3>
-              <p id="map-breadcrumb" class="map-breadcrumb"></p>
-              <div id="map-current"></div>
-              <h4>Connected places</h4>
-              <ul id="map-connections"></ul>
-            </section>
-
-            <section class="panel" id="panel-inventory" data-panel="inventory" role="tabpanel" aria-labelledby="tab-inventory" hidden>
-              <h3>Inventory</h3>
-              <ul id="inventory-list"></ul>
-            </section>
-
-            <section class="panel" id="panel-knowledge" data-panel="knowledge" role="tabpanel" aria-labelledby="tab-knowledge" hidden>
-              <h3>Knowledge</h3>
-              <div id="knowledge-filter" role="group" aria-label="Filter facts by source">
-                <button type="button" data-fact-filter="ALL" aria-pressed="true">All</button>
-                <button type="button" data-fact-filter="FACT" aria-pressed="false">Facts</button>
-                <button type="button" data-fact-filter="PERSONAL_EXPERIENCE" aria-pressed="false">Seen</button>
-                <button type="button" data-fact-filter="RUMOR" aria-pressed="false">Rumors</button>
-                <button type="button" data-fact-filter="HEARSAY" aria-pressed="false">Hearsay</button>
-              </div>
-              <ul id="learned-facts-list"></ul>
-            </section>
-
-            <section class="panel" id="panel-people" data-panel="people" role="tabpanel" aria-labelledby="tab-people" hidden>
-              <h3>People &amp; Time</h3>
-              <p id="world-clock" class="world-clock"></p>
-              <h4>Who's here</h4>
-              <ul id="people-list"></ul>
-            </section>
+        <section class="play-pane" id="pane-character" data-pane="character" role="tabpanel" aria-label="Character">
+          <div class="pane-scroll">
+            <h3>Character</h3>
+            <div id="character-header"></div>
+            <h4>Inventory</h4>
+            <ul id="inventory-list"></ul>
+            <h4>People you know</h4>
+            <ul id="known-npcs-list"></ul>
+            <h4>Recent events</h4>
+            <ul id="recent-events-list"></ul>
+            <h4>Knowledge</h4>
+            <div id="knowledge-filter" role="group" aria-label="Filter facts by source">
+              <button type="button" data-fact-filter="ALL" aria-pressed="true">All</button>
+              <button type="button" data-fact-filter="FACT" aria-pressed="false">Facts</button>
+              <button type="button" data-fact-filter="PERSONAL_EXPERIENCE" aria-pressed="false">Seen</button>
+              <button type="button" data-fact-filter="RUMOR" aria-pressed="false">Rumors</button>
+              <button type="button" data-fact-filter="HEARSAY" aria-pressed="false">Hearsay</button>
+            </div>
+            <ul id="learned-facts-list"></ul>
           </div>
-        </div>
+        </section>
+
+        <section class="play-pane" id="pane-map" data-pane="map" role="tabpanel" aria-label="Map">
+          <div class="pane-scroll">
+            <h3>Map</h3>
+            <p id="map-breadcrumb" class="map-breadcrumb"></p>
+            <div id="map-current"></div>
+            <h4>Connected places</h4>
+            <ul id="map-connections"></ul>
+            <h3>People &amp; Time</h3>
+            <p id="world-clock" class="world-clock"></p>
+            <h4>Who's here</h4>
+            <ul id="people-list"></ul>
+          </div>
+        </section>
+
+        <nav id="tabbar" role="tablist" aria-label="Play screen">
+          <button class="tab on" type="button" role="tab" data-pane="story" aria-selected="true">
+            <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/><path d="M11 5v14M13 5v14"/></svg></span>
+            <span class="tab-label">Story</span>
+          </button>
+          <button class="tab" type="button" role="tab" data-pane="character" aria-selected="false">
+            <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg></span>
+            <span class="tab-label">Character</span>
+          </button>
+          <button class="tab" type="button" role="tab" data-pane="map" aria-selected="false">
+            <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4 4 6v14l5-2 6 2 5-2V4l-5 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></span>
+            <span class="tab-label">Map</span>
+          </button>
+        </nav>
+
+        <div id="ent-pop" class="ent-pop" role="menu" hidden></div>
       </div>
     </section>
   </main>

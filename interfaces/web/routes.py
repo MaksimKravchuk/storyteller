@@ -139,7 +139,7 @@ async def post_action(
             cfg,
             player_id,
             game_id,
-            body.action,
+            body,
         )
     except action_errors.ACTION_ERRORS as exc:
         raise action_errors.to_http_exception(exc) from exc
