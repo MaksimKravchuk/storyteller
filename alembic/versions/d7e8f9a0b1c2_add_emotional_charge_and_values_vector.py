@@ -1,6 +1,6 @@
 """add emotional charge to knowledge_nodes and values_vector to npcs
 
-Revision ID: b2c3d4e5f6a7
+Revision ID: d7e8f9a0b1c2
 Revises: a1b2c3d4e5f7
 Create Date: 2026-06-19 12:00:00.000000
 
@@ -21,7 +21,7 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = "b2c3d4e5f6a7"
+revision: str = "d7e8f9a0b1c2"
 down_revision: Union[str, None] = "a1b2c3d4e5f7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

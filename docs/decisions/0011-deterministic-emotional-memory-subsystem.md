@@ -8,7 +8,7 @@ Related:
 - ADR-0002 (`docs/decisions/0002-benchmark-auto-compare-and-ratchet.md`) — benchmark re-baseline / ratchet policy invoked by the consequences below
 - ADR-0010 (`docs/decisions/0010-language-neutral-player-action-contract.md`) — locale-parity discipline
 - `knowledge/charge.py`, `cast/_mood_derivation.py`, `cast/_relationship_drift.py`, `cast/emotional_memory.py`, `cast/hostility.py`, `cast/director_dialogue.py`, `cast/_npc_combat_memory.py`
-- Migration `alembic/versions/b2c3d4e5f6a7_add_emotional_charge_and_values_vector.py`
+- Migration `alembic/versions/d7e8f9a0b1c2_add_emotional_charge_and_values_vector.py`
 
 ## Context
 
@@ -44,7 +44,7 @@ Six load-bearing sub-decisions:
 
 Orchestration: derivation is invoked from `DialogueHandler._execute_npc_dialogue` in `cast/director_dialogue.py` — the orchestrator owns state mutation, mirroring how the Director bumps hostility before dialogue — **not** inside the Actor. Combat memories now carry a COMBAT charge with `subject_id = attacker` (`cast/_npc_combat_memory.py`). Dialogue summaries are left neutral (scope boundary).
 
-Persistence: migration `b2c3d4e5f6a7` adds three `knowledge_nodes` columns (`valence`, `charge_intensity`, `charge_category`) plus `npcs.values_vector`, with `server_default` backfilling neutral, so pre-existing rows contribute no emotional signal until new charged events arrive.
+Persistence: migration `d7e8f9a0b1c2` adds three `knowledge_nodes` columns (`valence`, `charge_intensity`, `charge_category`) plus `npcs.values_vector`, with `server_default` backfilling neutral, so pre-existing rows contribute no emotional signal until new charged events arrive.
 
 ## Rationale
 
@@ -119,4 +119,4 @@ What future agents must preserve:
 - `models/npc_card.py`, `models/values_vector.py`, `models/relationship.py`
 - `prompts/actor_prompts.py`, `prompts/actor_prompts_ru.py`
 - `db/converters/` (KnowledgeNode + NPCCard conversion)
-- `alembic/versions/b2c3d4e5f6a7_add_emotional_charge_and_values_vector.py`
+- `alembic/versions/d7e8f9a0b1c2_add_emotional_charge_and_values_vector.py`
