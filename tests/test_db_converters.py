@@ -23,6 +23,7 @@ from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, Knowledge
 from models import game_state, location, npc_card, scene, setting
 from models.goal import Goal, GoalKind, GoalScope, GoalStatus
 from models.relationship import Relationship, RelationshipKind
+from models.values_vector import ValuesVector
 from tests._uuid_helpers import make_uuid
 from timeline import event as timeline_event
 
@@ -251,6 +252,33 @@ class TestNPCConverter:
         assert restored.life_goal is None
         assert restored.tactical_goal is None
 
+    @allure.story("Round-trip")
+    @allure.title("NPCCard.values_vector round-trips preserving all seven axes")
+    def test_values_vector_round_trip(self):
+        npc = npc_card.NPCCard(name="Stoic", values_vector=ValuesVector(law=0.5, faith=-0.3, valor=1.0))
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.values_vector.law == pytest.approx(0.5)
+        assert restored.values_vector.faith == pytest.approx(-0.3)
+        assert restored.values_vector.valor == pytest.approx(1.0)
+        assert restored.values_vector.honor == pytest.approx(0)
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_npc reconstructs a neutral values_vector from a legacy empty/missing payload")
+    def test_values_vector_legacy_empty_row(self):
+        npc = npc_card.NPCCard(name="Legacy")
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        row["values_vector"] = {}
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.values_vector.law == pytest.approx(0)
+        assert restored.values_vector.tradition == pytest.approx(0)
+
+        row.pop("values_vector")
+        restored_missing = npc_conv.row_to_npc(row)
+        assert restored_missing.values_vector.honor == pytest.approx(0)
+
 
 @allure.epic("Persistence")
 @allure.feature("Domain↔row converters")
@@ -394,6 +422,34 @@ class TestKnowledgeConverter:
 
         restored = kn_conv.row_to_knowledge_node(row)
         assert restored.salience == pytest.approx(0.5)
+
+    @allure.story("Round-trip")
+    @allure.title("KnowledgeNode emotional charge round-trips preserving valence, intensity, and category")
+    def test_charge_round_trip(self):
+        node = KnowledgeNode(text="A clash", valence=-0.6, charge_intensity=0.8, charge_category="violence")
+        row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
+        assert row["valence"] == pytest.approx(-0.6)
+        assert row["charge_intensity"] == pytest.approx(0.8)
+        assert row["charge_category"] == "violence"
+
+        restored = kn_conv.row_to_knowledge_node(row)
+        assert restored.valence == pytest.approx(-0.6)
+        assert restored.charge_intensity == pytest.approx(0.8)
+        assert restored.charge_category == "violence"
+
+    @allure.story("Backwards compatibility")
+    @allure.title("row_to_knowledge_node defaults emotional charge to neutral on legacy rows")
+    def test_charge_defaults_on_legacy_row(self):
+        node = KnowledgeNode(text="Legacy fact")
+        row = kn_conv.knowledge_node_to_row(node, GAME_STATE_ID)
+        row.pop("valence")
+        row.pop("charge_intensity")
+        row.pop("charge_category")
+
+        restored = kn_conv.row_to_knowledge_node(row)
+        assert restored.valence == pytest.approx(0)
+        assert restored.charge_intensity == pytest.approx(0)
+        assert restored.charge_category == ""
 
 
 @allure.epic("Persistence")

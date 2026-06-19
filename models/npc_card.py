@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pydantic import Field
+
 from models.character import Character
 from models.goal import Goal
+from models.values_vector import ValuesVector
 
 if TYPE_CHECKING:
     from models.game_state import GameState
@@ -51,6 +54,7 @@ class NPCCard(Character):
     physical_status: str = "healthy"
     hostility_level: int = 0
     recent_hostile_actions: list[dict[str, str]] = []
+    values_vector: ValuesVector = Field(default_factory=ValuesVector)
     life_goal: Goal | None = None
     tactical_goal: Goal | None = None
 

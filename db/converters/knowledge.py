@@ -12,13 +12,18 @@ from knowledge import salience as salience_presets
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
 
 _COL_CANON = "canon"
+_COL_CHARGE_CATEGORY = "charge_category"
+_COL_CHARGE_INTENSITY = "charge_intensity"
 _COL_EDGE_TYPE = "edge_type"
 _COL_FROM_NODE_ID = "from_node_id"
 _COL_METADATA = "metadata_"
 _COL_SALIENCE = "salience"
 _COL_SUBJECT_ID = "subject_id"
 _COL_TO_NODE_ID = "to_node_id"
+_COL_VALENCE = "valence"
 _DEFAULT_CANON = CanonSource.HISTORICAL.value
+_DEFAULT_CHARGE = float(0)
+_DEFAULT_CHARGE_CATEGORY = ""
 
 
 def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
@@ -34,6 +39,9 @@ def knowledge_node_to_row(node: KnowledgeNode, game_state_id: str) -> dict:
         COL_LOCATION_ID: uuid_to_text(node.location_id),
         "timestamp": node.timestamp,
         _COL_SALIENCE: node.salience,
+        _COL_VALENCE: node.valence,
+        _COL_CHARGE_INTENSITY: node.charge_intensity,
+        _COL_CHARGE_CATEGORY: node.charge_category,
         "subject": node.subject,
         "object": node.object,
         "action": node.action,
@@ -54,6 +62,9 @@ def row_to_knowledge_node(row) -> KnowledgeNode:
         location_id=row[COL_LOCATION_ID],
         timestamp=row["timestamp"],
         salience=row.get(_COL_SALIENCE, salience_presets.DEFAULT),
+        valence=row.get(_COL_VALENCE, _DEFAULT_CHARGE),
+        charge_intensity=row.get(_COL_CHARGE_INTENSITY, _DEFAULT_CHARGE),
+        charge_category=row.get(_COL_CHARGE_CATEGORY, _DEFAULT_CHARGE_CATEGORY),
         subject=row.get("subject"),
         object=row.get("object"),
         action=row.get("action"),

@@ -14,6 +14,7 @@ from db.converters._npc_relationships import relationships_to_row, row_to_relati
 from db.converters._uuid_text import uuid_to_text
 from models.goal import Goal
 from models.npc_card import NPCCard
+from models.values_vector import ValuesVector
 
 
 def _goal_to_row(goal: Goal | None) -> dict | None:
@@ -49,6 +50,7 @@ def npc_to_row(npc: NPCCard, game_state_id: str) -> dict:
         "physical_status": npc.physical_status,
         "hostility_level": npc.hostility_level,
         "recent_hostile_actions": npc.recent_hostile_actions,
+        "values_vector": npc.values_vector.model_dump(mode="json"),
         "life_goal": _goal_to_row(npc.life_goal),
         "tactical_goal": _goal_to_row(npc.tactical_goal),
     }
@@ -74,6 +76,7 @@ def row_to_npc(row) -> NPCCard:
         physical_status=row["physical_status"],
         hostility_level=row["hostility_level"],
         recent_hostile_actions=row["recent_hostile_actions"],
+        values_vector=ValuesVector.model_validate(row.get("values_vector") or {}),
         life_goal=_row_to_goal(row.get("life_goal")),
         tactical_goal=_row_to_goal(row.get("tactical_goal")),
     )

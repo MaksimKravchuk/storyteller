@@ -12,7 +12,10 @@ from models.base_model import StorytellerBase
 
 _SALIENCE_LOW = float(0)
 _SALIENCE_HIGH = float(1)
+_VALENCE_FLOOR = float(-1)
 _SALIENCE_FIELD = Field(default=salience_presets.DEFAULT, ge=_SALIENCE_LOW, le=_SALIENCE_HIGH)
+_VALENCE_FIELD = Field(default=_SALIENCE_LOW, ge=_VALENCE_FLOOR, le=_SALIENCE_HIGH)
+_CHARGE_INTENSITY_FIELD = Field(default=_SALIENCE_LOW, ge=_SALIENCE_LOW, le=_SALIENCE_HIGH)
 
 
 class KnowledgeScope(IntEnum):
@@ -73,6 +76,9 @@ class KnowledgeNode(StorytellerBase):
     location_id: UUID | None = None
     timestamp: float | None = None  # Game-clock time when learned
     salience: float = _SALIENCE_FIELD
+    valence: float = _VALENCE_FIELD  # Signed felt charge: -1 bad … +1 good
+    charge_intensity: float = _CHARGE_INTENSITY_FIELD  # Pre-decay strength of feeling
+    charge_category: str = ""  # Key into knowledge.charge.AXIS_SIGNATURES
     subject: str | None = None
     object: str | None = None
     action: str | None = None
