@@ -57,6 +57,13 @@ class NPCCard(Character):
     values_vector: ValuesVector = Field(default_factory=ValuesVector)
     life_goal: Goal | None = None
     tactical_goal: Goal | None = None
+    # Transient per-turn lower bound on ``current_mood`` set by the
+    # deterministic emotional deriver (see ``cast.emotional_memory``). It
+    # guards the derived mood through the same-turn LLM ``[MOOD:]`` update so
+    # an LLM-emitted calm/neutral cannot erase a deterministically hostile
+    # mood before the retaliation mechanic reads it, even at hostility 0.
+    # Re-derived every turn, so it is intentionally not persisted.
+    emotional_mood_floor: str | None = None
 
     def label_for_player(self, game_state: GameState, role_fallback: str) -> str:
         """Return the primary label the player should see for this NPC.

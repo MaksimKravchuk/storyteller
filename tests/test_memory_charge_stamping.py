@@ -10,6 +10,7 @@ import pytest
 from knowledge import charge
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory import MemoryEvent, MemoryManager
+from knowledge.memory_slots import EMPTY_SLOTS
 from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
 from llm.message import LLMResponse
 from tests._uuid_helpers import make_uuid
@@ -91,3 +92,26 @@ async def test_dialogue_summary_is_neutral() -> None:
     node = _personal_nodes(graph)[0]
     assert node.charge_intensity == pytest.approx(0)
     assert node.charge_category == ""
+
+
+@pytest.mark.asyncio
+@allure.title("A retaliation summary upgrades the charge of a deduped neutral dialogue summary")
+async def test_retaliation_charge_upgrades_deduped_dialogue_summary() -> None:
+    """Regression: when an aggressive turn writes the neutral dialogue summary
+    first and then a near-identical retaliation summary for the same NPC, dedup
+    must not leave the memory inert — it upgrades the surviving node's charge so
+    the emotional-memory subsystem still sees the grudge.
+    """
+    manager, graph = _make_manager()  # the stub returns the same text for both calls
+    graph.register_actor_node(_W1)
+
+    # 1) neutral dialogue summary lands first
+    await manager.summarize_interactions_batch([(_W1, "player squares up to the guard")])
+    # 2) near-identical retaliation summary for the SAME NPC is deduped, not dropped
+    await manager.summarize_interactions_batch([(_W1, "[retaliation] ...", EMPTY_SLOTS, charge.RETALIATION)])
+
+    nodes = _personal_nodes(graph)
+    assert len(nodes) == 1  # dedup held — no redundant node
+    assert nodes[0].charge_intensity == pytest.approx(charge.RETALIATION.base_intensity)
+    assert nodes[0].charge_category == charge.RETALIATION_CATEGORY
+    assert nodes[0].valence == pytest.approx(charge.RETALIATION.base_valence)

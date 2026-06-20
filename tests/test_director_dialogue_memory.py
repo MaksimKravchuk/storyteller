@@ -7,8 +7,9 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
+from cast import emotional_memory as em
 from cast.director_dialogue import DialogueHandler
-from knowledge import memory as _km, query as _kq, salience as salience_presets
+from knowledge import charge, memory as _km, query as _kq, salience as salience_presets
 from llm.message import LLMResponse
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
@@ -313,6 +314,65 @@ class TestDialogueHandlerLongTermMemory:
         assert "[retaliation]" in sent_prompt
         assert "shout insults" in sent_prompt
         assert "*lunges at you, sword drawn*" in sent_prompt
+
+    @allure.story("Emotional charge stamping")
+    @allure.title("summarize_retaliations stamps the retaliation memory with the RETALIATION charge")
+    @pytest.mark.asyncio
+    async def test_summarize_retaliations_stamps_retaliation_charge(self):
+        """Consumer-seam regression: the persisted retaliation memory must carry
+        the RETALIATION charge (not neutral), or the deterministic
+        emotional-memory subsystem never sees the grudge it should build.
+        """
+        gs = make_game_state()
+        setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_RETALIATION_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {}, memory_manager)
+
+        await handler.summarize_retaliations(
+            [{"npc_uuid": _NPC_A, "npc_name": "Marcus", "response": "*lunges*"}],
+            "shout insults",
+        )
+
+        memory = gs.knowledge_graph.personal_memories_for(_NPC_A)[0]
+        assert memory.charge_intensity == pytest.approx(charge.RETALIATION.base_intensity)
+        assert memory.charge_category == charge.RETALIATION_CATEGORY
+        assert memory.valence == pytest.approx(charge.RETALIATION.base_valence)
+        assert memory.subject_id == gs.player.uuid
+
+    @allure.story("Emotional charge stamping")
+    @allure.title("A stamped retaliation memory drives relationship drift toward the player")
+    @pytest.mark.asyncio
+    async def test_retaliation_memory_drives_relationship_drift(self):
+        """Deeper consumer seam: once the retaliation memory is charged, running
+        the emotional deriver on the retaliator drifts a negative relationship
+        toward the player — proving the charge actually reaches the subsystem.
+        """
+        gs = make_game_state()
+        npc = setup_npc(gs, _NPC_A, name="Marcus", occupation="legionary")
+        gs.knowledge_graph.register_actor_node(_NPC_A, label="Marcus (legionary)")
+
+        memory_llm = AsyncMock()
+        memory_llm.send_message = AsyncMock(
+            return_value=LLMResponse(body=_RETALIATION_SUMMARY, model="stub", usage={}),
+        )
+        memory_manager = MemoryManager(graph=gs.knowledge_graph, llm_client=memory_llm)
+        handler = DialogueHandler(gs, {}, memory_manager)
+
+        await handler.summarize_retaliations(
+            [{"npc_uuid": _NPC_A, "npc_name": "Marcus", "response": "*lunges*"}],
+            "shout insults",
+        )
+        em.apply_emotional_state(npc, gs.knowledge_graph, gs.game_clock)
+
+        player_rel = [rel for rel in npc.relationships if rel.target_uuid == str(gs.player.uuid)]
+        assert len(player_rel) == 1
+        assert player_rel[0].intensity < 0
 
     @allure.story("Memory summarisation hook")
     @allure.title("summarize_retaliations tags the retaliating NPC's memory with the current scene's location_id")

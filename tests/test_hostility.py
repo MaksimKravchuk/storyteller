@@ -158,6 +158,38 @@ class TestApplyLLMMoodUpdate:
 
         assert guard.current_mood == "hostile"
 
+    @allure.story("Emotional-floor guard")
+    @allure.title("An emotional floor blocks an LLM downgrade even at hostility 0")
+    def test_emotional_floor_blocks_downgrade_at_zero_hostility(self, guard):
+        guard.hostility_level = 0  # no mechanical floor
+        guard.current_mood = "hostile"
+        guard.emotional_mood_floor = "hostile"
+
+        hostility.apply_llm_mood_update(guard, "calm")
+
+        assert guard.current_mood == "hostile"
+
+    @allure.story("Emotional-floor guard")
+    @allure.title("An emotional floor still lets the LLM escalate above it")
+    def test_emotional_floor_allows_escalation(self, guard):
+        guard.emotional_mood_floor = "angry"
+
+        hostility.apply_llm_mood_update(guard, "enraged")
+
+        assert guard.current_mood == "enraged"
+
+    @allure.story("Emotional-floor guard")
+    @allure.title("The effective floor is the stronger of the mechanical and emotional floors")
+    def test_effective_floor_takes_stronger_of_the_two(self, guard):
+        guard.hostility_level = 1  # mechanical floor = irritated
+        guard.emotional_mood_floor = "hostile"  # stronger
+        guard.current_mood = "hostile"
+
+        # "angry" outranks the mechanical floor but not the emotional one.
+        hostility.apply_llm_mood_update(guard, "angry")
+
+        assert guard.current_mood == "hostile"
+
 
 @allure.epic("NPC behavior")
 @allure.feature("Hostility escalation")

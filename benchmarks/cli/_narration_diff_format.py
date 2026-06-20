@@ -21,20 +21,26 @@ _REMOVED_TURN = "_turn {0} present in previous version only_"
 
 
 def _blockquote(label: str, narration: str) -> list[str]:
-    """Render a labelled markdown blockquote for one narration body."""
+    """Render a labelled markdown blockquote for one narration body.
+
+    Emits a blank line before the label and between the label and the
+    quote. Without the separators, GitHub-flavoured markdown folds the
+    ``_current:_`` label and its quote into the *previous* blockquote as a
+    lazy continuation, so the two narrations render merged into one quote.
+    """
     narration_lines = narration.splitlines() or [""]
     quoted = "\n".join("> {0}".format(line) for line in narration_lines)
-    return ["_{0}:_".format(label), quoted]
+    return ["", "_{0}:_".format(label), "", quoted]
 
 
 def _format_turn(previous: TurnText | None, current: TurnText) -> list[str]:
     """Render one current turn against its previous-version counterpart."""
     lines = ["", "**Turn {0}** — `{1}`".format(current.index, current.player_action)]
     if previous is None:
-        lines.append(_NO_PRIOR_TURN)
+        lines.extend(["", _NO_PRIOR_TURN])
         lines.extend(_blockquote("current", current.narration))
     elif previous.narration == current.narration:
-        lines.append(_UNCHANGED)
+        lines.extend(["", _UNCHANGED])
     else:
         lines.extend(_blockquote("previous", previous.narration))
         lines.extend(_blockquote("current", current.narration))

@@ -15,7 +15,7 @@ from cast import (
     scene_log,
 )
 from cast.dice import ContestRoll, ContestType
-from knowledge import salience as salience_presets
+from knowledge import charge as charge_presets, salience as salience_presets
 from knowledge.memory import MemoryManager
 from knowledge.memory_slots import MemorySlots
 from models.game_state import GameState
@@ -288,6 +288,10 @@ class DialogueHandler:
                     object=player_name,
                     action="retaliated_against",
                 ),
+                # Stamp the felt RETALIATION charge so the retaliator builds a
+                # grudge toward the player through mood derivation / relationship
+                # drift — without this the salient memory stays emotionally inert.
+                charge_presets.RETALIATION,
             )
             for entry in retaliation_entries
             if entry.get("npc_uuid")

@@ -62,6 +62,15 @@ def _net_valence_by_subject(npc: NPCCard, memories: list[KnowledgeNode], now: fl
         subject_id = memory.subject_id
         if subject_id is None or subject_id == npc.uuid:
             continue
+        if memory.charge_intensity == 0:
+            # A neutral dialogue-summary memory carries a subject_id but no
+            # original emotional charge. Folding it in would seed the subject
+            # into ``totals`` with a zero contribution, materializing a
+            # spurious NEUTRAL relationship — or relaxing a real RIVAL/ENEMY
+            # back to neutral — with no charged evidence behind it. Genuinely
+            # charged memories (intensity > 0) still pass even once decayed to
+            # zero, so a faded grudge can legitimately relax.
+            continue
         totals[subject_id] += memory_contribution(npc.values_vector, memory, now)
     return totals
 

@@ -4,6 +4,7 @@ Date: 2026-06-19
 Status: Accepted
 Decision owner: Max
 Related:
+- ADR-0012 (`docs/decisions/0012-emotional-memory-autonomous-turns-and-llm-floor.md`) — extends this record: derives emotion on autonomous NPC turns, carries an LLM-proof mood floor, and resolves the "Known limitation / follow-up" below.
 - ADR-0008 (`docs/decisions/0008-scope-npc-memory-ownership-and-actor-recall.md`) — NPC memory ownership / Actor recall seam this builds on
 - ADR-0002 (`docs/decisions/0002-benchmark-auto-compare-and-ratchet.md`) — benchmark re-baseline / ratchet policy invoked by the consequences below
 - ADR-0010 (`docs/decisions/0010-language-neutral-player-action-contract.md`) — locale-parity discipline

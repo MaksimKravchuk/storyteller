@@ -43,5 +43,14 @@ def apply_emotional_state(
     mood = derive_mood(npc, memories, now)
     if has_emotional_signal(memories, now):
         apply_derived_mood(npc, mood)
+        # Carry the derived mood as a lower bound through the same-turn LLM
+        # ``[MOOD:]`` update so an inattentive Actor cannot de-escalate the
+        # deterministic mood before retaliation reads it — even when the
+        # mechanical hostility floor is 0 (memory-only grudge).
+        npc.emotional_mood_floor = mood
+    else:
+        # No live signal this turn: clear any stale floor so the LLM regains
+        # free rein once a grudge has fully decayed.
+        npc.emotional_mood_floor = None
     drift_relationships(npc, memories, now, turn=turn)
     return mood

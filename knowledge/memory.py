@@ -29,16 +29,53 @@ _SUMMARISER_USER_PROMPT = (
 )
 
 # A 2-tuple ``(npc_id, transcript)`` carries no slots; a 3-tuple
-# ``(npc_id, transcript, slots)`` carries explicit subject/object/action
-# values. Both forms feed ``summarize_interactions_batch``.
-DialoguePair = tuple[UUID, str] | tuple[UUID, str, MemorySlots]
+# ``(npc_id, transcript, slots)`` adds explicit subject/object/action
+# values; a 4-tuple ``(npc_id, transcript, slots, charge)`` additionally
+# stamps an emotional :class:`~knowledge.charge.ChargePreset` on the
+# resulting node (e.g. a retaliation memory). All forms feed
+# ``summarize_interactions_batch``; the charge defaults to neutral so a
+# plain dialogue summary stays a scope boundary (felt charge rides combat
+# / retaliation memories, not chit-chat).
+# The normalised 4-tuple every pair is widened to before a node is built.
+SplitPair = tuple[UUID, str, MemorySlots, charge_presets.ChargePreset]
+_BarePair = tuple[UUID, str]
+_SlotsPair = tuple[UUID, str, MemorySlots]
+DialoguePair = _BarePair | _SlotsPair | SplitPair
 
 
-def _split_pair(pair: DialoguePair) -> tuple[UUID, str, MemorySlots]:
-    """Normalise a 2- or 3-tuple :data:`DialoguePair` to ``(npc_id, log, slots)``."""
+def _split_pair(pair: DialoguePair) -> SplitPair:
+    """Normalise a 2/3/4-tuple :data:`DialoguePair` to ``(npc_id, log, slots, charge)``."""
+    if len(pair) == 4:
+        return pair[0], pair[1], pair[2], pair[3]
     if len(pair) == 3:
-        return pair[0], pair[1], pair[2]
-    return pair[0], pair[1], EMPTY_SLOTS
+        return pair[0], pair[1], pair[2], charge_presets.NEUTRAL
+    return pair[0], pair[1], EMPTY_SLOTS, charge_presets.NEUTRAL
+
+
+def _merge_into_duplicate(
+    graph: KnowledgeGraph,
+    npc_id: UUID,
+    summary_text: str,
+    charge: charge_presets.ChargePreset,
+) -> bool:
+    """Fold a near-duplicate summary into the existing node, upgrading its charge.
+
+    Returns ``True`` when a near-duplicate personal memory of *npc_id*
+    exists, so the caller skips creating a redundant node. A more strongly
+    charged write (e.g. a retaliation summary that paraphrases the same
+    exchange as an earlier neutral dialogue summary) raises the duplicate's
+    charge **in place** rather than being dropped by dedup, so the
+    emotional-memory subsystem still sees the event. Charge only ever rises,
+    never downgrades.
+    """
+    duplicate = memory_dedup.find_near_duplicate_memory(graph, npc_id, summary_text)
+    if duplicate is None:
+        return False
+    if charge.base_intensity > duplicate.charge_intensity:
+        duplicate.valence = charge.base_valence
+        duplicate.charge_intensity = charge.base_intensity
+        duplicate.charge_category = charge.category
+    return True
 
 
 @dataclass(frozen=True)
@@ -132,13 +169,17 @@ class MemoryManager:
     ) -> None:
         """Summarise many interactions concurrently into memory nodes.
 
-        Each ``pair`` is ``(npc_id, interaction_log)`` or
-        ``(npc_id, interaction_log, slots)``. ``salience`` is the
+        Each ``pair`` is ``(npc_id, interaction_log)``,
+        ``(npc_id, interaction_log, slots)``, or
+        ``(npc_id, interaction_log, slots, charge)``. ``salience`` is the
         importance score stamped on every produced memory; ``subject_id``
         is the canonical entity all summaries on this turn are about
-        (typically ``player.uuid``). Dialogue summaries carry neutral
-        emotional charge — felt charge is stamped on event memories
-        (combat, retaliation) via :class:`MemoryEvent`, not chit-chat.
+        (typically ``player.uuid``). A plain dialogue summary carries
+        neutral charge (a scope boundary — felt charge rides combat /
+        retaliation memories, not chit-chat); a pair may opt into a
+        :class:`~knowledge.charge.ChargePreset` so the deterministic
+        emotional-memory subsystem (mood derivation, relationship drift)
+        actually sees the event.
         """
         if not pairs:
             return
@@ -251,7 +292,7 @@ class MemoryManager:
 
     async def _summarize_one(
         self,
-        pair: tuple[UUID, str, MemorySlots],
+        pair: SplitPair,
         game_time: float,
         location_id: UUID | None,
         salience: float,
@@ -261,13 +302,14 @@ class MemoryManager:
         from llm.message import Message, Role
 
         npc_id = pair[0]
+        charge = pair[3]
         response = await self._llm.send_message(
             messages=[Message(role=Role.USER, body=_SUMMARISER_USER_PROMPT + pair[1])],
             system_prompt=_SUMMARISER_SYSTEM_PROMPT,
             max_tokens=_SUMMARY_MAX_TOKENS,
         )
         summary_text = response.body.strip()
-        if not summary_text or memory_dedup.has_near_duplicate_memory(self._graph, npc_id, summary_text):
+        if not summary_text or _merge_into_duplicate(self._graph, npc_id, summary_text, charge):
             return
         node_id = self._graph.add_node(
             _node.KnowledgeNode(
@@ -279,6 +321,9 @@ class MemoryManager:
                 timestamp=game_time,
                 salience=salience,
                 subject_id=subject_id,
+                valence=charge.base_valence,
+                charge_intensity=charge.base_intensity,
+                charge_category=charge.category,
                 **slot_kwargs(pair[2]),
             ),
         )
