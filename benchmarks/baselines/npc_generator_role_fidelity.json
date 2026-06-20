@@ -1,0 +1,58 @@
+{
+  "aggregate": {
+    "element_pass_rates": [
+      {
+        "base_value": 2,
+        "element_id": "beggar_role_tagged",
+        "iterations": 3,
+        "label": "Engine materialises a blind-beggar NPC with the blindness marker",
+        "passes": 1
+      },
+      {
+        "base_value": 2,
+        "element_id": "senator_role_tagged",
+        "iterations": 3,
+        "label": "Engine materialises a Roman-senator NPC",
+        "passes": 0
+      },
+      {
+        "base_value": 2,
+        "element_id": "beggar_persona_matches_role",
+        "iterations": 3,
+        "label": "Beggar dialogue + description read as a destitute, blind street figure",
+        "passes": 3
+      },
+      {
+        "base_value": 2,
+        "element_id": "senator_persona_matches_role",
+        "iterations": 3,
+        "label": "Senator dialogue + description carry patrician status",
+        "passes": 1
+      }
+    ],
+    "iteration_totals": [
+      3,
+      1,
+      2
+    ],
+    "iterations": 3,
+    "max_awarded": 3,
+    "mean_awarded": 2.0,
+    "min_awarded": 1,
+    "scenario_id": "npc_generator_role_fidelity",
+    "scenario_label": "NPCGenerator materialises NPCs whose persona matches the requested role",
+    "stdev_awarded": 0.816496580927726,
+    "total_base": 8
+  },
+  "baselined_at": "2026-06-20T19:19:08.410565+00:00",
+  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iterations": 3,
+  "noise_floor_stdev": 0.816496580927726
+}
