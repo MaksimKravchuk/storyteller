@@ -15,7 +15,7 @@ from uuid import UUID
 
 from cast import scene_log
 from cast._npc_outcome import OutcomeKind
-from knowledge import salience as salience_presets
+from knowledge import charge as charge_presets, salience as salience_presets
 from knowledge.memory import MemoryEvent, MemoryManager
 from knowledge.memory_slots import MemorySlots
 from knowledge.node import KnowledgeScope
@@ -133,6 +133,10 @@ async def persist_combat_memory(
             location_id=location_id,
             game_time=game_state.game_clock,
             salience=salience_presets.COMBAT,
+            valence=charge_presets.COMBAT.base_valence,
+            charge_intensity=charge_presets.COMBAT.base_intensity,
+            charge_category=charge_presets.COMBAT.category,
+            subject_id=event.actor.uuid,
             slots=_slots_for_combat(event),
         ),
     )

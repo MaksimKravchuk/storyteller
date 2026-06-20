@@ -11,7 +11,7 @@ from loguru import logger
 
 from models.game_state import INITIAL_GAME_CLOCK, PlayerState
 
-from knowledge import memory_dedup, node as _node, salience as salience_presets
+from knowledge import charge as charge_presets, memory_dedup, node as _node, salience as salience_presets
 from knowledge.graph import KnowledgeGraph
 from knowledge.memory_slots import EMPTY_SLOTS, MemorySlots, slot_kwargs
 
@@ -102,6 +102,9 @@ class MemoryEvent:
     slots: MemorySlots = EMPTY_SLOTS
     subject_id: UUID | None = None
     tags: list[str] = field(default_factory=list)
+    valence: float = charge_presets.NEUTRAL.base_valence
+    charge_intensity: float = charge_presets.NEUTRAL.base_intensity
+    charge_category: str = charge_presets.NEUTRAL.category
 
 
 class MemoryManager:
@@ -133,7 +136,9 @@ class MemoryManager:
         ``(npc_id, interaction_log, slots)``. ``salience`` is the
         importance score stamped on every produced memory; ``subject_id``
         is the canonical entity all summaries on this turn are about
-        (typically ``player.uuid``).
+        (typically ``player.uuid``). Dialogue summaries carry neutral
+        emotional charge — felt charge is stamped on event memories
+        (combat, retaliation) via :class:`MemoryEvent`, not chit-chat.
         """
         if not pairs:
             return
@@ -224,6 +229,9 @@ class MemoryManager:
                 location_id=event.location_id,
                 timestamp=event.game_time,
                 salience=event.salience,
+                valence=event.valence,
+                charge_intensity=event.charge_intensity,
+                charge_category=event.charge_category,
                 subject_id=event.subject_id,
                 tags=list(event.tags),
                 **slot_kwargs(event.slots),

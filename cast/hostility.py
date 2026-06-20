@@ -184,6 +184,23 @@ def apply_llm_mood_update(npc: NPCCard, new_mood: str) -> None:
     npc.current_mood = new_mood
 
 
+def apply_derived_mood(npc: NPCCard, derived_mood: str) -> None:
+    """Set ``current_mood`` from the deterministic emotional deriver, floored.
+
+    The emotional derivation (see :func:`cast.emotional_memory.derive_mood`)
+    is authoritative for mood at the start of a turn: it overwrites the
+    prior label — which may have decayed since last turn — with the freshly
+    derived one, then raises it to the mechanical hostility floor so emotion
+    can lift mood *above* the floor but the floor set by
+    :func:`bump_hostility` is never undercut. The later LLM ``[MOOD:]`` path
+    (:func:`apply_llm_mood_update`) stays floor-guarded on top of this.
+    """
+    npc.current_mood = derived_mood
+    floor = mood_floor(npc.hostility_level)
+    if floor is not None and _is_stronger_mood(floor, npc.current_mood):
+        npc.current_mood = floor
+
+
 def _is_stronger_mood(candidate: str, current: str) -> bool:
     """Report whether ``candidate`` outranks ``current`` on the hostility ladder.
 

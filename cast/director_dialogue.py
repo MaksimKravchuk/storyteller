@@ -10,6 +10,7 @@ from cast import (
     director_context,
     director_dialogue_helpers as dlg_helpers,
     director_dialogue_witness,
+    emotional_memory,
     known_npcs,
     scene_log,
 )
@@ -52,6 +53,16 @@ async def _execute_npc_dialogue(
     game_state: GameState,
 ) -> dict[str, str]:
     """Execute a single NPC dialogue and return the result entry."""
+    # Derive deterministic mood + relationship drift from this NPC's emotional
+    # memory before the Actor renders, so ``npc.current_mood`` carries the
+    # derived value into the prompt (Option A) and feeds the retaliation
+    # mechanic — mirroring how the Director bumps hostility before dialogue.
+    emotional_memory.apply_emotional_state(
+        npc,
+        game_state.knowledge_graph,
+        game_state.game_clock,
+        turn=game_state.turn_count,
+    )
     reply = await actor.execute(
         input_data="Player is addressing you, {0}.\nPlayer action: {1}".format(npc.name, action_text),
         context={
