@@ -1,11 +1,12 @@
 """Scoring rubric for the scene-builder re-entry-consistency benchmark.
 
-Two deterministic checks compare the Forum's POI list across snapshots
+Three deterministic checks compare the Forum's POI list across snapshots
 (landmarks must persist with the same primary names, no duplicates on
-re-entry). Two evidence-LLM checks score the prose on the re-entry
-turn: it must reference the same landmarks the first visit anchored,
-and it must not contradict the first visit's atmosphere without an
-in-fiction reason.
+re-entry) and confirm the re-entry narration names at least one seeded
+landmark — a closed-set membership test that needs no LLM judge. One
+evidence-LLM check remains for the genuinely subjective question of
+whether the re-entry prose contradicts the first visit's atmosphere
+without an in-fiction reason.
 """
 
 from __future__ import annotations
@@ -105,6 +106,34 @@ def _landmarks_not_duplicated(
     )
 
 
+def _re_entry_names_landmark(
+    captured: list[CapturedTurn],
+    _snapshots: list[GameState],
+) -> DeterministicResult:
+    """Re-entry narration names at least one seeded Forum landmark.
+
+    The element's proposition is a membership test over the fixed
+    ``FORUM_POIS`` set against the re-entry turn's narration — a fact the
+    LLM judges agreed on but that needs no judge. A narration that opens
+    on an unrelated set of features (as if the player had never visited
+    the Forum) mentions none of the canonical landmark names and scores 0.
+    """
+    if _RE_ENTRY_TURN_INDEX >= len(captured):
+        return DeterministicResult(awarded=0, reason="re-entry turn was not captured")
+    narration = captured[_RE_ENTRY_TURN_INDEX].narration.lower()
+    mentioned = [poi for poi in FORUM_POIS if poi.lower() in narration]
+    if mentioned:
+        return DeterministicResult(
+            awarded=2,
+            reason="re-entry narration names seeded landmark(s): {0}".format(mentioned),
+            evidence_quote=", ".join(mentioned)[:EVIDENCE_QUOTE_CHAR_BUDGET],
+        )
+    return DeterministicResult(
+        awarded=0,
+        reason="re-entry narration names none of the seeded Forum landmarks",
+    )
+
+
 ELEMENTS: tuple[Element, ...] = (
     Element(
         id="landmarks_persist",
@@ -124,17 +153,8 @@ ELEMENTS: tuple[Element, ...] = (
         id="prose_consistent_on_return",
         label="Re-entry narration mentions at least one seeded Forum landmark",
         base_value=2,
-        kind=KIND_EVIDENCE_LLM,
-        check=EvidencePromptSpec(
-            scenario_brief=_SCENARIO_BRIEF,
-            question=(
-                "On the re-entry turn (turn 3), does the narration mention at least one of the "
-                "Forum's seeded landmarks — the rostra, the Temple of Saturn, or the Basilica "
-                "Julia — rather than presenting an unrelated set of features as if the player "
-                "had never visited the Forum before?"
-            ),
-            evidence_turn=_RE_ENTRY_TURN_INDEX,
-        ),
+        kind=KIND_DETERMINISTIC,
+        check=_re_entry_names_landmark,
     ),
     Element(
         id="no_contradictory_redescription",

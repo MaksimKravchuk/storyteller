@@ -7,12 +7,14 @@ import json
 import sys
 from pathlib import Path
 
+from benchmarks.cli._bayes_format import format_scenario_block
 from benchmarks.cli._compare_format import (
     format_element_row,
     format_header,
     format_scenario_classification,
     format_table_header,
 )
+from benchmarks.harness.bayes._report import verdict_for_scenario
 
 
 def _load_report_payload(path: str) -> dict:
@@ -48,6 +50,21 @@ def _print_compare_table(baseline: dict, current: dict) -> None:
         _write(format_element_row(baseline_rate, current_rate))
 
 
+def _print_bayes_verdict(baseline: dict, current: dict) -> None:
+    """Print the graded Bayesian verdict beneath the frequentist banner.
+
+    The jq-extracted aggregate carries no separate noise floor, so the baseline's
+    own descriptive stdev stands in as the run-to-run noise scale.
+    """
+    verdict = verdict_for_scenario(
+        baseline,
+        current,
+        noise_floor_stdev=baseline.get("stdev_awarded", float(0)),
+    )
+    for line in format_scenario_block(verdict):
+        _write(line)
+
+
 def compare_command(args: argparse.Namespace) -> int:
     """Execute the ``compare`` subcommand."""
     baseline = _as_aggregate(_load_report_payload(args.baseline), args.baseline)
@@ -55,5 +72,6 @@ def compare_command(args: argparse.Namespace) -> int:
     _write(format_header("Baseline", baseline))
     _write(format_header("Current ", current))
     _write(format_scenario_classification(baseline, current))
+    _print_bayes_verdict(baseline, current)
     _print_compare_table(baseline, current)
     return 0

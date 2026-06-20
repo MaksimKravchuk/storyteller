@@ -19,17 +19,25 @@ def _rate_to_dict(rate: ElementPassRate) -> dict:
         "base_value": rate.base_value,
         "passes": rate.passes,
         _KEY_ITERATIONS: rate.iterations,
+        "k_yes": rate.k_yes,
+        "n_votes": rate.n_votes,
     }
 
 
 def _rate_from_dict(rate: dict) -> ElementPassRate:
-    """Rebuild an :class:`ElementPassRate` from its serialised dict shape."""
+    """Rebuild an :class:`ElementPassRate` from its serialised dict shape.
+
+    ``k_yes`` / ``n_votes`` default to 0 so baselines pinned before judge tallies
+    were retained still load (the Bayesian layer falls back to pass-counts).
+    """
     return ElementPassRate(
         element_id=rate["element_id"],
         label=rate["label"],
         base_value=rate["base_value"],
         passes=rate["passes"],
         iterations=rate[_KEY_ITERATIONS],
+        k_yes=rate.get("k_yes", 0),
+        n_votes=rate.get("n_votes", 0),
     )
 
 

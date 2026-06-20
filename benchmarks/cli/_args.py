@@ -29,8 +29,39 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
     _register_run_parser(sub)
     _register_compare_parser(sub)
+    _register_bayes_report_parser(sub)
     register_extra_subcommands(sub)
     return parser.parse_args(argv)
+
+
+def _non_negative_float(raw: str) -> float:
+    """Argparse type for ``--rope``: reject negative widths."""
+    try:
+        candidate = float(raw)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("rope must be a number, got {0!r}".format(raw)) from exc
+    if candidate < 0:
+        raise argparse.ArgumentTypeError("rope must be >= 0, got {0}".format(candidate))
+    return candidate
+
+
+def _register_bayes_report_parser(sub: argparse._SubParsersAction) -> None:
+    """Register the ``bayes-report`` subcommand."""
+    bayes_cmd = sub.add_parser(
+        "bayes-report",
+        help="Graded Bayesian verdicts + portfolio bias vs pinned baselines (offline).",
+    )
+    bayes_cmd.add_argument(
+        "results",
+        type=str,
+        help="Directory of current *_aggregate.json files to score against pinned baselines.",
+    )
+    bayes_cmd.add_argument(
+        "--rope",
+        type=_non_negative_float,
+        default=None,
+        help="Region-of-practical-equivalence half-width in score points (default 0.5).",
+    )
 
 
 def _register_run_parser(sub: argparse._SubParsersAction) -> None:
