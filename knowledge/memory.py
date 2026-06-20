@@ -52,6 +52,32 @@ def _split_pair(pair: DialoguePair) -> SplitPair:
     return pair[0], pair[1], EMPTY_SLOTS, charge_presets.NEUTRAL
 
 
+def _merge_into_duplicate(
+    graph: KnowledgeGraph,
+    npc_id: UUID,
+    summary_text: str,
+    charge: charge_presets.ChargePreset,
+) -> bool:
+    """Fold a near-duplicate summary into the existing node, upgrading its charge.
+
+    Returns ``True`` when a near-duplicate personal memory of *npc_id*
+    exists, so the caller skips creating a redundant node. A more strongly
+    charged write (e.g. a retaliation summary that paraphrases the same
+    exchange as an earlier neutral dialogue summary) raises the duplicate's
+    charge **in place** rather than being dropped by dedup, so the
+    emotional-memory subsystem still sees the event. Charge only ever rises,
+    never downgrades.
+    """
+    duplicate = memory_dedup.find_near_duplicate_memory(graph, npc_id, summary_text)
+    if duplicate is None:
+        return False
+    if charge.base_intensity > duplicate.charge_intensity:
+        duplicate.valence = charge.base_valence
+        duplicate.charge_intensity = charge.base_intensity
+        duplicate.charge_category = charge.category
+    return True
+
+
 @dataclass(frozen=True)
 class MemoryEventResult:
     """Outcome of :meth:`MemoryManager.create_memory_from_event`.
@@ -283,7 +309,7 @@ class MemoryManager:
             max_tokens=_SUMMARY_MAX_TOKENS,
         )
         summary_text = response.body.strip()
-        if not summary_text or memory_dedup.has_near_duplicate_memory(self._graph, npc_id, summary_text):
+        if not summary_text or _merge_into_duplicate(self._graph, npc_id, summary_text, charge):
             return
         node_id = self._graph.add_node(
             _node.KnowledgeNode(
