@@ -120,7 +120,11 @@ async def run_command(args: argparse.Namespace) -> int:
     # observational baseline run on main must stay green so its artifact is found.
     if args.no_compare:
         return 0
+    # Always run auto-compare first so the per-scenario [auto-compare] verdict
+    # lines are emitted for every surviving aggregate (the PR gate greps them);
+    # a crashed scenario must not suppress the verdicts of scenarios that passed.
+    compare_code = auto_compare_exit_code(args, aggregates)
     # In gate mode a crashed scenario is as much a failure as a regression.
     if failures:
         return 1
-    return auto_compare_exit_code(args, aggregates)
+    return compare_code
