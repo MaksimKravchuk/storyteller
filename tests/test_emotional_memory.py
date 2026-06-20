@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 import allure
 
 from cast import emotional_memory as em
-from cast.hostility import _MOOD_INTENSITY, bump_hostility
+from cast.hostility import _MOOD_INTENSITY, apply_llm_mood_update, bump_hostility
 from knowledge import charge
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -34,6 +34,27 @@ def _charged_memory(graph: KnowledgeGraph, npc_id: UUID, *, valence: float, **no
             canon=CanonSource.SESSION,
             valence=valence,
             **node_kwargs,
+        ),
+    )
+    graph.register_actor_node(npc_id)
+    graph.add_edge(npc_id, node_id, EdgeType.WITNESSED)
+    return node_id
+
+
+def _neutral_memory(graph: KnowledgeGraph, npc_id: UUID, *, subject_id: UUID) -> UUID:
+    """A neutral dialogue-summary memory: a subject_id but no emotional charge."""
+    node_id = graph.add_node(
+        KnowledgeNode(
+            text="chit-chat",
+            scope=KnowledgeScope.LOCAL,
+            source=KnowledgeSource.PERSONAL_EXPERIENCE,
+            canon=CanonSource.SESSION,
+            valence=0,
+            charge_intensity=0,
+            charge_category=charge.NEUTRAL_CATEGORY,
+            salience=0.5,
+            timestamp=0,
+            subject_id=subject_id,
         ),
     )
     graph.register_actor_node(npc_id)
@@ -192,6 +213,27 @@ class TestRelationshipDrift:
         em.drift_relationships(npc, graph.personal_memories_for(npc.uuid), 0)
         assert npc.relationships == []
 
+    @allure.title("A neutral dialogue-summary memory never materializes a relationship")
+    def test_neutral_summary_does_not_materialize_relationship(self):
+        npc = NPCCard(name="Guard", values_vector=ValuesVector(law=1.0))
+        graph = KnowledgeGraph()
+        _neutral_memory(graph, npc.uuid, subject_id=uuid4())
+        em.drift_relationships(npc, graph.personal_memories_for(npc.uuid), 0)
+        assert npc.relationships == []
+
+    @allure.title("A neutral dialogue-summary memory does not relax an existing ENEMY toward neutral")
+    def test_neutral_summary_does_not_relax_existing_enemy(self):
+        npc = NPCCard(name="Guard", values_vector=ValuesVector(law=1.0))
+        subject = uuid4()
+        npc.relationships.append(Relationship(target_uuid=str(subject), kind=RelationshipKind.ENEMY, intensity=-2))
+        graph = KnowledgeGraph()
+        # Only a zero-charge summary about the same subject — no charged
+        # evidence exists, so the standing grudge must not relax.
+        _neutral_memory(graph, npc.uuid, subject_id=subject)
+        em.drift_relationships(npc, graph.personal_memories_for(npc.uuid), 0)
+        assert npc.relationships[0].kind == RelationshipKind.ENEMY
+        assert npc.relationships[0].intensity == -2
+
     @allure.title("A target within the dead-band of the stored intensity does not move it")
     def test_hysteresis_holds_within_dead_band(self):
         npc = NPCCard(name="Guard")
@@ -260,3 +302,31 @@ class TestMoodPrecedence:
         graph = KnowledgeGraph()
         em.apply_emotional_state(npc, graph, 0)
         assert npc.current_mood == "content"
+
+    @allure.title("A freshly constructed NPC has no emotional mood floor")
+    def test_emotional_mood_floor_defaults_to_none(self):
+        assert NPCCard(name="Stranger").emotional_mood_floor is None
+
+    @allure.title("A memory-only grudge (hostility 0) survives a later LLM mood downgrade")
+    def test_derived_mood_floor_survives_llm_downgrade(self):
+        npc = NPCCard(name="Guard", values_vector=ValuesVector(law=1.0))
+        graph = KnowledgeGraph()
+        for _ in range(4):
+            _charged_memory(graph, npc.uuid, valence=-0.9, subject_id=uuid4())
+        em.apply_emotional_state(npc, graph, 0)
+        assert npc.hostility_level == 0  # no mechanical floor — the floor is purely emotional
+        derived = npc.current_mood
+        assert _MOOD_INTENSITY[derived] > 0
+        # The Actor LLM tries to flatten the NPC to calm in the same turn.
+        apply_llm_mood_update(npc, "calm")
+        assert npc.current_mood == derived  # blocked: retaliation still reads a hostile mood
+
+    @allure.title("A fully decayed grudge clears the emotional floor so the LLM regains free rein")
+    def test_decayed_signal_clears_emotional_floor(self):
+        npc = NPCCard(name="Guard", values_vector=ValuesVector(law=1.0))
+        npc.emotional_mood_floor = "hostile"  # stale floor from a prior turn
+        graph = KnowledgeGraph()
+        em.apply_emotional_state(npc, graph, 0)  # no memories → no live signal
+        assert npc.emotional_mood_floor is None
+        apply_llm_mood_update(npc, "calm")
+        assert npc.current_mood == "calm"

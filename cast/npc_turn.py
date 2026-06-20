@@ -22,7 +22,13 @@ from cast.dice import (
     record_npc_contest_event,
     roll_contest,
 )
-from cast import npc_goal_resolution as _ngr, npc_opportunity as _npo, player_context, scene_log
+from cast import (
+    emotional_memory as _em,
+    npc_goal_resolution as _ngr,
+    npc_opportunity as _npo,
+    player_context,
+    scene_log,
+)
 from cast.director_witness import WitnessedAggression, is_guard_occupation
 from cast.wait_detection import INCAPACITATING_STATES
 from models import game_state as gs_mod
@@ -403,6 +409,17 @@ class NPCTurnResolver:
         peer_actions: list[tuple[str, str]] | None = None,
     ) -> NPCAction:
         """Ask one NPC's Actor what they do, parse response, roll if needed."""
+        # Refresh the NPC's deterministic mood + relationship drift from its
+        # charged memories before the autonomous-turn prompt reads
+        # ``current_mood`` — mirrors the dialogue path so an NPC the player
+        # never addresses still acts on a fresh grudge instead of a stale
+        # mood. Derivation is pure and idempotent within a turn.
+        _em.apply_emotional_state(
+            npc,
+            self._gs.knowledge_graph,
+            self._gs.game_clock,
+            turn=self._gs.turn_count,
+        )
         prompt = _build_turn_prompt(npc, player_utterance, self._gs, witnessed_events, peer_actions)
         try:
             reply = await actor.execute(

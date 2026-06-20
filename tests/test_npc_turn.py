@@ -21,6 +21,7 @@ from models import (
     scene as scene_mod,
     scene_action_log as scene_action_log_mod,
     setting as setting_mod,
+    values_vector as values_vector_mod,
 )
 from tests._uuid_helpers import make_uuid
 
@@ -234,6 +235,62 @@ class TestNPCTurnResolverMultipleNPCs:
         names = {a.npc_name for a in actions}
         assert _GUARD in names
         assert _MERCHANT in names
+
+
+def _seed_player_grudge(gs: GameState, npc_uuid: UUID, subject_id: UUID) -> None:
+    """Give *npc_uuid* four strong charged memories blaming *subject_id*."""
+    gs.knowledge_graph.register_actor_node(npc_uuid)
+    for _ in range(4):
+        node_id = gs.knowledge_graph.add_node(
+            KnowledgeNode(
+                text="the player struck me",
+                scope=KnowledgeScope.LOCAL,
+                source=KnowledgeSource.PERSONAL_EXPERIENCE,
+                canon=CanonSource.SESSION,
+                valence=-0.9,
+                charge_intensity=0.85,
+                charge_category="violence",  # knowledge.charge.VIOLENCE
+                salience=0.85,
+                timestamp=0,
+                subject_id=subject_id,
+            ),
+        )
+        gs.knowledge_graph.add_edge(npc_uuid, node_id, EdgeType.WITNESSED)
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC turn resolution")
+class TestNPCTurnDerivesEmotionalState:
+    """An NPC the player never addresses must still act on a fresh grudge.
+
+    Before this wiring, derived mood was refreshed only on the dialogue
+    path, so on an autonomous EXPLORE/WAIT turn the resolver sent the
+    NPC's stale ``current_mood`` into the Actor prompt even when charged
+    memories had just landed.
+    """
+
+    @allure.story("Autonomous mood derivation")
+    @allure.title("An un-addressed NPC derives mood from charged memory before its autonomous-turn prompt")
+    @pytest.mark.asyncio
+    async def test_autonomous_turn_derives_mood_from_charged_memory(self):
+        gs = _make_gs()
+        npc = _make_npc(_NPC_UUID_A, _GUARD)
+        npc.values_vector = values_vector_mod.ValuesVector(law=1.0)
+        gs.npcs[_NPC_UUID_A] = npc
+        gs.current_scene = _make_scene(_NPC_UUID_A)
+        _seed_player_grudge(gs, _NPC_UUID_A, gs.player.uuid)
+
+        actor = _make_actor(_idle_response())
+        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
+
+        await resolver.resolve_npc_turns("The player loiters nearby.")
+
+        # Mood was derived from the grudge (deterministically "enraged"), not
+        # left at the seeded neutral.
+        assert npc.current_mood == "enraged"
+        # Consumer seam: the derived mood reached the autonomous-turn prompt body.
+        prompt = actor.execute.await_args.kwargs["input_data"]
+        assert "Your mood: enraged" in prompt
 
 
 @allure.epic("NPC Interaction")

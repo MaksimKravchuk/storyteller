@@ -78,6 +78,22 @@ def mood_floor(hostility_level: int) -> str | None:
     return None
 
 
+def _effective_mood_floor(npc: NPCCard) -> str | None:
+    """Return the strongest mood floor in force for the LLM ``[MOOD:]`` guard.
+
+    Combines the mechanical hostility floor (:func:`mood_floor`) with the
+    transient emotional floor (``npc.emotional_mood_floor``). Either may be
+    ``None``; the result is the higher of whatever is present on the
+    :data:`_MOOD_INTENSITY` ladder, or ``None`` when neither applies.
+    """
+    candidates = [
+        candidate for candidate in (mood_floor(npc.hostility_level), npc.emotional_mood_floor) if candidate is not None
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda mood: _MOOD_INTENSITY.get(mood.lower(), 0))
+
+
 def bump_hostility(
     npc: NPCCard,
     *,
@@ -139,17 +155,21 @@ def format_hostile_actions_summary(actions: list[dict[str, str]]) -> str:
 
 
 def apply_llm_mood_update(npc: NPCCard, new_mood: str) -> None:
-    """Apply an LLM-emitted ``[MOOD:]`` tag with a mechanical-floor guard.
+    """Apply an LLM-emitted ``[MOOD:]`` tag with a mood-floor guard.
 
-    When the NPC's ``hostility_level`` is 0 the LLM has free rein — it
-    may freely de-escalate, shift sideways, or pick any label that fits
-    the scene. Once hostility is engaged, we reject any label that
-    would slide below the floor set by :func:`mood_floor`; without this
-    guard, an inattentive LLM emitting ``[MOOD: calm]`` right after the
-    Director has ratcheted the NPC up to ``threatened`` would defeat
-    the retaliation path entirely.
+    The floor is the stronger of two lower bounds: the *mechanical*
+    floor from :func:`mood_floor` (player aggression this turn) and the
+    *emotional* floor carried on ``npc.emotional_mood_floor`` (the
+    deterministic mood derived from charged memory, see
+    :func:`cast.emotional_memory.apply_emotional_state`). When both are
+    absent the LLM has free rein — it may freely de-escalate, shift
+    sideways, or pick any label that fits the scene. Otherwise we reject
+    any label that would slide below the floor; without this guard an
+    inattentive LLM emitting ``[MOOD: calm]`` right after the NPC was
+    ratcheted to ``threatened`` — mechanically *or* by a fresh grudge at
+    hostility 0 — would defeat the retaliation path entirely.
     """
-    floor = mood_floor(npc.hostility_level)
+    floor = _effective_mood_floor(npc)
     if floor is not None and _is_stronger_mood(floor, new_mood):
         record_turn_event(
             "hostility_mood_downgrade_blocked",
