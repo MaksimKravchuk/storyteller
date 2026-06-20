@@ -1,0 +1,51 @@
+{
+  "aggregate": {
+    "element_pass_rates": [
+      {
+        "base_value": 2,
+        "element_id": "era_grounded_scene",
+        "iterations": 3,
+        "label": "Narration reads as Renaissance Florence, not generic medieval filler",
+        "passes": 3
+      },
+      {
+        "base_value": 2,
+        "element_id": "social_structure_echo",
+        "iterations": 3,
+        "label": "The generated wool trader reflects the seeded guild social structure",
+        "passes": 3
+      },
+      {
+        "base_value": 1,
+        "element_id": "tradition_surfaced",
+        "iterations": 3,
+        "label": "A seeded custom or tradition surfaces in the prose",
+        "passes": 3
+      }
+    ],
+    "iteration_totals": [
+      5,
+      4,
+      4
+    ],
+    "iterations": 3,
+    "max_awarded": 5,
+    "mean_awarded": 4.333333333333333,
+    "min_awarded": 4,
+    "scenario_id": "world_gen_vividness_florence",
+    "scenario_label": "A richly-seeded setting surfaces as era-grounded scene + NPC prose",
+    "stdev_awarded": 0.4714045207910317,
+    "total_base": 5
+  },
+  "baselined_at": "2026-06-20T19:19:11.650183+00:00",
+  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "engine_models": {
+    "agent_model": "gpt-5.4-nano",
+    "director_model": "gpt-5.4-mini",
+    "dramaturge_enabled": "false",
+    "dramaturge_model": "gpt-5.4-nano",
+    "narrator_model": "gpt-5.4-mini"
+  },
+  "iterations": 3,
+  "noise_floor_stdev": 0.4714045207910317
+}
