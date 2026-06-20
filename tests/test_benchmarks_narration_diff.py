@@ -194,6 +194,21 @@ def test_format_report_multiline_blockquote() -> None:
 
 
 @allure.story("Narration diff")
+@allure.title("format_report separates the previous and current blockquotes with blank lines")
+def test_format_report_separates_previous_and_current_blocks() -> None:
+    previous = {"scene_a": [TurnText(index=0, player_action="look", narration="old prose")]}
+    current = {"scene_a": [TurnText(index=0, player_action="look", narration="new prose")]}
+
+    report = format_report(previous, current)
+
+    # A blank line must sit between each label and its quote, and between the
+    # previous blockquote and the current label — otherwise GitHub-flavoured
+    # markdown lazy-continuation merges both narrations into one blockquote.
+    assert "_previous:_\n\n> old prose" in report
+    assert "> old prose\n\n_current:_\n\n> new prose" in report
+
+
+@allure.story("Narration diff")
 @allure.title("format_report renders the empty-current placeholder")
 def test_format_report_empty_current() -> None:
     report = format_report({}, {})
