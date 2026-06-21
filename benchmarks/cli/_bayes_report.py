@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import OrderedDict
 from pathlib import Path
 
 from benchmarks.cli._bayes_format import format_portfolio_line, format_scenario_block
@@ -41,11 +42,24 @@ def _verdict_for(current: dict, rope: float) -> ScenarioVerdict | None:
     )
 
 
-def _collect_verdicts(results_dir: Path, rope: float) -> list[ScenarioVerdict]:
-    """Compute one verdict per current aggregate file, printing each block."""
-    verdicts: list[ScenarioVerdict] = []
+def _latest_aggregates(results_dir: Path) -> list[dict]:
+    """One aggregate per scenario_id — the last in sorted order wins.
+
+    An archive directory can hold several aggregate files for the same scenario
+    (multiple runs); counting them all would double-count history and skew the
+    portfolio posterior, so they are deduplicated here before scoring.
+    """
+    by_scenario: OrderedDict[str, dict] = OrderedDict()
     for path in sorted(results_dir.glob("*_aggregate.json")):
-        current = json.loads(path.read_text(encoding="utf-8"))
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        by_scenario[payload["scenario_id"]] = payload
+    return list(by_scenario.values())
+
+
+def _collect_verdicts(results_dir: Path, rope: float) -> list[ScenarioVerdict]:
+    """Compute one verdict per scenario, printing each block."""
+    verdicts: list[ScenarioVerdict] = []
+    for current in _latest_aggregates(results_dir):
         verdict = _verdict_for(current, rope)
         if verdict is None:
             continue

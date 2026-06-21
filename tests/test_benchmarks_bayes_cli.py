@@ -139,6 +139,32 @@ class TestBayesReportCommand:
         assert "P(suite worse)=" in out
 
     @allure.story("Bayesian compare")
+    @allure.title("bayes-report counts each scenario once when the archive holds duplicate aggregates")
+    def test_deduplicates_archive_history(self, tmp_path, monkeypatch, capsys):
+        baselines_path = tmp_path / "baselines"
+        baselines_path.mkdir()
+        monkeypatch.setattr(baselines, "baselines_dir", lambda: baselines_path)
+        results = tmp_path / "results"
+        results.mkdir()
+        _pin_baseline("s0", mean=10.0, noise=1.0, rates=[])
+        # Two historical aggregate files for the SAME scenario — must not double-count.
+        _write_aggregate(
+            results / "2026-01-01T00-00-00_aaa_s0_aggregate.json",
+            _aggregate_dict(scenario_id="s0", mean=9.0, iterations=1, total=10, rates=[]),
+        )
+        _write_aggregate(
+            results / "2026-02-02T00-00-00_bbb_s0_aggregate.json",
+            _aggregate_dict(scenario_id="s0", mean=8.0, iterations=1, total=10, rates=[]),
+        )
+
+        exit_code = bayes_report_command(argparse.Namespace(results=str(results), rope=None))
+
+        out = capsys.readouterr().out
+        assert exit_code == 0
+        assert out.count("[bayes] s0:") == 1
+        assert "PORTFOLIO (1 scenarios)" in out
+
+    @allure.story("Bayesian compare")
     @allure.title("bayes-report skips scenarios with no pinned baseline")
     def test_skips_unpinned(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr(baselines, "baselines_dir", lambda: tmp_path / "baselines")

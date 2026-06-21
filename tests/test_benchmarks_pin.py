@@ -65,6 +65,26 @@ class TestPinCommand:
         assert "memory_follow_up_marcus" in baselines.list_baselines()
 
     @allure.story("Pin baseline")
+    @allure.title("pin carries per-element k_yes / n_votes judge tallies into the baseline")
+    def test_preserves_judge_tallies(self, tmp_path, monkeypatch):
+        # Regression: the Bayesian per-element posterior reads k_yes / n_votes; a pin
+        # path that dropped them would silently degrade to coarse iteration counts.
+        monkeypatch.setattr(baselines, "baselines_dir", lambda: tmp_path)
+        payload = _aggregate_payload()
+        payload["element_pass_rates"][0]["k_yes"] = 14
+        payload["element_pass_rates"][0]["n_votes"] = 18
+        aggregate_path = tmp_path / "src.json"
+        aggregate_path.write_text(json.dumps(payload), encoding="utf-8")
+        args = argparse.Namespace(scenario_id="memory_follow_up_marcus", from_path=str(aggregate_path))
+
+        _pin.pin_command(args)
+
+        baseline = baselines.read_baseline("memory_follow_up_marcus")
+        assert baseline is not None
+        assert baseline.aggregate.element_pass_rates[0].k_yes == 14
+        assert baseline.aggregate.element_pass_rates[0].n_votes == 18
+
+    @allure.story("Pin baseline")
     @allure.title("pin prefers the calibration file's stdev for noise_floor_stdev when present")
     def test_prefers_calibration_noise_floor(self, tmp_path, monkeypatch):
         monkeypatch.setattr(baselines, "baselines_dir", lambda: tmp_path)
