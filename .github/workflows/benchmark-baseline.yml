@@ -60,7 +60,9 @@ jobs:
           NARRATOR_MODEL: gpt-5.4-mini
         run: |
           set -euo pipefail
-          uv run python -m benchmarks run --iterations 1 --max-judges 3 --no-compare
+          # Odd cap of 5, matching benchmark-on-pr.yml and noise-floor-recalibration.yml
+          # so the "previous main" content is scored on the same panel as the PR side.
+          uv run python -m benchmarks run --iterations 1 --max-judges 5 --no-compare
 
       - name: Upload baseline content
         if: always()

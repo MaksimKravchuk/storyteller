@@ -3,13 +3,16 @@
 Three deterministic checks compare the Forum's POI list across snapshots
 (landmarks must persist with the same primary names, no duplicates on
 re-entry) and confirm the re-entry narration names at least one seeded
-landmark — a closed-set membership test that needs no LLM judge. One
+landmark — an alias-aware membership test that needs no LLM judge. One
 evidence-LLM check remains for the genuinely subjective question of
 whether the re-entry prose contradicts the first visit's atmosphere
 without an in-fiction reason.
 """
 
 from __future__ import annotations
+
+from types import MappingProxyType
+from typing import Mapping
 
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import (
@@ -106,22 +109,45 @@ def _landmarks_not_duplicated(
     )
 
 
+# Lowercased phrases the narrator may use for each seeded landmark. The primary
+# name is always included; common paraphrases are added so a re-entry that names
+# a landmark indirectly ("Saturn's temple", "the speakers' platform") is not
+# scored as a false regression — the previous evidence prompt recognised these too.
+_LANDMARK_ALIASES: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "rostra": ("rostra", "rostrum", "speakers' platform", "speaker's platform", "orators' platform"),
+        "Temple of Saturn": ("temple of saturn", "saturn's temple", "saturn temple"),
+        "Basilica Julia": ("basilica julia", "julia basilica"),
+    },
+)
+
+
+def _aliases_for(poi: str) -> tuple[str, ...]:
+    """Lowercased aliases for a seeded POI, defaulting to its own lowercased name."""
+    return _LANDMARK_ALIASES.get(poi, (poi.lower(),))
+
+
+def _mentions_landmark(narration: str, poi: str) -> bool:
+    """Whether the lowercased narration contains any alias of ``poi``."""
+    return any(alias in narration for alias in _aliases_for(poi))
+
+
 def _re_entry_names_landmark(
     captured: list[CapturedTurn],
     _snapshots: list[GameState],
 ) -> DeterministicResult:
     """Re-entry narration names at least one seeded Forum landmark.
 
-    The element's proposition is a membership test over the fixed
-    ``FORUM_POIS`` set against the re-entry turn's narration — a fact the
-    LLM judges agreed on but that needs no judge. A narration that opens
-    on an unrelated set of features (as if the player had never visited
-    the Forum) mentions none of the canonical landmark names and scores 0.
+    The element's proposition is a membership test over the seeded ``FORUM_POIS``
+    against the re-entry turn's narration — a fact the LLM judges agreed on but
+    that needs no judge. Matching is alias-aware (``_LANDMARK_ALIASES``) so a
+    valid paraphrase still scores; a narration that opens on an unrelated set of
+    features (as if the player had never visited the Forum) names none and scores 0.
     """
     if _RE_ENTRY_TURN_INDEX >= len(captured):
         return DeterministicResult(awarded=0, reason="re-entry turn was not captured")
     narration = captured[_RE_ENTRY_TURN_INDEX].narration.lower()
-    mentioned = [poi for poi in FORUM_POIS if poi.lower() in narration]
+    mentioned = [poi for poi in FORUM_POIS if _mentions_landmark(narration, poi)]
     if mentioned:
         return DeterministicResult(
             awarded=2,
@@ -130,7 +156,7 @@ def _re_entry_names_landmark(
         )
     return DeterministicResult(
         awarded=0,
-        reason="re-entry narration names none of the seeded Forum landmarks",
+        reason="re-entry narration names none of the seeded Forum landmarks (incl. aliases)",
     )
 
 

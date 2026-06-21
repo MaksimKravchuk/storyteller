@@ -69,6 +69,18 @@ class TestSceneBuilderReEntryPredicate:
         assert result.awarded == 2
 
     @allure.story("Scene-builder re-entry rubric")
+    @allure.title("prose_consistent_on_return awards credit for a paraphrased landmark alias")
+    def test_matches_landmark_alias(self):
+        # "Saturn's temple" is a valid paraphrase of the seeded "Temple of Saturn"
+        # — the old judge prompt accepted these, so the deterministic check must too.
+        captured = _four_turns("You re-enter the Forum; Saturn's temple looms over the square.")
+
+        result = _check()(captured, [])
+
+        assert result.awarded == 2
+        assert "Temple of Saturn" in result.reason
+
+    @allure.story("Scene-builder re-entry rubric")
     @allure.title("prose_consistent_on_return awards zero when the re-entry narration names no seeded landmark")
     def test_awards_zero_without_landmark(self):
         captured = _four_turns("You return to a busy junction of awnings, stalls, and drainage channels.")
