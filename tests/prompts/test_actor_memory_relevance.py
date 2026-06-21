@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import allure
 import pytest
 
@@ -24,6 +26,7 @@ _RELEVANT_TEXT = "The player spared Aulus at the gate."
 _TARGET_TEXT = "Marcus bribed Aulus yesterday."
 _CONCEPT_TEXT = "The player used light without flame."
 _IRRELEVANT_TEXT = "Aulus counted coins at the market."
+_FALLBACK_TEXT = "Aulus drilled the recruits at dawn."
 _ACTION_REPLY_JSON = '{"action": "watch Marcus", "type": "IDLE", "target": "Marcus"}'
 
 
@@ -101,15 +104,15 @@ def _build_actor_state_with_goal() -> tuple[GameState, NPCCard]:
     return state, actor
 
 
-def _build_actor_state_without_fallback() -> tuple[GameState, NPCCard]:
+def _build_single_memory_state(text: str, *, salience: float, subject_id: UUID) -> tuple[GameState, NPCCard]:
     graph = KnowledgeGraph()
     graph.register_actor_node(_ACTOR_ID, label="Aulus")
     _attach_memory(
         graph,
-        _RELEVANT_TEXT,
+        text,
         timestamp=1.0,
-        salience=0.1,
-        fields={"subject_id": _PLAYER_ID},
+        salience=salience,
+        fields={"subject_id": subject_id},
     )
     actor = NPCCard(
         uuid=_ACTOR_ID,
@@ -126,6 +129,14 @@ def _build_actor_state_without_fallback() -> tuple[GameState, NPCCard]:
         npcs={_ACTOR_ID: actor},
     )
     return state, actor
+
+
+def _build_actor_state_without_fallback() -> tuple[GameState, NPCCard]:
+    return _build_single_memory_state(_RELEVANT_TEXT, salience=0.1, subject_id=_PLAYER_ID)
+
+
+def _build_actor_state_held_fallback_only() -> tuple[GameState, NPCCard]:
+    return _build_single_memory_state(_FALLBACK_TEXT, salience=0.5, subject_id=_OTHER_ID)
 
 
 def _build_actor_state_with_concept_memory() -> tuple[GameState, NPCCard]:
@@ -249,3 +260,22 @@ class TestActorPromptMemoryRelevance:
 
         captured = kwargs_mod.capture_system_prompt(client)
         assert _RELEVANT_TEXT not in captured
+
+    @pytest.mark.asyncio
+    @allure.story("Actor memory prompt")
+    @allure.title("Actor prompt falls back to held memory when no interlocutor-scoped memory exists")
+    async def test_actor_prompt_falls_back_to_held_memory_without_interlocutor_scope(self) -> None:
+        state, npc = _build_actor_state_held_fallback_only()
+        client = kwargs_mod.make_mock_llm(kwargs_mod.ACTOR_REPLY_JSON)
+        actor = Actor(
+            llm_client=client,
+            npc=npc,
+            knowledge_query=KnowledgeQueryEngine(state.knowledge_graph),
+        )
+
+        await actor.act(
+            input_data="Do you remember me?",
+            context={"game_state": state, "location_name": "the gate"},
+        )
+
+        assert _FALLBACK_TEXT in kwargs_mod.capture_system_prompt(client)
