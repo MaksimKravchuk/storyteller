@@ -4,27 +4,19 @@ from __future__ import annotations
 
 import argparse
 
+from benchmarks.cli._arg_types import non_negative_float, positive_int
+
 _DEFAULT_CALIBRATE_ITERATIONS = 5
 
 
-def _positive_int(raw: str) -> int:
-    """Argparse type for ``--iterations``: reject zero and negative values."""
-    try:
-        candidate = int(raw)
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError("iterations must be an integer, got {0!r}".format(raw)) from exc
-    if candidate < 1:
-        raise argparse.ArgumentTypeError("iterations must be >= 1, got {0}".format(candidate))
-    return candidate
-
-
 def register_extra_subcommands(sub: argparse._SubParsersAction) -> None:
-    """Register pin, baselines, calibrate, reliability-report, narration-diff subcommands."""
+    """Register pin, baselines, calibrate, reliability-report, narration-diff, pr-comment subcommands."""
     _register_pin_parser(sub)
     _register_baselines_parser(sub)
     _register_calibrate_parser(sub)
     _register_reliability_report_parser(sub)
     _register_narration_diff_parser(sub)
+    _register_pr_comment_parser(sub)
 
 
 def _register_pin_parser(sub: argparse._SubParsersAction) -> None:
@@ -61,7 +53,7 @@ def _register_calibrate_parser(sub: argparse._SubParsersAction) -> None:
     )
     calibrate_cmd.add_argument(
         "--iterations",
-        type=_positive_int,
+        type=positive_int,
         default=_DEFAULT_CALIBRATE_ITERATIONS,
         help="Iterations per scenario (default {0}).".format(_DEFAULT_CALIBRATE_ITERATIONS),
     )
@@ -117,4 +109,29 @@ def _register_narration_diff_parser(sub: argparse._SubParsersAction) -> None:
         "current",
         type=str,
         help="Directory of current-version per-iteration result JSONs.",
+    )
+
+
+def _register_pr_comment_parser(sub: argparse._SubParsersAction) -> None:
+    """Register the ``pr-comment`` subcommand."""
+    pr_cmd = sub.add_parser(
+        "pr-comment",
+        help="Render the advisory benchmark PR comment (headline, summary table, narration) as markdown.",
+    )
+    pr_cmd.add_argument(
+        "results",
+        type=str,
+        help="Directory of current *_aggregate.json + per-iteration result JSONs.",
+    )
+    pr_cmd.add_argument(
+        "--previous",
+        type=str,
+        default="",
+        help="Directory of previous-main per-iteration content for the narration diff.",
+    )
+    pr_cmd.add_argument(
+        "--rope",
+        type=non_negative_float,
+        default=None,
+        help="Region-of-practical-equivalence half-width in score points (default 0.5).",
     )

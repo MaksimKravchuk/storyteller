@@ -6,7 +6,8 @@ import asyncio
 import sys
 
 from benchmarks.cli._args import parse_args
-from benchmarks.cli._dispatch import ASYNC_COMMANDS, SYNC_COMMANDS
+from benchmarks.cli._async_commands import ASYNC_COMMANDS
+from benchmarks.cli._sync_commands import SYNC_COMMANDS
 
 _UNKNOWN_COMMAND_EXIT_CODE = 2
 

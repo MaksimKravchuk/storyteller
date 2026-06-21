@@ -18,13 +18,15 @@ name: Benchmark gate (narrative PRs)
 #     of each PR actually incurs cost.
 #
 # WHAT THIS POSTS (advisory, see ADR-0009):
-#   1. Score verdict — the auto-compare result of `benchmarks run` against the
-#      git-tracked pinned baselines (ADR-0002). Shows `no_baseline` until a
+#   A single markdown comment rendered by `benchmarks pr-comment`:
+#   1. Headline badge + per-scenario summary table — the auto-compare verdict
+#      (frequentist, ADR-0002) and the graded Bayesian P(regression) per scenario,
+#      scored against the git-tracked pinned baselines. Shows `no baseline` until a
 #      scenario is pinned; that is non-blocking by design.
-#   2. Per-element score deltas — `benchmarks compare` for each pinned scenario.
-#   3. Narration diff — `benchmarks narration-diff` between the previous main
-#      version (downloaded from the `benchmark-baseline` artifact, CONTENT ONLY)
-#      and this PR's fresh run.
+#   2. Pooled portfolio line — the systematic-shift posterior (ADR-0013).
+#   3. Collapsible per-element deltas + a "how to read this" glossary.
+#   4. Narration diff between the previous main version (downloaded from the
+#      `benchmark-baseline` artifact, CONTENT ONLY) and this PR's fresh run.
 #
 # REQUIRED STATUS CHECK SETUP (manual step):
 #   Do NOT enable "benchmark-on-pr / benchmark" as a required branch-protection
@@ -118,56 +120,24 @@ jobs:
       - name: Build comparison comment
         if: always()
         run: |
-          # `set +e`: best-effort comment assembly. A non-zero from any sub-command
-          # (e.g. narration-diff) must not abort the `{ } > comment.md` block under
-          # the runner's default `bash -e` and leave a truncated comment.
+          # `set +e`: best-effort comment assembly. A non-zero exit from the
+          # renderer must not abort the step under the runner's default `bash -e`
+          # and leave the post step with no file.
           set +e
           # Resolve where upload-artifact placed the baseline files: at the artifact
           # root (prev_content/) or under a preserved prefix. Falls back to the empty
-          # prev_content dir so narration-diff degrades to "no baseline" cleanly.
+          # prev_content dir so the narration diff degrades to "no baseline" cleanly.
           prev_dir="prev_content"
           found="$(find prev_content -name '*_iter*.json' 2>/dev/null | head -1)"
           if [ -n "$found" ]; then
             prev_dir="$(dirname "$found")"
           fi
-          {
-            echo "## 🎭 Benchmark comparison (previous main → this PR)"
-            echo
-            echo "### Score verdict (vs git-tracked baselines)"
-            echo '```'
-            grep '^\[auto-compare\]' bench_stdout.txt \
-              || echo "(no auto-compare output — see job log)"
-            echo '```'
-            echo
-            echo "### Bayesian verdict (graded confidence + portfolio bias)"
-            echo "_Graded posteriors over the calibrated noise floor — each scenario shows P(regression)/P(equivalent)/P(improvement) with a 95% credible interval, and the pooled PORTFOLIO line surfaces a systematic shift no single noisy scenario can. See ADR-0013._"
-            echo '```'
-            uv run python -m benchmarks bayes-report benchmarks/results \
-              || echo "(bayes-report unavailable — see job log)"
-            echo '```'
-            echo
-            echo "<details><summary>Per-element score deltas</summary>"
-            echo
-            echo '```'
-            for cur in benchmarks/results/*_aggregate.json; do
-              [ -e "$cur" ] || continue
-              sid=$(jq -r '.scenario_id // empty' "$cur")
-              [ -n "$sid" ] || continue
-              base="benchmarks/baselines/${sid}.json"
-              [ -e "$base" ] || continue
-              jq '.aggregate' "$base" > /tmp/base_agg.json
-              uv run python -m benchmarks compare /tmp/base_agg.json "$cur" || true
-            done
-            echo '```'
-            echo
-            echo "</details>"
-            echo
-            uv run python -m benchmarks narration-diff "$prev_dir" benchmarks/results \
-              || echo "_(narration diff unavailable)_"
-            echo
-            echo "_Full results for both versions are attached as workflow artifacts._"
-            echo "_Advisory only — this check never blocks the merge (ADR-0002 / ADR-0009)._"
-          } > comment.md
+          # Single renderer: scores aggregates against pinned baselines (frequentist
+          # + Bayesian), builds the narration diff, and emits the whole markdown.
+          uv run python -m benchmarks pr-comment benchmarks/results --previous "$prev_dir" > comment.md
+          if [ ! -s comment.md ]; then
+            printf '## 🎭 Benchmark comparison\n_(comment generation failed — see job log)_\n' > comment.md
+          fi
 
       - name: Post comparison comment
         if: always()
