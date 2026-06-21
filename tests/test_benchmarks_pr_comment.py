@@ -9,7 +9,7 @@ from pathlib import Path
 import allure
 
 from benchmarks.cli import _main, _pr_comment, _pr_comment_elements, _pr_comment_format, _pr_comment_rows
-from benchmarks.cli._auto_compare import Verdict
+from benchmarks.cli._auto_compare import Verdict, VerdictClassification
 from benchmarks.harness import baselines
 from benchmarks.harness.bayes._report import verdict_for_scenario
 from benchmarks.harness.types._aggregates import ElementPassRate, PinnedBaseline, ScenarioAggregate
@@ -88,10 +88,12 @@ def _pin_baseline(scenario_id: str, *, mean: float, noise: float, rates: list[El
     )
 
 
-def _verdict(scenario_id: str, classification: str, *, base: float = 8.0, cur: float = 8.0) -> Verdict:
+def _verdict(
+    scenario_id: str, classification: VerdictClassification, *, base: float = 8.0, cur: float = 8.0
+) -> Verdict:
     return Verdict(
         scenario_id=scenario_id,
-        classification=classification,  # type: ignore[arg-type]
+        classification=classification,
         baseline_mean=base,
         current_mean=cur,
         delta_vs_noise_floor=cur - base,
