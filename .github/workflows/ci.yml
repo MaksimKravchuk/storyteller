@@ -398,6 +398,89 @@ jobs:
           header: narrative-quality-report
           path: allure-results/narrative-report.md
 
+  allure-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [test, e2e]
+    if: always() && github.event_name == 'pull_request'
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Download unit Allure results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: allure-results-unit
+          path: allure-results-unit
+
+      - name: Download e2e Allure results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: allure-results
+          path: allure-results-e2e
+
+      - name: Collect Allure result directories
+        id: collect
+        run: |
+          set -euo pipefail
+          RESULT_DIRS=()
+          for artifact_dir in allure-results-unit allure-results-e2e; do
+            if [ -d "$artifact_dir" ]; then
+              while IFS= read -r result_dir; do
+                RESULT_DIRS+=("$result_dir")
+              done < <(find "$artifact_dir" -type f -name '*-result.json' -exec dirname {} \; | sort -u)
+            fi
+          done
+          if [ "${#RESULT_DIRS[@]}" -eq 0 ]; then
+            echo "has_results=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "has_results=true" >> "$GITHUB_OUTPUT"
+          echo "result_dirs=${RESULT_DIRS[*]}" >> "$GITHUB_OUTPUT"
+
+      - name: Build single-file Allure report
+        if: steps.collect.outputs.has_results == 'true'
+        run: |
+          npx --yes allure@3.12.0 awesome ${{ steps.collect.outputs.result_dirs }} \
+            --single-file \
+            --output allure-report \
+            --report-name "Storyteller PR #${{ github.event.pull_request.number }}"
+
+      - name: Upload Allure HTML report
+        if: steps.collect.outputs.has_results == 'true'
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-html
+          path: allure-report/index.html
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Post Allure report on PR
+        if: steps.collect.outputs.has_results == 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: allure-report-html
+          message: |
+            ## Allure report
+
+            [Download the single-file HTML report](${{ steps.upload.outputs.artifact-url }})
+
+            Open `index.html` from the artifact in a browser.
+
+      - name: Clear stale Allure report comment
+        if: steps.collect.outputs.has_results != 'true'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: allure-report-html
+          message: |
+            ## Allure report
+
+            No Allure result files were available for this workflow run.
+
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
