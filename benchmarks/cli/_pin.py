@@ -16,7 +16,8 @@ from pathlib import Path
 
 from benchmarks.cli._calibrate_io import read_calibration_for
 from benchmarks.harness import baselines
-from benchmarks.harness.types._aggregates import ElementPassRate, PinnedBaseline, ScenarioAggregate
+from benchmarks.harness._baselines_codec import aggregate_from_dict
+from benchmarks.harness.types._aggregates import PinnedBaseline
 
 
 def _load_aggregate_payload(path_str: str) -> dict:
@@ -25,31 +26,6 @@ def _load_aggregate_payload(path_str: str) -> dict:
     if not path.is_file():
         raise FileNotFoundError("Aggregate not found: {0}".format(path_str))
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def _aggregate_from_payload(payload: dict) -> ScenarioAggregate:
-    """Rebuild a :class:`ScenarioAggregate` from an aggregate-archive JSON payload."""
-    return ScenarioAggregate(
-        scenario_id=payload["scenario_id"],
-        scenario_label=payload["scenario_label"],
-        iterations=payload["iterations"],
-        total_base=payload["total_base"],
-        mean_awarded=payload["mean_awarded"],
-        min_awarded=payload["min_awarded"],
-        max_awarded=payload["max_awarded"],
-        element_pass_rates=[
-            ElementPassRate(
-                element_id=rate["element_id"],
-                label=rate["label"],
-                base_value=rate["base_value"],
-                passes=rate["passes"],
-                iterations=rate["iterations"],
-            )
-            for rate in payload.get("element_pass_rates", [])
-        ],
-        iteration_totals=list(payload.get("iteration_totals", [])),
-        stdev_awarded=payload.get("stdev_awarded", float(0)),
-    )
 
 
 def _now_iso() -> str:
@@ -74,7 +50,7 @@ def pin_command(args: argparse.Namespace) -> int:
                 args.scenario_id,
             ),
         )
-    aggregate = _aggregate_from_payload(payload)
+    aggregate = aggregate_from_dict(payload)
     baseline = PinnedBaseline(
         aggregate=aggregate,
         baselined_at=_now_iso(),

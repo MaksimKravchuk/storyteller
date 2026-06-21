@@ -1,14 +1,18 @@
 """Scoring rubric for the scene-builder re-entry-consistency benchmark.
 
-Two deterministic checks compare the Forum's POI list across snapshots
+Three deterministic checks compare the Forum's POI list across snapshots
 (landmarks must persist with the same primary names, no duplicates on
-re-entry). Two evidence-LLM checks score the prose on the re-entry
-turn: it must reference the same landmarks the first visit anchored,
-and it must not contradict the first visit's atmosphere without an
-in-fiction reason.
+re-entry) and confirm the re-entry narration names at least one seeded
+landmark — an alias-aware membership test that needs no LLM judge. One
+evidence-LLM check remains for the genuinely subjective question of
+whether the re-entry prose contradicts the first visit's atmosphere
+without an in-fiction reason.
 """
 
 from __future__ import annotations
+
+from types import MappingProxyType
+from typing import Mapping
 
 from benchmarks.harness.types._captures import CapturedTurn
 from benchmarks.harness.types._elements import (
@@ -105,6 +109,57 @@ def _landmarks_not_duplicated(
     )
 
 
+# Lowercased phrases the narrator may use for each seeded landmark. The primary
+# name is always included; common paraphrases are added so a re-entry that names
+# a landmark indirectly ("Saturn's temple", "the speakers' platform") is not
+# scored as a false regression — the previous evidence prompt recognised these too.
+_LANDMARK_ALIASES: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        "rostra": ("rostra", "rostrum", "speakers' platform", "speaker's platform", "orators' platform"),
+        "Temple of Saturn": ("temple of saturn", "saturn's temple", "saturn temple"),
+        "Basilica Julia": ("basilica julia", "julia basilica"),
+    },
+)
+
+
+def _aliases_for(poi: str) -> tuple[str, ...]:
+    """Lowercased aliases for a seeded POI, defaulting to its own lowercased name."""
+    return _LANDMARK_ALIASES.get(poi, (poi.lower(),))
+
+
+def _mentions_landmark(narration: str, poi: str) -> bool:
+    """Whether the lowercased narration contains any alias of ``poi``."""
+    return any(alias in narration for alias in _aliases_for(poi))
+
+
+def _re_entry_names_landmark(
+    captured: list[CapturedTurn],
+    _snapshots: list[GameState],
+) -> DeterministicResult:
+    """Re-entry narration names at least one seeded Forum landmark.
+
+    The element's proposition is a membership test over the seeded ``FORUM_POIS``
+    against the re-entry turn's narration — a fact the LLM judges agreed on but
+    that needs no judge. Matching is alias-aware (``_LANDMARK_ALIASES``) so a
+    valid paraphrase still scores; a narration that opens on an unrelated set of
+    features (as if the player had never visited the Forum) names none and scores 0.
+    """
+    if _RE_ENTRY_TURN_INDEX >= len(captured):
+        return DeterministicResult(awarded=0, reason="re-entry turn was not captured")
+    narration = captured[_RE_ENTRY_TURN_INDEX].narration.lower()
+    mentioned = [poi for poi in FORUM_POIS if _mentions_landmark(narration, poi)]
+    if mentioned:
+        return DeterministicResult(
+            awarded=2,
+            reason="re-entry narration names seeded landmark(s): {0}".format(mentioned),
+            evidence_quote=", ".join(mentioned)[:EVIDENCE_QUOTE_CHAR_BUDGET],
+        )
+    return DeterministicResult(
+        awarded=0,
+        reason="re-entry narration names none of the seeded Forum landmarks (incl. aliases)",
+    )
+
+
 ELEMENTS: tuple[Element, ...] = (
     Element(
         id="landmarks_persist",
@@ -124,17 +179,8 @@ ELEMENTS: tuple[Element, ...] = (
         id="prose_consistent_on_return",
         label="Re-entry narration mentions at least one seeded Forum landmark",
         base_value=2,
-        kind=KIND_EVIDENCE_LLM,
-        check=EvidencePromptSpec(
-            scenario_brief=_SCENARIO_BRIEF,
-            question=(
-                "On the re-entry turn (turn 3), does the narration mention at least one of the "
-                "Forum's seeded landmarks — the rostra, the Temple of Saturn, or the Basilica "
-                "Julia — rather than presenting an unrelated set of features as if the player "
-                "had never visited the Forum before?"
-            ),
-            evidence_turn=_RE_ENTRY_TURN_INDEX,
-        ),
+        kind=KIND_DETERMINISTIC,
+        check=_re_entry_names_landmark,
     ),
     Element(
         id="no_contradictory_redescription",

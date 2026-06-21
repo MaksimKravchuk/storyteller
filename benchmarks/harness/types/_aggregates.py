@@ -7,13 +7,22 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ElementPassRate:
-    """Per-element pass rate across N iterations of one scenario."""
+    """Per-element pass rate across N iterations of one scenario.
+
+    ``k_yes`` / ``n_votes`` carry the summed judge tally for evidence-LLM
+    elements (0 for deterministic ones). They give the Bayesian layer
+    judge-level resolution — a wider panel tightens the per-element posterior
+    without another engine iteration — while ``passes`` / ``iterations`` remain
+    the coarse fallback for baselines pinned before tallies were retained.
+    """
 
     element_id: str
     label: str
     base_value: int
     passes: int
     iterations: int
+    k_yes: int = 0
+    n_votes: int = 0
 
 
 @dataclass(frozen=True)

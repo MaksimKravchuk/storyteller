@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import OrderedDict
+from dataclasses import dataclass
 
 from benchmarks.harness.types._aggregates import ElementPassRate, ScenarioAggregate
 from benchmarks.harness.types._scores import ElementScore, ScenarioReport
@@ -31,16 +32,29 @@ def element_passed(score: ElementScore) -> bool:
     return 2 * score.awarded >= score.base_value
 
 
-def _collect_pass_counts(
-    reports: list[ScenarioReport],
-) -> OrderedDict[str, tuple[ElementScore, int]]:
-    """Single-pass walk: preserve first-seen order and tally passes per element."""
-    accumulator: OrderedDict[str, tuple[ElementScore, int]] = OrderedDict()
+@dataclass
+class _ElementTally:
+    """Running per-element accumulator over iterations (passes + judge votes)."""
+
+    score: ElementScore
+    passes: int
+    k_yes: int
+    n_votes: int
+
+
+def _collect_tallies(reports: list[ScenarioReport]) -> OrderedDict[str, _ElementTally]:
+    """Single-pass walk: preserve first-seen order, tally passes + judge votes."""
+    tallies: OrderedDict[str, _ElementTally] = OrderedDict()
     for report in reports:
         for score in report.element_scores:
-            first_score, count = accumulator.get(score.element_id, (score, 0))
-            accumulator[score.element_id] = (first_score, count + int(element_passed(score)))
-    return accumulator
+            tally = tallies.get(score.element_id)
+            if tally is None:
+                tally = _ElementTally(score=score, passes=0, k_yes=0, n_votes=0)
+                tallies[score.element_id] = tally
+            tally.passes += int(element_passed(score))
+            tally.k_yes += score.k_yes
+            tally.n_votes += score.n_total
+    return tallies
 
 
 def _pass_rates(reports: list[ScenarioReport]) -> list[ElementPassRate]:
@@ -48,13 +62,15 @@ def _pass_rates(reports: list[ScenarioReport]) -> list[ElementPassRate]:
     iterations = len(reports)
     return [
         ElementPassRate(
-            element_id=score.element_id,
-            label=score.label,
-            base_value=score.base_value,
-            passes=count,
+            element_id=tally.score.element_id,
+            label=tally.score.label,
+            base_value=tally.score.base_value,
+            passes=tally.passes,
             iterations=iterations,
+            k_yes=tally.k_yes,
+            n_votes=tally.n_votes,
         )
-        for score, count in _collect_pass_counts(reports).values()
+        for tally in _collect_tallies(reports).values()
     ]
 
 

@@ -30,7 +30,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           set +e
-          uv run python -m benchmarks calibrate --iterations 5 --max-judges 3 --compare-to-baselines > calibration_output.txt 2>&1
+          # Panel cap MUST match benchmark-on-pr.yml (odd, 5): the calibrated noise
+          # floor is the variance scale the Bayesian PR comparison applies, so a
+          # different (noisier) panel here mis-scales the reported probabilities.
+          uv run python -m benchmarks calibrate --iterations 5 --max-judges 5 --compare-to-baselines > calibration_output.txt 2>&1
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
           cat calibration_output.txt
 

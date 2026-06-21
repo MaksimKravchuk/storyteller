@@ -3,9 +3,17 @@ name: Benchmark gate (narrative PRs)
 # Automatic narration benchmark check triggered by pull requests that touch
 # narrative-affecting code paths.  Each run hits paid LLMs:
 #
-#   Cost estimate (3-judge panel, 1 iteration, 5 scenarios):
-#   - ~15 scenario × judge dispatch calls (5 scenarios × ~1 element avg × 3 judges)
-#   - Typical spend: ~$0.02–$0.10 per PR push depending on element count and models
+#   Cost estimate (5-judge panel, 1 iteration, 5 scenarios):
+#   - ~25 scenario × judge dispatch calls (5 scenarios × ~1 element avg × 5 judges)
+#   - Typical spend: ~$0.03–$0.17 per PR push depending on element count and models
+#   - We spend on the cheap axis (judge votes over one fixed transcript) rather
+#     than the expensive one (extra engine iterations): a wider panel beats down
+#     judge variance — the dominant noise source once temperature is pinned —
+#     without re-running the multi-agent engine. See ADR-0013.
+#   - The cap is ODD (5, not 6) so an evidence element cannot split evenly: a 3-3
+#     tie scores round(base*3/6)=0 on a 1-point element, which would add a
+#     downward bias instead of just reducing variance. Keep the recalibration and
+#     baseline workflows on the SAME cap so the pinned noise floor scales to it.
 #   - A concurrency cancel-in-progress block below ensures only the HEAD commit
 #     of each PR actually incurs cost.
 #
@@ -71,7 +79,7 @@ jobs:
         # the run output, narration diff, and uploaded artifact are this PR only.
         run: find benchmarks/results -type f ! -name '.gitkeep' -delete
 
-      - name: Run benchmark harness (1 iteration, 3-judge panel)
+      - name: Run benchmark harness (1 iteration, 5-judge panel)
         # Advisory: capture the auto-compare verdict but never fail the job on a
         # regression. The posted comment is the signal; the check stays green.
         # `continue-on-error` keeps the job green if the harness exits 1, and the
@@ -87,7 +95,7 @@ jobs:
         run: |
           set +e
           set -o pipefail
-          uv run python -m benchmarks run --iterations 1 --max-judges 3 | tee bench_stdout.txt
+          uv run python -m benchmarks run --iterations 1 --max-judges 5 | tee bench_stdout.txt
           echo "benchmark exit code: ${PIPESTATUS[0]}"
           exit 0
 
@@ -129,6 +137,13 @@ jobs:
             echo '```'
             grep '^\[auto-compare\]' bench_stdout.txt \
               || echo "(no auto-compare output — see job log)"
+            echo '```'
+            echo
+            echo "### Bayesian verdict (graded confidence + portfolio bias)"
+            echo "_Graded posteriors over the calibrated noise floor — each scenario shows P(regression)/P(equivalent)/P(improvement) with a 95% credible interval, and the pooled PORTFOLIO line surfaces a systematic shift no single noisy scenario can. See ADR-0013._"
+            echo '```'
+            uv run python -m benchmarks bayes-report benchmarks/results \
+              || echo "(bayes-report unavailable — see job log)"
             echo '```'
             echo
             echo "<details><summary>Per-element score deltas</summary>"
