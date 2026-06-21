@@ -60,7 +60,7 @@ def _format_element_line(element: ElementInferiority) -> str:
     )
 
 
-def _notable_elements(verdict: ScenarioVerdict) -> list[ElementInferiority]:
+def notable_elements(verdict: ScenarioVerdict) -> list[ElementInferiority]:
     """Elements whose regression or improvement probability clears the threshold."""
     return [
         element
@@ -72,5 +72,5 @@ def _notable_elements(verdict: ScenarioVerdict) -> list[ElementInferiority]:
 def format_scenario_block(verdict: ScenarioVerdict) -> list[str]:
     """Scenario verdict line followed by its notable per-element rows."""
     lines = [format_scenario_line(verdict)]
-    lines.extend(_format_element_line(element) for element in _notable_elements(verdict))
+    lines.extend(_format_element_line(element) for element in notable_elements(verdict))
     return lines

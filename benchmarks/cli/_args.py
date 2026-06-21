@@ -4,20 +4,10 @@ from __future__ import annotations
 
 import argparse
 
+from benchmarks.cli._arg_types import non_negative_float, positive_int
 from benchmarks.cli._args_subcommands import register_extra_subcommands
 
 _DEFAULT_ITERATIONS = 3
-
-
-def _positive_int(raw: str) -> int:
-    """Argparse type for ``--iterations``: reject zero and negative values."""
-    try:
-        candidate = int(raw)
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError("iterations must be an integer, got {0!r}".format(raw)) from exc
-    if candidate < 1:
-        raise argparse.ArgumentTypeError("iterations must be >= 1, got {0}".format(candidate))
-    return candidate
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -34,17 +24,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _non_negative_float(raw: str) -> float:
-    """Argparse type for ``--rope``: reject negative widths."""
-    try:
-        candidate = float(raw)
-    except ValueError as exc:
-        raise argparse.ArgumentTypeError("rope must be a number, got {0!r}".format(raw)) from exc
-    if candidate < 0:
-        raise argparse.ArgumentTypeError("rope must be >= 0, got {0}".format(candidate))
-    return candidate
-
-
 def _register_bayes_report_parser(sub: argparse._SubParsersAction) -> None:
     """Register the ``bayes-report`` subcommand."""
     bayes_cmd = sub.add_parser(
@@ -58,7 +37,7 @@ def _register_bayes_report_parser(sub: argparse._SubParsersAction) -> None:
     )
     bayes_cmd.add_argument(
         "--rope",
-        type=_non_negative_float,
+        type=non_negative_float,
         default=None,
         help="Region-of-practical-equivalence half-width in score points (default 0.5).",
     )
@@ -75,7 +54,7 @@ def _register_run_parser(sub: argparse._SubParsersAction) -> None:
     )
     run_cmd.add_argument(
         "--iterations",
-        type=_positive_int,
+        type=positive_int,
         default=_DEFAULT_ITERATIONS,
         help="Number of iterations per scenario (default {0}).".format(_DEFAULT_ITERATIONS),
     )
