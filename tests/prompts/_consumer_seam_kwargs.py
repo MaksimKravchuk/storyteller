@@ -13,7 +13,7 @@ from typing import Any
 from unittest.mock import AsyncMock
 
 from cast import director_context, player_context
-from cast.actor_config import format_past_memories, goal_prompt_vars
+from cast.actor_config import format_past_memories, goal_outcome_var, goal_prompt_vars
 from cast.actor_memory import format_accessible_knowledge, select_actor_memories
 from cast.hostility import format_hostile_actions_summary
 from knowledge.query import KnowledgeQueryEngine
@@ -98,6 +98,9 @@ def _actor_optional_kwargs(
     goal_vars = goal_prompt_vars(guard, target.name, language)
     if goal_vars is not None:
         optional.update(goal_vars)
+    outcome_text = goal_outcome_var(guard, language)
+    if outcome_text is not None:
+        optional["goal_last_outcome"] = outcome_text
     return optional
 
 

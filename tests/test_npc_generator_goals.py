@@ -88,6 +88,18 @@ class TestGoalApplier:
         assert goal.target_uuid == marcus.uuid
 
     @allure.story("Goal building")
+    @allure.title("ACQUIRE is a valid generator life goal (standing material ambition)")
+    def test_acquire_kind_accepted(self, game_state) -> None:
+        marcus = _seed_marcus(game_state)
+        draft = NPCGoalDraft(kind=GoalKind.ACQUIRE, description="amass a fortune", target_name="Marcus")
+
+        goal = build_life_goal(draft, game_state, "merchant")
+
+        assert goal is not None
+        assert goal.kind is GoalKind.ACQUIRE
+        assert goal.target_uuid == marcus.uuid
+
+    @allure.story("Goal building")
     @allure.title("AVOID is Chronicler-only — dropped at creation with a logged warning")
     def test_avoid_kind_dropped_at_creation(self, game_state) -> None:
         _seed_marcus(game_state)
@@ -113,7 +125,6 @@ class TestGoalApplier:
             GoalKind.ERRAND,
             GoalKind.REST,
             GoalKind.FLEE_SCENE,
-            GoalKind.ACQUIRE,
             GoalKind.FLEE,
         ],
     )

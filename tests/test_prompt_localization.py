@@ -341,13 +341,18 @@ class TestNPCGeneratorPromptCatalog:
 # The structural _assert_section_parity guard checks section names and
 # required_vars only — it cannot see vocabulary skew inside template text.
 # These literals pin the GoalKind vocabulary content per locale. The
-# generator advertises 10 creation kinds (no AVOID); the Chronicler
-# advertises 11 (with AVOID) — that divergence is intentional, so the
-# checks compare each producer EN↔RU, never generator↔chronicler.
-_GENERATOR_KIND_LITERAL = 'kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask"'
-_CHRONICLER_PIPE_LITERAL = "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask|avoid"
-_CHRONICLER_SPACED_LITERAL = "kill | pursue | protect | befriend | court | gossip | trade | help | warn | ask | avoid"
-_CHRONICLER_COMMA_LITERAL = "kill, pursue, protect, befriend, court, gossip, trade, help, warn, ask, avoid"
+# generator advertises 11 creation kinds (no AVOID; includes ACQUIRE); the
+# Chronicler advertises 13 (adds ACQUIRE, REST, AVOID) — that divergence is
+# intentional, so the checks compare each producer EN↔RU, never
+# generator↔chronicler.
+_GENERATOR_KIND_LITERAL = 'kill|pursue|acquire|protect|befriend|court|gossip|trade|help|warn|ask"'
+_CHRONICLER_PIPE_LITERAL = "kill|pursue|acquire|protect|befriend|court|gossip|trade|help|warn|ask|rest|avoid"
+_CHRONICLER_SPACED_LITERAL = (
+    "kill | pursue | acquire | protect | befriend | court | gossip | trade | help | warn | ask | rest | avoid"
+)
+_CHRONICLER_COMMA_LITERAL = (
+    "kill, pursue, acquire, protect, befriend, court, gossip, trade, help, warn, ask, rest, avoid"
+)
 
 
 @allure.epic("Narrative Delivery")
@@ -361,7 +366,7 @@ class TestGoalVocabularyLocaleParity:
     """
 
     @allure.story("Vocabulary parity")
-    @allure.title("Generator kind literal lists 10 creation kinds (no AVOID) identically in EN and RU")
+    @allure.title("Generator kind literal lists 11 creation kinds (no AVOID) identically in EN and RU")
     def test_generator_kind_literal_matches_across_locales(self) -> None:
         english = get_npc_generator_prompts("English").create.render(npc_request="smith")
         russian = get_npc_generator_prompts("Russian").create.render(npc_request="кузнец")
@@ -373,7 +378,7 @@ class TestGoalVocabularyLocaleParity:
         assert "|avoid" not in russian
 
     @allure.story("Vocabulary parity")
-    @allure.title("Chronicler kind literals list 11 kinds (with AVOID) identically in EN and RU")
+    @allure.title("Chronicler kind literals list 13 kinds (with ACQUIRE, REST, AVOID) identically in EN and RU")
     def test_chronicler_kind_literals_match_across_locales(self) -> None:
         english = get_chronicler_prompts("English")
         russian = get_chronicler_prompts("Russian")

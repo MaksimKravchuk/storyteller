@@ -34,14 +34,44 @@ Constraints that mattered:
 2. Add deterministic, no-LLM resolvers for `PURSUE`, `ACQUIRE`, and `REST`
    in `cast/_npc_offscreen_resolvers.py`. Each performs a pure-Python state
    step (track/secure/heal) and stamps a one-line `last_outcome` on the goal.
-3. Add `last_outcome: str | None` to `models/goal.py` — a prompt-ready
-   sentence describing the most recent off-scene step, lighter than the
-   `progress_notes` list for direct prompt consumption.
+3. Add `last_outcome: OffSceneOutcome | None` to `models/goal.py` — a
+   structured, locale-agnostic record (kind enum + `detail` slot), lighter
+   than the `progress_notes` list and rendered per-locale at prompt time.
 4. Surface `last_outcome` through a new **optional** Actor prompt section
    (`goal_outcome`, EN + RU) that renders only when the var is present.
 5. Preserve the `KILL` path byte-for-byte: it keeps its original control
    flow and progress-note strings and never sets `last_outcome`, so its
    prompt body and benchmark narration are unchanged.
+
+### Robustness follow-through (post-review hardening)
+
+A review pass surfaced consumer-seam and reachability gaps; the decisions
+that close them:
+
+6. **Structured, locale-agnostic outcome.** The Actor prompt renders the
+   `OffSceneOutcome` via per-locale template banks
+   (`OFFSCREEN_OUTCOME_TEMPLATES` / `_RU`), so a Russian session never
+   sees mixed-language outcome text. Progress-note audit lines stay
+   English (matching the pre-existing note convention).
+7. **Outcome read off `life_goal` directly.** `goal_outcome_var` reads the
+   outcome independently of `select_active_goal`, so a just-completed goal
+   (ACQUIRE/REST) or one masked by a promoted tactical goal still surfaces
+   its outcome to the Actor.
+8. **One-shot consumption.** The Actor clears `last_outcome` after the turn
+   that rendered it, so a returning player sees the "while you were away…"
+   reaction once, not on every subsequent turn.
+9. **Liveness re-check + dead-target handling.** The ticker re-checks an
+   actor's status before dispatching (a corpse killed earlier in the same
+   tick runs no resolver); a PURSUE goal whose quarry was killed elsewhere
+   is ABANDONED rather than pursued forever; REST matches free-form injury
+   statuses by stem ("wounded left arm").
+10. **Producer reachability.** ACQUIRE is added to the NPC-generator
+    birth-goal pool and the Chronicler (a coherent standing material
+    ambition). REST is added to the **Chronicler only** — a lifelong
+    "rest" *birth* goal is incoherent, but a Chronicler-assigned reactive
+    recovery directive is sensible — keeping the resolver reachable in
+    normal play without polluting NPC generation. Both EN and RU producer
+    prompts are updated in lockstep.
 
 ## Rationale
 
@@ -88,6 +118,30 @@ semantics yet. Adding speculative resolvers would be unused complexity.
 Eligibility keyed on the dispatch table means they remain skipped until a
 resolver is intentionally added.
 
+### Alternative 5: Store/stamp `last_outcome` as localized English prose
+
+The first cut stored an English sentence. Rejected once RU sessions were
+considered: the locale-agnostic ticker would bake English into the prompt
+body, breaking locale parity (a CLAUDE.md hard rule). Passing the session
+language into the ticker would also freeze the locale at write time. A
+structured kind + `detail` rendered at the consumer keeps the prompt
+single-language and the stored state locale-free.
+
+### Alternative 6: Add REST to the NPC generator birth-goal pool
+
+Rejected: a lifelong "rest" *birth* goal is incoherent and would have NPCs
+spawn with a goal that completes on the first off-scene heal. REST reaches
+the off-scene loop via the Chronicler (reactive recovery directive)
+instead, which is the semantically right producer.
+
+### Alternative 7: Copy `last_outcome` into the promoted tactical goal
+
+To surface a PURSUE outcome after `promote_life_goals_on_sight` mirrors a
+life goal into a tactical one, an option was to copy the outcome onto the
+tactical goal. Rejected in favour of reading the outcome straight off
+`life_goal` (decision 7): one read site, no duplication, and it also
+covers the completed-goal case for free.
+
 ## Consequences
 
 Positive consequences:
@@ -107,6 +161,12 @@ Tradeoffs / risks:
   (no `last_outcome`, identical strings/flow) and a consumer-seam test
   asserting KILL renders no `goal_outcome` section.
 
+Positive consequences (robustness pass):
+- ACQUIRE and REST are now reachable in normal play (ACQUIRE via generator
+  + Chronicler, REST via Chronicler), so the resolvers are not dead code.
+- Off-scene outcomes are localized, surface even for completed/tactical-
+  masked goals, and are shown exactly once per re-entry.
+
 What future agents must preserve:
 - The KILL off-scene path must stay byte-for-byte (no `last_outcome`, same
   progress-note text) — it backs the `npc_autonomy_*` benchmarks.
@@ -114,6 +174,10 @@ What future agents must preserve:
   set scales with NPC count.
 - The `goal_outcome` Actor section must stay optional (rendered only when
   `goal_last_outcome` is set) and keep EN/RU parity.
+- `OffSceneOutcome` must stay locale-agnostic; add a template to **both**
+  `OFFSCREEN_OUTCOME_TEMPLATES` and `_RU` when introducing a new kind.
+- Producer kind lists must stay EN/RU lockstep (guarded by
+  `tests/test_prompt_localization.py::TestGoalVocabularyLocaleParity`).
 
 ## Verification / tests
 
@@ -123,13 +187,25 @@ What future agents must preserve:
 - `tests/test_actor_prompt.py::TestActorPromptOffSceneOutcome`: consumer
   seam — a non-KILL `last_outcome` reaches the rendered Actor prompt; a KILL
   goal renders no outcome section.
-- `tests/test_goal_prompt_vars.py`: `goal_last_outcome` var is gated on the
-  goal actually carrying an outcome.
-- `tests/test_db_converters.py::test_goal_round_trip`: `last_outcome`
-  survives the domain→row→domain round-trip (Goal persists as a JSON blob,
-  so no migration is required).
+- `tests/test_goal_prompt_vars.py`: `goal_outcome_var` is gated on an
+  outcome being present, renders localized (EN + RU), and survives goal
+  completion.
+- `tests/test_npc_background_tick.py`: dead-quarry PURSUE abandons,
+  free-form REST status heals, and an actor killed mid-tick runs no
+  resolver.
+- `tests/test_actor_prompt.py::TestActorPromptOffSceneOutcome`: a non-KILL
+  outcome reaches the prompt, renders in Russian for RU sessions, and KILL
+  renders no outcome section.
+- `tests/test_npc_generator_goals.py`: ACQUIRE is accepted as a generator
+  life goal; REST stays rejected at generation.
+- `tests/test_prompt_localization.py::TestGoalVocabularyLocaleParity`:
+  generator/Chronicler kind literals match EN↔RU after adding ACQUIRE/REST.
+- `tests/test_db_converters.py::test_goal_round_trip`: the structured
+  `last_outcome` survives the domain→row→domain round-trip (Goal persists
+  as a JSON blob, so no migration is required).
 - `tests/prompts/test_consumer_seam_contract.py`: every Actor section,
-  including `goal_outcome`, renders into the captured prompt.
+  including `goal_outcome`, renders into the captured prompt (kwargs
+  snapshotted pre-drive since the Actor consumes the outcome).
 - KILL benchmark byte-identity is additionally checked by the
   `npc_autonomy_emergent_vendetta` / `npc_autonomy_murder_plot` scenarios in
   the PR benchmark workflow.
@@ -141,8 +217,16 @@ What future agents must preserve:
 - `models/goal.py`
 - `cast/actor_config.py`
 - `cast/actor.py`
+- `cast/_npc_generator_goals.py`
 - `prompts/actor_prompts.py`
 - `prompts/actor_prompts_ru.py`
+- `prompts/npc_generator_prompts.py`
+- `prompts/npc_generator_prompts_ru.py`
+- `prompts/chronicler_prompts.py`
+- `prompts/chronicler_prompts_ru.py`
 - `tests/test_npc_background_tick.py`
 - `tests/test_actor_prompt.py`
 - `tests/test_goal_prompt_vars.py`
+- `tests/test_npc_generator_goals.py`
+- `tests/test_prompt_localization.py`
+- `tests/prompts/test_consumer_seam_contract.py`

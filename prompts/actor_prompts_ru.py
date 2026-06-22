@@ -12,7 +12,26 @@ because it is matched against the English-keyed enum in
 can be in the game language (Russian).
 """
 
+from types import MappingProxyType
+
+from models.goal import OffSceneOutcomeKind
 from prompts.base_template import PromptSection, PromptTemplate
+
+# Russian renderings of structured off-scene outcomes. ``{detail}`` is a
+# data slot (target name / goal description); kinds without a slot ignore
+# it. Keys MUST match the English bank in prompts.actor_prompts.
+OFFSCREEN_OUTCOME_TEMPLATES_RU: MappingProxyType[OffSceneOutcomeKind, str] = MappingProxyType(
+    {
+        OffSceneOutcomeKind.PURSUE_CAUGHT_UP: "настиг(ла) {detail} вне сцены",
+        OffSceneOutcomeKind.PURSUE_TRACKING: "всё ещё идёт по следу {detail}",
+        OffSceneOutcomeKind.PURSUE_TRACKING_UNKNOWN: "всё ещё выслеживает свою добычу",
+        OffSceneOutcomeKind.PURSUE_TARGET_DEAD: "{detail} мёртв — погоня окончена",
+        OffSceneOutcomeKind.ACQUIRE_PROGRESS: "продвинулся(лась) к цели: {detail}",
+        OffSceneOutcomeKind.ACQUIRE_SECURED: "добыл(а) желаемое: {detail}",
+        OffSceneOutcomeKind.REST_RECOVERED: "отдохнул(а) вне сцены и полностью восстановился(лась)",
+        OffSceneOutcomeKind.REST_AT_EASE: "отдохнул(а) вне сцены; и так был(а) здоров(а)",
+    },
+)
 
 _IDENTITY_RU = PromptSection(
     name="identity",

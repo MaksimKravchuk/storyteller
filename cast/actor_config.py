@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from cast._npc_active_goal import select_active_goal
 from knowledge.node import KnowledgeNode
-from models.goal import Goal, GoalKind
+from models.goal import Goal, GoalKind, OffSceneOutcome
 from models.npc_card import NPCCard
 from prompts.actor_prompts import get_actor_prompts
 
@@ -68,7 +68,7 @@ def _goal_coaching(kind: GoalKind, language: str) -> str:
 
 
 def _goal_section_vars(goal: Goal, target_name: str | None, language: str) -> dict[str, str]:
-    section_vars = {
+    return {
         "goal_kind": goal.kind.value,
         "goal_target": target_name or _GOAL_UNKNOWN_TARGET,
         "goal_turns_pursued": str(goal.turns_pursued),
@@ -77,11 +77,31 @@ def _goal_section_vars(goal: Goal, target_name: str | None, language: str) -> di
         "goal_progress_notes": _format_goal_progress(goal.progress_notes),
         "goal_coaching": _goal_coaching(goal.kind, language),
     }
-    # Gate the optional outcome section: only the off-scene resolvers stamp
-    # last_outcome, so KILL goals keep their original prompt body.
-    if goal.last_outcome:
-        section_vars["goal_last_outcome"] = goal.last_outcome
-    return section_vars
+
+
+def format_offscreen_outcome(outcome: OffSceneOutcome, language: str) -> str:
+    """Render a structured off-scene outcome as a localized sentence.
+
+    The per-locale template bank lives on the Actor prompt bundle; the
+    ``{detail}`` slot is filled with the stored target name or goal
+    description. Templates without a slot ignore the kwarg.
+    """
+    template = get_actor_prompts(language).offscreen_outcomes[outcome.kind]
+    return template.format(detail=outcome.detail)
+
+
+def goal_outcome_var(npc: NPCCard, language: str) -> str | None:
+    """Return the localized off-scene outcome for the NPC's life goal, or ``None``.
+
+    Read straight off ``life_goal`` — independent of which goal is
+    *active* — so a just-completed goal (ACQUIRE/REST) or one masked by a
+    promoted tactical goal still surfaces its outcome to the Actor. Only
+    the off-scene ticker writes ``last_outcome``, so KILL stays ``None``.
+    """
+    goal = npc.life_goal
+    if goal is None or goal.last_outcome is None:
+        return None
+    return format_offscreen_outcome(goal.last_outcome, language)
 
 
 def goal_prompt_vars(

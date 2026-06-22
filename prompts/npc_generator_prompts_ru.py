@@ -110,7 +110,7 @@ NPC_GENERATOR_CREATE_RU = PromptTemplate(
                 '  "goal": null\n'
                 "  // ИЛИ блок standing-intent — см. clause restraint в системном промпте:\n"
                 '  // "goal": {{\n'
-                '  //   "kind": "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask",\n'
+                '  //   "kind": "kill|pursue|acquire|protect|befriend|court|gossip|trade|help|warn|ask",\n'
                 '  //   "description": "1 фраза о постоянном намерении",\n'
                 '  //   "target_name": "Имя существующего NPC"\n'
                 "  // }}\n"

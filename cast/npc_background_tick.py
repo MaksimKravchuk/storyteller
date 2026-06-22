@@ -161,6 +161,11 @@ class NPCBackgroundTicker:
         await self._tick_remaining(remaining[1:], hours_advanced)
 
     async def _tick_one(self, actor: NPCCard, hours_advanced: float) -> None:
+        # Re-check liveness: ``eligible`` is snapshotted before the loop, so
+        # an earlier KILL resolver may have killed this actor mid-tick. A
+        # corpse must not run its resolver (e.g. complete an ACQUIRE goal).
+        if (actor.physical_status or "").lower() in _NPC_SKIP_STATUSES:
+            return
         goal = actor.life_goal
         if goal is None:
             return

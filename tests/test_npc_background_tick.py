@@ -9,7 +9,7 @@ import pytest
 
 from cast.dice import ContestOutcome, ContestRoll, ContestType
 from cast.npc_background_tick import NPCBackgroundTicker
-from models.goal import Goal, GoalKind, GoalStatus
+from models.goal import Goal, GoalKind, GoalStatus, OffSceneOutcome, OffSceneOutcomeKind
 from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
@@ -165,7 +165,9 @@ class TestOffSceneNonKillResolvers:
         await ticker.tick(hours_advanced=8.0)
 
         assert actor.life_goal.turns_pursued == 1
-        assert actor.life_goal.last_outcome == "caught up with Marcus off-screen"
+        assert actor.life_goal.last_outcome == OffSceneOutcome(
+            kind=OffSceneOutcomeKind.PURSUE_CAUGHT_UP, detail="Marcus"
+        )
         assert target.physical_status == "healthy"  # PURSUE is non-lethal — no contest
         assert memory.calls == []
 
@@ -182,7 +184,9 @@ class TestOffSceneNonKillResolvers:
         await ticker.tick(hours_advanced=8.0)
 
         assert actor.life_goal.turns_pursued == 1
-        assert actor.life_goal.last_outcome == "still on Marcus's trail"
+        assert actor.life_goal.last_outcome == OffSceneOutcome(
+            kind=OffSceneOutcomeKind.PURSUE_TRACKING, detail="Marcus"
+        )
 
     @pytest.mark.asyncio
     @allure.story("ACQUIRE")
@@ -197,7 +201,9 @@ class TestOffSceneNonKillResolvers:
         await ticker.tick(hours_advanced=8.0)
 
         assert actor.life_goal.status is GoalStatus.ACTIVE
-        assert actor.life_goal.last_outcome == "made headway toward the senator's ledger"
+        assert actor.life_goal.last_outcome == OffSceneOutcome(
+            kind=OffSceneOutcomeKind.ACQUIRE_PROGRESS, detail="the senator's ledger"
+        )
 
     @pytest.mark.asyncio
     @allure.story("ACQUIRE")
@@ -216,7 +222,9 @@ class TestOffSceneNonKillResolvers:
         await ticker.tick(hours_advanced=8.0)
 
         assert actor.life_goal.status is GoalStatus.COMPLETED
-        assert actor.life_goal.last_outcome == "secured the senator's ledger"
+        assert actor.life_goal.last_outcome == OffSceneOutcome(
+            kind=OffSceneOutcomeKind.ACQUIRE_SECURED, detail="the senator's ledger"
+        )
 
     @pytest.mark.asyncio
     @allure.story("REST")
@@ -233,7 +241,7 @@ class TestOffSceneNonKillResolvers:
 
         assert actor.physical_status == "healthy"
         assert actor.life_goal.status is GoalStatus.COMPLETED
-        assert actor.life_goal.last_outcome == "rested off-screen and recovered to full health"
+        assert actor.life_goal.last_outcome == OffSceneOutcome(kind=OffSceneOutcomeKind.REST_RECOVERED)
 
     @pytest.mark.asyncio
     @allure.story("REST")
@@ -249,7 +257,7 @@ class TestOffSceneNonKillResolvers:
 
         assert actor.physical_status == "healthy"
         assert actor.life_goal.status is GoalStatus.ACTIVE
-        assert actor.life_goal.last_outcome == "rested off-screen; already in good health"
+        assert actor.life_goal.last_outcome == OffSceneOutcome(kind=OffSceneOutcomeKind.REST_AT_EASE)
 
     @pytest.mark.asyncio
     @allure.story("Eligibility")
@@ -277,3 +285,65 @@ class TestOffSceneNonKillResolvers:
 
         assert actor.life_goal.turns_pursued == 0
         assert actor.life_goal.last_outcome is None
+
+    @pytest.mark.asyncio
+    @allure.story("PURSUE")
+    @allure.title("PURSUE goal whose quarry was killed elsewhere abandons the chase")
+    async def test_pursue_dead_quarry_abandons(self) -> None:
+        state, actor, target, _ = make_actor_target_state()
+        actor.life_goal = Goal(kind=GoalKind.PURSUE, description="shadow Marcus", target_uuid=target.uuid)
+        target.physical_status = "dead"
+        _strand_actor_alone(state, actor)
+
+        ticker = NPCBackgroundTicker(state, RecordingMemoryManager())
+        await ticker.tick(hours_advanced=8.0)
+
+        assert actor.life_goal.status is GoalStatus.ABANDONED
+        assert actor.life_goal.last_outcome == OffSceneOutcome(
+            kind=OffSceneOutcomeKind.PURSUE_TARGET_DEAD, detail="Marcus"
+        )
+
+    @pytest.mark.asyncio
+    @allure.story("REST")
+    @allure.title("REST heals a free-form injury status, not just exact-match statuses")
+    async def test_rest_heals_free_form_status(self) -> None:
+        state, actor, _, _ = make_actor_target_state()
+        actor.life_goal = Goal(kind=GoalKind.REST, description="mend")
+        actor.physical_status = "wounded left arm"
+        _strand_actor_alone(state, actor)
+
+        ticker = NPCBackgroundTicker(state, RecordingMemoryManager())
+        await ticker.tick(hours_advanced=8.0)
+
+        assert actor.physical_status == "healthy"
+        assert actor.life_goal.status is GoalStatus.COMPLETED
+
+    @pytest.mark.asyncio
+    @allure.story("Eligibility")
+    @allure.title("An actor killed earlier in the same tick does not run its own resolver")
+    async def test_actor_killed_mid_tick_skips_resolver(self) -> None:
+        # Brutus (KILL) and a co-located ACQUIRE holder are both off-scene
+        # and eligible; Brutus's lethal contest kills the ACQUIRE holder
+        # before its resolver runs, so the corpse must not "secure" anything.
+        state, brutus, victim, _ = make_actor_target_state()
+        brutus.life_goal = Goal(kind=GoalKind.KILL, description="kill Marcus", target_uuid=victim.uuid)
+        victim.life_goal = Goal(kind=GoalKind.ACQUIRE, description="a fortune", turns_pursued=2)
+        seed_kill_thread(state, brutus, victim)
+        _move_actor_offscene(state, brutus, victim)
+
+        forced_roll = ContestRoll(
+            contest_type=ContestType.COMBAT,
+            outcome=ContestOutcome.ACTOR_DOMINATES,
+            actor_roll=20,
+            target_roll=1,
+            actor_bonus=0,
+            target_bonus=0,
+        )
+        ticker = NPCBackgroundTicker(state, RecordingMemoryManager())
+        with patch("cast.npc_background_tick.roll_contest", return_value=forced_roll):
+            await ticker.tick(hours_advanced=8.0)
+
+        assert victim.physical_status == "dead"
+        # The dead victim's ACQUIRE goal never secured / completed.
+        assert victim.life_goal.status is GoalStatus.ACTIVE
+        assert victim.life_goal.last_outcome is None

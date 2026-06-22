@@ -22,6 +22,39 @@ from pydantic import BaseModel, Field
 _PROGRESS_NOTE_LIMIT = 6
 
 
+class OffSceneOutcomeKind(str, Enum):
+    """Structured kind of an off-scene background-tick outcome.
+
+    The off-scene ticker is locale-agnostic — it cannot know whether the
+    Actor will later render in English or Russian — so it records *what*
+    happened as a structured kind plus a free-text ``detail`` slot (a
+    target name or goal description). The Actor prompt layer turns the
+    pair into a localized sentence at render time, keeping the prompt
+    body single-language. See ``cast.actor_config.format_offscreen_outcome``.
+    """
+
+    PURSUE_CAUGHT_UP = "pursue_caught_up"
+    PURSUE_TRACKING = "pursue_tracking"
+    PURSUE_TRACKING_UNKNOWN = "pursue_tracking_unknown"
+    PURSUE_TARGET_DEAD = "pursue_target_dead"
+    ACQUIRE_PROGRESS = "acquire_progress"
+    ACQUIRE_SECURED = "acquire_secured"
+    REST_RECOVERED = "rest_recovered"
+    REST_AT_EASE = "rest_at_ease"
+
+
+class OffSceneOutcome(BaseModel):
+    """A structured, locale-agnostic record of one off-scene goal step.
+
+    ``detail`` fills the localized template's slot — a target's display
+    name (PURSUE) or the goal description (ACQUIRE). Kinds whose template
+    has no slot (REST, PURSUE_TRACKING_UNKNOWN) leave it empty.
+    """
+
+    kind: OffSceneOutcomeKind
+    detail: str = ""
+
+
 class GoalScope(str, Enum):
     """Whether a goal is value-driven (life) or situation-driven (tactical).
 
@@ -99,12 +132,13 @@ class Goal(BaseModel):
     ``turns_pursued`` (which only ticks when the actor takes an action).
     Life-tier goals leave it ``None``.
 
-    ``last_outcome`` is a single prompt-ready sentence describing the
-    most recent off-scene step the background ticker resolved (e.g.
-    "secured the ledger"). It is lighter than ``progress_notes`` — the
-    Actor prompt surfaces it directly so an NPC re-entering the scene
-    can react to what time did while the player was away. The KILL path
-    leaves it ``None`` so the combat-vendetta prompt stays unchanged.
+    ``last_outcome`` is a structured :class:`OffSceneOutcome` describing
+    the most recent off-scene step the background ticker resolved. It is
+    lighter than ``progress_notes`` and locale-agnostic — the Actor
+    prompt layer renders it as a localized sentence so an NPC re-entering
+    the scene can react to what time did while the player was away, and
+    clears it once consumed. The KILL path leaves it ``None`` so the
+    combat-vendetta prompt stays unchanged.
     """
 
     scope: GoalScope = GoalScope.LIFE
@@ -116,7 +150,7 @@ class Goal(BaseModel):
     last_attempted_action: str | None = None
     progress_notes: list[str] = Field(default_factory=list)
     created_on_turn: int | None = None
-    last_outcome: str | None = None
+    last_outcome: OffSceneOutcome | None = None
 
     def record_progress(self, note: str) -> None:
         """Append a short retrospective, dropping the oldest note when over budget.

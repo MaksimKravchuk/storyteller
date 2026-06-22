@@ -60,11 +60,14 @@ CHRONICLER_SYSTEM = PromptTemplate(
                 "specific NPC — hostile or protective (vow of vengeance, sworn "
                 "protection, oath of pursuit) or social and everyday (a bond of "
                 "friendship, courtship, a standing trade, a need to warn, gossip, "
-                "ask, or — for avoid — to deliberately steer clear of someone). "
-                "kind must be one of kill | pursue | protect | befriend | court | "
-                "gossip | trade | help | warn | ask | avoid. ``npc_uuid`` AND "
-                "``target_uuid`` must reference NPCs already registered in the "
-                "game state. Do NOT invent NPCs. Do NOT overwrite an NPC's "
+                "ask, or — for avoid — to deliberately steer clear of someone), or "
+                "a personal pursuit not aimed at another NPC (acquire a coveted "
+                "object or resource; rest to recover from injury or exhaustion). "
+                "kind must be one of kill | pursue | acquire | protect | befriend | "
+                "court | gossip | trade | help | warn | ask | rest | avoid. "
+                "``npc_uuid`` must reference a registered NPC; ``target_uuid`` must "
+                "too when present — it is null for acquire, rest, and other "
+                "self-directed goals. Do NOT invent NPCs. Do NOT overwrite an NPC's "
                 "existing active life goal — the engine will skip such drafts.\n"
                 "goal_updates: emit ABANDONED when circumstances make a goal "
                 "moot (target reconciled, target left the city for good); BLOCKED "
@@ -77,8 +80,8 @@ CHRONICLER_SYSTEM = PromptTemplate(
             template=(
                 "Thread categories: personal, political, natural, economic, social, cultural. "
                 "Thread statuses: open, resolved, abandoned. "
-                "Goal kinds (life-tier): kill, pursue, protect, befriend, court, gossip, "
-                "trade, help, warn, ask, avoid. "
+                "Goal kinds (life-tier): kill, pursue, acquire, protect, befriend, court, "
+                "gossip, trade, help, warn, ask, rest, avoid. "
                 "Reference existing locations and NPCs by their UUIDs; do not invent new entities."
             ),
         ),
@@ -125,7 +128,7 @@ CHRONICLER_ADVANCE = (
     '  "goal_drafts": [\n'
     "    {{\n"
     '      "npc_uuid": "uuid of the NPC who now carries the intent",\n'
-    '      "kind": "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask|avoid",\n'
+    '      "kind": "kill|pursue|acquire|protect|befriend|court|gossip|trade|help|warn|ask|rest|avoid",\n'
     '      "description": "one-sentence standing intent",\n'
     '      "target_uuid": "uuid of the NPC the intent is directed at, or null",\n'
     '      "source_thread_uuid": "uuid of the thread justifying the goal, or null"\n'

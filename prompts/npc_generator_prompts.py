@@ -104,7 +104,7 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 '  "goal": null\n'
                 "  // OR a standing-intent block — see system prompt restraint clause:\n"
                 '  // "goal": {{\n'
-                '  //   "kind": "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask",\n'
+                '  //   "kind": "kill|pursue|acquire|protect|befriend|court|gossip|trade|help|warn|ask",\n'
                 '  //   "description": "1 sentence of standing intent",\n'
                 '  //   "target_name": "Existing NPC Name"\n'
                 "  // }}\n"

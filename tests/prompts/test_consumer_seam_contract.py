@@ -134,11 +134,16 @@ class TestConsumerSeamContract:
         game_state = state_mod.build_maximal_game_state()
         client = kwargs_mod.make_mock_llm()
 
+        # Snapshot the expected section kwargs BEFORE driving: a consumer may
+        # legitimately consume one-shot state during act() (e.g. the Actor
+        # clears a goal's off-scene outcome after rendering it), so kwargs
+        # recomputed post-drive would no longer match the captured prompt.
+        template = case.template_for(case.locale)
+        section_kwargs = case.section_kwargs_for(game_state, case.locale)
+
         await case.drive(game_state, client, case.locale)
 
         captured = case.capture(client)
-        template = case.template_for(case.locale)
-        section_kwargs = case.section_kwargs_for(game_state, case.locale)
         _assert_every_section_present(template, captured, section_kwargs)
 
 
@@ -202,6 +207,10 @@ class TestContrivedBugIsCaught:
             language=cases_mod.LOCALE_EN,
         )
         client.send_message.return_value.body = kwargs_mod.ACTOR_REPLY_JSON
+        # Snapshot expected kwargs before act() — act() consumes one-shot
+        # state (clears the goal's off-scene outcome) that post-act kwargs
+        # would no longer carry.
+        section_kwargs = kwargs_mod.actor_kwargs(game_state, cases_mod.LOCALE_EN)
         await actor.act(
             input_data="What are you doing here?",
             context={
@@ -211,7 +220,6 @@ class TestContrivedBugIsCaught:
         )
 
         captured = kwargs_mod.capture_system_prompt(client)
-        section_kwargs = kwargs_mod.actor_kwargs(game_state, cases_mod.LOCALE_EN)
         # Both ``constraints`` and ``output_dialogue`` list physical_status
         # in their required_vars; the assertion fails on the first one it
         # checks, so we match either name.

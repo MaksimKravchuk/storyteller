@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import allure
 
-from cast.actor_config import goal_prompt_vars
-from models.goal import Goal, GoalKind
+from cast.actor_config import goal_outcome_var, goal_prompt_vars
+from models.goal import Goal, GoalKind, OffSceneOutcome, OffSceneOutcomeKind
 from models.npc_card import NPCCard
 from prompts.actor_prompts import ACTOR_SYSTEM_ACTION, ACTOR_SYSTEM_DIALOGUE
 from prompts.actor_prompts_ru import ACTOR_SYSTEM_DIALOGUE_RU
@@ -254,12 +254,30 @@ class TestActorPromptOffSceneOutcome:
             life_goal=Goal(kind=GoalKind.ACQUIRE, description="the senator's ledger"),
         )
         assert npc.life_goal is not None
-        npc.life_goal.last_outcome = "secured the senator's ledger"
+        npc.life_goal.last_outcome = OffSceneOutcome(
+            kind=OffSceneOutcomeKind.ACQUIRE_SECURED, detail="the senator's ledger"
+        )
 
-        rendered = self._render_with_goal(npc)
+        rendered = self._render_with_goal(npc, "English")
 
         assert "While you were away" in rendered
         assert "secured the senator's ledger" in rendered
+
+    @allure.story("Off-scene outcome")
+    @allure.title("Russian sessions render the outcome in Russian, not mixed-language English")
+    def test_outcome_localized_in_russian(self):
+        npc = NPCCard(
+            name="Cassia",
+            occupation="thief",
+            life_goal=Goal(kind=GoalKind.ACQUIRE, description="реликвия"),
+        )
+        assert npc.life_goal is not None
+        npc.life_goal.last_outcome = OffSceneOutcome(kind=OffSceneOutcomeKind.ACQUIRE_SECURED, detail="реликвия")
+
+        rendered = self._render_with_goal(npc, "Russian", template=ACTOR_SYSTEM_DIALOGUE_RU)
+
+        assert "добыл(а) желаемое: реликвия" in rendered
+        assert "secured" not in rendered
 
     @allure.story("Off-scene outcome")
     @allure.title("A KILL goal renders no off-scene outcome section (combat prompt unchanged)")
@@ -270,11 +288,12 @@ class TestActorPromptOffSceneOutcome:
             life_goal=Goal(kind=GoalKind.KILL, description="Avenge brother by killing Marcus"),
         )
 
-        rendered = self._render_with_goal(npc)
+        rendered = self._render_with_goal(npc, "English")
 
         assert "While you were away" not in rendered
 
-    def _render_with_goal(self, npc: NPCCard) -> str:
-        goal_vars = goal_prompt_vars(npc, "Marcus", "English")
-        assert goal_vars is not None
-        return ACTOR_SYSTEM_DIALOGUE.render(**{**BASE_ACTOR_PROMPT_VARS, **goal_vars})
+    def _render_with_goal(self, npc: NPCCard, language: str, template=ACTOR_SYSTEM_DIALOGUE) -> str:
+        goal_vars = goal_prompt_vars(npc, "Marcus", language) or {}
+        outcome_text = goal_outcome_var(npc, language)
+        extra = {} if outcome_text is None else {"goal_last_outcome": outcome_text}
+        return template.render(**{**BASE_ACTOR_PROMPT_VARS, **goal_vars, **extra})
