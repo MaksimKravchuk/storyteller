@@ -4,48 +4,58 @@
       {
         "base_value": 3,
         "element_id": "bystanders_not_idle",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Bassus and Cato react (non-IDLE npc_turn)",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "aulus_contest_roll",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Aulus dialogue carries a contest roll",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "bystander_moods_shifted",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Bystander moods shift from neutral",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 3,
         "element_id": "bystander_physical_intervention",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 23,
         "label": "Bystander actions include real intervention (attack / arrest / restrain)",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       }
     ],
     "iteration_totals": [
       10,
+      9,
+      10,
       10,
       10
     ],
-    "iterations": 3,
+    "iterations": 5,
     "max_awarded": 10,
-    "mean_awarded": 10.0,
-    "min_awarded": 10,
+    "mean_awarded": 9.8,
+    "min_awarded": 9,
     "scenario_id": "autonomy_three_guards_tavern",
     "scenario_label": "Autonomy — two bystander guards react to a punch",
-    "stdev_awarded": 0.0,
+    "stdev_awarded": 0.39999999999999997,
     "total_base": 10
   },
-  "baselined_at": "2026-06-20T19:19:00.071829+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.194061+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -53,6 +63,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
+  "iterations": 5,
   "noise_floor_stdev": 0.0
 }

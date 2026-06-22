@@ -4,52 +4,66 @@
       {
         "base_value": 1,
         "element_id": "marcus_speaks_turn1",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Marcus replies on recall turn (loaf)",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 1,
         "element_id": "marcus_speaks_turn2",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Marcus replies on recall turn (suspect)",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 3,
         "element_id": "marcus_recalls_stolen_loaf",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 25,
         "label": "Marcus's reply references the stolen loaf",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       },
       {
         "base_value": 3,
         "element_id": "marcus_names_suspect",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Marcus names or clearly implies Gaius as the suspect",
+        "n_votes": 25,
         "passes": 0
       },
       {
         "base_value": 1,
         "element_id": "game_clock_advanced",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Game clock advances across the session",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 1,
         "element_id": "marcus_history_grew",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Marcus's conversation history grew",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       }
     ],
     "iteration_totals": [
       7,
       7,
+      7,
+      7,
       7
     ],
-    "iterations": 3,
+    "iterations": 5,
     "max_awarded": 7,
     "mean_awarded": 7.0,
     "min_awarded": 7,
@@ -58,8 +72,8 @@
     "stdev_awarded": 0.0,
     "total_base": 10
   },
-  "baselined_at": "2026-06-20T19:19:02.671064+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.196547+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -67,6 +81,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
+  "iterations": 5,
   "noise_floor_stdev": 0.0
 }

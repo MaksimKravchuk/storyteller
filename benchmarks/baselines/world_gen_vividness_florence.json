@@ -4,41 +4,49 @@
       {
         "base_value": 2,
         "element_id": "era_grounded_scene",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 19,
         "label": "Narration reads as Renaissance Florence, not generic medieval filler",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 4
       },
       {
         "base_value": 2,
         "element_id": "social_structure_echo",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 20,
         "label": "The generated wool trader reflects the seeded guild social structure",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       },
       {
         "base_value": 1,
         "element_id": "tradition_surfaced",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 24,
         "label": "A seeded custom or tradition surfaces in the prose",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       }
     ],
     "iteration_totals": [
-      5,
+      3,
       4,
+      5,
+      5,
       4
     ],
-    "iterations": 3,
+    "iterations": 5,
     "max_awarded": 5,
-    "mean_awarded": 4.333333333333333,
-    "min_awarded": 4,
+    "mean_awarded": 4.2,
+    "min_awarded": 3,
     "scenario_id": "world_gen_vividness_florence",
     "scenario_label": "A richly-seeded setting surfaces as era-grounded scene + NPC prose",
-    "stdev_awarded": 0.4714045207910317,
+    "stdev_awarded": 0.7483314773547882,
     "total_base": 5
   },
-  "baselined_at": "2026-06-20T19:19:11.650183+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.203887+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -46,6 +54,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
-  "noise_floor_stdev": 0.4714045207910317
+  "iterations": 5,
+  "noise_floor_stdev": 1.8547236990991407
 }

@@ -4,48 +4,58 @@
       {
         "base_value": 3,
         "element_id": "no_npc_hallucinated",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Narrator does not invent NPCs to fill the empty atrium",
-        "passes": 0
+        "n_votes": 0,
+        "passes": 1
       },
       {
         "base_value": 2,
         "element_id": "evocative_prose",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 23,
         "label": "Narrator uses concrete sensory detail rather than generic filler",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "grounded_in_seed",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 3,
         "label": "Narrator stays within the seed scene's vocabulary",
-        "passes": 2
+        "n_votes": 25,
+        "passes": 1
       },
       {
         "base_value": 1,
         "element_id": "prose_not_repetitive",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 2,
         "label": "Narrator varies sentence structure across turns",
+        "n_votes": 25,
         "passes": 0
       }
     ],
     "iteration_totals": [
-      1,
-      3,
-      2
+      2,
+      2,
+      5,
+      2,
+      3
     ],
-    "iterations": 3,
-    "max_awarded": 3,
-    "mean_awarded": 2.0,
-    "min_awarded": 1,
+    "iterations": 5,
+    "max_awarded": 5,
+    "mean_awarded": 2.8,
+    "min_awarded": 2,
     "scenario_id": "narrator_prose_quiet_exploration",
     "scenario_label": "Narrator prose stays evocative + grounded on a quiet, NPC-free exploration turn",
-    "stdev_awarded": 0.816496580927726,
+    "stdev_awarded": 1.16619037896906,
     "total_base": 8
   },
-  "baselined_at": "2026-06-20T19:19:05.220904+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.198336+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -53,6 +63,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
-  "noise_floor_stdev": 0.816496580927726
+  "iterations": 5,
+  "noise_floor_stdev": 1.4142135623730951
 }

@@ -4,48 +4,58 @@
       {
         "base_value": 3,
         "element_id": "clash_occurred",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Brutus autonomously clashes with Marcus (attempt, any outcome)",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 3,
         "element_id": "outcome_recorded_in_world_facts",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Clash outcome lands in the knowledge graph",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "marcus_killed",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Marcus is killed (lethal resolution bonus)",
-        "passes": 2
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "narration_describes_clash",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 22,
         "label": "Narration describes Brutus clashing with Marcus (any outcome)",
-        "passes": 1
+        "n_votes": 25,
+        "passes": 5
       }
     ],
     "iteration_totals": [
-      9,
-      6,
-      8
+      10,
+      10,
+      10,
+      10,
+      10
     ],
-    "iterations": 3,
-    "max_awarded": 9,
-    "mean_awarded": 7.666666666666667,
-    "min_awarded": 6,
+    "iterations": 5,
+    "max_awarded": 10,
+    "mean_awarded": 10.0,
+    "min_awarded": 10,
     "scenario_id": "npc_autonomy_murder_plot",
     "scenario_label": "NPC autonomy — Brutus plots to murder Marcus while the player waits",
-    "stdev_awarded": 1.247219128924647,
+    "stdev_awarded": 0.0,
     "total_base": 10
   },
-  "baselined_at": "2026-06-20T19:19:07.354249+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.200168+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -53,6 +63,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
-  "noise_floor_stdev": 1.247219128924647
+  "iterations": 5,
+  "noise_floor_stdev": 0.7483314773547882
 }
