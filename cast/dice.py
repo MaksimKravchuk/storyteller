@@ -7,6 +7,7 @@ aggression-check mechanic for NPC mood-based retaliation.
 
 from __future__ import annotations
 
+import contextvars
 import random
 import types
 from dataclasses import dataclass
@@ -18,6 +19,31 @@ from llm.turn_event_logger import record_turn_event
 
 
 _D20 = 20
+
+# Optionally-installed default RNG for dice rolls. Production never sets it,
+# so dice fall back to a fresh ``random.Random()`` per roll — identical to the
+# original behaviour. The benchmark harness installs a seeded RNG (per scenario
+# + iteration) so contest outcomes reproduce run-to-run, keeping dice luck out
+# of the previous-vs-current comparison. A ``ContextVar`` matches the codebase's
+# swappable-process-state precedent (see ``llm/turn_event_logger.py``).
+_default_rng: contextvars.ContextVar[random.Random | None] = contextvars.ContextVar(
+    "dice_default_rng",
+    default=None,
+)
+
+
+def set_default_rng(rng: random.Random | None) -> None:
+    """Install (or clear, with ``None``) the default RNG for all dice rolls.
+
+    Harness-only seam: the benchmark runner seeds this before each scenario
+    iteration. Production code never calls it, so dice stay unseeded.
+    """
+    _default_rng.set(rng)
+
+
+def _active_rng() -> random.Random:
+    return _default_rng.get() or random.Random()
+
 
 # ---------------------------------------------------------------------------
 # Aggression thresholds — minimum d20 roll for an NPC to retaliate.
@@ -223,7 +249,7 @@ def roll_aggression(mood: str, _rng: random.Random | None = None) -> AggressionR
     threshold = AGGRESSION_THRESHOLDS.get(mood.lower())
     if threshold is None:
         return None
-    rng = _rng or random.Random()
+    rng = _rng or _active_rng()
     roll = rng.randint(1, _D20)
     return AggressionRoll(
         will_attack=roll >= threshold,
@@ -269,7 +295,7 @@ def roll_contest(
     - target total >= actor total - 5  → ACTOR_SUCCEEDS
     - target total <  actor total - 5  → ACTOR_DOMINATES
     """
-    rng = _rng or random.Random()
+    rng = _rng or _active_rng()
     actor_roll = rng.randint(1, _D20)
     target_roll = rng.randint(1, _D20)
 
