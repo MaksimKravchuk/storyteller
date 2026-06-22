@@ -18,13 +18,31 @@ from loguru import logger
 from cast.schemas.npc_response import NPCGoalDraft
 from models.goal import Goal, GoalKind, GoalScope
 
-# Life-tier kinds the LLM is allowed to assign at NPC creation. Tactical
+# Life-tier kinds the LLM is allowed to assign at NPC creation: the
+# combat/protective standing kinds plus the social/economic standing
+# kinds (befriend, court, gossip, trade, help, warn, ask). Tactical
 # kinds (DEFEND, EAT, ERRAND, REST, FLEE_SCENE) and ACQUIRE / FLEE are
 # intentionally excluded — the prompt restraint clause asks for
 # biography-driven standing intent only, and a fresh card carrying
-# "FLEE" or "EAT" makes no narrative sense.
+# "FLEE" or "EAT" makes no narrative sense. AVOID is likewise excluded:
+# it is a reactive stance the Chronicler assigns at runtime, never a
+# motivation an NPC is born carrying. This frozenset must list exactly
+# the kinds the generator prompt literal advertises (prompts/
+# npc_generator_prompts.py) — a wider prompt silently drops drafts here,
+# a wider frozenset is never produced by the LLM.
 _GENERATOR_LIFE_GOAL_KINDS: frozenset[GoalKind] = frozenset(
-    (GoalKind.KILL, GoalKind.PURSUE, GoalKind.PROTECT),
+    (
+        GoalKind.KILL,
+        GoalKind.PURSUE,
+        GoalKind.PROTECT,
+        GoalKind.BEFRIEND,
+        GoalKind.COURT,
+        GoalKind.GOSSIP,
+        GoalKind.TRADE,
+        GoalKind.HELP,
+        GoalKind.WARN,
+        GoalKind.ASK,
+    ),
 )
 
 

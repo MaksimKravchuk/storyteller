@@ -27,12 +27,14 @@ class RelationshipDraft(BaseModel):
 class NPCGoalDraft(BaseModel):
     """Optional life-tier goal block the LLM may attach to a generated NPC.
 
-    Restrained to KILL / PURSUE / PROTECT — the kinds that read as
-    "standing intent driven by biography". The other ``GoalKind`` values
-    (ACQUIRE, FLEE, plus the tactical-tier kinds like DEFEND/EAT) are
-    excluded by prompt convention; the schema accepts the full enum and
-    the applier in :class:`cast.npc_generator.NPCGenerator` filters out
-    unfit kinds rather than failing the whole response.
+    A standing agenda driven by biography — a combat/protective intent
+    (KILL / PURSUE / PROTECT) or a social/economic one (BEFRIEND, COURT,
+    GOSSIP, TRADE, HELP, WARN, ASK). The reactive AVOID stance and the
+    tactical-tier kinds (DEFEND/EAT/ERRAND/REST/FLEE_SCENE) plus
+    ACQUIRE / FLEE are excluded by prompt convention; the schema accepts
+    the full enum and the applier in
+    :class:`cast.npc_generator.NPCGenerator` filters out unfit kinds
+    rather than failing the whole response.
 
     ``target_name`` is a free-form name string the LLM picks from the
     list of existing NPCs handed to it via ``candidate_targets``; the

@@ -10,7 +10,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from prompts.actor_prompts_ru import ACTOR_SYSTEM_ACTION_RU, ACTOR_SYSTEM_DIALOGUE_RU
+from prompts.actor_prompts_ru import (
+    ACTOR_SYSTEM_ACTION_RU,
+    ACTOR_SYSTEM_DIALOGUE_RU,
+    GOAL_COACHING_AVOID_RU,
+    GOAL_COACHING_HOSTILE_RU,
+    GOAL_COACHING_SOCIAL_RU,
+)
 from prompts.base_template import PromptSection, PromptTemplate
 from prompts.locales import Locale, make_locale_lookup
 
@@ -63,6 +69,37 @@ _HOSTILITY = PromptSection(
     required_vars=["hostility_level", "recent_hostile_actions_summary"],
 )
 
+# Goal coaching banks (English). Selected by GoalKind category in
+# cast.actor_config._goal_coaching and interpolated into _GOAL as
+# {goal_coaching}. GOAL_COACHING_HOSTILE is the STEALTH→ATTACK escalation
+# that used to be hardcoded in _GOAL — kept verbatim so the combat path is
+# byte-for-byte unchanged; the social/avoid banks coach a non-violent
+# pursuit so a BEFRIEND/TRADE goal no longer reads as "attack the target".
+GOAL_COACHING_HOSTILE = (
+    "Read your last attempted action: if you have been STEALTH-ing or "
+    "positioning for several turns and the moment is open (target alone, "
+    "no witnesses named in the scene), commit to ATTACK now. Repeating "
+    "STEALTH every turn is failing — escalate, retreat, or change tactic. "
+    "Inaction is a real choice but only when an obstacle is concrete and "
+    "named in your action description."
+)
+
+GOAL_COACHING_SOCIAL = (
+    "Pursue this goal the way THIS character would: through conversation, "
+    "approach, offers, favours, or shared moments — never force. Read your "
+    "last attempted action: repeating the same opening every turn is "
+    "failing — vary your approach, change the subject, or accept a refusal "
+    "and bide your time. Inaction is a real choice but only when an "
+    "obstacle is concrete and named in your action description."
+)
+
+GOAL_COACHING_AVOID = (
+    "Your goal is to steer clear of this person. Read your last attempted "
+    "action: put distance between you, leave the exchange, or change the "
+    "subject rather than confront them. Engage only if avoidance is "
+    "impossible, and name what forces your hand in your action description."
+)
+
 _GOAL = PromptSection(
     name="goal",
     template=(
@@ -72,12 +109,7 @@ _GOAL = PromptSection(
         "  Description: {goal_description}\n"
         "  Last attempted action: {goal_last_action}\n"
         "  Recent progress notes:\n{goal_progress_notes}\n"
-        "Read your last attempted action: if you have been STEALTH-ing or "
-        "positioning for several turns and the moment is open (target alone, "
-        "no witnesses named in the scene), commit to ATTACK now. Repeating "
-        "STEALTH every turn is failing — escalate, retreat, or change tactic. "
-        "Inaction is a real choice but only when an obstacle is concrete and "
-        "named in your action description."
+        "{goal_coaching}"
     ),
     required_vars=[
         "goal_kind",
@@ -86,6 +118,7 @@ _GOAL = PromptSection(
         "goal_description",
         "goal_last_action",
         "goal_progress_notes",
+        "goal_coaching",
     ],
 )
 
@@ -205,11 +238,16 @@ class ActorPrompts:
 
     Two system templates cover the two output modes:
     ``system_dialogue`` for player-facing NPC responses,
-    ``system_action`` for autonomous NPC turns.
+    ``system_action`` for autonomous NPC turns. The three
+    ``goal_coaching_*`` strings are the locale's coaching banks, selected
+    by GoalKind category and interpolated into the ``goal`` section.
     """
 
     system_dialogue: PromptTemplate
     system_action: PromptTemplate
+    goal_coaching_hostile: str
+    goal_coaching_social: str
+    goal_coaching_avoid: str
 
 
 get_actor_prompts = make_locale_lookup(
@@ -217,10 +255,16 @@ get_actor_prompts = make_locale_lookup(
         Locale.ENGLISH: ActorPrompts(
             system_dialogue=ACTOR_SYSTEM_DIALOGUE,
             system_action=ACTOR_SYSTEM_ACTION,
+            goal_coaching_hostile=GOAL_COACHING_HOSTILE,
+            goal_coaching_social=GOAL_COACHING_SOCIAL,
+            goal_coaching_avoid=GOAL_COACHING_AVOID,
         ),
         Locale.RUSSIAN: ActorPrompts(
             system_dialogue=ACTOR_SYSTEM_DIALOGUE_RU,
             system_action=ACTOR_SYSTEM_ACTION_RU,
+            goal_coaching_hostile=GOAL_COACHING_HOSTILE_RU,
+            goal_coaching_social=GOAL_COACHING_SOCIAL_RU,
+            goal_coaching_avoid=GOAL_COACHING_AVOID_RU,
         ),
     }
 )

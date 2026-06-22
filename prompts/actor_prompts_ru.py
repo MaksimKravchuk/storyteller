@@ -64,6 +64,37 @@ _HOSTILITY_RU = PromptSection(
     required_vars=["hostility_level", "recent_hostile_actions_summary"],
 )
 
+# Goal coaching banks (Russian). Selected by GoalKind category in
+# cast.actor_config._goal_coaching and interpolated into _GOAL_RU as
+# {goal_coaching}. The hostile bank is the STEALTH→ATTACK escalation that
+# used to be hardcoded in _GOAL_RU; the social/avoid banks coach a
+# non-violent pursuit so a BEFRIEND/TRADE goal no longer reads as "attack".
+GOAL_COACHING_HOSTILE_RU = (
+    "Перечитай своё последнее действие: если ты несколько ходов "
+    "STEALTH-ишь или занимаешь позицию, а момент открыт (цель одна, "
+    "свидетелей в сцене не названо) — переходи в ATTACK. Повтор "
+    "STEALTH каждый ход — это провал; меняй приём, отступай или "
+    "бей. Бездействие — это тоже выбор, но только когда препятствие "
+    "конкретно и названо в твоём описании действия."
+)
+
+GOAL_COACHING_SOCIAL_RU = (
+    "Добивайся этой цели так, как это сделал бы ИМЕННО твой персонаж: "
+    "через разговор, сближение, предложения, услуги или общие мгновения — "
+    "не силой. Перечитай своё последнее действие: повторять один и тот же "
+    "заход каждый ход — это провал; меняй подход, смени тему или прими "
+    "отказ и выжди своего часа. Бездействие — это тоже выбор, но только "
+    "когда препятствие конкретно и названо в твоём описании действия."
+)
+
+GOAL_COACHING_AVOID_RU = (
+    "Твоя цель — держаться подальше от этого человека. Перечитай своё "
+    "последнее действие: увеличь расстояние, выйди из разговора или смени "
+    "тему, вместо того чтобы вступать в столкновение. Вступай в контакт, "
+    "только если избежать его невозможно, и назови в описании действия, "
+    "что тебя к этому вынуждает."
+)
+
 _GOAL_RU = PromptSection(
     name="goal",
     template=(
@@ -73,12 +104,7 @@ _GOAL_RU = PromptSection(
         "  Описание: {goal_description}\n"
         "  Последнее действие: {goal_last_action}\n"
         "  Заметки о прогрессе:\n{goal_progress_notes}\n"
-        "Перечитай своё последнее действие: если ты несколько ходов "
-        "STEALTH-ишь или занимаешь позицию, а момент открыт (цель одна, "
-        "свидетелей в сцене не названо) — переходи в ATTACK. Повтор "
-        "STEALTH каждый ход — это провал; меняй приём, отступай или "
-        "бей. Бездействие — это тоже выбор, но только когда препятствие "
-        "конкретно и названо в твоём описании действия."
+        "{goal_coaching}"
     ),
     required_vars=[
         "goal_kind",
@@ -87,6 +113,7 @@ _GOAL_RU = PromptSection(
         "goal_description",
         "goal_last_action",
         "goal_progress_notes",
+        "goal_coaching",
     ],
 )
 

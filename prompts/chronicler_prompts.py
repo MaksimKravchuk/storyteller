@@ -56,9 +56,13 @@ CHRONICLER_SYSTEM = PromptTemplate(
             name="goal_emission",
             template=(
                 "goal_drafts: emit ONLY when the same response creates or updates "
-                "a thread that explicitly attributes a directional intent (vow of "
-                "vengeance, sworn protection, oath of pursuit) to a specific NPC. "
-                "kind must be one of kill | pursue | protect. ``npc_uuid`` AND "
+                "a thread that explicitly attributes a directional intent toward a "
+                "specific NPC — hostile or protective (vow of vengeance, sworn "
+                "protection, oath of pursuit) or social and everyday (a bond of "
+                "friendship, courtship, a standing trade, a need to warn, gossip, "
+                "ask, or — for avoid — to deliberately steer clear of someone). "
+                "kind must be one of kill | pursue | protect | befriend | court | "
+                "gossip | trade | help | warn | ask | avoid. ``npc_uuid`` AND "
                 "``target_uuid`` must reference NPCs already registered in the "
                 "game state. Do NOT invent NPCs. Do NOT overwrite an NPC's "
                 "existing active life goal — the engine will skip such drafts.\n"
@@ -73,7 +77,8 @@ CHRONICLER_SYSTEM = PromptTemplate(
             template=(
                 "Thread categories: personal, political, natural, economic, social, cultural. "
                 "Thread statuses: open, resolved, abandoned. "
-                "Goal kinds (life-tier): kill, pursue, protect. "
+                "Goal kinds (life-tier): kill, pursue, protect, befriend, court, gossip, "
+                "trade, help, warn, ask, avoid. "
                 "Reference existing locations and NPCs by their UUIDs; do not invent new entities."
             ),
         ),
@@ -120,7 +125,7 @@ CHRONICLER_ADVANCE = (
     '  "goal_drafts": [\n'
     "    {{\n"
     '      "npc_uuid": "uuid of the NPC who now carries the intent",\n'
-    '      "kind": "kill|pursue|protect",\n'
+    '      "kind": "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask|avoid",\n'
     '      "description": "one-sentence standing intent",\n'
     '      "target_uuid": "uuid of the NPC the intent is directed at, or null",\n'
     '      "source_thread_uuid": "uuid of the thread justifying the goal, or null"\n'

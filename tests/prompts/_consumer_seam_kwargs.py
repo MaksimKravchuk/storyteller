@@ -84,6 +84,7 @@ def _actor_optional_kwargs(
     target: Any,
     game_state: GameState,
     knowledge_query: KnowledgeQueryEngine,
+    language: str,
 ) -> dict[str, str]:
     """Vars for the optional Actor sections (knowledge, memory, hostility, goal)."""
     optional: dict[str, str] = {
@@ -94,7 +95,7 @@ def _actor_optional_kwargs(
         "hostility_level": str(guard.hostility_level),
         "recent_hostile_actions_summary": format_hostile_actions_summary(guard.recent_hostile_actions),
     }
-    goal_vars = goal_prompt_vars(guard, target.name)
+    goal_vars = goal_prompt_vars(guard, target.name, language)
     if goal_vars is not None:
         optional.update(goal_vars)
     return optional
@@ -107,7 +108,7 @@ def actor_kwargs(game_state: GameState, language: str) -> dict[str, str]:
     knowledge_query = KnowledgeQueryEngine(game_state.knowledge_graph)
     return {
         **_actor_identity_kwargs(guard, language),
-        **_actor_optional_kwargs(guard, target, game_state, knowledge_query),
+        **_actor_optional_kwargs(guard, target, game_state, knowledge_query, language),
     }
 
 

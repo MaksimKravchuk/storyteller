@@ -195,6 +195,33 @@ class TestNPCConverter:
         assert restored.tactical_goal == npc.tactical_goal
 
     @allure.story("Round-trip")
+    @allure.title("Goals carrying the new social kinds survive a domain→row→domain round-trip")
+    @pytest.mark.parametrize(
+        ("life_kind", "tactical_kind"),
+        [
+            (GoalKind.BEFRIEND, GoalKind.AVOID),
+            (GoalKind.TRADE, GoalKind.WARN),
+        ],
+    )
+    def test_new_goalkind_round_trips(self, life_kind: GoalKind, tactical_kind: GoalKind):
+        npc = npc_card.NPCCard(name="Drusilla")
+        npc.life_goal = Goal(
+            scope=GoalScope.LIFE,
+            kind=life_kind,
+            description="standing agenda",
+            target_uuid=make_uuid("npc-9"),
+        )
+        npc.tactical_goal = Goal(scope=GoalScope.TACTICAL, kind=tactical_kind, description="right now")
+
+        row = npc_conv.npc_to_row(npc, GAME_STATE_ID)
+        assert row["life_goal"]["kind"] == life_kind.value
+        assert row["tactical_goal"]["kind"] == tactical_kind.value
+
+        restored = npc_conv.row_to_npc(row)
+        assert restored.life_goal == npc.life_goal
+        assert restored.tactical_goal == npc.tactical_goal
+
+    @allure.story("Round-trip")
     @allure.title("NPCs with no goals round-trip with life_goal and tactical_goal as None")
     def test_goal_none_round_trip(self):
         npc = npc_card.NPCCard(name="No-goal")

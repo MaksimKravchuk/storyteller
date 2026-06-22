@@ -39,10 +39,16 @@ class GoalScope(str, Enum):
 class GoalKind(str, Enum):
     """Coarse classification of what the NPC is trying to do.
 
-    The first five kinds (KILL, PURSUE, ACQUIRE, PROTECT, FLEE) are the
-    historical life-tier set; the rest are tactical-tier additions used
-    by the deterministic generator and may also be assigned by an Actor
-    as a per-turn intent.
+    Three groups, all string-valued so they round-trip through JSON:
+
+    * Historical life-tier kinds (KILL, PURSUE, ACQUIRE, PROTECT, FLEE)
+      driven by biography or world events.
+    * Deterministic tactical-tier kinds (DEFEND, EAT, ERRAND, REST,
+      FLEE_SCENE) spawned by Director hooks as ephemeral per-turn intents.
+    * Social/standing kinds (BEFRIEND, COURT, GOSSIP, TRADE, HELP, WARN,
+      ASK) the NPC generator and World Chronicler may assign as life
+      goals, plus AVOID — a reactive stance the Chronicler assigns at
+      runtime but the generator never creates at birth.
     """
 
     KILL = "kill"
@@ -55,6 +61,14 @@ class GoalKind(str, Enum):
     ERRAND = "errand"
     REST = "rest"
     FLEE_SCENE = "flee_scene"
+    BEFRIEND = "befriend"
+    COURT = "court"
+    GOSSIP = "gossip"
+    TRADE = "trade"
+    HELP = "help"
+    WARN = "warn"
+    ASK = "ask"
+    AVOID = "avoid"
 
 
 class GoalStatus(str, Enum):

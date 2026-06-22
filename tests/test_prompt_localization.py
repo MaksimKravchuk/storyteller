@@ -338,6 +338,53 @@ class TestNPCGeneratorPromptCatalog:
         assert '"knowledge_scope"' in create_rendered
 
 
+# The structural _assert_section_parity guard checks section names and
+# required_vars only — it cannot see vocabulary skew inside template text.
+# These literals pin the GoalKind vocabulary content per locale. The
+# generator advertises 10 creation kinds (no AVOID); the Chronicler
+# advertises 11 (with AVOID) — that divergence is intentional, so the
+# checks compare each producer EN↔RU, never generator↔chronicler.
+_GENERATOR_KIND_LITERAL = 'kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask"'
+_CHRONICLER_PIPE_LITERAL = "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask|avoid"
+_CHRONICLER_SPACED_LITERAL = "kill | pursue | protect | befriend | court | gossip | trade | help | warn | ask | avoid"
+_CHRONICLER_COMMA_LITERAL = "kill, pursue, protect, befriend, court, gossip, trade, help, warn, ask, avoid"
+
+
+@allure.epic("Narrative Delivery")
+@allure.feature("Prompt localization")
+class TestGoalVocabularyLocaleParity:
+    """The GoalKind literals match content between EN and RU per producer.
+
+    Closes the gap left by ``_assert_section_parity`` (structure only):
+    a one-locale vocabulary edit would pass that guard but skew which
+    kinds an EN-locale vs RU-locale LLM can ever emit.
+    """
+
+    @allure.story("Vocabulary parity")
+    @allure.title("Generator kind literal lists 10 creation kinds (no AVOID) identically in EN and RU")
+    def test_generator_kind_literal_matches_across_locales(self) -> None:
+        english = get_npc_generator_prompts("English").create.render(npc_request="smith")
+        russian = get_npc_generator_prompts("Russian").create.render(npc_request="кузнец")
+
+        assert _GENERATOR_KIND_LITERAL in english
+        assert _GENERATOR_KIND_LITERAL in russian
+        # AVOID must NOT be a creation kind in either locale.
+        assert "|avoid" not in english
+        assert "|avoid" not in russian
+
+    @allure.story("Vocabulary parity")
+    @allure.title("Chronicler kind literals list 11 kinds (with AVOID) identically in EN and RU")
+    def test_chronicler_kind_literals_match_across_locales(self) -> None:
+        english = get_chronicler_prompts("English")
+        russian = get_chronicler_prompts("Russian")
+        en_text = "{0}\n{1}".format(english.system.render(), english.advance)
+        ru_text = "{0}\n{1}".format(russian.system.render(), russian.advance)
+
+        for literal in (_CHRONICLER_PIPE_LITERAL, _CHRONICLER_SPACED_LITERAL, _CHRONICLER_COMMA_LITERAL):
+            assert literal in en_text
+            assert literal in ru_text
+
+
 @allure.epic("Narrative Delivery")
 @allure.feature("Prompt localization")
 class TestActorPromptCatalog:

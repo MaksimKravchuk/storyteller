@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
+from loguru import logger
 
 from cast._npc_generator_goals import build_life_goal, candidate_goal_targets
 from cast.npc_generator import NPCGenerator
@@ -62,10 +63,63 @@ class TestGoalApplier:
         assert goal.target_uuid == marcus.uuid
 
     @allure.story("Goal building")
-    @allure.title("Tactical-tier kind (DEFEND) is dropped at creation time")
-    def test_tactical_kind_rejected(self, game_state) -> None:
+    @allure.title("Social standing kinds resolve to a life-tier Goal targeting the named NPC")
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            GoalKind.BEFRIEND,
+            GoalKind.COURT,
+            GoalKind.GOSSIP,
+            GoalKind.TRADE,
+            GoalKind.HELP,
+            GoalKind.WARN,
+            GoalKind.ASK,
+        ],
+    )
+    def test_social_creation_kinds_accepted(self, game_state, kind: GoalKind) -> None:
+        marcus = _seed_marcus(game_state)
+        draft = NPCGoalDraft(kind=kind, description="standing agenda", target_name="Marcus")
+
+        goal = build_life_goal(draft, game_state, "townsperson")
+
+        assert goal is not None
+        assert goal.scope is GoalScope.LIFE
+        assert goal.kind is kind
+        assert goal.target_uuid == marcus.uuid
+
+    @allure.story("Goal building")
+    @allure.title("AVOID is Chronicler-only — dropped at creation with a logged warning")
+    def test_avoid_kind_dropped_at_creation(self, game_state) -> None:
         _seed_marcus(game_state)
-        draft = NPCGoalDraft(kind=GoalKind.DEFEND, description="hit back", target_name="Marcus")
+        draft = NPCGoalDraft(kind=GoalKind.AVOID, description="steer clear", target_name="Marcus")
+
+        captured: list[str] = []
+        sink_id = logger.add(captured.append, level="WARNING")
+        try:
+            result = build_life_goal(draft, game_state, "wary trader")
+        finally:
+            logger.remove(sink_id)
+
+        assert result is None
+        assert any("avoid" in line for line in captured)
+
+    @allure.story("Goal building")
+    @allure.title("Tactical-tier and excluded life kinds are dropped at creation time")
+    @pytest.mark.parametrize(
+        "kind",
+        [
+            GoalKind.DEFEND,
+            GoalKind.EAT,
+            GoalKind.ERRAND,
+            GoalKind.REST,
+            GoalKind.FLEE_SCENE,
+            GoalKind.ACQUIRE,
+            GoalKind.FLEE,
+        ],
+    )
+    def test_tactical_kind_rejected(self, game_state, kind: GoalKind) -> None:
+        _seed_marcus(game_state)
+        draft = NPCGoalDraft(kind=kind, description="hit back", target_name="Marcus")
 
         assert build_life_goal(draft, game_state, "guard") is None
 

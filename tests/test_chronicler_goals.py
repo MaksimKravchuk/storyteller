@@ -55,6 +55,28 @@ class TestApplyGoalDrafts:
         assert brutus.life_goal.target_uuid == _MARCUS
 
     @allure.story("Goal drafts")
+    @allure.title("Chronicler-only AVOID kind flows through unfiltered to life_goal")
+    def test_avoid_draft_assigns_life_goal(self) -> None:
+        npcs = {
+            _BRUTUS: _make_npc(_BRUTUS, "Brutus"),
+            _MARCUS: _make_npc(_MARCUS, "Marcus"),
+        }
+        draft = GoalDraft(
+            npc_uuid=_BRUTUS,
+            kind=GoalKind.AVOID,
+            description="steer clear of Marcus after the quarrel",
+            target_uuid=_MARCUS,
+            source_thread_uuid=_THREAD_1,
+        )
+
+        apply_goal_drafts(npcs, [draft])
+
+        brutus = npcs[_BRUTUS]
+        assert brutus.life_goal is not None
+        assert brutus.life_goal.kind is GoalKind.AVOID
+        assert brutus.life_goal.target_uuid == _MARCUS
+
+    @allure.story("Goal drafts")
     @allure.title("Unknown npc_uuid is skipped without raising")
     def test_unknown_npc_skipped(self) -> None:
         npcs = {_MARCUS: _make_npc(_MARCUS, "Marcus")}

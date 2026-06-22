@@ -3,12 +3,40 @@
 from __future__ import annotations
 
 import allure
+import pytest
 
 from models.goal import Goal, GoalKind, GoalScope, GoalStatus
 from models.npc_card import NPCCard
 from tests._uuid_helpers import make_uuid
 
 _MARCUS = make_uuid("npc-marcus")
+
+# Append-only guard: the historical kinds keep their order/values so old
+# JSONB rows (which store the string value) stay valid. New kinds are
+# appended after these.
+_LEGACY_KIND_ORDER: tuple[tuple[str, str], ...] = (
+    ("KILL", "kill"),
+    ("PURSUE", "pursue"),
+    ("ACQUIRE", "acquire"),
+    ("PROTECT", "protect"),
+    ("FLEE", "flee"),
+    ("DEFEND", "defend"),
+    ("EAT", "eat"),
+    ("ERRAND", "errand"),
+    ("REST", "rest"),
+    ("FLEE_SCENE", "flee_scene"),
+)
+
+_NEW_KIND_VALUES: tuple[tuple[GoalKind, str], ...] = (
+    (GoalKind.BEFRIEND, "befriend"),
+    (GoalKind.COURT, "court"),
+    (GoalKind.GOSSIP, "gossip"),
+    (GoalKind.TRADE, "trade"),
+    (GoalKind.HELP, "help"),
+    (GoalKind.WARN, "warn"),
+    (GoalKind.ASK, "ask"),
+    (GoalKind.AVOID, "avoid"),
+)
 
 
 def _kill_marcus_goal(last_attempted_action: str | None = None) -> Goal:
@@ -19,6 +47,49 @@ def _kill_marcus_goal(last_attempted_action: str | None = None) -> Goal:
         target_uuid=_MARCUS,
         last_attempted_action=last_attempted_action,
     )
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC autonomous goals")
+class TestGoalKindVocabulary:
+    """The GoalKind enum exposes the social/standing kinds without disturbing legacy values."""
+
+    @allure.story("Vocabulary")
+    @allure.title("The eight new kinds expose stable lowercase string values")
+    @pytest.mark.parametrize(("kind", "value"), _NEW_KIND_VALUES)
+    def test_new_kind_values(self, kind: GoalKind, value: str) -> None:
+        assert kind.value == value
+
+    @allure.story("Vocabulary")
+    @allure.title("Legacy kinds keep their order and values (append-only growth)")
+    def test_legacy_kinds_unchanged_and_first(self) -> None:
+        first_ten = tuple((member.name, member.value) for member in list(GoalKind)[:10])
+        assert first_ten == _LEGACY_KIND_ORDER
+
+    @allure.story("Vocabulary")
+    @allure.title("REST already exists and is not redefined by the new vocabulary")
+    def test_rest_is_not_new(self) -> None:
+        assert GoalKind.REST.value == "rest"
+        assert GoalKind.REST not in {kind for kind, _ in _NEW_KIND_VALUES}
+
+    @allure.story("Persistence")
+    @allure.title("A Goal carrying any new kind round-trips through JSON")
+    @pytest.mark.parametrize("kind", [kind for kind, _ in _NEW_KIND_VALUES])
+    def test_new_kind_round_trips_through_json(self, kind: GoalKind) -> None:
+        goal = Goal(kind=kind, description="standing agenda", target_uuid=_MARCUS)
+
+        revived = Goal.model_validate_json(goal.model_dump_json())
+
+        assert revived.kind is kind
+
+    @allure.story("Persistence")
+    @allure.title("A legacy kind stored as a bare string still validates (old DB rows load)")
+    def test_legacy_kind_string_validates(self) -> None:
+        revived = Goal.model_validate(
+            {"kind": "kill", "description": "avenge", "target_uuid": str(_MARCUS)},
+        )
+
+        assert revived.kind is GoalKind.KILL
 
 
 @allure.epic("NPC Interaction")

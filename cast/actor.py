@@ -28,6 +28,7 @@ _OPTIONAL_CONTEXT_KEYS = (
     "goal_description",
     "goal_last_action",
     "goal_progress_notes",
+    "goal_coaching",
 )
 
 
@@ -56,6 +57,7 @@ class Actor(BasePerformer):
         self._system_action = prompts.system_action
         self.npc = npc
         self.knowledge_query = knowledge_query
+        self.language = language
         self._conversation: list[Message] = []
         self.set_context(language=language)
 
@@ -176,6 +178,6 @@ def _apply_optional_sections(actor: Actor, context: dict) -> None:
             hostility_level=str(actor.npc.hostility_level),
             recent_hostile_actions_summary=format_hostile_actions_summary(actor.npc.recent_hostile_actions),
         )
-    goal_vars = goal_prompt_vars(actor.npc, context.get("goal_target_name"))
+    goal_vars = goal_prompt_vars(actor.npc, context.get("goal_target_name"), actor.language)
     if goal_vars is not None:
         actor.set_context(**goal_vars)
