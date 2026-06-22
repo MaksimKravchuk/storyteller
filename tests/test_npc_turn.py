@@ -643,12 +643,21 @@ class TestBuildTurnPromptPositiveOpportunity:
 
     @allure.story("Positive opportunity")
     @allure.title("Positive-intent knowledge fact naming a co-located NPC fires the clause")
-    def test_positive_keyword_fires(self):
+    @pytest.mark.parametrize(
+        "knowledge_text",
+        [
+            "Drusilla wants to help Livia find her brother.",
+            "Drusilla means to court Livia at the next festival.",
+            "Drusilla loves to gossip with Livia about the market.",
+            "Drusilla has a question to ask Livia about the dyes.",
+        ],
+    )
+    def test_positive_keyword_fires(self, knowledge_text: str):
         gs = _make_gs()
         drusilla = _make_npc(_NPC_UUID_A, "Drusilla")
         livia = _make_npc(_NPC_UUID_B, "Livia")
         _place_both(gs, drusilla, livia)
-        _plot_knowledge(gs, drusilla.uuid, "Drusilla wants to help Livia find her brother.")
+        _plot_knowledge(gs, drusilla.uuid, knowledge_text)
 
         prompt = npc_turn_mod._build_turn_prompt(drusilla, "Player waits.", gs)
 
@@ -732,6 +741,7 @@ class TestBuildTurnPromptPositiveOpportunity:
             "Livia reads the warning posted on the gate every morning.",
             "Livia is the daughter of a maiden aunt from the north.",
             "Livia is a wealthy shareholder in the grain guild.",
+            "Livia set herself a hard task in the courtyard, basket in hand.",
         ],
     )
     def test_positive_keyword_substring_false_positive(self, knowledge_text: str):

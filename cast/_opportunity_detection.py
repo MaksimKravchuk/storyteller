@@ -19,8 +19,12 @@ from models.relationship import Relationship, RelationshipKind
 from models.scene import Scene
 
 KNOWLEDGE_VIOLENCE_KEYWORDS: frozenset[str] = frozenset(("kill", "murder", "harm", "wound"))
+# Positive-intent stems. Cover every social GoalKind the generator and
+# Chronicler can advertise (befriend, court, gossip, trade, help, warn,
+# ask) plus a few neutral helpers (assist, aid, share, support) so a
+# knowledge fact phrased around any of them can surface an opportunity.
 KNOWLEDGE_POSITIVE_KEYWORDS: frozenset[str] = frozenset(
-    ("help", "assist", "aid", "befriend", "trade", "warn", "share", "support"),
+    ("help", "assist", "aid", "befriend", "court", "gossip", "trade", "warn", "ask", "share", "support"),
 )
 POSITIVE_RELATIONSHIP_KINDS: frozenset[RelationshipKind] = frozenset(
     (RelationshipKind.FRIEND, RelationshipKind.ALLY, RelationshipKind.KIN),
