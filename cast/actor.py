@@ -29,6 +29,7 @@ _OPTIONAL_CONTEXT_KEYS = (
     "goal_last_action",
     "goal_progress_notes",
     "goal_coaching",
+    "goal_last_outcome",
 )
 
 

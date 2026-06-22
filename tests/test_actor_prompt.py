@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import allure
 
+from cast.actor_config import goal_prompt_vars
+from models.goal import Goal, GoalKind
+from models.npc_card import NPCCard
 from prompts.actor_prompts import ACTOR_SYSTEM_ACTION, ACTOR_SYSTEM_DIALOGUE
 from prompts.actor_prompts_ru import ACTOR_SYSTEM_DIALOGUE_RU
-from tests.actor_helpers import render_actor_system
+from tests.actor_helpers import BASE_ACTOR_PROMPT_VARS, render_actor_system
 
 
 def _section_template(template, name: str) -> str:
@@ -224,6 +227,54 @@ class TestActorPromptOutputModes:
             "goal_description",
             "goal_last_action",
             "goal_progress_notes",
+            "goal_last_outcome",
         }
         assert goal_vars.issubset(set(ACTOR_SYSTEM_DIALOGUE.required_vars))
         assert goal_vars.issubset(set(ACTOR_SYSTEM_DIALOGUE_RU.required_vars))
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Actor prompt template")
+class TestActorPromptOffSceneOutcome:
+    """Consumer seam: an off-scene ``last_outcome`` must reach the Actor prompt body.
+
+    The producer is the background ticker (``cast._npc_offscreen_resolvers``)
+    which stamps ``Goal.last_outcome``; the consumer is the rendered Actor
+    system prompt. These tests assert the var actually lands in the prompt
+    text for non-KILL goals, and is *absent* for KILL so the combat prompt
+    stays byte-for-byte unchanged.
+    """
+
+    @allure.story("Off-scene outcome")
+    @allure.title("A non-KILL goal's last_outcome is interpolated into the rendered Actor prompt")
+    def test_non_kill_outcome_reaches_prompt(self):
+        npc = NPCCard(
+            name="Cassia",
+            occupation="thief",
+            life_goal=Goal(kind=GoalKind.ACQUIRE, description="the senator's ledger"),
+        )
+        assert npc.life_goal is not None
+        npc.life_goal.last_outcome = "secured the senator's ledger"
+
+        rendered = self._render_with_goal(npc)
+
+        assert "While you were away" in rendered
+        assert "secured the senator's ledger" in rendered
+
+    @allure.story("Off-scene outcome")
+    @allure.title("A KILL goal renders no off-scene outcome section (combat prompt unchanged)")
+    def test_kill_goal_omits_outcome_section(self):
+        npc = NPCCard(
+            name="Brutus",
+            occupation="former legionary",
+            life_goal=Goal(kind=GoalKind.KILL, description="Avenge brother by killing Marcus"),
+        )
+
+        rendered = self._render_with_goal(npc)
+
+        assert "While you were away" not in rendered
+
+    def _render_with_goal(self, npc: NPCCard) -> str:
+        goal_vars = goal_prompt_vars(npc, "Marcus", "English")
+        assert goal_vars is not None
+        return ACTOR_SYSTEM_DIALOGUE.render(**{**BASE_ACTOR_PROMPT_VARS, **goal_vars})

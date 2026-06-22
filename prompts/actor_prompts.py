@@ -122,6 +122,19 @@ _GOAL = PromptSection(
     ],
 )
 
+# Optional: only rendered when the off-scene ticker stamped a
+# ``last_outcome`` on the goal (PURSUE/ACQUIRE/REST). Absent for KILL,
+# so the combat-vendetta prompt body stays byte-for-byte unchanged.
+_GOAL_OUTCOME = PromptSection(
+    name="goal_outcome",
+    template=(
+        "  While you were away, your goal moved on — most recently: "
+        "{goal_last_outcome}. Treat this as already behind you; react to "
+        "it, do not narrate it as happening now."
+    ),
+    required_vars=["goal_last_outcome"],
+)
+
 _CONSTRAINTS = PromptSection(
     name="constraints",
     template=(
@@ -211,6 +224,7 @@ ACTOR_SYSTEM_DIALOGUE = PromptTemplate(
         _MEMORY,
         _HOSTILITY,
         _GOAL,
+        _GOAL_OUTCOME,
         _CONSTRAINTS,
         _OUTPUT_DIALOGUE,
         _LANGUAGE,
@@ -225,6 +239,7 @@ ACTOR_SYSTEM_ACTION = PromptTemplate(
         _MEMORY,
         _HOSTILITY,
         _GOAL,
+        _GOAL_OUTCOME,
         _CONSTRAINTS,
         _OUTPUT_ACTION,
         _LANGUAGE,

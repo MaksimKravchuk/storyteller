@@ -117,6 +117,19 @@ _GOAL_RU = PromptSection(
     ],
 )
 
+# Опционально: рендерится только когда фоновый тикер записал
+# ``last_outcome`` в цель (PURSUE/ACQUIRE/REST). Для KILL отсутствует,
+# поэтому боевой промпт остаётся неизменным байт-в-байт.
+_GOAL_OUTCOME_RU = PromptSection(
+    name="goal_outcome",
+    template=(
+        "  Пока тебя не было, твоя цель продвинулась — последнее: "
+        "{goal_last_outcome}. Считай это уже свершившимся; реагируй на "
+        "это, а не описывай как происходящее сейчас."
+    ),
+    required_vars=["goal_last_outcome"],
+)
+
 _CONSTRAINTS_RU = PromptSection(
     name="constraints",
     template=(
@@ -217,6 +230,7 @@ ACTOR_SYSTEM_DIALOGUE_RU = PromptTemplate(
         _MEMORY_RU,
         _HOSTILITY_RU,
         _GOAL_RU,
+        _GOAL_OUTCOME_RU,
         _CONSTRAINTS_RU,
         _OUTPUT_DIALOGUE_RU,
         _LANGUAGE_RU,
@@ -231,6 +245,7 @@ ACTOR_SYSTEM_ACTION_RU = PromptTemplate(
         _MEMORY_RU,
         _HOSTILITY_RU,
         _GOAL_RU,
+        _GOAL_OUTCOME_RU,
         _CONSTRAINTS_RU,
         _OUTPUT_ACTION_RU,
         _LANGUAGE_RU,

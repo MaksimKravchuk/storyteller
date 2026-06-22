@@ -70,3 +70,28 @@ class TestGoalPromptVars:
         assert rendered["goal_target"] == "(unspecified)"
         assert rendered["goal_last_action"] == "(none yet)"
         assert "no notes yet" in rendered["goal_progress_notes"]
+
+    @allure.story("Off-scene outcome")
+    @allure.title("goal_last_outcome var is omitted when the goal has no recorded outcome")
+    def test_no_last_outcome_var_when_unset(self) -> None:
+        npc = _kill_marcus()
+        rendered = goal_prompt_vars(npc, "Marcus", "English")
+
+        assert rendered is not None
+        assert "goal_last_outcome" not in rendered
+
+    @allure.story("Off-scene outcome")
+    @allure.title("goal_last_outcome var carries the off-scene outcome when one is recorded")
+    def test_last_outcome_var_present_when_set(self) -> None:
+        npc = NPCCard(
+            name="Cassia",
+            occupation="thief",
+            life_goal=Goal(kind=GoalKind.ACQUIRE, description="the senator's ledger"),
+        )
+        assert npc.life_goal is not None
+        npc.life_goal.last_outcome = "secured the senator's ledger"
+
+        rendered = goal_prompt_vars(npc, None, "English")
+
+        assert rendered is not None
+        assert rendered["goal_last_outcome"] == "secured the senator's ledger"

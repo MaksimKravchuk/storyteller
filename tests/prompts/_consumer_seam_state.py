@@ -89,6 +89,7 @@ def _make_guard_npc() -> NPCCard:
         turns_pursued=2,
         last_attempted_action="STEALTH near the notice board",
         progress_notes=["target lingered by the forum steps"],
+        last_outcome="tracked the patrician back to the forum",
     )
     return guard
 

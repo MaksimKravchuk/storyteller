@@ -98,6 +98,13 @@ class Goal(BaseModel):
     sweep can expire short-lived intents without conflating them with
     ``turns_pursued`` (which only ticks when the actor takes an action).
     Life-tier goals leave it ``None``.
+
+    ``last_outcome`` is a single prompt-ready sentence describing the
+    most recent off-scene step the background ticker resolved (e.g.
+    "secured the ledger"). It is lighter than ``progress_notes`` — the
+    Actor prompt surfaces it directly so an NPC re-entering the scene
+    can react to what time did while the player was away. The KILL path
+    leaves it ``None`` so the combat-vendetta prompt stays unchanged.
     """
 
     scope: GoalScope = GoalScope.LIFE
@@ -109,6 +116,7 @@ class Goal(BaseModel):
     last_attempted_action: str | None = None
     progress_notes: list[str] = Field(default_factory=list)
     created_on_turn: int | None = None
+    last_outcome: str | None = None
 
     def record_progress(self, note: str) -> None:
         """Append a short retrospective, dropping the oldest note when over budget.

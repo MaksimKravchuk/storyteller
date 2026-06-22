@@ -68,7 +68,7 @@ def _goal_coaching(kind: GoalKind, language: str) -> str:
 
 
 def _goal_section_vars(goal: Goal, target_name: str | None, language: str) -> dict[str, str]:
-    return {
+    section_vars = {
         "goal_kind": goal.kind.value,
         "goal_target": target_name or _GOAL_UNKNOWN_TARGET,
         "goal_turns_pursued": str(goal.turns_pursued),
@@ -77,6 +77,11 @@ def _goal_section_vars(goal: Goal, target_name: str | None, language: str) -> di
         "goal_progress_notes": _format_goal_progress(goal.progress_notes),
         "goal_coaching": _goal_coaching(goal.kind, language),
     }
+    # Gate the optional outcome section: only the off-scene resolvers stamp
+    # last_outcome, so KILL goals keep their original prompt body.
+    if goal.last_outcome:
+        section_vars["goal_last_outcome"] = goal.last_outcome
+    return section_vars
 
 
 def goal_prompt_vars(

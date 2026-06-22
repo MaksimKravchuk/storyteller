@@ -172,6 +172,7 @@ class TestNPCConverter:
             description="Avenge brother",
             target_uuid=make_uuid("npc-9"),
             progress_notes=["spotted target near the bridge"],
+            last_outcome="caught up with the target off-screen",
         )
         npc.tactical_goal = Goal(
             scope=GoalScope.TACTICAL,
