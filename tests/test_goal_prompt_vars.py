@@ -31,7 +31,7 @@ class TestGoalPromptVars:
     @allure.title("Returns None when the NPC has no goal at all")
     def test_no_goal_returns_none(self) -> None:
         npc = NPCCard(name="Anon", occupation="merchant")
-        assert goal_prompt_vars(npc, target_name="Marcus") is None
+        assert goal_prompt_vars(npc, "Marcus", "English") is None
 
     @allure.story("Section gating")
     @allure.title("Returns None when the goal exists but is no longer ACTIVE")
@@ -39,7 +39,7 @@ class TestGoalPromptVars:
         npc = _kill_marcus()
         assert npc.life_goal is not None
         npc.life_goal.status = GoalStatus.COMPLETED
-        assert goal_prompt_vars(npc, target_name="Marcus") is None
+        assert goal_prompt_vars(npc, "Marcus", "English") is None
 
     @allure.story("Active goal rendering")
     @allure.title("Active goal returns the full var bundle the prompt section expects")
@@ -49,7 +49,7 @@ class TestGoalPromptVars:
         npc.life_goal.last_attempted_action = "STEALTH"
         npc.life_goal.record_progress("approached the table from the shadows")
 
-        rendered = goal_prompt_vars(npc, target_name="Marcus")
+        rendered = goal_prompt_vars(npc, "Marcus", "English")
 
         assert rendered is not None
         assert rendered["goal_kind"] == "kill"
@@ -57,12 +57,14 @@ class TestGoalPromptVars:
         assert rendered["goal_description"] == "Avenge brother by killing Marcus"
         assert rendered["goal_last_action"] == "STEALTH"
         assert "approached the table" in rendered["goal_progress_notes"]
+        # A KILL goal is hostile — the coaching var carries the combat escalation.
+        assert "commit to ATTACK now" in rendered["goal_coaching"]
 
     @allure.story("Active goal rendering")
     @allure.title("Empty progress and unset last_action render fallbacks instead of the empty string")
     def test_fallbacks_when_no_history(self) -> None:
         npc = _kill_marcus()
-        rendered = goal_prompt_vars(npc, target_name=None)
+        rendered = goal_prompt_vars(npc, None, "English")
 
         assert rendered is not None
         assert rendered["goal_target"] == "(unspecified)"

@@ -53,9 +53,13 @@ CHRONICLER_SYSTEM_RU = PromptTemplate(
             name="goal_emission",
             template=(
                 "goal_drafts: выпускай ТОЛЬКО когда тот же ответ создаёт или "
-                "обновляет нить, явно приписывающую направленное намерение "
-                "(клятва мести, долг защитить, обет преследовать) конкретному "
-                "NPC. ``kind`` — одно из kill | pursue | protect. ``npc_uuid`` И "
+                "обновляет нить, явно приписывающую конкретному NPC направленное "
+                "намерение — враждебное или защитное (клятва мести, долг защитить, "
+                "обет преследовать) ИЛИ социальное и житейское (узы дружбы, "
+                "ухаживание, постоянная торговля, нужда предупредить, посплетничать, "
+                "спросить или — для avoid — намеренно держаться подальше от кого-то). "
+                "``kind`` — одно из kill | pursue | protect | befriend | court | "
+                "gossip | trade | help | warn | ask | avoid. ``npc_uuid`` И "
                 "``target_uuid`` обязаны указывать на NPC, уже зарегистрированных "
                 "в game state. НЕ изобретай NPC. НЕ перезаписывай уже активную "
                 "жизненную цель — движок такие drafts отбросит.\n"
@@ -71,7 +75,8 @@ CHRONICLER_SYSTEM_RU = PromptTemplate(
                 "Категории нитей (category): personal, political, natural, economic, "
                 "social, cultural. Статусы нитей (status): open, resolved, abandoned. "
                 "Области событий (scope): local, remote. Виды жизненных целей "
-                "(kind): kill, pursue, protect. Эти значения оставляй "
+                "(kind): kill, pursue, protect, befriend, court, gossip, trade, help, "
+                "warn, ask, avoid. Эти значения оставляй "
                 "АНГЛИЙСКИМИ — они читаются кодом. На существующие локации и NPC "
                 "ссылайся по их UUID; не выдумывай новых сущностей."
             ),
@@ -119,7 +124,7 @@ CHRONICLER_ADVANCE_RU = (
     '  "goal_drafts": [\n'
     "    {{\n"
     '      "npc_uuid": "uuid NPC, который теперь несёт намерение",\n'
-    '      "kind": "kill|pursue|protect",\n'
+    '      "kind": "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask|avoid",\n'
     '      "description": "одна фраза о постоянном намерении",\n'
     '      "target_uuid": "uuid NPC, на которого направлено намерение, или null",\n'
     '      "source_thread_uuid": "uuid нити, обосновывающей цель, или null"\n'

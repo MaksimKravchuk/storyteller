@@ -50,11 +50,16 @@ NPC_GENERATOR_SYSTEM = PromptTemplate(
                 "Most people do not walk around with a standing vendetta or a "
                 "mission. Default to ``goal: null``. Only attach a goal block "
                 "when the biography you just wrote contains BOTH (a) a named "
-                "antagonist or ward who is already in the registered NPC list, "
-                "and (b) an active intent verb — vow of vengeance, sworn duty "
-                "to protect, hunt for a debtor. Do not invent a target who is "
-                "not in the candidate list. Do not turn every hard-luck "
-                "backstory into a vendetta — most hard luck just is."
+                "person — antagonist, ward, friend, sweetheart, rival, or "
+                "trading partner — who is already in the registered NPC list, "
+                "and (b) an active intent verb toward them. That intent may be "
+                "hostile or protective (a vow of vengeance, a sworn duty to "
+                "protect, a hunt for a debtor) OR social and everyday (a wish "
+                "to befriend or court them, a standing trade, an urge to warn "
+                "or spread word about them, a question they must ask). Do not "
+                "invent a target who is not in the candidate list. Do not turn "
+                "every hard-luck backstory into a vendetta — most hard luck "
+                "just is."
             ),
         ),
     ]
@@ -99,7 +104,7 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 '  "goal": null\n'
                 "  // OR a standing-intent block — see system prompt restraint clause:\n"
                 '  // "goal": {{\n'
-                '  //   "kind": "kill|pursue|protect",\n'
+                '  //   "kind": "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask",\n'
                 '  //   "description": "1 sentence of standing intent",\n'
                 '  //   "target_name": "Existing NPC Name"\n'
                 "  // }}\n"
