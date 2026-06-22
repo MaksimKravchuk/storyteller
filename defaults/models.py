@@ -26,7 +26,7 @@ class AI_MODELS:
     gpt5_4_mini = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4-mini")
     gpt5_4_nano = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4-nano")
     claude_opus = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-opus-4-6")
-    claude_sonnet = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-sonnet-4-20250514")
+    claude_sonnet = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-sonnet-4-6")
     claude_haiku = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-haiku-4-5-20251001")
     # OpenRouter-routed models (cheaper alternatives, require OPENROUTER_API_KEY)
     deepseek_chat = ModelConfig(provider=PROVIDER_OPENROUTER, model_id="deepseek/deepseek-chat-v3.1")

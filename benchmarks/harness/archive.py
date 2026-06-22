@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from benchmarks.harness._archive_naming import file_stem
-from benchmarks.harness._git_sha import read_head_sha
+from benchmarks.harness._git_sha import resolve_git_sha
 from benchmarks.harness._serialise import report_to_serialisable
 from benchmarks.harness.report import render_markdown
 from benchmarks.harness.types._scores import ScenarioReport
@@ -43,8 +43,5 @@ def write_report(report: ScenarioReport) -> tuple[Path, Path]:
 
 
 def current_git_sha() -> str:
-    """Read ``HEAD`` without shelling out. Empty string when unavailable."""
-    head_file = Path(__file__).resolve().parent.parent.parent / ".git" / "HEAD"
-    if not head_file.is_file():
-        return ""
-    return read_head_sha(head_file)
+    """Read ``HEAD`` without shelling out (worktree-aware). Empty string when unavailable."""
+    return resolve_git_sha(Path(__file__).resolve().parent.parent.parent / ".git")

@@ -22,8 +22,15 @@ from benchmarks.harness.types._scenarios import Scenario
 from benchmarks.harness.types._scores import ScenarioReport
 
 
-async def _run_one_job(scenario: Scenario, iteration: int, ctx: RunContext) -> ScenarioReport:
-    """Run one (scenario, iteration) job and return its report."""
+async def _run_one_job(scenario: Scenario, iteration: int, ctx: RunContext) -> ScenarioReport | None:
+    """Run one (scenario, iteration) job, isolating any failure as ``None``.
+
+    A scripted turn that short-circuits without narration (e.g. the Director
+    returns a clarification question, bypassing the Narrator) makes the harness
+    raise ``IndexError``. Mirroring the ``run`` subcommand, we isolate it here so
+    one flaky iteration cannot abort the whole noise-floor pass and leave
+    ``.calibration.json`` unwritten.
+    """
     options = RunOptions(
         cfg=ctx.cfg,
         iteration=iteration,
@@ -31,16 +38,25 @@ async def _run_one_job(scenario: Scenario, iteration: int, ctx: RunContext) -> S
         max_judges=ctx.max_judges,
         engine_git_sha=ctx.sha,
     )
-    return await run_scenario_once(scenario, options=options)
+    # ``except Exception`` deliberately lets ``asyncio.CancelledError`` (a
+    # ``BaseException`` since 3.8) propagate, so task cancellation is never eaten.
+    try:
+        return await run_scenario_once(scenario, options=options)
+    except Exception as exc:
+        line = "[{0}] calibrate iter {1}: FAILED — {2}: {3}\n".format(scenario.id, iteration, type(exc).__name__, exc)
+        sys.stdout.write(line)
+        return None
 
 
 async def _run_scenarios(jobs: list[tuple[Scenario, int]], ctx: RunContext) -> list[ScenarioReport]:
-    """Run every (scenario, iteration) pair sequentially, returning all reports."""
+    """Run every (scenario, iteration) pair sequentially, returning surviving reports."""
     reports: list[ScenarioReport] = []
     pending = list(jobs)
     while pending:
         scenario, iteration = pending.pop(0)
-        reports.append(await _run_one_job(scenario, iteration, ctx))
+        report = await _run_one_job(scenario, iteration, ctx)
+        if report is not None:
+            reports.append(report)
     return reports
 
 
