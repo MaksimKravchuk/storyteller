@@ -4,48 +4,58 @@
       {
         "base_value": 3,
         "element_id": "landmarks_persist",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Seeded Forum landmarks (rostra, Temple of Saturn, Basilica Julia) survive re-entry",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "landmarks_not_duplicated",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Forum POI list does not duplicate on re-entry",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "prose_consistent_on_return",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Re-entry narration mentions at least one seeded Forum landmark",
-        "passes": 1
+        "n_votes": 0,
+        "passes": 2
       },
       {
         "base_value": 1,
         "element_id": "no_contradictory_redescription",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 13,
         "label": "Re-entry narration does not contradict the first visit's atmosphere",
-        "passes": 2
+        "n_votes": 25,
+        "passes": 3
       }
     ],
     "iteration_totals": [
       6,
+      7,
+      7,
       6,
-      7
+      6
     ],
-    "iterations": 3,
+    "iterations": 5,
     "max_awarded": 7,
-    "mean_awarded": 6.333333333333333,
+    "mean_awarded": 6.4,
     "min_awarded": 6,
     "scenario_id": "scene_builder_re_entry_consistency",
     "scenario_label": "SceneBuilder preserves Forum landmarks when the player leaves and returns",
-    "stdev_awarded": 0.4714045207910317,
+    "stdev_awarded": 0.48989794855663565,
     "total_base": 8
   },
-  "baselined_at": "2026-06-20T19:19:10.532854+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.202978+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -53,6 +63,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
-  "noise_floor_stdev": 0.4714045207910317
+  "iterations": 5,
+  "noise_floor_stdev": 0.0
 }

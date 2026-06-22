@@ -4,69 +4,85 @@
       {
         "base_value": 1,
         "element_id": "cassia_speaks_turn0",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Cassia replies on the greeting turn",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 1,
         "element_id": "cassia_speaks_turn1",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Cassia replies on the pomegranate-request turn",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 1,
         "element_id": "cassia_speaks_turn2",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Cassia replies on the foreign-origin turn",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 1,
         "element_id": "scene_action_log_player_entries",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Per-turn player entries reach scene_action_log",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 3,
         "element_id": "cassia_registers_foreign_appearance",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 25,
         "label": "Cassia's first reply registers the visitor's striking appearance",
-        "passes": 1
+        "n_votes": 25,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "cassia_maintains_foreign_framing",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 20,
         "label": "Cassia's middle reply still treats the player as a foreign visitor",
-        "passes": 2
+        "n_votes": 25,
+        "passes": 4
       },
       {
         "base_value": 3,
         "element_id": "cassia_references_prior_beat",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 15,
         "label": "Cassia's third reply weaves in something said earlier in the scene",
+        "n_votes": 25,
         "passes": 3
       }
     ],
     "iteration_totals": [
-      7,
-      9,
-      10
+      10,
+      12,
+      8,
+      11,
+      11
     ],
-    "iterations": 3,
-    "max_awarded": 10,
-    "mean_awarded": 8.666666666666666,
-    "min_awarded": 7,
+    "iterations": 5,
+    "max_awarded": 12,
+    "mean_awarded": 10.4,
+    "min_awarded": 8,
     "scenario_id": "player_appearance_in_scene",
     "scenario_label": "Player appearance — Cassia reacts to a foreign visitor across a scene",
-    "stdev_awarded": 1.247219128924647,
+    "stdev_awarded": 1.3564659966250536,
     "total_base": 12
   },
-  "baselined_at": "2026-06-20T19:19:09.465232+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.202115+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -74,6 +90,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
-  "noise_floor_stdev": 1.247219128924647
+  "iterations": 5,
+  "noise_floor_stdev": 0.7483314773547883
 }

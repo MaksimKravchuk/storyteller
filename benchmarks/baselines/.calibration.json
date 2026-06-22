@@ -1,0 +1,145 @@
+{
+  "autonomy_three_guards_tavern": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 10.0,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.0
+  },
+  "escalation_guard_assault": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 16.2,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.9797958971132712
+  },
+  "memory_follow_up_marcus": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 7.0,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.0
+  },
+  "memory_follow_up_marcus_graph_only": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 7.0,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.0
+  },
+  "narrator_prose_quiet_exploration": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 2.0,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 1.4142135623730951
+  },
+  "npc_autonomy_emergent_vendetta": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 3.0,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 1.4142135623730951
+  },
+  "npc_autonomy_murder_plot": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 9.2,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.7483314773547882
+  },
+  "npc_generator_role_fidelity": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 4,
+    "mean": 2.25,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.4330127018922193
+  },
+  "player_appearance_in_scene": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 9.8,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.7483314773547883
+  },
+  "scene_builder_re_entry_consistency": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 5.0,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 0.0
+  },
+  "world_gen_vividness_florence": {
+    "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
+    "iterations": 5,
+    "mean": 3.4,
+    "models": {
+      "agent_model": "gpt-5.4-nano",
+      "director_model": "gpt-5.4-mini",
+      "dramaturge_enabled": "false",
+      "dramaturge_model": "gpt-5.4-nano",
+      "narrator_model": "gpt-5.4-mini"
+    },
+    "stdev": 1.8547236990991407
+  }
+}

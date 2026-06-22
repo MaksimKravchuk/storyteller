@@ -44,3 +44,53 @@ def read_head_sha(head_file: Path) -> str:
     if head_line.startswith("ref:"):
         return _resolve_ref(head_file.parent, head_line.split(" ", 1)[1].strip())
     return head_line
+
+
+_GITDIR_MARKER = "gitdir:"
+
+
+def _resolve_git_dir(git_path: Path) -> Path | None:
+    """Return the real git directory, following a worktree ``.git`` pointer file.
+
+    A linked worktree's ``.git`` is a file containing ``gitdir: <path>`` rather
+    than a directory, so a plain ``.git/HEAD`` read misses it.
+    """
+    if git_path.is_dir():
+        return git_path
+    pointer = _read_text(git_path)
+    if pointer is None or not pointer.strip().startswith(_GITDIR_MARKER):
+        return None
+    target = Path(pointer.strip()[len(_GITDIR_MARKER) :].strip())
+    if target.is_absolute():
+        return target
+    return (git_path.parent / target).resolve()
+
+
+def _common_git_dir(git_dir: Path) -> Path:
+    """Return the shared dir that holds refs (``commondir`` for linked worktrees)."""
+    common_text = _read_text(git_dir / "commondir")
+    if common_text is None:
+        return git_dir
+    common = Path(common_text.strip())
+    if common.is_absolute():
+        return common
+    return (git_dir / common).resolve()
+
+
+def resolve_git_sha(git_path: Path) -> str:
+    """Resolve HEAD's sha from a ``.git`` dir or worktree pointer; ``""`` on miss.
+
+    Worktree-aware: HEAD lives in the worktree's git dir while its branch ref
+    lives in the shared ``commondir``, so the two are resolved separately.
+    """
+    git_dir = _resolve_git_dir(git_path)
+    if git_dir is None:
+        return ""
+    head_text = _read_text(git_dir / "HEAD")
+    if head_text is None:
+        return ""
+    head_line = head_text.strip()
+    if not head_line.startswith("ref:"):
+        return head_line
+    ref = head_line.split(" ", 1)[1].strip()
+    return _resolve_ref(_common_git_dir(git_dir), ref)

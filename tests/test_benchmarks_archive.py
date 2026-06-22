@@ -8,7 +8,7 @@ from pathlib import Path
 import allure
 
 from benchmarks.harness._archive_naming import file_stem
-from benchmarks.harness._git_sha import read_head_sha
+from benchmarks.harness._git_sha import read_head_sha, resolve_git_sha
 from benchmarks.harness.archive import write_report
 from benchmarks.harness.types._scores import (
     ElementScore,
@@ -146,3 +146,39 @@ class TestReadHeadSha:
     @allure.title("read_head_sha returns the empty string when the HEAD file does not exist")
     def test_missing_head_returns_empty(self, tmp_path: Path):
         assert read_head_sha(tmp_path / "does-not-exist" / "HEAD") == ""
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Benchmark harness")
+class TestResolveGitSha:
+    @allure.story("Archive metadata")
+    @allure.title("resolve_git_sha reads HEAD directly from a plain .git directory")
+    def test_plain_git_dir(self, tmp_path: Path):
+        git_dir = tmp_path / ".git"
+        (git_dir / "refs" / "heads").mkdir(parents=True)
+        (git_dir / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+        (git_dir / "refs" / "heads" / "main").write_text("abc123\n", encoding="utf-8")
+
+        assert resolve_git_sha(git_dir) == "abc123"
+
+    @allure.story("Archive metadata")
+    @allure.title("resolve_git_sha follows a linked-worktree .git pointer and resolves the ref via commondir")
+    def test_linked_worktree_pointer(self, tmp_path: Path):
+        common = tmp_path / "main" / ".git"
+        (common / "refs" / "heads").mkdir(parents=True)
+        sha = "b3afacb2aff15d5c830077b6da4a2230cdabac3e"
+        (common / "refs" / "heads" / "wt-branch").write_text("{0}\n".format(sha), encoding="utf-8")
+        wt_git_dir = common / "worktrees" / "wt"
+        wt_git_dir.mkdir(parents=True)
+        (wt_git_dir / "HEAD").write_text("ref: refs/heads/wt-branch\n", encoding="utf-8")
+        (wt_git_dir / "commondir").write_text("../..\n", encoding="utf-8")
+        worktree = tmp_path / "wt"
+        worktree.mkdir()
+        (worktree / ".git").write_text("gitdir: {0}\n".format(wt_git_dir), encoding="utf-8")
+
+        assert resolve_git_sha(worktree / ".git") == sha
+
+    @allure.story("Archive metadata")
+    @allure.title("resolve_git_sha returns the empty string when the .git pointer is unreadable")
+    def test_missing_pointer_returns_empty(self, tmp_path: Path):
+        assert resolve_git_sha(tmp_path / "absent" / ".git") == ""

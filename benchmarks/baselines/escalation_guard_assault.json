@@ -4,76 +4,94 @@
       {
         "base_value": 3,
         "element_id": "hostility_monotonic",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "hostility_level increases on every assault turn",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "final_mood_retaliating",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Final sentry mood is one that can roll aggression",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 3,
         "element_id": "formula_not_repeated",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 0,
         "label": "Sentry stops reciting the challenge formula by the third assault",
-        "passes": 3
+        "n_votes": 0,
+        "passes": 5
       },
       {
         "base_value": 3,
         "element_id": "sentry_physically_counters",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 25,
         "label": "Sentry's third-turn response includes physical counter-action",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "narration_no_cliches",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 11,
         "label": "Narrator avoids cinematic action-movie clichés on the climax turn",
-        "passes": 2
+        "n_votes": 25,
+        "passes": 4
       },
       {
         "base_value": 2,
         "element_id": "narration_no_purple_prose",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 17,
         "label": "Narrator avoids overwrought or melodramatic language on the climax turn",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       },
       {
         "base_value": 2,
         "element_id": "narration_no_repetition",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 5,
         "label": "Narrator avoids repeating phrases or cadence patterns across assault turns",
-        "passes": 1
+        "n_votes": 25,
+        "passes": 0
       },
       {
         "base_value": 2,
         "element_id": "narration_no_invented_inner_states",
-        "iterations": 3,
+        "iterations": 5,
+        "k_yes": 19,
         "label": "Narrator stays grounded in observable NPC behaviour without inventing inner states",
-        "passes": 3
+        "n_votes": 25,
+        "passes": 5
       }
     ],
     "iteration_totals": [
+      15,
+      15,
+      15,
       16,
-      14,
-      14
+      15
     ],
-    "iterations": 3,
+    "iterations": 5,
     "max_awarded": 16,
-    "mean_awarded": 14.666666666666666,
-    "min_awarded": 14,
+    "mean_awarded": 15.2,
+    "min_awarded": 15,
     "scenario_id": "escalation_guard_assault",
     "scenario_label": "Escalation — repeat assault on a lone sentry (KER-23 regression)",
-    "stdev_awarded": 0.9428090415820634,
+    "stdev_awarded": 0.39999999999999997,
     "total_base": 19
   },
-  "baselined_at": "2026-06-20T19:19:01.128167+00:00",
-  "engine_git_sha": "e62156960b533a42a2b90731c8bbf69878ce0248",
+  "baselined_at": "2026-06-22T08:10:12.195605+00:00",
+  "engine_git_sha": "b3afacb2aff15d5c830077b6da4a2230cdabac3e",
   "engine_models": {
     "agent_model": "gpt-5.4-nano",
     "director_model": "gpt-5.4-mini",
@@ -81,6 +99,6 @@
     "dramaturge_model": "gpt-5.4-nano",
     "narrator_model": "gpt-5.4-mini"
   },
-  "iterations": 3,
-  "noise_floor_stdev": 0.9428090415820634
+  "iterations": 5,
+  "noise_floor_stdev": 0.9797958971132712
 }
