@@ -10,6 +10,7 @@ from __future__ import annotations
 import contextvars
 import random
 import types
+import zlib
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -20,29 +21,67 @@ from llm.turn_event_logger import record_turn_event
 
 _D20 = 20
 
-# Optionally-installed default RNG for dice rolls. Production never sets it,
-# so dice fall back to a fresh ``random.Random()`` per roll — identical to the
-# original behaviour. The benchmark harness installs a seeded RNG (per scenario
-# + iteration) so contest outcomes reproduce run-to-run, keeping dice luck out
-# of the previous-vs-current comparison. A ``ContextVar`` matches the codebase's
-# swappable-process-state precedent (see ``llm/turn_event_logger.py``).
-_default_rng: contextvars.ContextVar[random.Random | None] = contextvars.ContextVar(
-    "dice_default_rng",
+# Deterministic-dice seam for the benchmark harness. Production never installs a
+# seed base, so dice fall back to a fresh ``random.Random()`` per roll —
+# identical to the original behaviour. The harness installs an int base (per
+# scenario + iteration); rolls then draw from a base-seeded RNG so contest
+# outcomes reproduce run-to-run, keeping dice luck out of the previous-vs-current
+# comparison. ``ContextVar`` matches the codebase's swappable-state precedent
+# (see ``llm/turn_event_logger.py``).
+#
+# Concurrency: NPC turns roll inside ``asyncio.gather`` (``cast.npc_turn``). Each
+# gathered task copies the context, so a single shared RNG would let whichever
+# LLM call finishes first consume the next d20 — non-deterministic by completion
+# order. ``seed_task_dice`` gives each task its own RNG keyed on a stable
+# discriminator (the NPC uuid), so rolls are order-independent.
+_dice_seed_base: contextvars.ContextVar[int | None] = contextvars.ContextVar(
+    "dice_seed_base",
+    default=None,
+)
+_task_rng: contextvars.ContextVar[random.Random | None] = contextvars.ContextVar(
+    "dice_task_rng",
     default=None,
 )
 
 
-def set_default_rng(rng: random.Random | None) -> None:
-    """Install (or clear, with ``None``) the default RNG for all dice rolls.
+def set_dice_seed_base(base: int | None) -> None:
+    """Install (or clear, with ``None``) the deterministic dice seed base.
 
-    Harness-only seam: the benchmark runner seeds this before each scenario
-    iteration. Production code never calls it, so dice stay unseeded.
+    Harness-only seam: the benchmark runner sets this once per scenario
+    iteration. Production code never calls it, so dice stay unseeded. Resets any
+    inherited per-task RNG so a fresh base starts a clean stream.
     """
-    _default_rng.set(rng)
+    _dice_seed_base.set(base)
+    _task_rng.set(None)
+
+
+def seed_task_dice(key: str) -> None:
+    """Give the current task its own base-derived RNG (no-op when unseeded).
+
+    Called at each concurrent dice site (``cast.npc_turn``) with a stable
+    per-actor ``key`` so that gathered NPC contests are reproducible regardless
+    of async completion order. A no-op in production (no seed base installed).
+    """
+    base = _dice_seed_base.get()
+    if base is None:
+        return
+    digest = zlib.crc32("{0}:{1}".format(base, key).encode())
+    _task_rng.set(random.Random(digest))
 
 
 def _active_rng() -> random.Random:
-    return _default_rng.get() or random.Random()
+    task = _task_rng.get()
+    if task is not None:
+        return task
+    base = _dice_seed_base.get()
+    if base is None:
+        return random.Random()
+    # Fallback for seeded rolls that never called seed_task_dice (non-gathered
+    # paths, e.g. the off-scene ticker): a base-only stream, cached per context.
+    # Concurrent NPC turns never reach here — they seed a uuid-keyed stream first.
+    seeded = random.Random(base)
+    _task_rng.set(seeded)
+    return seeded
 
 
 # ---------------------------------------------------------------------------

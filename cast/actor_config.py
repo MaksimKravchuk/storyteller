@@ -34,6 +34,16 @@ _HOSTILE_GOAL_KINDS: frozenset[GoalKind] = frozenset(
     ),
 )
 
+# Recovery kinds coach the NPC to conserve itself (rest, eat, tend wounds)
+# rather than socialize — relevant when a Chronicler-assigned REST goal rides
+# on an NPC still in the player's scene (the off-scene resolver hasn't run).
+_RECOVERY_GOAL_KINDS: frozenset[GoalKind] = frozenset(
+    (
+        GoalKind.REST,
+        GoalKind.EAT,
+    ),
+)
+
 
 def format_past_memories(memories: list[KnowledgeNode]) -> str:
     """Render a newline-joined bullet list of memory texts, truncated for prompt safety."""
@@ -56,14 +66,18 @@ def _goal_coaching(kind: GoalKind, language: str) -> str:
     """Return the locale's coaching text for *kind*'s behavioural category.
 
     Combat kinds get the STEALTH→ATTACK escalation; AVOID gets the
-    disengage coaching; every other kind gets the non-violent social
-    coaching. Every :class:`GoalKind` maps to exactly one non-empty bank.
+    disengage coaching; recovery kinds (REST/EAT) get the conserve-yourself
+    coaching so a wounded in-scene NPC isn't told to socialize; every other
+    kind gets the non-violent social coaching. Every :class:`GoalKind` maps
+    to exactly one non-empty bank.
     """
     prompts = get_actor_prompts(language)
     if kind in _HOSTILE_GOAL_KINDS:
         return prompts.goal_coaching_hostile
     if kind is GoalKind.AVOID:
         return prompts.goal_coaching_avoid
+    if kind in _RECOVERY_GOAL_KINDS:
+        return prompts.goal_coaching_recovery
     return prompts.goal_coaching_social
 
 

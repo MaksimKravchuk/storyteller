@@ -21,22 +21,30 @@ proving the run, not the code, was the variable.
 
 ## Decision
 
-Add an **installable default RNG** to `cast/dice.py` and seed it per
-scenario iteration in the benchmark runner:
+Add an **installable seed base** to `cast/dice.py` and set it per scenario
+iteration in the benchmark runner:
 
-1. `cast/dice.py` gains `set_default_rng(rng)` backed by a module-level
-   `ContextVar` (matching the codebase's swappable-state precedent in
-   `llm/turn_event_logger.py`). `roll_contest` / `roll_aggression` fall back
-   to the installed RNG, or to a fresh `random.Random()` when none is set.
-2. `benchmarks/harness/runner.run_scenario_once` installs
-   `random.Random(_dice_seed(scenario.id, iteration))` before each run.
+1. `cast/dice.py` gains `set_dice_seed_base(base)` plus `seed_task_dice(key)`,
+   backed by two module-level `ContextVar`s (matching the codebase's
+   swappable-state precedent in `llm/turn_event_logger.py`). `roll_contest` /
+   `roll_aggression` draw from a base-seeded RNG when a base is installed, else
+   a fresh `random.Random()` per roll.
+2. `benchmarks/harness/runner.run_scenario_once` calls
+   `set_dice_seed_base(_dice_seed(scenario.id, iteration))` before each run.
    `_dice_seed` is a stable `zlib.crc32` of `"{id}:{iteration}"` (not the
    per-process-salted built-in `hash`).
+3. **Concurrency: per-task seeding.** NPC turns roll inside `asyncio.gather`
+   (`cast.npc_turn`). Each gathered task copies the context, so a single shared
+   RNG would let whichever LLM call finishes first consume the next d20 —
+   non-deterministic by completion order. `cast.npc_turn._roll_npc_contest`
+   calls `seed_task_dice(str(npc.uuid))` before rolling, giving each task its
+   own RNG keyed on the NPC uuid (derived from the base), so contest outcomes
+   are order-independent *and* distinct per NPC. Retaliation dice are rolled
+   sequentially before its `gather`, so they need no per-task seeding.
 
-Production never calls `set_default_rng`, so live play is byte-for-byte
-unchanged (fresh RNG per roll). Scenario execution is sequential (no
-`asyncio.gather` across scenarios), and the seeded RNG is reinstalled at the
-top of every iteration, so there is no cross-iteration state bleed.
+Production never installs a base, so `seed_task_dice` is a no-op and live play
+is byte-for-byte unchanged (fresh RNG per roll). The base is reset at the top
+of every iteration, so there is no cross-iteration state bleed.
 
 ## Rationale
 
@@ -81,21 +89,26 @@ Positive consequences:
 Tradeoffs / risks:
 - Residual LLM-sampling variance remains (temperature pinning is not
   perfect determinism); this ADR removes the *dice* source only.
-- The seeded `random.Random` instance is shared for the duration of a run;
-  this is safe only because scenarios run sequentially. A future move to
-  concurrent scenario execution must revisit this (a per-task seeded RNG).
+- Concurrent NPC contests are made order-independent via `seed_task_dice`
+  per-task seeding (decision 3). Any *new* concurrent dice site must call
+  `seed_task_dice` with a stable key, or it will inherit a context-copied RNG
+  and reintroduce completion-order dependence.
+- The comparison is only fully apples-to-apples once both sides run the seeded
+  flow; until this merges to main, "previous main" still rolls unseeded.
 
 What future agents must preserve:
-- Production must never install a default RNG — keep `set_default_rng`
-  harness-only so live dice stay unseeded.
+- Production must never install a seed base — keep `set_dice_seed_base` /
+  `seed_task_dice` harness-only so live dice stay unseeded.
 - Keep `_dice_seed` a stable hash (not built-in `hash`) so seeds reproduce
   across processes.
+- Every concurrent dice site must `seed_task_dice` with a stable per-actor key.
 
 ## Verification / tests
 
-- `tests/test_dice_default_rng.py`: same seed reproduces the roll sequence;
-  the installed RNG drives both d20 draws; different seeds diverge; clearing
-  restores the fresh-RNG fallback.
+- `tests/test_dice_default_rng.py`: same base reproduces the roll sequence;
+  different bases diverge; the unseeded fallback stays in range; per-task
+  seeding is order-independent for the same key and distinct across keys; and
+  `seed_task_dice` is a no-op when unseeded.
 - `tests/test_benchmarks_runner_seed.py`: `_dice_seed` is stable per
   (scenario, iteration) and varies by both.
 

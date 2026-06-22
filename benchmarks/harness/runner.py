@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import random
 import zlib
 from dataclasses import dataclass
 
@@ -10,12 +9,12 @@ from benchmarks.harness._run_execution import _ExecutionResult, execute_scenario
 from benchmarks.harness.panel import DEFAULT_MAX_JUDGES, PanelAssembly, assemble_panel
 from benchmarks.harness.types._scenarios import Scenario
 from benchmarks.harness.types._scores import ScenarioReport
-from cast.dice import set_default_rng
+from cast.dice import set_dice_seed_base
 from config import Config
 
 
 def _dice_seed(scenario_id: str, iteration: int) -> int:
-    """Stable integer seed for a scenario iteration's dice rolls.
+    """Stable integer seed base for a scenario iteration's dice rolls.
 
     Depends only on the scenario id + iteration index, so previous-main and
     current-PR runs roll identical dice — dice luck drops out of the
@@ -39,11 +38,12 @@ class RunOptions:
 async def run_scenario_once(scenario: Scenario, *, options: RunOptions) -> ScenarioReport:
     """Run one iteration of ``scenario`` and return a scored report.
 
-    Installs a deterministic dice RNG (seeded from scenario id + iteration)
-    so contest outcomes are reproducible across runs — dice luck no longer
-    moves the previous-vs-current benchmark comparison.
+    Installs a deterministic dice seed base (from scenario id + iteration) so
+    contest outcomes are reproducible across runs — dice luck no longer moves
+    the previous-vs-current benchmark comparison. Per-task seeding in
+    ``cast.npc_turn`` keeps concurrent NPC contests order-independent.
     """
-    set_default_rng(random.Random(_dice_seed(scenario.id, options.iteration)))
+    set_dice_seed_base(_dice_seed(scenario.id, options.iteration))
     assembly = assemble_panel(
         options.cfg,
         overrides=options.panel_overrides,

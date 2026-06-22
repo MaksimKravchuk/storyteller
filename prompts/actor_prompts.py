@@ -18,6 +18,7 @@ from prompts.actor_prompts_ru import (
     ACTOR_SYSTEM_DIALOGUE_RU,
     GOAL_COACHING_AVOID_RU,
     GOAL_COACHING_HOSTILE_RU,
+    GOAL_COACHING_RECOVERY_RU,
     GOAL_COACHING_SOCIAL_RU,
     OFFSCREEN_OUTCOME_TEMPLATES_RU,
 )
@@ -102,6 +103,13 @@ GOAL_COACHING_AVOID = (
     "action: put distance between you, leave the exchange, or change the "
     "subject rather than confront them. Engage only if avoidance is "
     "impossible, and name what forces your hand in your action description."
+)
+
+GOAL_COACHING_RECOVERY = (
+    "Your goal right now is to recover and conserve yourself, not to socialize "
+    "or pursue anyone. Favour rest, tending wounds, eating, or quiet — keep "
+    "exchanges short and beg off politely. Stir yourself only if someone "
+    "forces the issue, and say what forced it in your action description."
 )
 
 _GOAL = PromptSection(
@@ -284,6 +292,7 @@ class ActorPrompts:
     goal_coaching_hostile: str
     goal_coaching_social: str
     goal_coaching_avoid: str
+    goal_coaching_recovery: str
     offscreen_outcomes: Mapping[OffSceneOutcomeKind, str]
 
 
@@ -295,6 +304,7 @@ get_actor_prompts = make_locale_lookup(
             goal_coaching_hostile=GOAL_COACHING_HOSTILE,
             goal_coaching_social=GOAL_COACHING_SOCIAL,
             goal_coaching_avoid=GOAL_COACHING_AVOID,
+            goal_coaching_recovery=GOAL_COACHING_RECOVERY,
             offscreen_outcomes=OFFSCREEN_OUTCOME_TEMPLATES,
         ),
         Locale.RUSSIAN: ActorPrompts(
@@ -303,6 +313,7 @@ get_actor_prompts = make_locale_lookup(
             goal_coaching_hostile=GOAL_COACHING_HOSTILE_RU,
             goal_coaching_social=GOAL_COACHING_SOCIAL_RU,
             goal_coaching_avoid=GOAL_COACHING_AVOID_RU,
+            goal_coaching_recovery=GOAL_COACHING_RECOVERY_RU,
             offscreen_outcomes=OFFSCREEN_OUTCOME_TEMPLATES_RU,
         ),
     }
