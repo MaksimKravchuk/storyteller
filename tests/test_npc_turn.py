@@ -608,6 +608,31 @@ class TestBuildTurnPromptOpportunityWindow:
 
         assert "OPPORTUNITY:" in prompt
 
+    @allure.story("Supportive agenda")
+    @allure.title("FRIEND, ALLY, and KIN relationships fire positive agendas and drop the routine nudge")
+    @pytest.mark.parametrize(
+        ("kind", "expected_action"),
+        (
+            (_RK.FRIEND, "befriend"),
+            (_RK.ALLY, "protect"),
+            (_RK.KIN, "check on"),
+        ),
+    )
+    def test_positive_relationship_fires_agenda(self, kind: _RK, expected_action: str):
+        gs = _make_gs()
+        livia = _make_npc(_NPC_UUID_A, "Livia")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        livia.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=kind, intensity=0)]
+        _place_both(gs, livia, marcus)
+
+        prompt = npc_turn_mod._build_turn_prompt(livia, "Player waits.", gs)
+
+        assert "AGENDA:" in prompt
+        assert "Marcus" in prompt
+        assert expected_action in prompt
+        assert "Most turns are routine" not in prompt
+        assert "ATTACK directly" not in prompt
+
 
 @allure.epic("NPC Interaction")
 @allure.feature("NPC autonomous turn — opportunity window")
@@ -646,6 +671,30 @@ class TestBuildTurnPromptOpportunityWindowIntegration:
 
         marcus_input = marcus_actor.execute.await_args.kwargs["input_data"]
         assert "OPPORTUNITY:" not in marcus_input
+
+    @allure.story("Supportive agenda")
+    @allure.title("Positive relationship agenda reaches Actor.execute input_data via the resolver path")
+    @pytest.mark.asyncio
+    async def test_positive_agenda_flows_into_actor_input(self):
+        gs = _make_gs()
+        livia = _make_npc(_NPC_UUID_A, "Livia")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        livia.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.ALLY, intensity=0)]
+        _place_both(gs, livia, marcus)
+
+        livia_actor = _make_actor(_idle_response("Livia"))
+        marcus_actor = _make_actor(_idle_response(_MERCHANT))
+        resolver = NPCTurnResolver(
+            game_state=gs,
+            actors={_NPC_UUID_A: livia_actor, _NPC_UUID_B: marcus_actor},
+        )
+
+        await resolver.resolve_npc_turns("Player waits.")
+
+        livia_input = livia_actor.execute.await_args.kwargs["input_data"]
+        assert "AGENDA:" in livia_input
+        assert "protect" in livia_input
+        assert "Most turns are routine" not in livia_input
 
 
 @allure.epic("NPC Interaction")

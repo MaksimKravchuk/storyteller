@@ -1,11 +1,12 @@
-"""Opportunity-window detection for NPC autonomous turns.
+"""Situated-agenda detection for NPC autonomous turns.
 
-When an NPC shares a scene with someone they have a standing hostile
-goal toward — encoded either as a hostile :class:`~models.relationship.Relationship`
-or as a violence-flavoured knowledge fact mentioning that NPC by name —
-the autonomous-turn prompt lifts the baseline "most turns are routine"
-nudge and appends an OPPORTUNITY clause so the LLM can choose in
-character whether to act on the moment.
+When an NPC shares a scene with someone they have a standing hostile or
+supportive intent toward — encoded either as a signed
+:class:`~models.relationship.Relationship` or as an intent-flavoured
+knowledge fact mentioning that NPC by name — the autonomous-turn prompt
+lifts the baseline "most turns are routine" nudge and appends a
+situated agenda so the LLM can choose in character whether to act on the
+moment.
 
 Routine NPCs (peaceful relationships, neutral knowledge) fall
 through every gate here and see the unchanged baseline prompt.
@@ -13,10 +14,9 @@ through every gate here and see the unchanged baseline prompt.
 
 from __future__ import annotations
 
-import re
 from uuid import UUID
 
-from knowledge.query import KnowledgeQueryEngine
+from cast import npc_agenda_helpers as _agenda
 from models.game_state import GameState
 from models.npc_card import NPCCard
 from models.relationship import Relationship, RelationshipKind
@@ -42,19 +42,25 @@ TACTICAL_HOSTILE_CLAUSE = (
     "Commit to one action. Do not hedge."
 )
 
-_KNOWLEDGE_KEYWORD_RE = re.compile(
-    r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)".format("|".join(KNOWLEDGE_VIOLENCE_KEYWORDS)),
-    re.IGNORECASE,
-)
+_KNOWLEDGE_VIOLENCE_RE = _agenda.keyword_regex(KNOWLEDGE_VIOLENCE_KEYWORDS)
 
 
 def get_opportunity_clause(npc: NPCCard, game_state: GameState) -> str | None:
+    """Return a hostile OPPORTUNITY clause naming the target, or None."""
+    clause = get_agenda_clause(npc, game_state)
+    if clause is None or not is_hostile_agenda_clause(clause):
+        return None
+    return clause
+
+
+def get_agenda_clause(npc: NPCCard, game_state: GameState) -> str | None:
     """Return a directive OPPORTUNITY clause naming the hostile target, or None.
 
-    When a hostile co-located target is found — via relationship or
-    violent knowledge fact — the returned string names that target and
-    instructs the Actor LLM to choose ATTACK, STEALTH, or IDLE with a
-    named obstacle. Returns ``None`` when no gate fires (routine turn).
+    When a co-located target is found — via hostile relationship,
+    violent knowledge fact, supportive relationship, or supportive
+    knowledge fact — the returned string names that target and
+    instructs the Actor LLM to choose a concrete action with a named
+    obstacle if it waits. Returns ``None`` when no gate fires.
     """
     scene = game_state.current_scene
     if scene is None:
@@ -62,12 +68,24 @@ def get_opportunity_clause(npc: NPCCard, game_state: GameState) -> str | None:
     co_located = _co_located_npc_uuids(scene, npc)
     if not co_located:
         return None
-    target_name = _name_from_relationship(npc, co_located, game_state) or _name_from_knowledge(
-        npc, co_located, game_state
+    target_name = _name_from_relationship(npc, co_located, game_state) or _agenda.name_from_knowledge(
+        npc,
+        co_located,
+        game_state,
+        _KNOWLEDGE_VIOLENCE_RE,
     )
     if target_name is None:
-        return None
+        return _agenda.supportive_agenda_from_relationship(
+            npc,
+            co_located,
+            game_state,
+        ) or _agenda.supportive_agenda_from_knowledge(npc, co_located, game_state)
     return _OPPORTUNITY_TEMPLATE.format(target=target_name)
+
+
+def is_hostile_agenda_clause(clause: str) -> bool:
+    """Return True when *clause* is the combat-oriented opportunity clause."""
+    return clause.startswith("OPPORTUNITY:")
 
 
 def _co_located_npc_uuids(scene: Scene, self_npc: NPCCard) -> list[UUID]:
@@ -83,16 +101,9 @@ def _resolve_hostile_target(
     co_located_set: set[str],
     game_state: GameState,
 ) -> str | None:
-    if rel.target_uuid not in co_located_set:
-        return None
     if rel.kind != RelationshipKind.ENEMY or rel.intensity > -2:
         return None
-    try:
-        npc_uuid = UUID(rel.target_uuid)
-    except ValueError:
-        return None
-    target_npc = game_state.npcs.get(npc_uuid)
-    return target_npc.name if target_npc else None
+    return _agenda.relationship_target_name(rel, co_located_set, game_state)
 
 
 def _name_from_relationship(
@@ -106,39 +117,3 @@ def _name_from_relationship(
         if name is not None:
             return name
     return None
-
-
-def _name_from_knowledge(
-    npc: NPCCard,
-    co_located_uuids: list[UUID],
-    game_state: GameState,
-) -> str | None:
-    co_located_names = _co_located_display_names(co_located_uuids, game_state)
-    if not co_located_names:
-        return None
-    query_engine = KnowledgeQueryEngine(game_state.knowledge_graph)
-    knowledge_text = query_engine.get_context_for_npc(npc)
-    if not knowledge_text or not _KNOWLEDGE_KEYWORD_RE.search(knowledge_text):
-        return None
-    return _names_in_text(co_located_names, knowledge_text)
-
-
-def _names_in_text(names: list[str], text: str) -> str | None:
-    """Return the first name from *names* that appears as a full token in *text*, or None."""
-    for candidate in names:
-        if not candidate:
-            continue
-        pattern = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)".format(re.escape(candidate))
-        if re.search(pattern, text, re.IGNORECASE):
-            return candidate
-    return None
-
-
-def _co_located_display_names(co_located_uuids: list[UUID], game_state: GameState) -> list[str]:
-    """Resolve UUIDs to NPC display names, skipping any not registered in game state."""
-    names: list[str] = []
-    for uuid in co_located_uuids:
-        npc = game_state.npcs.get(uuid)
-        if npc is not None:
-            names.append(npc.name)
-    return names

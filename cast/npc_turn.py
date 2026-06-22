@@ -495,14 +495,14 @@ def _build_turn_prompt(
     layer in on top.
     """
     utterance = _coerce_player_utterance(player_utterance)
-    opportunity_clause = _npo.get_opportunity_clause(npc, game_state)
+    agenda_clause = _npo.get_agenda_clause(npc, game_state)
     base_prompt = _format_base_turn_prompt(
         npc=npc,
         player_utterance=utterance,
         game_state=game_state,
-        include_routine_nudge=opportunity_clause is None,
+        include_routine_nudge=agenda_clause is None,
     )
-    optional = _optional_turn_clauses(npc, game_state, witnessed_events, peer_actions, opportunity_clause)
+    optional = _optional_turn_clauses(npc, game_state, witnessed_events, peer_actions, agenda_clause)
     return "\n\n".join([base_prompt, *optional])
 
 
@@ -511,7 +511,7 @@ def _optional_turn_clauses(
     game_state: GameState,
     witnessed_events: list[WitnessedAggression] | None,
     peer_actions: list[tuple[str, str]] | None,
-    opportunity_clause: str | None,
+    agenda_clause: str | None,
 ) -> list[str]:
     """Collect the optional clauses appended after the base turn prompt."""
     clauses: list[str] = []
@@ -523,9 +523,10 @@ def _optional_turn_clauses(
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
     if incident is not None:
         clauses.append(_format_incident_clause(npc, incident))
-    if opportunity_clause is not None:
-        clauses.append(opportunity_clause)
-        clauses.append(_npo.TACTICAL_HOSTILE_CLAUSE)
+    if agenda_clause is not None:
+        clauses.append(agenda_clause)
+        if _npo.is_hostile_agenda_clause(agenda_clause):
+            clauses.append(_npo.TACTICAL_HOSTILE_CLAUSE)
     return clauses
 
 
