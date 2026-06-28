@@ -86,7 +86,10 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ## Git Workflow
 
-- NEVER push directly to `main`. For every code change, create a feature branch (`feat/<topic>` or `fix/<topic>`), commit there, and open a PR with `gh pr create`. The only exception is when I explicitly say "push to main".
+- Trunk development: `main` is the only long-lived development branch. For code changes, create a short-lived branch (`feat/<topic>`, `fix/<topic>`, `docs/<topic>`, or `chore/<topic>`), commit there, push it, and open a PR with `gh pr create` early. PR review is the default code-review surface.
+- Agents may create branches, push them, and open PRs for code work without asking first. NEVER push directly to `main` unless Max explicitly says "push to main".
+- Agents may merge low-risk PRs after the required deterministic checks and CI pass. Stop and ask before merging product/release behavior changes, destructive data changes, paid/e2e/benchmark-dependent changes, or anything with unclear risk.
+- Release tags are the release boundary: cut annotated tags from `main` only after Max approval and the release checklist. See `docs/decisions/0014-trunk-development-with-release-tags.md`.
 - Before changing architecture, agent roles, prompt boundaries, persistence behavior, release strategy, or player-facing behavior, inspect accepted decision records in `docs/decisions/` and `docs/studio/09-founder-decision-register.md`.
 - When making a new significant decision in any of those areas, use the `decision-records` skill and create or update a record covering context, decision, rationale, alternatives, consequences, verification, and future-agent guardrails.
 - Before every commit, run the full gauntlet and only commit if everything passes:
@@ -106,9 +109,50 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ## Default workflow: stakeholder mode
 
-The user operates as **stakeholder**, not project manager. They state a task with success criteria; the assistant plans, implements, and ships a working demo. **No upstream story / brief / QA-plan approvals.** The surviving gates are: (a) the pre-commit gauntlet from the Git Workflow section, (b) decision-record inspection + invocation per Git Workflow when the change touches the listed boundaries, and (c) the PR review before merge.
+The user operates as **stakeholder**, not project manager. They state a task with success criteria; the assistant plans, implements, and ships a working demo. **No upstream story / brief / QA-plan approvals.** The surviving gates are: (a) the pre-commit gauntlet from the Git Workflow section, (b) decision-record inspection + invocation per Git Workflow when the change touches the listed boundaries, and (c) PR review/CI visibility before merge. Per ADR-0014, agents may merge low-risk green PRs without waiting for a separate approval.
 
 **Ambiguity rule:** when something load-bearing is genuinely ambiguous mid-task, stop and ask. Cosmetic / reversible choices are decided silently.
+
+### Hermes Kanban workers and Claude Code print mode
+
+When a Hermes Kanban worker is assigned a Storyteller coding, debugging, refactoring, or review card, prefer using Claude Code print mode (`claude -p`) for non-trivial inner-loop work. Hermes should still own task scoping, final diff inspection, verification, and the Kanban complete/block handoff.
+
+Implementation template:
+
+```bash
+claude -p "
+You are working inside Storyteller.
+
+Task:
+<task body>
+
+Rules:
+- Follow CLAUDE.md and AGENTS.md.
+- Keep changes surgical and minimal.
+- For bug fixes, write or adjust the regression test first and observe it fail before fixing.
+- You may push a short-lived branch and open a PR when the implementation is verified.
+- Do not run paid/e2e/benchmark checks unless Max explicitly approved them.
+- After editing, report changed files and commands run.
+" \
+  --allowedTools "Read,Edit,Write,Bash(git diff*),Bash(uv run pytest*),Bash(uv run ruff*),Bash(uv run mypy*),Bash(uv run flake8*)" \
+  --max-turns 25 \
+  --output-format json
+```
+
+Review template:
+
+```bash
+git diff main...HEAD | claude -p "
+Review this Storyteller diff. Focus on bugs, missed tests, prompt/agent regressions, async issues, DB/converter risks, and overengineering. Return blocking findings first, then non-blocking notes.
+" \
+  --allowedTools "Read" \
+  --max-turns 3
+```
+
+Guardrails:
+- Do not use `--dangerously-skip-permissions` by default; prefer scoped `--allowedTools`.
+- Do not trust Claude output blindly: inspect changed files and run relevant verification before completing or blocking the Kanban card.
+- If `claude -p` fails because of auth, rate limits, or tool permissions, continue with Hermes tools and mention the failure in the handoff.
 
 ### Parallel execution via git worktrees
 
@@ -134,7 +178,7 @@ The assistant picks the demo form based on what the change touches (multiple may
 | `tests/`-only changes                                            | Green CI is sufficient — no further demo.                                             |
 | `docs/`, `.claude/`, `CLAUDE.md`, `README*`                      | PR link only — no demo expected.                                                      |
 
-Git workflow from the section above still applies: feature branch → PR with `gh pr create`, never direct push to `main`.
+Git workflow from the section above still applies: short-lived branch → PR with `gh pr create` → merge to trunk when green and low-risk; never direct push to `main` unless Max explicitly says so.
 
 ### Escalation to feature-factory (opt-in)
 

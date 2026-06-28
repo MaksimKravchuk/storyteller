@@ -62,8 +62,11 @@ uv run python -m benchmarks run
 
 ## Development rules
 
-- Never push directly to main unless Max explicitly says “push to main”.
-- Use a feature branch for every code change.
+- Trunk development: `main` is the only long-lived development branch. Use short-lived branches for code changes and open GitHub PRs early; PR review is the default code-review surface.
+- Agents may create branches, push them, and open PRs for code work without asking first. Direct pushes to `main` still require Max to explicitly say “push to main”.
+- Agents may merge low-risk PRs after required deterministic checks and CI pass. Stop and ask before merging product/release behavior changes, destructive data changes, paid/e2e/benchmark-dependent changes, or anything with unclear risk.
+- Release tags are the release boundary: cut annotated tags from `main` only after Max approval and the release checklist.
+- See `docs/decisions/0014-trunk-development-with-release-tags.md` for the accepted workflow decision.
 - Keep changes surgical and minimal.
 - Do not add speculative abstractions.
 - Do not silently change lint/type/test configuration.
@@ -71,6 +74,47 @@ uv run python -m benchmarks run
 - For bug fixes: write the regression test first, run it and observe the expected failure, then fix the root cause.
 - Prefer tests at the consumer-side integration seam. Prove that the consumer receives the value, not only that the supplier produces it.
 - Maintain 90%+ unit test coverage.
+
+## Kanban workers: prefer Claude Code print mode
+
+When running as a Hermes Kanban worker on Storyteller coding, debugging, refactoring, or review tasks, prefer delegating non-trivial inner-loop work to Claude Code print mode (`claude -p`). Hermes remains responsible for task scoping, final diff inspection, verification, and Kanban handoff.
+
+Recommended implementation pattern:
+
+```bash
+claude -p "
+You are working inside Storyteller.
+
+Task:
+<task body>
+
+Rules:
+- Follow AGENTS.md and CLAUDE.md.
+- Keep changes surgical and minimal.
+- For bug fixes, write or adjust the regression test first and observe it fail before fixing.
+- You may push a short-lived branch and open a PR when the implementation is verified.
+- Do not run paid/e2e/benchmark checks unless Max explicitly approved them.
+- After editing, report changed files and commands run.
+" \
+  --allowedTools "Read,Edit,Write,Bash(git diff*),Bash(uv run pytest*),Bash(uv run ruff*),Bash(uv run mypy*),Bash(uv run flake8*)" \
+  --max-turns 25 \
+  --output-format json
+```
+
+Recommended review pattern:
+
+```bash
+git diff main...HEAD | claude -p "
+Review this Storyteller diff. Focus on bugs, missed tests, prompt/agent regressions, async issues, DB/converter risks, and overengineering. Return blocking findings first, then non-blocking notes.
+" \
+  --allowedTools "Read" \
+  --max-turns 3
+```
+
+Guardrails:
+- Do not use `--dangerously-skip-permissions` by default; prefer scoped `--allowedTools`.
+- Do not trust Claude output blindly: inspect changed files and run relevant verification before completing or blocking the Kanban card.
+- If `claude -p` fails because of auth, rate limits, or tool permissions, continue with Hermes tools and mention the failure in the handoff.
 
 ## PR expectations
 

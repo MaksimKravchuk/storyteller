@@ -1,7 +1,7 @@
 # ADR-0001: Feature-factory chain is the default workflow for non-trivial changes
 
 Date: 2026-05-25
-Status: Accepted
+Status: Accepted; PR/merge autonomy superseded in part by ADR-0014
 Decision owner: Max
 Related: [feat/feature-factory branch], [@sairahul1 "Software Factory" article](https://x.com/sairahul1/status/2058832033628241931), `docs/studio/09-founder-decision-register.md`
 
@@ -66,7 +66,7 @@ Tradeoffs / risks:
 - The "Backend Builder" role stays in the main session. If the main session drifts from CLAUDE.md discipline (e.g. skips the gauntlet), the PR-time gates catch it but later than a scoped builder would.
 
 What future agents must preserve:
-- The chain has **three human approval gates** (story, brief, PR). Do not collapse them into one. The cost of an approval gate is 30 seconds; the cost of a wrong premise spreading across 10 files is hours.
+- The chain originally had **three human approval gates** (story, brief, PR). ADR-0014 supersedes the PR approval gate for low-risk green PRs: GitHub PR + CI visibility remains required, but agents may merge low-risk PRs without waiting for a separate human approval. Story/brief gates still apply when feature-factory is invoked.
 - The Spec Writer **must** produce the prompt-variable contract table (producer kwarg key, consumer `required_vars`, EN status, RU status) when any prompt is touched. This is the table the `prompt-wiring-auditor` exists to verify; producing it upstream is the whole point of the upstream chain.
 - The Spec Writer **points at** the `decision-records` skill; it does not embed decision-record content. Records are durable; briefs are per-feature.
 - If you decide the chain is too heavyweight, supersede this ADR rather than silently removing the skill or agent files. The CLAUDE.md "Default workflow: feature-factory" section is the contract.
