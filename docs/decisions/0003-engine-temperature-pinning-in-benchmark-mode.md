@@ -69,9 +69,9 @@ game API narrow and reflects the constraint below.
   `benchmarks pin <scenario> --from <aggregate.json>` (the workflow
   established by ADR-0002 / benchmark-auto-compare-and-ratchet).
 - **Provider drift remains.** Even with temperature pinned, providers
-  silently update underlying models. Phase 3's golden-snapshot tests
-  (issue #282, deferred) require *both* this PR and provider model
-  snapshot pinning before they become viable.
+  silently update underlying models. Golden narration snapshots are viable
+  only when provider model snapshots are pinned and review evidence is
+  documented; see ADR-0016 for the golden snapshot workflow and warnings.
 
 ## Alternatives considered
 
