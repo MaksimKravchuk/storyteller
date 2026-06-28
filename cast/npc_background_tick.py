@@ -7,15 +7,22 @@ the current scene. Tactical goals are intentionally skipped — they live
 only a handful of turns and exist to drive in-scene reactions, so
 ticking them between scenes would be both noisy and out of character
 (a "DEFEND" goal makes no sense across an off-scene hour). For each
-eligible NPC:
+contest-eligible NPC:
 
 - If their target is co-located with them at their off-scene location,
   one contest is rolled and the outcome is applied via the same
   :mod:`cast.npc_goal_resolution` pipeline that on-scene NPC turns use,
   so a Brutus left alone with Marcus can finish what he started.
-- Otherwise the goal accrues a single progress note ("waited offscreen
-  for N hours") so the next time the player wanders back through, the
-  Actor sees that time has passed and pressure has built.
+- Otherwise the combat goal accrues a single progress note ("waited
+  offscreen for N hours") so the next time the player wanders back
+  through, the Actor sees that time has passed and pressure has built.
+
+Non-combat life-goal kinds are intentionally inert here. They are not a
+fallback branch of the contest map: unseen social/economic actions do
+not yet have deterministic relationship, memory, inventory, or task
+effects, so ticking them off-screen would only manufacture noisy
+progress. Social liveness is handled by on-scene actions plus the
+deterministic goal-resolution predicates that can inspect real state.
 
 Bounded: at most one contest per goal-holder per advance, only when the
 target is reachable. No LLM call when no contest fires — the cheap path
@@ -47,6 +54,28 @@ _GOAL_KIND_TO_CONTEST: MappingProxyType[GoalKind, ContestType] = MappingProxyTyp
     {GoalKind.KILL: ContestType.COMBAT},
 )
 
+# Document the deliberate non-contest boundary so new GoalKinds do not look like
+# accidental fall-throughs from ``_GOAL_KIND_TO_CONTEST``. These kinds may still
+# complete elsewhere when deterministic state proves success (for example a warm
+# relationship threshold), but this ticker does not invent off-scene progress for
+# them until their effects are explicitly modeled.
+_INTENTIONALLY_INERT_OFFSCENE_GOAL_KINDS = frozenset(
+    (
+        GoalKind.PURSUE,
+        GoalKind.ACQUIRE,
+        GoalKind.PROTECT,
+        GoalKind.FLEE,
+        GoalKind.BEFRIEND,
+        GoalKind.COURT,
+        GoalKind.GOSSIP,
+        GoalKind.TRADE,
+        GoalKind.HELP,
+        GoalKind.WARN,
+        GoalKind.ASK,
+        GoalKind.AVOID,
+    ),
+)
+
 
 def _scene_present_uuids(game_state: GameState) -> set[UUID]:
     scene = game_state.current_scene
@@ -62,6 +91,8 @@ def _is_eligible(npc: NPCCard, present_uuids: set[UUID]) -> bool:
         return False
     goal = npc.life_goal
     if goal is None or goal.status is not GoalStatus.ACTIVE:
+        return False
+    if goal.kind in _INTENTIONALLY_INERT_OFFSCENE_GOAL_KINDS:
         return False
     return goal.kind in _GOAL_KIND_TO_CONTEST
 
