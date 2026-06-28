@@ -34,6 +34,7 @@ _GENERATOR_LIFE_GOAL_KINDS: frozenset[GoalKind] = frozenset(
     (
         GoalKind.KILL,
         GoalKind.PURSUE,
+        GoalKind.ACQUIRE,
         GoalKind.PROTECT,
         GoalKind.BEFRIEND,
         GoalKind.COURT,

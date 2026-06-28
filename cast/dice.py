@@ -7,8 +7,10 @@ aggression-check mechanic for NPC mood-based retaliation.
 
 from __future__ import annotations
 
+import contextvars
 import random
 import types
+import zlib
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any
@@ -18,6 +20,69 @@ from llm.turn_event_logger import record_turn_event
 
 
 _D20 = 20
+
+# Deterministic-dice seam for the benchmark harness. Production never installs a
+# seed base, so dice fall back to a fresh ``random.Random()`` per roll —
+# identical to the original behaviour. The harness installs an int base (per
+# scenario + iteration); rolls then draw from a base-seeded RNG so contest
+# outcomes reproduce run-to-run, keeping dice luck out of the previous-vs-current
+# comparison. ``ContextVar`` matches the codebase's swappable-state precedent
+# (see ``llm/turn_event_logger.py``).
+#
+# Concurrency: NPC turns roll inside ``asyncio.gather`` (``cast.npc_turn``). Each
+# gathered task copies the context, so a single shared RNG would let whichever
+# LLM call finishes first consume the next d20 — non-deterministic by completion
+# order. ``seed_task_dice`` gives each task its own RNG keyed on a stable
+# discriminator (the NPC uuid), so rolls are order-independent.
+_dice_seed_base: contextvars.ContextVar[int | None] = contextvars.ContextVar(
+    "dice_seed_base",
+    default=None,
+)
+_task_rng: contextvars.ContextVar[random.Random | None] = contextvars.ContextVar(
+    "dice_task_rng",
+    default=None,
+)
+
+
+def set_dice_seed_base(base: int | None) -> None:
+    """Install (or clear, with ``None``) the deterministic dice seed base.
+
+    Harness-only seam: the benchmark runner sets this once per scenario
+    iteration. Production code never calls it, so dice stay unseeded. Resets any
+    inherited per-task RNG so a fresh base starts a clean stream.
+    """
+    _dice_seed_base.set(base)
+    _task_rng.set(None)
+
+
+def seed_task_dice(key: str) -> None:
+    """Give the current task its own base-derived RNG (no-op when unseeded).
+
+    Called at each concurrent dice site (``cast.npc_turn``) with a stable
+    per-actor ``key`` so that gathered NPC contests are reproducible regardless
+    of async completion order. A no-op in production (no seed base installed).
+    """
+    base = _dice_seed_base.get()
+    if base is None:
+        return
+    digest = zlib.crc32("{0}:{1}".format(base, key).encode())
+    _task_rng.set(random.Random(digest))
+
+
+def _active_rng() -> random.Random:
+    task = _task_rng.get()
+    if task is not None:
+        return task
+    base = _dice_seed_base.get()
+    if base is None:
+        return random.Random()
+    # Fallback for seeded rolls that never called seed_task_dice (non-gathered
+    # paths, e.g. the off-scene ticker): a base-only stream, cached per context.
+    # Concurrent NPC turns never reach here — they seed a uuid-keyed stream first.
+    seeded = random.Random(base)
+    _task_rng.set(seeded)
+    return seeded
+
 
 # ---------------------------------------------------------------------------
 # Aggression thresholds — minimum d20 roll for an NPC to retaliate.
@@ -223,7 +288,7 @@ def roll_aggression(mood: str, _rng: random.Random | None = None) -> AggressionR
     threshold = AGGRESSION_THRESHOLDS.get(mood.lower())
     if threshold is None:
         return None
-    rng = _rng or random.Random()
+    rng = _rng or _active_rng()
     roll = rng.randint(1, _D20)
     return AggressionRoll(
         will_attack=roll >= threshold,
@@ -269,7 +334,7 @@ def roll_contest(
     - target total >= actor total - 5  → ACTOR_SUCCEEDS
     - target total <  actor total - 5  → ACTOR_DOMINATES
     """
-    rng = _rng or random.Random()
+    rng = _rng or _active_rng()
     actor_roll = rng.randint(1, _D20)
     target_roll = rng.randint(1, _D20)
 

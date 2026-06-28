@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from cast.actor_config import format_past_memories, goal_prompt_vars
+from cast.actor_config import format_past_memories, goal_outcome_var, goal_prompt_vars
 from cast.actor_memory import format_accessible_knowledge, select_actor_memories
 from cast.base_performer_class import BasePerformer, LLMJSONError
 from cast.hostility import apply_llm_mood_update, format_hostile_actions_summary
@@ -29,6 +29,7 @@ _OPTIONAL_CONTEXT_KEYS = (
     "goal_last_action",
     "goal_progress_notes",
     "goal_coaching",
+    "goal_last_outcome",
 )
 
 
@@ -94,10 +95,13 @@ class Actor(BasePerformer):
         _apply_optional_sections(self, context)
 
         if context.get("is_npc_turn"):
-            return await self._act_npc_turn(input_data)
+            reply = await self._act_npc_turn(input_data)
+            self._consume_offscreen_outcome()
+            return reply
 
         self.system_prompt_template = self._system_dialogue
         envelope = await self._produce_envelope(input_data)
+        self._consume_offscreen_outcome()
 
         # Store only the prose narration so multi-turn dialogue context stays clean.
         self._conversation.append(Message(role=Role.USER, body=input_data))
@@ -118,6 +122,17 @@ class Actor(BasePerformer):
         """Drop optional prompt vars before rendering the next turn."""
         for context_key in _OPTIONAL_CONTEXT_KEYS:
             self._system_prompt_vars.pop(context_key, None)
+
+    def _consume_offscreen_outcome(self) -> None:
+        """Drop the life goal's off-scene outcome once the Actor has reacted to it.
+
+        The ``goal_outcome`` prompt section is a one-shot "while you were
+        away…" hook. Clearing it after the turn that rendered it stops the
+        NPC repeating the same stale reaction on every later turn.
+        """
+        goal = self.npc.life_goal
+        if goal is not None:
+            goal.last_outcome = None
 
     async def _act_npc_turn(self, input_data: str) -> ActorReply:
         """Action-mode dispatch: raw action JSON in, no envelope, no conversation state.
@@ -181,3 +196,6 @@ def _apply_optional_sections(actor: Actor, context: dict) -> None:
     goal_vars = goal_prompt_vars(actor.npc, context.get("goal_target_name"), actor.language)
     if goal_vars is not None:
         actor.set_context(**goal_vars)
+    outcome_text = goal_outcome_var(actor.npc, actor.language)
+    if outcome_text is not None:
+        actor.set_context(goal_last_outcome=outcome_text)

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import allure
 
-from cast.actor_config import goal_prompt_vars
-from models.goal import Goal, GoalKind, GoalStatus
+from cast.actor_config import goal_outcome_var, goal_prompt_vars
+from models.goal import Goal, GoalKind, GoalStatus, OffSceneOutcome, OffSceneOutcomeKind
 from models.npc_card import NPCCard
 from tests._uuid_helpers import make_uuid
 
@@ -70,3 +70,41 @@ class TestGoalPromptVars:
         assert rendered["goal_target"] == "(unspecified)"
         assert rendered["goal_last_action"] == "(none yet)"
         assert "no notes yet" in rendered["goal_progress_notes"]
+
+    @allure.story("Off-scene outcome")
+    @allure.title("goal_outcome_var is None when the life goal has no recorded outcome")
+    def test_no_outcome_var_when_unset(self) -> None:
+        npc = _kill_marcus()
+        assert goal_outcome_var(npc, "English") is None
+
+    @allure.story("Off-scene outcome")
+    @allure.title("goal_outcome_var renders the structured outcome as a localized sentence")
+    def test_outcome_var_localized(self) -> None:
+        npc = NPCCard(
+            name="Cassia",
+            occupation="thief",
+            life_goal=Goal(kind=GoalKind.ACQUIRE, description="the senator's ledger"),
+        )
+        assert npc.life_goal is not None
+        npc.life_goal.last_outcome = OffSceneOutcome(
+            kind=OffSceneOutcomeKind.ACQUIRE_SECURED, detail="the senator's ledger"
+        )
+
+        assert goal_outcome_var(npc, "English") == "secured the senator's ledger"
+        assert goal_outcome_var(npc, "Russian") == "добыл(а) желаемое: the senator's ledger"
+
+    @allure.story("Off-scene outcome")
+    @allure.title("goal_outcome_var surfaces a completed life goal's outcome (consumer-seam gap)")
+    def test_outcome_var_survives_goal_completion(self) -> None:
+        npc = NPCCard(
+            name="Cassia",
+            occupation="thief",
+            life_goal=Goal(kind=GoalKind.ACQUIRE, description="a relic"),
+        )
+        assert npc.life_goal is not None
+        npc.life_goal.status = GoalStatus.COMPLETED
+        npc.life_goal.last_outcome = OffSceneOutcome(kind=OffSceneOutcomeKind.ACQUIRE_SECURED, detail="a relic")
+
+        # select_active_goal would drop a COMPLETED goal, but the outcome must still surface.
+        assert goal_prompt_vars(npc, None, "English") is None
+        assert goal_outcome_var(npc, "English") == "secured a relic"

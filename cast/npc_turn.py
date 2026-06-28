@@ -21,6 +21,7 @@ from cast.dice import (
     NPCAction,
     record_npc_contest_event,
     roll_contest,
+    seed_task_dice,
 )
 from cast import (
     emotional_memory as _em,
@@ -117,6 +118,10 @@ def _roll_npc_contest(
     skill_pair = CONTEST_SKILL_MAP[contest_type]
     actor_skill = npc.get_attribute(skill_pair[0], 0)
 
+    # NPC turns roll concurrently under asyncio.gather; give this task its own
+    # base-derived RNG (no-op outside benchmark mode) so the contest outcome is
+    # independent of which gathered LLM call finishes first.
+    seed_task_dice(str(npc.uuid))
     if target_name.lower() == "player":
         contest_roll = roll_contest(contest_type, actor_skill, 0)
     else:

@@ -21,7 +21,7 @@ from db.converters import (
 )
 from knowledge.node import CanonSource, KnowledgeNode, KnowledgeScope, KnowledgeSource
 from models import game_state, location, npc_card, scene, setting
-from models.goal import Goal, GoalKind, GoalScope, GoalStatus
+from models.goal import Goal, GoalKind, GoalScope, GoalStatus, OffSceneOutcome, OffSceneOutcomeKind
 from models.relationship import Relationship, RelationshipKind
 from models.values_vector import ValuesVector
 from tests._uuid_helpers import make_uuid
@@ -172,6 +172,7 @@ class TestNPCConverter:
             description="Avenge brother",
             target_uuid=make_uuid("npc-9"),
             progress_notes=["spotted target near the bridge"],
+            last_outcome=OffSceneOutcome(kind=OffSceneOutcomeKind.PURSUE_CAUGHT_UP, detail="Marcus"),
         )
         npc.tactical_goal = Goal(
             scope=GoalScope.TACTICAL,

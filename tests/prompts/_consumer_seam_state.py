@@ -19,7 +19,7 @@ from knowledge.node import (
 )
 from knowledge.scene_state import record_scene_delta
 from models.game_state import GameState, PlayerState
-from models.goal import Goal, GoalKind, GoalScope, GoalStatus
+from models.goal import Goal, GoalKind, GoalScope, GoalStatus, OffSceneOutcome, OffSceneOutcomeKind
 from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import PointOfInterest, Scene, SceneNPC
@@ -89,6 +89,17 @@ def _make_guard_npc() -> NPCCard:
         turns_pursued=2,
         last_attempted_action="STEALTH near the notice board",
         progress_notes=["target lingered by the forum steps"],
+    )
+    # A life goal carrying an off-scene outcome — exercises the optional
+    # goal_outcome section even though the tactical goal drives the goal
+    # section (the outcome is read straight off life_goal).
+    guard.life_goal = Goal(
+        kind=GoalKind.PURSUE,
+        scope=GoalScope.LIFE,
+        status=GoalStatus.ACTIVE,
+        description="Run the suspicious patrician to ground.",
+        target_uuid=NPC_TARGET_ID,
+        last_outcome=OffSceneOutcome(kind=OffSceneOutcomeKind.PURSUE_CAUGHT_UP, detail="Marcus Cinna"),
     )
     return guard
 

@@ -2,13 +2,26 @@
 
 from __future__ import annotations
 
+import zlib
 from dataclasses import dataclass
 
 from benchmarks.harness._run_execution import _ExecutionResult, execute_scenario
 from benchmarks.harness.panel import DEFAULT_MAX_JUDGES, PanelAssembly, assemble_panel
 from benchmarks.harness.types._scenarios import Scenario
 from benchmarks.harness.types._scores import ScenarioReport
+from cast.dice import set_dice_seed_base
 from config import Config
+
+
+def _dice_seed(scenario_id: str, iteration: int) -> int:
+    """Stable integer seed base for a scenario iteration's dice rolls.
+
+    Depends only on the scenario id + iteration index, so previous-main and
+    current-PR runs roll identical dice — dice luck drops out of the
+    comparison while still varying across iterations. ``zlib.crc32`` is used
+    over ``hash()`` because the built-in hash is per-process salted.
+    """
+    return zlib.crc32("{0}:{1}".format(scenario_id, iteration).encode())
 
 
 @dataclass(frozen=True)
@@ -23,7 +36,14 @@ class RunOptions:
 
 
 async def run_scenario_once(scenario: Scenario, *, options: RunOptions) -> ScenarioReport:
-    """Run one iteration of ``scenario`` and return a scored report."""
+    """Run one iteration of ``scenario`` and return a scored report.
+
+    Installs a deterministic dice seed base (from scenario id + iteration) so
+    contest outcomes are reproducible across runs — dice luck no longer moves
+    the previous-vs-current benchmark comparison. Per-task seeding in
+    ``cast.npc_turn`` keeps concurrent NPC contests order-independent.
+    """
+    set_dice_seed_base(_dice_seed(scenario.id, options.iteration))
     assembly = assemble_panel(
         options.cfg,
         overrides=options.panel_overrides,

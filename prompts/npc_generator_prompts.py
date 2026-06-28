@@ -57,9 +57,12 @@ NPC_GENERATOR_SYSTEM = PromptTemplate(
                 "protect, a hunt for a debtor) OR social and everyday (a wish "
                 "to befriend or court them, a standing trade, an urge to warn "
                 "or spread word about them, a question they must ask). Do not "
-                "invent a target who is not in the candidate list. Do not turn "
-                "every hard-luck backstory into a vendetta — most hard luck "
-                "just is."
+                "invent a target who is not in the candidate list. The one "
+                "exception is an ACQUIRE goal aimed at a coveted object or "
+                "resource (a ledger, an heirloom, a contract): it sets "
+                "``target_name: null`` and needs no registered person. Do not "
+                "turn every hard-luck backstory into a vendetta — most hard "
+                "luck just is."
             ),
         ),
     ]
@@ -104,9 +107,9 @@ NPC_GENERATOR_CREATE = PromptTemplate(
                 '  "goal": null\n'
                 "  // OR a standing-intent block — see system prompt restraint clause:\n"
                 '  // "goal": {{\n'
-                '  //   "kind": "kill|pursue|protect|befriend|court|gossip|trade|help|warn|ask",\n'
+                '  //   "kind": "kill|pursue|acquire|protect|befriend|court|gossip|trade|help|warn|ask",\n'
                 '  //   "description": "1 sentence of standing intent",\n'
-                '  //   "target_name": "Existing NPC Name"\n'
+                '  //   "target_name": "Existing NPC Name (null for an ACQUIRE goal targeting an object)"\n'
                 "  // }}\n"
                 "}}"
             ),
@@ -124,9 +127,10 @@ NPC_GENERATOR_CREATE = PromptTemplate(
         PromptSection(
             name="candidate_targets",
             template=(
-                "If — and only if — you attach a goal block, ``target_name`` MUST exactly "
-                "match one of these registered NPCs (case-insensitive). A target outside "
-                "this list will be silently dropped:\n{candidate_targets}"
+                "If you attach a goal that targets a person, ``target_name`` MUST exactly "
+                "match one of these registered NPCs (case-insensitive); a person-target "
+                "outside this list is silently dropped. An ACQUIRE goal aimed at an object "
+                "instead sets ``target_name: null``:\n{candidate_targets}"
             ),
             required_vars=["candidate_targets"],
         ),

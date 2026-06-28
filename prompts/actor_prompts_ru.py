@@ -12,7 +12,26 @@ because it is matched against the English-keyed enum in
 can be in the game language (Russian).
 """
 
+from types import MappingProxyType
+
+from models.goal import OffSceneOutcomeKind
 from prompts.base_template import PromptSection, PromptTemplate
+
+# Russian renderings of structured off-scene outcomes. ``{detail}`` is a
+# data slot (target name / goal description); kinds without a slot ignore
+# it. Keys MUST match the English bank in prompts.actor_prompts.
+OFFSCREEN_OUTCOME_TEMPLATES_RU: MappingProxyType[OffSceneOutcomeKind, str] = MappingProxyType(
+    {
+        OffSceneOutcomeKind.PURSUE_CAUGHT_UP: "настиг(ла) {detail} вне сцены",
+        OffSceneOutcomeKind.PURSUE_TRACKING: "всё ещё идёт по следу {detail}",
+        OffSceneOutcomeKind.PURSUE_TRACKING_UNKNOWN: "всё ещё выслеживает свою добычу",
+        OffSceneOutcomeKind.PURSUE_TARGET_DEAD: "{detail} мёртв — погоня окончена",
+        OffSceneOutcomeKind.ACQUIRE_PROGRESS: "продвинулся(лась) к цели: {detail}",
+        OffSceneOutcomeKind.ACQUIRE_SECURED: "добыл(а) желаемое: {detail}",
+        OffSceneOutcomeKind.REST_RECOVERED: "отдохнул(а) вне сцены и полностью восстановился(лась)",
+        OffSceneOutcomeKind.REST_AT_EASE: "отдохнул(а) вне сцены; и так был(а) здоров(а)",
+    },
+)
 
 _IDENTITY_RU = PromptSection(
     name="identity",
@@ -95,6 +114,13 @@ GOAL_COACHING_AVOID_RU = (
     "что тебя к этому вынуждает."
 )
 
+GOAL_COACHING_RECOVERY_RU = (
+    "Сейчас твоя цель — восстановиться и поберечь себя, а не общаться или "
+    "кого-то преследовать. Предпочитай отдых, перевязку ран, еду или покой; "
+    "разговоры держи краткими и вежливо отговаривайся. Поднимайся, только "
+    "если кто-то вынуждает тебя, и назови в описании действия, что именно."
+)
+
 _GOAL_RU = PromptSection(
     name="goal",
     template=(
@@ -115,6 +141,19 @@ _GOAL_RU = PromptSection(
         "goal_progress_notes",
         "goal_coaching",
     ],
+)
+
+# Опционально: рендерится только когда фоновый тикер записал
+# ``last_outcome`` в цель (PURSUE/ACQUIRE/REST). Для KILL отсутствует,
+# поэтому боевой промпт остаётся неизменным байт-в-байт.
+_GOAL_OUTCOME_RU = PromptSection(
+    name="goal_outcome",
+    template=(
+        "  Пока тебя не было, твоя цель продвинулась — последнее: "
+        "{goal_last_outcome}. Считай это уже свершившимся; реагируй на "
+        "это, а не описывай как происходящее сейчас."
+    ),
+    required_vars=["goal_last_outcome"],
 )
 
 _CONSTRAINTS_RU = PromptSection(
@@ -217,6 +256,7 @@ ACTOR_SYSTEM_DIALOGUE_RU = PromptTemplate(
         _MEMORY_RU,
         _HOSTILITY_RU,
         _GOAL_RU,
+        _GOAL_OUTCOME_RU,
         _CONSTRAINTS_RU,
         _OUTPUT_DIALOGUE_RU,
         _LANGUAGE_RU,
@@ -231,6 +271,7 @@ ACTOR_SYSTEM_ACTION_RU = PromptTemplate(
         _MEMORY_RU,
         _HOSTILITY_RU,
         _GOAL_RU,
+        _GOAL_OUTCOME_RU,
         _CONSTRAINTS_RU,
         _OUTPUT_ACTION_RU,
         _LANGUAGE_RU,

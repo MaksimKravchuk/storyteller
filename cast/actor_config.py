@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from cast._npc_active_goal import select_active_goal
 from knowledge.node import KnowledgeNode
-from models.goal import Goal, GoalKind
+from models.goal import Goal, GoalKind, OffSceneOutcome
 from models.npc_card import NPCCard
 from prompts.actor_prompts import get_actor_prompts
 
@@ -31,6 +31,16 @@ _HOSTILE_GOAL_KINDS: frozenset[GoalKind] = frozenset(
         GoalKind.DEFEND,
         GoalKind.FLEE,
         GoalKind.FLEE_SCENE,
+    ),
+)
+
+# Recovery kinds coach the NPC to conserve itself (rest, eat, tend wounds)
+# rather than socialize — relevant when a Chronicler-assigned REST goal rides
+# on an NPC still in the player's scene (the off-scene resolver hasn't run).
+_RECOVERY_GOAL_KINDS: frozenset[GoalKind] = frozenset(
+    (
+        GoalKind.REST,
+        GoalKind.EAT,
     ),
 )
 
@@ -56,14 +66,18 @@ def _goal_coaching(kind: GoalKind, language: str) -> str:
     """Return the locale's coaching text for *kind*'s behavioural category.
 
     Combat kinds get the STEALTH→ATTACK escalation; AVOID gets the
-    disengage coaching; every other kind gets the non-violent social
-    coaching. Every :class:`GoalKind` maps to exactly one non-empty bank.
+    disengage coaching; recovery kinds (REST/EAT) get the conserve-yourself
+    coaching so a wounded in-scene NPC isn't told to socialize; every other
+    kind gets the non-violent social coaching. Every :class:`GoalKind` maps
+    to exactly one non-empty bank.
     """
     prompts = get_actor_prompts(language)
     if kind in _HOSTILE_GOAL_KINDS:
         return prompts.goal_coaching_hostile
     if kind is GoalKind.AVOID:
         return prompts.goal_coaching_avoid
+    if kind in _RECOVERY_GOAL_KINDS:
+        return prompts.goal_coaching_recovery
     return prompts.goal_coaching_social
 
 
@@ -77,6 +91,31 @@ def _goal_section_vars(goal: Goal, target_name: str | None, language: str) -> di
         "goal_progress_notes": _format_goal_progress(goal.progress_notes),
         "goal_coaching": _goal_coaching(goal.kind, language),
     }
+
+
+def format_offscreen_outcome(outcome: OffSceneOutcome, language: str) -> str:
+    """Render a structured off-scene outcome as a localized sentence.
+
+    The per-locale template bank lives on the Actor prompt bundle; the
+    ``{detail}`` slot is filled with the stored target name or goal
+    description. Templates without a slot ignore the kwarg.
+    """
+    template = get_actor_prompts(language).offscreen_outcomes[outcome.kind]
+    return template.format(detail=outcome.detail)
+
+
+def goal_outcome_var(npc: NPCCard, language: str) -> str | None:
+    """Return the localized off-scene outcome for the NPC's life goal, or ``None``.
+
+    Read straight off ``life_goal`` — independent of which goal is
+    *active* — so a just-completed goal (ACQUIRE/REST) or one masked by a
+    promoted tactical goal still surfaces its outcome to the Actor. Only
+    the off-scene ticker writes ``last_outcome``, so KILL stays ``None``.
+    """
+    goal = npc.life_goal
+    if goal is None or goal.last_outcome is None:
+        return None
+    return format_offscreen_outcome(goal.last_outcome, language)
 
 
 def goal_prompt_vars(

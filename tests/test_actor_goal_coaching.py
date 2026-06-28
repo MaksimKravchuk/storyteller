@@ -12,12 +12,13 @@ from __future__ import annotations
 import allure
 import pytest
 
-from cast.actor_config import _HOSTILE_GOAL_KINDS, _goal_coaching, goal_prompt_vars
+from cast.actor_config import _HOSTILE_GOAL_KINDS, _RECOVERY_GOAL_KINDS, _goal_coaching, goal_prompt_vars
 from models.goal import Goal, GoalKind, GoalScope
 from models.npc_card import NPCCard
 from prompts.actor_prompts import (
     GOAL_COACHING_AVOID,
     GOAL_COACHING_HOSTILE,
+    GOAL_COACHING_RECOVERY,
     GOAL_COACHING_SOCIAL,
     get_actor_prompts,
 )
@@ -26,6 +27,7 @@ from tests._uuid_helpers import make_uuid
 _HOSTILE_DISTINCTIVE = "commit to ATTACK now"
 _SOCIAL_DISTINCTIVE = "through conversation"
 _AVOID_DISTINCTIVE = "steer clear"
+_RECOVERY_DISTINCTIVE = "recover and conserve"
 
 _SOCIAL_KINDS: tuple[GoalKind, ...] = (
     GoalKind.BEFRIEND,
@@ -37,9 +39,7 @@ _SOCIAL_KINDS: tuple[GoalKind, ...] = (
     GoalKind.ASK,
     GoalKind.ACQUIRE,
     GoalKind.PROTECT,
-    GoalKind.EAT,
     GoalKind.ERRAND,
-    GoalKind.REST,
 )
 
 
@@ -65,6 +65,13 @@ class TestGoalCoachingSelection:
         assert _goal_coaching(kind, "English") == GOAL_COACHING_SOCIAL
 
     @allure.story("Category mapping")
+    @allure.title("Recovery kinds (REST/EAT) get the conserve-yourself bank")
+    @pytest.mark.parametrize("kind", [GoalKind.REST, GoalKind.EAT])
+    def test_recovery_kinds_get_recovery_bank(self, kind: GoalKind) -> None:
+        assert kind in _RECOVERY_GOAL_KINDS
+        assert _goal_coaching(kind, "English") == GOAL_COACHING_RECOVERY
+
+    @allure.story("Category mapping")
     @allure.title("AVOID gets its own disengage bank")
     def test_avoid_gets_avoid_bank(self) -> None:
         assert _goal_coaching(GoalKind.AVOID, "English") == GOAL_COACHING_AVOID
@@ -72,8 +79,8 @@ class TestGoalCoachingSelection:
     @allure.story("Exhaustiveness")
     @allure.title("Every GoalKind maps to exactly one non-empty coaching bank")
     def test_every_kind_maps_to_one_bank(self) -> None:
-        banks = {GOAL_COACHING_HOSTILE, GOAL_COACHING_SOCIAL, GOAL_COACHING_AVOID}
-        assert len(banks) == 3  # the three banks are distinct
+        banks = {GOAL_COACHING_HOSTILE, GOAL_COACHING_SOCIAL, GOAL_COACHING_AVOID, GOAL_COACHING_RECOVERY}
+        assert len(banks) == 4  # the four banks are distinct
         for kind in GoalKind:
             coaching = _goal_coaching(kind, "English")
             assert coaching
@@ -93,7 +100,7 @@ class TestGoalCoachingLocaleAware:
 
     @allure.story("Locale")
     @allure.title("Russian coaching banks are Cyrillic, not the English fallback")
-    @pytest.mark.parametrize("kind", [GoalKind.KILL, GoalKind.BEFRIEND, GoalKind.AVOID])
+    @pytest.mark.parametrize("kind", [GoalKind.KILL, GoalKind.BEFRIEND, GoalKind.AVOID, GoalKind.REST])
     def test_russian_coaching_is_cyrillic(self, kind: GoalKind) -> None:
         english = _goal_coaching(kind, "English")
         russian = _goal_coaching(kind, "Russian")

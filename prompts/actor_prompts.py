@@ -8,14 +8,19 @@ the ``make_locale_lookup`` call below.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
+from models.goal import OffSceneOutcomeKind
 from prompts.actor_prompts_ru import (
     ACTOR_SYSTEM_ACTION_RU,
     ACTOR_SYSTEM_DIALOGUE_RU,
     GOAL_COACHING_AVOID_RU,
     GOAL_COACHING_HOSTILE_RU,
+    GOAL_COACHING_RECOVERY_RU,
     GOAL_COACHING_SOCIAL_RU,
+    OFFSCREEN_OUTCOME_TEMPLATES_RU,
 )
 from prompts.base_template import PromptSection, PromptTemplate
 from prompts.locales import Locale, make_locale_lookup
@@ -100,6 +105,13 @@ GOAL_COACHING_AVOID = (
     "impossible, and name what forces your hand in your action description."
 )
 
+GOAL_COACHING_RECOVERY = (
+    "Your goal right now is to recover and conserve yourself, not to socialize "
+    "or pursue anyone. Favour rest, tending wounds, eating, or quiet — keep "
+    "exchanges short and beg off politely. Stir yourself only if someone "
+    "forces the issue, and say what forced it in your action description."
+)
+
 _GOAL = PromptSection(
     name="goal",
     template=(
@@ -120,6 +132,19 @@ _GOAL = PromptSection(
         "goal_progress_notes",
         "goal_coaching",
     ],
+)
+
+# Optional: only rendered when the off-scene ticker stamped a
+# ``last_outcome`` on the goal (PURSUE/ACQUIRE/REST). Absent for KILL,
+# so the combat-vendetta prompt body stays byte-for-byte unchanged.
+_GOAL_OUTCOME = PromptSection(
+    name="goal_outcome",
+    template=(
+        "  While you were away, your goal moved on — most recently: "
+        "{goal_last_outcome}. Treat this as already behind you; react to "
+        "it, do not narrate it as happening now."
+    ),
+    required_vars=["goal_last_outcome"],
 )
 
 _CONSTRAINTS = PromptSection(
@@ -211,6 +236,7 @@ ACTOR_SYSTEM_DIALOGUE = PromptTemplate(
         _MEMORY,
         _HOSTILITY,
         _GOAL,
+        _GOAL_OUTCOME,
         _CONSTRAINTS,
         _OUTPUT_DIALOGUE,
         _LANGUAGE,
@@ -225,10 +251,28 @@ ACTOR_SYSTEM_ACTION = PromptTemplate(
         _MEMORY,
         _HOSTILITY,
         _GOAL,
+        _GOAL_OUTCOME,
         _CONSTRAINTS,
         _OUTPUT_ACTION,
         _LANGUAGE,
     ]
+)
+
+
+# English renderings of structured off-scene outcomes. ``{detail}`` is a
+# data slot (target name / goal description); kinds without a slot ignore
+# it. Keys MUST match the Russian bank in prompts.actor_prompts_ru.
+OFFSCREEN_OUTCOME_TEMPLATES: Mapping[OffSceneOutcomeKind, str] = MappingProxyType(
+    {
+        OffSceneOutcomeKind.PURSUE_CAUGHT_UP: "caught up with {detail} off-screen",
+        OffSceneOutcomeKind.PURSUE_TRACKING: "still on {detail}'s trail",
+        OffSceneOutcomeKind.PURSUE_TRACKING_UNKNOWN: "still tracking their quarry",
+        OffSceneOutcomeKind.PURSUE_TARGET_DEAD: "{detail} is dead — the pursuit is over",
+        OffSceneOutcomeKind.ACQUIRE_PROGRESS: "made headway toward {detail}",
+        OffSceneOutcomeKind.ACQUIRE_SECURED: "secured {detail}",
+        OffSceneOutcomeKind.REST_RECOVERED: "rested off-screen and recovered to full health",
+        OffSceneOutcomeKind.REST_AT_EASE: "rested off-screen; already in good health",
+    },
 )
 
 
@@ -248,6 +292,8 @@ class ActorPrompts:
     goal_coaching_hostile: str
     goal_coaching_social: str
     goal_coaching_avoid: str
+    goal_coaching_recovery: str
+    offscreen_outcomes: Mapping[OffSceneOutcomeKind, str]
 
 
 get_actor_prompts = make_locale_lookup(
@@ -258,6 +304,8 @@ get_actor_prompts = make_locale_lookup(
             goal_coaching_hostile=GOAL_COACHING_HOSTILE,
             goal_coaching_social=GOAL_COACHING_SOCIAL,
             goal_coaching_avoid=GOAL_COACHING_AVOID,
+            goal_coaching_recovery=GOAL_COACHING_RECOVERY,
+            offscreen_outcomes=OFFSCREEN_OUTCOME_TEMPLATES,
         ),
         Locale.RUSSIAN: ActorPrompts(
             system_dialogue=ACTOR_SYSTEM_DIALOGUE_RU,
@@ -265,6 +313,8 @@ get_actor_prompts = make_locale_lookup(
             goal_coaching_hostile=GOAL_COACHING_HOSTILE_RU,
             goal_coaching_social=GOAL_COACHING_SOCIAL_RU,
             goal_coaching_avoid=GOAL_COACHING_AVOID_RU,
+            goal_coaching_recovery=GOAL_COACHING_RECOVERY_RU,
+            offscreen_outcomes=OFFSCREEN_OUTCOME_TEMPLATES_RU,
         ),
     }
 )
