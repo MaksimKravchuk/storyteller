@@ -8,7 +8,7 @@ import allure
 import pytest
 
 from cast.dice import ContestOutcome, ContestRoll, ContestType
-from cast.npc_background_tick import NPCBackgroundTicker
+from cast.npc_background_tick import NPCBackgroundTicker, _is_eligible
 from models.goal import Goal, GoalKind, GoalStatus, OffSceneOutcome, OffSceneOutcomeKind
 from models.location import Location
 from models.npc_card import NPCCard
@@ -152,6 +152,16 @@ class TestNPCBackgroundTicker:
 class TestOffSceneNonKillResolvers:
     """PURSUE / ACQUIRE / REST resolve deterministically off-scene (no LLM, no dice)."""
 
+    @pytest.mark.parametrize("goal_kind", [GoalKind.PURSUE, GoalKind.ACQUIRE, GoalKind.REST])
+    @allure.story("Eligibility")
+    @allure.title("_is_eligible accepts every non-KILL goal kind with a deterministic resolver")
+    def test_is_eligible_accepts_resolved_non_kill_goal_kinds(self, goal_kind: GoalKind) -> None:
+        state, actor, _, _ = make_actor_target_state()
+        actor.life_goal = Goal(kind=goal_kind, description="resolved off-scene")
+        _strand_actor_alone(state, actor)
+
+        assert _is_eligible(actor, set()) is True
+
     @pytest.mark.asyncio
     @allure.story("PURSUE")
     @allure.title("PURSUE goal-holder co-located with quarry stamps a 'caught up' outcome")
@@ -271,6 +281,31 @@ class TestOffSceneNonKillResolvers:
         await ticker.tick(hours_advanced=8.0)
 
         assert actor.life_goal.turns_pursued == 1
+
+    @pytest.mark.asyncio
+    @allure.story("Cost")
+    @allure.title("Background ticking does not route deterministic resolvers through an LLM client")
+    async def test_non_kill_background_tick_makes_no_llm_calls(self) -> None:
+        state, actor, target, _ = make_actor_target_state()
+        actor.life_goal = Goal(kind=GoalKind.PURSUE, description="shadow Marcus", target_uuid=target.uuid)
+        target.life_goal = Goal(kind=GoalKind.ACQUIRE, description="the senator's ledger")
+        _move_actor_offscene(state, actor, target)
+        memory = RecordingMemoryManager()
+
+        ticker = NPCBackgroundTicker(state, memory)
+        with patch(
+            "llm.base_client.BaseLLMClient.send_message",
+            side_effect=AssertionError("background tick must not call an LLM"),
+        ):
+            await ticker.tick(hours_advanced=8.0)
+
+        assert actor.life_goal.last_outcome == OffSceneOutcome(
+            kind=OffSceneOutcomeKind.PURSUE_CAUGHT_UP, detail="Marcus"
+        )
+        assert target.life_goal.last_outcome == OffSceneOutcome(
+            kind=OffSceneOutcomeKind.ACQUIRE_PROGRESS, detail="the senator's ledger"
+        )
+        assert memory.calls == []
 
     @pytest.mark.asyncio
     @allure.story("Eligibility")
