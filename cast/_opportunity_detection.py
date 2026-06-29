@@ -90,10 +90,9 @@ def name_from_knowledge(
     query_engine = KnowledgeQueryEngine(game_state.knowledge_graph)
     knowledge_filter = query_engine.build_npc_filter(npc)
     for knowledge_node in query_engine.query(knowledge_filter):
-        knowledge_text = knowledge_node.text
-        if not keyword_re.search(knowledge_text):
+        if not keyword_re.search(knowledge_node.text):
             continue
-        name = _names_in_text(co_located_names, knowledge_text)
+        name = _names_in_text(co_located_names, knowledge_node.text)
         if name is not None:
             return name
     return None
