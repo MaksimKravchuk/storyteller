@@ -292,10 +292,12 @@ class TestOffSceneNonKillResolvers:
         _move_actor_offscene(state, actor, target)
         memory = RecordingMemoryManager()
 
+        no_llm = AssertionError("background tick must not call an LLM")
         ticker = NPCBackgroundTicker(state, memory)
-        with patch(
-            "llm.base_client.BaseLLMClient.send_message",
-            side_effect=AssertionError("background tick must not call an LLM"),
+        with (
+            patch("llm.factory.create_llm_client", side_effect=no_llm),
+            patch("llm.openai_client.OpenAIClient.send_message", side_effect=no_llm),
+            patch("llm.anthropic_client.AnthropicClient.send_message", side_effect=no_llm),
         ):
             await ticker.tick(hours_advanced=8.0)
 
