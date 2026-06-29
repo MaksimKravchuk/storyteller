@@ -88,10 +88,15 @@ def name_from_knowledge(
     if not co_located_names:
         return None
     query_engine = KnowledgeQueryEngine(game_state.knowledge_graph)
-    knowledge_text = query_engine.get_context_for_npc(npc)
-    if not knowledge_text or not keyword_re.search(knowledge_text):
-        return None
-    return _names_in_text(co_located_names, knowledge_text)
+    knowledge_filter = query_engine.build_npc_filter(npc)
+    for knowledge_node in query_engine.query(knowledge_filter):
+        knowledge_text = knowledge_node.text
+        if not keyword_re.search(knowledge_text):
+            continue
+        name = _names_in_text(co_located_names, knowledge_text)
+        if name is not None:
+            return name
+    return None
 
 
 def _names_in_text(names: list[str], text: str) -> str | None:

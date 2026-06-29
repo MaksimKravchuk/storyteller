@@ -550,6 +550,21 @@ class TestBuildTurnPromptOpportunityWindow:
         assert "Marcus" in prompt
 
     @allure.story("Opportunity window")
+    @allure.title("Violent keyword and co-located NPC name must co-occur in the same fact")
+    def test_knowledge_keyword_and_name_must_co_occur_in_same_fact(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        _place_both(gs, brutus, marcus)
+        _plot_knowledge(gs, brutus.uuid, "Brutus intends to kill an unnamed rival today.")
+        _plot_knowledge(gs, brutus.uuid, "Marcus is buying olives in the forum.")
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" not in prompt
+        assert "Most turns are routine" in prompt
+
+    @allure.story("Opportunity window")
     @allure.title("Violent knowledge naming an absent NPC does not fire the clause")
     def test_knowledge_about_absent_npc_does_not_fire(self):
         gs = _make_gs()
@@ -664,6 +679,22 @@ class TestBuildTurnPromptPositiveOpportunity:
         assert _POSITIVE_MARKER in prompt
         assert _TACTICAL_CHOICE not in prompt
         assert "Livia" in prompt
+
+    @allure.story("Positive opportunity")
+    @allure.title("Positive keyword and co-located NPC name must co-occur in the same fact")
+    def test_positive_knowledge_keyword_and_name_must_co_occur_in_same_fact(self):
+        gs = _make_gs()
+        drusilla = _make_npc(_NPC_UUID_A, "Drusilla")
+        livia = _make_npc(_NPC_UUID_B, "Livia")
+        _place_both(gs, drusilla, livia)
+        _plot_knowledge(gs, drusilla.uuid, "Drusilla wants to help someone at the dye shop.")
+        _plot_knowledge(gs, drusilla.uuid, "Livia is waiting beside the fountain.")
+
+        prompt = npc_turn_mod._build_turn_prompt(drusilla, "Player waits.", gs)
+
+        assert _POSITIVE_MARKER not in prompt
+        assert "OPPORTUNITY:" not in prompt
+        assert "Most turns are routine" in prompt
 
     @allure.story("Positive opportunity")
     @allure.title("FRIEND below the +2 threshold does not fire (mirror of the hostile -2 boundary)")
