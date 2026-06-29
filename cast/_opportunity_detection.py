@@ -18,13 +18,48 @@ from models.npc_card import NPCCard
 from models.relationship import Relationship, RelationshipKind
 from models.scene import Scene
 
-KNOWLEDGE_VIOLENCE_KEYWORDS: frozenset[str] = frozenset(("kill", "murder", "harm", "wound"))
+KNOWLEDGE_VIOLENCE_KEYWORDS: frozenset[str] = frozenset(
+    (
+        "kill",
+        "murder",
+        "harm",
+        "wound",
+        "атаковать",
+        "вред",
+        "напасть",
+        "ранить",
+        "убивать",
+        "убийство",
+        "убить",
+        "убью",
+        "убьет",
+        "убьёт",
+    )
+)
 # Positive-intent stems. Cover every social GoalKind the generator and
 # Chronicler can advertise (befriend, court, gossip, trade, help, warn,
 # ask) plus a few neutral helpers (assist, aid, share, support) so a
 # knowledge fact phrased around any of them can surface an opportunity.
 KNOWLEDGE_POSITIVE_KEYWORDS: frozenset[str] = frozenset(
-    ("help", "assist", "aid", "befriend", "court", "gossip", "trade", "warn", "ask", "share", "support"),
+    (
+        "help",
+        "assist",
+        "aid",
+        "befriend",
+        "court",
+        "gossip",
+        "trade",
+        "warn",
+        "ask",
+        "share",
+        "support",
+        "дружить",
+        "помогать",
+        "помочь",
+        "предупредить",
+        "спросить",
+        "торговать",
+    ),
 )
 POSITIVE_RELATIONSHIP_KINDS: frozenset[RelationshipKind] = frozenset(
     (RelationshipKind.FRIEND, RelationshipKind.ALLY, RelationshipKind.KIN),
@@ -36,13 +71,16 @@ TargetResolver = Callable[[Relationship, "set[str]", GameState], "str | None"]
 
 
 def _keyword_regex(keywords: frozenset[str]) -> re.Pattern[str]:
-    """Compile a word-boundary alternation so keywords match only as whole tokens.
+    """Compile a Unicode-aware token alternation for whole-token keywords.
 
-    The surrounding ``[^a-zA-Z]``/anchor guards stop substring false
-    positives (e.g. "kill" inside "skillful", "aid" inside "maiden").
+    The negative letter guards stop substring false positives in English and
+    Cyrillic text (e.g. "kill" inside "skillful", "aid" inside "maiden").
     """
+    ordered_keywords = sorted(keywords, key=len, reverse=True)
+    escaped_keywords = [re.escape(keyword) for keyword in ordered_keywords]
+    alternation = "|".join(escaped_keywords)
     return re.compile(
-        r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)".format("|".join(keywords)),
+        rf"(?<![^\W\d_])(?:{alternation})(?![^\W\d_])",
         re.IGNORECASE,
     )
 
@@ -89,9 +127,14 @@ def name_from_knowledge(
         return None
     query_engine = KnowledgeQueryEngine(game_state.knowledge_graph)
     knowledge_text = query_engine.get_context_for_npc(npc)
-    if not knowledge_text or not keyword_re.search(knowledge_text):
+    if not knowledge_text:
         return None
-    return _names_in_text(co_located_names, knowledge_text)
+    for fact_text in knowledge_text.splitlines():
+        if keyword_re.search(fact_text):
+            name = _names_in_text(co_located_names, fact_text)
+            if name is not None:
+                return name
+    return None
 
 
 def _names_in_text(names: list[str], text: str) -> str | None:
@@ -99,7 +142,7 @@ def _names_in_text(names: list[str], text: str) -> str | None:
     for candidate in names:
         if not candidate:
             continue
-        pattern = r"(?:^|[^a-zA-Z])(?:{0})(?:[^a-zA-Z]|$)".format(re.escape(candidate))
+        pattern = rf"(?<![^\W\d_])(?:{re.escape(candidate)})(?![^\W\d_])"
         if re.search(pattern, text, re.IGNORECASE):
             return candidate
     return None

@@ -566,6 +566,36 @@ class TestBuildTurnPromptOpportunityWindow:
         assert "Most turns are routine" in prompt
 
     @allure.story("Opportunity window")
+    @allure.title("Knowledge keyword and co-located NPC name must share a fact")
+    def test_knowledge_keyword_and_name_must_share_fact(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        _place_both(gs, brutus, marcus)
+        _plot_knowledge(gs, brutus.uuid, "Brutus intends to kill an unnamed rival today.")
+        _plot_knowledge(gs, brutus.uuid, "Marcus is carrying bread near the well.")
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" not in prompt
+        assert "Most turns are routine" in prompt
+
+    @allure.story("Opportunity window")
+    @allure.title("Russian violent knowledge naming a co-located NPC fires the hostile clause")
+    def test_russian_violent_knowledge_keyword_fires_hostile_clause(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        _place_both(gs, brutus, marcus)
+        _plot_knowledge(gs, brutus.uuid, "Брут хочет убить Marcus сегодня.")
+
+        prompt = npc_turn_mod._build_turn_prompt(brutus, "Player waits.", gs)
+
+        assert "OPPORTUNITY:" in prompt
+        assert "TACTICAL CHOICE:" in prompt
+        assert "Marcus" in prompt
+
+    @allure.story("Opportunity window")
     @allure.title("Label containing 'kill' as a substring of 'skillful' does not fire on its own")
     def test_neutral_relationship_does_not_fire(self):
         gs = _make_gs()
@@ -658,6 +688,21 @@ class TestBuildTurnPromptPositiveOpportunity:
         livia = _make_npc(_NPC_UUID_B, "Livia")
         _place_both(gs, drusilla, livia)
         _plot_knowledge(gs, drusilla.uuid, knowledge_text)
+
+        prompt = npc_turn_mod._build_turn_prompt(drusilla, "Player waits.", gs)
+
+        assert _POSITIVE_MARKER in prompt
+        assert _TACTICAL_CHOICE not in prompt
+        assert "Livia" in prompt
+
+    @allure.story("Positive opportunity")
+    @allure.title("Russian positive keyword naming a co-located NPC fires the positive clause")
+    def test_russian_positive_keyword_fires(self):
+        gs = _make_gs()
+        drusilla = _make_npc(_NPC_UUID_A, "Drusilla")
+        livia = _make_npc(_NPC_UUID_B, "Livia")
+        _place_both(gs, drusilla, livia)
+        _plot_knowledge(gs, drusilla.uuid, "Друзилла хочет помочь Livia найти брата.")
 
         prompt = npc_turn_mod._build_turn_prompt(drusilla, "Player waits.", gs)
 
