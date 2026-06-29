@@ -858,6 +858,44 @@ class TestBuildTurnPromptOpportunityWindowIntegration:
         marcus_input = marcus_actor.execute.await_args.kwargs["input_data"]
         assert "OPPORTUNITY:" not in marcus_input
 
+    @allure.story("Positive opportunity")
+    @allure.title("Positive FRIEND/ALLY/KIN agenda reaches Actor.execute input_data via the resolver path")
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", [_RK.FRIEND, _RK.ALLY, _RK.KIN])
+    async def test_positive_relationship_agenda_flows_into_actor_input(self, kind):
+        """Consumer seam for positive situated agendas.
+
+        The NPC-turn producer builds FRIEND/ALLY/KIN opportunity clauses, but
+        the Actor only acts on them if the resolver passes that positive agenda
+        through as ``Actor.execute(input_data=...)``. Keep the clause readable as
+        a non-hostile social cue: it should name the target, suggest concrete
+        positive actions, and avoid routine or combat-only coaching.
+        """
+        gs = _make_gs()
+        drusilla = _make_npc(_NPC_UUID_A, "Drusilla")
+        livia = _make_npc(_NPC_UUID_B, "Livia")
+        drusilla.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=kind, intensity=3)]
+        _place_both(gs, drusilla, livia)
+
+        drusilla_actor = _make_actor(_talk_response("Livia"))
+        livia_actor = _make_actor(_idle_response("Livia"))
+        resolver = NPCTurnResolver(
+            game_state=gs,
+            actors={_NPC_UUID_A: drusilla_actor, _NPC_UUID_B: livia_actor},
+        )
+
+        await resolver.resolve_npc_turns("Player waits.")
+
+        drusilla_input = drusilla_actor.execute.await_args.kwargs["input_data"]
+        assert _POSITIVE_MARKER in drusilla_input
+        assert "Livia" in drusilla_input
+        assert "offer help" in drusilla_input
+        assert "warn them of a danger" in drusilla_input
+        assert "never force" in drusilla_input
+        assert "Most turns are routine" not in drusilla_input
+        assert _HOSTILE_MARKER not in drusilla_input
+        assert _TACTICAL_CHOICE not in drusilla_input
+
 
 @allure.epic("NPC Interaction")
 @allure.feature("NPC autonomous turn — player utterance")
