@@ -613,6 +613,80 @@ _NPC_UUID_C = make_uuid("npc-c")
 _POSITIVE_MARKER = "standing positive bond"
 _HOSTILE_MARKER = "standing hostile intent"
 _TACTICAL_CHOICE = "TACTICAL CHOICE:"
+_ROUTINE_NUDGE = "Most turns are routine"
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC autonomous turn — positive opportunity window")
+class TestNPCOpportunityClausePositiveRelationships:
+    """Direct unit coverage for ``npc_opportunity.get_opportunity_clause``.
+
+    Prompt-level tests prove the clause reaches the Actor input; these tests
+    pin the agenda detector itself so FRIEND/ALLY/KIN polarity cannot regress
+    back to the older hostile-only path.
+    """
+
+    @allure.story("Positive opportunity")
+    @allure.title("FRIEND, ALLY, and KIN relationships each produce a non-combat agenda clause")
+    @pytest.mark.parametrize("kind", [_RK.FRIEND, _RK.ALLY, _RK.KIN])
+    def test_positive_relationship_kinds_return_actionable_non_combat_clause(self, kind):
+        gs = _make_gs()
+        drusilla = _make_npc(_NPC_UUID_A, "Drusilla")
+        livia = _make_npc(_NPC_UUID_B, "Livia")
+        drusilla.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=kind, intensity=2)]
+        _place_both(gs, drusilla, livia)
+
+        clause = _npo_mod.get_opportunity_clause(drusilla, gs)
+
+        assert clause is not None
+        assert clause.is_hostile is False
+        assert _POSITIVE_MARKER in clause.text
+        assert "Livia" in clause.text
+        assert "offer help" in clause.text
+        assert "propose a trade" in clause.text
+        assert "warn them of a danger" in clause.text
+        assert "ATTACK" not in clause.text
+        assert "STEALTH" not in clause.text
+
+    @allure.story("Positive opportunity")
+    @allure.title("ENEMY relationship still returns the hostile combat agenda")
+    def test_enemy_relationship_keeps_hostile_combat_clause(self):
+        gs = _make_gs()
+        brutus = _make_npc(_NPC_UUID_A, "Brutus")
+        marcus = _make_npc(_NPC_UUID_B, "Marcus")
+        brutus.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=_RK.ENEMY, intensity=-2)]
+        _place_both(gs, brutus, marcus)
+
+        clause = _npo_mod.get_opportunity_clause(brutus, gs)
+
+        assert clause is not None
+        assert clause.is_hostile is True
+        assert _HOSTILE_MARKER in clause.text
+        assert "Marcus" in clause.text
+        assert "ATTACK directly" in clause.text
+
+    @allure.story("Positive opportunity")
+    @allure.title("Routine nudge is suppressed for every active situated relationship agenda")
+    @pytest.mark.parametrize(
+        ("kind", "intensity", "marker"),
+        [
+            (_RK.FRIEND, 2, _POSITIVE_MARKER),
+            (_RK.ALLY, 2, _POSITIVE_MARKER),
+            (_RK.KIN, 2, _POSITIVE_MARKER),
+            (_RK.ENEMY, -2, _HOSTILE_MARKER),
+        ],
+    )
+    def test_active_relationship_agenda_suppresses_routine_nudge(self, kind, intensity: int, marker: str):
+        gs = _make_gs()
+        actor = _make_npc(_NPC_UUID_A, "Actor")
+        target = _make_npc(_NPC_UUID_B, "Target")
+        actor.relationships = [_Rel(target_uuid=str(_NPC_UUID_B), kind=kind, intensity=intensity)]
+        _place_both(gs, actor, target)
+
+        prompt = npc_turn_mod._build_turn_prompt(actor, "Player waits.", gs)
+
+        assert marker in prompt
+        assert _ROUTINE_NUDGE not in prompt
 
 
 @allure.epic("NPC Interaction")
