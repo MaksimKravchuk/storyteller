@@ -1,0 +1,23 @@
+# Dockerfile.test needs the test suite inside the image so Fly can run pytest.
+# Keep heavyweight/generated/local-secret paths out of the build context.
+.git
+.gitignore
+
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+.vscode/
+.DS_Store
+
+.env
+allure-results/
+
+.claude/
