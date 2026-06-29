@@ -12,6 +12,11 @@ _DEFAULT_CALIBRATE_ITERATIONS = 5
 def register_extra_subcommands(sub: argparse._SubParsersAction) -> None:
     """Register pin, baselines, calibrate, reliability-report, narration-diff, pr-comment subcommands."""
     _register_pin_parser(sub)
+    golden_cmd = sub.add_parser(
+        "golden-update",
+        help="Capture a scenario's narrator output as benchmarks/golden/<scenario>.json.",
+    )
+    golden_cmd.add_argument("scenario_id", type=str, help="Scenario id to update golden narration for.")
     _register_baselines_parser(sub)
     _register_calibrate_parser(sub)
     _register_reliability_report_parser(sub)
