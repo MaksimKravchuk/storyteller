@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import CheckConstraint
 from sqlalchemy import (
     Boolean,
     Column,
@@ -19,6 +20,8 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
+
+from defaults.entitlements import USER_PLAN_ADMIN, USER_PLAN_FRIEND_BETA
 
 metadata = MetaData()
 
@@ -77,6 +80,10 @@ accounts = Table(
     Column("is_admin", Boolean, nullable=False, server_default="false"),
     Column(_COL_CREATED_AT, _TZ_TS, nullable=False, server_default=func.now()),
     Column("updated_at", _TZ_TS, nullable=False, server_default=func.now()),
+    CheckConstraint(
+        f"plan IN ('{USER_PLAN_FRIEND_BETA}', '{USER_PLAN_ADMIN}')",
+        name="ck_accounts_plan_allowed",
+    ),
     UniqueConstraint("supabase_user_id", name="uq_accounts_supabase_user_id"),
 )
 

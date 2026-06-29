@@ -10,7 +10,9 @@ import allure
 import pytest
 
 from config import Config
+from defaults.entitlements import USER_PLAN_ADMIN, USER_PLAN_FRIEND_BETA, quota_settings_for_plan
 from interfaces.web import service
+from interfaces.web.auth_models import PlayerFeedbackContext
 from interfaces.web.schemas import ActionRequest
 
 _PLAYER_ID = "11111111-1111-1111-1111-111111111111"
@@ -127,3 +129,57 @@ async def test_global_budget_blocks_action_before_resume() -> None:
 
     assert exc_info.value.reason == "global_budget_exhausted"
     resume_mock.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@allure.title("Friend beta plan uses configured quota settings")
+async def test_friend_beta_plan_uses_configured_quota_settings() -> None:
+    repo = _quota_repo()
+    repo.sessions.count_active_web.return_value = 2
+    cfg = Config(beta_max_active_games=2, beta_daily_turn_quota=7, beta_weekly_turn_quota=11)
+    quotas = quota_settings_for_plan(cfg, USER_PLAN_FRIEND_BETA)
+
+    with pytest.raises(service.BetaAccessDeniedError) as exc_info:
+        await service.start_game_for_player(
+            repo,
+            cfg,
+            service.StartGameParams(
+                player_id=_PLAYER_ID,
+                plan=USER_PLAN_FRIEND_BETA,
+                setting="Rome",
+                language="English",
+            ),
+        )
+
+    assert quotas.daily_turn_quota == 7
+    assert quotas.weekly_turn_quota == 11
+    assert quotas.max_active_games == 2
+    assert exc_info.value.reason == "max_active_games"
+    repo.sessions.create_web.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@allure.title("Admin plan bypasses per-user game and turn quotas")
+async def test_admin_plan_bypasses_per_user_quotas() -> None:
+    repo = _quota_repo()
+    repo.sessions.count_active_web.return_value = 99
+    repo.ai_logs.turn_count_for_user.return_value = 99
+    cfg = Config(beta_max_active_games=1, beta_daily_turn_quota=1, beta_weekly_turn_quota=1)
+    quotas = quota_settings_for_plan(cfg, USER_PLAN_ADMIN)
+
+    policy = service.beta_policy.BetaPolicy(repo, cfg)
+    await policy.ensure_active_game_quota(_PLAYER_ID, USER_PLAN_ADMIN)
+    await policy.ensure_turn_quota(_PLAYER_ID, USER_PLAN_ADMIN)
+
+    assert quotas.daily_turn_quota is None
+    assert quotas.weekly_turn_quota is None
+    assert quotas.max_active_games is None
+    repo.sessions.count_active_web.assert_not_awaited()
+    repo.ai_logs.turn_count_for_user.assert_not_awaited()
+
+
+@allure.title("Authenticated player context carries a deterministic default plan")
+def test_player_context_defaults_to_friend_beta_plan() -> None:
+    context = PlayerFeedbackContext(player_id=_PLAYER_ID, email=None)
+
+    assert context.plan == USER_PLAN_FRIEND_BETA

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from defaults.entitlements import DEFAULT_USER_PLAN
+
 
 @dataclass(frozen=True)
 class SupabaseClaims:
@@ -30,3 +32,4 @@ class PlayerFeedbackContext:
 
     player_id: str
     email: str | None
+    plan: str = DEFAULT_USER_PLAN

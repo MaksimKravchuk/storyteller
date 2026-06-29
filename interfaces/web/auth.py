@@ -12,6 +12,7 @@ from jwt import PyJWKClient
 
 from config import Config
 from interfaces.web.auth_models import AuthenticatedUser, SupabaseClaims
+from defaults.entitlements import normalize_user_plan
 from interfaces.web.errors import guard_account_query
 
 _AUTH_PREFIX = "Bearer "
@@ -101,6 +102,6 @@ def _authenticated_user(account: Mapping[str, Any], claims: SupabaseClaims) -> A
         account_id=str(account["id"]),
         supabase_user_id=str(account.get("supabase_user_id") or claims.sub),
         email=str(account.get("email") or claims.email).strip().lower(),
-        plan=str(account.get("plan") or "friend_beta"),
+        plan=normalize_user_plan(account.get("plan")),
         is_admin=bool(account.get("is_admin")),
     )

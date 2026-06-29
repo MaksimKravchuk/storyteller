@@ -8,11 +8,11 @@ from sqlalchemy import func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.tables import accounts, beta_invites
+from defaults.entitlements import DEFAULT_USER_PLAN
 
 _INVITED_STATUS = "invited"
 _ACCEPTED_STATUS = "accepted"
 _REVOKED_STATUS = "revoked"
-_DEFAULT_PLAN = "friend_beta"
 
 
 class AccountStore:
@@ -54,7 +54,7 @@ class AccountStore:
             .values(
                 supabase_user_id=str(supabase_user_id),
                 email=normalized,
-                plan=_DEFAULT_PLAN,
+                plan=DEFAULT_USER_PLAN,
             )
             .returning(accounts)
         )

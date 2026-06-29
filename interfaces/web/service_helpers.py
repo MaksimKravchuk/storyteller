@@ -20,6 +20,7 @@ from interfaces.web.schemas_library import GameSummary
 from interfaces.web.transcript import build_transcript, player_visible_turn_count
 
 _DEFAULT_LANGUAGE = "English"
+_DEFAULT_USER_PLAN = "friend_beta"
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,7 @@ class StartGameParams:
     player_id: str
     setting: str
     language: str
+    plan: str = _DEFAULT_USER_PLAN
     character: CharacterCreationInput | None = None
 
 

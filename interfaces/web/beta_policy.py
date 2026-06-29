@@ -8,6 +8,7 @@ from decimal import Decimal, InvalidOperation
 from config import Config
 from costs.reports import build_cost_summary
 from db.repository import GameRepository
+from defaults.entitlements import DEFAULT_USER_PLAN, PlanQuotaSettings, quota_settings_for_plan
 
 
 class _BetaLimits:
@@ -55,25 +56,29 @@ class BetaPolicy:
                 reason="global_budget_exhausted",
             )
 
-    async def ensure_active_game_quota(self, player_id: str) -> None:
+    async def ensure_active_game_quota(self, player_id: str, plan: str = DEFAULT_USER_PLAN) -> None:
         """Block new games once a player reaches the active-game quota."""
         if _is_mock_config(self._cfg):
             return
+        quotas = quota_settings_for_plan(self._cfg, plan)
+        if quotas.max_active_games is None:
+            return
         active_games = await self._repo.sessions.count_active_web(player_id)
-        if active_games >= self._cfg.beta_max_active_games:
+        if active_games >= quotas.max_active_games:
             raise BetaAccessDeniedError(
                 _BetaLimits.friendly_quota_message,
                 reason="max_active_games",
             )
 
-    async def ensure_turn_quota(self, player_id: str) -> None:
+    async def ensure_turn_quota(self, player_id: str, plan: str = DEFAULT_USER_PLAN) -> None:
         """Block player turns once daily or weekly turn quotas are exhausted."""
         if _is_mock_config(self._cfg):
             return
+        quotas = quota_settings_for_plan(self._cfg, plan)
         now = datetime.now(UTC)
         tomorrow = now + timedelta(seconds=_BetaLimits.seconds_per_day)
-        await self._ensure_daily_quota(player_id, now, tomorrow)
-        await self._ensure_weekly_quota(player_id, now, tomorrow)
+        await self._ensure_daily_quota(player_id, now, tomorrow, quotas)
+        await self._ensure_weekly_quota(player_id, now, tomorrow, quotas)
 
     async def _estimated_total_spend(self) -> Decimal:
         """Return current estimated beta spend from AI log aggregates."""
@@ -81,27 +86,43 @@ class BetaPolicy:
         summary = build_cost_summary(rows, self._cfg)
         return Decimal(summary["total"]["estimated_cost_usd"])
 
-    async def _ensure_daily_quota(self, player_id: str, now: datetime, end_at: datetime) -> None:
+    async def _ensure_daily_quota(
+        self,
+        player_id: str,
+        now: datetime,
+        end_at: datetime,
+        quotas: PlanQuotaSettings,
+    ) -> None:
         """Block a player who has reached the daily turn quota."""
+        if quotas.daily_turn_quota is None:
+            return
         daily = await self._repo.ai_logs.turn_count_for_user(
             player_id,
             start_at=_period_start(now, 1),
             end_at=end_at,
         )
-        if daily >= self._cfg.beta_daily_turn_quota:
+        if daily >= quotas.daily_turn_quota:
             raise BetaAccessDeniedError(
                 _BetaLimits.friendly_quota_message,
                 reason="daily_turn_quota",
             )
 
-    async def _ensure_weekly_quota(self, player_id: str, now: datetime, end_at: datetime) -> None:
+    async def _ensure_weekly_quota(
+        self,
+        player_id: str,
+        now: datetime,
+        end_at: datetime,
+        quotas: PlanQuotaSettings,
+    ) -> None:
         """Block a player who has reached the weekly turn quota."""
+        if quotas.weekly_turn_quota is None:
+            return
         weekly = await self._repo.ai_logs.turn_count_for_user(
             player_id,
             start_at=_period_start(now, _BetaLimits.days_per_week),
             end_at=end_at,
         )
-        if weekly >= self._cfg.beta_weekly_turn_quota:
+        if weekly >= quotas.weekly_turn_quota:
             raise BetaAccessDeniedError(
                 _BetaLimits.friendly_quota_message,
                 reason="weekly_turn_quota",

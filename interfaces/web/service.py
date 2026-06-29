@@ -83,7 +83,7 @@ async def _prepare_started_engine(
     """Run beta checks, create a session, and return its engine."""
     policy = beta_policy.BetaPolicy(repo, cfg)
     await policy.ensure_open()
-    await policy.ensure_active_game_quota(start_request.player_id)
+    await policy.ensure_active_game_quota(start_request.player_id, start_request.plan)
     session_row = await repo.sessions.create_web(start_request.player_id)
     session_id = session_row["id"]
     engine = await begin_session(repo, cfg, session_id, start_request.language)
@@ -132,7 +132,7 @@ async def _act_and_persist(*runtime_args: Any, user_id: str | None = None) -> Ac
 async def process_turn_for_player(
     repo: GameRepository,
     cfg: Config,
-    player_id: str,
+    player_id: Any,
     game_id: str,
     request: ActionRequest,
 ) -> ActionResponse:
@@ -146,14 +146,17 @@ async def process_turn_for_player(
     Raises ``GameNotFoundError`` if the player has no game or the supplied
     ``game_id`` doesn't match — both yield 404 to avoid leaking existence.
     """
-    async with quota_locks.player_lock(player_id):
-        policy = beta_policy.BetaPolicy(repo, cfg)
-        await policy.ensure_open()
-        await policy.ensure_turn_quota(player_id)
-        session_id, language = await owned_session_context(repo, player_id, game_id)
+    player_identifier = player_id if isinstance(player_id, str) else str(player_id.player_id)
+    async with quota_locks.player_lock(player_identifier):
+        await beta_policy.BetaPolicy(repo, cfg).ensure_open()
+        await beta_policy.BetaPolicy(repo, cfg).ensure_turn_quota(
+            player_identifier,
+            "friend_beta" if isinstance(player_id, str) else str(player_id.plan),
+        )
+        session_id, language = await owned_session_context(repo, player_identifier, game_id)
         engine = await resume_session(repo, cfg, session_id, language)
         if engine is None:
-            raise GameNotFoundError(player_id)
+            raise GameNotFoundError(player_identifier)
 
         if request.gesture is None:
             # ActionRequest guarantees a non-blank action whenever no gesture is set.
@@ -167,5 +170,5 @@ async def process_turn_for_player(
             engine=engine,
             action=phrase,
             language=language,
-            user_id=player_id,
+            user_id=player_identifier,
         ).run()
