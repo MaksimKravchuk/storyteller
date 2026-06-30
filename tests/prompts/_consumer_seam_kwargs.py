@@ -180,6 +180,10 @@ def director_system_kwargs(game_state: GameState, language: str) -> dict[str, st
     return {
         "setting_name": game_state.setting.name,
         "time_period": game_state.setting.time_period,
+        "setting_technologies": ", ".join(game_state.setting.technologies)
+        if game_state.setting.technologies
+        else "unknown",
+        "social_structure": game_state.setting.social_structure or "unknown",
         "scene_description": scene.description,
         "npcs_present": director_context.format_npcs_present(scene, game_state),
         "points_of_interest": director_context.format_pois(scene),

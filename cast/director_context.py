@@ -10,6 +10,7 @@ from cast.player_context import format_player_appearance, format_player_inventor
 from models.game_state import GameState
 
 _SCENE_SUMMARY_CHARS = 500
+_UNKNOWN_SETTING_DETAIL = "unknown"
 
 _KEY_PLAYER_ACTION = "player_action"
 _KEY_ACTION_TYPE = "action_type"
@@ -91,9 +92,12 @@ class ContextFormatter:
         """Update system prompt variables from the current game state."""
         scene = self._gs.current_scene
         player = self._gs.player
+        technologies = self._gs.setting.technologies
         context_vars = dict(
             setting_name=self._gs.setting.name,
             time_period=self._gs.setting.time_period,
+            setting_technologies=", ".join(technologies) if technologies else _UNKNOWN_SETTING_DETAIL,
+            social_structure=self._gs.setting.social_structure or _UNKNOWN_SETTING_DETAIL,
             scene_description=(scene.description if scene else "No scene set yet"),
             npcs_present=format_npcs_present(scene, self._gs),
             points_of_interest=format_pois(scene),

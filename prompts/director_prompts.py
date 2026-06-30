@@ -28,6 +28,16 @@ DIRECTOR_SYSTEM = PromptTemplate(
             required_vars=["setting_name", "time_period"],
         ),
         PromptSection(
+            name="setting_worldview",
+            template=(
+                "Setting worldview:\n"
+                "- Time period: {time_period}\n"
+                "- Technologies: {setting_technologies}\n"
+                "- Social structure: {social_structure}"
+            ),
+            required_vars=["time_period", "setting_technologies", "social_structure"],
+        ),
+        PromptSection(
             name="player_character",
             template=(
                 "The player character:\n"

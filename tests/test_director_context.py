@@ -32,7 +32,14 @@ class _CapturingPerformer:
 
 def _make_game_state_with_npcs(npc_list: list[NPCCard]) -> GameState:
     gs = GameState(
-        setting=Setting(name="Rome", time_period="1 AD", region="Italy", summary=""),
+        setting=Setting(
+            name="Rome",
+            time_period="1 AD",
+            region="Italy",
+            summary="",
+            technologies=["aqueducts", "wax tablets"],
+            social_structure="senators, equites, plebs, freedmen, and enslaved people",
+        ),
         knowledge_graph=KnowledgeGraph(),
     )
     for npc in npc_list:
@@ -224,3 +231,13 @@ class TestPlayerCharacterContext:
 
         assert performer.kwargs["player_appearance"] == "grey hoodie"
         assert performer.kwargs["player_inventory"] == "phone, keys"
+
+    @allure.title("ContextFormatter.sync_context exposes technology and social-structure setting context")
+    def test_sync_context_sets_setting_worldview_vars(self):
+        gs = _make_game_state_with_npcs([])
+
+        performer = _CapturingPerformer()
+        ContextFormatter(gs).sync_context(performer)
+
+        assert performer.kwargs["setting_technologies"] == "aqueducts, wax tablets"
+        assert performer.kwargs["social_structure"] == "senators, equites, plebs, freedmen, and enslaved people"

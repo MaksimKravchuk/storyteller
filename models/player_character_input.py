@@ -22,3 +22,4 @@ class PlayerCharacterInput(BaseModel):
     name: str = ""
     appearance: str = ""
     inventory: list[str] = []
+    origin_era: str = ""

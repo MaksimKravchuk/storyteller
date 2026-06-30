@@ -47,6 +47,7 @@ class PlayerState(StorytellerBase):
     location_id: UUID | None = None
     inventory: list[str] = []
     appearance: str = ""
+    origin_era: str = ""
     physical_status: str = "healthy"
     known_npcs: set[UUID] = Field(default_factory=set)
     player_event_log: list[str] = []
@@ -58,7 +59,6 @@ class GameState(StorytellerBase):
 
     Every agent receives a reference to the same ``GameState`` so they
     can read (and, where appropriate, update) the world.
-
     ``arbitrary_types_allowed`` is required because :class:`KnowledgeGraph`
     is a NetworkX-backed object with no pydantic schema.
     """
