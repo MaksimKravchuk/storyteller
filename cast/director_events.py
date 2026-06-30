@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-import asyncio
 from uuid import UUID
 
-from cast.schemas.chronicler_response import ScheduledEventDraft
+from cast._npc_social_events import process_remote_event_memories
+from cast.schemas.chronicler_response import ScheduledEventDraft, ScheduledEventEffectDraft
+from knowledge import memory as memory_mod
 from knowledge import salience as salience_presets
-from knowledge.memory import MemoryEvent, MemoryManager, MemorySlots
 from knowledge.node import KnowledgeScope
 from knowledge.rumor import propagate_rumors
 from models.game_state import GameState
-from timeline.event import GameEvent
+from timeline.event import EventEffect, GameEvent
 from timeline.event_manager import EventManager
 from timeline.time_costs import resolve_time_cost
 
@@ -23,7 +23,7 @@ class EventProcessor:
         self,
         game_state: GameState,
         event_manager: EventManager,
-        memory_manager: MemoryManager,
+        memory_manager: memory_mod.MemoryManager,
     ) -> None:
         self._gs = game_state
         self._event_mgr = event_manager
@@ -53,6 +53,7 @@ class EventProcessor:
                 location_id=draft.location_id,
                 scope=draft.scope,
                 on_complete_description=draft.on_complete_description,
+                effects=_effects_from_drafts(draft.effects),
             )
             scheduled_uuids.append(self._event_mgr.schedule(event))
         return scheduled_uuids
@@ -70,16 +71,14 @@ class EventProcessor:
         return local, remote
 
     async def process_remote_events(self, events: list[GameEvent]) -> None:
-        """Feed remote events into the memory system as rumours."""
-        await asyncio.gather(
-            *(self._memory_mgr.create_memory_from_event(self.build_memory_event(ev)) for ev in events),
-        )
+        """Feed remote events into memory, then apply social write-backs."""
+        await process_remote_event_memories(events, self._gs, self._memory_mgr, self.build_memory_event)
 
     def propagate_rumors_for_turn(self, events: list[GameEvent]) -> list[UUID]:
         """Fan completed CITY+ events out to non-witness NPCs in the same city."""
         return propagate_rumors(self._gs.knowledge_graph, self._gs, events)
 
-    def build_memory_event(self, ev: GameEvent) -> MemoryEvent:
+    def build_memory_event(self, ev: GameEvent) -> memory_mod.MemoryEvent:
         """Wrap a completed :class:`GameEvent` as a :class:`MemoryEvent`.
 
         Slots carry the event ``name`` as ``action`` and the
@@ -93,7 +92,7 @@ class EventProcessor:
         locations = self._gs.locations
         if ev.location_id is not None and ev.location_id in locations:
             witnesses = list(locations[ev.location_id].npcs_present)
-        return MemoryEvent(
+        return memory_mod.MemoryEvent(
             event_description=ev.on_complete_description or ev.name,
             witness_ids=witnesses,
             scope=scope,
@@ -116,9 +115,24 @@ def _scope_from_string(scope_str: str) -> KnowledgeScope:
     return scope_map.get(scope_str, KnowledgeScope.LOCAL)
 
 
-def _slots_from_event(ev: GameEvent) -> MemorySlots:
+def _effects_from_drafts(drafts: list[ScheduledEventEffectDraft]) -> list[EventEffect]:
+    return [
+        EventEffect(
+            effect_type=draft.effect_type,
+            target_id=str(draft.target_id),
+            effect_data={
+                "actor_id": str(draft.actor_id),
+                "target_id": str(draft.target_id),
+                "kind": draft.kind,
+            },
+        )
+        for draft in drafts
+    ]
+
+
+def _slots_from_event(ev: GameEvent) -> memory_mod.MemorySlots:
     description = ev.on_complete_description
-    return MemorySlots(
+    return memory_mod.MemorySlots(
         action=ev.name or None,
         outcome=description if description and description != ev.name else None,
     )

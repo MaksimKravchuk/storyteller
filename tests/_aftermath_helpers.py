@@ -39,6 +39,10 @@ class RecordingMemoryManager:
                 "salience": event.salience,
                 "slots": event.slots,
                 "subject_id": event.subject_id,
+                "tags": event.tags,
+                "valence": event.valence,
+                "charge_intensity": event.charge_intensity,
+                "charge_category": event.charge_category,
             },
         )
         return MemoryEventResult(canonical_id=None, all_ids=())

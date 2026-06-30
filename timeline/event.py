@@ -34,6 +34,9 @@ class EventEffect:
           {"location_id": str, "object_key": str, "state_description": str}
       - SPAWN_NPC:         {"npc_request": str}   (triggers NPC generator)
       - REMOVE_NPC:        {"npc_id": str}
+      - SOCIAL_MEMORY:
+          {"actor_id": str, "target_id": str, "kind": "harm" | "kindness"}
+          (handled by the Director's remote-event memory pass)
     """
 
     effect_type: str
