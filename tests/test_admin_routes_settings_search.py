@@ -55,7 +55,7 @@ def _patched(repo: AsyncMock):
 async def test_get_search_default() -> None:
     repo = _repo_with({})
     get_db_patch, repo_patch = _patched(repo)
-    async with TestClient(TestServer(_make_app(Config(openai_api_key="k")))) as client:
+    async with TestClient(TestServer(_make_app(Config(openai_api_key="k", tavily_api_key=None)))) as client:
         with get_db_patch as mock_get_db, repo_patch:
             _prime_get_db(mock_get_db)
             resp = await client.get(_API_SEARCH)

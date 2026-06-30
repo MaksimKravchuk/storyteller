@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+# Keep git available so tests and troubleshooting commands that inspect the
+# checkout SHA work the same way inside the Fly test machine as they do in CI.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install test dependencies in a cached layer.
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --group dev --extra openai --extra anthropic --no-install-project
+
+COPY . .
+
+# The Fly test app is a remotely reachable test executor. Keep the Machine
+# alive so GitHub Actions can run one-off pytest commands through fly ssh.
+CMD ["sleep", "infinity"]

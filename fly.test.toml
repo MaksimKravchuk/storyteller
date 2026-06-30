@@ -1,0 +1,20 @@
+# Dedicated Fly.io test-runner configuration.
+#
+# Do not point this at the production `storyteller-quest` app. GitHub Actions
+# passes the actual app name with `flyctl --app "$FLY_TEST_APP"` so forks and
+# preview environments can use their own Fly app without editing this file.
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile.test"
+
+[env]
+  PYTHONUNBUFFERED = "1"
+  UV_LINK_MODE = "copy"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+
+[deploy]
+  strategy = "immediate"
