@@ -17,7 +17,10 @@ MemoryEventBuilder = Callable[[GameEvent], MemoryEvent]
 
 
 def _resolve_social_effect(
-    effect: EventEffect, location_id: UUID | None, game_state: GameState
+    effect: EventEffect,
+    location_id: UUID | None,
+    source_event_id: UUID,
+    game_state: GameState,
 ) -> SocialMemoryEvent | None:
     actor_id = coerce_uuid(effect.effect_data.get("actor_id"))
     target_id = coerce_uuid(effect.effect_data.get("target_id", effect.target_id))
@@ -32,6 +35,7 @@ def _resolve_social_effect(
         target=target,
         kind=str(effect.effect_data.get("kind", "")),
         location_id=location_id,
+        source_event_id=source_event_id,
     )
 
 
@@ -40,10 +44,11 @@ async def _process_social_effect(
     location_id: UUID | None,
     game_state: GameState,
     memory_manager: MemoryManager,
+    source_event_id: UUID,
 ) -> None:
     if effect.effect_type.upper() != _SOCIAL_MEMORY_EFFECT:
         return
-    social_event = _resolve_social_effect(effect, location_id, game_state)
+    social_event = _resolve_social_effect(effect, location_id, source_event_id, game_state)
     if social_event is None:
         return
     await persist_social_memory_and_goal(memory_manager, social_event, game_state)
@@ -53,7 +58,7 @@ def _social_effect_writes(
     events: list[GameEvent], game_state: GameState, memory_manager: MemoryManager
 ) -> Iterator[Awaitable[None]]:
     return (
-        _process_social_effect(effect, ev.location_id, game_state, memory_manager)
+        _process_social_effect(effect, ev.location_id, game_state, memory_manager, ev.uuid)
         for ev in events
         for effect in ev.effects
     )

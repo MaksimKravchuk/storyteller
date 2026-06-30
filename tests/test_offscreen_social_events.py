@@ -10,7 +10,7 @@ import pytest
 
 from cast import _npc_social_events as npc_social_events, director_events
 from cast.schemas.chronicler_response import ScheduledEventDraft
-from knowledge import memory as memory_mod, node as node_mod, salience as salience_presets
+from knowledge import charge as charge_presets, memory as memory_mod, node as node_mod, salience as salience_presets
 from models import goal as goal_mod
 from tests._aftermath_helpers import RecordingMemoryManager, make_actor_target_state
 from timeline import event as event_mod, event_manager as event_manager_mod
@@ -66,8 +66,9 @@ class TestOffScreenSocialEvents:
             target_id=str(target.uuid),
             effect_data={"actor_id": str(actor.uuid), "target_id": str(target.uuid), "kind": "harm"},
         )
+        event = _remote_event(effect, location.uuid)
 
-        await _processor_with_memory(state, memory).process_remote_events([_remote_event(effect, location.uuid)])
+        await _processor_with_memory(state, memory).process_remote_events([event])
 
         assert len(memory.calls) == 2
         social_call = memory.calls[1]
@@ -75,6 +76,18 @@ class TestOffScreenSocialEvents:
         assert social_call["scope"] is node_mod.KnowledgeScope.LOCAL
         assert social_call["location_id"] == location.uuid
         assert social_call["salience"] == pytest.approx(salience_presets.RETALIATION)
+        assert social_call["valence"] == pytest.approx(charge_presets.RETALIATION.base_valence)
+        assert social_call["charge_intensity"] == pytest.approx(charge_presets.RETALIATION.base_intensity)
+        assert social_call["charge_category"] == charge_presets.RETALIATION.category
+        assert social_call["subject_id"] == actor.uuid
+        assert set(social_call["tags"]) == {
+            "social_memory",
+            "social_memory:harm",
+            "social_memory:grudge",
+            f"actor:{actor.uuid}",
+            f"target:{target.uuid}",
+            f"source_event:{event.uuid}",
+        }
         assert set(social_call["witness_ids"]) == {actor.uuid, target.uuid}
         assert target.life_goal is not None
         assert target.life_goal.kind is goal_mod.GoalKind.KILL

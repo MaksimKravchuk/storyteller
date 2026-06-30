@@ -63,6 +63,7 @@ class SocialMemoryEvent:
     target: NPCCard
     kind: str
     location_id: UUID | None = None
+    source_event_id: UUID | None = None
 
 
 def _location_id_for(event: SocialMemoryEvent, game_state: GameState) -> UUID | None:
@@ -101,6 +102,20 @@ def _goal_kind_for(event_kind: str) -> GoalKind | None:
         if isinstance(goal_kind, GoalKind):
             return goal_kind
     return None
+
+
+def _tags_for(event: SocialMemoryEvent) -> list[str]:
+    """Return durable identifiers for downstream social-memory queries."""
+    tags = [
+        "social_memory",
+        f"social_memory:{event.kind}",
+        f"social_memory:{_OUTCOME_BY_KIND[event.kind]}",
+        f"actor:{event.actor.uuid}",
+        f"target:{event.target.uuid}",
+    ]
+    if event.source_event_id is not None:
+        tags.append(f"source_event:{event.source_event_id}")
+    return tags
 
 
 def _spawn_follow_on_goal(event: SocialMemoryEvent) -> None:
@@ -146,6 +161,7 @@ async def persist_social_memory_and_goal(
             charge_intensity=charge.base_intensity,
             charge_category=charge.category,
             subject_id=event.actor.uuid,
+            tags=_tags_for(event),
             slots=MemorySlots(
                 subject=event.actor.name,
                 object=event.target.name,
