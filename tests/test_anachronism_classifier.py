@@ -13,7 +13,7 @@ from cast.schemas.anachronism import AnachronismAssessment
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.setting import Setting
-from prompts.anachronism_classifier import ANACHRONISM_CLASSIFIER_SYSTEM
+from prompts.anachronism_classifier import ANACHRONISM_CLASSIFIER_SYSTEM, get_anachronism_classifier_prompts
 
 _GAME_STATE = "game_state"
 _ORIGIN_ERA = "origin_era"
@@ -79,6 +79,23 @@ class TestAnachronismPrompt:
         assert all(identifier == identifier.lower() for identifier in SEED_CONCEPT_IDENTIFIERS)
         assert all(" " not in identifier for identifier in SEED_CONCEPT_IDENTIFIERS)
 
+    @allure.title("Russian prompt bundle renders localized classifier instructions")
+    def test_russian_prompt_bundle_renders_localized_sections(self) -> None:
+        prompts = get_anachronism_classifier_prompts("Russian")
+        rendered = prompts.system.render(
+            origin_era="современность",
+            setting_name="Древний Рим",
+            time_period="1 век н.э.",
+            setting_technologies="акведуки, восковые таблички",
+            social_structure="сенаторы и плебеи",
+            seed_concepts=", ".join(SEED_CONCEPT_IDENTIFIERS),
+        )
+
+        assert "МИРОВОЗЗРЕНИЕ" in rendered
+        assert "СЕТТИНГ" in rendered
+        assert "ДЕЙСТВИЕ" in rendered
+        assert "smartphone" in rendered
+
 
 @allure.epic("Narrative Delivery")
 @allure.feature("Anachronism classifier")
@@ -88,7 +105,8 @@ class TestAnachronismClassifier:
     @pytest.mark.asyncio
     async def test_no_origin_era_returns_neutral_without_llm(self) -> None:
         classifier = AnachronismClassifier(llm_client=AsyncMock())
-        classifier._send_json = AsyncMock()  # type: ignore[method-assign]
+        send_json = AsyncMock()
+        setattr(classifier, "_send_json", send_json)
 
         assessment = await classifier.execute(
             input_data="check the time on my phone",
@@ -96,7 +114,7 @@ class TestAnachronismClassifier:
         )
 
         assert assessment == AnachronismAssessment()
-        classifier._send_json.assert_not_called()  # type: ignore[attr-defined]
+        send_json.assert_not_called()
 
     @allure.title("Classifier can be invoked asynchronously and sends setting context to the LLM")
     @pytest.mark.asyncio
@@ -107,7 +125,8 @@ class TestAnachronismClassifier:
             perceived_rewrite="a glossy black talisman with no visible flame",
         )
         classifier = AnachronismClassifier(llm_client=AsyncMock())
-        classifier._send_json = AsyncMock(return_value=expected)  # type: ignore[method-assign]
+        send_json = AsyncMock(return_value=expected)
+        setattr(classifier, "_send_json", send_json)
 
         result = await classifier.execute(
             input_data="unlock my smartphone and show them the map",
@@ -119,8 +138,8 @@ class TestAnachronismClassifier:
         )
 
         assert result == expected
-        classifier._send_json.assert_awaited_once()  # type: ignore[attr-defined]
-        await_args = classifier._send_json.await_args  # type: ignore[attr-defined]
+        send_json.assert_awaited_once()
+        await_args = send_json.await_args
         assert await_args is not None
         prompt = await_args.args[0]
         assert "unlock my smartphone" in prompt

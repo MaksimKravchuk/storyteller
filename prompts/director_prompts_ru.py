@@ -22,6 +22,16 @@ DIRECTOR_SYSTEM_RU = PromptTemplate(
             required_vars=["setting_name", "time_period"],
         ),
         PromptSection(
+            name="setting_worldview",
+            template=(
+                "Мировоззрение сеттинга:\n"
+                "- Период: {time_period}\n"
+                "- Технологии: {setting_technologies}\n"
+                "- Социальная структура: {social_structure}"
+            ),
+            required_vars=["time_period", "setting_technologies", "social_structure"],
+        ),
+        PromptSection(
             name="player_character",
             template=(
                 "Персонаж игрока:\n"

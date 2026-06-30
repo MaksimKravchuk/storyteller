@@ -7,7 +7,7 @@ from typing import Any
 from cast.base_performer_class import BasePerformer
 from cast.schemas.anachronism import AnachronismAssessment
 from models.game_state import GameState
-from prompts.anachronism_classifier import ANACHRONISM_CLASSIFIER_REVIEW, ANACHRONISM_CLASSIFIER_SYSTEM
+from prompts.anachronism_classifier import get_anachronism_classifier_prompts
 
 SEED_CONCEPT_IDENTIFIERS: tuple[str, ...] = (
     "smartphone",
@@ -55,11 +55,13 @@ def _join_setting_list(setting_values: list[str]) -> str:
 class AnachronismClassifier(BasePerformer):
     """Classify how an action from a player's origin era reads in the target setting."""
 
-    def __init__(self, *, llm_client: Any):
+    def __init__(self, *, llm_client: Any, language: str = "English"):
+        prompts = get_anachronism_classifier_prompts(language)
         super().__init__(
             llm_client=llm_client,
-            system_prompt_template=ANACHRONISM_CLASSIFIER_SYSTEM,
+            system_prompt_template=prompts.system,
         )
+        self._review_template = prompts.review
         self.set_context(seed_concepts=", ".join(SEED_CONCEPT_IDENTIFIERS))
 
     async def act(self, input_data: str, context: dict) -> AnachronismAssessment:
@@ -76,7 +78,7 @@ class AnachronismClassifier(BasePerformer):
         game_state: GameState = context["game_state"]
         self._sync_setting_context(game_state, origin_era)
         return await self._send_json(
-            ANACHRONISM_CLASSIFIER_REVIEW.format(player_action=player_action),
+            self._review_template.format(player_action=player_action),
             response_model=AnachronismAssessment,
         )
 

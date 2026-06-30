@@ -27,6 +27,7 @@ def _apply_character_to_player(player: PlayerState, character: PlayerCharacterIn
         player.name = character.name
     player.appearance = character.appearance
     player.inventory = list(character.inventory)
+    player.origin_era = character.origin_era
 
 
 def _hide_opening_prompt_from_player_history(game_state: GameState) -> None:

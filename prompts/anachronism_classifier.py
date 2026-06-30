@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
+from prompts.anachronism_classifier_ru import ANACHRONISM_CLASSIFIER_REVIEW_RU, ANACHRONISM_CLASSIFIER_SYSTEM_RU
 from prompts.base_template import PromptSection, PromptTemplate
+from prompts.locales import Locale, make_locale_lookup
 
 ANACHRONISM_CLASSIFIER_SYSTEM = PromptTemplate(
     [
@@ -50,4 +54,26 @@ ANACHRONISM_CLASSIFIER_REVIEW = (
     '  "unfamiliar_concepts": ["canonical_snake_case_identifier"],\n'
     '  "perceived_rewrite": "brief in-world description of the strange action"\n'
     "}}"
+)
+
+
+@dataclass(frozen=True)
+class AnachronismClassifierPrompts:
+    """Per-locale anachronism classifier prompt bundle."""
+
+    system: PromptTemplate
+    review: str
+
+
+get_anachronism_classifier_prompts = make_locale_lookup(
+    {
+        Locale.ENGLISH: AnachronismClassifierPrompts(
+            system=ANACHRONISM_CLASSIFIER_SYSTEM,
+            review=ANACHRONISM_CLASSIFIER_REVIEW,
+        ),
+        Locale.RUSSIAN: AnachronismClassifierPrompts(
+            system=ANACHRONISM_CLASSIFIER_SYSTEM_RU,
+            review=ANACHRONISM_CLASSIFIER_REVIEW_RU,
+        ),
+    }
 )

@@ -33,6 +33,7 @@ def test_apply_character_copies_fields() -> None:
         name="Alex",
         appearance="grey hoodie",
         inventory=["phone", "keys"],
+        origin_era="modern day",
     )
 
     _apply_character_to_player(player, character)
@@ -40,6 +41,7 @@ def test_apply_character_copies_fields() -> None:
     assert player.name == "Alex"
     assert player.appearance == "grey hoodie"
     assert player.inventory == ["phone", "keys"]
+    assert player.origin_era == "modern day"
 
 
 @allure.story("Character apply")
