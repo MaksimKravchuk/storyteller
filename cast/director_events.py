@@ -5,13 +5,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from cast._npc_social_events import process_remote_event_memories
-from cast.schemas.chronicler_response import ScheduledEventDraft
+from cast.schemas.chronicler_response import ScheduledEventDraft, ScheduledEventEffectDraft
 from knowledge import memory as memory_mod
 from knowledge import salience as salience_presets
 from knowledge.node import KnowledgeScope
 from knowledge.rumor import propagate_rumors
 from models.game_state import GameState
-from timeline.event import GameEvent
+from timeline.event import EventEffect, GameEvent
 from timeline.event_manager import EventManager
 from timeline.time_costs import resolve_time_cost
 
@@ -53,6 +53,7 @@ class EventProcessor:
                 location_id=draft.location_id,
                 scope=draft.scope,
                 on_complete_description=draft.on_complete_description,
+                effects=_effects_from_drafts(draft.effects),
             )
             scheduled_uuids.append(self._event_mgr.schedule(event))
         return scheduled_uuids
@@ -112,6 +113,21 @@ def _scope_from_string(scope_str: str) -> KnowledgeScope:
         "world": KnowledgeScope.WORLD,
     }
     return scope_map.get(scope_str, KnowledgeScope.LOCAL)
+
+
+def _effects_from_drafts(drafts: list[ScheduledEventEffectDraft]) -> list[EventEffect]:
+    return [
+        EventEffect(
+            effect_type=draft.effect_type,
+            target_id=str(draft.target_id),
+            effect_data={
+                "actor_id": str(draft.actor_id),
+                "target_id": str(draft.target_id),
+                "kind": draft.kind,
+            },
+        )
+        for draft in drafts
+    ]
 
 
 def _slots_from_event(ev: GameEvent) -> memory_mod.MemorySlots:

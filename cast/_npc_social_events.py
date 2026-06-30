@@ -65,7 +65,14 @@ async def process_social_effects(
     memory_manager: MemoryManager,
 ) -> None:
     """Persist social memory effects carried by completed remote events."""
-    await asyncio.gather(*_social_effect_writes(events, game_state, memory_manager))
+    await _process_social_writes(tuple(_social_effect_writes(events, game_state, memory_manager)))
+
+
+async def _process_social_writes(writes: tuple[Awaitable[None], ...]) -> None:
+    if not writes:
+        return
+    await writes[0]
+    await _process_social_writes(writes[1:])
 
 
 def _remote_memory_writes(

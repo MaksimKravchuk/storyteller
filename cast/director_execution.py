@@ -48,17 +48,17 @@ _WAIT_HOURS_DEFAULT = 0.1
 _PLAYER_EVENT_LOG_CAP = 30
 
 
-def _scene_log_modules() -> tuple[Any, Any]:
-    """Lazily import the scene-log helpers as a single statement.
+def _scene_log_modules() -> tuple[Any, Any, Any]:
+    """Lazily import support helpers as a single statement.
 
     ``cast``'s module-level import group is already at the WPS235 name
-    cap, so these two siblings cannot join it; importing them together
+    cap, so these siblings cannot join it; importing them together
     here keeps this module within the WPS201 import-statement budget
-    instead of two separate local imports.
+    instead of separate local imports.
     """
-    from cast import scene_log, scene_swap
+    from cast import _npc_social_events, scene_log, scene_swap
 
-    return scene_log, scene_swap
+    return scene_log, scene_swap, _npc_social_events
 
 
 def _snapshot_moods(npcs: dict) -> dict[UUID, str]:
@@ -545,6 +545,8 @@ class PlanExecutor:
     async def _process_events(self, completed_events: list[GameEvent]) -> list[GameEvent]:
         """Partition events, process remote ones, return local events."""
         local, remote = self._events.partition_events(completed_events)
+        if local:
+            await _scene_log_modules()[2].process_social_effects(local, self._gs, self._memory_manager)
         if remote:
             await self._events.process_remote_events(remote)
         return local

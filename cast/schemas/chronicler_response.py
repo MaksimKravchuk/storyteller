@@ -41,6 +41,15 @@ class WorldThreadUpdate(BaseModel):
     status: Literal["open", "resolved", "abandoned"] | None = None
 
 
+class ScheduledEventEffectDraft(BaseModel):
+    """Strict scheduled-event side effect emitted by the Chronicler."""
+
+    effect_type: Literal["SOCIAL_MEMORY"]
+    actor_id: UUID
+    target_id: UUID
+    kind: Literal["harm", "kindness"]
+
+
 class ScheduledEventDraft(BaseModel):
     """An offscreen ``GameEvent`` the Chronicler wants the timeline to resolve.
 
@@ -56,6 +65,7 @@ class ScheduledEventDraft(BaseModel):
     location_id: UUID | None = None
     scope: Literal["local", "remote"] = "remote"
     on_complete_description: str = ""
+    effects: list[ScheduledEventEffectDraft] = Field(default_factory=list)
 
 
 class GoalDraft(BaseModel):
