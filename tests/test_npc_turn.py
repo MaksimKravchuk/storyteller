@@ -711,6 +711,22 @@ class TestBuildTurnPromptPositiveOpportunity:
         assert "Livia" in prompt
 
     @allure.story("Positive opportunity")
+    @allure.title("Positive keyword and co-located NPC name must share a fact")
+    def test_positive_knowledge_keyword_and_name_must_share_fact(self):
+        gs = _make_gs()
+        drusilla = _make_npc(_NPC_UUID_A, "Drusilla")
+        livia = _make_npc(_NPC_UUID_B, "Livia")
+        _place_both(gs, drusilla, livia)
+        _plot_knowledge(gs, drusilla.uuid, "Drusilla wants to help someone at the dye shop.")
+        _plot_knowledge(gs, drusilla.uuid, "Livia is waiting beside the fountain.")
+
+        prompt = npc_turn_mod._build_turn_prompt(drusilla, "Player waits.", gs)
+
+        assert _POSITIVE_MARKER not in prompt
+        assert "OPPORTUNITY:" not in prompt
+        assert "Most turns are routine" in prompt
+
+    @allure.story("Positive opportunity")
     @allure.title("FRIEND below the +2 threshold does not fire (mirror of the hostile -2 boundary)")
     def test_friend_below_threshold_does_not_fire(self):
         gs = _make_gs()
