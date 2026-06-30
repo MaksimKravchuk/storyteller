@@ -4,15 +4,23 @@
 .gitignore
 
 .venv/
+**/.venv/
 __pycache__/
+**/__pycache__/
 *.pyc
+**/*.pyc
 *.pyo
+**/*.pyo
 *.egg-info/
+**/*.egg-info/
 dist/
 build/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.ruff_cache/
 
 .vscode/
 .DS_Store
