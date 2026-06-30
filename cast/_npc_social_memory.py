@@ -96,30 +96,31 @@ def _format_event(event: SocialMemoryEvent) -> str:
     )
 
 
-def _goal_kind_for(event_kind: str) -> GoalKind | None:
-    for candidate in _GOAL_CANDIDATES.get(event_kind, ()):
-        goal_kind = getattr(GoalKind, candidate, None)
-        if isinstance(goal_kind, GoalKind):
-            return goal_kind
-    return None
-
-
 def _tags_for(event: SocialMemoryEvent) -> list[str]:
     """Return durable identifiers for downstream social-memory queries."""
+    actor_id = event.actor.uuid
+    target_id = event.target.uuid
+    outcome = _OUTCOME_BY_KIND[event.kind]
     tags = [
         "social_memory",
         f"social_memory:{event.kind}",
-        f"social_memory:{_OUTCOME_BY_KIND[event.kind]}",
-        f"actor:{event.actor.uuid}",
-        f"target:{event.target.uuid}",
+        f"social_memory:{outcome}",
+        f"actor:{actor_id}",
+        f"target:{target_id}",
     ]
     if event.source_event_id is not None:
-        tags.append(f"source_event:{event.source_event_id}")
+        source_event_id = event.source_event_id
+        tags.append(f"source_event:{source_event_id}")
     return tags
 
 
 def _spawn_follow_on_goal(event: SocialMemoryEvent) -> None:
-    goal_kind = _goal_kind_for(event.kind)
+    goal_kind = None
+    for candidate in _GOAL_CANDIDATES.get(event.kind, ()):
+        candidate_goal_kind = getattr(GoalKind, candidate, None)
+        if isinstance(candidate_goal_kind, GoalKind):
+            goal_kind = candidate_goal_kind
+            break
     if goal_kind is None:
         return
     current_goal = event.target.life_goal
