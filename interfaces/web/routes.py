@@ -16,7 +16,8 @@ from config import Config
 from db.repository import GameRepository
 from defaults.player_character import TEMPLATE_CHARACTER
 from interfaces.web import action_errors, deps, pwa, schemas, service
-from interfaces.web.beta_auth import get_beta_player_id
+from interfaces.web.auth_models import PlayerFeedbackContext
+from interfaces.web.beta_auth import get_beta_player_context
 from interfaces.web.readiness import readiness_payload
 
 router = APIRouter()
@@ -30,7 +31,7 @@ _START_FAILED_DETAIL = "Storyteller could not start this game. Please try anothe
 _NO_ACTIVE_GAME_DETAIL = "No active game"
 _HTTP_TOO_MANY_REQUESTS = 429
 
-PlayerIdDep = Annotated[str, Depends(get_beta_player_id)]
+PlayerCtxDep = Annotated[PlayerFeedbackContext, Depends(get_beta_player_context)]
 CfgDep = Annotated[Config, Depends(deps.get_cfg)]
 RepoDep = Annotated[GameRepository, Depends(deps.get_repo)]
 
@@ -55,12 +56,12 @@ async def readyz(cfg: CfgDep) -> object:
 
 @router.get("/api/games/current", response_model=schemas.GameSnapshot)
 async def get_current_game(
-    player_id: PlayerIdDep,
+    player: PlayerCtxDep,
     cfg: CfgDep,
     repo: RepoDep,
 ) -> schemas.GameSnapshot:
     """Return the caller's current game, or 404 if none exists."""
-    snapshot = await service.get_current_snapshot(repo, cfg, player_id)
+    snapshot = await service.get_current_snapshot(repo, cfg, player.player_id)
     if snapshot is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=_NO_ACTIVE_GAME_DETAIL)
     return snapshot
@@ -73,15 +74,16 @@ async def get_current_game(
 )
 async def start_game(
     body: schemas.StartGameRequest,
-    player_id: PlayerIdDep,
+    player: PlayerCtxDep,
     cfg: CfgDep,
     repo: RepoDep,
 ) -> schemas.GameSnapshot:
     """Start a new game for the caller (replaces any existing one)."""
     start_request = service.StartGameParams(
-        player_id=player_id,
+        player_id=player.player_id,
         setting=body.setting,
         language=body.language,
+        plan=player.plan,
         character=body.character,
     )
     try:
@@ -108,7 +110,7 @@ async def start_game(
 @router.get(
     "/api/character-template",
     response_model=schemas.CharacterCreationInput,
-    dependencies=[Depends(get_beta_player_id)],
+    dependencies=[Depends(get_beta_player_context)],
 )
 async def get_character_template() -> schemas.CharacterCreationInput:
     """Return the canned template character for one-click anonymous start.
@@ -128,7 +130,7 @@ async def get_character_template() -> schemas.CharacterCreationInput:
 async def post_action(
     game_id: str,
     body: schemas.ActionRequest,
-    player_id: PlayerIdDep,
+    player: PlayerCtxDep,
     cfg: CfgDep,
     repo: RepoDep,
 ) -> schemas.ActionResponse:
@@ -137,7 +139,7 @@ async def post_action(
         return await service.process_turn_for_player(
             repo,
             cfg,
-            player_id,
+            player,
             game_id,
             body,
         )
