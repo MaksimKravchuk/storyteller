@@ -4,6 +4,9 @@ The strict-mode path (with ``response_model``) is covered in
 ``test_send_json_validation.py``. These tests cover the schema-less branch
 where ``_send_json`` returns a raw dict and decode failures hard-raise (the
 old bracket-extraction recovery has been deleted).
+
+Also covers ``_strip_markdown_fence`` (cast/_performer_retry.py) unit-level
+edge cases: malformed/unclosed fences and fences without a language specifier.
 """
 
 from __future__ import annotations
@@ -13,6 +16,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import allure
 import pytest
 
+from cast._performer_retry import _strip_markdown_fence
 from cast.base_performer_class import BasePerformer
 from prompts.base_template import PromptTemplate
 
@@ -111,3 +115,39 @@ class TestSendJson:
 
     def _make(self) -> _JsonPerformer:
         return _JsonPerformer(llm_client=MagicMock(), system_prompt_template=_EMPTY_PROMPT)
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("BasePerformer JSON send")
+class TestStripMarkdownFence:
+    """Unit tests for ``_strip_markdown_fence`` (cast/_performer_retry.py).
+
+    Covers edge cases the integration-level tests above do not reach:
+    malformed/unclosed fences and fences with no language specifier.
+    The fallback path in ``_send_json_prompt_fallback`` calls this function
+    before ``json.loads``; its behavior on malformed input determines
+    whether downstream JSON decode errors carry a useful ``raw_response``.
+    """
+
+    @allure.story("Markdown fence recovery")
+    @allure.title("_strip_markdown_fence strips a fence with no language specifier")
+    def test_strips_fence_without_language(self):
+        result = _strip_markdown_fence('```\n{"key": "val"}\n```')
+        assert result == '{"key": "val"}'
+
+    @allure.story("Markdown fence recovery")
+    @allure.title("_strip_markdown_fence returns stripped original text when the closing fence is absent")
+    def test_malformed_unclosed_fence_returns_stripped_original_text(self):
+        malformed = '  ```json\n{"key": "val"}\n'
+        assert _strip_markdown_fence(malformed) == malformed.strip()
+
+    @allure.story("Markdown fence recovery")
+    @allure.title("_strip_markdown_fence returns empty string for a fence whose body is all whitespace")
+    def test_empty_body_fence_returns_empty_string(self):
+        assert _strip_markdown_fence("```\n   \n```") == ""
+
+    @allure.story("Markdown fence recovery")
+    @allure.title("_strip_markdown_fence returns plain text unchanged when there is no fence")
+    def test_plain_text_returned_unchanged(self):
+        plain = '{"key": "val"}'
+        assert _strip_markdown_fence(plain) == plain
