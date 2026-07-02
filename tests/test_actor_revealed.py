@@ -8,6 +8,10 @@ Covers two layers:
 * The LLM-client integration boundary — exercises the real
   ``_send_json`` decode/validate/retry chain end-to-end, which the
   ``AsyncMock(_send_json)`` tests below intentionally bypass.
+
+Also covers Actor._produce_envelope fallback edge cases (silent-degradation):
+* ``LLMJSONError`` with empty ``raw_response`` falls back to ``"..."`` placeholder.
+* ``LLMJSONError`` with ``raw_response`` longer than 500 chars is truncated.
 """
 
 from __future__ import annotations
@@ -17,8 +21,9 @@ from unittest.mock import AsyncMock
 import allure
 import pytest
 
-from cast.actor import Actor
+from cast.actor import Actor, _FALLBACK_NARRATION, _SALVAGE_NARRATION_MAX
 from cast.schemas.actor_reply import ActorEnvelope, ActorReply
+from llm.base_client import LLMJSONError
 from knowledge.graph import KnowledgeGraph
 from knowledge.query import KnowledgeQueryEngine
 from llm.message import LLMResponse
@@ -273,3 +278,51 @@ class TestActorEnvelopeIntegrationWithLLMClient:
         reply = await actor.act("who are you?", {_LOC_KEY: "forum"})
 
         assert reply.text == "..."
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Actor envelope fallback")
+class TestActorEnvelopeFallbackPaths:
+    """Silent-degradation regression tests for Actor._produce_envelope.
+
+    These tests inject a ``LLMJSONError`` directly on ``_send_json`` so the
+    ``_produce_envelope`` salvage logic is exercised in isolation — without
+    going through the full LLM-client retry chain tested in
+    ``TestActorEnvelopeIntegrationWithLLMClient``.
+
+    Guards two specific edge cases in the salvage branch:
+    * Empty ``raw_response`` (the falsy branch of ``raw_response or ""``) → "..."
+    * ``raw_response`` longer than ``_SALVAGE_NARRATION_MAX`` → truncated
+    """
+
+    @allure.story("Envelope-failure fallback")
+    @allure.title("LLMJSONError with empty raw_response falls back to the '...' placeholder narration")
+    @pytest.mark.asyncio
+    async def test_empty_raw_response_yields_placeholder(self):
+        actor, _ = _make_actor()
+        actor._send_json = AsyncMock(  # type: ignore[method-assign]
+            side_effect=LLMJSONError("decode failed", raw_response=""),
+        )
+
+        reply = await actor.act("greetings", {_LOC_KEY: "forum"})
+
+        assert reply.text == _FALLBACK_NARRATION
+        assert reply.revealed_names == ()
+
+    @allure.story("Envelope-failure fallback")
+    @allure.title(
+        "LLMJSONError with raw_response longer than _SALVAGE_NARRATION_MAX is truncated "
+        "to exactly _SALVAGE_NARRATION_MAX chars in the fallback narration"
+    )
+    @pytest.mark.asyncio
+    async def test_long_raw_response_is_truncated_to_salvage_limit(self):
+        actor, _ = _make_actor()
+        long_prose = "W" * (_SALVAGE_NARRATION_MAX + 100)
+        actor._send_json = AsyncMock(  # type: ignore[method-assign]
+            side_effect=LLMJSONError("decode failed", raw_response=long_prose),
+        )
+
+        reply = await actor.act("greetings", {_LOC_KEY: "forum"})
+
+        assert len(reply.text) == _SALVAGE_NARRATION_MAX
+        assert reply.text == "W" * _SALVAGE_NARRATION_MAX

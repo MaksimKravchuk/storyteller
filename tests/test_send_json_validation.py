@@ -11,6 +11,11 @@ Covers two paths:
    ``model_validate`` triggers a retry in which the assistant's bad payload
    and a user feedback message are appended to the conversation; the caller's
    conversation list is never mutated.
+
+3. **Validation-error truncation**: ``_retry_after_validation_failure`` truncates
+   the validation-error string to ``_VALIDATION_ERROR_PREVIEW_CHARS`` (400) chars
+   in the raised ``LLMJSONError`` and logger warning, while the retry conversation
+   body receives the full (un-truncated) ``exc.errors()`` string.
 """
 
 from __future__ import annotations
@@ -24,7 +29,7 @@ import allure
 import pytest
 from pydantic import BaseModel
 
-from cast.base_performer_class import BasePerformer
+from cast.base_performer_class import _VALIDATION_ERROR_PREVIEW_CHARS, BasePerformer
 from llm.message import LLMResponse, Role
 from prompts.base_template import PromptTemplate
 
@@ -40,6 +45,24 @@ class _WidgetResponse(BaseModel):
 
     count: int
     label: str = "default"
+
+
+class _VerboseValidationModel(BaseModel):
+    """Has enough required int fields that all-wrong input generates >400 chars.
+
+    Confirmed against the current Pydantic error rendering used by the tests;
+    assertions below verify the generated feedback body still exceeds the
+    preview limit before relying on truncation behavior.
+    """
+
+    f1: int
+    f2: int
+    f3: int
+    f4: int
+    f5: int
+    f6: int
+    f7: int
+    f8: int
 
 
 class _JsonPerformer(BasePerformer):
@@ -263,3 +286,77 @@ class TestSendJsonStrictMode:
             output_format = call.kwargs["output_format"]
             assert output_format.schema is None
             assert output_format.response_format == {"type": "json_object"}
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("BasePerformer JSON send — validation retry")
+class TestValidationErrorTruncation:
+    """Regression tests for the validation-error sanitization in ``_retry_after_validation_failure``.
+
+    ``base_performer_class._retry_after_validation_failure`` truncates
+    ``str(exc.errors())`` to ``_VALIDATION_ERROR_PREVIEW_CHARS`` (400) chars
+    before embedding it in log warnings and the raised ``LLMJSONError`` message.
+    The retry-conversation body, however, always receives the full
+    ``exc.errors()`` payload so the LLM can self-correct accurately.
+    """
+
+    @allure.story("Self-correcting retry")
+    @allure.title(
+        "LLMJSONError raised after retries exhausted contains errors truncated "
+        "to _VALIDATION_ERROR_PREVIEW_CHARS (400) when the raw error string exceeds that limit"
+    )
+    @pytest.mark.asyncio
+    async def test_long_validation_error_is_truncated_in_raised_exception(self) -> None:
+        performer = _make_performer()
+        bad_payload = json.dumps({f"f{n}": "not-an-int" for n in range(1, 9)})
+        send_mock = AsyncMock(return_value=bad_payload)
+        error_str = ""
+        with ExitStack() as stack:
+            stack.enter_context(_force_fallback())
+            stack.enter_context(patch.object(performer, _SEND_METHOD, new=send_mock))
+            try:
+                await performer._send_json(
+                    _PROMPT,
+                    retries=0,
+                    response_model=_VerboseValidationModel,
+                )
+            except ValueError as exc:
+                error_str = str(exc)
+            else:  # pragma: no cover - pytest.fail always raises
+                pytest.fail("Expected validation retry exhaustion to raise ValueError")
+        errors_prefix = "Errors: "
+        errors_start = error_str.find(errors_prefix)
+        assert errors_start != -1, error_str
+        errors_start += len(errors_prefix)
+        embedded_errors = error_str[errors_start:]
+        assert len(embedded_errors) <= _VALIDATION_ERROR_PREVIEW_CHARS
+
+    @allure.story("Self-correcting retry")
+    @allure.title(
+        "Retry conversation body contains the full (un-truncated) validation errors "
+        "string even when that string exceeds _VALIDATION_ERROR_PREVIEW_CHARS"
+    )
+    @pytest.mark.asyncio
+    async def test_retry_conversation_receives_full_validation_errors(self) -> None:
+        performer = _make_performer()
+        bad_payload = json.dumps({f"f{n}": "not-an-int" for n in range(1, 9)})
+        good_payload = json.dumps({f"f{n}": n for n in range(1, 9)})
+        send_mock = AsyncMock(side_effect=[bad_payload, good_payload])
+        with ExitStack() as stack:
+            stack.enter_context(_force_fallback())
+            stack.enter_context(patch.object(performer, _SEND_METHOD, new=send_mock))
+            await performer._send_json(
+                _PROMPT,
+                retries=1,
+                response_model=_VerboseValidationModel,
+            )
+
+        second_call_kwargs = send_mock.call_args_list[1].kwargs
+        assert "conversation" in second_call_kwargs
+        retry_conversation = second_call_kwargs["conversation"]
+        user_feedback = next(
+            (m for m in retry_conversation if m.role == Role.USER),
+            None,
+        )
+        assert user_feedback is not None
+        assert len(user_feedback.body) > _VALIDATION_ERROR_PREVIEW_CHARS
