@@ -24,6 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from cast import _npc_social_goal
 from cast._npc_active_goal import kill_goals_targeting, select_active_goal
 from cast._npc_aftermath_chain import build_aftermath, resolve_aftermath_chain
 from cast.dice import ContestRoll, NPCAction
@@ -81,6 +82,11 @@ def maybe_complete_kill_goal(actor: NPCCard, target: NPCCard, game_state: GameSt
         joined = actor.uuid in thread.involved_npcs and target.uuid in thread.involved_npcs
         if thread.status == _THREAD_OPEN and joined:
             thread.status = _THREAD_RESOLVED
+
+
+def maybe_complete_social_goal(actor: NPCCard, target: NPCCard) -> None:
+    """Complete supported social goals whose deterministic predicate is met."""
+    _npc_social_goal.maybe_complete_social_goal(actor, target)
 
 
 def resolve_goal_target_name(npc: Any, game_state: GameState) -> str | None:

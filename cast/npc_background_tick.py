@@ -20,10 +20,11 @@ dispatch table:
   :mod:`cast._npc_offscreen_resolvers`, each stamping a one-line
   ``last_outcome`` the Actor prompt reads on re-entry.
 
-Eligibility is now keyed on "the goal kind has a resolver" rather than
-the old KILL-only contest filter, so nine-of-ten motivations no longer
-sit inert off-screen. Every resolver is deterministic and never calls an
-LLM, so making more NPCs eligible adds pure-Python work, not tokens.
+Eligibility is keyed on "the goal kind has a resolver" rather than the
+old KILL-only contest filter. Unmapped kinds, including social goals, are
+intentionally inert off-scene until unseen social acts have deterministic
+relationship and memory mutation semantics. Registered resolvers never
+call an LLM, so making more NPCs eligible adds pure-Python work, not tokens.
 
 Bounded: at most one resolver step per goal-holder per advance. The KILL
 contest still fires only when the target is reachable, and the cheap
