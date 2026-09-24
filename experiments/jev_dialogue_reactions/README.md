@@ -1,6 +1,6 @@
 # Jev for NPC understanding and dialogue reactions
 
-Status: predeclared pilot design, 2026-09-24. This experiment changes no runtime behavior.
+Status: corrected pilot design, 2026-09-24. This experiment changes no runtime behavior.
 
 ## Question
 
@@ -9,6 +9,8 @@ Does a Jev judgment about what the NPC understands and how they immediately reac
 ## Design
 
 `cases.json` fixes eight fictional situations before live calls. Six are in English and two in Russian. They cover an unfamiliar word alone, a visible inexplicable voice and light, the same object after an NPC has witnessed it and heard the player's explanation, a role contrast (guard versus scholar), unfamiliar medicine, and a modern-radio negative control. The previously taught cases are seeded as `PERSONAL_EXPERIENCE` with a `WITNESSED` edge and player `subject_id`, so the real Actor memory selector receives them. Every arm starts from fresh state and uses the same NPC facts, scene, player utterance, Actor model, and dialogue envelope.
+
+The initial preregistration is commit `2990496`. Its first live run exposed a setup error: non-guard roles inherited the benchmark guard's name, appearance, and sword in the Actor prompt, while Jev did not see that equipment. Those outputs are diagnostic only and must be excluded from comparative counts. Before the retained rerun, every case now pins identity, appearance, and inventory explicitly for both providers. The Jev cue also explicitly says it must not alone change `mood`, and the runner closes HTTP clients after each Actor call. The case situations and outcome rubric below are unchanged. The diagnostic raw outputs will be archived separately for audit.
 
 The three Actor arms are:
 

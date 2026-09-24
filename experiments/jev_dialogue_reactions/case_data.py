@@ -22,8 +22,11 @@ class Case:
     language: str
     era: str
     location: str
+    npc_name: str
     occupation: str
     biography: str
+    appearance: str
+    inventory: list[str]
     traits: list[str]
     speech_style: str
     scene: str
@@ -48,8 +51,11 @@ def make_state(case: Case) -> tuple[GameState, NPCCard]:
     """Build a fresh NPC whose held memory is visible through the real Actor seam."""
     state = build_state().game_state
     npc = next(filter(_is_aulus, state.npcs.values()))
+    npc.name = case.npc_name
     npc.occupation = case.occupation
     npc.biography = case.biography
+    npc.appearance = case.appearance
+    npc.inventory = case.inventory
     npc.personality_traits = case.traits
     npc.speech_style = case.speech_style
     npc.current_mood = "neutral"
@@ -75,8 +81,11 @@ def jev_state(case: Case) -> dict[str, object]:
     return {
         "era": case.era,
         "npc": {
+            "name": case.npc_name,
             "role": case.occupation,
             "biography": case.biography,
+            "appearance": case.appearance,
+            "inventory": case.inventory,
             "traits": case.traits,
             "speech_style": case.speech_style,
             "current_mood": "neutral",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from contextlib import aclosing
 from dataclasses import dataclass
 from typing import Any
 
@@ -42,6 +43,10 @@ class RecordingClient:
         """Forward the normal Actor call and retain its response."""
         self.response = await self._delegate.send_message(**kwargs)
         return self.response
+
+    async def aclose(self) -> None:
+        """Close the underlying HTTP client before its event loop ends."""
+        await self._delegate._client.close()
 
 
 @dataclass
@@ -87,11 +92,15 @@ def actor_input(case: Case, variant: str, jev: dict[str, Any] | None = None) -> 
     )
     if case.language == "Russian":
         guidance = (
-            "Подсказка для этого хода (не новый факт): {0}. Вырази её своими словами, если она согласуется с опытом."
+            "Подсказка для этого хода (не новый факт): {0}. "
+            "Вырази её своими словами, если она согласуется с опытом. "
+            "Это краткая реакция, не меняй поле mood только из-за подсказки."
         ).format(cue)
     else:
         guidance = (
-            "Cue for this turn (not a new fact): {0}. Express it in your own words if your experience supports it."
+            "Cue for this turn (not a new fact): {0}. "
+            "Express it in your own words if your experience supports it. "
+            "This is a brief reaction; do not change the mood field from this cue alone."
         ).format(cue)
     return "{0}\n{1}".format(actor_input(case, "reminder"), guidance)
 
@@ -119,8 +128,9 @@ async def call_actor(
     """Run the real dialogue Actor with fresh state and the selected input arm."""
     trial = _prepare_actor(case, api_key)
     started = time.perf_counter()
-    reply = await trial.actor.execute(
-        actor_input(case, variant, jev),
-        context={"game_state": trial.state, "location_name": "{0}, {1}".format(case.location, case.era)},
-    )
-    return _actor_result(trial, reply.text, started)
+    async with aclosing(trial.client):
+        reply = await trial.actor.execute(
+            actor_input(case, variant, jev),
+            context={"game_state": trial.state, "location_name": "{0}, {1}".format(case.location, case.era)},
+        )
+        return _actor_result(trial, reply.text, started)

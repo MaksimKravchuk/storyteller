@@ -39,6 +39,7 @@ class _FakeClient:
     def __init__(self, captured, **kwargs):
         self.model = "fake"
         self._captured = captured
+        self._client = self
 
     async def send_message(self, **kwargs):
         self._captured.append(kwargs)
@@ -47,6 +48,9 @@ class _FakeClient:
             model="fake",
             usage={"prompt_tokens": 50, "completion_tokens": 10},
         )
+
+    async def close(self):
+        self.closed = True
 
 
 @allure.epic("NPC Interaction")
@@ -90,6 +94,23 @@ class TestJevDialoguePilot:
         assert "traveler claimed" in captured[0]["system_prompt"]
         assert case.player_action in captured[0]["messages"][-1].body
         assert "remember the slab" in result["text"]
+
+    @allure.story("Actor seam")
+    @allure.title("Scholar has matching identity and no inherited guard weapon in either provider")
+    def test_scholar_equipment_matches_jev_and_actor(self, monkeypatch):
+        captured = []
+        monkeypatch.setattr(providers, "OpenAIClient", partial(_FakeClient, captured))
+        case = next(case for case in load_cases() if case.name == "scholar_unseen_voice_en")
+
+        asyncio.run(providers.call_actor(case, "baseline", "dummy"))
+
+        prompt = captured[0]["system_prompt"]
+        assert "Livia" in prompt
+        assert "wax tablets" in prompt
+        assert "short sword" not in prompt
+        jev_npc = jev_state(case)["npc"]
+        assert isinstance(jev_npc, dict)
+        assert jev_npc["inventory"] == case.inventory
 
     @allure.story("Actor arms")
     @allure.title("Only Jev-guided arm carries the decision cue")

@@ -6,14 +6,28 @@
     "location": "a Roman tavern",
     "occupation": "city guard",
     "biography": "A Roman city guard who keeps order in taverns. He has never seen a modern communication device.",
-    "traits": ["disciplined", "wary"],
+    "traits": [
+      "disciplined",
+      "wary"
+    ],
     "speech_style": "terse and commanding",
     "scene": "The player and guard are talking quietly. The player has not shown any object or made a threat.",
     "player_action": "Player says: 'Call the watch on your smartphone.'",
     "prior_memory": null,
-    "expected_understanding": ["unknown"],
-    "expected_expression": ["ordinary", "curious", "skeptical"],
-    "rubric": "Does not claim to know what a smartphone is or how it works; may ask what the word means or ask the player to summon the watch in a familiar way. Mere unfamiliar vocabulary is not a threat."
+    "expected_understanding": [
+      "unknown"
+    ],
+    "expected_expression": [
+      "ordinary",
+      "curious",
+      "skeptical"
+    ],
+    "rubric": "Does not claim to know what a smartphone is or how it works; may ask what the word means or ask the player to summon the watch in a familiar way. Mere unfamiliar vocabulary is not a threat.",
+    "npc_name": "Aulus",
+    "appearance": "Roman guard in segmented armour, short sword at his hip.",
+    "inventory": [
+      "short sword"
+    ]
   },
   {
     "name": "guard_unseen_voice_en",
@@ -22,14 +36,29 @@
     "location": "a Roman tavern",
     "occupation": "city guard",
     "biography": "A Roman city guard who keeps order in taverns. He has never seen a modern communication device.",
-    "traits": ["disciplined", "wary"],
+    "traits": [
+      "disciplined",
+      "wary"
+    ],
     "speech_style": "terse and commanding",
     "scene": "The player holds up a palm-sized dark slab. It suddenly shines and a stranger's voice comes from it; nobody else is visible nearby. The player has not attacked.",
     "player_action": "Player holds the shining slab toward the guard and says: 'My friend is speaking to me from far away.'",
     "prior_memory": null,
-    "expected_understanding": ["unknown", "partial"],
-    "expected_expression": ["startled", "wary", "afraid"],
-    "rubric": "Treats the voice and light as observed, not the player's explanation as proven. Some alarm or caution is plausible; technical terms, certainty about distant speech, and casual acceptance are not."
+    "expected_understanding": [
+      "unknown",
+      "partial"
+    ],
+    "expected_expression": [
+      "startled",
+      "wary",
+      "afraid"
+    ],
+    "rubric": "Treats the voice and light as observed, not the player's explanation as proven. Some alarm or caution is plausible; technical terms, certainty about distant speech, and casual acceptance are not.",
+    "npc_name": "Aulus",
+    "appearance": "Roman guard in segmented armour, short sword at his hip.",
+    "inventory": [
+      "short sword"
+    ]
   },
   {
     "name": "guard_after_explanation_en",
@@ -38,14 +67,29 @@
     "location": "a Roman tavern",
     "occupation": "city guard",
     "biography": "A Roman city guard who keeps order in taverns. He has no knowledge of modern electronics.",
-    "traits": ["disciplined", "wary"],
+    "traits": [
+      "disciplined",
+      "wary"
+    ],
     "speech_style": "terse and commanding",
     "scene": "The player shows the same palm-sized dark slab in a quiet tavern. It is not shining or speaking now.",
     "player_action": "Player asks: 'Do you remember what this is?'",
     "prior_memory": "Yesterday this traveler showed the guard a slab that shone and spoke with a stranger's voice. The traveler claimed it lets distant people talk. The guard witnessed the light and voice but did not verify the claim or learn the mechanism.",
-    "expected_understanding": ["partial"],
-    "expected_expression": ["ordinary", "curious", "wary", "skeptical"],
-    "rubric": "Recalls the specific object and the player's claim, rather than reacting as if it is entirely new. Does not assert that distant communication is proven or explain electronics."
+    "expected_understanding": [
+      "partial"
+    ],
+    "expected_expression": [
+      "ordinary",
+      "curious",
+      "wary",
+      "skeptical"
+    ],
+    "rubric": "Recalls the specific object and the player's claim, rather than reacting as if it is entirely new. Does not assert that distant communication is proven or explain electronics.",
+    "npc_name": "Aulus",
+    "appearance": "Roman guard in segmented armour, short sword at his hip.",
+    "inventory": [
+      "short sword"
+    ]
   },
   {
     "name": "scholar_unseen_voice_en",
@@ -54,14 +98,31 @@
     "location": "a Roman scholar's study",
     "occupation": "scholar of natural philosophy",
     "biography": "A Roman scholar who investigates unusual devices and asks careful questions. She has never seen a modern communication device.",
-    "traits": ["inquisitive", "methodical", "brave"],
+    "traits": [
+      "inquisitive",
+      "methodical",
+      "brave"
+    ],
     "speech_style": "measured and precise",
     "scene": "The player holds up a palm-sized dark slab. It suddenly shines and a stranger's voice comes from it; nobody else is visible nearby. No one is threatened.",
     "player_action": "Player holds the shining slab toward the scholar and says: 'My friend is speaking to me from far away.'",
     "prior_memory": null,
-    "expected_understanding": ["unknown", "partial"],
-    "expected_expression": ["curious", "startled", "skeptical"],
-    "rubric": "Notices the unexpected voice and light; questions or investigates instead of explaining electronics or panicking without danger. Keeps observation separate from the player's claim."
+    "expected_understanding": [
+      "unknown",
+      "partial"
+    ],
+    "expected_expression": [
+      "curious",
+      "startled",
+      "skeptical"
+    ],
+    "rubric": "Notices the unexpected voice and light; questions or investigates instead of explaining electronics or panicking without danger. Keeps observation separate from the player's claim.",
+    "npc_name": "Livia",
+    "appearance": "Unarmed scholar in a plain tunic with ink-stained hands.",
+    "inventory": [
+      "wax tablets",
+      "stylus"
+    ]
   },
   {
     "name": "healer_unknown_medicine_en",
@@ -70,14 +131,30 @@
     "location": "a Roman infirmary",
     "occupation": "healer",
     "biography": "A Roman healer skilled with herbs, bandages, and fever care, with no knowledge of modern pharmaceuticals.",
-    "traits": ["compassionate", "practical"],
+    "traits": [
+      "compassionate",
+      "practical"
+    ],
     "speech_style": "calm and direct",
     "scene": "The player's companion has a fever. The healer has examined them; there is no immediate violence.",
     "player_action": "Player asks: 'Do you have antibiotics for this infection?'",
     "prior_memory": null,
-    "expected_understanding": ["unknown", "partial"],
-    "expected_expression": ["ordinary", "curious", "skeptical"],
-    "rubric": "May infer a request for treatment but does not define antibiotics, prescribe a modern drug, or claim to have one. Responds to the sick person without melodramatic fear."
+    "expected_understanding": [
+      "unknown",
+      "partial"
+    ],
+    "expected_expression": [
+      "ordinary",
+      "curious",
+      "skeptical"
+    ],
+    "rubric": "May infer a request for treatment but does not define antibiotics, prescribe a modern drug, or claim to have one. Responds to the sick person without melodramatic fear.",
+    "npc_name": "Gaius",
+    "appearance": "Unarmed healer in linen sleeves with a satchel of remedies.",
+    "inventory": [
+      "herbs",
+      "clean bandages"
+    ]
   },
   {
     "name": "modern_guard_radio_en",
@@ -86,14 +163,27 @@
     "location": "a modern train station",
     "occupation": "station security guard",
     "biography": "A modern security guard who routinely uses a handheld radio to contact colleagues during station incidents.",
-    "traits": ["professional", "observant"],
+    "traits": [
+      "professional",
+      "observant"
+    ],
     "speech_style": "brief and professional",
     "scene": "At a busy train station, the player points out an unattended bag. The guard's radio is clipped to their vest.",
     "player_action": "Player says: 'Please radio your colleagues about that bag.'",
     "prior_memory": null,
-    "expected_understanding": ["known"],
-    "expected_expression": ["ordinary", "wary"],
-    "rubric": "Recognizes a routine radio request and responds professionally; does not profess ignorance of the radio or treat it as miraculous. Caution about the bag is plausible."
+    "expected_understanding": [
+      "known"
+    ],
+    "expected_expression": [
+      "ordinary",
+      "wary"
+    ],
+    "rubric": "Recognizes a routine radio request and responds professionally; does not profess ignorance of the radio or treat it as miraculous. Caution about the bag is plausible.",
+    "npc_name": "Morgan",
+    "appearance": "Station security uniform with a handheld radio clipped to the vest.",
+    "inventory": [
+      "handheld radio"
+    ]
   },
   {
     "name": "guard_unknown_word_ru",
@@ -102,14 +192,28 @@
     "location": "римская таверна",
     "occupation": "городской стражник",
     "biography": "Римский городской стражник, который следит за порядком в тавернах. Он никогда не видел современных средств связи.",
-    "traits": ["дисциплинированный", "настороженный"],
+    "traits": [
+      "дисциплинированный",
+      "настороженный"
+    ],
     "speech_style": "коротко и повелительно",
     "scene": "Игрок и стражник спокойно разговаривают. Игрок не показывает никаких предметов и никому не угрожает.",
     "player_action": "Игрок говорит: «Позвони страже со своего смартфона».",
     "prior_memory": null,
-    "expected_understanding": ["unknown"],
-    "expected_expression": ["ordinary", "curious", "skeptical"],
-    "rubric": "Не утверждает, что знает смартфон или принцип его работы; может переспросить или предложить позвать стражу знакомым способом. Незнакомое слово само по себе не угроза."
+    "expected_understanding": [
+      "unknown"
+    ],
+    "expected_expression": [
+      "ordinary",
+      "curious",
+      "skeptical"
+    ],
+    "rubric": "Не утверждает, что знает смартфон или принцип его работы; может переспросить или предложить позвать стражу знакомым способом. Незнакомое слово само по себе не угроза.",
+    "npc_name": "Aulus",
+    "appearance": "Roman guard in segmented armour, short sword at his hip.",
+    "inventory": [
+      "short sword"
+    ]
   },
   {
     "name": "guard_after_explanation_ru",
@@ -118,13 +222,28 @@
     "location": "римская таверна",
     "occupation": "городской стражник",
     "biography": "Римский городской стражник, который следит за порядком в тавернах. Он не знает современной электроники.",
-    "traits": ["дисциплинированный", "настороженный"],
+    "traits": [
+      "дисциплинированный",
+      "настороженный"
+    ],
     "speech_style": "коротко и повелительно",
     "scene": "Игрок показывает ту же небольшую тёмную пластину в тихой таверне. Сейчас она не светится и не говорит.",
     "player_action": "Игрок спрашивает: «Помнишь, что это такое?»",
     "prior_memory": "Вчера этот путник показывал стражнику пластину, которая светилась и говорила чужим голосом. Путник утверждал, что она помогает людям разговаривать на расстоянии. Стражник видел свет и слышал голос, но не проверял объяснение и не знает механизма.",
-    "expected_understanding": ["partial"],
-    "expected_expression": ["ordinary", "curious", "wary", "skeptical"],
-    "rubric": "Помнит конкретный предмет и объяснение игрока, а не принимает его за новый. Не выдаёт дальнюю связь за доказанный факт и не объясняет электронику."
+    "expected_understanding": [
+      "partial"
+    ],
+    "expected_expression": [
+      "ordinary",
+      "curious",
+      "wary",
+      "skeptical"
+    ],
+    "rubric": "Помнит конкретный предмет и объяснение игрока, а не принимает его за новый. Не выдаёт дальнюю связь за доказанный факт и не объясняет электронику.",
+    "npc_name": "Aulus",
+    "appearance": "Roman guard in segmented armour, short sword at his hip.",
+    "inventory": [
+      "short sword"
+    ]
   }
 ]
