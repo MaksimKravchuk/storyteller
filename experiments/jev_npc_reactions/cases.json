@@ -1,0 +1,74 @@
+[
+  {
+    "name": "guard_active_assault",
+    "mood": "angry",
+    "role": "city guard",
+    "traits": [
+      "disciplined",
+      "protective"
+    ],
+    "scene": "A crowded tavern. The player is still swinging a knife at another guard. Two patrons are behind the attacker.",
+    "player_action": "The player punches Aulus and keeps lunging at the other guard with a knife.",
+    "language": "English"
+  },
+  {
+    "name": "guard_surrender",
+    "mood": "angry",
+    "role": "city guard",
+    "traits": [
+      "disciplined",
+      "protective"
+    ],
+    "scene": "The same crowded tavern. The player has dropped the knife, raised both hands, and stopped fighting.",
+    "player_action": "The player apologizes and surrenders after punching Aulus.",
+    "language": "English"
+  },
+  {
+    "name": "merchant_threat",
+    "mood": "threatened",
+    "role": "merchant",
+    "traits": [
+      "cautious",
+      "protective of family"
+    ],
+    "scene": "A market stall. The merchant is unarmed, alone, and has an open route to the nearby watch post.",
+    "player_action": "The player displays a dagger and demands the merchant's purse.",
+    "language": "English"
+  },
+  {
+    "name": "bandit_stolen_goods",
+    "mood": "angry",
+    "role": "bandit",
+    "traits": [
+      "reckless",
+      "territorial"
+    ],
+    "scene": "An empty alley. The bandit is armed, healthy, and alone with the player.",
+    "player_action": "The player grabs the bandit's bag and starts to run.",
+    "language": "English"
+  },
+  {
+    "name": "guard_forged_permit",
+    "mood": "suspicious",
+    "role": "city guard",
+    "traits": [
+      "patient",
+      "by the book"
+    ],
+    "scene": "A quiet gate checkpoint. The player presents a permit with a suspicious seal, but poses no immediate threat.",
+    "player_action": "The player asks to pass through the gate using the dubious permit.",
+    "language": "English"
+  },
+  {
+    "name": "guard_surrender_ru",
+    "mood": "angry",
+    "role": "city guard",
+    "traits": [
+      "disciplined",
+      "protective"
+    ],
+    "scene": "Шумная таверна. Игрок бросил нож, поднял руки и перестал драться.",
+    "player_action": "Игрок извиняется и сдаётся после удара по стражнику Авлу.",
+    "language": "Russian"
+  }
+]

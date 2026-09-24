@@ -1,0 +1,314 @@
+[
+  {
+    "case": "guard_active_assault",
+    "language": "English",
+    "mood": "angry",
+    "dice_attack_probability": 0.65,
+    "state": {
+      "npc": {
+        "name": "Aulus",
+        "role": "city guard",
+        "biography": "A tavern-posted legionary on watch duty, paid to keep the peace.",
+        "appearance": "Broad-shouldered, short sword at the hip, segmented armour.",
+        "speech_style": "terse, commanding",
+        "inventory": [],
+        "mood": "angry",
+        "physical_status": "healthy",
+        "traits": [
+          "disciplined",
+          "protective"
+        ]
+      },
+      "scene": "A crowded tavern. The player is still swinging a knife at another guard. Two patrons are behind the attacker.",
+      "last_player_action": "The player punches Aulus and keeps lunging at the other guard with a knife.",
+      "language": "English"
+    },
+    "jev": {
+      "answer": {
+        "type": "choice",
+        "choice": "restrain",
+        "confidence": 0.37,
+        "probabilities": {
+          "attack": 0.29,
+          "withdraw": 0.0,
+          "wait": 0.0,
+          "confront": 0.02,
+          "summon": 0.21,
+          "restrain": 0.48
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 644,
+        "output_tokens": 65
+      },
+      "latency_ms": 577
+    },
+    "actor": {
+      "text": "{\"action\":\"I slam forward between you and the other guard, hook my short sword up to block your knife-arm, and drive you back with my shoulder while shouting for the tavern-keepers to clear the crowd.\",\"type\":\"ATTACK\",\"target\":\"player\"}",
+      "model": "gpt-5.4-nano",
+      "latency_ms": 1838
+    }
+  },
+  {
+    "case": "guard_surrender",
+    "language": "English",
+    "mood": "angry",
+    "dice_attack_probability": 0.65,
+    "state": {
+      "npc": {
+        "name": "Aulus",
+        "role": "city guard",
+        "biography": "A tavern-posted legionary on watch duty, paid to keep the peace.",
+        "appearance": "Broad-shouldered, short sword at the hip, segmented armour.",
+        "speech_style": "terse, commanding",
+        "inventory": [],
+        "mood": "angry",
+        "physical_status": "healthy",
+        "traits": [
+          "disciplined",
+          "protective"
+        ]
+      },
+      "scene": "The same crowded tavern. The player has dropped the knife, raised both hands, and stopped fighting.",
+      "last_player_action": "The player apologizes and surrenders after punching Aulus.",
+      "language": "English"
+    },
+    "jev": {
+      "answer": {
+        "type": "choice",
+        "choice": "restrain",
+        "confidence": 0.9,
+        "probabilities": {
+          "attack": 0.0,
+          "restrain": 0.92,
+          "withdraw": 0.0,
+          "wait": 0.0,
+          "confront": 0.03,
+          "summon": 0.05
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 638,
+        "output_tokens": 65
+      },
+      "latency_ms": 612
+    },
+    "actor": {
+      "text": "{\"action\":\"I keep my short sword low but ready, step in close to the surrendered man, and bark for the tavern folk to keep back as I cuff his wrists behind his back and secure his dropped knife.\",\"type\":\"ATTACK\",\"target\":\"player\"}",
+      "model": "gpt-5.4-nano",
+      "latency_ms": 1750
+    }
+  },
+  {
+    "case": "merchant_threat",
+    "language": "English",
+    "mood": "threatened",
+    "dice_attack_probability": 0.55,
+    "state": {
+      "npc": {
+        "name": "Aulus",
+        "role": "merchant",
+        "biography": "A market trader with a family, used to avoiding street violence.",
+        "appearance": "Plain tunic, no armor or weapon.",
+        "speech_style": "cautious and practical",
+        "inventory": [
+          "purse",
+          "market goods"
+        ],
+        "mood": "threatened",
+        "physical_status": "healthy",
+        "traits": [
+          "cautious",
+          "protective of family"
+        ]
+      },
+      "scene": "A market stall. The merchant is unarmed, alone, and has an open route to the nearby watch post.",
+      "last_player_action": "The player displays a dagger and demands the merchant's purse.",
+      "language": "English"
+    },
+    "jev": {
+      "answer": {
+        "type": "choice",
+        "choice": "summon",
+        "confidence": 0.39,
+        "probabilities": {
+          "confront": 0.04,
+          "wait": 0.0,
+          "attack": 0.0,
+          "summon": 0.5,
+          "withdraw": 0.46,
+          "restrain": 0.0
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 641,
+        "output_tokens": 65
+      },
+      "latency_ms": 598
+    },
+    "actor": {
+      "text": "{\"action\":\"I jerk my hands back from the purse and step sideways toward the open path, keeping my body between the dagger and the stall; then I shout for the guards while starting to move toward the watch post.\",\"type\":\"INTIMIDATE\",\"target\":\"player\"}",
+      "model": "gpt-5.4-nano",
+      "latency_ms": 1744
+    }
+  },
+  {
+    "case": "bandit_stolen_goods",
+    "language": "English",
+    "mood": "angry",
+    "dice_attack_probability": 0.65,
+    "state": {
+      "npc": {
+        "name": "Aulus",
+        "role": "bandit",
+        "biography": "A street bandit who guards stolen goods fiercely.",
+        "appearance": "Travel-worn clothes, dagger at the belt.",
+        "speech_style": "blunt and confrontational",
+        "inventory": [
+          "dagger",
+          "bag of goods"
+        ],
+        "mood": "angry",
+        "physical_status": "healthy",
+        "traits": [
+          "reckless",
+          "territorial"
+        ]
+      },
+      "scene": "An empty alley. The bandit is armed, healthy, and alone with the player.",
+      "last_player_action": "The player grabs the bandit's bag and starts to run.",
+      "language": "English"
+    },
+    "jev": {
+      "answer": {
+        "type": "choice",
+        "choice": "attack",
+        "confidence": 0.84,
+        "probabilities": {
+          "wait": 0.0,
+          "restrain": 0.06,
+          "attack": 0.87,
+          "summon": 0.0,
+          "confront": 0.07,
+          "withdraw": 0.0
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 635,
+        "output_tokens": 64
+      },
+      "latency_ms": 609
+    },
+    "actor": {
+      "text": "{\"action\":\"I lunge after you and slash at your back with my dagger, trying to cut off your escape while I yank my bag back toward my side.\",\"type\":\"ATTACK\",\"target\":\"player\"}",
+      "model": "gpt-5.4-nano",
+      "latency_ms": 1507
+    }
+  },
+  {
+    "case": "guard_forged_permit",
+    "language": "English",
+    "mood": "suspicious",
+    "dice_attack_probability": 0.3,
+    "state": {
+      "npc": {
+        "name": "Aulus",
+        "role": "city guard",
+        "biography": "A tavern-posted legionary on watch duty, paid to keep the peace.",
+        "appearance": "Broad-shouldered, short sword at the hip, segmented armour.",
+        "speech_style": "terse, commanding",
+        "inventory": [],
+        "mood": "suspicious",
+        "physical_status": "healthy",
+        "traits": [
+          "patient",
+          "by the book"
+        ]
+      },
+      "scene": "A quiet gate checkpoint. The player presents a permit with a suspicious seal, but poses no immediate threat.",
+      "last_player_action": "The player asks to pass through the gate using the dubious permit.",
+      "language": "English"
+    },
+    "jev": {
+      "answer": {
+        "type": "choice",
+        "choice": "confront",
+        "confidence": 0.99,
+        "probabilities": {
+          "restrain": 0.01,
+          "wait": 0.0,
+          "summon": 0.0,
+          "attack": 0.0,
+          "confront": 0.99,
+          "withdraw": 0.0
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 636,
+        "output_tokens": 66
+      },
+      "latency_ms": 610
+    },
+    "actor": {
+      "text": "{\"action\":\"I step closer to the checkpoint rail, take the permit between two fingers without touching your hand, and scan the seal and lettering in the lamplight—then I hold it back out to you, eyeing you over my short sword.\",\"type\":\"TALK\",\"target\":\"player\"}",
+      "model": "gpt-5.4-nano",
+      "latency_ms": 917
+    }
+  },
+  {
+    "case": "guard_surrender_ru",
+    "language": "Russian",
+    "mood": "angry",
+    "dice_attack_probability": 0.65,
+    "state": {
+      "npc": {
+        "name": "Aulus",
+        "role": "city guard",
+        "biography": "A tavern-posted legionary on watch duty, paid to keep the peace.",
+        "appearance": "Broad-shouldered, short sword at the hip, segmented armour.",
+        "speech_style": "terse, commanding",
+        "inventory": [],
+        "mood": "angry",
+        "physical_status": "healthy",
+        "traits": [
+          "disciplined",
+          "protective"
+        ]
+      },
+      "scene": "Шумная таверна. Игрок бросил нож, поднял руки и перестал драться.",
+      "last_player_action": "Игрок извиняется и сдаётся после удара по стражнику Авлу.",
+      "language": "Russian"
+    },
+    "jev": {
+      "answer": {
+        "type": "choice",
+        "choice": "restrain",
+        "confidence": 0.93,
+        "probabilities": {
+          "attack": 0.0,
+          "withdraw": 0.0,
+          "summon": 0.02,
+          "confront": 0.04,
+          "wait": 0.0,
+          "restrain": 0.94
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 698,
+        "output_tokens": 65
+      },
+      "latency_ms": 599
+    },
+    "actor": {
+      "text": "{\"action\":\"Подхожу ближе, опускаю руку к рукояти короткого меча, останавливаю взглядом и проверяю, не тянется ли игрок за оружием; затем отдаю короткий приказ: не двигаться и ждать стражу.\",\"type\":\"TALK\",\"target\":\"player\"}",
+      "model": "gpt-5.4-nano",
+      "latency_ms": 1863
+    }
+  }
+]
