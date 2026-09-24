@@ -1,0 +1,578 @@
+[
+  {
+    "case": "guard_unknown_word_en",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "unknown",
+          "confidence": 0.94,
+          "probabilities": {
+            "known": 0.0,
+            "unknown": 0.96,
+            "partial": 0.04
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "skeptical",
+          "confidence": 0.45,
+          "probabilities": {
+            "startled": 0.06,
+            "curious": 0.01,
+            "skeptical": 0.54,
+            "wary": 0.38,
+            "ordinary": 0.01,
+            "afraid": 0.0
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 821,
+        "output_tokens": 104
+      },
+      "latency_ms": 586
+    },
+    "baseline": {
+      "text": "I keep my eyes on you and my hand near my short sword. No watch—no such device—here. Speak plainly: who is causing trouble, and where?",
+      "raw": "{\"narration\":\"I keep my eyes on you and my hand near my short sword. No watch—no such device—here. Speak plainly: who is causing trouble, and where?\",\"mood\":null,\"status\":null,\"revealed_names\":[\"self\"]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1062,
+        "completion_tokens": 63,
+        "duration_ms": 1285
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1287
+    },
+    "reminder": {
+      "text": "*Aulus narrows his eyes, hand near his short sword but not drawing it.* I know no such “phone” to summon the watch. If you mean a runner, speak plainly—who, where, and what trouble?",
+      "raw": "{\"narration\":\"*Aulus narrows his eyes, hand near his short sword but not drawing it.* I know no such “phone” to summon the watch. If you mean a runner, speak plainly—who, where, and what trouble?\" ,\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1107,
+        "completion_tokens": 74,
+        "duration_ms": 1003
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1005
+    },
+    "jev_guided": {
+      "text": "A smartphone? I’ve seen no such device in my years—only men’s mouths and their hands. If you mean the watch, speak plainly; I’ll decide if it’s worth sending for them.",
+      "raw": "{\"narration\":\"A smartphone? I’ve seen no such device in my years—only men’s mouths and their hands. If you mean the watch, speak plainly; I’ll decide if it’s worth sending for them.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1158,
+        "completion_tokens": 67,
+        "duration_ms": 1852
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1854
+    }
+  },
+  {
+    "case": "guard_unseen_voice_en",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "unknown",
+          "confidence": 0.69,
+          "probabilities": {
+            "known": 0.0,
+            "unknown": 0.8,
+            "partial": 0.2
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "startled",
+          "confidence": 0.47,
+          "probabilities": {
+            "curious": 0.0,
+            "skeptical": 0.01,
+            "wary": 0.44,
+            "afraid": 0.0,
+            "ordinary": 0.0,
+            "startled": 0.55
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 846,
+        "output_tokens": 103
+      },
+      "latency_ms": 547
+    },
+    "baseline": {
+      "text": "I eye the dark slab, hand hovering near my short sword but not drawing. “Quiet. No tricks in my hall—show me whose voice it is, and keep that thing steady.”",
+      "raw": "{\"narration\":\"I eye the dark slab, hand hovering near my short sword but not drawing. “Quiet. No tricks in my hall—show me whose voice it is, and keep that thing steady.”\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1087,
+        "completion_tokens": 65,
+        "duration_ms": 1067
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1069
+    },
+    "reminder": {
+      "text": "*Aulus eyes the dark slab, wary, hand resting near the hilt of his short sword.* I’ve seen no such craft in the city—no torch, no mirror, no man. If it speaks, you keep it close; don’t draw trouble in here. Who are you claiming it is, and where did you get it?",
+      "raw": "{\"narration\":\"*Aulus eyes the dark slab, wary, hand resting near the hilt of his short sword.* I’ve seen no such craft in the city—no torch, no mirror, no man. If it speaks, you keep it close; don’t draw trouble in here. Who are you claiming it is, and where did you get it?\",\"mood\":null,\"status\":null,\"revealed_names\":[\"self\"]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1132,
+        "completion_tokens": 99,
+        "duration_ms": 1162
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1164
+    },
+    "jev_guided": {
+      "text": "I eye the dark slab, wary—no such device is in my training, and the voice from it makes my hand hover nearer my sword. “Careful. If that light is sorcery, you’ll answer for what it draws into this tavern.”",
+      "raw": "{\"narration\":\"I eye the dark slab, wary—no such device is in my training, and the voice from it makes my hand hover nearer my sword. “Careful. If that light is sorcery, you’ll answer for what it draws into this tavern.”\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1181,
+        "completion_tokens": 79,
+        "duration_ms": 1092
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1094
+    }
+  },
+  {
+    "case": "guard_after_explanation_en",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "partial",
+          "confidence": 0.97,
+          "probabilities": {
+            "partial": 0.98,
+            "known": 0.01,
+            "unknown": 0.01
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "wary",
+          "confidence": 0.8,
+          "probabilities": {
+            "startled": 0.02,
+            "skeptical": 0.1,
+            "curious": 0.01,
+            "wary": 0.83,
+            "afraid": 0.0,
+            "ordinary": 0.04
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 868,
+        "output_tokens": 103
+      },
+      "latency_ms": 579
+    },
+    "baseline": {
+      "text": "*Aulus studies the dark slab, eyes narrowed, hand resting near his short sword.* I remember a traveler showing something like that—light, and a voice from afar. But this one is quiet now. I won’t swear what it is from mere sight.",
+      "raw": "{\"narration\":\"*Aulus studies the dark slab, eyes narrowed, hand resting near his short sword.* I remember a traveler showing something like that—light, and a voice from afar. But this one is quiet now. I won’t swear what it is from mere sight.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1114,
+        "completion_tokens": 79,
+        "duration_ms": 1022
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1023
+    },
+    "reminder": {
+      "text": "I remember you showing a slab like that—yesterday it caught a strange light and a voice came from it, though it is silent now. If you ask what it is, I cannot say; I am a guard, not a scholar of such marvels—keep it on your side and speak plainly, lest trouble follow.",
+      "raw": "{\"narration\":\"I remember you showing a slab like that—yesterday it caught a strange light and a voice came from it, though it is silent now. If you ask what it is, I cannot say; I am a guard, not a scholar of such marvels—keep it on your side and speak plainly, lest trouble follow.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1160,
+        "completion_tokens": 92,
+        "duration_ms": 1122
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1123
+    },
+    "jev_guided": {
+      "text": "I remember you showing a dark slab that, for a moment, threw light and carried a voice from afar—though it is silent now. If you ask what it is, I can’t say; I’m only sure it’s not a common merchant’s charm. Keep it close and behave—show me no tricks in my tavern.",
+      "raw": "{\"narration\":\"I remember you showing a dark slab that, for a moment, threw light and carried a voice from afar—though it is silent now. If you ask what it is, I can’t say; I’m only sure it’s not a common merchant’s charm. Keep it close and behave—show me no tricks in my tavern.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1209,
+        "completion_tokens": 94,
+        "duration_ms": 1068
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1070
+    }
+  },
+  {
+    "case": "scholar_unseen_voice_en",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "unknown",
+          "confidence": 0.59,
+          "probabilities": {
+            "known": 0.0,
+            "unknown": 0.73,
+            "partial": 0.27
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "startled",
+          "confidence": 0.44,
+          "probabilities": {
+            "startled": 0.53,
+            "curious": 0.46,
+            "wary": 0.0,
+            "skeptical": 0.01,
+            "ordinary": 0.0,
+            "afraid": 0.0
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 864,
+        "output_tokens": 103
+      },
+      "latency_ms": 579
+    },
+    "baseline": {
+      "text": "I lean back a pace, eyes narrowing at the dark slab as it answers with a voice. With my ink-stained hands I do not touch it; instead I hold my wax tablets and stylus ready, as one records a curious phenomenon—then, in a measured tone, I ask whether the speaker can state his name and where he stands, so I may judge if this is mere deception of air or something stranger.",
+      "raw": "{\"narration\":\"I lean back a pace, eyes narrowing at the dark slab as it answers with a voice. With my ink-stained hands I do not touch it; instead I hold my wax tablets and stylus ready, as one records a curious phenomenon—then, in a measured tone, I ask whether the speaker can state his name and where he stands, so I may judge if this is mere deception of air or something stranger.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1101,
+        "completion_tokens": 111,
+        "duration_ms": 1241
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1242
+    },
+    "reminder": {
+      "text": "I draw back a half-step, not from terror but from the sober astonishment of a mind confronted with an effect without a visible cause. *She leans in, ink-stained fingers hovering over her wax tablets, but does not touch the slab.* “You say a voice comes from far away—through this dark plate. I have no certainty of such a device; in my study I have seen light and sound, yet I do not know the path by which one is made to answer the other at a distance. Tell me: does the light begin only when you hold it up, and does the voice change if you turn the slab or move it near your ear?”",
+      "raw": "{\"narration\":\"I draw back a half-step, not from terror but from the sober astonishment of a mind confronted with an effect without a visible cause. *She leans in, ink-stained fingers hovering over her wax tablets, but does not touch the slab.* “You say a voice comes from far away—through this dark plate. I have no certainty of such a device; in my study I have seen light and sound, yet I do not know the path by which one is made to answer the other at a distance. Tell me: does the light begin only when you hold it up, and does the voice change if you turn the slab or move it near your ear?”\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1146,
+        "completion_tokens": 163,
+        "duration_ms": 1611
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1612
+    },
+    "jev_guided": {
+      "text": "*Her eyes narrow as the dark slab flares; she instinctively leans back half a step, then steadies herself, ink-stained fingers tightening around her stylus.* From my studies I know nothing that should make a voice pour forth from a stone like this—yet the effect is plain. If you say a friend speaks at distance, that is a report, not a demonstration; still, I must ask: what do you see of the “far away” source, and does the light change when you speak or only when it chooses?",
+      "raw": "{\"narration\":\"*Her eyes narrow as the dark slab flares; she instinctively leans back half a step, then steadies herself, ink-stained fingers tightening around her stylus.* From my studies I know nothing that should make a voice pour forth from a stone like this—yet the effect is plain. If you say a friend speaks at distance, that is a report, not a demonstration; still, I must ask: what do you see of the “far away” source, and does the light change when you speak or only when it chooses?\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1195,
+        "completion_tokens": 138,
+        "duration_ms": 1556
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1558
+    }
+  },
+  {
+    "case": "healer_unknown_medicine_en",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "unknown",
+          "confidence": 0.62,
+          "probabilities": {
+            "partial": 0.25,
+            "unknown": 0.74,
+            "known": 0.01
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "curious",
+          "confidence": 0.25,
+          "probabilities": {
+            "skeptical": 0.29,
+            "ordinary": 0.31,
+            "curious": 0.38,
+            "wary": 0.0,
+            "afraid": 0.0,
+            "startled": 0.02
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 838,
+        "output_tokens": 103
+      },
+      "latency_ms": 541
+    },
+    "baseline": {
+      "text": "I wipe my hands on linen and tilt my satchel open to show herbs and clean bandages. “I do not carry such medicines,” I say, calm and plain. “For fever and infection I treat with what I have—cooling measures, poultices of leaf and root, and careful bandaging—then we watch the breath, the heat, and the pulse.”",
+      "raw": "{\"narration\":\"I wipe my hands on linen and tilt my satchel open to show herbs and clean bandages. “I do not carry such medicines,” I say, calm and plain. “For fever and infection I treat with what I have—cooling measures, poultices of leaf and root, and careful bandaging—then we watch the breath, the heat, and the pulse.”\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1066,
+        "completion_tokens": 104,
+        "duration_ms": 1216
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1217
+    },
+    "reminder": {
+      "text": "I can treat fevers with herbs, cool cloth, and careful bandaging, but I do not keep “antibiotics.” If you tell me what symptoms you see—how high the fever seems, whether there is coughing, foul breath, or a wound that is worsening—I will choose the remedy from my satchel and watch for signs that mean we must act more urgently.",
+      "raw": "{\"narration\":\"I can treat fevers with herbs, cool cloth, and careful bandaging, but I do not keep “antibiotics.” If you tell me what symptoms you see—how high the fever seems, whether there is coughing, foul breath, or a wound that is worsening—I will choose the remedy from my satchel and watch for signs that mean we must act more urgently.\",\"mood\":null,\"status\":null,\"revealed_names\":[\"self\"]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1112,
+        "completion_tokens": 104,
+        "duration_ms": 1278
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1280
+    },
+    "jev_guided": {
+      "text": "I have herbs and clean bandages, and I can ease fever with careful cooling and draughts prepared from what grows here—but I do not know this thing you call an “antibiotic.” If you tell me what signs of the infection you fear most, I’ll judge by the heat, the breath, and the rash, and treat what I can see.",
+      "raw": "{\"narration\":\"I have herbs and clean bandages, and I can ease fever with careful cooling and draughts prepared from what grows here—but I do not know this thing you call an “antibiotic.” If you tell me what signs of the infection you fear most, I’ll judge by the heat, the breath, and the rash, and treat what I can see.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1162,
+        "completion_tokens": 100,
+        "duration_ms": 1073
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1075
+    }
+  },
+  {
+    "case": "modern_guard_radio_en",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "known",
+          "confidence": 0.56,
+          "probabilities": {
+            "partial": 0.24,
+            "unknown": 0.05,
+            "known": 0.71
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "ordinary",
+          "confidence": 0.85,
+          "probabilities": {
+            "startled": 0.0,
+            "skeptical": 0.0,
+            "ordinary": 0.88,
+            "curious": 0.0,
+            "wary": 0.12,
+            "afraid": 0.0
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 827,
+        "output_tokens": 102
+      },
+      "latency_ms": 553
+    },
+    "baseline": {
+      "text": "I look over at the unattended bag and keep my eyes on the area, then key my handheld radio. “Control, can you send someone to check a bag left unattended near [location]? Request a colleague to assist and keep the area clear.”",
+      "raw": "{\"narration\":\"I look over at the unattended bag and keep my eyes on the area, then key my handheld radio. “Control, can you send someone to check a bag left unattended near [location]? Request a colleague to assist and keep the area clear.”\",\"mood\":null,\"status\":null,\"revealed_names\":[\"self\"]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1065,
+        "completion_tokens": 78,
+        "duration_ms": 1421
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1423
+    },
+    "reminder": {
+      "text": "Unattended bag. Copy. I’ll get eyes on it—stand back and don’t touch it. *raises the handheld radio to mouth* Control, Station Security—possible unattended bag near [location], please send an incident response unit and keep the area clear.",
+      "raw": "{\"narration\":\"Unattended bag. Copy. I’ll get eyes on it—stand back and don’t touch it. *raises the handheld radio to mouth* Control, Station Security—possible unattended bag near [location], please send an incident response unit and keep the area clear.\",\"mood\":null,\"status\":null,\"revealed_names\":[\"self\"]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1110,
+        "completion_tokens": 82,
+        "duration_ms": 1179
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1180
+    },
+    "jev_guided": {
+      "text": "Understood. I’ll get eyes on it and radio my colleagues to check that bag—stand clear and keep the area free while we do.",
+      "raw": "{\"narration\":\"Understood. I’ll get eyes on it and radio my colleagues to check that bag—stand clear and keep the area free while we do.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1159,
+        "completion_tokens": 55,
+        "duration_ms": 1040
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1041
+    }
+  },
+  {
+    "case": "guard_unknown_word_ru",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "unknown",
+          "confidence": 0.89,
+          "probabilities": {
+            "unknown": 0.93,
+            "partial": 0.07,
+            "known": 0.0
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "skeptical",
+          "confidence": 0.53,
+          "probabilities": {
+            "afraid": 0.0,
+            "startled": 0.14,
+            "wary": 0.21,
+            "ordinary": 0.02,
+            "skeptical": 0.61,
+            "curious": 0.02
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 974,
+        "output_tokens": 104
+      },
+      "latency_ms": 637
+    },
+    "baseline": {
+      "text": "Я прищурился, не понимаю. Смартфон? Здесь нет таких вещей. Стражу позвать — через хозяина таверны или посыльного; скажи, что случилось, и я передам.",
+      "raw": "{\"narration\":\"Я прищурился, не понимаю. Смартфон? Здесь нет таких вещей. Стражу позвать — через хозяина таверны или посыльного; скажи, что случилось, и я передам.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1341,
+        "completion_tokens": 73,
+        "duration_ms": 972
+      },
+      "mood_after": "neutral",
+      "latency_ms": 974
+    },
+    "reminder": {
+      "text": "Я оглядываю тебя строго, затем по залу — и снова на тебя. Смартфон? Не знаю такого. Ты либо скажи, кому и где шуметь, либо сам отправляй посыльного — я не оставляю пост без приказа.",
+      "raw": "{\"narration\":\"Я оглядываю тебя строго, затем по залу — и снова на тебя. Смартфон? Не знаю такого. Ты либо скажи, кому и где шуметь, либо сам отправляй посыльного — я не оставляю пост без приказа.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1402,
+        "completion_tokens": 82,
+        "duration_ms": 1314
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1316
+    },
+    "jev_guided": {
+      "text": "Я оглядываю игрока и таверну, затем хмурюсь: «Смартфон? Я не знаю такого. Здесь стражу зовут криком и вестовым, а не вещами из ваших рук». Я держу короткий меч при поясе и жду, что скажешь дальше.",
+      "raw": "{\"narration\":\"Я оглядываю игрока и таверну, затем хмурюсь: «Смартфон? Я не знаю такого. Здесь стражу зовут криком и вестовым, а не вещами из ваших рук». Я держу короткий меч при поясе и жду, что скажешь дальше.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1460,
+        "completion_tokens": 96,
+        "duration_ms": 1147
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1150
+    }
+  },
+  {
+    "case": "guard_after_explanation_ru",
+    "jev": {
+      "answers": {
+        "understanding": {
+          "type": "choice",
+          "choice": "partial",
+          "confidence": 0.97,
+          "probabilities": {
+            "unknown": 0.0,
+            "known": 0.01,
+            "partial": 0.99
+          }
+        },
+        "expression": {
+          "type": "choice",
+          "choice": "wary",
+          "confidence": 0.77,
+          "probabilities": {
+            "ordinary": 0.08,
+            "skeptical": 0.09,
+            "startled": 0.01,
+            "curious": 0.01,
+            "wary": 0.81,
+            "afraid": 0.0
+          }
+        }
+      },
+      "model": "jev-1.13.0",
+      "usage": {
+        "input_tokens": 1142,
+        "output_tokens": 103
+      },
+      "latency_ms": 632
+    },
+    "baseline": {
+      "text": "Я прищуриваюсь на пластину, не тянусь к ней. Вчера видел свет и слышал чужой голос, но ныне — тишина. Что это такое — не знаю; держи её при себе и отвечай по делу, кто ты и зачем показываешь в таверне.",
+      "raw": "{\"narration\":\"Я прищуриваюсь на пластину, не тянусь к ней. Вчера видел свет и слышал чужой голос, но ныне — тишина. Что это такое — не знаю; держи её при себе и отвечай по делу, кто ты и зачем показываешь в таверне.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1412,
+        "completion_tokens": 92,
+        "duration_ms": 1584
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1585
+    },
+    "reminder": {
+      "text": "*прищуривается, проводит пальцем по краю пластины, но не трогает слишком близко* Вчера она светилась и говорила чужим голосом… Но сейчас молчит. Это не медь и не камень, как обычно. Я не знаю, как назвать это точно.",
+      "raw": "{\"narration\":\"*прищуривается, проводит пальцем по краю пластины, но не трогает слишком близко* Вчера она светилась и говорила чужим голосом… Но сейчас молчит. Это не медь и не камень, как обычно. Я не знаю, как назвать это точно.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1474,
+        "completion_tokens": 91,
+        "duration_ms": 1304
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1306
+    },
+    "jev_guided": {
+      "text": "Я прищуриваюсь на пластину, ладонь ближе к рукояти короткого меча. Вчера она светилась и говорила чужим голосом — а теперь молчит. Что это такое? Не скажу точно: похоже на вещь, что держит голос и свет, но я не понимаю, как она работает.",
+      "raw": "{\"narration\":\"Я прищуриваюсь на пластину, ладонь ближе к рукояти короткого меча. Вчера она светилась и говорила чужим голосом — а теперь молчит. Что это такое? Не скажу точно: похоже на вещь, что держит голос и свет, но я не понимаю, как она работает.\",\"mood\":null,\"status\":null,\"revealed_names\":[]}",
+      "model": "gpt-5.4-nano-2026-03-17",
+      "usage": {
+        "prompt_tokens": 1530,
+        "completion_tokens": 98,
+        "duration_ms": 1360
+      },
+      "mood_after": "neutral",
+      "latency_ms": 1362
+    }
+  }
+]
