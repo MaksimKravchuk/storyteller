@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +17,7 @@ from experiments.jev_dialogue_reactions.providers import call_actor
 
 _MAX_CONCURRENT_CALLS = 4
 _DEFAULT_ITERATIONS = 3
-_DEFAULT_OUTPUT_DIR = Path("/private/tmp/storyteller-jev-dialogue-results")
+_DEFAULT_OUTPUT_DIR_NAME = "storyteller-jev-dialogue-results"
 
 
 class _TrialRunner:
@@ -75,10 +76,11 @@ def _write_output(output: Path, rows: list[dict[str, Any]]) -> None:
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    default_output_dir = Path(tempfile.gettempdir()) / _DEFAULT_OUTPUT_DIR_NAME
     parser = argparse.ArgumentParser()
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--iterations", type=int, default=_DEFAULT_ITERATIONS)
-    parser.add_argument("--output-dir", type=Path, default=_DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--output-dir", type=Path, default=default_output_dir)
     return parser
 
 

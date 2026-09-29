@@ -12,7 +12,7 @@ import allure
 
 from experiments.jev_npc_reactions import actor_eval, jev_eval
 from experiments.jev_npc_reactions.case_data import jev_state, load_cases
-from experiments.jev_npc_reactions.run import run
+from experiments.jev_npc_reactions.run import main, run
 from llm.message import LLMResponse
 
 
@@ -93,3 +93,14 @@ class TestJevReactionPilot:
         assert "purse" in captured[0]["system_prompt"]
         assert case.player_action in captured[0]["messages"][-1].body
         assert "retreats" in answer["text"]
+
+    @allure.story("Runner output")
+    @allure.title("Default output lands in the platform temp directory")
+    def test_default_output_uses_platform_temp_dir(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
+        monkeypatch.setattr("sys.argv", ["run.py"])
+
+        main()
+
+        rows = json.loads((tmp_path / "storyteller_jev_results.json").read_text())
+        assert len(rows) == len(load_cases())

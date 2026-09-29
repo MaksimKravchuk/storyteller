@@ -9,7 +9,7 @@ from functools import partial
 
 import allure
 
-from experiments.jev_dialogue_reactions import jev_eval, providers
+from experiments.jev_dialogue_reactions import jev_eval, providers, run
 from experiments.jev_dialogue_reactions.case_data import jev_state, load_cases
 from llm.message import LLMResponse
 
@@ -51,6 +51,10 @@ class _FakeClient:
 
     async def close(self):
         self.closed = True
+
+
+async def _fake_iteration(cases, jev_key, actor_key):
+    return [{"case": case.name} for case in cases]
 
 
 @allure.epic("NPC Interaction")
@@ -130,3 +134,18 @@ class TestJevDialoguePilot:
         assert reminder in guided
         assert "understanding=unknown" in guided
         assert "understanding=unknown" not in reminder
+
+    @allure.story("Runner output")
+    @allure.title("Live results default to the platform temp directory")
+    def test_live_output_defaults_to_platform_temp_dir(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("tempfile.tempdir", str(tmp_path))
+        monkeypatch.setattr(run, "run_iteration", _fake_iteration)
+        monkeypatch.setenv("TYPESAFE_API_KEY", "dummy")
+        monkeypatch.setenv("OPENAI_API_KEY", "dummy")
+        monkeypatch.setattr("sys.argv", ["run.py", "--live", "--iterations", "1"])
+
+        run.main()
+
+        output = tmp_path / "storyteller-jev-dialogue-results" / "results_iter0.json"
+        rows = json.loads(output.read_text(encoding="utf-8"))
+        assert len(rows) == len(load_cases())

@@ -75,7 +75,7 @@ Jev recognized the same-mood active-assault versus surrender distinction that th
 
 ## How to rerun
 
-The fixed inputs are in `cases.json`, and the runner is `run.py`. Offline mode uses no API keys and writes `/private/tmp/storyteller_jev_results.json`. Live mode needs `TYPESAFE_API_KEY` and `OPENAI_API_KEY` in the process environment and makes six calls to each provider per iteration. The archived raw results contain fictional scene data and model outputs, with no credentials.
+The fixed inputs are in `cases.json`, and the runner is `run.py`. Offline mode uses no API keys and writes `storyteller_jev_results.json` to the system temp directory (`tempfile.gettempdir()`). Live mode needs `TYPESAFE_API_KEY` and `OPENAI_API_KEY` in the process environment and makes six calls to each provider per iteration. The archived raw results contain fictional scene data and model outputs, with no credentials.
 
 ```bash
 PYTHONPATH=. uv run python experiments/jev_npc_reactions/run.py

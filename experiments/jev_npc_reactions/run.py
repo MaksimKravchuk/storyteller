@@ -7,16 +7,16 @@ import asyncio
 import json
 import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from cast.dice import AGGRESSION_THRESHOLDS
-from experiments.jev_npc_reactions.actor_eval import call_actor
+from experiments.jev_npc_reactions import actor_eval, jev_eval
 from experiments.jev_npc_reactions.case_data import Case, jev_state, load_cases
-from experiments.jev_npc_reactions.jev_eval import call_jev
 
 _D20_SIDES = 20
-_DEFAULT_OUTPUT = Path("/private/tmp/storyteller_jev_results.json")
+_DEFAULT_OUTPUT_NAME = "storyteller_jev_results.json"
 
 
 def _baseline(case: Case) -> dict[str, Any]:
@@ -33,8 +33,8 @@ def _baseline(case: Case) -> dict[str, Any]:
 
 async def _live_case(case: Case, jev_key: str, actor_key: str) -> dict[str, Any]:
     jev, actor = await asyncio.gather(
-        asyncio.to_thread(call_jev, case, jev_key),
-        call_actor(case, actor_key),
+        asyncio.to_thread(jev_eval.call_jev, case, jev_key),
+        actor_eval.call_actor(case, actor_key),
     )
     return {**_baseline(case), "jev": jev, "actor": actor}
 
@@ -56,7 +56,8 @@ def main() -> None:
     """Run the exploratory comparison and save raw output locally."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--live", action="store_true")
-    parser.add_argument("--output", type=Path, default=_DEFAULT_OUTPUT)
+    default_output = Path(tempfile.gettempdir()) / _DEFAULT_OUTPUT_NAME
+    parser.add_argument("--output", type=Path, default=default_output)
     args = parser.parse_args()
     rows = asyncio.run(run(args.live))
     args.output.write_text(f"{json.dumps(rows, ensure_ascii=False, indent=2)}\n")

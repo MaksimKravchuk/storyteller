@@ -58,7 +58,7 @@ The trial supports using Jev as a plausible *classification* signal for NPC pers
 
 ## Reproduce
 
-Dry run makes no provider calls. Live mode requires `TYPESAFE_API_KEY` and `OPENAI_API_KEY` in the process environment, and writes results to `/private/tmp/storyteller-jev-dialogue-results` by default.
+Dry run makes no provider calls. Live mode requires `TYPESAFE_API_KEY` and `OPENAI_API_KEY` in the process environment, and writes results to `storyteller-jev-dialogue-results/` in the system temp directory (`tempfile.gettempdir()`) by default.
 
 ```bash
 PYTHONPATH=. uv run python experiments/jev_dialogue_reactions/run.py
