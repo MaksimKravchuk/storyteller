@@ -84,9 +84,9 @@ def maybe_complete_kill_goal(actor: NPCCard, target: NPCCard, game_state: GameSt
             thread.status = _THREAD_RESOLVED
 
 
-def maybe_complete_social_goal(actor: NPCCard, target: NPCCard) -> None:
+def maybe_complete_social_goal(actor: NPCCard, game_state: GameState) -> None:
     """Complete supported social goals whose deterministic predicate is met."""
-    _npc_social_goal.maybe_complete_social_goal(actor, target)
+    _npc_social_goal.maybe_complete_social_goal(actor, game_state)
 
 
 def resolve_goal_target_name(npc: Any, game_state: GameState) -> str | None:

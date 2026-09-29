@@ -99,13 +99,13 @@ class TestGoalProgress:
     @allure.story("Goal completion")
     @allure.title("BEFRIEND goal completes when relationship reaches friend threshold")
     def test_befriend_goal_completes_at_friend_threshold(self) -> None:
-        _, actor, target, _ = make_actor_target_state()
+        state, actor, target, _ = make_actor_target_state()
         actor.life_goal = Goal(kind=GoalKind.BEFRIEND, description="x", target_uuid=target.uuid)
         actor.relationships = [
             Relationship(target_uuid=str(target.uuid), kind=RelationshipKind.FRIEND, intensity=2),
         ]
 
-        maybe_complete_social_goal(actor, target)
+        maybe_complete_social_goal(actor, state)
 
         assert actor.life_goal.status is GoalStatus.COMPLETED
         assert any("friend threshold" in note for note in actor.life_goal.progress_notes)
@@ -113,13 +113,13 @@ class TestGoalProgress:
     @allure.story("Goal completion")
     @allure.title("BEFRIEND goal stays active below the friend threshold")
     def test_befriend_goal_stays_active_below_friend_threshold(self) -> None:
-        _, actor, target, _ = make_actor_target_state()
+        state, actor, target, _ = make_actor_target_state()
         actor.life_goal = Goal(kind=GoalKind.BEFRIEND, description="x", target_uuid=target.uuid)
         actor.relationships = [
             Relationship(target_uuid=str(target.uuid), kind=RelationshipKind.FRIEND, intensity=1),
         ]
 
-        maybe_complete_social_goal(actor, target)
+        maybe_complete_social_goal(actor, state)
 
         assert actor.life_goal.status is GoalStatus.ACTIVE
         assert actor.life_goal.progress_notes == []
@@ -301,6 +301,62 @@ class TestResolveActionsAftermath:
         assert actor.life_goal.status is GoalStatus.COMPLETED
         assert actor.life_goal.last_attempted_action == "TALK"
         assert memory.calls == []
+
+    @pytest.mark.asyncio
+    @allure.story("Social aftermath")
+    @allure.title("Satisfied BEFRIEND goal completes even when this turn's action names no target")
+    async def test_untargeted_action_completes_satisfied_befriend_goal(self) -> None:
+        state, actor, target, _ = make_actor_target_state()
+        actor.life_goal = Goal(kind=GoalKind.BEFRIEND, description="x", target_uuid=target.uuid)
+        actor.relationships = [
+            Relationship(target_uuid=str(target.uuid), kind=RelationshipKind.ALLY, intensity=3),
+        ]
+
+        await resolve_actions_aftermath(
+            [
+                NPCAction(
+                    npc_name="Brutus",
+                    npc_uuid=actor.uuid,
+                    action_type="IDLE",
+                    action_description="nurses his cup",
+                    target=None,
+                    contest_roll=None,
+                ),
+            ],
+            state,
+            RecordingMemoryManager(),
+        )
+
+        assert actor.life_goal.status is GoalStatus.COMPLETED
+        assert any(target.name in note for note in actor.life_goal.progress_notes)
+
+    @pytest.mark.asyncio
+    @allure.story("Social aftermath")
+    @allure.title("BEFRIEND goal never completes toward a dead target")
+    async def test_befriend_goal_stays_active_when_target_is_dead(self) -> None:
+        state, actor, target, _ = make_actor_target_state()
+        actor.life_goal = Goal(kind=GoalKind.BEFRIEND, description="x", target_uuid=target.uuid)
+        actor.relationships = [
+            Relationship(target_uuid=str(target.uuid), kind=RelationshipKind.FRIEND, intensity=2),
+        ]
+        target.physical_status = "dead"
+
+        await resolve_actions_aftermath(
+            [
+                NPCAction(
+                    npc_name="Brutus",
+                    npc_uuid=actor.uuid,
+                    action_type="TALK",
+                    action_description="mourns over the body",
+                    target=target.name,
+                    contest_roll=None,
+                ),
+            ],
+            state,
+            RecordingMemoryManager(),
+        )
+
+        assert actor.life_goal.status is GoalStatus.ACTIVE
 
     @pytest.mark.asyncio
     @allure.story("Aftermath wiring")

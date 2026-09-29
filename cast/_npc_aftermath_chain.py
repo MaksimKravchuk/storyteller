@@ -74,7 +74,7 @@ async def resolve_one_aftermath(
     update_goal_progress(aftermath.actor, aftermath.action_type, aftermath.action_description)
     if target is not None:
         maybe_complete_kill_goal(aftermath.actor, target, game_state)
-        maybe_complete_social_goal(aftermath.actor, target)
+    maybe_complete_social_goal(aftermath.actor, game_state)
 
 
 async def resolve_aftermath_chain(
