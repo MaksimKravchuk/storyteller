@@ -49,9 +49,9 @@ Copy `.env.example` to `.env` and set your values:
 |---|---|---|
 | `OPENAI_API_KEY` | — | OpenAI API key |
 | `ANTHROPIC_API_KEY` | — | Anthropic API key |
-| `DIRECTOR_MODEL` | `gpt-5.4-mini` | Model for the Director agent |
-| `AGENT_MODEL` | `gpt-5.4-nano` | Model for supporting agents |
-| `NARRATOR_MODEL` | `gpt-5.4-mini` | Model for the Narrator |
+| `DIRECTOR_MODEL` | `gpt-6-luna` | Model for the Director agent |
+| `AGENT_MODEL` | `gpt-6-luna` | Model for supporting agents |
+| `NARRATOR_MODEL` | `gpt-6-luna` | Model for the Narrator |
 | `DEFAULT_PROVIDER` | `openai` | Fallback provider for unrecognised model names |
 | `TEMPERATURE` | `0.7` | LLM sampling temperature |
 | `MAX_TOKENS` | `2048` | Max tokens per LLM response |

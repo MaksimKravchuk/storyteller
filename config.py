@@ -15,8 +15,7 @@ from defaults.models import (
     ModelConfig,
 )
 
-_GPT5_4_MINI = "gpt-5.4-mini"
-_GPT5_4_NANO = "gpt-5.4-nano"
+_GPT6_LUNA = "gpt-6-luna"
 
 _OPENROUTER_PREFIXES = (
     "deepseek/",
@@ -72,10 +71,10 @@ class Config(BaseSettings):
     searxng_base_url: str | None = None
 
     # Model selection per agent role
-    director_model: str = _GPT5_4_MINI
-    agent_model: str = _GPT5_4_NANO
-    narrator_model: str = _GPT5_4_MINI
-    dramaturge_model: str = _GPT5_4_NANO
+    director_model: str = _GPT6_LUNA
+    agent_model: str = _GPT6_LUNA
+    narrator_model: str = _GPT6_LUNA
+    dramaturge_model: str = _GPT6_LUNA
 
     # Dramaturge (consistency oracle) is off by default — enable via env
     # var ``DRAMATURGE_ENABLED=true``. When enabled, a validation pass runs

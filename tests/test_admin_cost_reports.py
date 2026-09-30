@@ -56,7 +56,7 @@ async def test_admin_beta_cost_summary_redacts_prompt_material() -> None:
     rendered = repr(payload)
 
     assert response.status == 200
-    assert payload["total"]["estimated_cost_usd"] == "1.250000"
+    assert payload["total"]["estimated_cost_usd"] == "3.000000"
     assert "system_prompt" not in rendered
     assert "messages" not in rendered
     assert "response_content" not in rendered

@@ -27,6 +27,12 @@ _SYSTEM_PROMPT_LOG_CHARS = 200
 _RETRY_MAX_ATTEMPTS = 3
 _RETRY_BASE_DELAY = 2.0
 
+# Models whose API default is ``reasoning_effort: medium`` but which accept
+# ``none``. Pinning ``none`` keeps the GPT-5.4-era wire contract: Chat
+# Completions rejects ``temperature`` and function calling once reasoning is
+# on, and every performer relies on both.
+_REASONING_NONE_MODEL_PREFIXES = ("gpt-6-luna",)
+
 
 async def _call_with_retry(
     create: Callable[[], Awaitable[Any]],
@@ -104,11 +110,11 @@ def _sanitize(text: str) -> str:
 
 
 class OpenAIClient(BaseLLMClient):
-    """OpenAI API provider (GPT-5.4 family, GPT-4o, etc.)."""
+    """OpenAI API provider (GPT-6 Luna, GPT-5.x family, GPT-4o, etc.)."""
 
     def __init__(
         self,
-        model: str = "gpt-5.4-mini",
+        model: str = "gpt-6-luna",
         api_key: str | None = None,
         base_url: str | None = None,
         extra_headers: Mapping[str, str] | None = None,
@@ -179,6 +185,8 @@ class OpenAIClient(BaseLLMClient):
             "temperature": self.temperature if temperature is None else temperature,
             "max_completion_tokens": self.max_tokens if max_tokens is None else max_tokens,
         }
+        if self.model.startswith(_REASONING_NONE_MODEL_PREFIXES):
+            kwargs["reasoning_effort"] = "none"
         wire_response_format = _build_response_format(output_format)
         if wire_response_format is not None:
             kwargs["response_format"] = wire_response_format

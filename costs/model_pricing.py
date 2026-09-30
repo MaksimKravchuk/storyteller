@@ -32,8 +32,9 @@ class CallCost:
 
 DEFAULT_MODEL_PRICES = MappingProxyType(
     {
-        "gpt-5.4-mini": ModelPrice(Decimal("0.250"), Decimal("2.000")),
-        "gpt-5.4-nano": ModelPrice(Decimal("0.050"), Decimal("0.400")),
+        "gpt-6-luna": ModelPrice(Decimal("0.100"), Decimal("0.500")),
+        "gpt-5.4-mini": ModelPrice(Decimal("0.750"), Decimal("4.500")),
+        "gpt-5.4-nano": ModelPrice(Decimal("0.200"), Decimal("1.250")),
     },
 )
 
