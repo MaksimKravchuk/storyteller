@@ -1,4 +1,4 @@
-"""HTTP routes for story-poster illustrations (ADR-0019)."""
+"""HTTP routes for story-poster illustrations (ADR-0020)."""
 
 from __future__ import annotations
 

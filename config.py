@@ -107,7 +107,7 @@ class Config(BaseSettings):
     beta_global_budget_usd: str = "50"
     model_pricing_json: str | None = None
 
-    # Story library posters (ADR-0019). Every story gets a free typographic
+    # Story library posters (ADR-0020). Every story gets a free typographic
     # playbill; painted illustrations are paid image-model calls, off by
     # default and capped per player per rolling 24 hours. Price the image model via
     # ``MODEL_PRICING_JSON`` so it counts toward the beta budget.

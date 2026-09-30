@@ -1,4 +1,4 @@
-"""Image generation for optional story-poster illustrations (ADR-0019).
+"""Image generation for optional story-poster illustrations (ADR-0020).
 
 Kept apart from the chat-completion clients: posters are the only image
 call, they are paid per image, and they only run on an explicit player

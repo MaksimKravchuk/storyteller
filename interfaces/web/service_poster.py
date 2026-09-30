@@ -1,4 +1,4 @@
-"""Paint an optional illustration onto a story's library playbill (ADR-0019).
+"""Paint an optional illustration onto a story's library playbill (ADR-0020).
 
 Every story already has a free, deterministic playbill (see
 :mod:`interfaces.web.playbill`). An illustration is a paid image-model call,

@@ -1,19 +1,19 @@
-# ADR-0019: Story library posters — deterministic playbills, illustrations on request
+# ADR-0020: Story library posters — deterministic playbills, illustrations on request
 
 Date: 2026-09-30
 Status: Proposed
 Decision owner: Max. He chose the hybrid variant in session on 2026-09-30: every story gets a playbill generated after the prologue, and a painted illustration is made only when the player asks ("just do it"). Turning paid illustrations on for a deployed beta is a separate operator action; see Consequences.
 Decision type: Product (player-facing library UX, an optional paid feature) + Architecture (a new image-model client, new web routes) + Persistence (a new `story_posters` table) + Operations (spend, quota, moderation)
-Extends: `docs/decisions/0018-player-ui-stage-visual-language.md` (the "stage" visual language, `PLACE_ICONS` / `DAYPART_ICONS`, name-gated cast chips)
+Extends: `docs/decisions/0019-player-ui-stage-visual-language.md` (the "stage" visual language, `PLACE_ICONS` / `DAYPART_ICONS`, name-gated cast chips)
 Related: founder-register D004 (cost budget), D006 (PWA online-required), D007 (privacy posture) and D010 (release approval / material spend) in `docs/studio/09-founder-decision-register.md`; `docs/decisions/0006-content-safety-moderation-pipeline.md`; `interfaces/web/{playbill.py,library_rows.py,poster_art.py,poster_errors.py,service_poster.py,routes_poster.py,schemas_library.py,service.py,auth_routes.py}`, `interfaces/web/static/{app.js,style.css}`, `llm/image_client.py`, `db/{tables.py,repo_posters.py,repo_web_games.py,repo_ai_logs.py}`, `alembic/versions/a9b0c1d2e3f4_add_story_posters.py`, `config.py`, `costs/model_pricing.py`, `.env.example`
 
 ## Context
 
-ADR-0018 gave the play screen an identity, but the "My Stories" library still listed each story as a title, a setting and a turn count. Two stories set in the same city looked identical, and nothing on the list recalled how a story began or who was in it.
+ADR-0019 gave the play screen an identity, but the "My Stories" library still listed each story as a title, a setting and a turn count. Two stories set in the same city looked identical, and nothing on the list recalled how a story began or who was in it.
 
 A poster per story fixes that. A poster can come from two very different sources:
 
-- **A deterministic projection of game state.** Everything a playbill needs already exists after the prologue: the opening narration, the setting, the player character, the current location and its type, the time of day, and the name-gated people in the scene (`build_world_view`). This is free, instant and language-neutral where it reuses ADR-0018's icons.
+- **A deterministic projection of game state.** Everything a playbill needs already exists after the prologue: the opening narration, the setting, the player character, the current location and its type, the time of day, and the name-gated people in the scene (`build_world_view`). This is free, instant and language-neutral where it reuses ADR-0019's icons.
 - **An image model.** A painted poster is far more memorable, but each image is a paid call. Its prompt carries player-authored text (the character's appearance) to a third party, and it needs content moderation like any other model input.
 
 Constraints carried from earlier decisions:
@@ -21,7 +21,7 @@ Constraints carried from earlier decisions:
 - **D004 / D010.** A $50 global beta budget, fail-closed quota UX, and "materially increase spend" needs Max's approval. Any new paid call type must be priced, logged and budget-gated.
 - **D007.** Testers are told that AI requests go to model providers. An image prompt that includes the player's described appearance is such a request.
 - **ADR-0006 (content safety, `0006-content-safety-moderation-pipeline.md`).** Model inputs derived from player text are moderated, and flagged content is never logged or returned.
-- **ADR-0018.** NPC names reach the player only through `NPCCard.label_for_player` (`ScenePerson.label`). Location types and dayparts are drawn with `PLACE_ICONS` / `DAYPART_ICONS`, not printed as slugs. `PRECACHE_URLS` stays unchanged (D006).
+- **ADR-0019.** NPC names reach the player only through `NPCCard.label_for_player` (`ScenePerson.label`). Location types and dayparts are drawn with `PLACE_ICONS` / `DAYPART_ICONS`, not printed as slugs. `PRECACHE_URLS` stays unchanged (D006).
 
 Three variants were put to Max: typographic playbills only, a painted poster for every story, or a hybrid. He chose the **hybrid**.
 
@@ -140,8 +140,8 @@ Max chose the variant. The reasoning below is the agent's engineering case for i
 - **Every story gets an identity at zero marginal cost.** Everything on the playbill already exists after the prologue, so projecting it costs no model call, adds no latency and cannot fail a game start. Painting is the optional extra, not the baseline.
 - **Paid work follows player intent, not game starts.** Painting only on request ties image spend to stories a player cares about. Painting at every start would spend on stories abandoned after one turn and would add seconds, or a background job, to the start path. The flag defaulting to `false`, one image per story, the per-player daily cap, `BetaPolicy.ensure_open` and cost rows in `ai_call_logs` keep this new spend class inside D004's budget model and D010's "materially increase spend" gate.
 - **The cheap checks run before the expensive call.** Availability, budget, ownership, one-per-story, quota and moderation all run before `images.generate`, under a per-player poster lock. A refused request costs nothing, except for the OpenAI moderation call when a key is configured.
-- **Name-gating stays single-path.** Cast labels come from `build_world_view`, the same `NPCCard.label_for_player` path as the stage header (ADR-0018, and §5 of `0006-player-dashboard-gui.md`). Leaving names out of the image prompt means the picture cannot leak a name the player has not learned, and text rendered by an image model, which is often garbled, never reaches the poster.
-- **The poster speaks ADR-0018's language.** The drawn art reuses `PLACE_ICONS` / `DAYPART_ICONS` keyed by backend slugs, so it reads the same in Russian and English sessions. The tagline is prose the Narrator already wrote in the story's language and the player already read.
+- **Name-gating stays single-path.** Cast labels come from `build_world_view`, the same `NPCCard.label_for_player` path as the stage header (ADR-0019, and §5 of `0006-player-dashboard-gui.md`). Leaving names out of the image prompt means the picture cannot leak a name the player has not learned, and text rendered by an image model, which is often garbled, never reaches the poster.
+- **The poster speaks ADR-0019's language.** The drawn art reuses `PLACE_ICONS` / `DAYPART_ICONS` keyed by backend slugs, so it reads the same in Russian and English sessions. The tagline is prose the Narrator already wrote in the story's language and the player already read.
 - **A stored snapshot keeps the library query cheap and the poster stable.** Computing the playbill while listing would mean deserialising every story's game state on each `GET /api/games`, and the poster would drift as the story moved on. A JSONB row plus a SQL `IS NOT NULL` flag keeps listing to one outer join.
 - **`bytea` is the least moving parts for the beta.** Deleting a session cascades to its poster, which serves D007 deletion requests. Backups already cover the database, and no storage credentials, signed URLs or third-party origin are added. The owner-scoped `GET` needs no separate ACL layer.
 - **The image client is kept separate from the chat layer.** Image generation is not a chat completion, is not part of turn flow and has no system prompt, so forcing it through `BasePerformer` or the model-name factory would blur both. The `ImageClient` protocol keeps the provider swappable and lets tests inject a fake.
@@ -197,7 +197,7 @@ Tradeoffs / risks:
 - **"One per story" never overwrites, but a race can still pay twice.** `save_image` is a conditional `UPDATE … WHERE image IS NULL`, so the first stored image wins and a later one is refused (`PosterExistsError`). The losing call's cost row is already committed by then. The pre-call check runs under a per-process lock, so two workers could both pay for the same story before one of them loses the write. This is the same single-process limitation the turn quotas already accept.
 - **Database growth.** Each WebP (roughly a few hundred KB at 1024×1536, q82; estimate) lives in Postgres and in its backups.
 - **The playbill is frozen at the prologue.** The cast is whoever was on stage at the start, usually strangers, and the place and daypart are those of the opening scene.
-- **English chrome remains**, as under ADR-0018: "Starring", "with", "Paint poster" and the refusal messages.
+- **English chrome remains**, as under ADR-0019: "Starring", "with", "Paint poster" and the refusal messages.
 - **Enabling paid illustrations on a deployed beta is a Max action.** The flag defaults to `false`. Flipping it, or raising `POSTER_DAILY_IMAGE_QUOTA`, changes spend and falls under D010.
 
 What future agents must preserve:
@@ -257,7 +257,7 @@ What future agents must preserve:
 - `config.py`, `.env.example`, `costs/model_pricing.py`
 - `safety/factory.py`
 - `tests/test_web_playbill.py`, `tests/test_web_poster.py`, `tests/test_web_poster_routes.py`, `tests/test_image_client.py`, `tests/db/test_repo_posters.py`, `tests/test_config.py`, `tests/test_web_auth.py`, `tests/_poster_helpers.py`
-- `docs/decisions/0018-player-ui-stage-visual-language.md`
+- `docs/decisions/0019-player-ui-stage-visual-language.md`
 - `docs/decisions/0006-content-safety-moderation-pipeline.md`
 - `docs/decisions/0006-player-dashboard-gui.md` (§5 single name-gating path)
 - `docs/studio/09-founder-decision-register.md` (D004, D006, D007, D010)

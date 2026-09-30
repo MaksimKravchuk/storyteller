@@ -5,7 +5,7 @@ Status: Proposed
 Decision owner: Max (player-facing product direction)
 Decision type: Product (player-facing UX / visual identity) + Architecture (web static assets, PWA app shell)
 Extends: `docs/decisions/0006-player-dashboard-gui.md` (vanilla, mobile-first, `WorldView`, precached shell) and `docs/decisions/0010-language-neutral-player-action-contract.md` (tap-to-act entities, `action_html`, no English in the player contract)
-Extended by: `docs/decisions/0019-story-library-posters.md` (library playbill posters drawn with `PLACE_ICONS` / `DAYPART_ICONS` and name-gated cast; optional on-demand painted illustration)
+Extended by: `docs/decisions/0020-story-library-posters.md` (library playbill posters drawn with `PLACE_ICONS` / `DAYPART_ICONS` and name-gated cast; optional on-demand painted illustration)
 Related: founder-register D006 (PWA online-required) and D007 (privacy posture) in `docs/studio/09-founder-decision-register.md`; `interfaces/web/static/{style.css,app.js,index.html,sw.js,manifest.webmanifest}`, `interfaces/web/static/fonts/`, `interfaces/web/world.py`, `interfaces/web/world_schemas.py`, `models/location.py`, `models/game_state.py`, `formatting/entity_markup.py`
 
 ## Context

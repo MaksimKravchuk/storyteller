@@ -74,7 +74,7 @@
   let currentGameId = null;
   let supabaseClient = null;
   let authRequired = false;
-  // Whether players may ask for a painted poster (ADR-0019, operator flag).
+  // Whether players may ask for a painted poster (ADR-0020, operator flag).
   let postersEnabled = false;
   // Object URLs of painted posters on screen; revoked when the library re-renders.
   let posterUrls = [];

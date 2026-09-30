@@ -588,7 +588,7 @@ main {
   gap: 0.4rem;
 }
 
-/* Playbill cards: the poster sits beside the copy (ADR-0019). */
+/* Playbill cards: the poster sits beside the copy (ADR-0020). */
 .story-row.has-playbill { grid-template-columns: auto minmax(0, 1fr) auto; }
 
 .story-tagline {
