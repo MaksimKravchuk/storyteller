@@ -1,6 +1,6 @@
 # Spec-Driven Development with GitHub Spec Kit
 
-Date: 2026-06-30
+Date: 2026-06-30 (bounded iteration added 2026-09-30)
 Status: Active workflow
 Related: `docs/decisions/0017-adopt-spec-kit-as-requirements-layer.md`, `.specify/memory/constitution.md`
 
@@ -42,11 +42,15 @@ Use a real release tag from <https://github.com/github/spec-kit/releases> instea
 
 ## Default Storyteller flow
 
-Use this for non-trivial feature work, prompt/agent changes, web/admin features, persistence changes, benchmark/scenario additions, and anything likely to become a PR with more than one meaningful step.
+Pick the smallest flow that fits (see constitution "Spec-Driven Workflow"):
 
-```text
-/speckit-specify -> /speckit-clarify -> /speckit-plan -> /speckit-checklist -> /speckit-tasks -> /speckit-analyze
-```
+| Work size | Flow |
+| --- | --- |
+| Small: one module, obvious behavior, typo, narrow bug fix | No Spec Kit. Follow `CLAUDE.md` directly. |
+| Medium: clear intent, several files | `/speckit-specify` → `/speckit-plan` → `/speckit-tasks` |
+| Large or risky: prompts/agents, persistence, player-facing behavior, several modules | `/speckit-specify` → `/speckit-clarify` (only if blocking unknowns) → `/speckit-plan` → `/speckit-tasks` → `/speckit-analyze` (one pass) |
+
+`/speckit-checklist` and `/speckit-converge` are opt-in: only when Max asks or the plan names a specific high-risk domain.
 
 Then implement through the normal Storyteller path:
 
@@ -55,6 +59,18 @@ Hermes scopes from spec -> Claude Code writes surgical changes -> Hermes inspect
 ```
 
 `/speckit-implement` is optional. Do not use it as the default autopilot for Storyteller unless the task is narrow, the generated tasks are already reviewed, and the implementation permissions are scoped.
+
+## Stop rules: resolve contradictions, do not polish forever
+
+Spec Kit's generic commands happily produce more questions, more checklist items, more findings, and more tasks on every run. Left unchecked, an agent loops `analyze → edit → analyze` and the feature grows with each pass. Storyteller bounds this with constitution Principle VI:
+
+1. **Only blocking findings get fixed.** Blocking means one of: a contradiction between artifacts/ADRs/constitution; a guardrail (constitution MUST or accepted ADR) violation; a P1 story or requirement with no task; a load-bearing unknown (changes player-visible behavior, persisted data, security/privacy, or paid cost, with no safe default). Everything else is a one-line "Known gap".
+2. **One round, then escalate.** Each command runs once. Blocking findings get one targeted remediation pass and one re-check of just those findings. Still blocking → stop and ask Max with 2–3 options. No third round.
+3. **Remediation never adds scope.** Fixes may clarify, reconcile, delete, or down-prioritize. New stories, requirements, success criteria, and tasks are not allowed (except the minimum task to cover an existing P1 requirement). New ideas go to the spec's "Out of Scope / Follow-ups" section.
+4. **Done means "no blocking findings", not "every box checked".** Unchecked checklist items do not block implementation.
+5. **Big specs get split, not expanded.** Beyond roughly 3 user stories or 10 functional requirements, split into separate features.
+
+Local overrides in the generated `speckit-*` skills are marked "Storyteller override" so they can be re-applied after a Spec Kit upgrade.
 
 ## When to use Spec Kit
 
@@ -66,7 +82,7 @@ Hermes scopes from spec -> Claude Code writes surgical changes -> Hermes inspect
 | Persistence or schema behavior | Yes | Include migration/rollback and consumer-seam verification. |
 | Benchmark/scenario additions | Yes | Define expected rubric/evidence before coding. |
 | Small typo/docs fix | No | Direct docs PR is enough. |
-| Narrow bug fix with obvious regression test | Optional | Use if ambiguity is high; otherwise use strict TDD directly. |
+| Narrow bug fix with obvious regression test | No | Use strict TDD directly. |
 | Emergency production fix | Optional after fix | Backfill a spec/ADR if the decision must survive. |
 
 ## Feature artifact expectations
@@ -124,7 +140,7 @@ Plan with Storyteller context:
 /speckit-plan Use the existing FastAPI web UI and async SQLAlchemy persistence. Follow CLAUDE.md, inspect docs/decisions and the founder decision register, avoid paid e2e unless explicitly approved, and define consumer-seam tests.
 ```
 
-Break down and analyze before coding:
+Break down and analyze before coding (analyze reports blocking contradictions only):
 
 ```text
 /speckit-tasks
@@ -152,4 +168,4 @@ Docs-only Spec Kit workflow changes do not require full app benchmarks. Code or 
 - Keep `.specify/memory/constitution.md` aligned with `CLAUDE.md`, `AGENTS.md`, and accepted ADRs.
 - When Spec Kit changes generated skill names or workflow semantics, update this document and the agent guidance.
 - Do not store credentials or private local state in `.claude/` or `.specify/`.
-- Review generated skills before upgrading Spec Kit in the repo.
+- Review generated skills before upgrading Spec Kit in the repo, and re-apply the sections marked "Storyteller override" (bounded iteration) in `speckit-specify`, `speckit-clarify`, `speckit-checklist`, `speckit-tasks`, `speckit-analyze`, `speckit-converge`, and `speckit-implement`, plus the trimmed Polish phase in `.specify/templates/tasks-template.md` and the "Out of Scope / Follow-ups" section in `.specify/templates/spec-template.md`.

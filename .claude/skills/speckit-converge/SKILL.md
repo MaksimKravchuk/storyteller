@@ -87,6 +87,17 @@ of the code relative to the feature's artifacts — no git, no branch comparison
 When the codebase already satisfies everything, the command MUST leave `tasks.md`
 **byte-for-byte unchanged** (no empty Convergence header) and report a clean result.
 
+**Storyteller override — bounded convergence** (constitution Principle VI):
+
+- Converge is opt-in and runs at most **once** per feature. If `tasks.md` already contains a
+  `## Phase N: Convergence` section, do not append another one: report the remaining gaps
+  and escalate to Max instead.
+- Only **blocking** findings become tasks: CRITICAL findings, and HIGH `missing`/`contradicts`
+  findings on a P1 user story or a functional requirement already written in `spec.md`.
+- `partial` findings that are not blocking, MEDIUM/LOW findings, and every `unrequested`
+  finding are reported once as Known gaps and never become tasks.
+- Never create tasks for work that is not already stated in `spec.md`, `plan.md`, or `tasks.md`.
+
 **Constitution Authority**: The project constitution (`.specify/memory/constitution.md`) is
 **non-negotiable**. Code that violates a MUST principle is the highest-severity finding and
 produces a corresponding remediation task. If the constitution is an unfilled template,
@@ -200,14 +211,14 @@ Before appending anything, output a compact, severity-graded summary (no file wr
 
 ### 7. Append Convergence Tasks (or report converged)
 
-**If there are one or more actionable findings** (`tasks_appended` outcome):
+**If there are one or more blocking findings** (`tasks_appended` outcome):
 
 Append to the **end** of `tasks.md`, per the append contract:
 
 1. Scan all existing task IDs; let `M` be the maximum. Determine the next phase number `N`
    (highest existing phase + 1).
 2. Write a single new section header `## Phase N: Convergence`.
-3. Emit one checklist item per actionable finding, ordered CRITICAL/HIGH first, assigning
+3. Emit one checklist item per blocking finding (see the bounded-convergence override above), ordered CRITICAL first, assigning
    zero-padded IDs `T{M+1:03d}, T{M+2:03d}, …`:
 
    ```markdown
@@ -221,10 +232,10 @@ Append to the **end** of `tasks.md`, per the append contract:
 
    Constitution-violation tasks MUST be emitted first and described as
    `CRITICAL`.
-4. Never reuse or renumber existing IDs. If a prior Convergence phase exists, add a new,
-   separately-numbered one below it — do not touch the old one.
+4. Never reuse or renumber existing IDs. If a prior Convergence phase exists, do not add
+   another one (see the bounded-convergence override above) — escalate instead.
 
-**If there are no actionable findings** (`converged` outcome):
+**If there are no blocking findings** (`converged` outcome):
 
 - Do **not** modify `tasks.md` at all — no empty phase header.
 - Report: **"✅ Converged — the implementation satisfies the spec, plan, and tasks."**
@@ -233,8 +244,8 @@ Append to the **end** of `tasks.md`, per the append contract:
 ### 8. Provide Next Actions (Handoff)
 
 - On `tasks_appended`: state how many tasks were appended under which phase, and recommend
-  running `/speckit-implement` to complete them; note that a follow-up converge
-  run will find fewer or no remaining items.
+  implementing them through the normal Storyteller PR workflow. Do not recommend another
+  converge run; this was the single allowed convergence pass.
 - On `converged`: recommend proceeding to review / opening a PR. No further implement pass
   is needed for this feature's specified scope.
 

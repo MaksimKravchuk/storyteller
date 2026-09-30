@@ -144,6 +144,8 @@ The tasks.md should be immediately executable - each task must be specific enoug
 
 **Tests are OPTIONAL**: Only generate test tasks if explicitly requested in the feature specification or if user requests TDD approach.
 
+**No speculative tasks** (Storyteller override, constitution Principle VI): every task MUST trace to a user story, functional requirement, plan decision, or constitution MUST. Do not add "polish", hardening, optimization, or documentation tasks that nothing in `spec.md`/`plan.md` requires; list such ideas under the spec's "Out of Scope / Follow-ups" instead.
+
 ### Checklist Format (REQUIRED)
 
 Every task MUST strictly follow this format:

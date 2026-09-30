@@ -149,13 +149,9 @@ Examples of foundational tasks (adjust based on your project):
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-**Purpose**: Improvements that affect multiple user stories
+**Purpose**: Only cross-cutting work that spec.md, plan.md, or the constitution explicitly requires. Omit this phase if nothing qualifies; do not add generic cleanup, optimization, or hardening tasks (constitution Principle VI).
 
-- [ ] TXXX [P] Documentation updates in docs/
-- [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
+- [ ] TXXX [P] Documentation updates required by the plan in docs/
 - [ ] TXXX Run quickstart.md validation
 
 ---

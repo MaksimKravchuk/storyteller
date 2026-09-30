@@ -131,6 +131,17 @@
 - **Paid evidence needed**: [No / e2e / benchmarks / both; approval status if known]
 - **Demo evidence expected**: [PR link only / screenshots / deterministic test output / benchmark report]
 
+## Out of Scope / Follow-ups
+
+<!--
+  Ideas, edge cases, and improvements discovered during clarify/analyze/implementation
+  that are NOT required to resolve a blocking contradiction go here instead of growing
+  this feature (constitution Principle VI). Each line is a candidate for a separate spec.
+-->
+
+- [Explicitly excluded capability, e.g., "Multiplayer sessions"]
+- [Deferred idea found during review, e.g., "Per-NPC voice tuning — follow-up spec"]
+
 ## Assumptions
 
 <!--
