@@ -1,632 +1,1345 @@
-* { box-sizing: border-box; }
+/* ============================================================
+ * Storyteller player UI — "the stage" visual language.
+ *
+ * The engine is a theatre: a Director runs a cast of performers, the
+ * Narrator speaks the prose, the EventManager moves the clock. The UI
+ * mirrors that: a darkened house, a lit stage (place · time · who is on
+ * stage), the prose set like a book, and the player's own lines set as
+ * stage cues. Story content is serif (Literata); titles use Cormorant.
+ *
+ * Colour carries meaning and nothing else:
+ *   brass   — the stage light: interface emphasis, places
+ *   person  — warm rose: people (NPC mentions, cast, known people)
+ *   thing   — sage: objects the player can handle
+ *   velvet  — the curtain: brand accents only
+ * Italics stay ink-toned so atmosphere never reads as a clickable name.
+ * ============================================================ */
 
-body {
-  font-family: Georgia, "Times New Roman", serif;
-  margin: 0;
-  padding: 0;
-  background: #1a1a1a;
-  color: #e8e4d8;
-  line-height: 1.6;
+/* ── Fonts (self-hosted, SIL OFL — see static/fonts/OFL-*.txt) ── */
+@font-face {
+  font-family: "Literata";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/literata-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-header {
+@font-face {
+  font-family: "Literata";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/literata-cyrillic-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Literata";
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/literata-latin-wght-italic.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Literata";
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url("/static/fonts/literata-cyrillic-wght-italic.woff2") format("woff2-variations");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/static/fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/static/fonts/cormorant-garamond-cyrillic-600-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+/* The stage light colour animates between times of day. It is used (and
+ * transitioned) only on body::before, so it does not inherit. */
+@property --stage-light {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: rgba(214, 168, 92, 0.07);
+}
+
+/* ── Tokens ─────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+
+  --bg: #13100d;
+  --bg-elev: #1a1612;
+  --bg-raised: #221d17;
+  --line: rgba(232, 211, 170, 0.11);
+  --line-strong: rgba(232, 211, 170, 0.22);
+
+  --ink: #ebe3d2;
+  --ink-bright: #f7eedb;
+  --ink-em: #d9ccb0;
+  --ink-soft: #b9ad94;
+  --ink-faint: #928670;
+
+  --brass: #d6a85c;
+  --brass-bright: #ecc47e;
+  --brass-dim: rgba(214, 168, 92, 0.38);
+  --brass-wash: rgba(214, 168, 92, 0.09);
+  --velvet: #8f2f36;
+  --velvet-deep: #5a1a20;
+
+  --person: #e6a58c;
+  --person-dim: rgba(230, 165, 140, 0.38);
+  --person-wash: rgba(230, 165, 140, 0.1);
+  --place: #d8b25f;
+  --place-dim: rgba(216, 178, 95, 0.4);
+  --place-wash: rgba(216, 178, 95, 0.1);
+  --thing: #a8c6a2;
+  --thing-dim: rgba(168, 198, 162, 0.4);
+  --thing-wash: rgba(168, 198, 162, 0.1);
+
+  --danger: #e58a7e;
+  --warn-bg: #2a1f14;
+
+  --font-prose: "Literata", "PT Serif", Georgia, "Times New Roman", serif;
+  --font-display: "Cormorant Garamond", "Cormorant", "Literata", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --prose-size: 1.0625rem;
+  --gutter: 1rem;
+  --radius: 14px;
+  --radius-lg: 18px;
+  --tabbar-h: 3.5rem;
+  --stage-h: 5.75rem; /* kept in sync with #stage by app.js */
+}
+
+@media (min-width: 720px) {
+  :root {
+    --prose-size: 1.125rem;
+    --gutter: 2rem;
+  }
+}
+
+
+/* ── Base ───────────────────────────────────────────────── */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-prose);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* A soft pool of stage light above the page; its hue follows the clock. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: 70vh;
+  background: radial-gradient(110% 70% at 50% -12%, var(--stage-light), transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+  transition: --stage-light 1.6s ease;
+}
+
+/* Time of day tints the stage light (set on <body> from the world clock). */
+body[data-daypart="morning"]::before { --stage-light: rgba(236, 200, 140, 0.1); }
+body[data-daypart="afternoon"]::before { --stage-light: rgba(242, 214, 160, 0.075); }
+body[data-daypart="evening"]::before { --stage-light: rgba(214, 112, 72, 0.12); }
+body[data-daypart="night"]::before { --stage-light: rgba(92, 120, 196, 0.12); }
+
+::selection { background: rgba(214, 168, 92, 0.3); color: var(--ink-bright); }
+
+a { color: var(--brass-bright); }
+
+button { font-family: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Shared roles, declared once:
+ * brass small caps (section eyebrows), faint small caps (labels/crumbs),
+ * outline pills (nav, premise examples, fact filters), raised surfaces. */
+.eyebrow,
+.pane-scroll h3 {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.examples-label,
+.optional,
+.story-turns,
+.stage-crumbs,
+.map-breadcrumb,
+.pane-scroll h4 {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.nav-btn,
+#setting-examples button,
+#knowledge-filter button {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.nav-btn:hover,
+#setting-examples button:hover,
+#setting-examples button:focus-visible {
+  color: var(--ink-bright);
+  border-color: var(--brass-dim);
+}
+
+.card,
+.premise,
+.setting-row,
+.character-details {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.eyebrow { margin: 0 0 0.35rem; }
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2rem, 6vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: 0.005em;
+  color: var(--ink-bright);
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 560;
+  letter-spacing: 0.015em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--brass);
+  color: #1b1309;
+  border: 1px solid rgba(255, 226, 170, 0.35);
+  box-shadow: 0 8px 22px -12px rgba(214, 168, 92, 0.75);
+}
+
+.btn-primary:hover { background: var(--brass-bright); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+}
+
+.btn-secondary:hover { border-color: var(--brass-dim); color: var(--ink-bright); }
+
+.btn-quiet {
+  padding: 0.45rem 0.6rem;
+  background: transparent;
+  border: none;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+}
+
+.btn-quiet:hover { color: var(--ink-soft); text-decoration-color: currentColor; }
+
+.btn-large {
+  min-height: 3.25rem;
+  padding: 0.75rem 1.9rem;
+  font-size: 1.05rem;
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.nav-btn:disabled {
+  opacity: 0.45;
+  cursor: wait;
+  box-shadow: none;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.icon-btn:hover { color: var(--ink); border-color: var(--line-strong); }
+
+/* ── Form fields ────────────────────────────────────────── */
+textarea,
+input[type="text"],
+input[type="email"],
+select {
+  width: 100%;
+  margin: 0.45rem 0 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--bg-raised);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.45;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+textarea { resize: vertical; }
+
+textarea::placeholder,
+input::placeholder { color: var(--ink-faint); opacity: 0.85; }
+
+textarea:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--brass-dim);
+  box-shadow: 0 0 0 3px var(--brass-wash);
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+
+.hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.status {
+  min-height: 1.2em;
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--danger);
+}
+
+.status:empty { min-height: 0; margin: 0; }
+
+.status.info { color: var(--ink-soft); }
+
+/* ── Top bar ────────────────────────────────────────────── */
+.topbar {
+  position: relative;
+  z-index: 25;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #444;
-  background: #222;
+  gap: 1rem;
+  padding: 0.65rem var(--gutter);
+  padding-top: calc(0.65rem + env(safe-area-inset-top));
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(90, 26, 32, 0.28), transparent);
 }
 
-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: normal;
-  letter-spacing: 0.05em;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--brass);
+  text-decoration: none;
 }
 
-header button {
-  background: transparent;
-  color: #e8e4d8;
-  border: 1px solid #666;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  font-family: inherit;
+.brand-curtain { fill: var(--velvet); }
+
+.brand-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-bright);
 }
 
-header button:hover { border-color: #e8e4d8; }
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
 
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.nav-btn svg { flex: none; }
+
+@media (max-width: 600px) {
+  .nav-label { display: none; }
+  .nav-btn { width: 2.5rem; padding: 0; justify-content: center; }
+  .brand-name { font-size: 1.35rem; }
+}
+
+/* ── Layout shell ───────────────────────────────────────── */
 main {
-  max-width: 1120px;
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1.5rem var(--gutter) 2rem;
 }
 
 #offline-banner {
   margin: 0 0 1rem;
   padding: 0.75rem 1rem;
-  border: 1px solid #8a5a2b;
-  background: #2a2118;
-  color: #f5c878;
+  border: 1px solid rgba(214, 168, 92, 0.45);
+  border-radius: 10px;
+  background: var(--warn-bg);
+  color: var(--brass-bright);
 }
 
-/* Setting panel keeps its old narrow measure for the new-game form. */
-#setting-panel {
-  max-width: 720px;
-  margin: 0 auto;
+.loading-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 4rem 0;
+  color: var(--ink-faint);
+  font-style: italic;
 }
 
+/* Three quiet dots: "the narrator is thinking". */
+.dots {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.dots i {
+  width: 0.34rem;
+  height: 0.34rem;
+  border-radius: 50%;
+  background: var(--brass);
+  opacity: 0.25;
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+
+.dots i:nth-child(2) { animation-delay: 0.2s; }
+.dots i:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+
+.card { padding: 1.5rem; }
+
+/* ── Auth ───────────────────────────────────────────────── */
+.auth-card {
+  max-width: 460px;
+  margin: 1rem auto 2rem;
+}
+
+.auth-card h2 { font-size: 2rem; }
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+/* ── Library ("My Stories") ─────────────────────────────── */
 #stories-panel {
-  max-width: 820px;
+  max-width: 860px;
   margin: 0 auto 1.5rem;
 }
 
 .stories-heading {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
+  margin: 0.5rem 0 1.5rem;
 }
+
+.stories-heading h2 { margin: 0; }
 
 #stories-list {
-  list-style: none;
+  display: grid;
+  gap: 0.9rem;
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
+/* Each saved story is a playbill: velvet spine, title, premise, length. */
 .story-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin: 0.75rem 0;
-  padding: 0.85rem 1rem;
-  border: 1px solid #444;
-  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  padding: 1.25rem 1.4rem 1.25rem 1.6rem;
+  background: linear-gradient(180deg, rgba(255, 240, 210, 0.035), rgba(255, 240, 210, 0.01));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: inset 3px 0 0 var(--velvet);
+  transition: border-color 0.2s ease;
 }
+
+.story-row:hover { border-color: var(--brass-dim); }
 
 .story-meta {
   display: flex;
   flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
 }
 
-.story-meta span {
-  color: #9a937f;
-  font-size: 0.9rem;
+.story-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.55rem;
+  line-height: 1.15;
+  color: var(--ink-bright);
 }
+
+.story-setting {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.story-turns { margin-top: 0.3rem; }
 
 .story-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
-.story-actions button,
-#library-new-game-btn {
-  padding: 0.4rem 0.8rem;
-  background: transparent;
-  color: #e8e4d8;
-  border: 1px solid #666;
-  font-family: inherit;
-  cursor: pointer;
+@media (max-width: 600px) {
+  .story-row { grid-template-columns: 1fr; }
+  .story-actions { justify-content: space-between; }
 }
 
-.story-actions button:hover,
-#library-new-game-btn:hover { border-color: #e8e4d8; }
-
-#character-fields {
-  margin: 1rem 0;
-  padding: 0.75rem 1rem 1rem;
-  border: 1px solid #444;
-  background: rgba(255, 255, 255, 0.02);
+/* ── New story ("set the stage") ────────────────────────── */
+#setting-panel {
+  max-width: 760px;
+  margin: 0 auto;
 }
 
-#character-fields legend {
-  padding: 0 0.4rem;
-  color: #c8c0a8;
-  font-size: 0.95rem;
-  letter-spacing: 0.03em;
-}
-
-#character-fields .hint,
-.setting-hint {
-  margin: 0 0 0.5rem;
-  font-size: 0.85rem;
-  color: #9a937f;
-}
+.setting-hero { margin: 0.5rem 0 1.75rem; }
 
 .intro-copy {
-  color: #c8c0a8;
+  max-width: 36em;
+  margin: 0;
+  color: var(--ink-soft);
   font-size: 1.05rem;
+  text-wrap: pretty;
+}
+
+.premise { padding: 1.25rem; }
+
+.premise-label {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+#setting-input {
+  min-height: 6.5rem;
+  margin-top: 0.85rem;
+  font-size: 1.12rem;
+  line-height: 1.55;
 }
 
 #setting-examples {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.45rem;
-  margin: 0.35rem 0 0.5rem;
+  margin-top: 0.9rem;
 }
 
+.examples-label { margin-right: 0.25rem; }
+
 #setting-examples button {
-  padding: 0.35rem 0.65rem;
-  background: rgba(255, 255, 255, 0.03);
-  color: #c8c0a8;
-  border: 1px solid #4d493f;
-  border-radius: 999px;
-  font-family: inherit;
+  padding: 0.4rem 0.8rem;
   font-size: 0.85rem;
-  cursor: pointer;
 }
 
 #setting-examples button:hover,
-#setting-examples button:focus {
-  color: #f5c878;
-  border-color: rgba(245, 200, 120, 0.55);
-  outline: none;
+#setting-examples button:focus-visible { color: var(--brass-bright); background: var(--brass-wash); }
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.8rem 1.25rem;
 }
 
-#use-template-btn {
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.9rem;
-  background: transparent;
-  color: #e8e4d8;
-  border: 1px solid #666;
-  font-family: inherit;
-  font-size: 0.9rem;
+.setting-row label { margin: 0; color: var(--ink); font-size: 1rem; }
+
+.setting-row select {
+  width: auto;
+  min-width: 11rem;
+  margin: 0;
+}
+
+.character-details { margin-top: 1rem; }
+
+.character-details summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
   cursor: pointer;
+  list-style: none;
+  color: var(--ink);
 }
 
-#use-template-btn:hover { border-color: #e8e4d8; }
+.character-details summary::-webkit-details-marker { display: none; }
 
-h2 {
-  font-weight: normal;
-  letter-spacing: 0.03em;
+.character-details summary::after {
+  content: "+";
+  margin-left: auto;
+  color: var(--brass);
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
 }
 
-textarea,
-input[type="text"],
-select {
-  width: 100%;
-  padding: 0.75rem;
-  background: #2a2a2a;
-  color: #e8e4d8;
-  border: 1px solid #555;
-  font-family: inherit;
-  font-size: 1rem;
-  margin: 0.5rem 0;
-}
+.character-details[open] summary::after { transform: rotate(45deg); }
 
-textarea:focus,
-input[type="text"]:focus,
-select:focus {
-  outline: none;
-  border-color: #a88;
-}
-
-label {
-  display: block;
-  margin-top: 0.75rem;
-  font-size: 0.9rem;
-  color: #c8c0a8;
-  letter-spacing: 0.03em;
-}
-
-button[type="submit"] {
-  padding: 0.6rem 1.2rem;
-  background: #a88;
-  color: #1a1a1a;
+#character-fields {
+  margin: 0;
+  padding: 0 1.25rem 1.25rem;
   border: none;
-  font-family: inherit;
-  font-size: 1rem;
+}
+
+#character-fields > .hint { margin-top: 0; }
+
+#use-template-btn { margin-top: 1rem; }
+
+.setting-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .setting-row { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+  .setting-row select { width: 100%; }
+  .setting-actions .btn-primary { width: 100%; }
+}
+
+/* Opening: the curtain sways while the cast researches and stages. */
+.opening {
+  padding: 2.5rem 1rem 1rem;
+  text-align: center;
+}
+
+.curtain {
+  position: relative;
+  width: 168px;
+  height: 104px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 84px 84px 0 0;
+  border-bottom: 2px solid var(--brass-dim);
+  background: radial-gradient(80% 90% at 50% 100%, rgba(236, 196, 126, 0.28), transparent 70%);
+}
+
+.curtain span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 54%;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 3px, transparent 3px 11px),
+    linear-gradient(180deg, var(--velvet), var(--velvet-deep));
+  animation: curtain-sway 3.2s ease-in-out infinite alternate;
+}
+
+.curtain span:first-child { left: 0; }
+.curtain span:last-child { right: 0; scale: -1 1; }
+
+@keyframes curtain-sway {
+  from { transform: translateX(0) skewX(0deg); }
+  to { transform: translateX(-40%) skewX(4deg); }
+}
+
+.opening-title {
+  margin: 1.25rem 0 0.25rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.9rem;
+  color: var(--ink-bright);
+}
+
+.progress-line {
+  position: relative;
+  width: min(260px, 70%);
+  height: 2px;
+  margin: 0.9rem auto 1.25rem;
+  overflow: hidden;
+  background: var(--line);
+  border-radius: 2px;
+}
+
+.progress-line span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 35%;
+  background: var(--brass);
+  animation: progress-slide 1.8s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(290%); }
+}
+
+.opening-steps {
+  display: inline-grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: act;
+  text-align: left;
+  color: var(--ink-soft);
+}
+
+.opening-steps li { counter-increment: act; }
+
+.opening-steps li::before {
+  content: counter(act, upper-roman) ".";
+  display: inline-block;
+  min-width: 2.2rem;
+  color: var(--brass);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+#opening + .status { text-align: center; max-width: 34em; margin-left: auto; margin-right: auto; }
+
+/* ============================================================
+ * Play screen — Story / Character / Map.
+ * Mobile-first (ADR-0006): one pane at a time, bottom tab bar.
+ * ≥960px: Story owns the main column; Character/Map dock as a rail.
+ * ============================================================ */
+
+#game-panel { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+
+body[data-screen="play"] main { padding-top: 0; }
+
+.play-pane { display: none; }
+.play-pane[data-pane-active] { display: block; }
+
+/* On phones the rail wrapper is transparent to layout: its panes take turns
+ * with Story and the tab bar is fixed to the bottom. */
+.rail { display: contents; }
+
+/* ── The stage: where, when, and who is on stage ───────── */
+.stage {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "place clock"
+    "cast cast";
+  align-items: end;
+  column-gap: 1rem;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 0.7rem var(--gutter) 0.65rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.stage-place-btn {
+  grid-area: place;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
-button[type="submit"]:disabled {
-  opacity: 0.5;
-  cursor: wait;
+.stage-crumbs {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-#log {
-  margin-bottom: 1rem;
-  max-height: 70vh;
-  overflow-y: auto;
-  padding-right: 0.5rem;
+.stage-place {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 1.15;
+  color: var(--ink-bright);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.turn { margin: 1rem 0; }
+.stage-place-btn:hover .stage-place { color: var(--brass-bright); }
 
-.turn.player {
-  color: #c8a;
+.stage-clock {
+  grid-area: clock;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.15rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--brass);
+  white-space: nowrap;
+}
+
+.stage-cast {
+  grid-area: cast;
+  display: flex;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.stage-cast::-webkit-scrollbar { display: none; }
+
+.stage-cast:empty { display: none; }
+
+.stage-cast li {
+  flex: none;
+  padding: 0.12rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.stage-cast .cast-known {
+  color: var(--person);
+  border: 1px solid var(--person-dim);
+  background: var(--person-wash);
+}
+
+.stage-cast .cast-stranger {
+  color: var(--ink-soft);
   font-style: italic;
-  padding-left: 1rem;
-  border-left: 2px solid #c8a;
+  border: 1px dashed var(--line-strong);
 }
 
-.turn.player::before { content: "> "; }
-
-.turn.narrator p {
-  margin: 0 0 0.6rem;
+.stage-cast .cast-more {
+  color: var(--ink-faint);
+  border: 1px solid var(--line);
 }
 
-.turn.narrator p:last-child {
-  margin-bottom: 0;
+/* ── The script: narrated prose and the player's cues ──── */
+#log {
+  padding: 1.5rem 0 0.5rem;
 }
 
-/* Narrator markdown gets distinct colors so the player can see at a glance
- * which spans are names/items (bold), atmosphere/thoughts (italic), or
- * short written text the player reads (code). */
+.turn {
+  max-width: 36em;
+  scroll-margin-top: calc(var(--stage-h) + 1rem);
+}
+
+.turn.narrator {
+  font-size: var(--prose-size);
+  line-height: 1.72;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+
+.turn.narrator p { margin: 0 0 0.85em; }
+.turn.narrator p:last-child { margin-bottom: 0; }
+
+/* The story opens like a book: a drop cap on the very first passage. */
+#log > .turn.narrator:first-child > p:first-child::first-letter {
+  float: left;
+  margin: 0.06em 0.12em 0 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 3.5em;
+  line-height: 0.82;
+  color: var(--brass);
+}
+
 .turn.narrator strong {
-  color: #f5c878;
-  font-weight: 700;
-  text-shadow: 0 0 10px rgba(245, 200, 120, 0.2);
+  color: var(--ink-bright);
+  font-weight: 650;
 }
 
 .turn.narrator em {
-  color: #9bb8d8;
+  color: var(--ink-em);
   font-style: italic;
 }
 
+/* Written text the player reads (signs, seals, notes). */
 .turn.narrator code {
-  font-family: "Menlo", "Consolas", monospace;
-  color: #e0c898;
-  background: #2a2418;
-  border: 1px solid #5a4a28;
-  padding: 0.1rem 0.4rem;
-  border-radius: 3px;
-  font-size: 0.92em;
+  padding: 0.05em 0.4em;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--brass-bright);
+  background: var(--brass-wash);
+  border: 1px solid rgba(214, 168, 92, 0.25);
+  border-radius: 4px;
 }
 
-#action-form {
+/* The player's line is a stage cue: a brass rule and a quieter italic voice. */
+.turn.player {
   display: flex;
-  gap: 0.5rem;
-  align-items: stretch;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 2.1rem 0 1.1rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  font-size: calc(var(--prose-size) * 0.95);
+  line-height: 1.5;
 }
 
-#action-form input { flex: 1; margin: 0; }
-
-.status {
-  min-height: 1.2em;
-  font-size: 0.9rem;
-  color: #c88;
+.turn.player::before {
+  content: "";
+  flex: none;
+  width: 1.6rem;
+  height: 1px;
+  background: var(--brass);
+  transform: translateY(-0.3em);
 }
 
-.status.info { color: #8c8; }
+.turn.narrator + .turn.narrator { margin-top: 0.85em; }
 
-/* ============================================================
- * Play screen — Story / Character / Map panes with a bottom tab bar.
- * Authored mobile-first: one pane is visible at a time and the tab bar
- * switches them; the min-width query docks Character/Map as a side-rail
- * with Story always visible. Reuses the dark literary palette and the
- * narrator-bold gold (#f5c878) accent.
- * ============================================================ */
-
-.play-body {
-  display: block;
+/* Placeholder passage while the cast works on the turn. */
+.turn.pending {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ink-faint);
+  font-size: 0.92rem;
+  font-style: italic;
 }
 
-/* Reserve space for the fixed bottom tab bar + the device safe-area inset. */
-#game-panel {
-  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+.turn.is-arriving { animation: passage-in 0.5s ease-out both; }
+
+@keyframes passage-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
 
-/* Only the active pane is shown on mobile. */
-.play-pane {
-  display: none;
+/* In-prose entities (formatting.entity_markup.wrap_entities): tap to act.
+ * Hue says what it is — person, place, thing — never a stylistic accident. */
+.poi,
+.ent-pop {
+  --k: var(--place);
+  --k-dim: var(--place-dim);
+  --k-wash: var(--place-wash);
 }
 
-.play-pane[data-pane-active] {
-  display: block;
+[data-kind="npc"] { --k: var(--person); --k-dim: var(--person-dim); --k-wash: var(--person-wash); }
+[data-kind="item"] { --k: var(--thing); --k-dim: var(--thing-dim); --k-wash: var(--thing-wash); }
+
+.turn.narrator .poi {
+  color: var(--k);
+  text-decoration: underline dotted;
+  text-decoration-color: var(--k-dim);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
-/* Character / Map panes scroll inside themselves above the tab bar. */
-.pane-scroll {
-  max-height: calc(100dvh - 7rem);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-bottom: 1rem;
-}
+.turn.narrator .poi:hover,
+.turn.narrator .poi.is-open { background: var(--k-wash); text-decoration-style: solid; }
 
-/* Compact composer, kept reachable just above the tab bar on mobile. */
+/* ── Composer: the player's next line ─────────────────── */
 .composer {
   position: sticky;
-  bottom: calc(3.5rem + env(safe-area-inset-bottom));
-  background: #1a1a1a;
-  padding: 0.5rem 0;
-  z-index: 5;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  z-index: 15;
+  margin: 1.25rem calc(-1 * var(--gutter)) 0;
+  padding: 1.1rem var(--gutter) 0.7rem;
+  background: linear-gradient(180deg, transparent, var(--bg) 1.1rem);
 }
 
-/* ── Bottom tab bar (mobile) ───────────────────────────── */
+.composer .status { margin: 0 0 0.5rem; }
+
+.composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: 40rem;
+}
+
+#action-input {
+  flex: 1;
+  min-height: 3rem;
+  max-height: 40vh;
+  margin: 0;
+  padding: 0.72rem 1rem;
+  border-radius: 1.5rem;
+  resize: none;
+  overflow-y: auto;
+  field-sizing: content;
+}
+
+#action-submit {
+  flex: none;
+  min-height: 3rem;
+  min-width: 4.5rem;
+}
+
+/* ── Bottom tab bar (mobile) ─────────────────────────── */
 #tabbar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  display: flex;
-  background: #222;
-  border-top: 1px solid #444;
-  padding-bottom: env(safe-area-inset-bottom);
   z-index: 30;
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--bg);
+  border-top: 1px solid var(--line);
 }
 
 #tabbar .tab {
-  flex: 1;
-  min-height: 48px; /* >= 44px touch target */
   position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
+  min-height: var(--tabbar-h);
+  padding: 0.3rem 0.15rem;
   background: transparent;
   border: none;
-  color: #9a937f;
-  font-family: inherit;
-  font-size: 0.6rem;
-  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  padding: 0.3rem 0.15rem;
 }
 
-#tabbar .tic {
-  line-height: 0;
-  color: inherit;
+#tabbar .tic { line-height: 0; }
+
+#tabbar .tab.on { color: var(--brass-bright); }
+
+#tabbar .tab.on::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 32%;
+  right: 32%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brass);
+  box-shadow: 0 0 10px rgba(214, 168, 92, 0.6);
 }
 
-#tabbar .tab.on {
-  color: #f5c878;
-}
+#tabbar .tab:focus-visible { outline-offset: -3px; }
 
-#tabbar .tab.on .tic {
-  filter: drop-shadow(0 0 6px rgba(245, 200, 120, 0.4));
-}
-
-#tabbar .tab:focus-visible {
-  outline: 1px solid rgba(245, 200, 120, 0.55);
-  outline-offset: -2px;
-}
-
-/* "Has new" dot: unseen Character/Map updates surface as a gold pip. */
+/* "Has new" pip: unseen Character/Map updates. */
 #tabbar .tab.has-new::after {
   content: "";
   position: absolute;
-  top: 0.5rem;
+  top: 0.55rem;
   right: 50%;
-  margin-right: -0.95rem;
-  width: 6px;
-  height: 6px;
+  margin-right: -1rem;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #f5c878;
-  box-shadow: 0 0 6px rgba(245, 200, 120, 0.6);
+  background: var(--person);
+  box-shadow: 0 0 8px rgba(230, 165, 140, 0.7);
 }
 
-/* ── In-prose entity popover ───────────────────────────── */
+/* ── Entity popover ─────────────────────────────────── */
 .ent-pop {
   position: fixed;
   z-index: 40;
-  min-width: 9rem;
-  background: #1f1f1f;
-  border: 1px solid rgba(245, 200, 120, 0.3);
-  border-radius: 10px;
-  padding: 0.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 11rem;
+  max-width: 16rem;
+  padding: 0.4rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.7);
   opacity: 0;
   transform: translateY(-4px);
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.ent-pop.open {
-  opacity: 1;
-  transform: none;
-}
+.ent-pop.open { opacity: 1; transform: none; }
 
 .ep-title {
-  margin: 0 0 0.4rem;
-  padding: 0 0.2rem 0.35rem;
-  font-size: 0.85rem;
-  color: #f5c878;
-  border-bottom: 1px solid rgba(245, 200, 120, 0.16);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.3rem;
+  padding: 0.35rem 0.5rem 0.45rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+  color: var(--ink-bright);
 }
+
+/* Kind marker: shape as well as hue, so it survives colour-blindness —
+ * person ●, place ◆, thing ■. */
+.ep-title::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--k);
+  transform: rotate(45deg);
+}
+
+.ent-pop[data-kind="npc"] .ep-title::before { border-radius: 50%; transform: none; }
+.ent-pop[data-kind="item"] .ep-title::before { transform: none; }
 
 .ent-pop .ep-act {
   display: block;
   width: 100%;
-  text-align: left;
-  padding: 0.4rem 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.6rem;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  color: #c8c0a8;
-  font-family: inherit;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 0.95rem;
+  text-align: left;
   cursor: pointer;
 }
 
 .ent-pop .ep-act:hover,
 .ent-pop .ep-act:focus-visible {
-  background: rgba(245, 200, 120, 0.1);
-  color: #f5c878;
+  background: var(--brass-wash);
+  color: var(--brass-bright);
   outline: none;
 }
 
-/* ── Shared pane typography (re-scoped from the old sidebar) ── */
-.pane-scroll h3,
-.pane-scroll h4 {
-  font-weight: normal;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-family: Georgia, "Times New Roman", serif;
-}
+/* ── Panes: shared typography ─────────────────────────── */
+.pane-scroll { padding: 1.25rem 0 1.5rem; }
 
 .pane-scroll h3 {
-  font-size: 0.72rem;
-  color: #a39880;
-  margin: 1.4rem 0 0.6rem;
+  margin: 2rem 0 0.8rem;
+  font-weight: 500;
 }
 
-.pane-scroll h3:first-child {
-  margin-top: 0;
-}
+.pane-scroll h3:first-child { margin-top: 0; }
 
 .pane-scroll h4 {
-  font-size: 0.78rem;
-  color: #c8c0a8;
-  margin: 1.4rem 0 0.6rem;
-  padding-bottom: 0.35rem;
-  border-bottom: 1px solid rgba(245, 200, 120, 0.14);
+  margin: 1.6rem 0 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--line);
+  font-weight: 500;
 }
 
-/* ── Foldable headings ───────────────────────────────── */
 .pane-scroll h4.is-foldable {
-  cursor: pointer;
-  user-select: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
 }
 
 .pane-scroll h4.is-foldable::after {
-  content: "▾";
-  display: inline-block;
-  font-size: 0.65rem;
-  color: rgba(245, 200, 120, 0.45);
+  content: "";
+  flex: none;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin: 0 0.25rem 0 0.5rem;
+  border-right: 1.5px solid var(--ink-faint);
+  border-bottom: 1.5px solid var(--ink-faint);
+  transform: rotate(45deg) translate(-2px, -2px);
   transition: transform 0.18s ease;
-  flex-shrink: 0;
-  margin-left: 0.4rem;
-  letter-spacing: 0;
 }
 
-.pane-scroll h4.is-foldable.is-folded::after {
-  transform: rotate(-90deg);
+.pane-scroll h4.is-foldable.is-folded::after { transform: rotate(-45deg); }
+
+.pane-scroll h4.is-foldable.is-folded + ul { display: none; }
+
+.pane-scroll ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.pane-scroll h4.is-foldable.is-folded + ul {
-  display: none;
+.pane-scroll li {
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
-#character-header {
-  margin-bottom: 0.5rem;
+.pane-scroll li.empty {
+  padding: 0.35rem 0;
+  color: var(--ink-faint);
+  font-style: italic;
+  font-size: 0.88rem;
 }
+
+
+/* ── Character ───────────────────────────────────────── */
+#character-header { margin-bottom: 0.5rem; }
 
 .char-name {
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.35rem;
-  color: #f5c878;
-  letter-spacing: 0.02em;
   margin: 0;
-  text-shadow: 0 0 12px rgba(245, 200, 120, 0.15);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: var(--ink-bright);
 }
 
 .char-appearance {
-  color: #9bb8d8;
+  margin: 0.4rem 0 0;
+  color: var(--ink-soft);
   font-style: italic;
-  font-size: 0.88rem;
-  margin: 0.25rem 0 0;
-  line-height: 1.45;
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 /* Physical-status badge only shows when the player is not "healthy". */
 .char-status {
   display: inline-block;
-  margin-top: 0.5rem;
-  color: #c88;
-  border: 1px solid #5a3030;
-  padding: 0.05rem 0.5rem;
-  border-radius: 2px;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  text-transform: lowercase;
+  margin-top: 0.6rem;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid rgba(229, 138, 126, 0.45);
+  border-radius: 999px;
+  color: var(--danger);
+  font-size: 0.78rem;
 }
 
-.pane-scroll ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.pane-scroll li {
-  font-size: 0.92rem;
-  line-height: 1.5;
-}
-
-.pane-scroll .empty {
-  font-style: italic;
-  color: #6a655a;
-  padding: 0.3rem 0;
-  text-align: center;
-}
-
-/* Reset icon/counter left-indent and hide glyphs for empty messages */
-#inventory-list li.empty,
-#recent-events-list li.empty,
-#learned-facts-list li.empty {
-  padding-left: 0;
-}
-
-#inventory-list li.empty::before,
-#recent-events-list li.empty::before,
-#learned-facts-list li.empty::before {
-  content: none;
-}
-
-/* Inventory: small gold diamond before each item. */
-#inventory-list li {
+/* Inventory: things wear the sage "thing" hue. */
+#inventory-list li:not(.empty) {
   position: relative;
-  padding: 0.3rem 0 0.3rem 1.1rem;
+  padding: 0.35rem 0 0.35rem 1.25rem;
 }
 
-#inventory-list li::before {
-  content: "\25C6"; /* ◆ */
+#inventory-list li:not(.empty)::before {
+  content: "";
   position: absolute;
-  left: 0;
-  top: 0.55rem;
-  color: rgba(245, 200, 120, 0.55);
-  font-size: 0.7rem;
-  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
+  left: 0.15rem;
+  top: 0.8rem;
+  width: 0.4rem;
+  height: 0.4rem;
+  border: 1.5px solid var(--thing);
+  transform: rotate(45deg);
 }
 
-/* Known NPCs: name in gold, occupation in italic blue, descriptor on a
- * second line under a faint blue rule. */
-#known-npcs-list li {
-  padding: 0.5rem 0;
-}
+/* Known people wear the warm "person" hue. */
+#known-npcs-list li { padding: 0.5rem 0; }
 
-.npc-line {
-  display: block;
-}
+.npc-line { display: block; }
 
-.npc-name {
-  color: #f5c878;
-}
+.npc-name { color: var(--person); }
 
 .npc-sep {
-  color: #6a655a;
-  margin: 0 0.3rem;
+  margin: 0 0.35rem;
+  color: var(--ink-faint);
 }
 
 .npc-occupation {
-  color: #9bb8d8;
+  color: var(--ink-soft);
   font-style: italic;
   font-size: 0.9rem;
 }
 
 .npc-descriptor {
   display: block;
-  color: #c8c0a8;
-  font-size: 0.82rem;
   margin-top: 0.2rem;
-  padding-left: 0.6rem;
-  border-left: 1px solid rgba(155, 184, 216, 0.18);
+  padding-left: 0.65rem;
+  border-left: 1px solid var(--person-dim);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
   line-height: 1.45;
 }
 
-/* Recent events: lowercase Roman numerals via CSS counters. */
-#recent-events-list {
-  counter-reset: evt;
-}
+/* Recent events: lowercase Roman numerals — the acts so far. */
+#recent-events-list { counter-reset: evt; }
 
-#recent-events-list li {
+#recent-events-list li:not(.empty) {
   position: relative;
-  padding: 0.3rem 0 0.3rem 1.6rem;
+  padding: 0.3rem 0 0.3rem 1.8rem;
   counter-increment: evt;
 }
 
@@ -635,303 +1348,333 @@ button[type="submit"]:disabled {
   position: absolute;
   left: 0;
   top: 0.3rem;
-  color: #6a655a;
-  font-size: 0.82rem;
-  font-style: italic;
   min-width: 1.4rem;
+  color: var(--ink-faint);
+  font-size: 0.85rem;
+  font-style: italic;
   text-align: right;
 }
 
-/* Learned facts: source-prefix glyph driven by data-source. */
-#learned-facts-list li {
-  position: relative;
-  padding: 0.35rem 0 0.35rem 1.4rem;
+/* Knowledge: how sure you are is drawn, not written —
+ * solid = fact, ringed = seen yourself, hollow = rumor, dashed = hearsay. */
+#knowledge-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.6rem;
 }
 
-#learned-facts-list li::before {
-  position: absolute;
-  left: 0;
-  top: 0.45rem;
+#knowledge-filter button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.7rem;
   font-size: 0.78rem;
-  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
 }
 
-#learned-facts-list li[data-source="FACT"]::before {
-  content: "\2B28"; /* ⬨ */
-  color: #f5c878;
+#knowledge-filter button[aria-pressed="true"] {
+  color: var(--ink-bright);
+  border-color: var(--brass-dim);
+  background: var(--brass-wash);
 }
 
+#knowledge-filter button:not([data-fact-filter="ALL"])::before,
+#learned-facts-list li:not(.empty)::before {
+  content: "";
+  flex: none;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+[data-fact-filter="FACT"]::before,
+#learned-facts-list li[data-source="FACT"]::before { background: var(--brass); }
+
+[data-fact-filter="PERSONAL_EXPERIENCE"]::before,
 #learned-facts-list li[data-source="PERSONAL_EXPERIENCE"]::before {
-  content: "\274B"; /* ❋ */
-  color: #f5c878;
+  background: var(--brass);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--brass-dim);
 }
 
-#learned-facts-list li[data-source="RUMOR"]::before {
-  content: "\25CB"; /* ○ */
-  color: #9bb8d8;
+[data-fact-filter="RUMOR"]::before,
+#learned-facts-list li[data-source="RUMOR"]::before { border: 1.5px solid var(--brass); }
+
+[data-fact-filter="HEARSAY"]::before,
+#learned-facts-list li[data-source="HEARSAY"]::before { border: 1.5px dashed var(--ink-faint); }
+
+#learned-facts-list li:not(.empty) {
+  position: relative;
+  padding: 0.35rem 0 0.35rem 1.35rem;
 }
 
-#learned-facts-list li[data-source="HEARSAY"]::before {
-  content: "\2761"; /* ❡ */
-  color: #9bb8d8;
+#learned-facts-list li:not(.empty)::before {
+  position: absolute;
+  left: 0.1rem;
+  top: 0.78rem;
 }
 
-.fact-source {
-  display: block;
-  font-size: 0.7rem;
-  color: #6a655a;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-top: 0.15rem;
+#learned-facts-list li[data-source="RUMOR"],
+#learned-facts-list li[data-source="HEARSAY"] { color: var(--ink-soft); }
+
+#learned-facts-list li[data-source="HEARSAY"] { font-style: italic; }
+
+/* Reveal animation for entries that arrived this turn. */
+@keyframes character-reveal {
+  from { opacity: 0; transform: translateY(-2px); background: var(--brass-wash); }
+  to { opacity: 1; transform: none; background: transparent; }
 }
 
-/* ── Map panel ─────────────────────────────────────────── */
-.map-breadcrumb {
-  margin: 0 0 0.5rem;
-  font-size: 0.72rem;
-  color: #8a8270;
-  letter-spacing: 0.04em;
+.pane-scroll li.is-new {
+  animation: character-reveal 0.9s ease-out both;
+  animation-delay: calc(var(--stagger, 0) * 50ms);
+  border-radius: 6px;
 }
 
-.map-current-name {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #f5c878;
-  text-shadow: 0 0 12px rgba(245, 200, 120, 0.15);
-}
+/* ── Map ─────────────────────────────────────────────── */
+.map-breadcrumb { margin: 0 0 0.5rem; }
 
-.map-current-name.empty {
-  font-size: 0.9rem;
-  font-style: italic;
-  color: #6a655a;
-  text-shadow: none;
-}
-
-.map-current-type {
-  margin: 0.1rem 0 0;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #6a655a;
-}
-
-/* ── Connective-rail map rows (current "here" + tappable neighbours) ── */
-.map-here-rail {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
+.map-here-rail { margin: 0; padding: 0; list-style: none; }
 
 .map-place {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.2rem;
-  border-bottom: 1px solid rgba(245, 200, 120, 0.08);
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.6rem;
+  border-radius: 10px;
 }
 
-.map-place .mp-dot {
-  color: rgba(155, 184, 216, 0.55);
-  font-size: 0.7rem;
-  font-family: "Apple Symbols", "Segoe UI Symbol", Georgia, serif;
+.mp-icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  color: var(--place);
+  background: var(--place-wash);
 }
 
-.map-place .mp-name {
-  color: #9bb8d8;
-  flex: 1;
+.mp-name { flex: 1; min-width: 0; color: var(--ink); }
+
+.mp-go {
+  display: inline-grid;
+  place-items: center;
+  color: var(--brass);
+  line-height: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.map-place .mp-note {
-  color: #6a655a;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.map-current-name.empty {
+  margin: 0;
+  color: var(--ink-faint);
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
-.map-place .mp-go {
-  color: rgba(245, 200, 120, 0.7);
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
+/* The current place is where the stage light falls. */
+.map-place.here {
+  padding: 0.8rem 0.8rem;
+  background: var(--brass-wash);
+  border: 1px solid var(--brass-dim);
 }
 
-/* Tappable neighbours travel on click. */
-#map-connections li.map-place {
+.map-place.here .mp-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  line-height: 1.15;
+  color: var(--ink-bright);
+}
+
+.map-place.here .mp-icon { background: rgba(214, 168, 92, 0.16); }
+
+button.map-place {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
 }
 
-#map-connections li.map-place:hover .mp-name,
-#map-connections li.map-place:active .mp-name {
-  color: #f5c878;
-}
+button.map-place:hover,
+button.map-place:focus-visible { background: var(--bg-raised); }
 
-/* The current place reads as the gold anchor of the rail. */
-.map-place.here .mp-dot { color: rgba(245, 200, 120, 0.7); }
-.map-place.here .mp-name {
-  color: #f5c878;
-  text-shadow: 0 0 12px rgba(245, 200, 120, 0.15);
-}
+button.map-place:hover .mp-go,
+button.map-place:focus-visible .mp-go { opacity: 1; transform: translateX(2px); }
 
-/* ── People & Time panel ───────────────────────────────── */
+/* While a turn resolves, gestures wait for it (app.js drops them). */
+#game-panel[data-turn-pending] button.map-place { opacity: 0.45; cursor: wait; }
+#game-panel[data-turn-pending] .turn.narrator .poi { cursor: wait; }
+
 .world-clock {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0 0 0.4rem;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #f5c878;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--brass);
 }
 
 #people-list li.person-row {
   display: flex;
   justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.4rem 0;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
 }
 
-.person-label { color: #f5c878; }
+.person-label { color: var(--person); }
 
 .person-row.is-stranger .person-label {
-  color: #c8c0a8;
+  color: var(--ink-soft);
   font-style: italic;
 }
 
 .person-role {
-  color: #6a655a;
-  font-size: 0.78rem;
-  font-style: italic;
   align-self: center;
+  color: var(--ink-faint);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
-/* ── Knowledge source filter ───────────────────────────── */
-#knowledge-filter {
+/* ── Feedback sheet ─────────────────────────────────── */
+.sheet {
+  width: min(520px, calc(100% - 2rem));
+  padding: 1.25rem 1.5rem 1.5rem;
+  background: var(--bg-elev);
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
+}
+
+.sheet::backdrop {
+  background: rgba(8, 6, 4, 0.66);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.sheet-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-bottom: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-#knowledge-filter button {
-  padding: 0.2rem 0.55rem;
-  background: rgba(255, 255, 255, 0.03);
-  color: #c8c0a8;
-  border: 1px solid #4d493f;
-  border-radius: 999px;
-  font-family: inherit;
-  font-size: 0.72rem;
-  cursor: pointer;
-}
+.sheet-head h2 { margin: 0; font-size: 1.75rem; }
 
-#knowledge-filter button[aria-pressed="true"] {
-  color: #f5c878;
-  border-color: rgba(245, 200, 120, 0.55);
-}
+.sheet #feedback-submit { margin-top: 1rem; }
 
-/* Reveal animation for entries that arrived this turn. */
-@keyframes character-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-    text-shadow: 0 0 14px rgba(245, 200, 120, 0.55);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    text-shadow: none;
+@media (max-width: 600px) {
+  .sheet {
+    width: 100%;
+    max-width: none;
+    margin: auto 0 0;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 }
 
-.pane-scroll li.is-new {
-  animation: character-reveal 0.55s ease-out both;
-  animation-delay: calc(var(--stagger, 0) * 40ms);
-}
+/* ── Desktop: Story in the main column, Character/Map as a docked rail ── */
+@media (min-width: 960px) {
+  :root { --tabbar-h: 0px; }
 
-@media (prefers-reduced-motion: reduce) {
-  .pane-scroll li.is-new { animation: none; }
-  .ent-pop { transition: none; }
-}
+  /* The play grid runs to the page bottom so the sticky rail fits inside it. */
+  body[data-screen="play"] main { padding-bottom: 0; }
 
-/* Inline entity spans inserted by formatting.entity_markup.wrap_entities —
- * now interactive: a tap opens the gesture popover. */
-.turn.narrator .poi {
-  border-bottom: 1px dotted currentColor;
-  cursor: pointer;
-}
-.turn.narrator .poi:active {
-  color: #f5c878;
-}
-.turn.narrator .poi[data-kind="npc"]  { color: #b4dcff; }
-.turn.narrator .poi[data-kind="poi"]  { color: #f5c878; }
-.turn.narrator .poi[data-kind="item"] { color: #c8f5b4; }
-
-/* ── Desktop enhancement: Story stays in the main column; Character/Map dock
- * as a side-rail driven by the same data-pane-active toggle. ── */
-@media (min-width: 721px) {
   .play-body {
     display: grid;
-    grid-template-columns: 1fr 320px;
-    grid-template-rows: auto 1fr;
-    column-gap: 2.5rem;
-    row-gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    column-gap: 3.5rem;
     align-items: start;
   }
 
-  #game-panel { padding-bottom: 1.5rem; }
+  #pane-story { display: block; }
 
-  /* Story is always visible and owns the main column across both rows. */
-  #pane-story {
-    display: block;
-    grid-column: 1;
-    grid-row: 1 / span 2;
+  .stage {
+    margin: 0;
+    padding: 0.9rem 0 0.75rem;
   }
 
-  /* Character + Map share the rail (row 2, under the tab switcher); only the
-   * active one shows. */
-  #pane-character,
-  #pane-map {
-    grid-column: 2;
-    grid-row: 2;
-    border-left: 1px solid rgba(245, 200, 120, 0.18);
-    padding-left: 1.5rem;
-  }
+  .stage-place { font-size: 1.6rem; }
 
   .composer {
-    position: static;
-    background: transparent;
-    padding: 0;
-    bottom: auto;
-    z-index: auto;
+    margin: 1.5rem 0 0;
+    padding: 1.25rem 0 1.25rem;
   }
 
-  .pane-scroll {
-    max-height: calc(100vh - 6rem);
+  /* One sticky, viewport-tall rail: tab switcher on top, the chosen pane
+   * scrolling beneath it. */
+  .rail {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
   }
 
-  /* The tab bar becomes a slim rail switcher; the Story tab is redundant
-   * (Story is always shown) so it is hidden. */
+  .rail .play-pane { display: none; }
+
+  .rail .play-pane[data-rail-active] {
+    display: block;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+    padding-right: 0.35rem;
+  }
+
   #tabbar {
     position: static;
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
-    border-bottom: 1px solid rgba(245, 200, 120, 0.18);
-    padding-bottom: 0.5rem;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    background: transparent;
+    flex: none;
+    padding: 0.9rem 0 0;
     border-top: none;
-    padding: 0;
-    z-index: auto;
+    border-bottom: 1px solid var(--line);
   }
 
-  #tabbar .tab[data-pane="story"] {
-    display: none;
-  }
+  #tabbar .tab[data-pane="story"] { display: none; }
+
+  /* The rail tab already names the pane. */
+  .rail .pane-scroll > h3:first-child { display: none; }
+
+  .pane-scroll { padding-top: 1.1rem; }
 
   #tabbar .tab {
-    flex: 0 0 auto;
     flex-direction: row;
-    gap: 0.3rem;
-    min-height: 0;
-    font-size: 0.58rem;
-    padding: 0.3rem 0.45rem;
+    gap: 0.45rem;
+    min-height: 2.75rem;
+    font-size: 0.72rem;
+  }
+
+  #tabbar .tab.on::before {
+    top: auto;
+    bottom: -1px;
+    left: 10%;
+    right: 10%;
+  }
+
+  #tabbar .tab.has-new::after {
+    top: 0.7rem;
+    right: 0.9rem;
+    margin: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
