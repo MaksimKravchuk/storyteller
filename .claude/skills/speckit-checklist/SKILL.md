@@ -32,6 +32,14 @@ disable-model-invocation: false
 
 **Metaphor**: If your spec is code written in English, the checklist is its unit test suite. You're testing whether the requirements are well-written, complete, unambiguous, and ready for implementation - NOT whether the implementation works.
 
+**Storyteller override — opt-in and bounded** (constitution Principle VI):
+
+- This command is optional. Run it only when Max asks or the plan names a specific high-risk domain.
+- Generate at most **15** items per checklist, prioritized by the blocking conditions in Principle VI (contradictions, guardrail violations, missing P1 coverage, load-bearing unknowns). Prefer "Do X and Y conflict?" items over "Is Z quantified?" polish items.
+- Tag every item that would be a blocking finding if left unchecked with a `[Blocking]` marker (in addition to its traceability marker), so `/speckit-implement` can tell blockers from Known gaps. Untagged items are non-blocking.
+- Unchecked items are a report, not a to-do list. Only items that reveal a blocking finding justify editing `spec.md`/`plan.md`; everything else is a Known gap. Never add new user stories, requirements, or success criteria to make an item pass.
+- Do not re-run the same checklist domain to "raise the pass rate".
+
 ## User Input
 
 ```text
@@ -114,7 +122,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Audience: Reviewer (PR) if code-related; Author otherwise
    - Focus: Top 2 relevance clusters
 
-   Output the questions (label Q1/Q2/Q3). After answers: if ≥2 scenario classes (Alternate / Exception / Recovery / Non-Functional domain) remain unclear, you MAY ask up to TWO more targeted follow‑ups (Q4/Q5) with a one-line justification each (e.g., "Unresolved recovery path risk"). Do not exceed five total questions. Skip escalation if user explicitly declines more.
+   Output the questions (label Q1/Q2/Q3). Do not ask follow-up questions beyond these three; use the defaults above for anything still unclear.
 
 4. **Understand user request**: Combine `$ARGUMENTS` + clarifying answers:
    - Derive checklist theme (e.g., security, review, deploy, ux)

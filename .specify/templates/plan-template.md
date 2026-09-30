@@ -46,6 +46,7 @@
 - **Narrative safety and benchmark evidence**: [Narrative/prompt impact and required evidence]
 - **Repo-tracked decisions and PR evidence**: [ADRs/founder decisions inspected; whether new ADR is required]
 - **Paid checks**: [No / e2e / benchmarks / both; approval status]
+- **Bounded iteration (Principle VI)**: [Blocking findings resolved or escalated; non-blocking items listed as Known gaps; no stories/requirements/tasks added beyond the spec; new ideas moved to "Out of Scope / Follow-ups"]
 
 If any gate cannot pass, document the violation in Complexity Tracking before proceeding.
 

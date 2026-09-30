@@ -181,7 +181,7 @@ Given that feature description, do this:
       
       ## Notes
       
-      - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
+      - Only blocking items (constitution Principle VI) require spec updates before `/speckit-plan`; non-blocking items are recorded here as Known gaps and do not block planning
       ```
 
    b. **Run Validation Check**: Review the spec against each checklist item:
@@ -194,9 +194,9 @@ Given that feature description, do this:
 
       - **If items fail (excluding [NEEDS CLARIFICATION])**:
         1. List the failing items and specific issues
-        2. Update the spec to address each issue
-        3. Re-run validation until all items pass (max 3 iterations)
-        4. If still failing after 3 iterations, document remaining issues in checklist notes and warn user
+        2. Classify each failing item as blocking or non-blocking per constitution Principle VI (Storyteller override)
+        3. Make **one** fix pass that addresses only blocking items; do not add new stories, requirements, or success criteria to make an item pass
+        4. Do not re-run validation in a loop. Record remaining **non-blocking** items under "Known gaps" in the checklist notes. If any **blocking** item remains after the single fix pass, stop: do not report the spec as ready for `/speckit-plan`; escalate it to Max with the exact contradiction and 2–3 resolution options
 
       - **If [NEEDS CLARIFICATION] markers remain**:
         1. Extract all [NEEDS CLARIFICATION: ...] markers from the spec
@@ -231,7 +231,7 @@ Given that feature description, do this:
         6. Present all questions together before waiting for responses
         7. Wait for user to respond with their choices for all questions (e.g., "Q1: A, Q2: Custom - [details], Q3: B")
         8. Update the spec by replacing each [NEEDS CLARIFICATION] marker with the user's selected or provided answer
-        9. Re-run validation after all clarifications are resolved
+        9. Re-check only the items affected by the answers (single pass, no further iterations)
 
    d. **Update Checklist**: After each validation iteration, update the checklist file with current pass/fail status
 

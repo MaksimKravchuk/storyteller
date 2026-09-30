@@ -1,6 +1,6 @@
 ---
 name: "speckit-clarify"
-description: "Identify underspecified areas in the current feature spec by asking up to 5 highly targeted clarification questions and encoding answers back into the spec."
+description: "Resolve blocking unknowns in the current feature spec by asking at most 3 targeted clarification questions (zero is a valid outcome) and encoding answers back into the spec."
 argument-hint: "Optional areas to clarify in the spec"
 compatibility: "Requires spec-kit project structure with .specify/ directory"
 metadata:
@@ -128,8 +128,10 @@ Execution steps:
    - Clarification would not materially change implementation or validation strategy
    - Information is better deferred to planning phase (note internally)
 
-4. Generate (internally) a prioritized queue of candidate clarification questions (maximum 5). Do NOT output them all at once. Apply these constraints:
-    - Maximum of 5 total questions across the whole session.
+4. Generate (internally) a prioritized queue of candidate clarification questions (maximum 3). Do NOT output them all at once. Apply these constraints:
+    - **Storyteller override**: ask only about *blocking* unknowns as defined in constitution Principle VI (contradictions, guardrail violations, or load-bearing unknowns that change player-visible behavior, persisted data shape, security/privacy, or paid cost with no safe default). For everything else, pick a reasonable default, record it under Assumptions, and do not ask.
+    - Maximum of 3 total questions across the whole session.
+    - Answers may **refine** an existing in-scope requirement (add the missing constraint, field shape, retention rule, edge case, or measurable criterion it needs). Answers MUST NOT add a **new capability** (a new user story, or a requirement not implied by an existing story); record such scope under "Out of Scope / Follow-ups" instead.
     - Each question must be answerable with EITHER:
        - A short multiple‑choice selection (2–5 distinct, mutually exclusive options), OR
        - A one-word / short‑phrase answer (explicitly constrain: "Answer in <=5 words").
@@ -137,7 +139,7 @@ Execution steps:
     - Ensure category coverage balance: attempt to cover the highest impact unresolved categories first; avoid asking two low-impact questions when a single high-impact area (e.g., security posture) is unresolved.
     - Exclude questions already answered, trivial stylistic preferences, or plan-level execution details (unless blocking correctness).
     - Favor clarifications that reduce downstream rework risk or prevent misaligned acceptance tests.
-    - If more than 5 categories remain unresolved, select the top 5 by (Impact * Uncertainty) heuristic.
+    - If more than 3 blocking unknowns remain, select the top 3 by (Impact * Uncertainty) and escalate the rest to Max in the completion report rather than scheduling another clarify round.
 
 5. Sequential questioning loop (interactive):
     - Present EXACTLY ONE question at a time.
@@ -171,7 +173,7 @@ Execution steps:
     - Stop asking further questions when:
        - All critical ambiguities resolved early (remaining queued items become unnecessary), OR
        - User signals completion ("done", "good", "no more"), OR
-       - You reach 5 asked questions.
+       - You reach 3 asked questions.
     - Never reveal future queued questions in advance.
     - If no valid questions exist at start, immediately report no critical ambiguities.
 
@@ -226,7 +228,7 @@ Behavior rules:
 
 - If no meaningful ambiguities found (or all potential questions would be low-impact), respond: "No critical ambiguities detected worth formal clarification." and suggest proceeding.
 - If spec file missing, instruct user to run `/speckit-specify` first (do not create a new spec here).
-- Never exceed 5 total asked questions (clarification retries for a single question do not count as new questions).
+- Never exceed 3 total asked questions (clarification retries for a single question do not count as new questions).
 - Avoid speculative tech stack questions unless the absence blocks functional clarity.
 - Respect user early termination signals ("stop", "done", "proceed").
 - If no questions asked due to full coverage, output a compact coverage summary (all categories Clear) then suggest advancing.
@@ -277,7 +279,7 @@ Report completion (after questioning loop ends or early termination):
 - Sections touched (list names).
 - Spec quality checklist status (if `FEATURE_DIR/checklists/requirements.md` was re-validated): show before/after pass counts (e.g., "Spec Quality Checklist: 12/16 → 15/16 items passing") and list any items that changed state — both newly checked (unchecked → checked) and any regressions (checked → unchecked). If any items remain unchecked, list them as areas needing attention.
 - Coverage summary table listing each taxonomy category with Status: Resolved (was Partial/Missing and addressed), Deferred (exceeds question quota or better suited for planning), Clear (already sufficient), Outstanding (still Partial/Missing but low impact).
-- If any Outstanding or Deferred remain, recommend whether to proceed to `/speckit-plan` or run `/speckit-clarify` again later post-plan.
+- Outstanding or Deferred non-blocking items are listed once as Known gaps and do not justify another clarify run. Recommend `/speckit-plan` unless a blocking unknown remains, in which case escalate it to Max instead of re-running `/speckit-clarify`.
 - Suggested next command.
 
 ## Done When

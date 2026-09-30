@@ -120,7 +120,7 @@ Create internal representations (do not include raw artifacts in output):
 
 ### 4. Detection Passes (Token-Efficient Analysis)
 
-Focus on high-signal findings. Limit to 50 findings total; aggregate remainder in overflow summary.
+Focus on high-signal findings. Limit to 20 findings total; aggregate remainder in a one-line overflow count. **Storyteller override**: the goal is to surface blocking contradictions (constitution Principle VI), not to produce an exhaustive quality audit.
 
 #### A. Duplication Detection
 
@@ -165,17 +165,19 @@ Use this heuristic to prioritize findings:
 - **MEDIUM**: Terminology drift, missing non-functional task coverage, underspecified edge case
 - **LOW**: Style/wording improvements, minor redundancy not affecting execution order
 
+**Blocking flag (Storyteller override)**: independently of severity, mark a finding `Blocking: yes` only if it matches one of the four blocking conditions in constitution Principle VI (contradiction, guardrail violation, missing P1 coverage, load-bearing unknown). CRITICAL findings are normally blocking; HIGH findings are blocking only when they meet one of those conditions. MEDIUM and LOW are never blocking.
+
 ### 6. Produce Compact Analysis Report
 
 Output a Markdown report (no file writes) with the following structure:
 
 ## Specification Analysis Report
 
-| ID | Category | Severity | Location(s) | Summary | Recommendation |
-|----|----------|----------|-------------|---------|----------------|
-| A1 | Duplication | HIGH | spec.md:L120-134 | Two similar requirements ... | Merge phrasing; keep clearer version |
+| ID | Category | Severity | Blocking | Location(s) | Summary | Recommendation |
+|----|----------|----------|----------|-------------|---------|----------------|
+| A1 | Inconsistency | CRITICAL | yes | spec.md:L120-134, plan.md:L40 | Spec requires X, plan implements not-X | Pick one; edit the losing artifact |
 
-(Add one row per finding; generate stable IDs prefixed by category initial.)
+(Add one row per finding, blocking findings first; generate stable IDs prefixed by category initial. Non-blocking findings may be collapsed into a single "Known gaps" bullet list without recommendations.)
 
 **Coverage Summary Table:**
 
@@ -194,18 +196,20 @@ Output a Markdown report (no file writes) with the following structure:
 - Ambiguity Count
 - Duplication Count
 - Critical Issues Count
+- Blocking Findings Count
 
 ### 7. Provide Next Actions
 
 At end of report, output a concise Next Actions block:
 
-- If CRITICAL issues exist: Recommend resolving before `/speckit-implement`
-- If only LOW/MEDIUM: User may proceed, but provide improvement suggestions
-- Provide explicit command suggestions: e.g., "Run /speckit-specify with refinement", "Run /speckit-plan to adjust architecture", "Manually edit tasks.md to add coverage for 'performance-metrics'"
+- If blocking findings exist: recommend **one** targeted remediation pass that edits only the artifacts and lines those findings name, followed by one re-check of those findings only (not a full re-analysis).
+- If no blocking findings exist: state **"No blocking contradictions — ready to implement."** Non-blocking findings are recorded as Known gaps; do not recommend edits or re-running any Spec Kit command for them.
+- If this is already the re-check after a remediation pass and blocking findings remain: stop and escalate to Max with each contradiction and 2–3 resolution options. Do not propose another round.
+- Never recommend adding new user stories, requirements, success criteria, or tasks, except the minimum task needed to cover an existing P1 requirement. New ideas go to the spec's "Out of Scope / Follow-ups" section.
 
 ### 8. Offer Remediation
 
-Ask the user: "Would you like me to suggest concrete remediation edits for the top N issues?" (Do NOT apply them automatically.)
+Only if blocking findings exist, ask the user: "Would you like me to suggest concrete remediation edits for the N blocking issues?" (Do NOT apply them automatically. Do not offer remediation for non-blocking findings.)
 
 ### 9. Check for extension hooks
 
@@ -246,14 +250,14 @@ After reporting, check if `.specify/extensions.yml` exists in the project root.
 
 - **Minimal high-signal tokens**: Focus on actionable findings, not exhaustive documentation
 - **Progressive disclosure**: Load artifacts incrementally; don't dump all content into analysis
-- **Token-efficient output**: Limit findings table to 50 rows; summarize overflow
+- **Token-efficient output**: Limit findings table to 20 rows; summarize overflow
 - **Deterministic results**: Rerunning without changes should produce consistent IDs and counts
 
 ### Analysis Guidelines
 
 - **NEVER modify files** (this is read-only analysis)
 - **NEVER hallucinate missing sections** (if absent, report them accurately)
-- **Prioritize constitution violations** (these are always CRITICAL)
+- **Prioritize constitution violations** (MUST violations are always CRITICAL; SHOULD/"prefer" guidance is never blocking)
 - **Use examples over exhaustive rules** (cite specific instances, not generic patterns)
 - **Report zero issues gracefully** (emit success report with coverage statistics)
 

@@ -25,6 +25,8 @@ The default Storyteller flow is:
 /speckit-specify -> /speckit-clarify -> /speckit-plan -> /speckit-checklist -> /speckit-tasks -> /speckit-analyze
 ```
 
+(Superseded by the tiered, bounded flow in the 2026-09-30 amendment below.)
+
 Implementation still follows the existing Storyteller workflow: Hermes scopes and verifies, Claude Code may write code, deterministic checks must pass, significant decisions require ADRs, and PRs remain the review surface.
 
 `/speckit-implement` is optional and is not the default autopilot for Storyteller.
@@ -89,6 +91,36 @@ This is a docs/workflow decision. Verification is by file inspection and PR revi
 - `CLAUDE.md` and `AGENTS.md` point future agents to the Spec Kit workflow.
 
 No app tests, e2e tests, or benchmarks are required for this docs-only adoption.
+
+## Amendment 2026-09-30: bounded iteration
+
+### Context
+
+The generic Spec Kit commands have no global stop condition. `/speckit-analyze` offers improvement suggestions for every severity and recommends re-running earlier commands, `/speckit-specify` self-validates up to three times, `/speckit-clarify` suggests running again post-plan, `/speckit-checklist` appends items on every run, `/speckit-implement` blocks on any unchecked checklist box, and `/speckit-converge` appends a new task phase each time it runs. In practice this pulled agents into repeated edit cycles in which each pass fixed wording and added requirements, edge cases, and tasks, so features grew instead of converging.
+
+### Decision
+
+Spec Kit review steps exist to remove **blocking contradictions**, not to perfect documents. Constitution Principle VI (v1.1.0) defines what is blocking (contradiction, guardrail violation, missing P1 coverage, load-bearing unknown), limits each command to one run, allows one remediation pass plus one re-check, then requires escalation to Max. Remediation may not add scope; new ideas go to the spec's "Out of Scope / Follow-ups" section. The default flow is tiered by work size, and `/speckit-checklist` and `/speckit-converge` are opt-in.
+
+The generated `speckit-*` skills carry small "Storyteller override" edits that apply this rule, and the tasks template no longer seeds generic cleanup/optimization/hardening tasks.
+
+### Alternatives considered
+
+- **Leave the generic behavior and rely on judgment**: rejected, because the unbounded loop is what caused the problem.
+- **Remove analyze/checklist/converge entirely**: rejected, because a single analyze pass does catch real spec/plan/tasks contradictions cheaply on risky work.
+- **Hard numeric caps only (e.g. "max N findings")**: insufficient by itself, since a loop of N-finding rounds still grows scope. The blocking definition plus the no-scope-growth rule is the core; caps are secondary.
+
+### Consequences
+
+- Specs may ship with documented Known gaps; that is expected.
+- Spec Kit upgrades must re-apply the "Storyteller override" sections (listed in `docs/studio/13-spec-driven-development.md`, Maintenance).
+- Unresolvable contradictions reach Max after one round instead of being silently "resolved" by expanding the spec.
+
+### Future-agent guardrails
+
+- Do not run a Spec Kit command a second time for non-blocking findings.
+- Do not add stories, requirements, success criteria, or tasks while fixing review findings.
+- If a blocking finding survives one remediation pass, stop and ask Max.
 
 ## Related files
 

@@ -82,7 +82,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Phase 2: Foundational tasks (blocking prerequisites for all user stories)
    - Phase 3+: One phase per user story (in priority order from spec.md)
    - Each phase includes: story goal, independent test criteria, tests (if requested), implementation tasks
-   - Final Phase: Polish & cross-cutting concerns
+   - Final Phase: Polish & cross-cutting concerns — **only if** spec.md, plan.md, or a constitution MUST requires such work; otherwise omit this phase
    - All tasks must follow the strict checklist format (see Task Generation Rules below)
    - Clear file paths for each task
    - Dependencies section showing story completion order
@@ -143,6 +143,8 @@ The tasks.md should be immediately executable - each task must be specific enoug
 **CRITICAL**: Tasks MUST be organized by user story to enable independent implementation and testing.
 
 **Tests are OPTIONAL**: Only generate test tasks if explicitly requested in the feature specification or if user requests TDD approach.
+
+**No speculative tasks** (Storyteller override, constitution Principle VI): every task MUST trace to a user story, functional requirement, plan decision, or constitution MUST. Do not add "polish", hardening, optimization, or documentation tasks that nothing in `spec.md`/`plan.md` requires; list such ideas under the spec's "Out of Scope / Follow-ups" instead.
 
 ### Checklist Format (REQUIRED)
 
@@ -208,7 +210,7 @@ Every task MUST strictly follow this format:
 - **Phase 3+**: User Stories in priority order (P1, P2, P3...)
   - Within each story: Tests (if requested) → Models → Services → Endpoints → Integration
   - Each phase should be a complete, independently testable increment
-- **Final Phase**: Polish & Cross-Cutting Concerns
+- **Final Phase**: Polish & Cross-Cutting Concerns (optional; omit when nothing in spec/plan requires it)
 
 ## Done When
 

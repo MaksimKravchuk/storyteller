@@ -79,9 +79,13 @@ You **MUST** consider the user input before proceeding (if not empty).
      - **PASS**: All checklists have 0 incomplete items
      - **FAIL**: One or more checklists have incomplete items
 
+   - **Storyteller override** (constitution Principle VI): unchecked checklist items are Known gaps, not blockers. Do not edit the spec or checklists to raise the pass count before implementing.
+
    - **If any checklist is incomplete**:
      - Display the table with incomplete item counts
-     - **STOP** and ask: "Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)"
+     - Classify each incomplete item: items tagged `[Blocking]` are blocking; for untagged items, apply the four blocking conditions of constitution Principle VI yourself
+     - If no incomplete item is blocking, note them as Known gaps and proceed to step 3
+     - Otherwise **STOP** and ask: "Some checklists are incomplete. Do you want to proceed with implementation anyway? (yes/no)"
      - Wait for user response before continuing
      - If user says "no" or "wait" or "stop", halt execution
      - If user says "yes" or "proceed" or "continue", proceed to step 3
@@ -161,7 +165,8 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **Tests before code**: If you need to write tests for contracts, entities, and integration scenarios
    - **Core development**: Implement models, services, CLI commands, endpoints
    - **Integration work**: Database connections, middleware, logging, external services
-   - **Polish and validation**: Unit tests, performance optimization, documentation
+   - **Polish and validation**: only the polish, test, optimization, or documentation work that has a corresponding task ID in `tasks.md`; skip this category entirely when there is none
+   - **No scope additions** (Storyteller override): implement only what `tasks.md` lists. Improvements or edge cases discovered while coding go to the spec's "Out of Scope / Follow-ups" section, not into new tasks or code in this feature.
 
 8. Progress tracking and error handling:
    - Report progress after each completed task
