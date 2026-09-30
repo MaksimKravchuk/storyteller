@@ -3,175 +3,217 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#1a1a1a" />
+  <meta name="theme-color" content="#13100d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Storyteller" />
   <title>Storyteller</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png" />
+  <link rel="preload" href="/static/fonts/literata-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/static/fonts/literata-cyrillic-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
-<body>
-  <header>
-    <h1>Storyteller</h1>
-    <section id="auth-panel" aria-label="Account access" hidden>
-      <form id="login-form">
-        <label for="login-email">Email</label>
-        <input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
-        <div class="auth-actions">
-          <button type="submit" id="login-btn">Log in</button>
-          <button type="button" id="signup-btn">Sign up</button>
-        </div>
-        <p class="hint">Both flows send a Supabase magic link. Use the invited email address.</p>
-      </form>
-      <button id="logout-btn" type="button" hidden>Logout</button>
-      <p id="auth-status" class="status"></p>
-    </section>
-    <button id="new-game-btn" type="button" hidden>New game</button>
+<body data-screen="loading">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Storyteller — my stories">
+      <svg class="brand-mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+        <path d="M4 29V12a12 9.5 0 0 1 24 0v17" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M5.3 12.2c.3-3.6 4.1-6.6 9.6-7.4-1.5 6.6-4.4 12.5-9.6 16z" fill="#8f2f36"/>
+        <path d="M26.7 12.2c-.3-3.6-4.1-6.6-9.6-7.4 1.5 6.6 4.4 12.5 9.6 16z" fill="#8f2f36"/>
+        <path d="M16 19.2l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3z" fill="currentColor"/>
+        <path d="M1.5 29h29" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+      <span class="brand-name">Storyteller</span>
+    </a>
+    <nav class="topnav" aria-label="Main">
+      <button id="library-btn" class="nav-btn" type="button" title="My stories" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 5.2l3.8-1 3.1 15.5-3.8 1z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="nav-label">Stories</span>
+      </button>
+      <button id="feedback-open-btn" class="nav-btn" type="button" title="Send beta feedback" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span class="nav-label">Feedback</span>
+      </button>
+      <button id="new-game-btn" class="nav-btn" type="button" title="Start a new story" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+        <span class="nav-label">New game</span>
+      </button>
+      <button id="logout-btn" class="nav-btn" type="button" title="Logout" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M14 4H5v16h9M10 12h10M17 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="nav-label">Logout</span>
+      </button>
+    </nav>
   </header>
 
   <main id="app">
     <div id="offline-banner" role="status" aria-live="polite" hidden>
       Storyteller needs an internet connection and model access to continue.
     </div>
-    <p id="loading">Checking for an existing quest…</p>
+    <p id="loading" class="loading-line"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span> Checking for an existing quest…</p>
+
+    <section id="auth-panel" class="card auth-card" aria-label="Account access" hidden>
+      <p class="eyebrow">Friends beta</p>
+      <h2>Take your seat</h2>
+      <form id="login-form">
+        <label for="login-email">Email</label>
+        <input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        <div class="auth-actions">
+          <button type="submit" id="login-btn" class="btn-primary">Log in</button>
+          <button type="button" id="signup-btn" class="btn-secondary">Sign up</button>
+        </div>
+        <p class="hint">Both flows send a Supabase magic link. Use the invited email address.</p>
+      </form>
+      <p id="auth-status" class="status"></p>
+    </section>
 
     <section id="stories-panel" hidden>
       <div class="stories-heading">
-        <h2>My Stories</h2>
-        <button id="library-new-game-btn" type="button">New game</button>
+        <div>
+          <p class="eyebrow">Your repertoire</p>
+          <h2>My Stories</h2>
+        </div>
+        <button id="library-new-game-btn" class="btn-primary" type="button">New game</button>
       </div>
       <ul id="stories-list" aria-label="Saved stories"></ul>
       <p id="stories-status" class="status"></p>
     </section>
 
     <section id="setting-panel" hidden>
-      <h2>Start a new quest</h2>
-      <p class="intro-copy">
-        Storyteller is an AI text quest demo: give it a real or imagined place,
-        era, and tone, then describe what you do as the narrator responds.
-      </p>
-      <form id="setting-form">
-        <label for="language-select">Story language:</label>
-        <select id="language-select" name="language">
-          <option value="English" selected>English</option>
-          <option value="Russian">Русский</option>
-          <option value="Spanish">Español</option>
-          <option value="French">Français</option>
-          <option value="German">Deutsch</option>
-          <option value="Japanese">日本語</option>
-        </select>
-
-        <label for="setting-input">Tell Storyteller where and when the adventure should begin:</label>
-        <p class="hint setting-hint">
-          Include a place, a time period, and the mood or situation you want.
-          These examples can be used as-is or rewritten:
+      <div class="setting-hero">
+        <p class="eyebrow">A new story</p>
+        <h2>Start a new quest</h2>
+        <p class="intro-copy">
+          Storyteller is an AI text quest demo: give it a real or imagined place,
+          era, and tone, then describe what you do as the narrator responds.
         </p>
-        <div id="setting-examples" aria-label="Example setting prompts">
-          <button type="button" data-setting-example="A rain-soaked cyberpunk bazaar on Mars, one hour before curfew">
-            Cyberpunk bazaar on Mars before curfew
-          </button>
-          <button type="button" data-setting-example="A quiet Viking fishing village in winter, after strange lights appear over the fjord">
-            Viking village after strange lights
-          </button>
-          <button type="button" data-setting-example="1920s Cairo, inside a crowded museum gala on the night an artifact vanishes">
-            1920s Cairo museum mystery
-          </button>
-        </div>
-        <textarea
-          id="setting-input"
-          name="setting"
-          rows="4"
-          maxlength="500"
-          required
-          placeholder="e.g. Rome, 1st century AD, during the reign of Augustus — tense political intrigue"
-        ></textarea>
-
-        <fieldset id="character-fields">
-          <legend>Your character</legend>
-          <p class="hint">
-            Describe yourself however you like — leave fields blank to stay anonymous,
-            or click <em>Use template</em> for a plausible default.
-          </p>
-
-          <label for="char-name">Name (optional)</label>
-          <input
-            id="char-name"
-            name="name"
-            type="text"
-            maxlength="128"
-            autocomplete="off"
-            placeholder="Leave empty if you'd rather stay anonymous"
-          />
-
-          <label for="char-appearance">Appearance</label>
+      </div>
+      <form id="setting-form">
+        <div class="premise">
+          <label for="setting-input" class="premise-label">Tell Storyteller where and when the adventure should begin:</label>
+          <p class="hint setting-hint">Include a place, a time period, and the mood or situation you want.</p>
           <textarea
-            id="char-appearance"
-            name="appearance"
-            rows="2"
+            id="setting-input"
+            name="setting"
+            rows="3"
             maxlength="500"
-            placeholder="Average build, dark hair, jeans and a t-shirt"
+            required
+            placeholder="e.g. Rome, 1st century AD, during the reign of Augustus — tense political intrigue"
           ></textarea>
+          <div id="setting-examples" aria-label="Example setting prompts">
+            <span class="examples-label">Or borrow a premise</span>
+            <button type="button" data-setting-example="A rain-soaked cyberpunk bazaar on Mars, one hour before curfew">
+              Cyberpunk bazaar on Mars before curfew
+            </button>
+            <button type="button" data-setting-example="A quiet Viking fishing village in winter, after strange lights appear over the fjord">
+              Viking village after strange lights
+            </button>
+            <button type="button" data-setting-example="1920s Cairo, inside a crowded museum gala on the night an artifact vanishes">
+              1920s Cairo museum mystery
+            </button>
+          </div>
+        </div>
 
-          <label for="char-inventory">Inventory (comma-separated)</label>
-          <input
-            id="char-inventory"
-            name="inventory"
-            type="text"
-            maxlength="500"
-            autocomplete="off"
-            placeholder="phone, wallet, keys"
-          />
+        <div class="setting-row">
+          <label for="language-select">Story language</label>
+          <select id="language-select" name="language">
+            <option value="English" selected>English</option>
+            <option value="Russian">Русский</option>
+            <option value="Spanish">Español</option>
+            <option value="French">Français</option>
+            <option value="German">Deutsch</option>
+            <option value="Japanese">日本語</option>
+          </select>
+        </div>
 
-          <button type="button" id="use-template-btn">Use template</button>
-        </fieldset>
+        <details class="character-details">
+          <summary>Your character <span class="optional">optional</span></summary>
+          <fieldset id="character-fields">
+            <legend class="visually-hidden">Your character</legend>
+            <p class="hint">
+              Describe yourself however you like — leave fields blank to stay anonymous,
+              or click <em>Use template</em> for a plausible default.
+            </p>
 
-        <button type="submit">Start</button>
+            <label for="char-name">Name (optional)</label>
+            <input
+              id="char-name"
+              name="name"
+              type="text"
+              maxlength="128"
+              autocomplete="off"
+              placeholder="Leave empty if you'd rather stay anonymous"
+            />
+
+            <label for="char-appearance">Appearance</label>
+            <textarea
+              id="char-appearance"
+              name="appearance"
+              rows="2"
+              maxlength="500"
+              placeholder="Average build, dark hair, jeans and a t-shirt"
+            ></textarea>
+
+            <label for="char-inventory">Inventory (comma-separated)</label>
+            <input
+              id="char-inventory"
+              name="inventory"
+              type="text"
+              maxlength="500"
+              autocomplete="off"
+              placeholder="phone, wallet, keys"
+            />
+
+            <button type="button" id="use-template-btn" class="btn-secondary">Use template</button>
+          </fieldset>
+        </details>
+
+        <div class="setting-actions">
+          <button type="submit" class="btn-primary btn-large">Begin the story</button>
+        </div>
       </form>
-      <p id="setting-status" class="status"></p>
+
+      <div id="opening" class="opening" hidden>
+        <div class="curtain" aria-hidden="true"><span></span><span></span></div>
+        <p class="opening-title">Setting the stage</p>
+        <div class="progress-line" aria-hidden="true"><span></span></div>
+        <ol class="opening-steps">
+          <li>Researching the setting</li>
+          <li>Building the first scene</li>
+          <li>Casting the characters</li>
+          <li>Writing the opening</li>
+        </ol>
+      </div>
+      <p id="setting-status" class="status" aria-live="polite"></p>
     </section>
 
     <section id="game-panel" hidden>
       <div class="play-body">
         <section class="play-pane" id="pane-story" data-pane="story" role="tabpanel" aria-label="Story" data-pane-active>
+          <header id="stage" class="stage" aria-label="Current scene">
+            <button type="button" id="stage-place-btn" class="stage-place-btn" title="Open the map">
+              <span id="stage-crumbs" class="stage-crumbs"></span>
+              <span id="stage-place" class="stage-place"></span>
+            </button>
+            <p id="stage-clock" class="stage-clock"></p>
+            <ul id="stage-cast" class="stage-cast" aria-label="On stage"></ul>
+          </header>
           <div id="log" aria-live="polite"></div>
           <form id="action-form" class="composer">
-            <input
-              id="action-input"
-              name="action"
-              type="text"
-              maxlength="2000"
-              required
-              autocomplete="off"
-              placeholder="What do you do?"
-            />
-            <button type="submit" id="action-submit">Act</button>
-          </form>
-          <p id="action-status" class="status"></p>
-          <details class="feedback-box">
-            <summary>Send beta feedback</summary>
-            <form id="feedback-form">
-              <label for="feedback-category">Category</label>
-              <select id="feedback-category" name="category" required>
-                <option value="bug">Bug</option>
-                <option value="confusing">Confusing moment</option>
-                <option value="idea">Idea</option>
-                <option value="praise">Praise</option>
-                <option value="other">Other</option>
-              </select>
-              <label for="feedback-message">What should Max know?</label>
+            <p id="action-status" class="status" aria-live="polite"></p>
+            <div class="composer-row">
               <textarea
-                id="feedback-message"
-                name="message"
-                rows="3"
-                maxlength="4000"
+                id="action-input"
+                name="action"
+                rows="1"
+                maxlength="2000"
                 required
-                placeholder="What happened, what you expected, or what would make this better"
+                autocomplete="off"
+                enterkeyhint="send"
+                placeholder="What do you do?"
               ></textarea>
-              <button type="submit" id="feedback-submit">Send feedback</button>
-            </form>
-            <p id="feedback-status" class="status"></p>
-          </details>
+              <button type="submit" id="action-submit" class="btn-primary">Act</button>
+            </div>
+          </form>
         </section>
 
         <section class="play-pane" id="pane-character" data-pane="character" role="tabpanel" aria-label="Character">
@@ -229,6 +271,36 @@
       </div>
     </section>
   </main>
+
+  <dialog id="feedback-dialog" class="sheet" aria-labelledby="feedback-title">
+    <div class="sheet-head">
+      <h2 id="feedback-title">Send beta feedback</h2>
+      <button type="button" id="feedback-close-btn" class="icon-btn" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
+    </div>
+    <form id="feedback-form">
+      <label for="feedback-category">Category</label>
+      <select id="feedback-category" name="category" required>
+        <option value="bug">Bug</option>
+        <option value="confusing">Confusing moment</option>
+        <option value="idea">Idea</option>
+        <option value="praise">Praise</option>
+        <option value="other">Other</option>
+      </select>
+      <label for="feedback-message">What should Max know?</label>
+      <textarea
+        id="feedback-message"
+        name="message"
+        rows="4"
+        maxlength="4000"
+        required
+        placeholder="What happened, what you expected, or what would make this better"
+      ></textarea>
+      <button type="submit" id="feedback-submit" class="btn-primary">Send feedback</button>
+    </form>
+    <p id="feedback-status" class="status"></p>
+  </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/static/app.js"></script>

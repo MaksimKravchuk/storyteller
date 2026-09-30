@@ -19,21 +19,31 @@
     storiesList: $("stories-list"),
     storiesStatus: $("stories-status"),
     libraryNewGameBtn: $("library-new-game-btn"),
+    libraryBtn: $("library-btn"),
     settingForm: $("setting-form"),
     settingInput: $("setting-input"),
     languageSelect: $("language-select"),
     settingStatus: $("setting-status"),
+    opening: $("opening"),
     charName: $("char-name"),
     charAppearance: $("char-appearance"),
     charInventory: $("char-inventory"),
     useTemplateBtn: $("use-template-btn"),
     settingExamples: $("setting-examples"),
     gamePanel: $("game-panel"),
+    stagePlaceBtn: $("stage-place-btn"),
+    stageCrumbs: $("stage-crumbs"),
+    stagePlace: $("stage-place"),
+    stageClock: $("stage-clock"),
+    stageCast: $("stage-cast"),
     log: $("log"),
     actionForm: $("action-form"),
     actionInput: $("action-input"),
     actionSubmit: $("action-submit"),
     actionStatus: $("action-status"),
+    feedbackDialog: $("feedback-dialog"),
+    feedbackOpenBtn: $("feedback-open-btn"),
+    feedbackCloseBtn: $("feedback-close-btn"),
     feedbackForm: $("feedback-form"),
     feedbackCategory: $("feedback-category"),
     feedbackMessage: $("feedback-message"),
@@ -56,7 +66,8 @@
     offlineBanner: $("offline-banner"),
   };
 
-  const desktopQuery = window.matchMedia("(min-width: 721px)");
+  // Must match the rail breakpoint in style.css.
+  const desktopQuery = window.matchMedia("(min-width: 960px)");
   const isDesktop = () => desktopQuery.matches;
 
   let currentGameId = null;
@@ -70,15 +81,41 @@
   // Knowledge panel: client-side source filter ("ALL" or a FactSource value).
   let factFilter = "ALL";
   let allFacts = [];
-  let prevFacts = null;
   // Which play-screen pane is selected (Story / Character / Map).
   let activePane = "story";
+  // Mobile: where the reader was in the story before opening another pane.
+  let storyScrollY = null;
 
   const FACT_TITLES = {
     FACT: "fact",
     RUMOR: "rumor",
     PERSONAL_EXPERIENCE: "personal experience",
     HEARSAY: "hearsay",
+  };
+
+  // Stage cast chips beyond this count collapse into a "+N" chip.
+  const STAGE_CAST_LIMIT = 4;
+
+  // Inline icons. Location types and times of day are drawn rather than
+  // written so the chrome stays readable in every story language.
+  const svg = (paths) =>
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + "</svg>";
+
+  const PLACE_ICONS = {
+    building: svg('<path d="M5 20V9.5L12 4l7 5.5V20M9.5 20v-5.5h5V20M3 20h18"/>'),
+    district: svg('<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>'),
+    city: svg('<path d="M3 20h18M5 20v-9h4v9M9 20V5h6v15M15 20v-7h4v7"/>'),
+    region: svg('<path d="M2 19 9 8l4 6 3-4 6 9z"/>'),
+    country: svg('<path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/>'),
+    generic: svg('<path d="M12 4 20 12 12 20 4 12z"/>'),
+  };
+
+  const DAYPART_ICONS = {
+    morning: svg('<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 3v5M9.5 5.5 12 3l2.5 2.5M4.9 12.9l1.4 1M19.1 12.9l-1.4 1"/>'),
+    afternoon: svg('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>'),
+    evening: svg('<path d="M3 18h18M7 18a5 5 0 0 1 10 0M12 3v5M9.5 5.5 12 8l2.5-2.5M4.9 12.9l1.4 1M19.1 12.9l-1.4 1"/>'),
+    night: svg('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),
   };
 
   const identityKey = (value) => value;
@@ -93,6 +130,17 @@
   function setStatus(el, text, kind) {
     el.textContent = text || "";
     el.className = "status" + (kind ? " " + kind : "");
+  }
+
+  // One screen at a time: "loading" | "library" | "setting" | "play".
+  // The top-bar buttons follow the screen so there is always a way back to
+  // the library and never two "New game" buttons on screen at once.
+  function setScreen(name) {
+    document.body.dataset.screen = name;
+    if (name !== "play") delete document.body.dataset.daypart;
+    els.libraryBtn.hidden = name === "library" || name === "loading";
+    els.newGameBtn.hidden = name !== "play";
+    els.feedbackOpenBtn.hidden = name !== "play";
   }
 
   function setOfflineNotice(showNotice) {
@@ -118,8 +166,30 @@
     // (markdown subset -> safe HTML, with inline entity <span>s already wrapped
     // by formatting.entity_markup.wrap_entities), so innerHTML is safe here.
     div.innerHTML = html;
+    // Entity spans are actions: make them reachable from the keyboard too.
+    div.querySelectorAll(".poi").forEach((span) => {
+      span.tabIndex = 0;
+      span.setAttribute("role", "button");
+    });
     els.log.appendChild(div);
-    els.log.scrollTop = els.log.scrollHeight;
+    return div;
+  }
+
+  // Bring a transcript line to the top of the reading area (below the sticky
+  // stage), so a new passage is read from its first line, not its last.
+  function scrollToTurn(el, smooth) {
+    if (!el || (!isDesktop() && activePane !== "story")) return;
+    el.scrollIntoView({ block: "start", behavior: smooth ? "smooth" : "auto" });
+  }
+
+  function showPending() {
+    const div = document.createElement("div");
+    div.className = "turn pending";
+    div.setAttribute("role", "status");
+    div.innerHTML = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>';
+    div.append("The AI narrator is resolving your action...");
+    els.log.appendChild(div);
+    return div;
   }
 
   function renderInventoryItem(item) {
@@ -137,7 +207,7 @@
     name.textContent = npc.name;
     const sep = document.createElement("span");
     sep.className = "npc-sep";
-    sep.textContent = "*";
+    sep.textContent = "·";
     const occupation = document.createElement("span");
     occupation.className = "npc-occupation";
     occupation.textContent = npc.occupation;
@@ -166,7 +236,7 @@
   function renderEmptyPlaceholder(listEl) {
     const li = document.createElement("li");
     li.className = "empty";
-    li.textContent = "- nothing yet -";
+    li.textContent = "Nothing yet.";
     listEl.appendChild(li);
   }
 
@@ -234,29 +304,31 @@
     flagPaneIfNew("character");
   }
 
-  // Build the shared dot/name/note row used by both the current place and
-  // the (tappable) connected places. ``connection`` rows carry the location
-  // id and a "go" affordance so a tap can drive a move gesture.
+  function placeIcon(locationType) {
+    const span = document.createElement("span");
+    span.className = "mp-icon";
+    span.title = locationType;
+    span.innerHTML = PLACE_ICONS[locationType] || PLACE_ICONS.generic;
+    return span;
+  }
+
+  // Build the shared icon/name row used by both the current place and the
+  // (tappable) connected places. ``connection`` rows carry the location id
+  // and a "go" affordance so a tap can drive a move gesture.
   function makeMapPlace(node, connection) {
     const li = document.createElement("li");
     li.className = "map-place" + (connection ? "" : " here");
-    const dot = document.createElement("span");
-    dot.className = "mp-dot";
-    dot.setAttribute("aria-hidden", "true");
-    dot.textContent = "◆";
     const name = document.createElement("span");
     name.className = "mp-name";
     name.textContent = node.name;
-    const note = document.createElement("span");
-    note.className = "mp-note";
-    note.textContent = node.location_type;
-    li.append(dot, name, note);
+    li.append(placeIcon(node.location_type), name);
     if (connection) {
       li.dataset.locId = node.id;
+      li.tabIndex = 0;
+      li.setAttribute("role", "button");
       const go = document.createElement("span");
       go.className = "mp-go";
-      go.setAttribute("aria-hidden", "true");
-      go.textContent = "go ›";
+      go.innerHTML = svg('<path d="M9 6l6 6-6 6"/>');
       li.append(go);
     }
     return li;
@@ -284,7 +356,7 @@
     if (!current) {
       const empty = document.createElement("p");
       empty.className = "map-current-name empty";
-      empty.textContent = "- location unknown -";
+      empty.textContent = "Location unknown.";
       els.mapCurrent.appendChild(empty);
       return;
     }
@@ -302,15 +374,49 @@
     renderList(els.mapConnections, map.connections, prevConnections, renderConnectionNode, mapNodeKey);
   }
 
+  // "Day 2 · 18:00" with a drawn sun/moon for the time of day.
+  function fillClock(el, clock) {
+    const hour = String(clock.hour || 0).padStart(2, "0") + ":00";
+    el.innerHTML = DAYPART_ICONS[clock.time_of_day] || "";
+    el.append(" Day " + (clock.day || 1) + " · " + hour);
+    el.title = clock.time_of_day || "";
+  }
+
   function renderPeopleTime(world) {
-    const clock = world.clock || {};
-    els.worldClock.textContent = "Day " + (clock.day || 1) + " · " + (clock.time_of_day || "");
+    fillClock(els.worldClock, world.clock || {});
     const prevPeople = prevWorld ? prevWorld.people : null;
     renderList(els.peopleList, world.people, prevPeople, renderPerson, personKey);
   }
 
+  // The stage: where the scene is, what time it is, and who is on stage.
+  // Always in view above the prose; it is the theatre's lit proscenium.
+  function renderStage(world) {
+    const map = world.map || {};
+    els.stageCrumbs.textContent = (map.breadcrumb || []).map((node) => node.name).join(" · ");
+    els.stagePlace.textContent = map.current ? map.current.name : "…";
+    const clock = world.clock || {};
+    fillClock(els.stageClock, clock);
+    if (clock.time_of_day) document.body.dataset.daypart = clock.time_of_day;
+    els.stageCast.innerHTML = "";
+    const people = world.people || [];
+    for (const person of people.slice(0, STAGE_CAST_LIMIT)) {
+      const li = document.createElement("li");
+      li.className = person.known ? "cast-known" : "cast-stranger";
+      li.textContent = person.label;
+      li.title = person.role;
+      els.stageCast.appendChild(li);
+    }
+    if (people.length > STAGE_CAST_LIMIT) {
+      const more = document.createElement("li");
+      more.className = "cast-more";
+      more.textContent = "+" + (people.length - STAGE_CAST_LIMIT);
+      els.stageCast.appendChild(more);
+    }
+  }
+
   function renderWorld(world) {
     if (!world) return;
+    renderStage(world);
     renderMap(world.map);
     renderPeopleTime(world);
     prevWorld = world;
@@ -331,12 +437,22 @@
     renderWorld(snapshot.world);
     hide(els.settingPanel);
     if (els.storiesPanel) hide(els.storiesPanel);
+    resetOpening();
     show(els.gamePanel);
-    show(els.newGameBtn);
+    setScreen("play");
     // Land on the transcript after (re)loading a game on mobile; on desktop the
     // Story column is always visible so the rail keeps its current pane.
+    storyScrollY = null;
     if (!isDesktop()) selectPane("story");
-    els.actionInput.focus();
+    // Resume reading at the start of the latest passage.
+    const cues = els.log.querySelectorAll(".turn.player");
+    const resumeAt = cues.length ? cues[cues.length - 1] : null;
+    if (resumeAt) {
+      scrollToTurn(resumeAt, false);
+    } else {
+      window.scrollTo(0, 0);
+    }
+    if (isDesktop()) els.actionInput.focus({ preventScroll: true });
   }
 
   function showSettingPanel() {
@@ -344,17 +460,20 @@
     prevCharacter = null;
     prevWorld = null;
     hide(els.gamePanel);
-    hide(els.newGameBtn);
     if (els.storiesPanel) hide(els.storiesPanel);
+    resetOpening();
     show(els.settingPanel);
-    els.settingInput.focus();
+    setScreen("setting");
+    window.scrollTo(0, 0);
+    els.settingInput.focus({ preventScroll: true });
   }
 
   function showStoriesPanel() {
     hide(els.settingPanel);
     hide(els.gamePanel);
-    show(els.newGameBtn);
     if (els.storiesPanel) show(els.storiesPanel);
+    setScreen("library");
+    window.scrollTo(0, 0);
   }
 
   function renderStoryRow(story) {
@@ -363,18 +482,25 @@
     const meta = document.createElement("div");
     meta.className = "story-meta";
     const title = document.createElement("strong");
+    title.className = "story-title";
     title.textContent = story.title || story.setting || "Untitled story";
-    const details = document.createElement("span");
-    details.textContent = (story.setting || "Unknown setting") + " * " + story.turn_count + " turns";
-    meta.append(title, details);
+    const setting = document.createElement("span");
+    setting.className = "story-setting";
+    setting.textContent = story.setting || "Unknown setting";
+    const turns = document.createElement("span");
+    turns.className = "story-turns";
+    turns.textContent = story.turn_count + (story.turn_count === 1 ? " turn" : " turns");
+    meta.append(title, setting, turns);
     const actions = document.createElement("div");
     actions.className = "story-actions";
     const continueBtn = document.createElement("button");
     continueBtn.type = "button";
+    continueBtn.className = "btn-primary";
     continueBtn.dataset.continueGame = story.game_id;
     continueBtn.textContent = "Continue";
     const archiveBtn = document.createElement("button");
     archiveBtn.type = "button";
+    archiveBtn.className = "btn-quiet";
     archiveBtn.dataset.archiveGame = story.game_id;
     archiveBtn.textContent = "Archive";
     actions.append(continueBtn, archiveBtn);
@@ -436,6 +562,12 @@
     return fetch(url, Object.assign({}, opts, { headers }));
   }
 
+  function setSignedIn(signedIn) {
+    if (els.authPanel) els.authPanel.hidden = signedIn;
+    if (els.loginForm) els.loginForm.hidden = signedIn;
+    if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
+  }
+
   async function loadPublicConfig() {
     const response = await fetch("/api/config/public");
     if (!response.ok) return;
@@ -450,9 +582,7 @@
     }
     supabaseClient = window.supabase.createClient(cfg.supabase_url, supabaseBrowserKey);
     const { data } = await supabaseClient.auth.getSession();
-    const signedIn = Boolean(data && data.session);
-    if (els.loginForm) els.loginForm.hidden = signedIn;
-    if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
+    setSignedIn(Boolean(data && data.session));
   }
 
   async function sendMagicLink(shouldCreateUser) {
@@ -484,8 +614,7 @@
   async function onLogout() {
     if (!supabaseClient) return;
     await supabaseClient.auth.signOut();
-    if (els.loginForm) els.loginForm.hidden = false;
-    if (els.logoutBtn) els.logoutBtn.hidden = true;
+    setSignedIn(false);
     setStatus(els.authStatus, "Logged out.", "info");
   }
 
@@ -543,6 +672,18 @@
     }
   }
 
+  // While the opening is built the form steps aside for the curtain.
+  function showOpening() {
+    hide(els.settingForm);
+    show(els.opening);
+    window.scrollTo(0, 0);
+  }
+
+  function resetOpening() {
+    hide(els.opening);
+    show(els.settingForm);
+  }
+
   async function onStartGame(event) {
     event.preventDefault();
     const setting = els.settingInput.value.trim();
@@ -556,6 +697,7 @@
     );
     const button = els.settingForm.querySelector("button[type=submit]");
     button.disabled = true;
+    showOpening();
     try {
       const response = await apiFetch("/api/games", {
         method: "POST",
@@ -570,6 +712,7 @@
       setStatus(els.settingStatus, "");
     } catch (err) {
       if (isNetworkError(err)) setOfflineNotice(true);
+      resetOpening();
       setStatus(els.settingStatus, "Failed to start game: " + err.message);
     } finally {
       button.disabled = false;
@@ -582,6 +725,18 @@
     return div.innerHTML;
   }
 
+  function releaseComposer() {
+    els.actionInput.disabled = false;
+    els.actionSubmit.disabled = false;
+    // Desktop keeps typing flow; on phones drop the keyboard so the new
+    // passage has the whole screen.
+    if (isDesktop()) {
+      els.actionInput.focus({ preventScroll: true });
+    } else {
+      els.actionInput.blur();
+    }
+  }
+
   // The single render path for every turn entry point: the free-text
   // composer, an in-prose entity tap, and a map place tap. ``body`` is the
   // POST payload (``{action}`` or ``{gesture}``); ``optimisticEcho`` is the
@@ -592,10 +747,12 @@
     if (!currentGameId) return;
     selectPane("story");
     closePopover();
-    if (optimisticEcho) appendTurnHTML("player", escapeHTML(optimisticEcho));
+    let cue = optimisticEcho ? appendTurnHTML("player", escapeHTML(optimisticEcho)) : null;
+    const pending = showPending();
+    scrollToTurn(cue || pending, true);
     els.actionInput.disabled = true;
     els.actionSubmit.disabled = true;
-    setStatus(els.actionStatus, "The AI narrator is resolving your action...", "info");
+    setStatus(els.actionStatus, "");
     try {
       const response = await apiFetch(
         "/api/games/" + encodeURIComponent(currentGameId) + "/actions",
@@ -610,18 +767,19 @@
       }
       setOfflineNotice(false);
       const data = await response.json();
-      if (!optimisticEcho && data.action_html) appendTurnHTML("player", data.action_html);
-      appendTurnHTML("narrator", data.narration_html);
+      pending.remove();
+      if (!cue && data.action_html) cue = appendTurnHTML("player", data.action_html);
+      const passage = appendTurnHTML("narrator", data.narration_html);
+      passage.classList.add("is-arriving");
       renderCharacter(data.character);
       renderWorld(data.world);
-      setStatus(els.actionStatus, "");
+      scrollToTurn(cue || passage, true);
     } catch (err) {
+      pending.remove();
       if (isNetworkError(err)) setOfflineNotice(true);
       setStatus(els.actionStatus, "Error: " + err.message);
     } finally {
-      els.actionInput.disabled = false;
-      els.actionSubmit.disabled = false;
-      els.actionInput.focus();
+      releaseComposer();
     }
   }
 
@@ -630,7 +788,22 @@
     const action = els.actionInput.value.trim();
     if (!action || !currentGameId) return;
     els.actionInput.value = "";
+    autosizeComposer();
     submitTurn({ action }, action);
+  }
+
+  // The composer grows with the player's line, up to the CSS max-height.
+  function autosizeComposer() {
+    const input = els.actionInput;
+    input.style.height = "auto";
+    input.style.height = input.scrollHeight + 2 + "px";
+  }
+
+  // Enter sends; Shift+Enter keeps a line break; IME composition is untouched.
+  function onComposerKeydown(event) {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    event.preventDefault();
+    els.actionForm.requestSubmit();
   }
 
   async function onSubmitFeedback(event) {
@@ -662,6 +835,18 @@
     } finally {
       if (els.feedbackSubmit) els.feedbackSubmit.disabled = false;
     }
+  }
+
+  function openFeedback() {
+    if (!els.feedbackDialog) return;
+    setStatus(els.feedbackStatus, "");
+    els.feedbackDialog.showModal();
+    els.feedbackMessage.focus();
+  }
+
+  function onFeedbackDialogClick(event) {
+    // A click on the backdrop lands on the <dialog> element itself.
+    if (event.target === els.feedbackDialog) els.feedbackDialog.close();
   }
 
   function onNewGame() {
@@ -748,6 +933,12 @@
   }
 
   function selectPane(name) {
+    closePopover();
+    // On desktop Story is always on screen; "selecting" it must not blank the
+    // Character/Map rail (it used to, after every turn).
+    if (isDesktop() && name === "story") return;
+    const previous = activePane;
+    if (!isDesktop() && previous === "story" && name !== "story") storyScrollY = window.scrollY;
     activePane = name;
     document.querySelectorAll(".play-pane").forEach((pane) => {
       if (pane.dataset.pane === name) {
@@ -762,8 +953,14 @@
       tab.setAttribute("aria-selected", String(selected));
     });
     setBadge(name, false);
-    closePopover();
-    if (name === "story") els.log.scrollTop = els.log.scrollHeight;
+    if (isDesktop() || previous === name) return;
+    // Mobile panes share the page scroll: open side panes at the top and
+    // return the reader to where they left the story.
+    if (name === "story") {
+      window.scrollTo(0, storyScrollY === null ? document.body.scrollHeight : storyScrollY);
+    } else {
+      window.scrollTo(0, 0);
+    }
   }
 
   function onTabClick(event) {
@@ -790,18 +987,25 @@
     item: [{ label: "Investigate", intent: "examine" }],
   };
 
+  let openSpan = null;
+
   function closePopover() {
     els.entPop.hidden = true;
     els.entPop.classList.remove("open");
     els.entPop.innerHTML = "";
+    if (openSpan) openSpan.classList.remove("is-open");
+    openSpan = null;
   }
 
-  function openPopover(span) {
+  function openPopover(span, fromKeyboard) {
     const kind = span.dataset.kind;
     const id = span.dataset.id;
     const verbs = ENTITY_VERBS[kind];
     if (!verbs || !id) return;
-    els.entPop.innerHTML = "";
+    closePopover();
+    openSpan = span;
+    span.classList.add("is-open");
+    els.entPop.dataset.kind = kind;
     const title = document.createElement("p");
     title.className = "ep-title";
     title.textContent = span.textContent;
@@ -817,29 +1021,60 @@
       els.entPop.appendChild(btn);
     }
     // Position near the tapped word, viewport-relative (position:fixed), then
-    // reveal so the entry transition runs after layout.
+    // reveal so the entry transition runs after layout. Flip above the word
+    // when there is no room below (the composer sits at the bottom).
     const rect = span.getBoundingClientRect();
     els.entPop.hidden = false;
     const width = els.entPop.offsetWidth;
+    const height = els.entPop.offsetHeight;
     const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
+    const below = rect.bottom + 6;
+    const top = below + height > window.innerHeight - 96 ? Math.max(8, rect.top - height - 6) : below;
     els.entPop.style.left = left + "px";
-    els.entPop.style.top = rect.bottom + 6 + "px";
+    els.entPop.style.top = top + "px";
     requestAnimationFrame(() => els.entPop.classList.add("open"));
+    if (fromKeyboard) {
+      const first = els.entPop.querySelector(".ep-act");
+      if (first) first.focus();
+    }
   }
 
   function onLogClick(event) {
     const span = event.target.closest(".poi");
     if (span && els.log.contains(span)) {
-      openPopover(span);
+      if (span === openSpan) {
+        closePopover();
+      } else {
+        openPopover(span, false);
+      }
       return;
     }
     closePopover();
   }
 
+  function onLogKeydown(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const span = event.target.closest(".poi");
+    if (!span) return;
+    event.preventDefault();
+    openPopover(span, true);
+  }
+
+  function travelFrom(row) {
+    submitTurn({ gesture: { intent: "move", entity_kind: "location", entity_id: row.dataset.locId } });
+  }
+
   function onMapPlaceClick(event) {
     const row = event.target.closest(".map-place[data-loc-id]");
+    if (row) travelFrom(row);
+  }
+
+  function onMapPlaceKeydown(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const row = event.target.closest(".map-place[data-loc-id]");
     if (!row) return;
-    submitTurn({ gesture: { intent: "move", entity_kind: "location", entity_id: row.dataset.locId } });
+    event.preventDefault();
+    travelFrom(row);
   }
 
   function initPlayScreen() {
@@ -847,15 +1082,28 @@
     els.tabbar.addEventListener("click", onTabClick);
     if (els.knowledgeFilter) els.knowledgeFilter.addEventListener("click", onFactFilterClick);
     els.log.addEventListener("click", onLogClick);
-    els.log.addEventListener("scroll", closePopover);
+    els.log.addEventListener("keydown", onLogKeydown);
+    window.addEventListener("scroll", closePopover, { passive: true });
     els.mapConnections.addEventListener("click", onMapPlaceClick);
+    els.mapConnections.addEventListener("keydown", onMapPlaceKeydown);
+    els.stagePlaceBtn.addEventListener("click", () => selectPane("map"));
+    els.actionInput.addEventListener("input", autosizeComposer);
+    els.actionInput.addEventListener("keydown", onComposerKeydown);
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") closePopover();
+    });
+    document.addEventListener("click", (event) => {
+      if (!els.entPop.hidden && !els.entPop.contains(event.target) && !els.log.contains(event.target)) {
+        closePopover();
+      }
     });
     // On desktop the rail must show a panel (Story lives in the main column),
     // so promote Story selection to Character when the viewport widens.
     desktopQuery.addEventListener("change", () => {
-      if (isDesktop() && activePane === "story") selectPane("character");
+      if (isDesktop() && activePane === "story") {
+        activePane = "";
+        selectPane("character");
+      }
     });
   }
 
@@ -864,7 +1112,11 @@
   if (els.feedbackForm) {
     els.feedbackForm.addEventListener("submit", onSubmitFeedback);
   }
+  if (els.feedbackOpenBtn) els.feedbackOpenBtn.addEventListener("click", openFeedback);
+  if (els.feedbackCloseBtn) els.feedbackCloseBtn.addEventListener("click", () => els.feedbackDialog.close());
+  if (els.feedbackDialog) els.feedbackDialog.addEventListener("click", onFeedbackDialogClick);
   els.newGameBtn.addEventListener("click", onNewGame);
+  if (els.libraryBtn) els.libraryBtn.addEventListener("click", loadStories);
   if (els.libraryNewGameBtn) {
     els.libraryNewGameBtn.addEventListener("click", onNewGame);
   }
@@ -891,6 +1143,7 @@
 
   registerServiceWorker();
   setOfflineNotice(!navigator.onLine);
+  setScreen("loading");
   initFoldableSections();
   initPlayScreen();
   loadPublicConfig().finally(loadStories);

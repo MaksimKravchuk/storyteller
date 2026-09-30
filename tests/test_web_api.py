@@ -421,7 +421,7 @@ def test_get_index_exposes_pwa_metadata_and_offline_notice(client: TestClient) -
 
     assert response.status_code == _HTTP_OK
     assert '<link rel="manifest" href="/manifest.webmanifest" />' in response.text
-    assert '<meta name="theme-color" content="#1a1a1a" />' in response.text
+    assert '<meta name="theme-color" content="#13100d" />' in response.text
     assert 'id="offline-banner"' in response.text
     assert "Storyteller needs an internet connection and model access to continue." in response.text
 
@@ -443,8 +443,8 @@ def test_get_manifest_serves_installable_metadata(client: TestClient) -> None:
     assert manifest["short_name"] == "Storyteller"
     assert manifest["start_url"] == "/"
     assert manifest["display"] == "standalone"
-    assert manifest["theme_color"] == "#1a1a1a"
-    assert manifest["background_color"] == "#1a1a1a"
+    assert manifest["theme_color"] == "#13100d"
+    assert manifest["background_color"] == "#13100d"
     assert {icon["src"] for icon in manifest["icons"]} == {
         "/static/icons/icon-192.png",
         "/static/icons/icon-512.png",

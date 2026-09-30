@@ -1,4 +1,4 @@
-const CACHE_NAME = "STORYTELLER-PWA-CACHE-v2";
+const CACHE_NAME = "STORYTELLER-PWA-CACHE-v3";
 const OFFLINE_DETAIL = "Storyteller needs an internet connection and model access to continue.";
 const PRECACHE_URLS = [
   "/",

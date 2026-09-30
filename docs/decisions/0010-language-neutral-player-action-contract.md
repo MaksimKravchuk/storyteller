@@ -4,6 +4,7 @@ Date: 2026-06-01
 Status: Proposed
 Decision owner: Max (release/product direction)
 Amends: `docs/decisions/0006-player-dashboard-gui.md` (§6 informational-only map nodes; Alternative 4 "clickable map nodes that move the player")
+Extended by: `docs/decisions/0018-player-ui-stage-visual-language.md` (entity hues keyed to the gesture `entity_kind`; `action_html` rendered as a stage cue; language-neutral location/daypart icons)
 Related: `interfaces/web/schemas.py`, `interfaces/web/player_gestures.py`, `cast/player_gesture_phrases.py`, `interfaces/web/service.py`, `interfaces/web/static/`, `models/npc_card.py`, `prompts/locales.py`
 
 ## Context
