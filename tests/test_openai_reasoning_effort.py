@@ -2,46 +2,27 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import allure
 import pytest
 
 from config import Config, resolve_model_config
-from llm import message as msg
+from db.repo_settings import ALLOWED_ROLES
 from llm.base_client import OutputFormat
 from llm.factory import create_llm_client
 from llm.message import Tool
 from llm.openai_client import OpenAIClient
+from tests.test_openai_client import _OPENAI_CTOR, _install_sdk_mock, _user_msg
 
-_OPENAI_CTOR = "openai.AsyncOpenAI"
 _GPT6_LUNA = "gpt-6-luna"
-_ROLE_MODEL_FIELDS = ("director_model", "agent_model", "narrator_model", "dramaturge_model")
+_ROLE_MODEL_FIELDS = tuple(sorted("{0}_model".format(role) for role in ALLOWED_ROLES))
 
 pytestmark = [
     allure.epic("Engine & LLM Infrastructure"),
     allure.feature("OpenAI client — reasoning effort"),
     allure.story("Reasoning effort"),
 ]
-
-
-def _install_sdk_mock() -> tuple[MagicMock, AsyncMock]:
-    """Patch target for AsyncOpenAI; return (sdk_class_mock, create_mock)."""
-    response = SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content="ok"))],
-        usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1),
-        model=_GPT6_LUNA,
-    )
-    create_mock = AsyncMock(return_value=response)
-    sdk_instance = MagicMock()
-    sdk_instance.chat.completions.create = create_mock
-    sdk_class = MagicMock(return_value=sdk_instance)
-    return sdk_class, create_mock
-
-
-def _user_msg() -> msg.Message:
-    return msg.Message(role=msg.Role.USER, body="hi")
 
 
 @allure.title(

@@ -5,7 +5,7 @@ from __future__ import annotations
 import allure
 import pytest
 
-from defaults.models import AI_MODELS
+from config import Config
 from engine.game_engine import GameEngine, _apply_character_to_player
 from models.game_state import PlayerState
 from models.player_character_input import PlayerCharacterInput
@@ -27,12 +27,13 @@ def test_assert_running_raises_before_start():
 
 
 @allure.story("Default models")
-@allure.title("GameEngine() defaults the director, agent, and narrator roles to gpt-6-luna")
-def test_default_role_models_are_gpt6_luna() -> None:
+@allure.title("GameEngine() role model defaults match the Config role defaults")
+def test_default_role_models_match_config_defaults() -> None:
     engine = _make_engine()
-    assert engine._director_model is AI_MODELS.gpt6_luna
-    assert engine._agent_model is AI_MODELS.gpt6_luna
-    assert engine._narrator_model is AI_MODELS.gpt6_luna
+    fields = Config.model_fields
+    assert engine._director_model.model_id == fields["director_model"].default
+    assert engine._agent_model.model_id == fields["agent_model"].default
+    assert engine._narrator_model.model_id == fields["narrator_model"].default
 
 
 @allure.story("Character apply")

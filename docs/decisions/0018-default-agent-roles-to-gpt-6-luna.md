@@ -98,7 +98,7 @@ This is a paid, human-gated step. It never runs on CI (ADR-0002).
 
 - `tests/test_config.py::TestDefaultsExports::test_role_models_default_to_gpt6_luna`: all four role fields default to `gpt-6-luna`.
 - `tests/test_config.py::TestDefaultsExports::test_ai_models_gpt6_luna`: registry entry.
-- `tests/test_game_engine.py::test_default_role_models_are_gpt6_luna`: `GameEngine()` direct-construction defaults.
+- `tests/test_game_engine.py::test_default_role_models_match_config_defaults`: `GameEngine()` direct-construction defaults match `Config`'s.
 - `tests/test_openai_reasoning_effort.py`:
   - `test_gpt6_luna_pins_reasoning_effort_none`: a luna tool-call request carries `reasoning_effort: none` next to `temperature` and `tool_choice`.
   - `test_other_models_omit_reasoning_effort`: GPT-5.4, GPT-4, and DeepSeek payloads have no such field.

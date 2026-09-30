@@ -8,6 +8,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from defaults.models import (
+    AI_MODELS,
     PROVIDER_ANTHROPIC,
     PROVIDER_DEEPSEEK,
     PROVIDER_OPENAI,
@@ -15,7 +16,7 @@ from defaults.models import (
     ModelConfig,
 )
 
-_GPT6_LUNA = "gpt-6-luna"
+_DEFAULT_ROLE_MODEL = AI_MODELS.gpt6_luna.model_id
 
 _OPENROUTER_PREFIXES = (
     "deepseek/",
@@ -71,10 +72,10 @@ class Config(BaseSettings):
     searxng_base_url: str | None = None
 
     # Model selection per agent role
-    director_model: str = _GPT6_LUNA
-    agent_model: str = _GPT6_LUNA
-    narrator_model: str = _GPT6_LUNA
-    dramaturge_model: str = _GPT6_LUNA
+    director_model: str = _DEFAULT_ROLE_MODEL
+    agent_model: str = _DEFAULT_ROLE_MODEL
+    narrator_model: str = _DEFAULT_ROLE_MODEL
+    dramaturge_model: str = _DEFAULT_ROLE_MODEL
 
     # Dramaturge (consistency oracle) is off by default — enable via env
     # var ``DRAMATURGE_ENABLED=true``. When enabled, a validation pass runs

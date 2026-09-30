@@ -5,6 +5,7 @@ from __future__ import annotations
 import allure
 
 from config import Config, get_api_key_for_provider, list_api_key_status, resolve_model_config
+from db.repo_settings import ALLOWED_ROLES
 from defaults.models import AI_MODELS, ModelConfig
 
 _OPENAI = "openai"
@@ -55,8 +56,8 @@ class TestDefaultsExports:
     @allure.title("Every agent role defaults to gpt-6-luna when no *_MODEL env var is set")
     def test_role_models_default_to_gpt6_luna(self):
         fields = Config.model_fields
-        for role_field in ("director_model", "agent_model", "narrator_model", "dramaturge_model"):
-            assert fields[role_field].default == _GPT6_LUNA, role_field
+        for role in ALLOWED_ROLES:
+            assert fields["{0}_model".format(role)].default == _GPT6_LUNA, role
 
 
 @allure.epic("Engine & LLM Infrastructure")
