@@ -22,6 +22,7 @@ class ModelConfig:
 class AI_MODELS:
     """Registry of available model configurations."""
 
+    gpt6_luna = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-6-luna")
     gpt5_4 = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4")
     gpt5_4_mini = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4-mini")
     gpt5_4_nano = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4-nano")

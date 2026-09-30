@@ -5,6 +5,7 @@ from __future__ import annotations
 import allure
 import pytest
 
+from config import Config
 from engine.game_engine import GameEngine, _apply_character_to_player
 from models.game_state import PlayerState
 from models.player_character_input import PlayerCharacterInput
@@ -23,6 +24,16 @@ def test_assert_running_raises_before_start():
     engine = _make_engine()
     with pytest.raises(RuntimeError, match="Game not started"):
         engine.assert_running()
+
+
+@allure.story("Default models")
+@allure.title("GameEngine() role model defaults match the Config role defaults")
+def test_default_role_models_match_config_defaults() -> None:
+    engine = _make_engine()
+    fields = Config.model_fields
+    assert engine._director_model.model_id == fields["director_model"].default
+    assert engine._agent_model.model_id == fields["agent_model"].default
+    assert engine._narrator_model.model_id == fields["narrator_model"].default
 
 
 @allure.story("Character apply")
