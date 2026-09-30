@@ -72,9 +72,9 @@ class GameEngine:
     def __init__(
         self,
         *,
-        director_model: ModelConfig = AI_MODELS.gpt5_4_mini,
-        agent_model: ModelConfig = AI_MODELS.gpt5_4_nano,
-        narrator_model: ModelConfig = AI_MODELS.gpt5_4_mini,
+        director_model: ModelConfig = AI_MODELS.gpt6_luna,
+        agent_model: ModelConfig = AI_MODELS.gpt6_luna,
+        narrator_model: ModelConfig = AI_MODELS.gpt6_luna,
         dramaturge_model: ModelConfig | None = None,
         api_keys: dict[str, str | None] | None = None,
         language: str = "English",

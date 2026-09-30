@@ -72,7 +72,7 @@ Player action → Director routes it → EventManager advances time → SceneBui
 
 ### Configuration
 
-`config.py` loads from env vars / `.env`. Per-agent model vars: `DIRECTOR_MODEL` (default gpt-5.4-mini), `AGENT_MODEL` (gpt-5.4-nano), `NARRATOR_MODEL` (gpt-5.4-mini), `DRAMATURGE_MODEL` (gpt-5.4-nano). Provider is auto-detected from each model name (no global provider var). The Dramaturge consistency pass is off by default — enable with `DRAMATURGE_ENABLED=true`.
+`config.py` loads from env vars / `.env`. Per-agent model vars: `DIRECTOR_MODEL`, `AGENT_MODEL`, `NARRATOR_MODEL`, `DRAMATURGE_MODEL` (all default gpt-6-luna; `OpenAIClient` pins `reasoning_effort=none` for it — see ADR-0018). Provider is auto-detected from each model name (no global provider var). The Dramaturge consistency pass is off by default — enable with `DRAMATURGE_ENABLED=true`.
 
 ## Code Conventions
 
