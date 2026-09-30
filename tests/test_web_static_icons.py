@@ -1,7 +1,7 @@
 """Consumer-side guard: the web client draws an icon for every backend slug.
 
 The player UI renders location types and times of day as inline-SVG icons
-(ADR-0018) instead of printing the English slugs. These tests read the icon
+(ADR-0019) instead of printing the English slugs. These tests read the icon
 tables out of the shipped ``app.js`` and compare their keys to the
 vocabularies the backend actually emits, so a new slug cannot silently render
 without an icon.

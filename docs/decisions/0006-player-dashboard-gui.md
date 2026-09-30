@@ -4,7 +4,7 @@ Date: 2026-05-29
 Status: Proposed
 Decision owner: Max (release/product direction)
 Amended by: `docs/decisions/0010-language-neutral-player-action-contract.md` (§6 and Alternative 4 — map nodes and in-prose entities become actionable via a language-neutral structured contract)
-Extended by: `docs/decisions/0018-player-ui-stage-visual-language.md` (visual language — tokens, self-hosted fonts, semantic colour, `WorldView`-driven stage header; shell constraints unchanged)
+Extended by: `docs/decisions/0019-player-ui-stage-visual-language.md` (visual language — tokens, self-hosted fonts, semantic colour, `WorldView`-driven stage header; shell constraints unchanged)
 Related: extends `docs/decisions/0004-retire-telegram-and-cli-player-clients.md` and `docs/studio/09-founder-decision-register.md` (D006 — PWA offline behavior); `interfaces/web/world.py`, `interfaces/web/world_schemas.py`, `interfaces/web/schemas.py`, `interfaces/web/static/`, `models/npc_card.py`
 
 ## Context
