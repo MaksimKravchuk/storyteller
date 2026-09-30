@@ -250,7 +250,7 @@ What future agents must preserve:
 - `interfaces/web/static/app.js`, `interfaces/web/static/style.css`
 - `interfaces/web/beta_policy.py`, `interfaces/web/quota_locks.py`
 - `llm/image_client.py`
-- `db/tables.py` (`story_posters`), `db/repo_posters.py`, `db/repo_web_games.py`, `db/repo_ai_logs.py` (unchanged save path)
+- `db/tables.py` (`story_posters`), `db/repo_posters.py`, `db/repo_web_games.py`
 - `alembic/versions/a9b0c1d2e3f4_add_story_posters.py`
 - `config.py`, `.env.example`, `costs/model_pricing.py`
 - `safety/factory.py`
