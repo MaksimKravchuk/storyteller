@@ -16,6 +16,20 @@ from models.npc_card import NPCCard
 from tests import director_helpers
 from tests.e2e._real_llm import real_llm_for
 
+# Ways a model writes "blind" without the word: gpt-6-luna described the
+# requested blind beggar as having "cloudy eyes" and having "lost his sight".
+_BLINDNESS_MARKERS = (
+    "blind",
+    "sightless",
+    "unseeing",
+    "milky eyes",
+    "clouded eyes",
+    "cloudy eyes",
+    "lost his sight",
+    "lost her sight",
+    "lost their sight",
+)
+
 
 @allure.epic("AI Agent Orchestration")
 @allure.feature("NPCGenerator real-model materialisation")
@@ -73,7 +87,7 @@ class TestNPCGeneratorRealModel:
         # ``short_descriptor`` (the fall-back the alias resolver renders
         # for unintroduced NPCs).
         haystack = " ".join((card.appearance, card.short_descriptor, card.biography)).lower()
-        assert any(marker in haystack for marker in ("blind", "sightless", "milky eyes", "clouded eyes")), (
+        assert any(marker in haystack for marker in _BLINDNESS_MARKERS), (
             "NPC for 'blind beggar' has no blindness marker in appearance/descriptor/biography.\n"
             "appearance={0!r}\nshort_descriptor={1!r}\nbiography={2!r}".format(
                 card.appearance,
