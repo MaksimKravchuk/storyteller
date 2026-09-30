@@ -131,7 +131,7 @@ Execution steps:
 4. Generate (internally) a prioritized queue of candidate clarification questions (maximum 3). Do NOT output them all at once. Apply these constraints:
     - **Storyteller override**: ask only about *blocking* unknowns as defined in constitution Principle VI (contradictions, guardrail violations, or load-bearing unknowns that change player-visible behavior, persisted data shape, security/privacy, or paid cost with no safe default). For everything else, pick a reasonable default, record it under Assumptions, and do not ask.
     - Maximum of 3 total questions across the whole session.
-    - Answers MUST NOT add new user stories or requirements; if an answer introduces new scope, record it under "Out of Scope / Follow-ups" instead.
+    - Answers may **refine** an existing in-scope requirement (add the missing constraint, field shape, retention rule, edge case, or measurable criterion it needs). Answers MUST NOT add a **new capability** (a new user story, or a requirement not implied by an existing story); record such scope under "Out of Scope / Follow-ups" instead.
     - Each question must be answerable with EITHER:
        - A short multiple‑choice selection (2–5 distinct, mutually exclusive options), OR
        - A one-word / short‑phrase answer (explicitly constrain: "Answer in <=5 words").

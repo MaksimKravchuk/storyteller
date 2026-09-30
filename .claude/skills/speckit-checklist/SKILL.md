@@ -36,6 +36,7 @@ disable-model-invocation: false
 
 - This command is optional. Run it only when Max asks or the plan names a specific high-risk domain.
 - Generate at most **15** items per checklist, prioritized by the blocking conditions in Principle VI (contradictions, guardrail violations, missing P1 coverage, load-bearing unknowns). Prefer "Do X and Y conflict?" items over "Is Z quantified?" polish items.
+- Tag every item that would be a blocking finding if left unchecked with a `[Blocking]` marker (in addition to its traceability marker), so `/speckit-implement` can tell blockers from Known gaps. Untagged items are non-blocking.
 - Unchecked items are a report, not a to-do list. Only items that reveal a blocking finding justify editing `spec.md`/`plan.md`; everything else is a Known gap. Never add new user stories, requirements, or success criteria to make an item pass.
 - Do not re-run the same checklist domain to "raise the pass rate".
 

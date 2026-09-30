@@ -43,7 +43,7 @@ Iteration budget per feature:
 
 No scope growth during review:
 
-- Remediation may clarify, reconcile, delete, or down-prioritize. It MUST NOT add new user stories, functional requirements, success criteria, entities, or tasks, except the minimum task needed to cover an existing P1 requirement.
+- Remediation may clarify, reconcile, delete, or down-prioritize, and may refine an existing in-scope requirement with the constraint it was missing. It MUST NOT add new capabilities: new user stories, functional requirements not implied by an existing story, success criteria, entities, or tasks, except the minimum task needed to cover an existing P1 requirement.
 - New ideas discovered during review go to the spec's "Out of Scope / Follow-ups" section, not into the current feature.
 - If a spec grows beyond roughly 3 user stories or 10 functional requirements, prefer splitting it into separate features over expanding it.
 

@@ -90,12 +90,17 @@ When the codebase already satisfies everything, the command MUST leave `tasks.md
 **Storyteller override — bounded convergence** (constitution Principle VI):
 
 - Converge is opt-in and runs at most **once** per feature. If `tasks.md` already contains a
-  `## Phase N: Convergence` section, do not append another one: report the remaining gaps
-  and escalate to Max instead.
-- Only **blocking** findings become tasks: CRITICAL findings, and HIGH `missing`/`contradicts`
-  findings on a P1 user story or a functional requirement already written in `spec.md`.
-- `partial` findings that are not blocking, MEDIUM/LOW findings, and every `unrequested`
-  finding are reported once as Known gaps and never become tasks.
+  `## Phase N: Convergence` section, treat this run as the read-only re-check below: do not
+  append another phase; report the remaining gaps and escalate any unresolved blocker to Max.
+- Only **blocking** findings become tasks: CRITICAL findings, and HIGH `missing`, `partial`, or
+  `contradicts` findings on a P1 user story or a core functional requirement already written
+  in `spec.md`.
+- MEDIUM/LOW findings and every `unrequested` finding are reported once as Known gaps and
+  never become tasks.
+- **One targeted re-check**: after the appended Convergence tasks are implemented, a second
+  run is allowed only as a read-only re-check limited to the findings that produced those
+  tasks. It MUST NOT append anything; if any of those findings is still unresolved, escalate
+  it to Max.
 - Never create tasks for work that is not already stated in `spec.md`, `plan.md`, or `tasks.md`.
 
 **Constitution Authority**: The project constitution (`.specify/memory/constitution.md`) is
@@ -244,8 +249,9 @@ Append to the **end** of `tasks.md`, per the append contract:
 ### 8. Provide Next Actions (Handoff)
 
 - On `tasks_appended`: state how many tasks were appended under which phase, and recommend
-  implementing them through the normal Storyteller PR workflow. Do not recommend another
-  converge run; this was the single allowed convergence pass.
+  implementing them through the normal Storyteller PR workflow, followed by at most one
+  read-only re-check of just those findings (see the bounded-convergence override). Do not
+  recommend a full converge run; this was the single allowed convergence pass.
 - On `converged`: recommend proceeding to review / opening a PR. No further implement pass
   is needed for this feature's specified scope.
 

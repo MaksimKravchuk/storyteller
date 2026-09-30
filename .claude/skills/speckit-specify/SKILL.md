@@ -196,7 +196,7 @@ Given that feature description, do this:
         1. List the failing items and specific issues
         2. Classify each failing item as blocking or non-blocking per constitution Principle VI (Storyteller override)
         3. Make **one** fix pass that addresses only blocking items; do not add new stories, requirements, or success criteria to make an item pass
-        4. Do not re-run validation in a loop. Record any remaining items (blocking or not) under "Known gaps" in the checklist notes and continue; the spec is ready for planning when no blocking item remains
+        4. Do not re-run validation in a loop. Record remaining **non-blocking** items under "Known gaps" in the checklist notes. If any **blocking** item remains after the single fix pass, stop: do not report the spec as ready for `/speckit-plan`; escalate it to Max with the exact contradiction and 2–3 resolution options
 
       - **If [NEEDS CLARIFICATION] markers remain**:
         1. Extract all [NEEDS CLARIFICATION: ...] markers from the spec
