@@ -1,7 +1,7 @@
 # ADR-0019: Player web UI visual language — "the stage"
 
 Date: 2026-09-30
-Status: Proposed
+Status: Accepted
 Decision owner: Max (player-facing product direction)
 Decision type: Product (player-facing UX / visual identity) + Architecture (web static assets, PWA app shell)
 Extends: `docs/decisions/0006-player-dashboard-gui.md` (vanilla, mobile-first, `WorldView`, precached shell) and `docs/decisions/0010-language-neutral-player-action-contract.md` (tap-to-act entities, `action_html`, no English in the player contract)
@@ -59,7 +59,7 @@ Adopt one visual language for `interfaces/web/static/`, called **"the stage"**. 
    - `prefers-reduced-motion` turns off animations and transitions.
    - `PRECACHE_URLS` is unchanged, and fonts are **not** added to it. Only `CACHE_NAME` is bumped (`v2` to `v3`) to evict the old shell, following the ADR-0010 precedent.
 
-This ADR is **Proposed**, not self-accepted: it sets the player-facing product surface, which is Max's call (ADR-0004, ADR-0006, ADR-0010).
+Max accepted this ADR on 2026-09-30. It sets the player-facing product surface, which is Max's call (ADR-0004, ADR-0006, ADR-0010).
 
 ## Rationale
 

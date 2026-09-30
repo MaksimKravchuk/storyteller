@@ -1,7 +1,7 @@
 # ADR-0020: Story library posters — deterministic playbills, illustrations on request
 
 Date: 2026-09-30
-Status: Proposed
+Status: Accepted
 Decision owner: Max. He chose the hybrid variant in session on 2026-09-30: every story gets a playbill generated after the prologue, and a painted illustration is made only when the player asks ("just do it"). Turning paid illustrations on for a deployed beta is a separate operator action; see Consequences.
 Decision type: Product (player-facing library UX, an optional paid feature) + Architecture (a new image-model client, new web routes) + Persistence (a new `story_posters` table) + Operations (spend, quota, moderation)
 Extends: `docs/decisions/0019-player-ui-stage-visual-language.md` (the "stage" visual language, `PLACE_ICONS` / `DAYPART_ICONS`, name-gated cast chips)
