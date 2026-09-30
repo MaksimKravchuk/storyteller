@@ -369,6 +369,23 @@ class TestOffSceneNonKillResolvers:
         assert actor.life_goal.last_outcome is None
 
     @pytest.mark.asyncio
+    @allure.story("Eligibility")
+    @allure.title("Off-scene social life goals are intentionally inert")
+    async def test_social_life_goal_is_intentionally_inert_off_scene(self) -> None:
+        state, actor, target, _ = make_actor_target_state()
+        actor.life_goal = Goal(kind=GoalKind.BEFRIEND, description="x", target_uuid=target.uuid)
+        _move_actor_offscene(state, actor, target)
+        memory = RecordingMemoryManager()
+
+        ticker = NPCBackgroundTicker(state, memory)
+        await ticker.tick(hours_advanced=8.0)
+
+        assert actor.life_goal.status is GoalStatus.ACTIVE
+        assert actor.life_goal.turns_pursued == 0
+        assert actor.life_goal.progress_notes == []
+        assert memory.calls == []
+
+    @pytest.mark.asyncio
     @allure.story("PURSUE")
     @allure.title("PURSUE goal whose quarry was killed elsewhere abandons the chase")
     async def test_pursue_dead_quarry_abandons(self) -> None:

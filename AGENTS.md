@@ -63,6 +63,8 @@ uv run python -m benchmarks run
 ## Development rules
 
 - Trunk development: `main` is the only long-lived development branch. Use short-lived branches for code changes and open GitHub PRs early; PR review is the default code-review surface.
+- For non-trivial features, use Spec Kit as the repo-tracked requirements/planning layer before coding when it helps clarify scope: `/speckit-specify` → `/speckit-clarify` → `/speckit-plan` → `/speckit-checklist` → `/speckit-tasks` → `/speckit-analyze`. See `docs/decisions/0017-adopt-spec-kit-as-requirements-layer.md`, `docs/studio/13-spec-driven-development.md`, and `.specify/memory/constitution.md`.
+- `/speckit-implement` is optional, not the default autopilot. Implementation still follows CLAUDE.md, accepted ADRs, deterministic verification, and PR review.
 - Agents may create branches, push them, and open PRs for code work without asking first. Direct pushes to `main` still require Max to explicitly say “push to main”.
 - Agents may merge low-risk PRs after required deterministic checks and CI pass. Stop and ask before merging product/release behavior changes, destructive data changes, paid/e2e/benchmark-dependent changes, or anything with unclear risk.
 - Release tags are the release boundary: cut annotated tags from `main` only after Max approval and the release checklist.
