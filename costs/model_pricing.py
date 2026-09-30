@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from decimal import Decimal
 from types import MappingProxyType
@@ -11,6 +12,9 @@ from typing import Any
 from config import Config
 
 _ONE_MILLION = Decimal("1000000")
+# Providers answer with a dated snapshot id (``gpt-6-luna-2026-05-18``) that
+# call logs persist verbatim; prices are keyed by the base model id.
+_SNAPSHOT_SUFFIX = re.compile(r"-\d{4}-\d{2}-\d{2}$")
 
 
 @dataclass(frozen=True)
@@ -75,7 +79,8 @@ def price_for_model(model: str | None, cfg: Config) -> ModelPrice | None:
     """Return pricing for a model, or None when it is unknown."""
     if model is None:
         return None
-    return configured_prices(cfg).get(model)
+    prices = configured_prices(cfg)
+    return prices.get(model) or prices.get(_SNAPSHOT_SUFFIX.sub("", model))
 
 
 def calculate_call_cost_usd(

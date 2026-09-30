@@ -35,6 +35,25 @@ def test_checked_in_openai_prices_match_published_rates() -> None:
     assert price_for_model("gpt-5.4-nano", cfg) == ModelPrice(Decimal("0.20"), Decimal("1.25"))
 
 
+@allure.title("Dated snapshot ids logged from provider responses are priced as their base model")
+def test_dated_snapshot_id_is_priced_as_base_model() -> None:
+    luna = calculate_call_cost_usd("gpt-6-luna-2026-05-18", 1_000_000, 500_000, Config())
+    nano = price_for_model("gpt-5.4-nano-2026-03-17", Config())
+
+    assert luna.unpriced is False
+    assert luna.cost_usd == Decimal("0.350000")
+    assert nano == ModelPrice(Decimal("0.20"), Decimal("1.25"))
+
+
+@allure.title("An exact-id pricing override wins over the snapshot's base-model price")
+def test_exact_snapshot_override_wins_over_base_model() -> None:
+    cfg = Config(
+        model_pricing_json='{"gpt-6-luna-2026-05-18":{"input_per_million_usd":"9","output_per_million_usd":"9"}}',
+    )
+
+    assert price_for_model("gpt-6-luna-2026-05-18", cfg) == ModelPrice(Decimal("9"), Decimal("9"))
+
+
 @allure.title("Unknown model pricing is flagged without crashing")
 def test_unknown_model_is_flagged_without_crashing() -> None:
     result = calculate_call_cost_usd("unknown-model", 10, 20, Config())
