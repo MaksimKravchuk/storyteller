@@ -261,7 +261,7 @@ Decision owner: Max, for both changes. The model switch was made in session on 2
 
 1. **Default model.** The `poster_image_model` default in `config.py` and the `.env.example` line become `gpt-image-2.5-flare`. Quality (`medium`), size (`1024x1536`), format (`webp`, compression 82) and `OpenAIImageClient` are unchanged, because the model is only a parameter to the same call.
 2. **Price.** `DEFAULT_MODEL_PRICES` in `costs/model_pricing.py` gains `gpt-image-2.5-flare` at **$5.00 input / $30.00 output per million tokens**. These are OpenAI's published text-input and image-output rates, which match how `cost_log_entry` logs `prompt_tokens` / `completion_tokens`. The `gpt-image-1-mini` entry stays, so an operator can switch back with `POSTER_IMAGE_MODEL` and stay inside the budget. `price_for_model` strips a dated snapshot suffix, so a `…-2026-09-08` model id is priced too.
-3. **Painted illustrations are enabled on the deployed beta (D010).** On 2026-09-30, Max approved enabling painted illustrations on the deployed Fly beta as a proof of concept for a single user. `fly.toml` gains:
+3. **Painted illustrations are enabled on the deployed beta (D010).** On 2026-09-30, Max approved enabling painted illustrations on the deployed Fly beta, a proof of concept that only he is using for now. `fly.toml` gains:
 
    ```toml
    [env]
@@ -270,7 +270,7 @@ Decision owner: Max, for both changes. The model switch was made in session on 2
 
    `POSTER_DAILY_IMAGE_QUOTA` stays `3` and `POSTER_IMAGE_QUALITY` stays `medium`. The `config.py` default for `POSTER_IMAGES_ENABLED` stays `false`. Local runs, docker-compose, `fly.test.toml` and any other deployment stay off unless their operator sets the flag.
 
-The approval covers exactly this: the Fly beta, a single user, `gpt-image-2.5-flare` at `medium`, 3 paintings per rolling 24 h, and every existing check from §5 (`BetaPolicy.ensure_open`, ownership, one per story, quota, moderation).
+The approval covers exactly this: the Fly beta as it is today, `gpt-image-2.5-flare` at `medium`, 3 paintings per player per rolling 24 h, and every existing check from §5 (`BetaPolicy.ensure_open`, ownership, one per story, quota, moderation). The flag is app-wide, not per account: every invited beta account can paint within its own quota. That costs at most about $0.03 a day per account, and all of it stays inside the global budget.
 
 ### Rationale
 
@@ -303,7 +303,7 @@ Tradeoffs / risks:
 
 What future agents must preserve:
 - **The `POSTER_IMAGES_ENABLED` default in `config.py` stays `false`.** The deployed beta enables painting only through `fly.toml [env]`. Do not add the flag to `fly.test.toml`.
-- **The D010 approval is scoped** to a single-user proof of concept, `gpt-image-2.5-flare` at `medium` and 3 paintings a day. Each of the following needs a new Max decision:
+- **The D010 approval is scoped** to the proof-of-concept beta as it is today, `gpt-image-2.5-flare` at `medium` and 3 paintings per player a day. The flag does not restrict painting to particular accounts. Each of the following needs a new Max decision:
   - raising the quota;
   - raising the quality;
   - switching to a model with higher per-image cost;

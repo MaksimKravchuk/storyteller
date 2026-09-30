@@ -5,8 +5,9 @@ primary_region = "ams"
   dockerfile = "Dockerfile"
 
 # Painted story-poster illustrations are on for this beta: Max's D010 spend
-# decision of 2026-09-30, a single-user proof of concept at the default quota
-# (ADR-0020, "Amendment 2026-09-30"). The config.py default stays false.
+# decision of 2026-09-30 for the proof-of-concept beta. The flag is app-wide:
+# every invited account can paint up to the per-player quota (ADR-0020,
+# "Amendment 2026-09-30"). The config.py default stays false.
 [env]
   POSTER_IMAGES_ENABLED = "true"
 
