@@ -7,11 +7,13 @@ import pytest
 from pydantic import ValidationError
 
 from config import Config, get_api_key_for_provider, list_api_key_status, resolve_model_config
+from db.repo_settings import ALLOWED_ROLES
 from defaults.models import AI_MODELS, ModelConfig
 
 _OPENAI = "openai"
 _GPT5_4_MINI = "gpt-5.4-mini"
 _GPT5_4_NANO = "gpt-5.4-nano"
+_GPT6_LUNA = "gpt-6-luna"
 
 
 @allure.epic("Engine & LLM Infrastructure")
@@ -45,6 +47,19 @@ class TestDefaultsExports:
     def test_ai_models_gpt5_4_nano(self):
         assert AI_MODELS.gpt5_4_nano.provider == _OPENAI
         assert AI_MODELS.gpt5_4_nano.model_id == _GPT5_4_NANO
+
+    @allure.story("AI_MODELS registry")
+    @allure.title("AI_MODELS.gpt6_luna is preconfigured as the OpenAI gpt-6-luna model")
+    def test_ai_models_gpt6_luna(self):
+        assert AI_MODELS.gpt6_luna.provider == _OPENAI
+        assert AI_MODELS.gpt6_luna.model_id == _GPT6_LUNA
+
+    @allure.story("Role model defaults")
+    @allure.title("Every agent role defaults to gpt-6-luna when no *_MODEL env var is set")
+    def test_role_models_default_to_gpt6_luna(self):
+        fields = Config.model_fields
+        for role in ALLOWED_ROLES:
+            assert fields["{0}_model".format(role)].default == _GPT6_LUNA, role
 
 
 @allure.epic("Engine & LLM Infrastructure")

@@ -91,9 +91,12 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Engine models stay on the GPT-5.4 set the committed baselines were
+          # calibrated on (ADR-0002); move them with a baseline re-pin (ADR-0018).
           DIRECTOR_MODEL: gpt-5.4-mini
           AGENT_MODEL: gpt-5.4-nano
           NARRATOR_MODEL: gpt-5.4-mini
+          DRAMATURGE_MODEL: gpt-5.4-nano
         run: |
           set +e
           set -o pipefail

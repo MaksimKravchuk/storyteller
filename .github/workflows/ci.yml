@@ -369,10 +369,10 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          DIRECTOR_MODEL: gpt-5.4-mini
-          AGENT_MODEL: gpt-5.4-nano
-          NARRATOR_MODEL: gpt-5.4-mini
-          DRAMATURGE_MODEL: gpt-5.4-nano
+          DIRECTOR_MODEL: gpt-6-luna
+          AGENT_MODEL: gpt-6-luna
+          NARRATOR_MODEL: gpt-6-luna
+          DRAMATURGE_MODEL: gpt-6-luna
         run: uv run pytest ${{ steps.select.outputs.selected }} --alluredir=allure-results -v
 
       - name: Upload Allure results

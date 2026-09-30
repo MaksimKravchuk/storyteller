@@ -7,7 +7,7 @@ from decimal import Decimal
 import allure
 
 from config import Config
-from costs.model_pricing import calculate_call_cost_usd, price_for_model
+from costs.model_pricing import ModelPrice, calculate_call_cost_usd, price_for_model
 from costs.reports import build_cost_summary
 
 pytestmark = [
@@ -19,11 +19,39 @@ pytestmark = [
 
 @allure.title("Known model token usage produces an exact Decimal USD cost")
 def test_known_model_cost_uses_decimal_prices() -> None:
-    result = calculate_call_cost_usd("gpt-5.4-mini", 1_000_000, 500_000, Config())
+    result = calculate_call_cost_usd("gpt-6-luna", 1_000_000, 500_000, Config())
 
-    assert result.cost_usd == Decimal("1.250000")
+    assert result.cost_usd == Decimal("0.350000")
     assert result.unpriced is False
     assert result.missing_usage is False
+
+
+@allure.title("Checked-in OpenAI prices match the published standard per-1M-token rates")
+def test_checked_in_openai_prices_match_published_rates() -> None:
+    cfg = Config()
+
+    assert price_for_model("gpt-6-luna", cfg) == ModelPrice(Decimal("0.10"), Decimal("0.50"))
+    assert price_for_model("gpt-5.4-mini", cfg) == ModelPrice(Decimal("0.75"), Decimal("4.50"))
+    assert price_for_model("gpt-5.4-nano", cfg) == ModelPrice(Decimal("0.20"), Decimal("1.25"))
+
+
+@allure.title("Dated snapshot ids logged from provider responses are priced as their base model")
+def test_dated_snapshot_id_is_priced_as_base_model() -> None:
+    luna = calculate_call_cost_usd("gpt-6-luna-2026-05-18", 1_000_000, 500_000, Config())
+    nano = price_for_model("gpt-5.4-nano-2026-03-17", Config())
+
+    assert luna.unpriced is False
+    assert luna.cost_usd == Decimal("0.350000")
+    assert nano == ModelPrice(Decimal("0.20"), Decimal("1.25"))
+
+
+@allure.title("An exact-id pricing override wins over the snapshot's base-model price")
+def test_exact_snapshot_override_wins_over_base_model() -> None:
+    cfg = Config(
+        model_pricing_json='{"gpt-6-luna-2026-05-18":{"input_per_million_usd":"9","output_per_million_usd":"9"}}',
+    )
+
+    assert price_for_model("gpt-6-luna-2026-05-18", cfg) == ModelPrice(Decimal("9"), Decimal("9"))
 
 
 @allure.title("Poster image model is priced so illustrations count against the beta budget")
@@ -93,7 +121,7 @@ def test_cost_summary_redacts_prompt_material_and_flags_missing_usage() -> None:
     summary = build_cost_summary(rows, Config())
     rendered = repr(summary)
 
-    assert summary["total"]["estimated_cost_usd"] == "1.250000"
+    assert summary["total"]["estimated_cost_usd"] == "3.000000"
     assert summary["total"]["missing_usage_count"] == 1
     assert summary["total"]["unpriced_call_count"] == 1
     assert "system_prompt" not in rendered
