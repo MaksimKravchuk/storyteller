@@ -16,6 +16,22 @@ from models.npc_card import NPCCard
 from tests import director_helpers
 from tests.e2e._real_llm import real_llm_for
 
+# Ways a model names a messenger without the word: gpt-6-luna billed the
+# requested wounded messenger as a "Letter-carrier" who was "carrying letters".
+_MESSENGER_SYNONYMS = (
+    "messenger",
+    "courier",
+    "herald",
+    "runner",
+    "envoy",
+    "rider",
+    "letter-carrier",
+    "letter carrier",
+    "carrying letters",
+    "carries letters",
+    "dispatch",
+)
+
 # Ways a model writes "blind" without the word: gpt-6-luna described the
 # requested blind beggar as having "cloudy eyes" and having "lost his sight".
 _BLINDNESS_MARKERS = (
@@ -48,14 +64,13 @@ class TestNPCGeneratorRealModel:
         assert isinstance(card, NPCCard)
         # Input-tied: the requested role must surface somewhere on the
         # card. "messenger" has a few period-appropriate synonyms
-        # (courier, herald, runner, envoy) the model legitimately picks
+        # (courier, herald, letter-carrier, …) the model legitimately picks
         # — accept any of them — but reject a card that is silent on
         # the role across occupation, short_descriptor, and biography.
         # Failure mode this catches: role list dropped from the prompt
         # body, or the LLM returning an arbitrary persona.
         haystack = " ".join((card.occupation, card.short_descriptor, card.biography)).lower()
-        role_synonyms = ("messenger", "courier", "herald", "runner", "envoy", "rider")
-        assert any(token in haystack for token in role_synonyms), (
+        assert any(token in haystack for token in _MESSENGER_SYNONYMS), (
             "NPC for 'wounded messenger' has no messenger-synonym anywhere on the card.\n"
             "occupation={0!r}\nshort_descriptor={1!r}\nbiography={2!r}".format(
                 card.occupation,
