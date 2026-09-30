@@ -30,15 +30,17 @@ def _format_scene_entry(entry: Any, game_state: GameState | None = None) -> str:
 
 
 def _npc_disambiguation_line(npc: Any) -> str:
-    """Format an NPC as ``"- name (status) — appearance"`` for the prompt.
+    """Format an NPC as ``"- name, occupation (status) — appearance"`` for the prompt.
 
-    Including appearance lets the Director resolve player references like
-    "guy in the helmet" instead of clarifying which NPC was meant.
+    Including occupation and appearance lets the Director resolve player
+    references like "the forum guard" or "guy in the helmet" instead of
+    clarifying which NPC was meant.
     """
+    label = npc.name
+    if npc.occupation:
+        label = "{0}, {1}".format(label, npc.occupation)
     if npc.physical_status and npc.physical_status != "healthy":
-        label = "{0} ({1})".format(npc.name, npc.physical_status)
-    else:
-        label = npc.name
+        label = "{0} ({1})".format(label, npc.physical_status)
     appearance = npc.appearance.strip()
     if appearance:
         return "- {0} — {1}".format(label, appearance)

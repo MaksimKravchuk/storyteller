@@ -12,6 +12,8 @@ from __future__ import annotations
 import json as _json
 from typing import Awaitable, Callable
 
+from loguru import logger
+
 from cast.director_tools import ACTION_TOOLS, RouteResult, parse_tool_call
 from cast.schemas import action_plan as plan_schemas
 from llm.message import Message, Role, Tool, ToolCall
@@ -73,6 +75,7 @@ class ActionRouter:
                 tools=self._tools,
                 conversation=self.build_scene_history(),
             )
+        logger.info("Director route | tool={}", call.name)
         return parse_tool_call(call)
 
     def save_pending_clarification(
