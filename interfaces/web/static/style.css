@@ -314,7 +314,8 @@ h2 {
 }
 
 .btn-primary:disabled,
-.btn-secondary:disabled {
+.btn-secondary:disabled,
+.nav-btn:disabled {
   opacity: 0.45;
   cursor: wait;
   box-shadow: none;
@@ -1622,6 +1623,10 @@ button.map-place:focus-visible { background: var(--bg-raised); }
 button.map-place:hover .mp-go,
 button.map-place:focus-visible .mp-go { opacity: 1; transform: translateX(2px); }
 
+/* While a turn resolves, gestures wait for it (app.js drops them). */
+#game-panel[data-turn-pending] button.map-place { opacity: 0.45; cursor: wait; }
+#game-panel[data-turn-pending] .turn.narrator .poi { cursor: wait; }
+
 .world-clock {
   display: flex;
   align-items: center;
@@ -1730,7 +1735,10 @@ button.map-place:focus-visible .mp-go { opacity: 1; transform: translateX(2px); 
     height: 100dvh;
   }
 
-  .rail .play-pane[data-pane-active] {
+  .rail .play-pane { display: none; }
+
+  .rail .play-pane[data-rail-active] {
+    display: block;
     flex: 1;
     min-height: 0;
     overflow-y: auto;

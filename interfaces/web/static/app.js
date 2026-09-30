@@ -87,7 +87,9 @@
   let factFilter = "ALL";
   let allFacts = [];
   // Which pane the mobile tab bar shows (Story / Character / Map), and which
-  // one the desktop rail shows next to the always-visible Story column.
+  // one the desktop rail shows next to the always-visible Story column. Each
+  // layout reads its own attribute, so crossing the breakpoint never flashes
+  // a side pane in the story's place. On desktop activePane stays "story".
   let activePane = "story";
   let railPane = "character";
   // Mobile: where the reader was in the story before opening another pane.
@@ -654,21 +656,37 @@
     }
   }
 
+  async function fetchStories() {
+    const response = await apiFetch("/api/games");
+    if (!response.ok) {
+      throw new Error(await parseError(response));
+    }
+    setOfflineNotice(false);
+    const data = await response.json();
+    return data.games || [];
+  }
+
   async function loadStories() {
     try {
-      const response = await apiFetch("/api/games");
-      if (!response.ok) {
-        throw new Error(await parseError(response));
-      }
-      setOfflineNotice(false);
-      const data = await response.json();
-      renderStories(data.games || []);
+      renderStories(await fetchStories());
     } catch (err) {
       if (isNetworkError(err)) setOfflineNotice(true);
       showSettingPanel();
       setStatus(els.settingStatus, "Could not load stories: " + err.message);
     } finally {
       hide(els.loading);
+    }
+  }
+
+  // The Stories button. Unlike the first load, a failure keeps the player
+  // where they are (a story in play stays playable) and reports it there.
+  async function openLibrary() {
+    try {
+      renderStories(await fetchStories());
+    } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
+      const status = document.body.dataset.screen === "play" ? els.actionStatus : els.settingStatus;
+      setStatus(status, "Could not load stories: " + err.message);
     }
   }
 
@@ -821,6 +839,9 @@
     );
     const button = els.settingForm.querySelector("button[type=submit]");
     button.disabled = true;
+    // The curtain stays up until this start settles: leaving for the library
+    // now would let the late response pull the player back into the new story.
+    els.libraryBtn.disabled = true;
     showOpening();
     try {
       const response = await apiFetch("/api/games", {
@@ -840,6 +861,7 @@
       setStatus(els.settingStatus, "Failed to start game: " + err.message);
     } finally {
       button.disabled = false;
+      els.libraryBtn.disabled = false;
     }
   }
 
@@ -849,9 +871,20 @@
     return div.innerHTML;
   }
 
+  // One turn at a time across every entry point (composer, entity, map):
+  // the composer locks and gestures dim until the narrator answers.
+  function setTurnPending(on) {
+    els.gamePanel.toggleAttribute("data-turn-pending", on);
+    els.actionInput.disabled = on;
+    els.actionSubmit.disabled = on;
+  }
+
+  function turnPending() {
+    return els.gamePanel.hasAttribute("data-turn-pending");
+  }
+
   function releaseComposer() {
-    els.actionInput.disabled = false;
-    els.actionSubmit.disabled = false;
+    setTurnPending(false);
     // Desktop keeps typing flow; on phones drop the keyboard so the new
     // passage has the whole screen.
     if (isDesktop()) {
@@ -868,17 +901,17 @@
   // Gesture turns pass no echo and render the server-composed ``action_html``
   // instead, since the phrase is composed server-side in the session language.
   async function submitTurn(body, optimisticEcho) {
-    if (!currentGameId) return;
+    if (!currentGameId || turnPending()) return;
+    const gameId = currentGameId;
+    setTurnPending(true);
     selectPane("story");
     let cue = optimisticEcho ? appendTurnHTML("player", escapeHTML(optimisticEcho)) : null;
     const pending = showPending();
     scrollToTurn(cue || pending, true);
-    els.actionInput.disabled = true;
-    els.actionSubmit.disabled = true;
     setStatus(els.actionStatus, "");
     try {
       const response = await apiFetch(
-        "/api/games/" + encodeURIComponent(currentGameId) + "/actions",
+        "/api/games/" + encodeURIComponent(gameId) + "/actions",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -891,6 +924,8 @@
       setOfflineNotice(false);
       const data = await response.json();
       pending.remove();
+      // The player may have opened another story while this turn resolved.
+      if (currentGameId !== gameId) return;
       if (!cue && data.action_html) cue = appendTurnHTML("player", data.action_html);
       const passage = appendTurnHTML("narrator", data.narration_html);
       passage.classList.add("is-arriving");
@@ -900,7 +935,7 @@
     } catch (err) {
       pending.remove();
       if (isNetworkError(err)) setOfflineNotice(true);
-      setStatus(els.actionStatus, "Error: " + err.message);
+      if (currentGameId === gameId) setStatus(els.actionStatus, "Error: " + err.message);
     } finally {
       releaseComposer();
     }
@@ -927,8 +962,10 @@
   }
 
   // Enter sends; Shift+Enter keeps a line break; IME composition is untouched.
+  // Safari reports the Enter that confirms an IME candidate with
+  // ``isComposing`` false but the composition keyCode 229.
   function onComposerKeydown(event) {
-    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) return;
     event.preventDefault();
     els.actionForm.requestSubmit();
   }
@@ -1072,7 +1109,8 @@
   function applyPanes() {
     const shown = visiblePane();
     document.querySelectorAll(".play-pane").forEach((pane) => {
-      pane.toggleAttribute("data-pane-active", pane.dataset.pane === shown);
+      pane.toggleAttribute("data-pane-active", pane.dataset.pane === activePane);
+      pane.toggleAttribute("data-rail-active", pane.dataset.pane === railPane);
     });
     els.tabbar.querySelectorAll(".tab[data-pane]").forEach((tab) => {
       const selected = tab.dataset.pane === shown;
@@ -1084,12 +1122,16 @@
 
   function selectPane(name) {
     closePopover();
-    const previous = activePane;
-    if (!isDesktop() && previous === "story" && name !== "story") storyScrollY = window.scrollY;
-    activePane = name;
     if (name !== "story") railPane = name;
+    if (isDesktop()) {
+      applyPanes();
+      return;
+    }
+    const previous = activePane;
+    if (previous === "story" && name !== "story") storyScrollY = window.scrollY;
+    activePane = name;
     applyPanes();
-    if (isDesktop() || previous === name) return;
+    if (previous === name) return;
     // Mobile panes share the page scroll: open side panes at the top and
     // return the reader to where they left the story.
     if (name === "story") {
@@ -1125,12 +1167,18 @@
 
   let openSpan = null;
 
+  // Closing hands a keyboard user back to the word the popover came from
+  // rather than dropping focus to the page.
   function closePopover() {
     if (els.entPop.hidden) return;
+    const hadFocus = els.entPop.contains(document.activeElement);
     els.entPop.hidden = true;
     els.entPop.classList.remove("open");
     els.entPop.innerHTML = "";
-    if (openSpan) openSpan.classList.remove("is-open");
+    if (openSpan) {
+      openSpan.classList.remove("is-open");
+      if (hadFocus) openSpan.focus({ preventScroll: true });
+    }
     openSpan = null;
   }
 
@@ -1138,7 +1186,7 @@
     const kind = span.dataset.kind;
     const id = span.dataset.id;
     const verbs = ENTITY_VERBS[kind];
-    if (!verbs || !id) return;
+    if (!verbs || !id || turnPending()) return;
     closePopover();
     openSpan = span;
     span.classList.add("is-open");
@@ -1198,6 +1246,17 @@
     openPopover(span, true);
   }
 
+  // Crossing the breakpoint switches between the tab-bar and rail views, and
+  // both land on the story. A phone side pane owned the page scroll, so the
+  // wide layout puts the reader back where they left the story; the way back
+  // keeps the story on screen throughout, so its scroll survives as is.
+  function onBreakpointChange() {
+    const leftStory = activePane !== "story";
+    activePane = "story";
+    applyPanes();
+    if (isDesktop() && leftStory && storyScrollY !== null) window.scrollTo(0, storyScrollY);
+  }
+
   function onMapPlaceClick(event) {
     const row = event.target.closest(".map-place[data-loc-id]");
     if (!row) return;
@@ -1228,8 +1287,7 @@
         closePopover();
       }
     });
-    // Crossing the breakpoint switches between the tab-bar and rail views.
-    desktopQuery.addEventListener("change", applyPanes);
+    desktopQuery.addEventListener("change", onBreakpointChange);
   }
 
   els.settingForm.addEventListener("submit", onStartGame);
@@ -1241,7 +1299,7 @@
   els.feedbackCloseBtn.addEventListener("click", () => els.feedbackDialog.close());
   els.feedbackDialog.addEventListener("click", onFeedbackDialogClick);
   els.newGameBtn.addEventListener("click", onNewGame);
-  els.libraryBtn.addEventListener("click", loadStories);
+  els.libraryBtn.addEventListener("click", openLibrary);
   if (els.libraryNewGameBtn) {
     els.libraryNewGameBtn.addEventListener("click", onNewGame);
   }
