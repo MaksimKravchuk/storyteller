@@ -9,6 +9,7 @@ without an icon.
 
 from __future__ import annotations
 
+import functools
 import re
 from pathlib import Path
 
@@ -26,11 +27,15 @@ _APP_JS = Path(__file__).resolve().parents[1] / "interfaces" / "web" / "static" 
 _HOURS_PER_DAY = 24
 
 
+@functools.cache
+def _app_js() -> str:
+    return _APP_JS.read_text(encoding="utf-8")
+
+
 def _icon_table_keys(table_name: str) -> set[str]:
-    script = _APP_JS.read_text(encoding="utf-8")
-    table = re.search(r"const {0} = \{{(.*?)\n  \}};".format(table_name), script, re.DOTALL)
+    table = re.search(r"const {0} = \{{(.*?)\}};".format(table_name), _app_js(), re.DOTALL)
     assert table is not None, "{0} not found in app.js".format(table_name)
-    return set(re.findall(r"^\s+(\w+): svg\(", table.group(1), re.MULTILINE))
+    return set(re.findall(r"(\w+):\s*svg\(", table.group(1)))
 
 
 @allure.story("Static shell")

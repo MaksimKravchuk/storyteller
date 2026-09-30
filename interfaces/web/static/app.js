@@ -31,6 +31,7 @@
     useTemplateBtn: $("use-template-btn"),
     settingExamples: $("setting-examples"),
     gamePanel: $("game-panel"),
+    stage: $("stage"),
     stagePlaceBtn: $("stage-place-btn"),
     stageCrumbs: $("stage-crumbs"),
     stagePlace: $("stage-place"),
@@ -81,8 +82,10 @@
   // Knowledge panel: client-side source filter ("ALL" or a FactSource value).
   let factFilter = "ALL";
   let allFacts = [];
-  // Which play-screen pane is selected (Story / Character / Map).
+  // Which pane the mobile tab bar shows (Story / Character / Map), and which
+  // one the desktop rail shows next to the always-visible Story column.
   let activePane = "story";
+  let railPane = "character";
   // Mobile: where the reader was in the story before opening another pane.
   let storyScrollY = null;
 
@@ -133,14 +136,18 @@
   }
 
   // One screen at a time: "loading" | "library" | "setting" | "play".
-  // The top-bar buttons follow the screen so there is always a way back to
-  // the library and never two "New game" buttons on screen at once.
+  // Panels and top-bar buttons follow the screen, so there is always a way
+  // back to the library and never two "New game" buttons on screen at once.
   function setScreen(name) {
     document.body.dataset.screen = name;
     if (name !== "play") delete document.body.dataset.daypart;
+    els.storiesPanel.hidden = name !== "library";
+    els.settingPanel.hidden = name !== "setting";
+    els.gamePanel.hidden = name !== "play";
     els.libraryBtn.hidden = name === "library" || name === "loading";
     els.newGameBtn.hidden = name !== "play";
     els.feedbackOpenBtn.hidden = name !== "play";
+    window.scrollTo(0, 0);
   }
 
   function setOfflineNotice(showNotice) {
@@ -313,24 +320,25 @@
   }
 
   // Build the shared icon/name row used by both the current place and the
-  // (tappable) connected places. ``connection`` rows carry the location id
-  // and a "go" affordance so a tap can drive a move gesture.
+  // connected places. A connection row is a real button carrying the location
+  // id and a "go" chevron, so a tap (or Enter) can drive a move gesture.
   function makeMapPlace(node, connection) {
-    const li = document.createElement("li");
-    li.className = "map-place" + (connection ? "" : " here");
+    const row = document.createElement(connection ? "button" : "div");
+    row.className = "map-place" + (connection ? "" : " here");
     const name = document.createElement("span");
     name.className = "mp-name";
     name.textContent = node.name;
-    li.append(placeIcon(node.location_type), name);
+    row.append(placeIcon(node.location_type), name);
     if (connection) {
-      li.dataset.locId = node.id;
-      li.tabIndex = 0;
-      li.setAttribute("role", "button");
+      row.type = "button";
+      row.dataset.locId = node.id;
       const go = document.createElement("span");
       go.className = "mp-go";
       go.innerHTML = svg('<path d="M9 6l6 6-6 6"/>');
-      li.append(go);
+      row.append(go);
     }
+    const li = document.createElement("li");
+    li.append(row);
     return li;
   }
 
@@ -366,9 +374,12 @@
     els.mapCurrent.appendChild(ul);
   }
 
+  function crumbNames(map) {
+    return (map.breadcrumb || []).map((node) => node.name);
+  }
+
   function renderMap(map) {
-    const crumbs = (map.breadcrumb || []).map((node) => node.name);
-    els.mapBreadcrumb.textContent = crumbs.join("  ›  ");
+    els.mapBreadcrumb.textContent = crumbNames(map).join("  ›  ");
     renderMapCurrent(map.current);
     const prevConnections = prevWorld && prevWorld.map ? prevWorld.map.connections : null;
     renderList(els.mapConnections, map.connections, prevConnections, renderConnectionNode, mapNodeKey);
@@ -392,7 +403,7 @@
   // Always in view above the prose; it is the theatre's lit proscenium.
   function renderStage(world) {
     const map = world.map || {};
-    els.stageCrumbs.textContent = (map.breadcrumb || []).map((node) => node.name).join(" · ");
+    els.stageCrumbs.textContent = crumbNames(map).join(" · ");
     els.stagePlace.textContent = map.current ? map.current.name : "…";
     const clock = world.clock || {};
     fillClock(els.stageClock, clock);
@@ -435,23 +446,13 @@
     renderCharacter(snapshot.character);
     prevWorld = snapshot.world;
     renderWorld(snapshot.world);
-    hide(els.settingPanel);
-    if (els.storiesPanel) hide(els.storiesPanel);
-    resetOpening();
-    show(els.gamePanel);
     setScreen("play");
-    // Land on the transcript after (re)loading a game on mobile; on desktop the
-    // Story column is always visible so the rail keeps its current pane.
+    // Land on the transcript after (re)loading a game on mobile, resuming at
+    // the start of the latest passage.
     storyScrollY = null;
-    if (!isDesktop()) selectPane("story");
-    // Resume reading at the start of the latest passage.
+    selectPane("story");
     const cues = els.log.querySelectorAll(".turn.player");
-    const resumeAt = cues.length ? cues[cues.length - 1] : null;
-    if (resumeAt) {
-      scrollToTurn(resumeAt, false);
-    } else {
-      window.scrollTo(0, 0);
-    }
+    if (cues.length) scrollToTurn(cues[cues.length - 1], false);
     if (isDesktop()) els.actionInput.focus({ preventScroll: true });
   }
 
@@ -459,21 +460,13 @@
     currentGameId = null;
     prevCharacter = null;
     prevWorld = null;
-    hide(els.gamePanel);
-    if (els.storiesPanel) hide(els.storiesPanel);
     resetOpening();
-    show(els.settingPanel);
     setScreen("setting");
-    window.scrollTo(0, 0);
     els.settingInput.focus({ preventScroll: true });
   }
 
   function showStoriesPanel() {
-    hide(els.settingPanel);
-    hide(els.gamePanel);
-    if (els.storiesPanel) show(els.storiesPanel);
     setScreen("library");
-    window.scrollTo(0, 0);
   }
 
   function renderStoryRow(story) {
@@ -746,7 +739,6 @@
   async function submitTurn(body, optimisticEcho) {
     if (!currentGameId) return;
     selectPane("story");
-    closePopover();
     let cue = optimisticEcho ? appendTurnHTML("player", escapeHTML(optimisticEcho)) : null;
     const pending = showPending();
     scrollToTurn(cue || pending, true);
@@ -793,7 +785,11 @@
   }
 
   // The composer grows with the player's line, up to the CSS max-height.
+  // ``field-sizing: content`` does this natively; the JS path is a fallback.
+  const nativeFieldSizing = window.CSS && CSS.supports("field-sizing", "content");
+
   function autosizeComposer() {
+    if (nativeFieldSizing) return;
     const input = els.actionInput;
     input.style.height = "auto";
     input.style.height = input.scrollHeight + 2 + "px";
@@ -838,7 +834,6 @@
   }
 
   function openFeedback() {
-    if (!els.feedbackDialog) return;
     setStatus(els.feedbackStatus, "");
     els.feedbackDialog.showModal();
     els.feedbackMessage.focus();
@@ -927,32 +922,37 @@
   // player isn't already looking at it. ``renderList`` marks fresh rows
   // ``.is-new``; we reuse that signal rather than recomputing the delta.
   function flagPaneIfNew(pane) {
-    if (activePane === pane) return;
+    if (visiblePane() === pane) return;
     const el = paneEl(pane);
     if (el && el.querySelector(".is-new")) setBadge(pane, true);
   }
 
-  function selectPane(name) {
-    closePopover();
-    // On desktop Story is always on screen; "selecting" it must not blank the
-    // Character/Map rail (it used to, after every turn).
-    if (isDesktop() && name === "story") return;
-    const previous = activePane;
-    if (!isDesktop() && previous === "story" && name !== "story") storyScrollY = window.scrollY;
-    activePane = name;
+  // The Character/Map pane on screen: the rail pane on desktop (Story is
+  // always beside it), the tab-bar pane on phones.
+  function visiblePane() {
+    return isDesktop() ? railPane : activePane;
+  }
+
+  function applyPanes() {
+    const shown = visiblePane();
     document.querySelectorAll(".play-pane").forEach((pane) => {
-      if (pane.dataset.pane === name) {
-        pane.setAttribute("data-pane-active", "");
-      } else {
-        pane.removeAttribute("data-pane-active");
-      }
+      pane.toggleAttribute("data-pane-active", pane.dataset.pane === shown);
     });
     els.tabbar.querySelectorAll(".tab[data-pane]").forEach((tab) => {
-      const selected = tab.dataset.pane === name;
+      const selected = tab.dataset.pane === shown;
       tab.classList.toggle("on", selected);
       tab.setAttribute("aria-selected", String(selected));
     });
-    setBadge(name, false);
+    setBadge(shown, false);
+  }
+
+  function selectPane(name) {
+    closePopover();
+    const previous = activePane;
+    if (!isDesktop() && previous === "story" && name !== "story") storyScrollY = window.scrollY;
+    activePane = name;
+    if (name !== "story") railPane = name;
+    applyPanes();
     if (isDesktop() || previous === name) return;
     // Mobile panes share the page scroll: open side panes at the top and
     // return the reader to where they left the story.
@@ -990,6 +990,7 @@
   let openSpan = null;
 
   function closePopover() {
+    if (els.entPop.hidden) return;
     els.entPop.hidden = true;
     els.entPop.classList.remove("open");
     els.entPop.innerHTML = "";
@@ -1022,14 +1023,15 @@
     }
     // Position near the tapped word, viewport-relative (position:fixed), then
     // reveal so the entry transition runs after layout. Flip above the word
-    // when there is no room below (the composer sits at the bottom).
+    // when it would run into the composer.
     const rect = span.getBoundingClientRect();
     els.entPop.hidden = false;
     const width = els.entPop.offsetWidth;
     const height = els.entPop.offsetHeight;
     const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
     const below = rect.bottom + 6;
-    const top = below + height > window.innerHeight - 96 ? Math.max(8, rect.top - height - 6) : below;
+    const floor = els.actionForm.getBoundingClientRect().top;
+    const top = below + height > floor ? Math.max(8, rect.top - height - 6) : below;
     els.entPop.style.left = left + "px";
     els.entPop.style.top = top + "px";
     requestAnimationFrame(() => els.entPop.classList.add("open"));
@@ -1060,32 +1062,25 @@
     openPopover(span, true);
   }
 
-  function travelFrom(row) {
+  function onMapPlaceClick(event) {
+    const row = event.target.closest(".map-place[data-loc-id]");
+    if (!row) return;
     submitTurn({ gesture: { intent: "move", entity_kind: "location", entity_id: row.dataset.locId } });
   }
 
-  function onMapPlaceClick(event) {
-    const row = event.target.closest(".map-place[data-loc-id]");
-    if (row) travelFrom(row);
-  }
-
-  function onMapPlaceKeydown(event) {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    const row = event.target.closest(".map-place[data-loc-id]");
-    if (!row) return;
-    event.preventDefault();
-    travelFrom(row);
-  }
-
   function initPlayScreen() {
-    selectPane(isDesktop() ? "character" : "story");
+    applyPanes();
+    // Keep --stage-h equal to the sticky stage's real height (it changes with
+    // the cast row and the crumbs) so a scrolled-to passage clears it.
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty("--stage-h", els.stage.offsetHeight + "px");
+    }).observe(els.stage);
     els.tabbar.addEventListener("click", onTabClick);
     if (els.knowledgeFilter) els.knowledgeFilter.addEventListener("click", onFactFilterClick);
     els.log.addEventListener("click", onLogClick);
     els.log.addEventListener("keydown", onLogKeydown);
     window.addEventListener("scroll", closePopover, { passive: true });
     els.mapConnections.addEventListener("click", onMapPlaceClick);
-    els.mapConnections.addEventListener("keydown", onMapPlaceKeydown);
     els.stagePlaceBtn.addEventListener("click", () => selectPane("map"));
     els.actionInput.addEventListener("input", autosizeComposer);
     els.actionInput.addEventListener("keydown", onComposerKeydown);
@@ -1097,14 +1092,8 @@
         closePopover();
       }
     });
-    // On desktop the rail must show a panel (Story lives in the main column),
-    // so promote Story selection to Character when the viewport widens.
-    desktopQuery.addEventListener("change", () => {
-      if (isDesktop() && activePane === "story") {
-        activePane = "";
-        selectPane("character");
-      }
-    });
+    // Crossing the breakpoint switches between the tab-bar and rail views.
+    desktopQuery.addEventListener("change", applyPanes);
   }
 
   els.settingForm.addEventListener("submit", onStartGame);
@@ -1112,11 +1101,11 @@
   if (els.feedbackForm) {
     els.feedbackForm.addEventListener("submit", onSubmitFeedback);
   }
-  if (els.feedbackOpenBtn) els.feedbackOpenBtn.addEventListener("click", openFeedback);
-  if (els.feedbackCloseBtn) els.feedbackCloseBtn.addEventListener("click", () => els.feedbackDialog.close());
-  if (els.feedbackDialog) els.feedbackDialog.addEventListener("click", onFeedbackDialogClick);
+  els.feedbackOpenBtn.addEventListener("click", openFeedback);
+  els.feedbackCloseBtn.addEventListener("click", () => els.feedbackDialog.close());
+  els.feedbackDialog.addEventListener("click", onFeedbackDialogClick);
   els.newGameBtn.addEventListener("click", onNewGame);
-  if (els.libraryBtn) els.libraryBtn.addEventListener("click", loadStories);
+  els.libraryBtn.addEventListener("click", loadStories);
   if (els.libraryNewGameBtn) {
     els.libraryNewGameBtn.addEventListener("click", onNewGame);
   }
@@ -1143,7 +1132,6 @@
 
   registerServiceWorker();
   setOfflineNotice(!navigator.onLine);
-  setScreen("loading");
   initFoldableSections();
   initPlayScreen();
   loadPublicConfig().finally(loadStories);

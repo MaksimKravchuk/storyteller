@@ -73,10 +73,11 @@
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
-/* The stage light colour animates between times of day. */
+/* The stage light colour animates between times of day. It is used (and
+ * transitioned) only on body::before, so it does not inherit. */
 @property --stage-light {
   syntax: "<color>";
-  inherits: true;
+  inherits: false;
   initial-value: rgba(214, 168, 92, 0.07);
 }
 
@@ -87,7 +88,6 @@
   --bg: #13100d;
   --bg-elev: #1a1612;
   --bg-raised: #221d17;
-  --bg-glass: rgba(19, 16, 13, 0.97);
   --line: rgba(232, 211, 170, 0.11);
   --line-strong: rgba(232, 211, 170, 0.22);
 
@@ -124,10 +124,9 @@
   --prose-size: 1.0625rem;
   --gutter: 1rem;
   --radius: 14px;
+  --radius-lg: 18px;
   --tabbar-h: 3.5rem;
-  --stage-h: 5.75rem;
-
-  --stage-light: rgba(214, 168, 92, 0.07);
+  --stage-h: 5.75rem; /* kept in sync with #stage by app.js */
 }
 
 @media (min-width: 720px) {
@@ -137,11 +136,6 @@
   }
 }
 
-/* Time of day tints the stage light (set on <body> from the world clock). */
-body[data-daypart="morning"] { --stage-light: rgba(236, 200, 140, 0.1); }
-body[data-daypart="afternoon"] { --stage-light: rgba(242, 214, 160, 0.075); }
-body[data-daypart="evening"] { --stage-light: rgba(214, 112, 72, 0.12); }
-body[data-daypart="night"] { --stage-light: rgba(92, 120, 196, 0.12); }
 
 /* ── Base ───────────────────────────────────────────────── */
 *,
@@ -150,10 +144,7 @@ body[data-daypart="night"] { --stage-light: rgba(92, 120, 196, 0.12); }
 
 [hidden] { display: none !important; }
 
-html {
-  -webkit-text-size-adjust: 100%;
-  scroll-padding-top: var(--stage-h);
-}
+html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
@@ -166,7 +157,6 @@ body {
   font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: --stage-light 1.6s ease;
 }
 
 /* A soft pool of stage light above the page; its hue follows the clock. */
@@ -178,7 +168,14 @@ body::before {
   background: radial-gradient(110% 70% at 50% -12%, var(--stage-light), transparent 72%);
   pointer-events: none;
   z-index: 0;
+  transition: --stage-light 1.6s ease;
 }
+
+/* Time of day tints the stage light (set on <body> from the world clock). */
+body[data-daypart="morning"]::before { --stage-light: rgba(236, 200, 140, 0.1); }
+body[data-daypart="afternoon"]::before { --stage-light: rgba(242, 214, 160, 0.075); }
+body[data-daypart="evening"]::before { --stage-light: rgba(214, 112, 72, 0.12); }
+body[data-daypart="night"]::before { --stage-light: rgba(92, 120, 196, 0.12); }
 
 ::selection { background: rgba(214, 168, 92, 0.3); color: var(--ink-bright); }
 
@@ -200,13 +197,57 @@ button { font-family: inherit; }
   white-space: nowrap;
 }
 
-.eyebrow {
-  margin: 0 0 0.35rem;
+/* Shared roles, declared once:
+ * brass small caps (section eyebrows), faint small caps (labels/crumbs),
+ * outline pills (nav, premise examples, fact filters), raised surfaces. */
+.eyebrow,
+.pane-scroll h3 {
   font-size: 0.72rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--brass);
 }
+
+.examples-label,
+.optional,
+.story-turns,
+.stage-crumbs,
+.map-breadcrumb,
+.pane-scroll h4 {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.nav-btn,
+#setting-examples button,
+#knowledge-filter button {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.nav-btn:hover,
+#setting-examples button:hover,
+#setting-examples button:focus-visible {
+  color: var(--ink-bright);
+  border-color: var(--brass-dim);
+}
+
+.card,
+.premise,
+.setting-row,
+.character-details {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.eyebrow { margin: 0 0 0.35rem; }
 
 h2 {
   margin: 0 0 0.75rem;
@@ -374,6 +415,8 @@ label {
   text-decoration: none;
 }
 
+.brand-curtain { fill: var(--velvet); }
+
 .brand-name {
   font-family: var(--font-display);
   font-weight: 600;
@@ -394,16 +437,8 @@ label {
   gap: 0.4rem;
   min-height: 2.5rem;
   padding: 0.35rem 0.85rem;
-  background: transparent;
-  color: var(--ink-soft);
-  border: 1px solid var(--line);
-  border-radius: 999px;
   font-size: 0.85rem;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
 }
-
-.nav-btn:hover { color: var(--ink-bright); border-color: var(--brass-dim); }
 
 .nav-btn svg { flex: none; }
 
@@ -464,12 +499,7 @@ main {
   40% { opacity: 1; transform: translateY(-2px); }
 }
 
-.card {
-  background: var(--bg-elev);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 1.5rem;
-}
+.card { padding: 1.5rem; }
 
 /* ── Auth ───────────────────────────────────────────────── */
 .auth-card {
@@ -546,13 +576,7 @@ main {
   font-size: 0.95rem;
 }
 
-.story-turns {
-  margin-top: 0.3rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
+.story-turns { margin-top: 0.3rem; }
 
 .story-actions {
   display: flex;
@@ -581,12 +605,7 @@ main {
   text-wrap: pretty;
 }
 
-.premise {
-  padding: 1.25rem;
-  background: var(--bg-elev);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-}
+.premise { padding: 1.25rem; }
 
 .premise-label {
   margin: 0;
@@ -610,31 +629,15 @@ main {
   margin-top: 0.9rem;
 }
 
-.examples-label {
-  margin-right: 0.25rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
+.examples-label { margin-right: 0.25rem; }
 
 #setting-examples button {
   padding: 0.4rem 0.8rem;
-  background: transparent;
-  color: var(--ink-soft);
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
   font-size: 0.85rem;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
 
 #setting-examples button:hover,
-#setting-examples button:focus-visible {
-  color: var(--brass-bright);
-  border-color: var(--brass-dim);
-  background: var(--brass-wash);
-}
+#setting-examples button:focus-visible { color: var(--brass-bright); background: var(--brass-wash); }
 
 .setting-row {
   display: flex;
@@ -643,9 +646,6 @@ main {
   gap: 1rem;
   margin-top: 1rem;
   padding: 0.8rem 1.25rem;
-  background: var(--bg-elev);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
 }
 
 .setting-row label { margin: 0; color: var(--ink); font-size: 1rem; }
@@ -656,12 +656,7 @@ main {
   margin: 0;
 }
 
-.character-details {
-  margin-top: 1rem;
-  background: var(--bg-elev);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
+.character-details { margin-top: 1rem; }
 
 .character-details summary {
   display: flex;
@@ -685,13 +680,6 @@ main {
 }
 
 .character-details[open] summary::after { transform: rotate(45deg); }
-
-.optional {
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
 
 #character-fields {
   margin: 0;
@@ -744,16 +732,11 @@ main {
 }
 
 .curtain span:first-child { left: 0; }
-.curtain span:last-child { right: 0; animation-name: curtain-sway-right; }
+.curtain span:last-child { right: 0; scale: -1 1; }
 
 @keyframes curtain-sway {
   from { transform: translateX(0) skewX(0deg); }
   to { transform: translateX(-40%) skewX(4deg); }
-}
-
-@keyframes curtain-sway-right {
-  from { transform: translateX(0) skewX(0deg); }
-  to { transform: translateX(40%) skewX(-4deg); }
 }
 
 .opening-title {
@@ -819,12 +802,14 @@ main {
 
 #game-panel { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
 
-/* The play grid runs to the page bottom so the sticky rail never has to
- * shift up to stay inside it. */
-body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
+body[data-screen="play"] main { padding-top: 0; }
 
 .play-pane { display: none; }
 .play-pane[data-pane-active] { display: block; }
+
+/* On phones the rail wrapper is transparent to layout: its panes take turns
+ * with Story and the tab bar is fixed to the bottom. */
+.rail { display: contents; }
 
 /* ── The stage: where, when, and who is on stage ───────── */
 .stage {
@@ -840,9 +825,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   column-gap: 1rem;
   margin: 0 calc(-1 * var(--gutter));
   padding: 0.7rem var(--gutter) 0.65rem;
-  background: var(--bg-glass);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 
@@ -861,10 +844,6 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 
 .stage-crumbs {
   overflow: hidden;
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -1029,10 +1008,20 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 
 /* In-prose entities (formatting.entity_markup.wrap_entities): tap to act.
  * Hue says what it is — person, place, thing — never a stylistic accident. */
+.poi,
+.ent-pop {
+  --k: var(--place);
+  --k-dim: var(--place-dim);
+  --k-wash: var(--place-wash);
+}
+
+[data-kind="npc"] { --k: var(--person); --k-dim: var(--person-dim); --k-wash: var(--person-wash); }
+[data-kind="item"] { --k: var(--thing); --k-dim: var(--thing-dim); --k-wash: var(--thing-wash); }
+
 .turn.narrator .poi {
-  color: var(--place);
+  color: var(--k);
   text-decoration: underline dotted;
-  text-decoration-color: var(--place-dim);
+  text-decoration-color: var(--k-dim);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
   border-radius: 3px;
@@ -1040,15 +1029,8 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   transition: background-color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
-.turn.narrator .poi[data-kind="npc"] { color: var(--person); text-decoration-color: var(--person-dim); }
-.turn.narrator .poi[data-kind="item"] { color: var(--thing); text-decoration-color: var(--thing-dim); }
-
 .turn.narrator .poi:hover,
-.turn.narrator .poi.is-open { background: var(--place-wash); text-decoration-style: solid; }
-.turn.narrator .poi[data-kind="npc"]:hover,
-.turn.narrator .poi[data-kind="npc"].is-open { background: var(--person-wash); }
-.turn.narrator .poi[data-kind="item"]:hover,
-.turn.narrator .poi[data-kind="item"].is-open { background: var(--thing-wash); }
+.turn.narrator .poi.is-open { background: var(--k-wash); text-decoration-style: solid; }
 
 /* ── Composer: the player's next line ─────────────────── */
 .composer {
@@ -1078,9 +1060,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   border-radius: 1.5rem;
   resize: none;
   overflow-y: auto;
-  font-size: 1rem;
-  line-height: 1.45;
-  background: var(--bg-raised);
+  field-sizing: content;
 }
 
 #action-submit {
@@ -1098,9 +1078,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   z-index: 30;
   display: flex;
   padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(19, 16, 13, 0.96);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: var(--bg);
   border-top: 1px solid var(--line);
 }
 
@@ -1191,12 +1169,12 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   flex: none;
   width: 0.5rem;
   height: 0.5rem;
-  background: var(--place);
+  background: var(--k);
   transform: rotate(45deg);
 }
 
-.ent-pop[data-kind="npc"] .ep-title::before { background: var(--person); border-radius: 50%; transform: none; }
-.ent-pop[data-kind="item"] .ep-title::before { background: var(--thing); transform: none; }
+.ent-pop[data-kind="npc"] .ep-title::before { border-radius: 50%; transform: none; }
+.ent-pop[data-kind="item"] .ep-title::before { transform: none; }
 
 .ent-pop .ep-act {
   display: block;
@@ -1224,11 +1202,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 
 .pane-scroll h3 {
   margin: 2rem 0 0.8rem;
-  font-size: 0.72rem;
   font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--brass);
 }
 
 .pane-scroll h3:first-child { margin-top: 0; }
@@ -1237,11 +1211,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   margin: 1.6rem 0 0.5rem;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--line);
-  font-size: 0.7rem;
   font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
 }
 
 .pane-scroll h4.is-foldable {
@@ -1286,7 +1256,6 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   font-size: 0.88rem;
 }
 
-.pane-scroll li.empty::before { content: none !important; }
 
 /* ── Character ───────────────────────────────────────── */
 #character-header { margin-bottom: 0.5rem; }
@@ -1320,12 +1289,12 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 }
 
 /* Inventory: things wear the sage "thing" hue. */
-#inventory-list li {
+#inventory-list li:not(.empty) {
   position: relative;
   padding: 0.35rem 0 0.35rem 1.25rem;
 }
 
-#inventory-list li::before {
+#inventory-list li:not(.empty)::before {
   content: "";
   position: absolute;
   left: 0.15rem;
@@ -1367,13 +1336,13 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 /* Recent events: lowercase Roman numerals — the acts so far. */
 #recent-events-list { counter-reset: evt; }
 
-#recent-events-list li {
+#recent-events-list li:not(.empty) {
   position: relative;
   padding: 0.3rem 0 0.3rem 1.8rem;
   counter-increment: evt;
 }
 
-#recent-events-list li::before {
+#recent-events-list li:not(.empty)::before {
   content: counter(evt, lower-roman) ".";
   position: absolute;
   left: 0;
@@ -1400,12 +1369,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   gap: 0.4rem;
   min-height: 2rem;
   padding: 0.2rem 0.7rem;
-  background: transparent;
-  color: var(--ink-soft);
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
   font-size: 0.78rem;
-  cursor: pointer;
 }
 
 #knowledge-filter button[aria-pressed="true"] {
@@ -1415,7 +1379,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 }
 
 #knowledge-filter button:not([data-fact-filter="ALL"])::before,
-#learned-facts-list li::before {
+#learned-facts-list li:not(.empty)::before {
   content: "";
   flex: none;
   width: 0.55rem;
@@ -1439,12 +1403,12 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 [data-fact-filter="HEARSAY"]::before,
 #learned-facts-list li[data-source="HEARSAY"]::before { border: 1.5px dashed var(--ink-faint); }
 
-#learned-facts-list li {
+#learned-facts-list li:not(.empty) {
   position: relative;
   padding: 0.35rem 0 0.35rem 1.35rem;
 }
 
-#learned-facts-list li::before {
+#learned-facts-list li:not(.empty)::before {
   position: absolute;
   left: 0.1rem;
   top: 0.78rem;
@@ -1468,13 +1432,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 }
 
 /* ── Map ─────────────────────────────────────────────── */
-.map-breadcrumb {
-  margin: 0 0 0.5rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
+.map-breadcrumb { margin: 0 0 0.5rem; }
 
 .map-here-rail { margin: 0; padding: 0; list-style: none; }
 
@@ -1482,7 +1440,8 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  padding: 0.6rem 0.6rem;
+  width: 100%;
+  padding: 0.6rem;
   border-radius: 10px;
 }
 
@@ -1532,20 +1491,20 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 
 .map-place.here .mp-icon { background: rgba(214, 168, 92, 0.16); }
 
-#map-connections li.map-place {
+button.map-place {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
 }
 
-#map-connections li.map-place:hover,
-#map-connections li.map-place:focus-visible {
-  background: var(--bg-raised);
-  border-radius: 10px;
-}
+button.map-place:hover,
+button.map-place:focus-visible { background: var(--bg-raised); }
 
-#map-connections li.map-place:hover .mp-go,
-#map-connections li.map-place:focus-visible .mp-go { opacity: 1; transform: translateX(2px); }
+button.map-place:hover .mp-go,
+button.map-place:focus-visible .mp-go { opacity: 1; transform: translateX(2px); }
 
 .world-clock {
   display: flex;
@@ -1586,7 +1545,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   background: var(--bg-elev);
   color: var(--ink);
   border: 1px solid var(--line-strong);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.8);
 }
 
@@ -1613,7 +1572,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
     max-width: none;
     margin: auto 0 0;
     padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 }
 
@@ -1621,21 +1580,17 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
 @media (min-width: 960px) {
   :root { --tabbar-h: 0px; }
 
+  /* The play grid runs to the page bottom so the sticky rail fits inside it. */
+  body[data-screen="play"] main { padding-bottom: 0; }
+
   .play-body {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 340px;
-    grid-template-rows: auto 1fr;
     column-gap: 3.5rem;
     align-items: start;
   }
 
-  #game-panel { padding-bottom: 0; }
-
-  #pane-story {
-    display: block;
-    grid-column: 1;
-    grid-row: 1 / span 2;
-  }
+  #pane-story { display: block; }
 
   .stage {
     margin: 0;
@@ -1649,16 +1604,30 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
     padding: 1.25rem 0 1.25rem;
   }
 
-  #tabbar {
+  /* One sticky, viewport-tall rail: tab switcher on top, the chosen pane
+   * scrolling beneath it. */
+  .rail {
     position: sticky;
     top: 0;
-    grid-column: 2;
-    grid-row: 1;
-    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  .rail .play-pane[data-pane-active] {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+    padding-right: 0.35rem;
+  }
+
+  #tabbar {
+    position: static;
+    flex: none;
     padding: 0.9rem 0 0;
-    background: var(--bg);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
     border-top: none;
     border-bottom: 1px solid var(--line);
   }
@@ -1666,8 +1635,7 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
   #tabbar .tab[data-pane="story"] { display: none; }
 
   /* The rail tab already names the pane. */
-  #pane-character .pane-scroll > h3:first-child,
-  #pane-map .pane-scroll > h3:first-child { display: none; }
+  .rail .pane-scroll > h3:first-child { display: none; }
 
   .pane-scroll { padding-top: 1.1rem; }
 
@@ -1689,20 +1657,6 @@ body[data-screen="play"] main { padding-top: 0; padding-bottom: 0; }
     top: 0.7rem;
     right: 0.9rem;
     margin: 0;
-  }
-
-  #pane-character,
-  #pane-map {
-    position: sticky;
-    top: 3.7rem;
-    grid-column: 2;
-    grid-row: 2;
-    max-height: calc(100dvh - 3.7rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line-strong) transparent;
-    padding-right: 0.35rem;
   }
 }
 

@@ -18,8 +18,8 @@
     <a class="brand" href="/" aria-label="Storyteller — my stories">
       <svg class="brand-mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
         <path d="M4 29V12a12 9.5 0 0 1 24 0v17" fill="none" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M5.3 12.2c.3-3.6 4.1-6.6 9.6-7.4-1.5 6.6-4.4 12.5-9.6 16z" fill="#8f2f36"/>
-        <path d="M26.7 12.2c-.3-3.6-4.1-6.6-9.6-7.4 1.5 6.6 4.4 12.5 9.6 16z" fill="#8f2f36"/>
+        <path d="M5.3 12.2c.3-3.6 4.1-6.6 9.6-7.4-1.5 6.6-4.4 12.5-9.6 16z" class="brand-curtain"/>
+        <path d="M26.7 12.2c-.3-3.6-4.1-6.6-9.6-7.4 1.5 6.6 4.4 12.5 9.6 16z" class="brand-curtain"/>
         <path d="M16 19.2l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3z" fill="currentColor"/>
         <path d="M1.5 29h29" stroke="currentColor" stroke-width="1.6"/>
       </svg>
@@ -216,56 +216,58 @@
           </form>
         </section>
 
-        <section class="play-pane" id="pane-character" data-pane="character" role="tabpanel" aria-label="Character">
-          <div class="pane-scroll">
-            <h3>Character</h3>
-            <div id="character-header"></div>
-            <h4>Inventory</h4>
-            <ul id="inventory-list"></ul>
-            <h4>People you know</h4>
-            <ul id="known-npcs-list"></ul>
-            <h4>Recent events</h4>
-            <ul id="recent-events-list"></ul>
-            <h4>Knowledge</h4>
-            <div id="knowledge-filter" role="group" aria-label="Filter facts by source">
-              <button type="button" data-fact-filter="ALL" aria-pressed="true">All</button>
-              <button type="button" data-fact-filter="FACT" aria-pressed="false">Facts</button>
-              <button type="button" data-fact-filter="PERSONAL_EXPERIENCE" aria-pressed="false">Seen</button>
-              <button type="button" data-fact-filter="RUMOR" aria-pressed="false">Rumors</button>
-              <button type="button" data-fact-filter="HEARSAY" aria-pressed="false">Hearsay</button>
+        <div class="rail">
+          <nav id="tabbar" role="tablist" aria-label="Play screen">
+            <button class="tab on" type="button" role="tab" data-pane="story" aria-selected="true">
+              <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/><path d="M11 5v14M13 5v14"/></svg></span>
+              <span class="tab-label">Story</span>
+            </button>
+            <button class="tab" type="button" role="tab" data-pane="character" aria-selected="false">
+              <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg></span>
+              <span class="tab-label">Character</span>
+            </button>
+            <button class="tab" type="button" role="tab" data-pane="map" aria-selected="false">
+              <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4 4 6v14l5-2 6 2 5-2V4l-5 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></span>
+              <span class="tab-label">Map</span>
+            </button>
+          </nav>
+
+          <section class="play-pane" id="pane-character" data-pane="character" role="tabpanel" aria-label="Character">
+            <div class="pane-scroll">
+              <h3>Character</h3>
+              <div id="character-header"></div>
+              <h4>Inventory</h4>
+              <ul id="inventory-list"></ul>
+              <h4>People you know</h4>
+              <ul id="known-npcs-list"></ul>
+              <h4>Recent events</h4>
+              <ul id="recent-events-list"></ul>
+              <h4>Knowledge</h4>
+              <div id="knowledge-filter" role="group" aria-label="Filter facts by source">
+                <button type="button" data-fact-filter="ALL" aria-pressed="true">All</button>
+                <button type="button" data-fact-filter="FACT" aria-pressed="false">Facts</button>
+                <button type="button" data-fact-filter="PERSONAL_EXPERIENCE" aria-pressed="false">Seen</button>
+                <button type="button" data-fact-filter="RUMOR" aria-pressed="false">Rumors</button>
+                <button type="button" data-fact-filter="HEARSAY" aria-pressed="false">Hearsay</button>
+              </div>
+              <ul id="learned-facts-list"></ul>
             </div>
-            <ul id="learned-facts-list"></ul>
-          </div>
-        </section>
+          </section>
 
-        <section class="play-pane" id="pane-map" data-pane="map" role="tabpanel" aria-label="Map">
-          <div class="pane-scroll">
-            <h3>Map</h3>
-            <p id="map-breadcrumb" class="map-breadcrumb"></p>
-            <div id="map-current"></div>
-            <h4>Connected places</h4>
-            <ul id="map-connections"></ul>
-            <h3>People &amp; Time</h3>
-            <p id="world-clock" class="world-clock"></p>
-            <h4>Who's here</h4>
-            <ul id="people-list"></ul>
-          </div>
-        </section>
-
-        <nav id="tabbar" role="tablist" aria-label="Play screen">
-          <button class="tab on" type="button" role="tab" data-pane="story" aria-selected="true">
-            <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/><path d="M11 5v14M13 5v14"/></svg></span>
-            <span class="tab-label">Story</span>
-          </button>
-          <button class="tab" type="button" role="tab" data-pane="character" aria-selected="false">
-            <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg></span>
-            <span class="tab-label">Character</span>
-          </button>
-          <button class="tab" type="button" role="tab" data-pane="map" aria-selected="false">
-            <span class="tic" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4 4 6v14l5-2 6 2 5-2V4l-5 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg></span>
-            <span class="tab-label">Map</span>
-          </button>
-        </nav>
+          <section class="play-pane" id="pane-map" data-pane="map" role="tabpanel" aria-label="Map">
+            <div class="pane-scroll">
+              <h3>Map</h3>
+              <p id="map-breadcrumb" class="map-breadcrumb"></p>
+              <div id="map-current"></div>
+              <h4>Connected places</h4>
+              <ul id="map-connections"></ul>
+              <h3>People &amp; Time</h3>
+              <p id="world-clock" class="world-clock"></p>
+              <h4>Who's here</h4>
+              <ul id="people-list"></ul>
+            </div>
+          </section>
+        </div>
 
         <div id="ent-pop" class="ent-pop" role="menu" hidden></div>
       </div>
