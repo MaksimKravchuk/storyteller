@@ -601,7 +601,14 @@ def test_list_games_returns_current_player_library(client: TestClient, mock_repo
         response = client.get("/api/games")
     assert response.status_code == _HTTP_OK
     assert response.json()["games"] == [
-        {"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2},
+        {
+            "game_id": "game-1",
+            "title": "Rome",
+            "setting": "Rome",
+            "turn_count": 2,
+            "playbill": None,
+            "has_poster_image": False,
+        },
     ]
     list_mock.assert_awaited_once_with(mock_repo, _FIXED_PLAYER_ID)
 
@@ -665,8 +672,8 @@ def test_list_games_uses_account_id_for_ownership(
     response = test_client.get("/api/games")
 
     assert response.status_code == _HTTP_OK
-    assert response.json()["games"] == [
-        {"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2},
+    assert [(game["game_id"], game["title"], game["turn_count"]) for game in response.json()["games"]] == [
+        ("game-1", "Rome", 2),
     ]
 
 

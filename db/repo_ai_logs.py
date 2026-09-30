@@ -119,6 +119,25 @@ class AILogStore:
         query_result = await self._session.execute(stmt)
         return int(query_result.scalar() or 0)
 
+    async def agent_call_count_for_user(
+        self,
+        user_id: str,
+        agent_name: str,
+        *,
+        start_at: datetime,
+        end_at: datetime,
+    ) -> int:
+        """Count one agent's logged calls for a web user in a time window."""
+        logs = tbl.ai_call_logs
+        stmt = select(sa_func.count(logs.c.id)).where(
+            logs.c.user_id == user_id,
+            logs.c.agent_name == agent_name,
+            logs.c.created_at >= start_at,
+            logs.c.created_at < end_at,
+        )
+        query_result = await self._session.execute(stmt)
+        return int(query_result.scalar() or 0)
+
 
 def _usage_conditions(start_at: datetime | None, end_at: datetime | None) -> list[Any]:
     """Build optional created_at conditions for usage summaries."""

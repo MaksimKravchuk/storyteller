@@ -19,7 +19,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
+from sqlalchemy.dialects.postgresql import BYTEA, JSONB, TIMESTAMP, UUID
 
 from defaults.entitlements import USER_PLAN_ADMIN, USER_PLAN_FRIEND_BETA
 
@@ -417,4 +417,23 @@ beta_feedback = Table(
     Index("idx_beta_feedback_created", _COL_CREATED_AT),
     Index("idx_beta_feedback_game", "game_id"),
     Index("idx_beta_feedback_user_created", "user_id", _COL_CREATED_AT),
+)
+
+
+# Story library poster: a deterministic playbill captured after the prologue,
+# plus an optional on-demand illustration (one per story).
+story_posters = Table(
+    "story_posters",
+    metadata,
+    Column(
+        _COL_SESSION_ID,
+        _UUID_STR,
+        ForeignKey(_FK_SESSIONS_ID, ondelete=_ON_DELETE_CASCADE),
+        primary_key=True,
+    ),
+    Column("playbill", JSONB, nullable=False),
+    Column("image", BYTEA, nullable=True),
+    Column("image_mime", _SHORT_STR, nullable=True),
+    Column("image_created_at", _TZ_TS, nullable=True),
+    Column(_COL_CREATED_AT, _TZ_TS, nullable=False, server_default=func.now()),
 )

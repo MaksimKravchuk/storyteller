@@ -11,6 +11,7 @@ from db.repository import GameRepository
 from interfaces.web.auth import get_current_user
 from interfaces.web.auth_models import AuthenticatedUser
 from interfaces.web.deps import get_cfg, get_repo
+from interfaces.web.poster_art import posters_available
 
 router = APIRouter()
 
@@ -34,6 +35,7 @@ async def get_public_config(cfg: CfgDep) -> dict[str, str | bool | None]:
         "supabase_publishable_key": cfg.public_supabase_key,
         "beta_auth_required": cfg.beta_auth_required,
         "beta_invite_gate_enabled": cfg.beta_invite_gate_enabled,
+        "poster_images_enabled": posters_available(cfg),
     }
 
 

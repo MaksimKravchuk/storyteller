@@ -8,6 +8,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
+from db.repo_posters import PosterStore
 
 
 def _row_dict(row: Any) -> dict:
@@ -19,9 +20,11 @@ class WebGameStore:
 
     def __init__(self, db_session: AsyncSession) -> None:
         self._session = db_session
+        self.posters = PosterStore(db_session)
 
     async def list(self, web_player_id: str) -> list[dict]:
-        """Return non-archived web games for one player, newest first."""
+        """Return non-archived web games for one player, newest first, with any poster playbill."""
+        posters = tbl.story_posters
         stmt = (
             select(
                 tbl.sessions.c.id,
@@ -30,9 +33,12 @@ class WebGameStore:
                 tbl.game_states.c.id.label("game_id"),
                 tbl.game_states.c.turn_count,
                 tbl.settings.c.name.label("setting"),
+                posters.c.playbill,
+                posters.c.image.is_not(None).label("has_poster_image"),
             )
             .join(tbl.game_states, tbl.game_states.c.session_id == tbl.sessions.c.id)
             .join(tbl.settings, tbl.settings.c.game_state_id == tbl.game_states.c.id)
+            .outerjoin(posters, posters.c.session_id == tbl.sessions.c.id)
             .where(tbl.sessions.c.web_player_id == web_player_id)
             .where(tbl.sessions.c.archived_at.is_(None))
             .order_by(tbl.sessions.c.updated_at.desc(), tbl.sessions.c.id.desc())

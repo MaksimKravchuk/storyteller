@@ -34,6 +34,10 @@ DEFAULT_MODEL_PRICES = MappingProxyType(
     {
         "gpt-5.4-mini": ModelPrice(Decimal("0.250"), Decimal("2.000")),
         "gpt-5.4-nano": ModelPrice(Decimal("0.050"), Decimal("0.400")),
+        # Poster illustrations (ADR-0019): text-prompt tokens in, image tokens out.
+        # Taken from public price listings; verify against OpenAI and override
+        # via MODEL_PRICING_JSON if it changes.
+        "gpt-image-1-mini": ModelPrice(Decimal("2.000"), Decimal("8.000")),
     },
 )
 

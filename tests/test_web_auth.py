@@ -331,6 +331,7 @@ def test_public_config_exposes_public_supabase_values_only(client: TestClient) -
         "supabase_publishable_key": "sb_publishable_test_key",
         "beta_auth_required": True,
         "beta_invite_gate_enabled": True,
+        "poster_images_enabled": False,
     }
     assert "jwks" not in response.text.lower()
     assert "issuer" not in response.text.lower()

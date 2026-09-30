@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import allure
+import pytest
+from pydantic import ValidationError
 
 from config import Config, get_api_key_for_provider, list_api_key_status, resolve_model_config
 from defaults.models import AI_MODELS, ModelConfig
@@ -184,3 +186,23 @@ class TestSearchProviderConfig:
         cfg = Config(search_provider="searxng", searxng_base_url="http://localhost:8888")
         assert cfg.search_provider == "searxng"
         assert cfg.searxng_base_url == "http://localhost:8888"
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("Defaults & model config")
+class TestPosterConfig:
+    @allure.story("Story poster config")
+    @allure.title("Poster illustrations default off, on gpt-image-1-mini at medium quality, three per player per day")
+    def test_poster_defaults(self):
+        fields = Config.model_fields
+        assert fields["poster_images_enabled"].default is False
+        assert fields["poster_image_model"].default == "gpt-image-1-mini"
+        assert fields["poster_image_quality"].default == "medium"
+        assert fields["poster_daily_image_quota"].default == 3
+
+    @allure.story("Story poster config")
+    @allure.title("The poster daily quota accepts zero and rejects negatives")
+    def test_poster_quota_bounds(self):
+        assert Config(poster_daily_image_quota=0).poster_daily_image_quota == 0
+        with pytest.raises(ValidationError):
+            Config(poster_daily_image_quota=-1)
