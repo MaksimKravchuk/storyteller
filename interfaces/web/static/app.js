@@ -102,8 +102,6 @@
 
   // Stage cast chips beyond this count collapse into a "+N" chip.
   const STAGE_CAST_LIMIT = 4;
-  // The engine's name for a player who left the name blank; not billed as the hero.
-  const ANONYMOUS_HERO = "Player";
 
   // Inline icons. Location types and times of day are drawn rather than
   // written so the chrome stays readable in every story language.
@@ -486,9 +484,8 @@
       '<svg class="poster-curtains" viewBox="0 0 120 180" preserveAspectRatio="none" aria-hidden="true">' +
       '<path d="M0 0h120v9H0z"/><path d="M0 0c9 38 21 66 46 82C20 81 8 70 0 58z"/>' +
       '<path d="M120 0c-9 38-21 66-46 82 26-1 38-12 46-24z"/></svg>';
-    const motif = document.createElement("span");
+    const motif = placeIcon(playbill.place_type);
     motif.className = "poster-motif";
-    motif.innerHTML = PLACE_ICONS[playbill.place_type] || PLACE_ICONS.generic;
     const sky = document.createElement("span");
     sky.className = "poster-daypart";
     sky.innerHTML = DAYPART_ICONS[playbill.daypart] || "";
@@ -526,7 +523,7 @@
   function renderBilling(playbill) {
     const line = document.createElement("p");
     line.className = "story-cast";
-    if (playbill.hero && playbill.hero !== ANONYMOUS_HERO) {
+    if (playbill.hero) {
       const hero = document.createElement("span");
       hero.className = "cast-hero";
       hero.textContent = playbill.hero;
@@ -568,29 +565,23 @@
     return meta;
   }
 
+  function actionButton(className, dataKey, gameId, label) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.dataset[dataKey] = gameId;
+    button.textContent = label;
+    return button;
+  }
+
   function renderStoryActions(story) {
     const actions = document.createElement("div");
     actions.className = "story-actions";
-    const continueBtn = document.createElement("button");
-    continueBtn.type = "button";
-    continueBtn.className = "btn-primary";
-    continueBtn.dataset.continueGame = story.game_id;
-    continueBtn.textContent = "Continue";
-    actions.append(continueBtn);
+    actions.append(actionButton("btn-primary", "continueGame", story.game_id, "Continue"));
     if (postersEnabled && story.playbill && !story.has_poster_image) {
-      const paintBtn = document.createElement("button");
-      paintBtn.type = "button";
-      paintBtn.className = "btn-secondary";
-      paintBtn.dataset.paintPoster = story.game_id;
-      paintBtn.textContent = "Paint poster";
-      actions.append(paintBtn);
+      actions.append(actionButton("btn-secondary", "paintPoster", story.game_id, "Paint poster"));
     }
-    const archiveBtn = document.createElement("button");
-    archiveBtn.type = "button";
-    archiveBtn.className = "btn-quiet";
-    archiveBtn.dataset.archiveGame = story.game_id;
-    archiveBtn.textContent = "Archive";
-    actions.append(archiveBtn);
+    actions.append(actionButton("btn-quiet", "archiveGame", story.game_id, "Archive"));
     return actions;
   }
 
@@ -609,8 +600,7 @@
       note = document.createElement("p");
       row.querySelector(".story-meta").append(note);
     }
-    setStatus(note, text);
-    note.classList.add("poster-status");
+    setStatus(note, text, "poster-status");
   }
 
   async function paintPoster(button) {

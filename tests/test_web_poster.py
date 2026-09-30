@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
@@ -10,6 +11,7 @@ import pytest
 from db.repo_posters import PosterImage
 from interfaces.web import poster_art, poster_errors, service_poster
 from interfaces.web.errors import GameNotFoundError
+from safety.moderator import SafetyRejectedError
 from tests._poster_helpers import (
     PLAYER,
     WEBP,
@@ -55,7 +57,7 @@ def test_posters_available(enabled: bool, api_key: str | None, expected: bool) -
 @allure.story(_STORY)
 @allure.title("illustrate_poster stores the image, logs its cost as a PosterIllustrator call, and commits")
 async def test_illustrate_stores_logs_and_commits() -> None:
-    repo, client = fake_repo(stored=stored_playbill()), fake_painter()
+    repo, client = fake_repo(), fake_painter()
 
     await illustrate(repo, fake_cfg(), client)
 
@@ -73,14 +75,28 @@ async def test_illustrate_stores_logs_and_commits() -> None:
 
 @pytest.mark.asyncio
 @allure.story(_STORY)
-@allure.title("illustrate_poster counts today's PosterIllustrator calls for this player")
-async def test_illustrate_checks_daily_count_for_poster_agent() -> None:
-    repo = fake_repo(stored=stored_playbill())
+@allure.title("illustrate_poster counts this player's paintings over the last day")
+async def test_illustrate_counts_recent_paintings() -> None:
+    repo = fake_repo()
 
     await illustrate(repo, fake_cfg(), fake_painter())
 
-    count_call = repo.ai_logs.agent_call_count_for_user.await_args
-    assert count_call.args == (PLAYER, "PosterIllustrator")
+    painted_since = repo.web_games.posters.painted_since
+    player_id, since = painted_since.await_args.args
+    assert player_id == PLAYER
+    assert isinstance(since, datetime)
+
+
+@pytest.mark.asyncio
+@allure.story(_STORY)
+@allure.title("illustrate_poster paints under a poster-only lock so turns never wait on it")
+async def test_illustrate_uses_poster_lock() -> None:
+    lock = MagicMock()
+
+    with patch.object(service_poster.quota_locks, "player_lock", new=lock):
+        await illustrate(fake_repo(), fake_cfg(), fake_painter())
+
+    lock.assert_called_once_with("poster:{0}".format(PLAYER))
 
 
 @pytest.mark.asyncio
@@ -88,10 +104,10 @@ async def test_illustrate_checks_daily_count_for_poster_agent() -> None:
 @allure.title("illustrate_poster refuses before any paid call when illustrations are unavailable")
 @pytest.mark.parametrize(("enabled", "api_key"), [(False, "sk-test"), (True, None)])
 async def test_illustrate_unavailable(enabled: bool, api_key: str | None) -> None:
-    repo, client = fake_repo(stored=stored_playbill()), fake_painter()
+    client = fake_painter()
 
     with pytest.raises(poster_errors.PosterUnavailableError):
-        await illustrate(repo, fake_cfg(enabled=enabled, api_key=api_key), client)
+        await illustrate(fake_repo(), fake_cfg(enabled=enabled, api_key=api_key), client)
 
     client.generate.assert_not_awaited()
 
@@ -100,10 +116,10 @@ async def test_illustrate_unavailable(enabled: bool, api_key: str | None) -> Non
 @allure.story(_STORY)
 @allure.title("illustrate_poster hides stories the player does not own")
 async def test_illustrate_not_owned() -> None:
-    repo, client = fake_repo(owned=False, stored=stored_playbill()), fake_painter()
+    client = fake_painter()
 
     with pytest.raises(GameNotFoundError):
-        await illustrate(repo, fake_cfg(), client)
+        await illustrate(fake_repo(owned=False), fake_cfg(), client)
 
     client.generate.assert_not_awaited()
 
@@ -116,10 +132,10 @@ async def test_illustrate_not_owned() -> None:
     [(None, poster_errors.PosterMissingError), (stored_playbill(has_image=True), poster_errors.PosterExistsError)],
 )
 async def test_illustrate_needs_bare_playbill(stored: tuple[dict, bool] | None, error: type[Exception]) -> None:
-    repo, client = fake_repo(stored=stored), fake_painter()
+    client = fake_painter()
 
     with pytest.raises(error):
-        await illustrate(repo, fake_cfg(), client)
+        await illustrate(fake_repo(stored=stored), fake_cfg(), client)
 
     client.generate.assert_not_awaited()
 
@@ -128,25 +144,25 @@ async def test_illustrate_needs_bare_playbill(stored: tuple[dict, bool] | None, 
 @allure.story(_STORY)
 @allure.title("illustrate_poster stops at the daily quota before paying for an image")
 async def test_illustrate_quota_reached() -> None:
-    repo, client = fake_repo(stored=stored_playbill(), painted_today=3), fake_painter()
+    client = fake_painter()
 
     with pytest.raises(poster_errors.PosterQuotaError):
-        await illustrate(repo, fake_cfg(quota=3), client)
+        await illustrate(fake_repo(painted_today=3), fake_cfg(quota=3), client)
 
     client.generate.assert_not_awaited()
 
 
 @pytest.mark.asyncio
 @allure.story(_STORY)
-@allure.title("illustrate_poster refuses a prompt that moderation flags, with the moderator's message")
+@allure.title("illustrate_poster refuses a flagged prompt through the shared moderation path")
 async def test_illustrate_moderation_flagged() -> None:
-    repo, client = fake_repo(stored=stored_playbill()), fake_painter()
+    client = fake_painter()
     moderator = MagicMock()
     moderator.check = AsyncMock(return_value=MagicMock(flagged=True))
     moderator.refusal_message = MagicMock(return_value="Let's keep the poster within the story's limits.")
 
-    with pytest.raises(poster_errors.PosterRejectedError, match="within the story's limits"):
-        await illustrate(repo, fake_cfg(), client, moderator=moderator)
+    with pytest.raises(SafetyRejectedError, match="within the story's limits"):
+        await illustrate(fake_repo(), fake_cfg(), client, moderator=moderator)
 
     client.generate.assert_not_awaited()
 
@@ -155,7 +171,7 @@ async def test_illustrate_moderation_flagged() -> None:
 @allure.story(_STORY)
 @allure.title("illustrate_poster reports a provider failure without storing, logging, or committing")
 async def test_illustrate_provider_failure() -> None:
-    repo = fake_repo(stored=stored_playbill())
+    repo = fake_repo()
 
     with pytest.raises(poster_errors.PosterFailedError):
         await illustrate(repo, fake_cfg(), fake_painter(RuntimeError("provider down")))
@@ -168,14 +184,13 @@ async def test_illustrate_provider_failure() -> None:
 
 @pytest.mark.asyncio
 @allure.story(_STORY)
-@allure.title("poster_image_for_player never reads the image of a story the player does not own")
-async def test_image_lookup_is_owner_scoped() -> None:
-    owned, foreign = fake_repo(), fake_repo(owned=False)
+@allure.title("illustrate_poster never overwrites an illustration another request stored first")
+async def test_illustrate_lost_race_keeps_first_image() -> None:
+    repo = fake_repo()
+    repo.web_games.posters.save_image = AsyncMock(return_value=False)
 
-    assert await service_poster.poster_image_for_player(owned, PLAYER, "game-1") == PosterImage(
-        image_bytes=b"RIFF-webp",
-        mime=WEBP,
-    )
-    assert await service_poster.poster_image_for_player(foreign, PLAYER, "game-1") is None
-    get_image = foreign.web_games.posters.get_image
-    get_image.assert_not_awaited()
+    with pytest.raises(poster_errors.PosterExistsError):
+        await illustrate(repo, fake_cfg(), fake_painter())
+
+    repo.ai_logs.save.assert_not_awaited()
+    repo.commit.assert_not_awaited()

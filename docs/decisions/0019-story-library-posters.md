@@ -40,7 +40,7 @@ Three variants were put to Max: typographic playbills only, a painted poster for
 | `daypart` | `WorldView.clock.time_of_day` |
 | `cast` | The first 4 `WorldView.people` as `{label, known}`: the `ScenePerson.label` → `NPCCard.label_for_player` path, the same one the stage header uses |
 
-`start_game_for_player` calls `save_playbill` after the engine start succeeds and before `_mark_session_playing` commits, so the playbill lands in the same transaction as the new session. If the projection raises, the error is logged and the story starts without a playbill: **a poster never blocks a game start.** The playbill is a snapshot of opening night. It is not refreshed as the story moves on.
+`start_game_for_player` calls `save_playbill` after the engine start succeeds and before `_mark_session_playing` commits, so the playbill lands in the same transaction as the new session. The projection is pure and reuses the same `build_world_view` the start snapshot already runs, so it is not wrapped in its own error handling: a failure there is a code bug that would break the snapshot too. The playbill is a snapshot of opening night. It is not refreshed as the story moves on.
 
 ### 2. Posters are stored in a new `story_posters` table
 
@@ -52,7 +52,7 @@ Alembic revision `a9b0c1d2e3f4` (revises `e8f9a0b1c2d3`) creates one row per ses
 | `playbill` | JSONB, not null | `Playbill.model_dump()` |
 | `image` | BYTEA, nullable | The painted illustration, if any |
 | `image_mime` | varchar(32), nullable | `image/webp` today |
-| `image_created_at` | timestamptz, nullable | Set with `clock_timestamp()` on save |
+| `image_created_at` | timestamptz, nullable | Set with `clock_timestamp()` on save; the daily quota counts it |
 | `created_at` | timestamptz, not null | `now()` |
 
 `db/repo_posters.py` `PosterStore` is reached as `repo.web_games.posters`, which keeps `GameRepository` the single persistence access point. `save_playbill` upserts the playbill and leaves any image alone. `save_image` updates the existing row. `get_playbill` returns `(playbill, has_image)` without reading the image bytes.
@@ -69,30 +69,30 @@ In `app.js` / `style.css`, a card with a playbill gets a 2:3 poster frame:
 
 - stage curtains (inline SVG), `PLACE_ICONS[place_type]` (falling back to `generic`) and `DAYPART_ICONS[daypart]`, tinted per daypart;
 - the tagline;
-- a billing line, "Starring *hero* · with *cast*". Known cast renders in the `--person` hue and strangers in italics, echoing the stage chips. The hero is omitted when it is the engine's default `"Player"` name.
+- a billing line, "Starring *hero* · with *cast*". Known cast renders in the `--person` hue and strangers in italics, echoing the stage chips. The server sends `hero: null` when the player kept the engine's default name (`PlayerState.name`), so the client never hard-codes that default.
 
 When `has_poster_image` is true, the client fetches `GET /api/games/{id}/poster` through `apiFetch` (so the auth header is sent), shows it as a blob object URL over the drawn art, and revokes the URLs whenever the library re-renders. A **Paint poster** button appears only when `GET /api/config/public` reports `poster_images_enabled` and the card has a playbill but no image. Errors appear on the card they belong to.
 
 ### 5. A painted illustration is made only on explicit player request, once per story
 
-`POST /api/games/{game_id}/poster` (`routes_poster.py`) calls `service_poster.illustrate_poster`, which returns `201 {"has_poster_image": true}`. Every check that can refuse runs **before** the paid call. Checks from `BetaPolicy.ensure_open` onward run inside `quota_locks.player_lock(player_id)`:
+`POST /api/games/{game_id}/poster` (`routes_poster.py`) calls `service_poster.illustrate_poster`, which returns `201 {"has_poster_image": true}`. Every check that can refuse runs **before** the paid call. Checks from `BetaPolicy.ensure_open` onward run inside a poster-only lock, `quota_locks.player_lock("poster:" + player_id)`, so a 20–60 s painting never holds up the same player's turns or game starts:
 
 1. `posters_available(cfg)`: `POSTER_IMAGES_ENABLED` is true **and** an OpenAI key is configured.
 2. `BetaPolicy.ensure_open()`: the beta kill switch and the global budget (D004).
 3. `owned_session_context`: the caller owns the story.
 4. A playbill exists and has no image yet (one image per story).
-5. The rolling 24-hour quota: `ai_call_logs` rows with `agent_name = "PosterIllustrator"` for this user are counted with `agent_call_count_for_user`. The call is refused at `POSTER_DAILY_IMAGE_QUOTA`.
+5. The rolling 24-hour quota: `PosterStore.painted_since` counts this player's `story_posters` rows whose `image_created_at` falls in the window (joined through `sessions.web_player_id`). The call is refused at `POSTER_DAILY_IMAGE_QUOTA`.
 6. Moderation: the prompt goes through `safety.factory.build_moderator(cfg)` as `ModerationDirection.INPUT`, the same moderator and thresholds as the ADR-0006 content-safety pipeline. The check is skipped when `SAFETY_ENABLED=false`. A flag refuses with the moderator's refusal message.
 7. Paint, store the image, write the cost row, and commit.
 
-`GET /api/games/{game_id}/poster` serves the bytes with the stored MIME type and `Cache-Control: private, max-age=86400`. It is owner-scoped through `web_games.get_by_game(player_id, game_id)`, so another player's story and a story without an image both return the same 404.
+`GET /api/games/{game_id}/poster` serves the bytes with the stored MIME type and `Cache-Control: private, max-age=31536000, immutable` (an illustration is written once and never replaced). It is owner-scoped in one joined query, `PosterStore.get_image_for_player(player_id, game_id)`, so another player's story, an archived story and a story without an image all return the same 404.
 
 | Refusal | HTTP |
 | --- | --- |
 | Not owned, no playbill, or illustrations unavailable | 404 `No poster for this story` |
 | Already painted | 409 |
 | Daily poster quota reached | 429 |
-| Moderation flagged | 422 with the moderator's refusal message |
+| Moderation flagged | 400 with the moderator's refusal message (`engine.moderation.moderate_input` → `SafetyRejectedError`, mapped by `action_errors` exactly like a flagged player action) |
 | Kill switch or global budget (`BetaAccessDeniedError`) | 503 with the beta message |
 | Image provider failure (`PosterFailedError`) | 503 |
 
@@ -137,7 +137,7 @@ Max chose the variant. The reasoning below is the agent's engineering case for i
 
 - **Every story gets an identity at zero marginal cost.** Everything on the playbill already exists after the prologue, so projecting it costs no model call, adds no latency and cannot fail a game start. Painting is the optional extra, not the baseline.
 - **Paid work follows player intent, not game starts.** Painting only on request ties image spend to stories a player cares about. Painting at every start would spend on stories abandoned after one turn and would add seconds, or a background job, to the start path. The flag defaulting to `false`, one image per story, the per-player daily cap, `BetaPolicy.ensure_open` and cost rows in `ai_call_logs` keep this new spend class inside D004's budget model and D010's "materially increase spend" gate.
-- **The cheap checks run before the expensive call.** Availability, budget, ownership, one-per-story, quota and moderation all run before `images.generate`, under the same per-player lock as turn quotas. A refused request costs nothing, except for the OpenAI moderation call when a key is configured.
+- **The cheap checks run before the expensive call.** Availability, budget, ownership, one-per-story, quota and moderation all run before `images.generate`, under a per-player poster lock. A refused request costs nothing, except for the OpenAI moderation call when a key is configured.
 - **Name-gating stays single-path.** Cast labels come from `build_world_view`, the same `NPCCard.label_for_player` path as the stage header (ADR-0018, and §5 of `0006-player-dashboard-gui.md`). Leaving names out of the image prompt means the picture cannot leak a name the player has not learned, and text rendered by an image model, which is often garbled, never reaches the poster.
 - **The poster speaks ADR-0018's language.** The drawn art reuses `PLACE_ICONS` / `DAYPART_ICONS` keyed by backend slugs, so it reads the same in Russian and English sessions. The tagline is prose the Narrator already wrote in the story's language and the player already read.
 - **A stored snapshot keeps the library query cheap and the poster stable.** Computing the playbill while listing would mean deserialising every story's game state on each `GET /api/games`, and the poster would drift as the story moved on. A JSONB row plus a SQL `IS NOT NULL` flag keeps listing to one outer join.
@@ -192,7 +192,7 @@ Tradeoffs / risks:
 - **Unpriced models are invisible to the budget.** `calculate_call_cost_usd` treats a model without a price as $0. Pointing `POSTER_IMAGE_MODEL` at a model not in the price table without a `MODEL_PRICING_JSON` entry lets posters spend outside the D004 budget check.
 - **The prompt carries player-authored text to OpenAI** (the character's appearance, and the tagline, which may contain a name the narration used). This is covered by the existing D007 / onboarding wording that AI requests go to model providers. The prompt is also retained in `ai_call_logs.messages`, like every other logged model input.
 - **Moderation depends on configuration.** With `SAFETY_ENABLED=false` the prompt is not moderated. With no OpenAI key there is nothing to paint (`posters_available` is false), so the heuristic-only case does not arise.
-- **"One per story" is enforced in the process, not in the database.** `quota_locks.player_lock` is a per-process `asyncio.Lock`. Two workers could each pass the "no image yet" check and both pay, with the last `UPDATE` winning. This is the same limitation the turn quotas already accept for a single-process beta.
+- **"One per story" never overwrites, but a race can still pay twice.** `save_image` is a conditional `UPDATE … WHERE image IS NULL`, so the first stored image wins and a later one is refused (`PosterExistsError`, not logged or committed). The pre-call check runs under a per-process lock, so two workers could both pay for the same story before one of them loses the write. This is the same single-process limitation the turn quotas already accept.
 - **Database growth.** Each WebP (roughly a few hundred KB at 1024×1536, q82; estimate) lives in Postgres and in its backups.
 - **The playbill is frozen at the prologue.** The cast is whoever was on stage at the start, usually strangers, and the place and daypart are those of the opening scene.
 - **English chrome remains**, as under ADR-0018: "Starring", "with", "Paint poster" and the refusal messages.
@@ -204,7 +204,7 @@ What future agents must preserve:
 - **The illustration prompt excludes names.** Do not add cast names or the hero's name to `poster_prompt`, and keep the "no text" instruction. Typography is drawn by the client.
 - **Paid illustration only on an explicit player request.** Do not paint automatically at start, on list or in the background without a new decision.
 - **All refusal checks run before the paid call, under the player lock:** availability, `BetaPolicy.ensure_open`, ownership, one-per-story, the rolling quota, then moderation. Do not reorder moderation or quota after `paint`.
-- **Every painting writes an `ai_call_logs` row** with `agent_name="PosterIllustrator"`, the model, token usage and `user_id`. The quota counts these rows, and the global budget prices them. Any new image model must be priced (default table or `MODEL_PRICING_JSON`).
+- **Every painting writes an `ai_call_logs` row** with `agent_name="PosterIllustrator"`, the model, token usage and `user_id`. The global budget prices these rows; the daily quota counts `story_posters.image_created_at` instead, so renaming the log agent cannot change it. Any new image model must be priced (default table or `MODEL_PRICING_JSON`).
 - **Poster rows must not carry `turn_number`**, so they stay out of D004's turn quotas.
 - **Image reads are owner-scoped** and return 404 for both absent and foreign stories. Do not serve poster bytes from a public or unauthenticated URL.
 - **The library query never loads image bytes.** Keep `has_poster_image` computed in SQL.
@@ -250,7 +250,7 @@ What future agents must preserve:
 - `interfaces/web/static/app.js`, `interfaces/web/static/style.css`
 - `interfaces/web/beta_policy.py`, `interfaces/web/quota_locks.py`
 - `llm/image_client.py`
-- `db/tables.py` (`story_posters`), `db/repo_posters.py`, `db/repo_web_games.py`, `db/repo_ai_logs.py` (`agent_call_count_for_user`)
+- `db/tables.py` (`story_posters`), `db/repo_posters.py`, `db/repo_web_games.py`, `db/repo_ai_logs.py` (unchanged save path)
 - `alembic/versions/a9b0c1d2e3f4_add_story_posters.py`
 - `config.py`, `.env.example`, `costs/model_pricing.py`
 - `safety/factory.py`

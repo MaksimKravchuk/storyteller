@@ -10,13 +10,11 @@ from __future__ import annotations
 
 import re
 
-from loguru import logger
-
 from db.repository import GameRepository
 from interfaces.web.schemas_library import Playbill, PlaybillCastMember
 from interfaces.web.world import build_world_view
 from interfaces.web.world_schemas import ScenePerson
-from models.game_state import GameState
+from models.game_state import GameState, PlayerState
 
 _TAGLINE_MAX_CHARS = 160
 _CAST_LIMIT = 4
@@ -24,6 +22,8 @@ _GENERIC_PLACE_TYPE = "generic"
 _MARKUP_RE = re.compile(r"[*_`]")
 _SENTENCE_END_RE = re.compile(r"(?<=[.!?…])\s")
 _TRAILING_PUNCTUATION = ",;:—– "
+# The engine's name for a player who left the name blank; not billed as the hero.
+_ANONYMOUS_HERO = PlayerState.model_fields["name"].default
 
 
 def _opening_text(game_state: GameState) -> str:
@@ -44,6 +44,10 @@ def tagline_from_opening(opening: str) -> str:
     return "{0}…".format(clipped.rstrip(_TRAILING_PUNCTUATION))
 
 
+def _billed_hero(name: str) -> str | None:
+    return None if name == _ANONYMOUS_HERO else name
+
+
 def _cast(people: list[ScenePerson]) -> list[PlaybillCastMember]:
     billed = people[:_CAST_LIMIT]
     return [PlaybillCastMember(label=person.label, known=person.known) for person in billed]
@@ -57,7 +61,7 @@ def build_playbill(game_state: GameState) -> Playbill:
     return Playbill(
         tagline=tagline_from_opening(_opening_text(game_state)),
         setting=setting.name,
-        hero=game_state.player.name,
+        hero=_billed_hero(game_state.player.name),
         hero_look=game_state.player.appearance,
         era=setting.time_period,
         region=setting.region,
@@ -69,10 +73,5 @@ def build_playbill(game_state: GameState) -> Playbill:
 
 
 async def save_playbill(repo: GameRepository, session_id: str, game_state: GameState) -> None:
-    """Store the playbill for a new story; a build failure never blocks the start."""
-    try:
-        playbill = build_playbill(game_state)
-    except Exception:
-        logger.exception("save_playbill: could not build playbill for session {0}", session_id)
-        return
-    await repo.web_games.posters.save_playbill(session_id, playbill.model_dump())
+    """Store the playbill for a new story."""
+    await repo.web_games.posters.save_playbill(session_id, build_playbill(game_state).model_dump())

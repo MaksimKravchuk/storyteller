@@ -9,6 +9,8 @@ from interfaces.web import service_poster
 from interfaces.web.schemas_library import Playbill, PlaybillCastMember
 from llm.image_client import GeneratedImage
 
+StoredPlaybill = tuple[dict, bool]
+
 PLAYER = "11111111-1111-1111-1111-111111111111"
 WEBP = "image/webp"
 IMAGE_BYTES = b"RIFF-webp"
@@ -23,7 +25,6 @@ IMAGE = GeneratedImage(
     output_tokens=IMAGE_TOKENS,
     duration_ms=_PAINT_MS,
 )
-StoredPlaybill = tuple[dict, bool]
 
 
 def playbill() -> Playbill:
@@ -42,9 +43,12 @@ def playbill() -> Playbill:
     )
 
 
-def stored_playbill(*, has_image: bool = False) -> tuple[dict, bool]:
+def stored_playbill(*, has_image: bool = False) -> StoredPlaybill:
     """Return ``get_playbill``'s shape for the representative playbill."""
     return playbill().model_dump(), has_image
+
+
+STORED_DEFAULT = stored_playbill()
 
 
 def fake_cfg(*, enabled: bool = True, api_key: str | None = "sk-test", quota: int = 3) -> MagicMock:
@@ -56,7 +60,11 @@ def fake_cfg(*, enabled: bool = True, api_key: str | None = "sk-test", quota: in
     return cfg
 
 
-def fake_repo(owned: bool = True, stored: StoredPlaybill | None = None, painted_today: int = 0) -> MagicMock:
+def fake_repo(
+    owned: bool = True,
+    stored: StoredPlaybill | None = STORED_DEFAULT,
+    painted_today: int = 0,
+) -> MagicMock:
     """Return a repository whose poster/log/ownership calls are async fakes."""
     repo = MagicMock(name="GameRepository")
     session_row = None
@@ -65,9 +73,9 @@ def fake_repo(owned: bool = True, stored: StoredPlaybill | None = None, painted_
     repo.web_games.get_by_game = AsyncMock(return_value=session_row)
     posters = repo.web_games.posters
     posters.get_playbill = AsyncMock(return_value=stored)
-    posters.save_image = AsyncMock()
-    posters.get_image = AsyncMock(return_value=PosterImage(image_bytes=IMAGE_BYTES, mime=WEBP))
-    repo.ai_logs.agent_call_count_for_user = AsyncMock(return_value=painted_today)
+    posters.save_image = AsyncMock(return_value=True)
+    posters.painted_since = AsyncMock(return_value=painted_today)
+    posters.get_image_for_player = AsyncMock(return_value=PosterImage(image_bytes=IMAGE_BYTES, mime=WEBP))
     repo.ai_logs.save = AsyncMock()
     repo.commit = AsyncMock()
     return repo
@@ -84,9 +92,10 @@ def fake_painter(image: GeneratedImage | Exception = IMAGE) -> MagicMock:
 
 
 async def illustrate(repo: MagicMock, cfg: MagicMock, client: MagicMock, moderator: object = None) -> None:
-    """Run ``illustrate_poster`` with the beta gate open and ``moderator`` wired."""
+    """Run ``illustrate_poster`` with the beta gate open, ``client`` painting, ``moderator`` wired."""
     with (
         patch.object(service_poster.beta_policy.BetaPolicy, "ensure_open", new=AsyncMock()),
         patch.object(service_poster, "build_moderator", return_value=moderator),
+        patch.object(service_poster.poster_art, "default_image_client", return_value=client),
     ):
-        await service_poster.illustrate_poster(repo, cfg, PLAYER, "game-1", client_factory=lambda _: client)
+        await service_poster.illustrate_poster(repo, cfg, PLAYER, "game-1")

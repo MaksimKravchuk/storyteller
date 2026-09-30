@@ -1321,6 +1321,8 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     game_state = MagicMock()
     game_state.uuid = "game-1"
     game_state.setting.name = "Rome"
+    game_state.setting.time_period = "1st century BC"
+    game_state.setting.region = "Italy"
     game_state.conversation_log = []
     game_state.turn_count = 0
     game_state.scene_number = None
@@ -1379,6 +1381,8 @@ async def test_start_game_commits_before_returning_snapshot() -> None:
     game_state = MagicMock()
     game_state.uuid = "game-1"
     game_state.setting.name = "Rome"
+    game_state.setting.time_period = "1st century BC"
+    game_state.setting.region = "Italy"
     game_state.conversation_log = []
     game_state.turn_count = 0
     game_state.scene_number = None

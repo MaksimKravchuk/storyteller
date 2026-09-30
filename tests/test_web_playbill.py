@@ -9,7 +9,7 @@ import pytest
 
 from interfaces.web import playbill, service
 from interfaces.web.library_rows import game_summary_from_row
-from models.game_state import GameState
+from models.game_state import GameState, PlayerState
 from models.location import Location
 from models.npc_card import NPCCard
 from models.scene import Scene, SceneNPC
@@ -124,17 +124,13 @@ async def test_save_playbill_writes_poster_row(game_state: GameState) -> None:
     assert stored["cast"][1] == {"label": "a hooded augur", "known": False}
 
 
-@pytest.mark.asyncio
 @allure.story(_STORY)
-@allure.title("save_playbill never blocks a game start when the playbill cannot be built")
-async def test_save_playbill_skips_unbuildable_state() -> None:
-    repo = MagicMock()
-    repo.web_games.posters.save_playbill = AsyncMock()
+@allure.title("build_playbill leaves the hero unbilled for a player who kept the default name")
+def test_build_playbill_unnamed_hero(game_state: GameState) -> None:
+    staged = _staged_state(game_state)
+    staged.player.name = PlayerState().name
 
-    with patch.object(playbill, "build_playbill", side_effect=ValueError("boom")):
-        await playbill.save_playbill(repo, "sess-1", MagicMock())
-
-    repo.web_games.posters.save_playbill.assert_not_awaited()
+    assert playbill.build_playbill(staged).hero is None
 
 
 @pytest.mark.asyncio

@@ -690,8 +690,7 @@ main {
 }
 
 @media (max-width: 600px) {
-  .story-row,
-  .story-row.has-playbill { grid-template-columns: 1fr; }
+  .story-row { grid-template-columns: 1fr; }
   .story-row.has-playbill { grid-template-columns: 92px minmax(0, 1fr); }
   .story-row.has-playbill .poster { width: 92px; align-self: start; }
   .story-row.has-playbill .story-actions { grid-column: 1 / -1; }

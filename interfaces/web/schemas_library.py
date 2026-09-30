@@ -18,12 +18,13 @@ class Playbill(BaseModel):
     ``tagline`` is the opening's first sentence; ``cast`` comes from the
     scene's people (``NPCCard.label_for_player``); ``place_type`` and
     ``daypart`` reuse the backend slugs the client already draws as icons.
-    ``hero_look`` feeds the optional illustration prompt.
+    ``hero`` is None for an unnamed player; ``hero_look`` feeds the optional
+    illustration prompt.
     """
 
     tagline: str
     setting: str
-    hero: str
+    hero: str | None
     hero_look: str
     era: str
     region: str

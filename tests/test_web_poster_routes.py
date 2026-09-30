@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
@@ -11,9 +11,9 @@ from fastapi.testclient import TestClient
 
 from interfaces.web import beta_auth, poster_errors, service_poster
 from interfaces.web.app import app
-from interfaces.web.beta_policy import BetaAccessDeniedError
 from interfaces.web.deps import get_cfg, get_repo
 from interfaces.web.errors import GameNotFoundError
+from safety.moderator import SafetyRejectedError
 from tests._poster_helpers import PLAYER, WEBP, fake_cfg, fake_repo
 
 pytestmark = [
@@ -56,10 +56,10 @@ def test_route_paint_created(poster_client: TestClient) -> None:
         (GameNotFoundError(PLAYER), 404),
         (poster_errors.PosterExistsError("s"), 409),
         (poster_errors.PosterQuotaError("q"), 429),
-        (poster_errors.PosterRejectedError("Not that."), 422),
+        (SafetyRejectedError("Not that.", MagicMock()), 400),
         (poster_errors.PosterFailedError("down"), 503),
-        (BetaAccessDeniedError("Paused.", reason="beta_disabled"), 503),
-        (BetaAccessDeniedError("Limit.", reason="daily_turn_quota"), 429),
+        (service_poster.beta_policy.BetaAccessDeniedError("Paused.", reason="beta_disabled"), 503),
+        (service_poster.beta_policy.BetaAccessDeniedError("Limit.", reason="daily_turn_quota"), 429),
     ],
 )
 def test_route_paint_errors(poster_client: TestClient, error: Exception, status_code: int) -> None:
@@ -71,20 +71,23 @@ def test_route_paint_errors(poster_client: TestClient, error: Exception, status_
 
 
 @allure.story(_STORY)
-@allure.title("GET /api/games/{id}/poster serves the stored image with its mime type")
+@allure.title("GET /api/games/{id}/poster serves the stored image as an immutable private resource")
 def test_route_get_image(poster_client: TestClient) -> None:
     response = poster_client.get("/api/games/game-1/poster")
 
     assert response.status_code == 200
     assert response.headers["content-type"] == WEBP
     assert response.content == b"RIFF-webp"
-    assert "private" in response.headers["cache-control"]
+    assert response.headers["cache-control"] == "private, max-age=31536000, immutable"
 
 
 @allure.story(_STORY)
-@allure.title("GET /api/games/{id}/poster is 404 when the story has no illustration")
+@allure.title("GET /api/games/{id}/poster is 404 when the player's story has no illustration")
 def test_route_get_image_missing(poster_client: TestClient) -> None:
-    with patch.object(service_poster, "poster_image_for_player", new=AsyncMock(return_value=None)):
-        response = poster_client.get("/api/games/game-1/poster")
+    repo = app.dependency_overrides[get_repo]()
+    repo.web_games.posters.get_image_for_player = AsyncMock(return_value=None)
+
+    response = poster_client.get("/api/games/game-1/poster")
 
     assert response.status_code == 404
+    repo.web_games.posters.get_image_for_player.assert_awaited_once_with(PLAYER, "game-1")
