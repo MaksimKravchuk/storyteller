@@ -2,10 +2,11 @@
 
 Date: 2026-09-30
 Status: Accepted
-Decision owner: Max. He chose the hybrid variant in session on 2026-09-30: every story gets a playbill generated after the prologue, and a painted illustration is made only when the player asks ("just do it"). Turning paid illustrations on for a deployed beta is a separate operator action; see Consequences.
+Amended: 2026-09-30. The default image model is now `gpt-image-2.5-flare`, and Max's D010 spend decision turns painted illustrations on for the deployed Fly beta. See "Amendment 2026-09-30" below.
+Decision owner: Max. He chose the hybrid variant in session on 2026-09-30: every story gets a playbill generated after the prologue, and a painted illustration is made only when the player asks ("just do it"). Turning paid illustrations on for a deployed beta is a separate operator action; see Consequences. *(Max took that action for the Fly beta on 2026-09-30; see the amendment.)*
 Decision type: Product (player-facing library UX, an optional paid feature) + Architecture (a new image-model client, new web routes) + Persistence (a new `story_posters` table) + Operations (spend, quota, moderation)
 Extends: `docs/decisions/0019-player-ui-stage-visual-language.md` (the "stage" visual language, `PLACE_ICONS` / `DAYPART_ICONS`, name-gated cast chips)
-Related: founder-register D004 (cost budget), D006 (PWA online-required), D007 (privacy posture) and D010 (release approval / material spend) in `docs/studio/09-founder-decision-register.md`; `docs/decisions/0006-content-safety-moderation-pipeline.md`; `interfaces/web/{playbill.py,library_rows.py,poster_art.py,poster_errors.py,service_poster.py,routes_poster.py,schemas_library.py,service.py,auth_routes.py}`, `interfaces/web/static/{app.js,style.css}`, `llm/image_client.py`, `db/{tables.py,repo_posters.py,repo_web_games.py,repo_ai_logs.py}`, `alembic/versions/a9b0c1d2e3f4_add_story_posters.py`, `config.py`, `costs/model_pricing.py`, `.env.example`
+Related: founder-register D004 (cost budget), D006 (PWA online-required), D007 (privacy posture) and D010 (release approval / material spend) in `docs/studio/09-founder-decision-register.md`; `docs/decisions/0006-content-safety-moderation-pipeline.md`; `interfaces/web/{playbill.py,library_rows.py,poster_art.py,poster_errors.py,service_poster.py,routes_poster.py,schemas_library.py,service.py,auth_routes.py}`, `interfaces/web/static/{app.js,style.css}`, `llm/image_client.py`, `db/{tables.py,repo_posters.py,repo_web_games.py,repo_ai_logs.py}`, `alembic/versions/a9b0c1d2e3f4_add_story_posters.py`, `config.py`, `costs/model_pricing.py`, `.env.example`, `fly.toml`
 
 ## Context
 
@@ -98,7 +99,9 @@ The library disables a story's Archive button while its poster is being painted.
 | Kill switch or global budget (`BetaAccessDeniedError`) | 503 with the beta message |
 | Image provider failure (`PosterFailedError`) | 503 |
 
-### 6. Images come from OpenAI `gpt-image-1-mini` through a dedicated client
+### 6. Images come from an OpenAI `gpt-image` model through a dedicated client
+
+*(Amended 2026-09-30: the default model is `gpt-image-2.5-flare`. It was `gpt-image-1-mini` when this ADR was accepted.)*
 
 `llm/image_client.py` defines an `ImageClient` protocol and `OpenAIImageClient`. The client requests `images.generate` at `1024x1536` (portrait), `output_format="webp"`, `output_compression=82`, the configured quality and `n=1`. It returns the bytes plus `usage.input_tokens` / `usage.output_tokens` and the duration. The OpenAI SDK is imported lazily, like `llm.openai_client`. Any provider exception becomes `PosterFailedError`.
 
@@ -112,8 +115,8 @@ This client sits apart from the chat LLM factory. It is not auto-detected from a
 
 | Env var | Default | Meaning |
 | --- | --- | --- |
-| `POSTER_IMAGES_ENABLED` | `false` | Operator switch for painted illustrations |
-| `POSTER_IMAGE_MODEL` | `gpt-image-1-mini` | OpenAI image model |
+| `POSTER_IMAGES_ENABLED` | `false` | Operator switch for painted illustrations. Set to `true` for the deployed Fly beta in `fly.toml [env]` since 2026-09-30 (D010, see the amendment) |
+| `POSTER_IMAGE_MODEL` | `gpt-image-2.5-flare` | OpenAI image model (was `gpt-image-1-mini` until the 2026-09-30 amendment) |
 | `POSTER_IMAGE_QUALITY` | `medium` | Passed through to `images.generate` |
 | `POSTER_DAILY_IMAGE_QUOTA` | `3` (`ge=0`) | Paintings per player per rolling 24 h; `0` stops painting |
 
@@ -127,7 +130,7 @@ Each painting writes one `ai_call_logs` row with the following fields:
 - `duration_ms`
 - the player's `user_id`
 
-`costs/model_pricing.py` gains a default price for `gpt-image-1-mini` of **$2.00 input / $8.00 output per million tokens**. This was taken from public price listings, not from an OpenAI invoice. `MODEL_PRICING_JSON` overrides it. The rows therefore count toward the global budget in `BetaPolicy`. They carry no `turn_number`, so they do **not** count toward D004's turn quotas.
+`costs/model_pricing.py` gains a default price for `gpt-image-1-mini` of **$2.00 input / $8.00 output per million tokens**. This was taken from public price listings, not from an OpenAI invoice. `MODEL_PRICING_JSON` overrides it. *(Amended 2026-09-30: `gpt-image-2.5-flare` is priced at $5.00 input / $30.00 output per million tokens, and the `gpt-image-1-mini` entry stays.)* The rows therefore count toward the global budget in `BetaPolicy`. They carry no `turn_number`, so they do **not** count toward D004's turn quotas.
 
 ### 9. Images live in Postgres `bytea`
 
@@ -190,7 +193,7 @@ Positive consequences:
 - `PRECACHE_URLS` and the service worker are unchanged (D006). The poster art is inline SVG in the precached `app.js`.
 
 Tradeoffs / risks:
-- **The default price is unverified.** $2 / $8 per M tokens comes from public listings. **Estimate (inferred, unverified):** a medium 1024×1536 image is on the order of 1.5k output tokens, about $0.01–0.02 per poster, so the default cap of 3 per player per day is a few cents per player per day. Check the first real `PosterIllustrator` rows in `ai_call_logs` against the OpenAI dashboard and correct `DEFAULT_MODEL_PRICES` or set `MODEL_PRICING_JSON`.
+- **The default price is unverified.** *(This bullet describes `gpt-image-1-mini`. For the `gpt-image-2.5-flare` default, see the cost risk in the amendment.)* $2 / $8 per M tokens comes from public listings. **Estimate (inferred, unverified):** a medium 1024×1536 image is on the order of 1.5k output tokens, about $0.01–0.02 per poster, so the default cap of 3 per player per day is a few cents per player per day. Check the first real `PosterIllustrator` rows in `ai_call_logs` against the OpenAI dashboard and correct `DEFAULT_MODEL_PRICES` or set `MODEL_PRICING_JSON`.
 - **Unpriced models are invisible to the budget.** `calculate_call_cost_usd` treats a model without a price as $0. Pointing `POSTER_IMAGE_MODEL` at a model not in the price table without a `MODEL_PRICING_JSON` entry lets posters spend outside the D004 budget check.
 - **The prompt carries player-authored text to OpenAI** (the character's appearance, and the tagline, which may contain a name the narration used). This is covered by the existing D007 / onboarding wording that AI requests go to model providers. The prompt is also retained in `ai_call_logs.messages`, like every other logged model input.
 - **Moderation depends on configuration.** With `SAFETY_ENABLED=false` the prompt is not moderated. With no OpenAI key there is nothing to paint (`posters_available` is false), so the heuristic-only case does not arise.
@@ -198,7 +201,7 @@ Tradeoffs / risks:
 - **Database growth.** Each WebP (roughly a few hundred KB at 1024×1536, q82; estimate) lives in Postgres and in its backups.
 - **The playbill is frozen at the prologue.** The cast is whoever was on stage at the start, usually strangers, and the place and daypart are those of the opening scene.
 - **English chrome remains**, as under ADR-0019: "Starring", "with", "Paint poster" and the refusal messages.
-- **Enabling paid illustrations on a deployed beta is a Max action.** The flag defaults to `false`. Flipping it, or raising `POSTER_DAILY_IMAGE_QUOTA`, changes spend and falls under D010.
+- **Enabling paid illustrations on a deployed beta is a Max action.** The flag defaults to `false`. Flipping it, or raising `POSTER_DAILY_IMAGE_QUOTA`, changes spend and falls under D010. *(Max approved enabling it for the Fly beta on 2026-09-30; see the amendment for the scope of that approval.)*
 
 What future agents must preserve:
 - **The playbill stays deterministic and free.** Do not add an LLM call to `build_playbill`. A playbill build failure must never fail or delay a game start.
@@ -210,7 +213,7 @@ What future agents must preserve:
 - **Poster rows must not carry `turn_number`**, so they stay out of D004's turn quotas.
 - **Image reads are owner-scoped** and return 404 for both absent and foreign stories. Do not serve poster bytes from a public or unauthenticated URL.
 - **The library query never loads image bytes.** Keep `has_poster_image` computed in SQL.
-- **`POSTER_IMAGES_ENABLED` defaults to `false`.** Enabling it in a deployed beta, raising the quota or switching to a pricier model or quality is a D010 spend decision for Max.
+- **`POSTER_IMAGES_ENABLED` defaults to `false`.** Enabling it in a deployed beta, raising the quota or switching to a pricier model or quality is a D010 spend decision for Max. *(The 2026-09-30 amendment records one such decision and its limits.)*
 - **Moving images out of Postgres** (object storage, CDN) is a new decision that touches D007 (origin, deletion) and should extend this ADR.
 
 ## Verification / tests
@@ -243,6 +246,81 @@ What future agents must preserve:
 - **Spend check after enabling (inspection).** After the first real paintings, compare the `PosterIllustrator` cost in the admin report with the OpenAI usage dashboard.
 - **Standard gauntlet.** ruff, format, flake8, mypy, pytest.
 
+## Amendment 2026-09-30: `gpt-image-2.5-flare` by default, illustrations on for the deployed beta
+
+Decision owner: Max, for both changes. The model switch was made in session on 2026-09-30. The enablement is a D010 spend decision he made the same day.
+
+### Context
+
+- **A newer image model is out.** OpenAI released `gpt-image-2.5-flare` on 2026-09-08 (snapshot `gpt-image-2.5-flare-2026-09-08`). It is served by the same `images.generate` endpoint (`v1/images/generations`) that `OpenAIImageClient` already calls, and it accepts the `medium` quality this ADR uses.
+- **Quality.** As reported in session, it tops the Artificial Analysis text-to-image arena, and `gpt-image-1-mini` is not in the top 35. When the agent checked on 2026-09-30, the ranked Artificial Analysis entry was `GPT Image 2.5 Flare (max)`. Posters paint at `medium`, and that setting has no ranking of its own.
+- **Cost.** OpenAI's model page gives token rates for `gpt-image-2.5-flare` but no per-image table: $5 per million text-input tokens and $30 per million image-output tokens ($8 image input, $1.25 / $2 cached input). Two third-party calculators (fal.ai and another pricing write-up) put a medium 1024×1536 image at about 343 output tokens, roughly $0.0103, and a medium square at about 439 tokens, roughly $0.013. That compares with $0.015 for a medium 1024×1536 image from `gpt-image-1-mini`, which is OpenAI's official per-image price.
+- **The painted path had not run in production.** `POSTER_IMAGES_ENABLED` defaults to `false`, and `fly.toml` had no `[env]` block. The deployed beta (`storyteller-quest`) therefore served playbills only, and the "spend check after enabling" in Verification had not been possible.
+
+### Decision
+
+1. **Default model.** The `poster_image_model` default in `config.py` and the `.env.example` line become `gpt-image-2.5-flare`. Quality (`medium`), size (`1024x1536`), format (`webp`, compression 82) and `OpenAIImageClient` are unchanged, because the model is only a parameter to the same call.
+2. **Price.** `DEFAULT_MODEL_PRICES` in `costs/model_pricing.py` gains `gpt-image-2.5-flare` at **$5.00 input / $30.00 output per million tokens**. These are OpenAI's published text-input and image-output rates, which match how `cost_log_entry` logs `prompt_tokens` / `completion_tokens`. The `gpt-image-1-mini` entry stays, so an operator can switch back with `POSTER_IMAGE_MODEL` and stay inside the budget. `price_for_model` strips a dated snapshot suffix, so a `…-2026-09-08` model id is priced too.
+3. **Painted illustrations are enabled on the deployed beta (D010).** On 2026-09-30, Max approved enabling painted illustrations on the deployed Fly beta as a proof of concept for a single user. `fly.toml` gains:
+
+   ```toml
+   [env]
+     POSTER_IMAGES_ENABLED = "true"
+   ```
+
+   `POSTER_DAILY_IMAGE_QUOTA` stays `3` and `POSTER_IMAGE_QUALITY` stays `medium`. The `config.py` default for `POSTER_IMAGES_ENABLED` stays `false`. Local runs, docker-compose, `fly.test.toml` and any other deployment stay off unless their operator sets the flag.
+
+The approval covers exactly this: the Fly beta, a single user, `gpt-image-2.5-flare` at `medium`, 3 paintings per rolling 24 h, and every existing check from §5 (`BetaPolicy.ensure_open`, ownership, one per story, quota, moderation).
+
+### Rationale
+
+Max made both calls. The reasoning below is the agent's engineering case.
+
+- **Better pictures for about the same or lower spend.** The model is a config value. Switching it touches one default, one price entry and the tests that pin them. No code path, prompt or guardrail changes.
+- **Enable before anyone else sees it.** Running the paid path for one user at the unchanged quota is the cheapest way to prove it end to end against the real provider. It checks the image parameters, the usage fields, the cost row and the budget before any tester sees the button.
+- **The spend is small and still bounded.** At 3 paintings a day for one user, even about $0.02 per image is about $0.06 a day (about $1.80 a month). That is far below D010's "materially increase spend" line of 10% of D004's $50 budget. Every painting still passes `BetaPolicy.ensure_open` and counts toward the $50 global budget through its `ai_call_logs` row.
+- **`fly.toml [env]`, not a Fly secret.** The flag is not secret. Keeping it in the tracked `fly.toml` makes Max's approval visible in review, lets a PR revert it, and keeps it across redeploys.
+
+### Alternatives considered
+
+- **Stay on `gpt-image-1-mini`.** This was rejected in session: its quality is lower, and its official per-image price is higher than the third-party estimate for Flare.
+- **Flip the `config.py` default to `true`.** This was rejected because it would turn painting on in every environment that has an OpenAI key, including local development and any future deployment. That breaks the "defaults to `false`" guardrail and moves the spend decision out of the deployment where Max made it.
+- **Set the flag with `fly secrets set`.** This was rejected because the approval would then live outside the repo, with no review trail and nothing in `fly.toml` to show that painting is on.
+
+### Consequences
+
+Positive consequences:
+- The painted path runs against the real provider, so the unverified estimates in this ADR can be replaced with measured cost.
+- Poster quality improves without new code.
+
+Tradeoffs / risks:
+- **The per-image cost of `gpt-image-2.5-flare` is an estimate.** OpenAI publishes only token rates, and the ≈$0.010 portrait figure comes from third-party calculators. If they are off, a painting could cost slightly more than mini's $0.015. The budget prices logged token usage, not this estimate, so the global budget stays correct either way. Only the "cheaper than mini" part of the rationale is at risk. The first real `PosterIllustrator` row settles it.
+- **Missing usage means the call costs $0 to the budget.** `calculate_call_cost_usd` treats a row without token usage as $0 (`missing_usage`). If `gpt-image-2.5-flare` returned no `usage`, paintings would not count toward the budget. The first real row must show token counts.
+- **Parameter support has not been exercised live.** OpenAI's image-generation guide lists `1024x1536`, the `low`–`high` quality levels, and JPEG/WebP output with compression for the 2.5 models. No real call was made before enabling, because the agent has no API key. If a parameter were rejected, painting would fail closed: `PosterFailedError` returns 503, no cost row is written and no image is stored.
+- **The approval does not travel with new testers.** The flag applies to every player on the deployed beta. Once more testers are invited (a D003 wave), each of them can paint up to 3 posters a day under this flag.
+- **Player text now reaches OpenAI's image endpoint in production.** This means the character's appearance and the tagline. It is covered by D007's existing "AI requests are sent to model providers" wording, as §8 of this ADR already notes.
+- **Rollback.** Set `POSTER_IMAGES_ENABLED = "false"` (or `POSTER_DAILY_IMAGE_QUOTA = "0"`) in `fly.toml` and deploy, or use the beta kill switch, which also stops gameplay.
+
+What future agents must preserve:
+- **The `POSTER_IMAGES_ENABLED` default in `config.py` stays `false`.** The deployed beta enables painting only through `fly.toml [env]`. Do not add the flag to `fly.test.toml`.
+- **The D010 approval is scoped** to a single-user proof of concept, `gpt-image-2.5-flare` at `medium` and 3 paintings a day. Each of the following needs a new Max decision:
+  - raising the quota;
+  - raising the quality;
+  - switching to a model with higher per-image cost;
+  - giving painting access to more beta players, by invite or by wave. Before that happens, ask Max whether painting stays on for them, or turn the flag off.
+- **Every model `POSTER_IMAGE_MODEL` can name must have a price** in `DEFAULT_MODEL_PRICES` or `MODEL_PRICING_JSON`. Keep the `gpt-image-1-mini` entry while switching back to it is an option.
+
+### Verification / tests
+
+- `tests/test_config.py::test_poster_defaults` asserts that the `poster_image_model` default is `gpt-image-2.5-flare` and that `poster_images_enabled` still defaults to `false`.
+- `tests/test_model_pricing.py::test_poster_image_model_price` prices the default model at $5 / $30 per million tokens (1M in plus 0.5M out gives $20.000000), and `unpriced` is false.
+- **Inspection:** `fly.toml` has `[env] POSTER_IMAGES_ENABLED = "true"`, and `fly.test.toml` does not have the flag.
+- **After deploy (inspection):** `GET https://storyteller-quest.fly.dev/api/config/public` reports `poster_images_enabled: true`.
+- **After the first painting (inspection):**
+  - The `PosterIllustrator` row in `ai_call_logs` names `gpt-image-2.5-flare` and has non-null `prompt_tokens` / `completion_tokens` and a non-zero cost.
+  - That cost matches the OpenAI usage dashboard.
+  - Record the measured per-image cost here, replacing the estimate in the cost risk.
+
 ## Related files
 
 - `interfaces/web/playbill.py`, `interfaces/web/library_rows.py`, `interfaces/web/schemas_library.py`
@@ -255,6 +333,8 @@ What future agents must preserve:
 - `db/tables.py` (`story_posters`), `db/repo_posters.py`, `db/repo_web_games.py`
 - `alembic/versions/a9b0c1d2e3f4_add_story_posters.py`
 - `config.py`, `.env.example`, `costs/model_pricing.py`
+- `fly.toml` (`[env] POSTER_IMAGES_ENABLED`, 2026-09-30 amendment), `fly.test.toml` (must stay without the flag)
+- `tests/test_model_pricing.py` (`test_poster_image_model_price`)
 - `safety/factory.py`
 - `tests/test_web_playbill.py`, `tests/test_web_poster.py`, `tests/test_web_poster_routes.py`, `tests/test_image_client.py`, `tests/db/test_repo_posters.py`, `tests/test_config.py`, `tests/test_web_auth.py`, `tests/_poster_helpers.py`
 - `docs/decisions/0019-player-ui-stage-visual-language.md`

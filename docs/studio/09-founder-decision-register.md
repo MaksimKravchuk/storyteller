@@ -423,3 +423,7 @@ Verification:
 
 - Release checklist requires Max approval before public release or tester expansion.
 - Agents stop and ask when an action would publish, invite, merge/deploy release-critical work, or materially increase spend. "Materially increase spend" means any single action projected to consume ≥10% of the active LLM budget defined in D004, or any change that raises the per-user or global quota ceiling.
+
+Spend approvals recorded under this gate:
+
+- **2026-09-30: painted story-poster illustrations on the deployed beta.** Max approved turning on paid poster illustrations on the Fly beta as a proof of concept for a single user: `fly.toml [env] POSTER_IMAGES_ENABLED = "true"`, model `gpt-image-2.5-flare` at `medium`, `POSTER_DAILY_IMAGE_QUOTA` unchanged at 3 per player per rolling 24 h. The `config.py` default stays `false`. Each of the following needs a new Max decision: raising the quota, raising the quality, switching to a model with higher per-image cost, or letting more beta players paint. See `docs/decisions/0020-story-library-posters.md` ("Amendment 2026-09-30").

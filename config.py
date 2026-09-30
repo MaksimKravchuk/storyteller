@@ -112,7 +112,7 @@ class Config(BaseSettings):
     # default and capped per player per rolling 24 hours. Price the image model via
     # ``MODEL_PRICING_JSON`` so it counts toward the beta budget.
     poster_images_enabled: bool = False
-    poster_image_model: str = "gpt-image-1-mini"
+    poster_image_model: str = "gpt-image-2.5-flare"
     poster_image_quality: str = "medium"
     poster_daily_image_quota: int = Field(default=3, ge=0)
 

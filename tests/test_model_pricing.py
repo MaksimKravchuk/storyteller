@@ -59,7 +59,7 @@ def test_poster_image_model_price() -> None:
     cfg = Config()
     result = calculate_call_cost_usd(cfg.poster_image_model, 1_000_000, 500_000, cfg)
 
-    assert result.cost_usd == Decimal("6.000000")
+    assert result.cost_usd == Decimal("20.000000")
     assert result.unpriced is False
 
 

@@ -207,11 +207,13 @@ class TestSearchProviderConfig:
 @allure.feature("Defaults & model config")
 class TestPosterConfig:
     @allure.story("Story poster config")
-    @allure.title("Poster illustrations default off, on gpt-image-1-mini at medium quality, three per player per day")
+    @allure.title(
+        "Poster illustrations default off, on gpt-image-2.5-flare at medium quality, three per player per day"
+    )
     def test_poster_defaults(self):
         fields = Config.model_fields
         assert fields["poster_images_enabled"].default is False
-        assert fields["poster_image_model"].default == "gpt-image-1-mini"
+        assert fields["poster_image_model"].default == "gpt-image-2.5-flare"
         assert fields["poster_image_quality"].default == "medium"
         assert fields["poster_daily_image_quota"].default == 3
 
