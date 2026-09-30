@@ -1,4 +1,4 @@
-# ADR-0018: Player web UI visual language — "the stage"
+# ADR-0019: Player web UI visual language — "the stage"
 
 Date: 2026-09-30
 Status: Proposed
