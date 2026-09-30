@@ -54,6 +54,15 @@ def test_exact_snapshot_override_wins_over_base_model() -> None:
     assert price_for_model("gpt-6-luna-2026-05-18", cfg) == ModelPrice(Decimal("9"), Decimal("9"))
 
 
+@allure.title("Poster image model is priced so illustrations count against the beta budget")
+def test_poster_image_model_price() -> None:
+    cfg = Config()
+    result = calculate_call_cost_usd(cfg.poster_image_model, 1_000_000, 500_000, cfg)
+
+    assert result.cost_usd == Decimal("6.000000")
+    assert result.unpriced is False
+
+
 @allure.title("Unknown model pricing is flagged without crashing")
 def test_unknown_model_is_flagged_without_crashing() -> None:
     result = calculate_call_cost_usd("unknown-model", 10, 20, Config())

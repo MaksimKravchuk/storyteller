@@ -6,8 +6,8 @@ from config import Config
 from db.repository import GameRepository
 from interfaces.web.schemas import GameSnapshot
 from interfaces.web.schemas_library import GameListResponse
+from interfaces.web.library_rows import game_summary_from_row
 from interfaces.web.service_helpers import (
-    game_summary_from_row,
     restore_engine,
     session_language,
     snapshot_from_engine,

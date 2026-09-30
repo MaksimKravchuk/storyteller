@@ -14,7 +14,7 @@ from loguru import logger
 from config import Config
 from db.repository import GameRepository
 from engine.session_ops import begin_session, resume_session
-from interfaces.web import beta_policy, player_gestures, quota_locks
+from interfaces.web import beta_policy, player_gestures, playbill, quota_locks
 from interfaces.web.errors import (
     GameNotFoundError,
     GameStartFailedError,
@@ -113,6 +113,7 @@ async def start_game_for_player(
             if is_provider_auth_error(exc):
                 raise GameStartUnavailableError("LLM provider credentials rejected game start") from exc
             raise GameStartFailedError("Game start failed at runtime") from exc
+        await playbill.save_playbill(repo, session_id, engine.assert_running()[0])
         await _mark_session_playing(repo, session_id, start_request.language)
         return snapshot_from_engine(engine, start_request.language)
 

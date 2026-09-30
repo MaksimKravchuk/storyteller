@@ -601,7 +601,14 @@ def test_list_games_returns_current_player_library(client: TestClient, mock_repo
         response = client.get("/api/games")
     assert response.status_code == _HTTP_OK
     assert response.json()["games"] == [
-        {"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2},
+        {
+            "game_id": "game-1",
+            "title": "Rome",
+            "setting": "Rome",
+            "turn_count": 2,
+            "playbill": None,
+            "has_poster_image": False,
+        },
     ]
     list_mock.assert_awaited_once_with(mock_repo, _FIXED_PLAYER_ID)
 
@@ -665,8 +672,8 @@ def test_list_games_uses_account_id_for_ownership(
     response = test_client.get("/api/games")
 
     assert response.status_code == _HTTP_OK
-    assert response.json()["games"] == [
-        {"game_id": "game-1", "title": "Rome", "setting": "Rome", "turn_count": 2},
+    assert [(game["game_id"], game["title"], game["turn_count"]) for game in response.json()["games"]] == [
+        ("game-1", "Rome", 2),
     ]
 
 
@@ -1314,6 +1321,8 @@ async def test_start_game_creates_fresh_session_each_call() -> None:
     game_state = MagicMock()
     game_state.uuid = "game-1"
     game_state.setting.name = "Rome"
+    game_state.setting.time_period = "1st century BC"
+    game_state.setting.region = "Italy"
     game_state.conversation_log = []
     game_state.turn_count = 0
     game_state.scene_number = None
@@ -1372,6 +1381,8 @@ async def test_start_game_commits_before_returning_snapshot() -> None:
     game_state = MagicMock()
     game_state.uuid = "game-1"
     game_state.setting.name = "Rome"
+    game_state.setting.time_period = "1st century BC"
+    game_state.setting.region = "Italy"
     game_state.conversation_log = []
     game_state.turn_count = 0
     game_state.scene_number = None

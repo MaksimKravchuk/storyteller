@@ -16,7 +16,6 @@ from engine.game_engine import GameEngine
 from interfaces.web import character, world
 from interfaces.web.errors import GameNotFoundError
 from interfaces.web.schemas import CharacterCreationInput, GameSnapshot
-from interfaces.web.schemas_library import GameSummary
 from interfaces.web.transcript import build_transcript, player_visible_turn_count
 
 _DEFAULT_LANGUAGE = "English"
@@ -62,22 +61,6 @@ async def owned_session_context(repo: GameRepository, player_id: str, game_id: s
     if session_row is None:
         raise GameNotFoundError(player_id)
     return str(session_row["id"]), session_language(session_row)
-
-
-def _turn_count(row: Mapping[str, object]) -> int:
-    raw_value = row.get("turn_count")
-    return int(raw_value) if isinstance(raw_value, int) else 0
-
-
-def game_summary_from_row(row: Mapping[str, object]) -> GameSummary:
-    """Build a compact library summary from a joined session/game row."""
-    setting = str(row.get("setting") or "Untitled setting")
-    return GameSummary(
-        game_id=str(row["game_id"]),
-        title=str(row.get("title") or setting),
-        setting=setting,
-        turn_count=_turn_count(row),
-    )
 
 
 async def restore_engine(

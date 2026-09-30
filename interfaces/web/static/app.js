@@ -74,6 +74,10 @@
   let currentGameId = null;
   let supabaseClient = null;
   let authRequired = false;
+  // Whether players may ask for a painted poster (ADR-0020, operator flag).
+  let postersEnabled = false;
+  // Object URLs of painted posters on screen; revoked when the library re-renders.
+  let posterUrls = [];
   // Snapshot of the last character payload, used to detect newly-arrived
   // items so they can briefly glow gold on the turn they appear.
   let prevCharacter = null;
@@ -471,40 +475,170 @@
     setScreen("library");
   }
 
-  function renderStoryRow(story) {
-    const li = document.createElement("li");
-    li.className = "story-row";
+  // ── Library playbills ──
+  // Every story with a playbill gets a poster: a drawn motif for its place
+  // and time of day, replaced by the painted illustration once one exists.
+  function posterArt(playbill) {
+    const art = document.createElement("div");
+    art.className = "poster-art";
+    art.dataset.daypart = playbill.daypart;
+    art.innerHTML =
+      '<svg class="poster-curtains" viewBox="0 0 120 180" preserveAspectRatio="none" aria-hidden="true">' +
+      '<path d="M0 0h120v9H0z"/><path d="M0 0c9 38 21 66 46 82C20 81 8 70 0 58z"/>' +
+      '<path d="M120 0c-9 38-21 66-46 82 26-1 38-12 46-24z"/></svg>';
+    const motif = placeIcon(playbill.place_type);
+    motif.className = "poster-motif";
+    const sky = document.createElement("span");
+    sky.className = "poster-daypart";
+    sky.innerHTML = DAYPART_ICONS[playbill.daypart] || "";
+    art.append(motif, sky);
+    return art;
+  }
+
+  // Posters are behind auth, so fetch the bytes rather than pointing <img> at the URL.
+  async function loadPosterImage(frame, gameId) {
+    try {
+      const response = await apiFetch("/api/games/" + encodeURIComponent(gameId) + "/poster");
+      if (!response.ok) return;
+      const url = URL.createObjectURL(await response.blob());
+      posterUrls.push(url);
+      const img = document.createElement("img");
+      img.className = "poster-img";
+      img.alt = "";
+      img.src = url;
+      frame.appendChild(img);
+    } catch {
+      // The drawn playbill stays as the poster.
+    }
+  }
+
+  function renderPoster(story) {
+    const frame = document.createElement("div");
+    frame.className = "poster";
+    frame.dataset.posterFor = story.game_id;
+    frame.append(posterArt(story.playbill));
+    if (story.has_poster_image) loadPosterImage(frame, story.game_id);
+    return frame;
+  }
+
+  // "Starring <hero> · with <cast>" — cast labels are already name-gated.
+  function renderBilling(playbill) {
+    const line = document.createElement("p");
+    line.className = "story-cast";
+    if (playbill.hero) {
+      const hero = document.createElement("span");
+      hero.className = "cast-hero";
+      hero.textContent = playbill.hero;
+      line.append("Starring ", hero);
+    }
+    playbill.cast.forEach((member, index) => {
+      line.append(index === 0 ? (line.childNodes.length ? " · with " : "With ") : ", ");
+      const name = document.createElement("span");
+      name.className = member.known ? "cast-known" : "cast-stranger";
+      name.textContent = member.label;
+      line.append(name);
+    });
+    return line.childNodes.length ? line : null;
+  }
+
+  function renderStoryMeta(story) {
     const meta = document.createElement("div");
     meta.className = "story-meta";
     const title = document.createElement("strong");
     title.className = "story-title";
     title.textContent = story.title || story.setting || "Untitled story";
+    meta.append(title);
+    const playbill = story.playbill;
+    if (playbill && playbill.tagline) {
+      const tagline = document.createElement("p");
+      tagline.className = "story-tagline";
+      tagline.textContent = playbill.tagline;
+      meta.append(tagline);
+    }
+    const billing = playbill ? renderBilling(playbill) : null;
+    if (billing) meta.append(billing);
     const setting = document.createElement("span");
     setting.className = "story-setting";
     setting.textContent = story.setting || "Unknown setting";
     const turns = document.createElement("span");
     turns.className = "story-turns";
     turns.textContent = story.turn_count + (story.turn_count === 1 ? " turn" : " turns");
-    meta.append(title, setting, turns);
+    meta.append(setting, turns);
+    return meta;
+  }
+
+  function actionButton(className, dataKey, gameId, label) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.dataset[dataKey] = gameId;
+    button.textContent = label;
+    return button;
+  }
+
+  function renderStoryActions(story) {
     const actions = document.createElement("div");
     actions.className = "story-actions";
-    const continueBtn = document.createElement("button");
-    continueBtn.type = "button";
-    continueBtn.className = "btn-primary";
-    continueBtn.dataset.continueGame = story.game_id;
-    continueBtn.textContent = "Continue";
-    const archiveBtn = document.createElement("button");
-    archiveBtn.type = "button";
-    archiveBtn.className = "btn-quiet";
-    archiveBtn.dataset.archiveGame = story.game_id;
-    archiveBtn.textContent = "Archive";
-    actions.append(continueBtn, archiveBtn);
-    li.append(meta, actions);
+    actions.append(actionButton("btn-primary", "continueGame", story.game_id, "Continue"));
+    if (postersEnabled && story.playbill && !story.has_poster_image) {
+      actions.append(actionButton("btn-secondary", "paintPoster", story.game_id, "Paint poster"));
+    }
+    actions.append(actionButton("btn-quiet", "archiveGame", story.game_id, "Archive"));
+    return actions;
+  }
+
+  function renderStoryRow(story) {
+    const li = document.createElement("li");
+    li.className = "story-row" + (story.playbill ? " has-playbill" : "");
+    if (story.playbill) li.append(renderPoster(story));
+    li.append(renderStoryMeta(story), renderStoryActions(story));
     return li;
+  }
+
+  // Poster errors show on the card they belong to, not at the foot of the list.
+  function setPosterStatus(row, text) {
+    let note = row.querySelector(".poster-status");
+    if (!note) {
+      note = document.createElement("p");
+      row.querySelector(".story-meta").append(note);
+    }
+    setStatus(note, text, "poster-status");
+  }
+
+  async function paintPoster(button) {
+    const gameId = button.dataset.paintPoster || "";
+    const row = button.closest(".story-row");
+    const frame = row.querySelector(".poster");
+    // Archiving mid-paint would hide the paid illustration with its story.
+    const archiveBtn = row.querySelector("button[data-archive-game]");
+    button.disabled = true;
+    archiveBtn.disabled = true;
+    button.textContent = "Painting…";
+    frame.classList.add("is-painting");
+    setPosterStatus(row, "");
+    try {
+      const response = await apiFetch("/api/games/" + encodeURIComponent(gameId) + "/poster", { method: "POST" });
+      if (!response.ok) {
+        throw new Error(await parseError(response));
+      }
+      setOfflineNotice(false);
+      button.remove();
+      await loadPosterImage(frame, gameId);
+    } catch (err) {
+      if (isNetworkError(err)) setOfflineNotice(true);
+      button.disabled = false;
+      button.textContent = "Paint poster";
+      setPosterStatus(row, "Could not paint the poster: " + err.message);
+    } finally {
+      frame.classList.remove("is-painting");
+      archiveBtn.disabled = false;
+    }
   }
 
   function renderStories(games) {
     if (!els.storiesList) return;
+    posterUrls.forEach((url) => URL.revokeObjectURL(url));
+    posterUrls = [];
     els.storiesList.innerHTML = "";
     if (!games || games.length === 0) {
       showSettingPanel();
@@ -583,6 +717,7 @@
     const response = await fetch("/api/config/public");
     if (!response.ok) return;
     const cfg = await response.json();
+    postersEnabled = Boolean(cfg.poster_images_enabled);
     authRequired = Boolean(cfg.beta_auth_required);
     if (!authRequired) return;
     if (els.authPanel) show(els.authPanel);
@@ -920,6 +1055,11 @@
     const continueBtn = event.target.closest("button[data-continue-game]");
     if (continueBtn) {
       continueStory(continueBtn.dataset.continueGame || "");
+      return;
+    }
+    const paintBtn = event.target.closest("button[data-paint-poster]");
+    if (paintBtn) {
+      paintPoster(paintBtn);
       return;
     }
     const archiveBtn = event.target.closest("button[data-archive-game]");
