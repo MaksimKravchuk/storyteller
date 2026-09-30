@@ -51,6 +51,14 @@ def test_tagline_is_first_sentence_without_markdown() -> None:
 
 
 @allure.story(_STORY)
+@allure.title("tagline_from_opening ends a Japanese first sentence at its full-width terminator")
+def test_tagline_japanese_first_sentence() -> None:
+    opening = "朝霧がフォルムの柱にまとわりつく。商人が手を振る！誰かが見ている？"
+
+    assert playbill.tagline_from_opening(opening) == "朝霧がフォルムの柱にまとわりつく。"
+
+
+@allure.story(_STORY)
 @allure.title("tagline_from_opening clips a long first sentence at a word boundary")
 def test_tagline_clips_long_sentence() -> None:
     tagline = playbill.tagline_from_opening("word " * 60)

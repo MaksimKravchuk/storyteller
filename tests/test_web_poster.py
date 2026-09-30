@@ -69,7 +69,7 @@ async def test_illustrate_stores_logs_and_commits() -> None:
     assert logged_rows[0]["agent_name"] == "PosterIllustrator"
     assert (logged_rows[0]["prompt_tokens"], logged_rows[0]["completion_tokens"]) == (120, 4160)
     assert logged_rows[0]["model"] == "gpt-image-1-mini"
-    repo.commit.assert_awaited_once_with()
+    assert repo.commit.await_count == 2
     assert "Forum Romanum" in client.generate.await_args.args[0]
 
 
@@ -184,13 +184,28 @@ async def test_illustrate_provider_failure() -> None:
 
 @pytest.mark.asyncio
 @allure.story(_STORY)
-@allure.title("illustrate_poster never overwrites an illustration another request stored first")
-async def test_illustrate_lost_race_keeps_first_image() -> None:
+@allure.title("illustrate_poster keeps the first illustration but still logs the cost of an unstored one")
+async def test_illustrate_unstored_image_is_still_cost_logged() -> None:
     repo = fake_repo()
     repo.web_games.posters.save_image = AsyncMock(return_value=False)
 
     with pytest.raises(poster_errors.PosterExistsError):
         await illustrate(repo, fake_cfg(), fake_painter())
 
-    repo.ai_logs.save.assert_not_awaited()
-    repo.commit.assert_not_awaited()
+    log_call = repo.ai_logs.save.await_args
+    assert log_call.args[0][0]["agent_name"] == "PosterIllustrator"
+    repo.commit.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+@allure.story(_STORY)
+@allure.title("illustrate_poster commits the paid image's cost before a storage failure can lose it")
+async def test_illustrate_commits_cost_before_storing() -> None:
+    repo = fake_repo()
+    repo.web_games.posters.save_image = AsyncMock(side_effect=RuntimeError("db down"))
+
+    with pytest.raises(RuntimeError, match="db down"):
+        await illustrate(repo, fake_cfg(), fake_painter())
+
+    repo.ai_logs.save.assert_awaited_once()
+    repo.commit.assert_awaited_once_with()

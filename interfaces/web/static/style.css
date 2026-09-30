@@ -315,6 +315,7 @@ h2 {
 
 .btn-primary:disabled,
 .btn-secondary:disabled,
+.btn-quiet:disabled,
 .nav-btn:disabled {
   opacity: 0.45;
   cursor: wait;

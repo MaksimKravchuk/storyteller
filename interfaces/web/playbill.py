@@ -20,7 +20,9 @@ _TAGLINE_MAX_CHARS = 160
 _CAST_LIMIT = 4
 _GENERIC_PLACE_TYPE = "generic"
 _MARKUP_RE = re.compile(r"[*_`]")
-_SENTENCE_END_RE = re.compile(r"(?<=[.!?…])\s")
+# Latin-script sentences end at punctuation plus a space; Japanese full-width
+# terminators end a sentence with no space after them.
+_SENTENCE_END_RE = re.compile(r"(?<=[.!?…])\s|(?<=[。！？])")
 _TRAILING_PUNCTUATION = ",;:—– "
 # The engine's name for a player who left the name blank; not billed as the hero.
 _ANONYMOUS_HERO = PlayerState.model_fields["name"].default

@@ -33,7 +33,7 @@ Three variants were put to Max: typographic playbills only, a painted poster for
 
 | Field | Source |
 | --- | --- |
-| `tagline` | The first sentence of the opening narration (the first `conversation_log` response). Markdown is stripped, whitespace collapsed, and the result is clipped at a word boundary to 160 chars with `…`. |
+| `tagline` | The first sentence of the opening narration (the first `conversation_log` response). A sentence ends at `.`, `!`, `?` or `…` followed by a space, or at the Japanese full-width `。`, `！` or `？`. Markdown is stripped, whitespace collapsed, and the result is clipped at a word boundary to 160 chars with `…`. |
 | `setting`, `era`, `region` | `Setting.name`, `Setting.time_period`, `Setting.region` |
 | `hero`, `hero_look` | `player.name`, `player.appearance` |
 | `place`, `place_type` | `WorldView.map.current` name and `location_type` (`None` / `"generic"` with no current location) |
@@ -83,7 +83,9 @@ When `has_poster_image` is true, the client fetches `GET /api/games/{id}/poster`
 4. A playbill exists and has no image yet (one image per story).
 5. The rolling 24-hour quota: `PosterStore.painted_since` counts this player's `story_posters` rows whose `image_created_at` falls in the window (joined through `sessions.web_player_id`). The call is refused at `POSTER_DAILY_IMAGE_QUOTA`.
 6. Moderation: the prompt goes through `safety.factory.build_moderator(cfg)` as `ModerationDirection.INPUT`, the same moderator and thresholds as the ADR-0006 content-safety pipeline. The check is skipped when `SAFETY_ENABLED=false`. A flag refuses with the moderator's refusal message.
-7. Paint, store the image, write the cost row, and commit.
+7. Paint, then commit the cost row before storing the image. The call is paid for once it returns, so its cost reaches the budget even if the store is refused or fails. Then store the image and commit.
+
+The library disables a story's Archive button while its poster is being painted. Archiving mid-paint would otherwise hide the paid image along with the story. An image that lands on a story archived from another tab is still stored, and it counts toward the player's quota like any other painting.
 
 `GET /api/games/{game_id}/poster` serves the bytes with the stored MIME type and `Cache-Control: private, max-age=31536000, immutable` (an illustration is written once and never replaced). It is owner-scoped in one joined query, `PosterStore.get_image_for_player(player_id, game_id)`, so another player's story, an archived story and a story without an image all return the same 404.
 
@@ -192,7 +194,7 @@ Tradeoffs / risks:
 - **Unpriced models are invisible to the budget.** `calculate_call_cost_usd` treats a model without a price as $0. Pointing `POSTER_IMAGE_MODEL` at a model not in the price table without a `MODEL_PRICING_JSON` entry lets posters spend outside the D004 budget check.
 - **The prompt carries player-authored text to OpenAI** (the character's appearance, and the tagline, which may contain a name the narration used). This is covered by the existing D007 / onboarding wording that AI requests go to model providers. The prompt is also retained in `ai_call_logs.messages`, like every other logged model input.
 - **Moderation depends on configuration.** With `SAFETY_ENABLED=false` the prompt is not moderated. With no OpenAI key there is nothing to paint (`posters_available` is false), so the heuristic-only case does not arise.
-- **"One per story" never overwrites, but a race can still pay twice.** `save_image` is a conditional `UPDATE … WHERE image IS NULL`, so the first stored image wins and a later one is refused (`PosterExistsError`, not logged or committed). The pre-call check runs under a per-process lock, so two workers could both pay for the same story before one of them loses the write. This is the same single-process limitation the turn quotas already accept.
+- **"One per story" never overwrites, but a race can still pay twice.** `save_image` is a conditional `UPDATE … WHERE image IS NULL`, so the first stored image wins and a later one is refused (`PosterExistsError`). The losing call's cost row is already committed by then. The pre-call check runs under a per-process lock, so two workers could both pay for the same story before one of them loses the write. This is the same single-process limitation the turn quotas already accept.
 - **Database growth.** Each WebP (roughly a few hundred KB at 1024×1536, q82; estimate) lives in Postgres and in its backups.
 - **The playbill is frozen at the prologue.** The cast is whoever was on stage at the start, usually strangers, and the place and daypart are those of the opening scene.
 - **English chrome remains**, as under ADR-0018: "Starring", "with", "Paint poster" and the refusal messages.

@@ -18,6 +18,7 @@ from engine.moderation import moderate_input
 from interfaces.web import beta_policy, poster_art, poster_errors, quota_locks
 from interfaces.web.schemas_library import Playbill
 from interfaces.web.service_helpers import owned_session_context
+from llm.image_client import GeneratedImage
 from safety.factory import build_moderator
 
 _QUOTA_WINDOW = timedelta(days=1)
@@ -52,16 +53,28 @@ async def _prepare(repo: GameRepository, cfg: Config, player_id: str, game_id: s
     return session_id, prompt
 
 
+async def _commit_cost(
+    repo: GameRepository,
+    player_id: str,
+    session_id: str,
+    prompt: str,
+    image: GeneratedImage,
+) -> None:
+    """Commit a paid image's cost row before storing it can refuse or fail."""
+    cost_row = poster_art.cost_log_entry(session_id, prompt, image)
+    await repo.ai_logs.save([cost_row], user_id=player_id)
+    await repo.commit()
+
+
 async def illustrate_poster(repo: GameRepository, cfg: Config, player_id: str, game_id: str) -> None:
-    """Generate, store, and cost-log one illustration for an owned story."""
+    """Generate, cost-log, and store one illustration for an owned story."""
     if not poster_art.posters_available(cfg):
         raise poster_errors.PosterUnavailableError()
     async with quota_locks.player_lock(_POSTER_LOCK_PREFIX + player_id):
         session_id, prompt = await _prepare(repo, cfg, player_id, game_id)
         image = await poster_art.paint(poster_art.default_image_client(cfg), prompt)
+        await _commit_cost(repo, player_id, session_id, prompt, image)
         stored = PosterImage(image_bytes=image.image_bytes, mime=image.mime)
         if not await repo.web_games.posters.save_image(session_id, stored):
             raise poster_errors.PosterExistsError()
-        cost_row = poster_art.cost_log_entry(session_id, prompt, image)
-        await repo.ai_logs.save([cost_row], user_id=player_id)
         await repo.commit()

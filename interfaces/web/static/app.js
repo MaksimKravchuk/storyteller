@@ -609,7 +609,10 @@
     const gameId = button.dataset.paintPoster || "";
     const row = button.closest(".story-row");
     const frame = row.querySelector(".poster");
+    // Archiving mid-paint would hide the paid illustration with its story.
+    const archiveBtn = row.querySelector("button[data-archive-game]");
     button.disabled = true;
+    archiveBtn.disabled = true;
     button.textContent = "Painting…";
     frame.classList.add("is-painting");
     setPosterStatus(row, "");
@@ -628,6 +631,7 @@
       setPosterStatus(row, "Could not paint the poster: " + err.message);
     } finally {
       frame.classList.remove("is-painting");
+      archiveBtn.disabled = false;
     }
   }
 
