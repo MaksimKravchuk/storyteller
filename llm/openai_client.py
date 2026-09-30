@@ -32,6 +32,10 @@ _RETRY_BASE_DELAY = 2.0
 # Completions rejects ``temperature`` and function calling once reasoning is
 # on, and every performer relies on both.
 _REASONING_NONE_MODEL_PREFIXES = ("gpt-6-luna",)
+# Models that reject ``none`` and, with reasoning on, reject ``temperature``.
+# ``low`` is the closest they get to the no-reasoning calls performers and
+# judges were written for (ADR-0019).
+_REASONING_LOW_MODEL_PREFIXES = ("gpt-6-astra", "gpt-6.1-sol")
 
 
 async def _call_with_retry(
@@ -182,9 +186,12 @@ class OpenAIClient(BaseLLMClient):
         kwargs: dict[str, Any] = {
             "model": self.model,
             "messages": self._format_messages(messages, system_prompt),
-            "temperature": self.temperature if temperature is None else temperature,
             "max_completion_tokens": self.max_tokens if max_tokens is None else max_tokens,
         }
+        if self.model.startswith(_REASONING_LOW_MODEL_PREFIXES):
+            kwargs["reasoning_effort"] = "low"
+        else:
+            kwargs["temperature"] = self.temperature if temperature is None else temperature
         if self.model.startswith(_REASONING_NONE_MODEL_PREFIXES):
             kwargs["reasoning_effort"] = "none"
         wire_response_format = _build_response_format(output_format)

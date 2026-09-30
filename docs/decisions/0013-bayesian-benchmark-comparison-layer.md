@@ -1,7 +1,7 @@
 # ADR-0013: Bayesian benchmark-comparison layer + wider judge panel + deterministic landmark conversion
 
 Date: 2026-06-20
-Status: Accepted
+Status: Accepted (roster composition in Decision 1 superseded by ADR-0019; the odd cap and everything else stand)
 Decision owner: Max
 Related: ADR-0002 (`docs/decisions/0002-benchmark-auto-compare-and-ratchet.md`), ADR-0003 (`docs/decisions/0003-engine-temperature-pinning-in-benchmark-mode.md`), ADR-0009 (`docs/decisions/0009-ci-benchmark-version-comparison-comment.md`), `benchmarks/harness/bayes/`, `benchmarks/cli/_bayes_report.py`, `benchmarks/cli/_bayes_format.py`, `.github/workflows/benchmark-on-pr.yml`, `benchmarks/scenarios/scene_builder_re_entry_consistency/elements.py`
 

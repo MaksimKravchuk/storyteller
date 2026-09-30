@@ -20,7 +20,10 @@ from defaults.models import ModelConfig
 from llm.factory import create_llm_client
 from llm.message import Message, OutputFormat, Role
 
-_JUDGE_MAX_TOKENS = 400
+# The verdict JSON itself is short, but reasoning-only judges (GPT-6 Astra /
+# GPT-6.1 Sol, Claude Opus 5.5 / Sonnet 5.5) spend output tokens on thinking
+# before it; a tight cap truncates them into empty bodies (ADR-0019).
+_JUDGE_MAX_TOKENS = 4096
 _JUDGE_TEMPERATURE: float = float(0)
 _JSON_REMINDER = "\n\nReply in valid JSON only."
 

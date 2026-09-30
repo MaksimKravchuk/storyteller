@@ -22,13 +22,15 @@ class ModelConfig:
 class AI_MODELS:
     """Registry of available model configurations."""
 
+    gpt6_astra = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-6-astra")
+    gpt6_1_sol = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-6.1-sol")
     gpt6_luna = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-6-luna")
     gpt5_4 = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4")
     gpt5_4_mini = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4-mini")
     gpt5_4_nano = ModelConfig(provider=PROVIDER_OPENAI, model_id="gpt-5.4-nano")
-    claude_opus = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-opus-4-6")
-    claude_sonnet = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-sonnet-4-6")
-    claude_haiku = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-haiku-4-5-20251001")
+    claude_opus = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-opus-5-5")
+    claude_sonnet = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-sonnet-5-5")
+    claude_haiku = ModelConfig(provider=PROVIDER_ANTHROPIC, model_id="claude-haiku-4-5")
     # OpenRouter-routed models (cheaper alternatives, require OPENROUTER_API_KEY)
     deepseek_chat = ModelConfig(provider=PROVIDER_OPENROUTER, model_id="deepseek/deepseek-chat-v3.1")
     deepseek_v4_pro = ModelConfig(provider=PROVIDER_OPENROUTER, model_id="deepseek/deepseek-v4-pro")

@@ -95,6 +95,18 @@ class TestPanelOverrides:
         assert _candidate_matches_override(opus, opus.config.model_id)
         assert _candidate_matches_override(opus, opus.config.model_id.upper())
 
+    @allure.story("Default roster")
+    @allure.title("The default judge roster uses the current Claude and GPT model generation")
+    def test_default_roster_uses_current_models(self):
+        assert [candidate.config.model_id for candidate in DEFAULT_ROSTER] == [
+            "claude-opus-5-5",
+            "claude-sonnet-5-5",
+            "claude-haiku-4-5",
+            "gpt-6-astra",
+            "gpt-6.1-sol",
+            "gpt-6-luna",
+        ]
+
     @allure.story("Judge overrides")
     @allure.title("_resolve_roster returns the default roster when overrides are empty")
     def test_resolve_roster_default_when_no_overrides(self):
@@ -104,10 +116,10 @@ class TestPanelOverrides:
     @allure.story("Judge overrides")
     @allure.title("_resolve_roster preserves user-supplied override order and returns only the requested candidates")
     def test_resolve_roster_with_overrides_preserves_order(self):
-        resolved = _resolve_roster(["gpt-5.4", "opus"])
+        resolved = _resolve_roster(["gpt-6-astra", "opus"])
 
         assert len(resolved) == 2
-        assert resolved[0].alias == "gpt-5.4"
+        assert resolved[0].alias == "gpt-6-astra"
         assert resolved[1].alias == "opus"
 
     @allure.story("Judge overrides")
@@ -121,9 +133,9 @@ class TestPanelOverrides:
     def test_overrides_still_key_filtered(self):
         assembly = assemble_panel(
             _cfg_with_keys(openai="sk-x", anthropic=None),
-            overrides=["opus", "gpt-5.4"],
+            overrides=["opus", "gpt-6-astra"],
         )
 
         assert len(assembly.members) == 1
-        assert assembly.members[0].model_id == "gpt-5.4"
+        assert assembly.members[0].model_id == "gpt-6-astra"
         assert any(skip.alias == "opus" for skip in assembly.skipped)
