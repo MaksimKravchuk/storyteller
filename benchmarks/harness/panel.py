@@ -24,9 +24,9 @@ DEFAULT_ROSTER: tuple[RosterCandidate, ...] = (
     RosterCandidate(alias="opus", config=AI_MODELS.claude_opus),
     RosterCandidate(alias="sonnet", config=AI_MODELS.claude_sonnet),
     RosterCandidate(alias="haiku", config=AI_MODELS.claude_haiku),
-    RosterCandidate(alias="gpt-5.4", config=AI_MODELS.gpt5_4),
-    RosterCandidate(alias="gpt-5.4-mini", config=AI_MODELS.gpt5_4_mini),
-    RosterCandidate(alias="gpt-5.4-nano", config=AI_MODELS.gpt5_4_nano),
+    RosterCandidate(alias="gpt-6-astra", config=AI_MODELS.gpt6_astra),
+    RosterCandidate(alias="gpt-6.1-sol", config=AI_MODELS.gpt6_1_sol),
+    RosterCandidate(alias="gpt-6-luna", config=AI_MODELS.gpt6_luna),
 )
 
 

@@ -48,22 +48,28 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          BODY=$(cat calibration_output.txt)
+          # Build the body in a file: a multi-line --body string would start
+          # lines at column 1 inside this block scalar, which is invalid YAML.
+          {
+            echo "## Noise-floor drift alert"
+            echo
+            echo "Calibration detected ≥50% stdev drift in at least one scenario."
+            echo
+            echo '```'
+            cat calibration_output.txt
+            echo '```'
+            echo
+            echo 'Re-run `benchmarks calibrate` locally and investigate before merging new benchmarks.'
+          } > issue_body.md
           gh issue create \
             --title "noise floor drift detected ($(date -u '+%Y-%m-%d'))" \
-            --body "## Noise-floor drift alert
-
-Calibration detected ≥50% stdev drift in at least one scenario.
-
-\`\`\`
-${BODY}
-\`\`\`
-
-Re-run \`benchmarks calibrate\` locally and investigate before merging new benchmarks." \
+            --body-file issue_body.md \
             --label "benchmarks"
 
       - name: Archive calibration JSON
-        if: steps.calibrate.outputs.exit_code == '0'
+        # Upload on drift too: after a deliberate engine or judge change the new
+        # noise floor is exactly what the operator needs to re-pin (ADR-0019).
+        if: always() && steps.calibrate.outputs.exit_code != ''
         uses: actions/upload-artifact@v4
         with:
           name: calibration-${{ github.run_id }}

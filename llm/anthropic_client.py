@@ -16,6 +16,11 @@ from llm.message import LLMResponse, Message, Role, Tool, ToolCall
 _RETRY_MAX_ATTEMPTS = 3
 _RETRY_BASE_DELAY = 2.0
 
+# Claude models whose thinking cannot be switched off and which reject
+# ``temperature``. ``low`` effort is the closest they get to the no-thinking
+# calls performers and judges were written for (ADR-0019).
+_ALWAYS_THINKING_MODEL_PREFIXES = ("claude-opus-5-5", "claude-sonnet-5-5")
+
 # Centralised Anthropic payload keys so string literals don't repeat
 # through the translation helpers (flake8 WPS226 caps re-use at 3).
 _KEY_TYPE = "type"
@@ -255,9 +260,12 @@ class AnthropicClient(BaseLLMClient):
         kwargs: dict[str, Any] = {
             "model": self.model,
             "messages": self._format_messages(messages),
-            "temperature": self.temperature if temperature is None else temperature,
             "max_tokens": self.max_tokens if max_tokens is None else max_tokens,
         }
+        if self.model.startswith(_ALWAYS_THINKING_MODEL_PREFIXES):
+            kwargs["output_config"] = {"effort": "low"}
+        else:
+            kwargs["temperature"] = self.temperature if temperature is None else temperature
         if system_prompt:
             kwargs["system"] = system_prompt
         if output_format is not None and output_format.tools:

@@ -67,3 +67,16 @@ async def test_default_role_model_pins_reasoning_none_on_wire(role_field: str) -
         client = create_llm_client(model_config, api_key="k")
         await client.send_message(messages=[_user_msg()])
     assert create_mock.call_args.kwargs["reasoning_effort"] == "none"
+
+
+@allure.title("Reasoning-only GPT-6 models get reasoning_effort=low and no temperature, which they reject")
+@pytest.mark.parametrize("model", ["gpt-6-astra", "gpt-6.1-sol"])
+@pytest.mark.asyncio
+async def test_reasoning_only_models_send_low_effort_without_temperature(model: str) -> None:
+    sdk_class, create_mock = _install_sdk_mock()
+    with patch(_OPENAI_CTOR, sdk_class):
+        client = OpenAIClient(model=model, api_key="k")
+        await client.send_message(messages=[_user_msg()], temperature=0.2)
+    kwargs = create_mock.call_args.kwargs
+    assert kwargs["reasoning_effort"] == "low"
+    assert "temperature" not in kwargs
