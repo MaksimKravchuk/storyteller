@@ -1016,6 +1016,38 @@ main {
 
 #opening + .status { text-align: center; max-width: 34em; margin-left: auto; margin-right: auto; }
 
+/* While the curtain is up it is the whole screen: the hero repeats "Setting
+ * the stage" and the info line repeats the acts, so both step aside (the
+ * line stays for screen readers). Errors only show once the curtain drops. */
+#setting-panel:has(#opening:not([hidden])) .setting-hero { display: none; }
+
+#opening:not([hidden]) + .status.info {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Wide screens: acts and tips side by side so the curtain fits a 720px-tall
+ * HD screen without scrolling. */
+@media (min-width: 960px) {
+  .opening { padding-top: 1.5rem; }
+
+  .opening-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+  }
+
+  .opening-tips {
+    width: 22em;
+    margin: 0;
+  }
+}
+
 /* ============================================================
  * Play screen — Story / Character / Map.
  * Mobile-first (ADR-0006): one pane at a time, bottom tab bar.
