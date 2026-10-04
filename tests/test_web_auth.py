@@ -355,7 +355,7 @@ def test_public_supabase_key_supports_modern_legacy_and_fly_secret_names(
 
 
 @allure.story("Static shell")
-@allure.title("Static UI includes Supabase login/logout controls and auth fetch wiring")
+@allure.title("Static UI includes one-step email-code login, logout, and auth fetch wiring")
 def test_static_shell_includes_auth_controls(client: TestClient) -> None:
     index_response = client.get("/")
     script_response = client.get("/static/app.js")
@@ -365,12 +365,13 @@ def test_static_shell_includes_auth_controls(client: TestClient) -> None:
     assert 'id="auth-panel"' in index_response.text
     assert 'id="login-email"' in index_response.text
     assert 'id="login-btn"' in index_response.text
-    assert 'id="signup-btn"' in index_response.text
+    assert 'id="signup-btn"' not in index_response.text
+    assert 'id="login-code"' in index_response.text
+    assert 'id="verify-btn"' in index_response.text
     assert 'id="logout-btn"' in index_response.text
-    assert "Log in" in index_response.text
-    assert "Sign up" in index_response.text
+    assert "Send code" in index_response.text
     assert "supabase-js" in index_response.text
-    assert "sendMagicLink(false)" in script_response.text
-    assert "sendMagicLink(true)" in script_response.text
+    assert "shouldCreateUser: true" in script_response.text
+    assert "auth.verifyOtp" in script_response.text
     assert "cfg.supabase_publishable_key" in script_response.text
     assert "Authorization" in script_response.text

@@ -11,7 +11,11 @@
     authPanel: $("auth-panel"),
     loginForm: $("login-form"),
     loginEmail: $("login-email"),
-    signupBtn: $("signup-btn"),
+    loginBtn: $("login-btn"),
+    codeForm: $("code-form"),
+    loginCode: $("login-code"),
+    verifyBtn: $("verify-btn"),
+    changeEmailBtn: $("change-email-btn"),
     logoutBtn: $("logout-btn"),
     authStatus: $("auth-status"),
     settingPanel: $("setting-panel"),
@@ -710,6 +714,7 @@
   function setSignedIn(signedIn) {
     if (els.authPanel) els.authPanel.hidden = signedIn;
     if (els.loginForm) els.loginForm.hidden = signedIn;
+    if (els.codeForm) els.codeForm.hidden = true;
     if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
   }
 
@@ -731,30 +736,57 @@
     setSignedIn(Boolean(data && data.session));
   }
 
-  async function sendMagicLink(shouldCreateUser) {
+  // One step for new and returning players: the invite gate is enforced server-side,
+  // so creating the Supabase user on first sign-in is safe.
+  async function onLogin(event) {
+    event.preventDefault();
     if (!supabaseClient || !els.loginEmail) return;
     const email = els.loginEmail.value.trim();
     if (!email) return;
+    if (els.loginBtn) els.loginBtn.disabled = true;
+    setStatus(els.authStatus, "Sending code…", "info");
     const { error } = await supabaseClient.auth.signInWithOtp({
       email,
       options: {
-        shouldCreateUser: shouldCreateUser,
+        shouldCreateUser: true,
         emailRedirectTo: window.location.origin,
       },
     });
-    const successMessage = shouldCreateUser
-      ? "Check your email to finish signing up."
-      : "Check your email to log in.";
-    setStatus(els.authStatus, error ? error.message : successMessage, error ? "" : "info");
+    if (els.loginBtn) els.loginBtn.disabled = false;
+    if (error) {
+      setStatus(els.authStatus, error.message);
+      return;
+    }
+    hide(els.loginForm);
+    show(els.codeForm);
+    setStatus(els.authStatus, "We sent a code to " + email + ".", "info");
+    els.loginCode.value = "";
+    els.loginCode.focus();
   }
 
-  async function onLogin(event) {
+  async function onVerifyCode(event) {
     event.preventDefault();
-    await sendMagicLink(false);
+    if (!supabaseClient) return;
+    const email = els.loginEmail.value.trim();
+    const token = els.loginCode.value.replace(/\s/g, "");
+    if (!token) return;
+    if (els.verifyBtn) els.verifyBtn.disabled = true;
+    const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: "email" });
+    if (els.verifyBtn) els.verifyBtn.disabled = false;
+    if (error) {
+      setStatus(els.authStatus, "That code didn't work: " + error.message);
+      return;
+    }
+    setStatus(els.authStatus, "");
+    setSignedIn(true);
+    await loadStories();
   }
 
-  async function onSignup() {
-    await sendMagicLink(true);
+  function onChangeEmail() {
+    hide(els.codeForm);
+    show(els.loginForm);
+    setStatus(els.authStatus, "");
+    els.loginEmail.focus();
   }
 
   async function onLogout() {
@@ -1321,8 +1353,11 @@
   if (els.loginForm) {
     els.loginForm.addEventListener("submit", onLogin);
   }
-  if (els.signupBtn) {
-    els.signupBtn.addEventListener("click", onSignup);
+  if (els.codeForm) {
+    els.codeForm.addEventListener("submit", onVerifyCode);
+  }
+  if (els.changeEmailBtn) {
+    els.changeEmailBtn.addEventListener("click", onChangeEmail);
   }
   if (els.logoutBtn) {
     els.logoutBtn.addEventListener("click", onLogout);
