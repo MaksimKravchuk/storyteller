@@ -68,6 +68,11 @@ def _make_npc_entity(snpc: Any, game_state: Any, all_npcs: dict) -> VisibleEntit
         )
         return None
     names = card.known_names_for_player(game_state, snpc.role)
+    # The scene role ("городовой у будки") is how the Narrator's scene prose
+    # tends to refer to the NPC, so it is matched too. It only steers which
+    # words become clickable; the gesture still resolves to the gated label.
+    if snpc.role and snpc.role not in names:
+        names = [*names, snpc.role]
     return VisibleEntity(kind="npc", id=str(snpc.uuid), names=names)
 
 

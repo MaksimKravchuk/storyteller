@@ -23,7 +23,9 @@ import re
 from dataclasses import dataclass
 from html import escape
 
-from formatting.entity_lemmatizers import Lemmatizer, pick_lemmatizer
+from formatting.entity_lemmatizers import Lemmatizer, NounTest, pick_lemmatizer, pick_noun_test
+from formatting.entity_ambiguity import unambiguous_forms
+from formatting.entity_short_forms import npc_short_forms
 from models.visible_entity import VisibleEntity
 
 _TAG_RE = re.compile(r"<[^>]+>")
@@ -61,23 +63,46 @@ def wrap_entities(
     if not html or not entities:
         return html
     lemmatize = pick_lemmatizer(language)
-    plans = _build_plans(entities, lemmatize)
+    plans = _build_plans(entities, lemmatize, pick_noun_test(language))
     if not plans:
         return html
     return _Rewriter(plans, lemmatize, token_cache).rewrite(html)
 
 
-def _build_plans(entities: list[VisibleEntity], lemmatize: Lemmatizer) -> list[_AliasPlan]:
-    """Flatten every alias into a lemma-sequence plan, longest first."""
+def _build_plans(
+    entities: list[VisibleEntity],
+    lemmatize: Lemmatizer,
+    is_noun: NounTest | None,
+) -> list[_AliasPlan]:
+    """Flatten every alias into a lemma-sequence plan, longest first.
+
+    NPC aliases also contribute their short forms ("плечистый мужчина"
+    for a long descriptor), unless that form is ambiguous — it is another
+    NPC's short form too, or it occurs inside any other entity's alias
+    ("потёртый тулуп" when someone else is "писарь в потёртом тулупе") —
+    so a shared word never points at the wrong person.
+    """
     plans: list[_AliasPlan] = []
     for entity in entities:
         for alias in entity.names:
             lemmas = tuple(lemmatize(tok) for tok in _TOKEN_RE.findall(alias))
-            if not lemmas:
-                continue
-            plans.append(_AliasPlan(entity_id=entity.id, kind=entity.kind, lemmas=lemmas))
+            if lemmas:
+                plans.append(_AliasPlan(entity_id=entity.id, kind=entity.kind, lemmas=lemmas))
+    plans.extend(_short_form_plans(entities, lemmatize, is_noun, list(plans)))
     plans.sort(key=lambda plan: len(plan.lemmas), reverse=True)
     return plans
+
+
+def _short_form_plans(
+    entities: list[VisibleEntity],
+    lemmatize: Lemmatizer,
+    is_noun: NounTest | None,
+    full_plans: list[_AliasPlan],
+) -> list[_AliasPlan]:
+    """Return a plan for every unambiguous NPC short form."""
+    full = [(plan.entity_id, plan.lemmas) for plan in full_plans]
+    kept = unambiguous_forms(npc_short_forms(entities, is_noun, lemmatize), full)
+    return [_AliasPlan(entity_id=owner, kind="npc", lemmas=lemmas) for owner, lemmas in kept]
 
 
 class _Rewriter:

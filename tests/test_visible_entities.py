@@ -60,7 +60,7 @@ class TestCollectVisibleEntities:
         entity = entities[0]
         assert entity.kind == "npc"
         assert entity.id == str(_NPC_1)
-        assert entity.names == ["an armed man"]
+        assert entity.names == ["an armed man", "guard"]
 
     @allure.story("Introduced NPC")
     @allure.title("Introduced NPCs expose the combined label plus the bare name and occupation alias")
@@ -73,7 +73,7 @@ class TestCollectVisibleEntities:
             npcs_present=[SceneNPC(role="guard", uuid=_NPC_1)],
         )
         entity = collect_visible_entities(scene, gs, None)[0]
-        assert entity.names == ["Tony (watchman)", "Tony", "the watchman"]
+        assert entity.names == ["Tony (watchman)", "Tony", "the watchman", "guard"]
 
     @allure.story("Points of interest")
     @allure.title("Typed POIs surface with their alias lists intact, tagged as 'poi'")
