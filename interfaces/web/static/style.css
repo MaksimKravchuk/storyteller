@@ -888,29 +888,165 @@ main {
   to { transform: translateX(290%); }
 }
 
+.opening-premise {
+  max-width: 32em;
+  margin: 0 auto;
+  font-style: italic;
+  color: var(--ink-em);
+  overflow-wrap: anywhere;
+}
+
+.opening-premise:empty { display: none; }
+
 .opening-steps {
   display: inline-grid;
-  gap: 0.3rem;
+  gap: 0.55rem;
   margin: 0;
   padding: 0;
   list-style: none;
   counter-reset: act;
   text-align: left;
-  color: var(--ink-soft);
+  color: var(--ink-faint);
 }
 
-.opening-steps li { counter-increment: act; }
+.opening-steps li {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr;
+  counter-increment: act;
+  transition: color 0.4s ease;
+}
 
 .opening-steps li::before {
   content: counter(act, upper-roman) ".";
-  display: inline-block;
-  min-width: 2.2rem;
-  color: var(--brass);
+  grid-row: span 2;
+  color: var(--brass-dim);
   font-family: var(--font-display);
   font-weight: 600;
+  transition: color 0.4s ease;
 }
 
+.opening-steps .step-note {
+  grid-column: 2;
+  max-height: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  font-style: italic;
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.4s ease;
+}
+
+.opening-steps li.done { color: var(--ink-soft); }
+.opening-steps li.done::before { content: "✓"; color: var(--brass); }
+
+.opening-steps li.active { color: var(--ink-bright); }
+.opening-steps li.active::before { color: var(--brass-bright); }
+.opening-steps li.active .step-name { animation: step-glow 1.6s ease-in-out infinite alternate; }
+.opening-steps li.active .step-note { max-height: 4em; opacity: 1; }
+
+@keyframes step-glow {
+  from { opacity: 1; }
+  to { opacity: 0.55; }
+}
+
+.opening-elapsed {
+  margin: 1.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.opening-tips {
+  max-width: 30em;
+  margin: 1.75rem auto 0;
+  padding: 1rem 1.25rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+
+.opening-tips-label {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.opening-tip {
+  min-height: 3.2em;
+  margin: 0.5rem 0 0.25rem;
+  color: var(--ink-em);
+}
+
+.opening-tips-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.tip-nav {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tip-nav:hover,
+.tip-nav:focus-visible { color: var(--brass-bright); border-color: var(--brass-dim); }
+
+.tip-dots { display: inline-flex; gap: 0.4rem; }
+
+.tip-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition: background 0.3s ease;
+}
+
+.tip-dots i.on { background: var(--brass); }
+
 #opening + .status { text-align: center; max-width: 34em; margin-left: auto; margin-right: auto; }
+
+/* While the curtain is up it is the whole screen: the hero repeats "Setting
+ * the stage" and the info line repeats the acts, so both step aside (the
+ * line stays for screen readers). Errors only show once the curtain drops. */
+#setting-panel:has(#opening:not([hidden])) .setting-hero { display: none; }
+
+#opening:not([hidden]) + .status.info {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Wide screens: acts and tips side by side so the curtain fits a 720px-tall
+ * HD screen without scrolling. */
+@media (min-width: 960px) {
+  .opening { padding-top: 1.5rem; }
+
+  .opening-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+  }
+
+  .opening-tips {
+    width: 22em;
+    margin: 0;
+  }
+}
 
 /* ============================================================
  * Play screen — Story / Character / Map.

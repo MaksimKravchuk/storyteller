@@ -175,13 +175,43 @@
       <div id="opening" class="opening" hidden>
         <div class="curtain" aria-hidden="true"><span></span><span></span></div>
         <p class="opening-title">Setting the stage</p>
+        <p id="opening-premise" class="opening-premise"></p>
         <div class="progress-line" aria-hidden="true"><span></span></div>
-        <ol class="opening-steps">
-          <li>Researching the setting</li>
-          <li>Building the first scene</li>
-          <li>Casting the characters</li>
-          <li>Writing the opening</li>
-        </ol>
+        <div class="opening-body">
+          <div class="opening-progress">
+            <ol id="opening-steps" class="opening-steps">
+              <li>
+                <span class="step-name">Researching the setting</span>
+                <span class="step-note">Reading up on the place and its era</span>
+              </li>
+              <li>
+                <span class="step-name">Building the first scene</span>
+                <span class="step-note">Choosing where the curtain rises</span>
+              </li>
+              <li>
+                <span class="step-name">Casting the characters</span>
+                <span class="step-note">Giving the locals names, faces, and secrets</span>
+              </li>
+              <li>
+                <span class="step-name">Writing the opening</span>
+                <span class="step-note">The narrator finds the first words</span>
+              </li>
+            </ol>
+            <p class="opening-elapsed" aria-hidden="true">
+              <span id="opening-elapsed">0:00</span> · usually about a minute
+            </p>
+          </div>
+          <aside class="opening-tips" aria-label="Tips while you wait">
+            <p class="opening-tips-label">While you wait</p>
+            <p id="opening-tip" class="opening-tip"></p>
+            <p id="opening-tip-announce" class="visually-hidden" aria-live="polite"></p>
+            <div class="opening-tips-nav">
+              <button type="button" id="opening-tip-prev" class="tip-nav" aria-label="Previous tip">‹</button>
+              <span id="opening-tip-dots" class="tip-dots" aria-hidden="true"></span>
+              <button type="button" id="opening-tip-next" class="tip-nav" aria-label="Next tip">›</button>
+            </div>
+          </aside>
+        </div>
       </div>
       <p id="setting-status" class="status" aria-live="polite"></p>
     </section>

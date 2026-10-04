@@ -25,6 +25,14 @@
     languageSelect: $("language-select"),
     settingStatus: $("setting-status"),
     opening: $("opening"),
+    openingPremise: $("opening-premise"),
+    openingSteps: $("opening-steps"),
+    openingElapsed: $("opening-elapsed"),
+    openingTip: $("opening-tip"),
+    openingTipAnnounce: $("opening-tip-announce"),
+    openingTipDots: $("opening-tip-dots"),
+    openingTipPrev: $("opening-tip-prev"),
+    openingTipNext: $("opening-tip-next"),
     charName: $("char-name"),
     charAppearance: $("char-appearance"),
     charInventory: $("char-inventory"),
@@ -818,14 +826,85 @@
     }
   }
 
+  // The start is one request with no progress events, so the acts advance on
+  // a typical-timing schedule; the last act holds until the response lands.
+  const OPENING_ACT_STARTS = [0, 15, 30, 45];
+  const OPENING_TIP_MS = 8000;
+  const OPENING_TIPS = [
+    "Write anything as your action: talk, wander, steal, wait. The narrator answers in prose.",
+    "Highlighted words in the story are clickable: tap a person to look closer or talk to them.",
+    "Tap the place name at the top of the story to open the map and travel.",
+    "The Character tab keeps your inventory and what has happened to you so far.",
+    "Every action costs in-game time, and the world keeps moving while you act.",
+    "Your stories are saved: open Stories to come back to this one later.",
+  ];
+  const opening = { startedAt: 0, clockTimer: null, tipTimer: null, tip: 0 };
+
+  function formatElapsed(seconds) {
+    return Math.floor(seconds / 60) + ":" + String(seconds % 60).padStart(2, "0");
+  }
+
+  function tickOpening() {
+    const seconds = Math.floor((Date.now() - opening.startedAt) / 1000);
+    els.openingElapsed.textContent = formatElapsed(seconds);
+    const current = OPENING_ACT_STARTS.filter((start) => seconds >= start).length - 1;
+    els.openingSteps.querySelectorAll("li").forEach((li, i) => {
+      li.classList.toggle("done", i < current);
+      li.classList.toggle("active", i === current);
+      if (i === current) {
+        li.setAttribute("aria-current", "step");
+      } else {
+        li.removeAttribute("aria-current");
+      }
+    });
+  }
+
+  function showTip(index) {
+    opening.tip = (index + OPENING_TIPS.length) % OPENING_TIPS.length;
+    els.openingTip.textContent = OPENING_TIPS[opening.tip];
+    els.openingTipDots.querySelectorAll("i").forEach((dot, i) => {
+      dot.classList.toggle("on", i === opening.tip);
+    });
+  }
+
+  // Leafing through tips by hand restarts the rotation so a tip being read
+  // is not swapped out from under the reader.
+  function restartTipRotation() {
+    clearInterval(opening.tipTimer);
+    opening.tipTimer = setInterval(() => showTip(opening.tip + 1), OPENING_TIP_MS);
+  }
+
+  function stepTip(delta) {
+    showTip(opening.tip + delta);
+    // Only tips the reader asks for are announced; the automatic rotation
+    // stays silent so a screen reader is not interrupted every few seconds.
+    els.openingTipAnnounce.textContent = OPENING_TIPS[opening.tip];
+    restartTipRotation();
+  }
+
+  function stopOpeningTimers() {
+    clearInterval(opening.clockTimer);
+    clearInterval(opening.tipTimer);
+    els.openingTipAnnounce.textContent = "";
+  }
+
   // While the opening is built the form steps aside for the curtain.
-  function showOpening() {
+  function showOpening(setting) {
     hide(els.settingForm);
+    els.openingPremise.textContent = "“" + setting + "”";
+    els.openingTipDots.innerHTML = "<i></i>".repeat(OPENING_TIPS.length);
+    opening.startedAt = Date.now();
+    stopOpeningTimers();
+    tickOpening();
+    opening.clockTimer = setInterval(tickOpening, 1000);
+    showTip(Math.floor(Math.random() * OPENING_TIPS.length));
+    restartTipRotation();
     show(els.opening);
     window.scrollTo(0, 0);
   }
 
   function resetOpening() {
+    stopOpeningTimers();
     hide(els.opening);
     show(els.settingForm);
   }
@@ -846,7 +925,7 @@
     // The curtain stays up until this start settles: leaving for the library
     // now would let the late response pull the player back into the new story.
     els.libraryBtn.disabled = true;
-    showOpening();
+    showOpening(setting);
     try {
       const response = await apiFetch("/api/games", {
         method: "POST",
@@ -864,6 +943,7 @@
       resetOpening();
       setStatus(els.settingStatus, "Failed to start game: " + err.message);
     } finally {
+      stopOpeningTimers();
       button.disabled = false;
       els.libraryBtn.disabled = false;
     }
@@ -1295,6 +1375,8 @@
   }
 
   els.settingForm.addEventListener("submit", onStartGame);
+  els.openingTipPrev.addEventListener("click", () => stepTip(-1));
+  els.openingTipNext.addEventListener("click", () => stepTip(1));
   els.actionForm.addEventListener("submit", onSubmitAction);
   if (els.feedbackForm) {
     els.feedbackForm.addEventListener("submit", onSubmitFeedback);
