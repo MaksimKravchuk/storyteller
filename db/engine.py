@@ -48,6 +48,8 @@ def _adapt_url_for_asyncpg(database_url: str) -> Tuple[str, dict]:
     Postgres providers (Fly, Supabase, etc.) so they work with asyncpg.
     """
     clean_url, sslmode = _strip_sslmode(database_url)
+    if urlparse(clean_url).scheme in ("postgres", "postgresql"):
+        clean_url = urlunparse(urlparse(clean_url)._replace(scheme="postgresql+asyncpg"))
     connect_args: dict = {}
     if sslmode in _SSL_ENABLED_MODES:
         connect_args["ssl"] = _ssl.create_default_context()
