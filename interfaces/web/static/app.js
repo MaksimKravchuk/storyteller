@@ -29,6 +29,7 @@
     openingSteps: $("opening-steps"),
     openingElapsed: $("opening-elapsed"),
     openingTip: $("opening-tip"),
+    openingTipAnnounce: $("opening-tip-announce"),
     openingTipDots: $("opening-tip-dots"),
     openingTipPrev: $("opening-tip-prev"),
     openingTipNext: $("opening-tip-next"),
@@ -875,12 +876,16 @@
 
   function stepTip(delta) {
     showTip(opening.tip + delta);
+    // Only tips the reader asks for are announced; the automatic rotation
+    // stays silent so a screen reader is not interrupted every few seconds.
+    els.openingTipAnnounce.textContent = OPENING_TIPS[opening.tip];
     restartTipRotation();
   }
 
   function stopOpeningTimers() {
     clearInterval(opening.clockTimer);
     clearInterval(opening.tipTimer);
+    els.openingTipAnnounce.textContent = "";
   }
 
   // While the opening is built the form steps aside for the curtain.

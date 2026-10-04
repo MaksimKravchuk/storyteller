@@ -942,7 +942,7 @@ main {
 .opening-steps li.active { color: var(--ink-bright); }
 .opening-steps li.active::before { color: var(--brass-bright); }
 .opening-steps li.active .step-name { animation: step-glow 1.6s ease-in-out infinite alternate; }
-.opening-steps li.active .step-note { max-height: 2.6em; opacity: 1; }
+.opening-steps li.active .step-note { max-height: 4em; opacity: 1; }
 
 @keyframes step-glow {
   from { opacity: 1; }
