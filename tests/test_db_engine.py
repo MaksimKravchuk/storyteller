@@ -69,6 +69,14 @@ class TestStripSslmode:
 @allure.feature("Database engine")
 class TestAdaptUrlForAsyncpg:
     @allure.story("Engine creation")
+    @allure.title("Fly postgres attachment URLs use the asyncpg SQLAlchemy dialect")
+    @pytest.mark.parametrize("scheme", ["postgres", "postgresql"])
+    def test_fly_postgres_url_uses_asyncpg(self, scheme):
+        clean, args = _real_engine._adapt_url_for_asyncpg(f"{scheme}://u:p@host/db?sslmode=disable")
+        assert clean == "postgresql+asyncpg://u:p@host/db"
+        assert args == {"ssl": False}
+
+    @allure.story("Engine creation")
     @allure.title("sslmode=require yields an SSLContext in the asyncpg connect args")
     def test_require_produces_ssl_context(self):
         url = "postgresql://u:p@host/db?sslmode=require"
