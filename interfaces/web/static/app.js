@@ -48,7 +48,6 @@
     stageCrumbs: $("stage-crumbs"),
     stagePlace: $("stage-place"),
     stageClock: $("stage-clock"),
-    stageCast: $("stage-cast"),
     log: $("log"),
     actionForm: $("action-form"),
     actionInput: $("action-input"),
@@ -123,7 +122,6 @@
   };
 
   // Stage cast chips beyond this count collapse into a "+N" chip.
-  const STAGE_CAST_LIMIT = 4;
 
   // Inline icons. Location types and times of day are drawn rather than
   // written so the chrome stays readable in every story language.
@@ -452,8 +450,9 @@
     renderList(els.peopleList, world.people, prevPeople, renderPerson, personKey);
   }
 
-  // The stage: where the scene is, what time it is, and who is on stage.
-  // Always in view above the prose; it is the theatre's lit proscenium.
+  // The stage: where the scene is and what time it is. Always in view above
+  // the prose; it is the theatre's lit proscenium. Who is on stage lives in
+  // the prose itself — every person mentioned there is tappable.
   function renderStage(world) {
     const map = world.map || {};
     els.stageCrumbs.textContent = crumbNames(map).join(" · ");
@@ -461,21 +460,6 @@
     const clock = world.clock || {};
     fillClock(els.stageClock, clock);
     if (clock.time_of_day) document.body.dataset.daypart = clock.time_of_day;
-    els.stageCast.innerHTML = "";
-    const people = world.people || [];
-    for (const person of people.slice(0, STAGE_CAST_LIMIT)) {
-      const li = document.createElement("li");
-      li.className = person.known ? "cast-known" : "cast-stranger";
-      li.textContent = person.label;
-      li.title = person.role;
-      els.stageCast.appendChild(li);
-    }
-    if (people.length > STAGE_CAST_LIMIT) {
-      const more = document.createElement("li");
-      more.className = "cast-more";
-      more.textContent = "+" + (people.length - STAGE_CAST_LIMIT);
-      els.stageCast.appendChild(more);
-    }
   }
 
   function renderWorld(world) {
@@ -1402,8 +1386,21 @@
   // ── In-prose entity popover ──
   // Tapping a .poi span offers the verbs valid for its kind; picking one runs
   // a structured gesture (the server composes the localized action phrase).
+  // A verb either runs a gesture (``intent``), opens a sub-menu (``more``),
+  // or hands the moment to the composer (``compose``) for anything else.
   const ENTITY_VERBS = {
-    npc: [{ label: "Look closer", intent: "examine" }, { label: "Talk", intent: "talk" }],
+    npc: [
+      { label: "Look closer", intent: "examine" },
+      { label: "Approach & talk", intent: "talk" },
+      {
+        label: "Act…",
+        more: [
+          { label: "Attack", intent: "attack" },
+          { label: "Steal", intent: "steal" },
+          { label: "Something else…", compose: true },
+        ],
+      },
+    ],
     poi: [{ label: "Investigate", intent: "examine" }],
     item: [{ label: "Investigate", intent: "examine" }],
   };
@@ -1425,6 +1422,30 @@
     openSpan = null;
   }
 
+  function fillVerbs(verbs, kind, id) {
+    els.entPop.querySelectorAll(".ep-act").forEach((btn) => btn.remove());
+    for (const verb of verbs) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = verb.more ? "ep-act ep-more" : "ep-act";
+      btn.textContent = verb.label;
+      btn.addEventListener("click", (event) => {
+        if (verb.more) {
+          // Keep the click from reaching the log, which would close us.
+          event.stopPropagation();
+          fillVerbs(verb.more, kind, id);
+          els.entPop.querySelector(".ep-act").focus();
+        } else if (verb.compose) {
+          closePopover();
+          els.actionInput.focus();
+        } else {
+          submitTurn({ gesture: { intent: verb.intent, entity_kind: kind, entity_id: id } });
+        }
+      });
+      els.entPop.appendChild(btn);
+    }
+  }
+
   function openPopover(span, fromKeyboard) {
     const kind = span.dataset.kind;
     const id = span.dataset.id;
@@ -1438,16 +1459,7 @@
     title.className = "ep-title";
     title.textContent = span.textContent;
     els.entPop.appendChild(title);
-    for (const verb of verbs) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "ep-act";
-      btn.textContent = verb.label;
-      btn.addEventListener("click", () => {
-        submitTurn({ gesture: { intent: verb.intent, entity_kind: kind, entity_id: id } });
-      });
-      els.entPop.appendChild(btn);
-    }
+    fillVerbs(verbs, kind, id);
     // Position near the tapped word, viewport-relative (position:fixed), then
     // reveal so the entry transition runs after layout. Flip above the word
     // when it would run into the composer.

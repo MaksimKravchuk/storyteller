@@ -57,7 +57,7 @@ class TestWatchmanRegression:
         assert len(entities) == 1
         entity = entities[0]
         assert entity.id == str(_UUID)
-        assert entity.names == ["an armed man"]
+        assert entity.names == ["an armed man", "guard"]
         assert "Tony" not in html
         assert "watchman" not in html
         assert 'data-id="{0}"'.format(_UUID) in html
@@ -70,7 +70,7 @@ class TestWatchmanRegression:
         gs = _make_state()
         gs.player.known_npcs.add(_UUID)
         entities, html = _render_turn(gs, "Tony nods. The watchman steps aside.")
-        assert entities[0].names == ["Tony (watchman)", "Tony", "the watchman"]
+        assert entities[0].names == ["Tony (watchman)", "Tony", "the watchman", "guard"]
         assert html.count('data-id="{0}"'.format(_UUID)) == 2
         assert ">Tony</span>" in html
         # The surface form is preserved so the sentence-initial capital

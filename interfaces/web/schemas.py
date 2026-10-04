@@ -19,10 +19,9 @@ from interfaces.web.world_schemas import WorldView
 # here rather than inferred per request.
 _ALLOWED_GESTURE_PAIRS: frozenset[tuple[str, str]] = frozenset(
     (
-        ("examine", "npc"),
+        *((intent, "npc") for intent in ("examine", "talk", "attack", "steal")),
         ("examine", "poi"),
         ("examine", "item"),
-        ("talk", "npc"),
         ("move", "location"),
     )
 )
@@ -81,7 +80,7 @@ class PlayerGesture(BaseModel):
     player-visible name and composes the action in the session language.
     """
 
-    intent: Literal["examine", "talk", "move"]
+    intent: Literal["examine", "talk", "attack", "steal", "move"]
     entity_kind: Literal["npc", "poi", "item", "location"]
     entity_id: str = Field(min_length=1)
 

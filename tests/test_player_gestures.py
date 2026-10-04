@@ -76,6 +76,27 @@ def test_npc_card_missing_uses_role(game_state: GameState) -> None:
 
 
 @allure.story(_STORY)
+@allure.title("attack/steal→npc compose in the session language with the gated label")
+@pytest.mark.parametrize(
+    ("intent", "language", "expected"),
+    [
+        ("attack", "English", "attack a hooded merchant"),
+        ("steal", "English", "steal from a hooded merchant"),
+        ("attack", "Russian", "напасть на a hooded merchant"),
+        ("steal", "Russian", "обокрасть a hooded merchant"),
+    ],
+)
+def test_npc_hostile_intents(game_state: GameState, intent: str, language: str, expected: str) -> None:
+    lucia = NPCCard(name="Lucia", occupation="merchant", short_descriptor="a hooded merchant")
+    game_state.npcs[lucia.uuid] = lucia
+    game_state.current_scene = Scene(
+        location_id=make_uuid("loc"), npcs_present=[SceneNPC(role="trader", uuid=lucia.uuid)]
+    )
+    gesture = PlayerGesture.model_validate({"intent": intent, "entity_kind": "npc", "entity_id": str(lucia.uuid)})
+    assert compose_player_gesture(game_state, language, gesture) == expected
+
+
+@allure.story(_STORY)
 @allure.title("examine→poi resolves a point of interest to its primary name")
 def test_poi(game_state: GameState) -> None:
     poi = PointOfInterest(names=["the marble fountain", "fountain"])

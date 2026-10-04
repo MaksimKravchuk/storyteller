@@ -149,6 +149,8 @@ def test_action_request_xor(payload: dict) -> None:
         ("examine", "poi"),
         ("examine", "item"),
         ("talk", "npc"),
+        ("attack", "npc"),
+        ("steal", "npc"),
         ("move", "location"),
     ],
 )
@@ -164,6 +166,8 @@ def test_player_gesture_allows_valid_pairs(intent: str, entity_kind: str) -> Non
     [
         {"intent": "talk", "entity_kind": "poi", "entity_id": "e-1"},
         {"intent": "move", "entity_kind": "npc", "entity_id": "e-1"},
+        {"intent": "attack", "entity_kind": "poi", "entity_id": "e-1"},
+        {"intent": "steal", "entity_kind": "item", "entity_id": "e-1"},
         {"intent": "examine", "entity_kind": "location", "entity_id": "e-1"},
         {"intent": "talk", "entity_kind": "npc", "entity_id": ""},
     ],
