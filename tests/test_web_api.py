@@ -463,6 +463,8 @@ def test_get_service_worker_serves_online_required_worker(client: TestClient) ->
     assert 'requestPath(request).startsWith("/api/")' in response.text
     assert "PRECACHE_URLS.includes(requestPath(request))" in response.text
     assert "caches.open" in response.text
+    # Cross-origin calls (Supabase auth) must reach the network untouched, not the offline stub.
+    assert "url.origin !== self.location.origin" in response.text
 
 
 @allure.story("Static shell")
