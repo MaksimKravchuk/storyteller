@@ -5,133 +5,252 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Storyteller Admin</title>
 <style>
+  :root {
+    --bg: #0e1220; --panel: #151a2c; --raised: #1b2137; --inset: #0b0f1b;
+    --border: #242b44; --border-strong: #333c5e;
+    --text: #e7e9f2; --muted: #9aa1bb; --faint: #646c8a;
+    --accent: #e94560; --accent-hover: #d13a54; --link: #8f96ff;
+    --ok: #4ade80; --warn: #fbbf24; --err: #f87171; --info: #60a5fa;
+    --radius: 8px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #e0e0e0; display: flex; height: 100vh; }
-  a { color: #7c83ff; }
-  .sidebar { width: 340px; background: #16213e; border-right: 1px solid #0f3460; overflow-y: auto; flex-shrink: 0; }
-  .sidebar h2 { padding: 16px; font-size: 18px; border-bottom: 1px solid #0f3460; color: #e94560; }
-  .sidebar-search-wrap { padding: 10px 12px; border-bottom: 1px solid #0f3460; }
-  .sidebar-search { width: 100%; padding: 8px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 13px; }
-  .sidebar-search:focus { outline: none; border-color: #7c83ff; }
-  .session-id-short { color: #7c83ff; font-family: monospace; font-size: 11px; }
-  .session-item { padding: 12px 16px; border-bottom: 1px solid #0f3460; cursor: pointer; transition: background 0.15s; }
-  .session-item:hover { background: #0f3460; }
-  .session-item.active { background: #0f3460; border-left: 3px solid #e94560; }
-  .session-item .chat-id { font-weight: 600; color: #fff; }
-  .session-item .meta { font-size: 12px; color: #999; margin-top: 4px; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-  .badge-playing { background: #1b5e20; color: #81c784; }
-  .badge-idle { background: #424242; color: #bbb; }
-  .badge-awaiting { background: #e65100; color: #ffcc80; }
-  .badge-green { background: #1b5e20; color: #81c784; }
-  .badge-red { background: #5e1b1b; color: #ff8a80; }
-  .sidebar-nav { display: flex; border-bottom: 1px solid #0f3460; }
-  .sidebar-nav .nav-link { flex: 1; padding: 10px 12px; text-align: center; cursor: pointer; color: #999; font-size: 13px; transition: all 0.15s; }
-  .sidebar-nav .nav-link:hover { color: #fff; background: #0f3460; }
-  .sidebar-nav .nav-link.active { color: #e94560; border-bottom: 2px solid #e94560; margin-bottom: -1px; }
-  .settings-role { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #0f3460; }
-  .settings-role:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-  .settings-role h4 { color: #e94560; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-  .settings-role .current { font-size: 12px; color: #999; margin-bottom: 8px; }
-  .settings-role .current code { color: #e0e0e0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-  .settings-row { display: flex; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-  .settings-row select, .settings-row input { padding: 6px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 13px; }
-  .settings-row select { min-width: 120px; }
-  .settings-row select.settings-model-sel { min-width: 200px; flex: 1; }
-  .settings-row input { min-width: 220px; flex: 1; }
-  .settings-row button { padding: 6px 14px; background: #e94560; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; }
-  .settings-row button:hover { background: #c13651; }
-  .settings-banner { margin-top: 6px; padding: 6px 10px; border-radius: 4px; font-size: 12px; }
-  .settings-banner.ok { background: #1b5e20; color: #81c784; }
-  .settings-banner.err { background: #5e1b1b; color: #ff8a80; }
-  .main { flex: 1; overflow-y: auto; padding: 24px; }
-  .placeholder { color: #666; font-size: 18px; margin-top: 40vh; text-align: center; }
-  .tabs { display: flex; gap: 0; border-bottom: 2px solid #0f3460; margin-bottom: 16px; }
-  .tab { padding: 8px 20px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #999; transition: all 0.15s; }
-  .tab:hover { color: #fff; }
-  .tab.active { color: #e94560; border-bottom-color: #e94560; }
-  .card { background: #16213e; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-  .card h3 { color: #e94560; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; font-size: 14px; }
-  .kv .label { color: #999; }
+  html, body { height: 100%; }
+  body { font: 13.5px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; overflow: hidden; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: var(--mono); font-size: 12px; }
+  button { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-track { background: transparent; }
+  :focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+
+  /* Buttons & inputs */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--raised); border: 1px solid var(--border-strong); border-radius: 6px; cursor: pointer; font-size: 13px; white-space: nowrap; transition: background .12s, border-color .12s; }
+  .btn:hover { background: #232a45; border-color: #424c75; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
+  .btn-ghost:hover { background: var(--raised); color: var(--text); }
+  .btn-sm { padding: 3px 9px; font-size: 12px; }
+  .input, select.input { padding: 7px 10px; background: var(--inset); color: var(--text); border: 1px solid var(--border-strong); border-radius: 6px; font-size: 13px; min-width: 0; }
+  .input:focus { outline: none; border-color: var(--link); box-shadow: 0 0 0 3px rgba(143,150,255,.15); }
+  .segmented { display: inline-flex; background: var(--inset); border: 1px solid var(--border-strong); border-radius: 7px; padding: 2px; }
+  .segmented button { background: none; border: none; padding: 4px 12px; border-radius: 5px; cursor: pointer; color: var(--muted); font-size: 12px; }
+  .segmented button.active { background: var(--accent); color: #fff; }
+
+  /* Left rail */
+  .rail { width: 196px; flex-shrink: 0; background: #0b0f1c; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 10px; gap: 2px; }
+  .brand { display: flex; align-items: center; gap: 9px; padding: 4px 8px 18px; }
+  .brand-mark { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, var(--accent), #8f5bff); display: grid; place-items: center; font-weight: 800; color: #fff; font-size: 14px; }
+  .brand-name { font-weight: 700; font-size: 14px; }
+  .brand-tag { font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 1px; }
+  .nav-link { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: none; background: none; border-radius: 6px; color: var(--muted); cursor: pointer; text-align: left; font-size: 13.5px; }
+  .nav-link svg { width: 17px; height: 17px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-link:hover { background: var(--panel); color: var(--text); }
+  .nav-link.active { background: var(--raised); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+  .nav-link.active svg { color: var(--accent); }
+  .rail-spacer { flex: 1; }
+  .account-wrap { border-top: 1px solid var(--border); padding: 10px 6px 0; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--muted); }
+  .account-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* List panel (sessions / users) */
+  .list-panel { width: 310px; flex-shrink: 0; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+  .list-panel > div { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .list-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 8px; font-weight: 600; }
+  .list-search { padding: 0 12px 10px; border-bottom: 1px solid var(--border); }
+  .list-search .input { width: 100%; }
+  .list { overflow-y: auto; flex: 1; }
+  .list-item { padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; border-left: 3px solid transparent; }
+  .list-item:hover { background: var(--raised); }
+  .list-item.active { background: var(--raised); border-left-color: var(--accent); }
+  .li-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .li-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .li-meta { font-size: 12px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .li-pinned { color: var(--link); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .count { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 9px; background: var(--raised); border: 1px solid var(--border); color: var(--muted); font-size: 11px; text-align: center; font-weight: 500; }
+
+  /* Main */
+  .main { flex: 1; overflow-y: auto; min-width: 0; }
+  .page { padding: 22px 28px 40px; max-width: 1400px; }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .page-head h1 { font-size: 20px; font-weight: 650; letter-spacing: -.2px; }
+  .page-sub { color: var(--muted); font-size: 12.5px; margin-top: 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .page-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dot { color: var(--faint); }
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .toolbar .input { width: 260px; }
+  .toolbar .spacer { flex: 1; }
+  .help { color: var(--muted); font-size: 12.5px; margin-bottom: 12px; }
+  .loading { display: flex; align-items: center; gap: 10px; color: var(--muted); padding: 28px 4px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { color: var(--faint); padding: 14px 4px; }
+  .empty-state { text-align: center; padding: 18vh 20px; color: var(--muted); }
+  .empty-state h2 { color: var(--text); font-size: 16px; margin-bottom: 6px; font-weight: 600; }
+  .empty-state kbd, .kbd { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; color: var(--text); }
+  .error-box { background: rgba(248,113,113,.08); border: 1px solid rgba(248,113,113,.35); color: var(--err); padding: 12px 14px; border-radius: var(--radius); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 18px; overflow-x: auto; }
+  .tab { padding: 8px 14px; cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--muted); white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  .subtabs { display: flex; gap: 4px; margin-bottom: 14px; }
+  .subtab { padding: 5px 12px; cursor: pointer; border: 1px solid var(--border); background: none; border-radius: 999px; color: var(--muted); font-size: 12.5px; text-transform: capitalize; }
+  .subtab:hover { color: var(--text); }
+  .subtab.active { background: var(--raised); border-color: var(--border-strong); color: var(--text); }
+
+  /* Cards, kv, stats */
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+  .card h3 { color: var(--muted); margin-bottom: 12px; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; display: flex; align-items: center; gap: 8px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .grid > .card { margin-bottom: 0; }
+  .kv { display: grid; grid-template-columns: 130px 1fr; gap: 7px 14px; }
+  .kv .label { color: var(--muted); }
+  .kv > div { min-width: 0; overflow-wrap: anywhere; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .stat-link { cursor: pointer; }
+  .stat-link:hover { border-color: var(--border-strong); background: var(--raised); }
+  .stat-value { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .stat-label { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .prose { white-space: pre-wrap; color: #cfd3e3; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
+  .card .table-wrap { border: none; background: none; margin: 0 -4px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; padding: 8px; color: #999; border-bottom: 1px solid #0f3460; }
-  td { padding: 8px; border-bottom: 1px solid #0f3460; }
-  .log-entry { background: #16213e; border-radius: 6px; padding: 12px; margin-bottom: 8px; }
-  .log-entry .action { color: #7c83ff; font-weight: 600; }
-  .log-entry .response { margin-top: 6px; white-space: pre-wrap; font-size: 13px; color: #ccc; }
-  .log-entry .turn-info { font-size: 11px; color: #666; margin-bottom: 4px; }
-  .empty { color: #666; font-style: italic; padding: 16px; }
-  .session-inline-logs { display: grid; gap: 8px; }
-  .user-log-group { background: #0f1a30; border: 1px solid #0f3460; border-radius: 6px; padding: 8px; }
-  .user-log-group summary { cursor: pointer; color: #7c83ff; font-size: 12px; font-weight: 600; }
-  .user-log-entry { background: #0a0f1e; color: #aaa; border-radius: 4px; margin-top: 8px; padding: 8px; white-space: pre-wrap; word-break: break-word; max-height: 240px; overflow-y: auto; font-size: 11px; }
+  th { text-align: left; padding: 9px 10px; color: var(--muted); font-weight: 500; font-size: 12px; border-bottom: 1px solid var(--border); background: var(--panel); position: sticky; top: 0; white-space: nowrap; }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,.018); }
+  tr.row-link { cursor: pointer; }
+  tr.row-link:hover td { background: var(--raised); }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.hot { color: var(--err); font-weight: 600; }
+  td.zero { color: var(--faint); }
+  td.wrap { max-width: 520px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .muted { color: var(--muted); }
+  .faint { color: var(--faint); }
 
-  /* AI Call Logs */
-  .ai-calls-toggle { margin-top: 8px; cursor: pointer; font-size: 12px; color: #7c83ff; user-select: none; }
-  .ai-calls-toggle:hover { color: #aab0ff; }
-  .ai-calls-container { display: none; margin-top: 8px; padding-left: 12px; border-left: 2px solid #0f3460; }
-  .ai-calls-container.open { display: block; }
-  .ai-call-entry { background: #111a30; border-radius: 4px; padding: 10px; margin-bottom: 6px; font-size: 12px; }
-  .ai-call-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .agent-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
-  .agent-Director { background: #4a1525; color: #e94560; }
-  .agent-Narrator { background: #152545; color: #5b9bd5; }
-  .agent-SceneBuilder { background: #153525; color: #5bd58a; }
-  .agent-Actor { background: #2d1545; color: #b57cff; }
-  .agent-NPCGenerator { background: #453015; color: #ffb347; }
-  .agent-DataMiner { background: #154540; color: #5bd5c8; }
-  .agent-MemoryManager { background: #3d3515; color: #d5c85b; }
-  .ai-call-meta { color: #666; font-size: 11px; }
-  .ai-call-detail-toggle { cursor: pointer; color: #7c83ff; font-size: 11px; margin-top: 4px; user-select: none; }
-  .ai-call-detail-toggle:hover { color: #aab0ff; }
-  .ai-call-copy-bar { display: flex; gap: 6px; margin-bottom: 6px; }
-  .copy-btn { background: #0f3460; color: #7c83ff; border: 1px solid #1a4a7a; border-radius: 4px; padding: 3px 8px; font-size: 10px; cursor: pointer; font-family: inherit; }
-  .copy-btn:hover { background: #16467a; color: #aab0ff; }
-  .ai-call-detail { display: none; margin-top: 6px; }
-  .ai-call-detail.open { display: block; }
-  .ai-call-detail pre { background: #0a0f1e; border-radius: 4px; padding: 8px; font-size: 11px; color: #aaa; overflow-x: auto; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; }
-  .ai-call-detail h4 { color: #999; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin: 6px 0 4px; }
-  .setup-header { color: #999; font-size: 13px; font-weight: 600; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid #0f3460; }
+  /* Badges & chips */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; border: 1px solid transparent; }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge-plain::before { display: none; }
+  .badge-playing, .badge-green { background: rgba(74,222,128,.1); color: var(--ok); border-color: rgba(74,222,128,.25); }
+  .badge-idle { background: rgba(154,161,187,.1); color: var(--muted); border-color: rgba(154,161,187,.22); }
+  .badge-awaiting { background: rgba(251,191,36,.1); color: var(--warn); border-color: rgba(251,191,36,.25); }
+  .badge-red { background: rgba(248,113,113,.1); color: var(--err); border-color: rgba(248,113,113,.28); }
+  .badge-info { background: rgba(96,165,250,.1); color: var(--info); border-color: rgba(96,165,250,.25); }
+  .agent-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--agent, #8a8fc4); background: color-mix(in srgb, var(--agent, #8a8fc4) 15%, transparent); border: 1px solid color-mix(in srgb, var(--agent, #8a8fc4) 35%, transparent); }
+  .id-chip { font-family: var(--mono); font-size: 11.5px; color: var(--link); background: rgba(143,150,255,.08); border: 1px solid rgba(143,150,255,.2); border-radius: 4px; padding: 0 5px; cursor: copy; }
+  .id-chip:hover { background: rgba(143,150,255,.16); }
+  .chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; margin: 2px 3px 2px 0; background: var(--raised); border: 1px solid var(--border); color: #c9cde0; }
+  .view-link { color: var(--link); cursor: pointer; }
+  .view-link:hover { text-decoration: underline; }
+  .traits-chip, .npc-tag { display: inline-block; background: rgba(181,124,255,.12); color: #c9a6ff; border: 1px solid rgba(181,124,255,.25); padding: 1px 8px; border-radius: 999px; font-size: 11px; margin: 2px 3px 2px 0; }
+  .npc-tag { cursor: pointer; }
+  .npc-tag:hover { background: rgba(181,124,255,.22); }
+  .inv-chip, .item-chip { display: inline-block; background: rgba(255,179,71,.1); color: #ffc677; border: 1px solid rgba(255,179,71,.25); padding: 1px 8px; border-radius: 999px; font-size: 11px; margin: 2px 3px 2px 0; cursor: help; }
+  .inv-chip { cursor: default; }
+  .object-chip { display: inline-block; background: rgba(91,213,200,.1); color: #5bd5c8; border: 1px solid rgba(91,213,200,.25); padding: 1px 8px; border-radius: 999px; font-size: 11px; cursor: help; }
+  .dice-chip { display: inline-block; background: rgba(143,150,255,.1); color: var(--link); padding: 1px 9px; border-radius: 999px; font-size: 11px; border: 1px solid rgba(143,150,255,.25); cursor: help; }
+  .dice-chip.dice-actor-win { background: rgba(74,222,128,.1); color: var(--ok); border-color: rgba(74,222,128,.25); }
+  .dice-chip.dice-target-win, .dice-chip.dice-aggr-attack { background: rgba(248,113,113,.1); color: var(--err); border-color: rgba(248,113,113,.28); }
+  .dice-chip.dice-aggr-calm { background: rgba(251,191,36,.1); color: var(--warn); border-color: rgba(251,191,36,.25); }
+  .turn-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
 
-  /* Call chain tree */
-  .ai-call-tree-root { margin-bottom: 4px; }
-  .ai-call-tree-children { margin-left: 20px; border-left: 2px solid #0f3460; padding-left: 12px; }
-  .ai-call-tree-child { position: relative; }
-  .ai-call-tree-child::before { content: ''; position: absolute; left: -14px; top: 14px; width: 12px; height: 0; border-top: 2px solid #0f3460; }
-  .call-seq-badge { display: inline-block; background: #0f3460; color: #7c83ff; font-size: 10px; padding: 1px 5px; border-radius: 8px; margin-right: 4px; }
-  .agent-badge { background: #2a2a40; color: #cfd2ff; }
-  .agent-Dramaturge { background: #45152d; color: #ff7cb0; }
-  .agent-WorldChronicler { background: #2d3515; color: #c8d55b; }
-  .agent-ItemGenerator { background: #15402d; color: #5bd5a8; }
+  /* Disclosure (details) */
+  details > summary { cursor: pointer; user-select: none; list-style: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  .disclosure > summary { display: inline-flex; align-items: center; gap: 6px; color: var(--link); font-size: 12px; font-weight: 500; }
+  .disclosure > summary::before { content: '▸'; font-size: 10px; transition: transform .12s; }
+  .disclosure[open] > summary::before { transform: rotate(90deg); }
+  .disclosure > summary:hover { color: #b7bcff; }
+
+  /* Scenes & turns */
+  .scene-block { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; overflow: hidden; }
+  .scene-block.current { border-color: rgba(74,222,128,.35); }
+  .scene-header { padding: 12px 16px; cursor: pointer; user-select: none; display: flex; gap: 12px; align-items: flex-start; }
+  .scene-header:hover { background: var(--raised); }
+  .chev { color: var(--faint); transition: transform .12s; margin-top: 1px; }
+  .chev::before { content: '▾'; }
+  .scene-block.collapsed .chev { transform: rotate(-90deg); }
+  .scene-block.collapsed .scene-body { display: none; }
+  .scene-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .scene-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .scene-body { padding: 4px 16px 14px; border-top: 1px solid var(--border); }
+  .scene-info { display: flex; gap: 20px; flex-wrap: wrap; padding: 10px 0; }
+  .scene-info table { margin-top: 6px; font-size: 12px; }
+  .scene-info td, .scene-info th { padding: 4px 8px; }
+  .scene-desc { font-size: 12.5px; color: var(--muted); margin: 6px 0 12px; font-style: italic; }
+  .log-entry { background: var(--inset); border: 1px solid var(--border); border-radius: 7px; padding: 12px 14px; margin-top: 10px; }
+  .log-entry .turn-info { font-size: 11px; color: var(--faint); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .6px; }
+  .log-entry .action { color: var(--link); font-weight: 600; }
+  .log-entry .response { margin-top: 6px; white-space: pre-wrap; color: #cfd3e3; }
+  .setup-header { font-weight: 600; margin-bottom: 4px; }
+  .ai-calls { margin-top: 10px; }
+  .ai-calls-body { margin-top: 8px; padding-left: 12px; border-left: 2px solid var(--border); }
+
+  /* AI call entries */
+  .ai-call-entry { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; margin-bottom: 6px; font-size: 12px; }
+  .ai-call-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .ai-call-meta { color: var(--faint); font-size: 11px; font-family: var(--mono); }
+  .ai-call-detail[open] { margin-top: 2px; }
+  .ai-call-copy-bar { display: flex; gap: 6px; margin: 8px 0; }
+  .ai-call-detail h4 { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; margin: 10px 0 4px; font-weight: 600; }
+  .ai-call-tree-children { margin-left: 18px; border-left: 2px solid var(--border); padding-left: 12px; }
+  .call-seq-badge { font-family: var(--mono); background: var(--raised); color: var(--muted); font-size: 10px; padding: 1px 6px; border-radius: 4px; }
+  .code-block { background: var(--inset); border: 1px solid var(--border); border-radius: 5px; padding: 8px 10px; font: 11.5px/1.5 var(--mono); color: #c3c7d8; white-space: pre-wrap; word-break: break-word; max-height: 320px; overflow: auto; }
+  .user-log-group { background: var(--inset); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+  .session-inline-logs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .session-inline-logs > details { flex: 1 1 220px; }
+  .user-log-entry { margin-top: 8px; max-height: 240px; }
+
+  /* Structured LLM messages */
+  .msg-block { margin: 6px 0; border-left: 3px solid var(--border-strong); padding: 6px 10px; background: var(--inset); border-radius: 0 5px 5px 0; }
+  .msg-system { border-left-color: #d5c85b; }
+  .msg-user { border-left-color: #5bd58a; }
+  .msg-assistant { border-left-color: #b57cff; }
+  .msg-tool { border-left-color: #5bd5c8; }
+  .msg-role-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; color: var(--muted); }
+  .msg-system .msg-role-badge { color: #d5c85b; }
+  .msg-user .msg-role-badge { color: #5bd58a; }
+  .msg-assistant .msg-role-badge { color: #b57cff; }
+  .msg-tool .msg-role-badge { color: #5bd5c8; }
+  .msg-block pre { color: #d6d9e6; font: 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; }
+
+  /* JSON tree */
+  .json-tree { font: 12px/1.5 var(--mono); color: #ddd; background: var(--inset); border: 1px solid var(--border); border-radius: 5px; padding: 8px 10px; max-height: 420px; overflow: auto; }
+  .json-tree details { padding-left: 14px; }
+  .json-tree details > summary { margin-left: -14px; }
+  .json-tree details > summary::before { content: '▸ '; color: var(--faint); }
+  .json-tree details[open] > summary::before { content: '▾ '; }
+  .json-key { color: var(--link); }
+  .json-str { color: #5bd58a; }
+  .json-num { color: #ffb347; }
+  .json-bool { color: var(--accent); }
+  .json-null { color: #888; font-style: italic; }
+  .json-punct { color: var(--faint); }
 
   /* Agent-flow graph (n8n-style: HTML nodes layered over an SVG edge canvas) */
-  .agent-flow-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-  .agent-flow-bar label { font-size: 12px; color: #999; }
-  .agent-flow-bar select { padding: 6px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 13px; }
-  .agent-flow-hint { font-size: 11px; color: #666; flex: 1 1 200px; }
-  .agent-flow-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 11px; color: #aab0c4; margin-bottom: 10px; }
+  .agent-flow-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); margin-bottom: 10px; }
   .agent-flow-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
   .agent-flow-legend .sw { width: 18px; height: 14px; border-radius: 4px; display: inline-block; }
   .agent-flow-legend .sw-llm { background: linear-gradient(135deg,#b57cff,#5b9bd5); }
   .agent-flow-legend .sw-det { background: #1b2a48; border: 1.5px solid #5bd5c8; }
   .agent-flow-legend .ln { width: 22px; height: 0; border-top: 2px solid #5b6abf; }
   .agent-flow-legend .ln-det { border-top: 2px dashed #5bd5c8; }
-
-  .agent-flow-canvas { position: relative; overflow: auto; max-height: 70vh; background:
-    linear-gradient(#0c1426 0 0) padding-box,
-    radial-gradient(circle at center, #16264a 1px, transparent 1px) 0 0 / 22px 22px;
-    background-color: #0c1426; border: 1px solid #0f3460; border-radius: 8px; }
+  .agent-flow-canvas { position: relative; overflow: auto; max-height: 70vh; background: radial-gradient(circle at center, #1b2544 1px, transparent 1px) 0 0 / 22px 22px, #0b1020; border: 1px solid var(--border); border-radius: var(--radius); }
   .agent-flow-stage { position: relative; }
   .agent-flow-edges { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
   .agent-flow-edge { fill: none; stroke: #44508f; stroke-width: 1.6; opacity: 0.85; }
   .agent-flow-edge--det { stroke: #2f7d77; stroke-dasharray: 5 4; }
   .agent-flow-edge.hot { stroke: #ffffff; opacity: 1; stroke-width: 2.4; }
   .agent-flow-edge-label { font-size: 10px; fill: #aab0ff; }
-
-  .flow-node { position: absolute; box-sizing: border-box; border-radius: 9px; cursor: pointer;
-    background: #16213e; border: 1px solid #2a3b66; padding: 7px 9px; overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .08s, box-shadow .08s; }
+  .flow-node { position: absolute; box-sizing: border-box; border-radius: 9px; cursor: pointer; background: var(--panel); border: 1px solid #2a3b66; padding: 7px 9px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.35); transition: transform .08s, box-shadow .08s, opacity .12s; }
   .flow-node:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.5); }
   .flow-node.selected { outline: 2px solid #fff; outline-offset: 1px; }
   .flow-node.dim { opacity: 0.32; }
@@ -139,161 +258,129 @@
   .flow-node__pill { font-size: 8px; font-weight: 700; letter-spacing: .5px; padding: 1px 5px; border-radius: 6px; }
   .flow-node__icon { font-size: 13px; line-height: 1; }
   .flow-node__title { font-size: 12.5px; font-weight: 600; color: #f0f2ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .flow-node__model { font-size: 9.5px; color: #8a93b8; font-family: ui-monospace, Menlo, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .flow-node__model { font-size: 9.5px; color: #8a93b8; font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .flow-node__out { font-size: 10px; color: #c3c9e0; margin-top: 3px; line-height: 1.25; max-height: 26px; overflow: hidden; }
   .flow-node__foot { font-size: 9px; color: #6f7aa0; margin-top: 4px; display: flex; justify-content: space-between; gap: 6px; }
-  /* Non-deterministic (LLM) family: warm, agent-coloured left stripe */
   .flow-node--llm { border-left: 4px solid var(--agent, #8a8fc4); }
   .flow-node--llm .flow-node__pill { background: var(--agent, #8a8fc4); color: #0f1a30; }
-  /* Deterministic family: cool steel, hard edge, teal accent */
   .flow-node--det { background: #131f38; border: 1px solid #2c4a66; border-left: 4px solid #5bd5c8; border-radius: 5px; }
   .flow-node--det .flow-node__pill { background: #0d3b39; color: #5bd5c8; border: 1px solid #2f7d77; }
-  .flow-node--det .flow-node__title { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+  .flow-node--det .flow-node__title { font-family: var(--mono); font-size: 11.5px; }
   .flow-node--lane { background: #101a30; border: 1px dashed #3a4a72; }
   .flow-node--lane .flow-node__pill { background: #1b2440; color: #8a93b8; }
-  #agent-flow-detail { margin-top: 12px; }
-  .det-payload { background: #0c1426; border: 1px solid #2c4a66; border-radius: 6px; padding: 10px 12px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: #c3c9e0; white-space: pre-wrap; overflow-x: auto; }
+  #agent-flow-detail { margin-top: 14px; }
   .det-kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 12px; margin-bottom: 10px; }
-  .det-kv dt { color: #5bd5c8; font-family: ui-monospace, Menlo, monospace; }
-  .det-kv dd { margin: 0; color: #e0e0e0; }
+  .det-kv dt { color: #5bd5c8; font-family: var(--mono); }
+  .det-kv dd { margin: 0; overflow-wrap: anywhere; }
 
-  /* Scene view */
-  .scene-block { background: #0f1a30; border: 1px solid #0f3460; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
-  .scene-header { background: #16213e; padding: 14px 16px; cursor: pointer; user-select: none; border-bottom: 1px solid #0f3460; }
-  .scene-header:hover { background: #1a2848; }
-  .scene-title { font-size: 15px; font-weight: 600; color: #e94560; }
-  .scene-meta { font-size: 12px; color: #999; margin-top: 4px; }
-  .scene-body { padding: 12px 16px; }
-  .scene-body.collapsed { display: none; }
-  .scene-info { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #0f3460; }
-  .scene-info-group { margin-bottom: 8px; }
-  .scene-info-toggle { cursor: pointer; user-select: none; color: #999; font-size: 12px; margin-bottom: 6px; }
-  .scene-info-toggle:hover { color: #ccc; }
-  .scene-info-toggle .count-badge { display: inline-block; background: #0f3460; color: #7c83ff; padding: 1px 6px; border-radius: 8px; font-size: 10px; margin-left: 4px; }
-  .scene-info-table { display: none; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
-  .scene-info-table.open { display: table; }
-  .scene-info-table th { text-align: left; padding: 4px 8px; color: #666; border-bottom: 1px solid #0f3460; font-size: 11px; }
-  .scene-info-table td { padding: 4px 8px; border-bottom: 1px solid #0a1025; }
-  .npc-tag { display: inline-block; background: #2d1545; color: #b57cff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px 2px; cursor: pointer; }
-  .npc-tag:hover { background: #3d2055; }
-  .poi-tag { display: inline-block; background: #153525; color: #5bd58a; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px 2px; }
-  .scene-desc { font-size: 12px; color: #888; margin-bottom: 12px; font-style: italic; }
-  .scene-turns { padding-top: 4px; }
+  /* NPC detail */
+  .npc-detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .npc-detail-header h2 { font-size: 17px; }
 
-  /* Structured LLM messages */
-  .msg-block { margin: 6px 0; border-left: 3px solid #0f3460; padding: 6px 10px; background: #0a0f1e; border-radius: 0 4px 4px 0; }
-  .msg-system { border-left-color: #d5c85b; }
-  .msg-user { border-left-color: #5bd58a; }
-  .msg-assistant { border-left-color: #b57cff; }
-  .msg-tool { border-left-color: #5bd5c8; }
-  .msg-role-badge { display: inline-block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; color: #999; }
-  .msg-system .msg-role-badge { color: #d5c85b; }
-  .msg-user .msg-role-badge { color: #5bd58a; }
-  .msg-assistant .msg-role-badge { color: #b57cff; }
-  .msg-tool .msg-role-badge { color: #5bd5c8; }
-  .msg-block pre { background: transparent; padding: 0; color: #ddd; font-size: 12px; white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  /* Settings */
+  .role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; }
+  .settings-role { background: var(--inset); border: 1px solid var(--border); border-radius: 7px; padding: 14px; }
+  .settings-role h4 { font-size: 13px; text-transform: capitalize; margin-bottom: 4px; }
+  .settings-role .current { font-size: 12px; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .settings-role .current code { color: var(--text); }
+  .settings-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
+  .settings-row:last-child { margin-bottom: 0; }
+  .settings-row .input { flex: 1 1 180px; }
+  .field-label { color: var(--muted); font-size: 12px; min-width: 110px; }
 
-  /* JSON tree */
-  .json-tree { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; color: #ddd; }
-  .json-tree details { padding-left: 14px; }
-  .json-tree details > summary { cursor: pointer; list-style: none; margin-left: -14px; }
-  .json-tree details > summary::-webkit-details-marker { display: none; }
-  .json-tree details > summary::before { content: '▸ '; color: #666; }
-  .json-tree details[open] > summary::before { content: '▾ '; }
-  .json-key { color: #7c83ff; }
-  .json-str { color: #5bd58a; }
-  .json-num { color: #ffb347; }
-  .json-bool { color: #e94560; }
-  .json-null { color: #888; font-style: italic; }
-  .json-punct { color: #666; }
+  /* Login */
+  .login-overlay { position: fixed; inset: 0; background: radial-gradient(circle at 30% 20%, #1c2140, var(--bg) 60%); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .login-card { width: 360px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  .login-card .brand { padding: 0 0 20px; }
+  .login-card label { display: block; color: var(--muted); font-size: 12px; margin: 12px 0 5px; }
+  .login-card .input { width: 100%; padding: 9px 11px; font-size: 14px; }
+  .login-card .btn { width: 100%; justify-content: center; margin-top: 20px; padding: 9px; font-size: 14px; }
+  .login-status { color: var(--warn); font-size: 12px; margin-top: 12px; min-height: 1em; }
 
-  /* Per-turn chips */
-  .turn-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-  .dice-chip { display: inline-block; background: #1a2848; color: #7c83ff; padding: 3px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #0f3460; cursor: help; }
-  .dice-chip.dice-actor-win { background: #153525; color: #5bd58a; }
-  .dice-chip.dice-target-win { background: #4a1525; color: #e94560; }
-  .dice-chip.dice-aggr-attack { background: #4a1525; color: #e94560; }
-  .dice-chip.dice-aggr-calm { background: #2d3015; color: #d5c85b; }
-  .item-chip { display: inline-block; background: #453015; color: #ffb347; padding: 3px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #5a3a15; cursor: help; }
-  .object-chip { display: inline-block; background: #154540; color: #5bd5c8; padding: 3px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #1a5a54; cursor: help; }
+  /* Toasts */
+  .toasts { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 8px; z-index: 200; }
+  .toast { background: var(--raised); border: 1px solid var(--border-strong); border-left: 3px solid var(--ok); padding: 9px 14px; border-radius: 7px; box-shadow: 0 8px 24px rgba(0,0,0,.4); max-width: 380px; animation: toast-in .16s ease-out; }
+  .toast-err { border-left-color: var(--err); }
+  @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } }
 
-  /* NPC detail page */
-  .back-button { background: #0f3460; color: #7c83ff; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-right: 12px; }
-  .back-button:hover { background: #16478b; }
-  .npc-detail-header { display: flex; align-items: center; margin-bottom: 16px; }
-  .npc-detail-header h2 { color: #e94560; }
-  .subtabs { display: flex; gap: 0; border-bottom: 2px solid #0f3460; margin-bottom: 16px; }
-  .subtab { padding: 6px 16px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #999; transition: all 0.15s; font-size: 13px; }
-  .subtab:hover { color: #fff; }
-  .subtab.active { color: #e94560; border-bottom-color: #e94560; }
-  .traits-chip { display: inline-block; background: #2d1545; color: #b57cff; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px; }
-  .inv-chip { display: inline-block; background: #453015; color: #ffb347; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px; }
-  .view-link { color: #7c83ff; cursor: pointer; text-decoration: underline; }
-  .view-link:hover { color: #aab0ff; }
-  .account-wrap { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #0f3460; font-size: 12px; color: #999; }
-  .login-overlay { position: fixed; inset: 0; background: #1a1a2e; display: flex; align-items: center; justify-content: center; z-index: 100; }
-  .login-overlay[hidden], .account-wrap[hidden] { display: none; }
-  .login-card { width: 340px; background: #16213e; border: 1px solid #0f3460; border-radius: 8px; padding: 24px; }
-  .login-card h2 { color: #e94560; font-size: 18px; margin-bottom: 16px; }
-  .login-card label { display: block; color: #999; font-size: 12px; margin: 12px 0 5px; }
-  .login-card input { width: 100%; padding: 8px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 14px; }
-  .login-card button { width: 100%; margin-top: 18px; padding: 9px; background: #e94560; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; }
-  .login-status { color: #ffb347; font-size: 12px; margin-top: 12px; min-height: 1em; }
+  @media (max-width: 1100px) {
+    .rail { width: 58px; padding: 14px 8px; }
+    .brand-name, .brand-tag, .nav-link span, .account-email { display: none; }
+    .brand { padding: 4px 7px 18px; }
+    .nav-link { justify-content: center; padding: 9px 0; }
+    .list-panel { width: 270px; }
+    .page { padding: 18px 18px 32px; }
+  }
 </style>
 </head>
 <body>
 
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
 <div id="login-overlay" class="login-overlay" hidden>
   <form class="login-card" onsubmit="onAdminLogin(event)">
-    <h2>Storyteller Admin</h2>
+    <div class="brand"><span class="brand-mark">S</span><span class="brand-name">Storyteller</span><span class="brand-tag">admin</span></div>
     <label for="login-email">Email</label>
-    <input id="login-email" type="email" autocomplete="email" required>
+    <input id="login-email" class="input" type="email" autocomplete="email" required>
     <label for="login-password">Password</label>
-    <input id="login-password" type="password" autocomplete="current-password" required>
-    <button type="submit">Log in</button>
+    <input id="login-password" class="input" type="password" autocomplete="current-password" required>
+    <button class="btn btn-primary" type="submit">Log in</button>
     <div id="login-status" class="login-status" role="status"></div>
   </form>
 </div>
 
-<div class="sidebar">
-  <h2>Storyteller</h2>
+<nav class="rail">
+  <div class="brand"><span class="brand-mark">S</span><span class="brand-name">Storyteller</span><span class="brand-tag">admin</span></div>
+  <button id="nav-sessions" class="nav-link" title="Sessions" onclick="showView('sessions')">
+    <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Sessions</span></button>
+  <button id="nav-users" class="nav-link" title="Users" onclick="showView('users')">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3c2.1.7 3.5 2.7 3.5 5.7"/></svg><span>Users</span></button>
+  <button id="nav-feedback" class="nav-link" title="Feedback" onclick="showView('feedback')">
+    <svg viewBox="0 0 24 24"><path d="M5 21V4h12l-2 4 2 4H5"/></svg><span>Feedback</span></button>
+  <button id="nav-reliability" class="nav-link" title="Reliability" onclick="showView('reliability')">
+    <svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><span>Reliability</span></button>
+  <button id="nav-settings" class="nav-link" title="Settings" onclick="showView('settings')">
+    <svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg><span>Settings</span></button>
+  <div class="rail-spacer"></div>
   <div id="account-wrap" class="account-wrap" hidden>
-    <span id="account-email"></span>
-    <button class="copy-btn" type="button" onclick="onAdminLogout()">Log out</button>
+    <span id="account-email" class="account-email"></span>
+    <button class="btn btn-sm" type="button" onclick="onAdminLogout()" title="Log out">Log out</button>
   </div>
-  <div class="sidebar-nav">
-    <div id="nav-sessions" class="nav-link active" onclick="showView('sessions')">Sessions</div>
-    <div id="nav-users" class="nav-link" onclick="showView('users')">Users</div>
-    <div id="nav-feedback" class="nav-link" onclick="showView('feedback')">Feedback</div>
-    <div id="nav-reliability" class="nav-link" onclick="showView('reliability')">Reliability</div>
-    <div id="nav-settings" class="nav-link" onclick="showView('settings')">Settings</div>
-  </div>
-  <div id="sessions-nav-content">
-    <div class="sidebar-search-wrap">
-      <input id="session-search" class="sidebar-search" type="text"
-             placeholder="Search id / player…" oninput="onSearchInput()">
-    </div>
-    <div id="session-list"></div>
-  </div>
-  <div id="users-nav-content" style="display:none">
-    <div class="sidebar-search-wrap">
-      <input id="user-search" class="sidebar-search" type="text"
-             placeholder="Search by email…" oninput="onUserSearchInput()">
-    </div>
-    <div class="sidebar-search-wrap"><button class="copy-btn" onclick="currentUserId=null; loadUsers(); renderUsersHome()">Manage beta invites</button></div>
-    <div id="user-list"></div>
-  </div>
-</div>
+</nav>
 
-<div class="main" id="main">
-  <div class="placeholder">Select a session to inspect</div>
-</div>
+<aside id="list-panel" class="list-panel">
+  <div id="sessions-nav-content">
+    <div class="list-head"><span>Sessions</span><span id="session-count" class="count"></span></div>
+    <div class="list-search">
+      <input id="session-search" class="input search" type="search"
+             placeholder="Search id / player…   /" oninput="onSearchInput()">
+    </div>
+    <div id="session-list" class="list"></div>
+  </div>
+  <div id="users-nav-content" hidden>
+    <div class="list-head"><span>Users</span><span id="user-count" class="count"></span></div>
+    <div class="list-search">
+      <input id="user-search" class="input search" type="search"
+             placeholder="Search by email…   /" oninput="onUserSearchInput()">
+    </div>
+    <div class="list">
+      <div id="nav-invites" class="list-item" onclick="go('#/users')">
+        <div class="li-pinned">✉ Beta invites</div>
+        <div class="li-meta">Invite or re-enable testers</div>
+      </div>
+      <div id="user-list"></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main" id="main"></main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const API = '';
 let _settingsCatalog = [];
 let _settingsKeys = {};
+let currentView = 'sessions';
 let currentSessionId = null;
 let currentUserId = null;
 let currentTab = 'overview';
@@ -303,6 +390,81 @@ let searchDebounceTimer = null;
 let userSearchDebounceTimer = null;
 const SEARCH_DEBOUNCE_MS = 250;
 let supabaseClient = null;
+const _sessionsById = {};
+
+const VIEWS = ['sessions', 'users', 'feedback', 'reliability', 'settings'];
+const SESSION_TABS = [
+  ['overview', 'Overview'], ['scenes', 'Scenes'], ['npcs', 'NPCs'], ['locations', 'Locations'],
+  ['events', 'Events'], ['knowledge', 'Knowledge'], ['models', 'Models'], ['flow', 'Agent flow'],
+];
+const LOADING = '<div class="loading"><span class="spinner"></span>Loading…</div>';
+
+// ---- Small rendering helpers ----
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+}
+function fmtNum(n) { return n == null ? '—' : Number(n).toLocaleString(); }
+function fmtDate(iso) { return iso ? new Date(iso).toLocaleString() : '—'; }
+function fmtRel(iso) {
+  if (!iso) return '—';
+  const sec = (Date.now() - new Date(iso)) / 1000;
+  let text = new Date(iso).toLocaleDateString();
+  if (sec < 45) text = 'just now';
+  else if (sec < 3600) text = `${Math.round(sec / 60)}m ago`;
+  else if (sec < 86400) text = `${Math.round(sec / 3600)}h ago`;
+  else if (sec < 604800) text = `${Math.round(sec / 86400)}d ago`;
+  return `<span title="${escapeHtml(fmtDate(iso))}">${text}</span>`;
+}
+function idChip(id) {
+  const full = String(id || '');
+  if (!full) return '—';
+  return `<span class="id-chip" title="${escapeHtml(full)} — click to copy" onclick="event.stopPropagation(); copyText('${escapeHtml(full)}', 'ID')">${escapeHtml(full.slice(0, 8))}</span>`;
+}
+function agentBadge(name) {
+  return `<span class="agent-badge" style="--agent:${agentColor(name)}">${escapeHtml(name || '?')}</span>`;
+}
+function pageHeader(titleHtml, subHtml, actionsHtml) {
+  return `<header class="page-head"><div><h1>${titleHtml}</h1>${subHtml ? `<div class="page-sub">${subHtml}</div>` : ''}</div>
+    <div class="page-actions">${actionsHtml || ''}</div></header>`;
+}
+function emptyState(title, hint) {
+  return `<div class="empty-state"><h2>${title}</h2>${hint ? `<div>${hint}</div>` : ''}</div>`;
+}
+function errorBox(what, e) { return `<div class="error-box">Error loading ${escapeHtml(what)}: ${escapeHtml(e.message)}</div>`; }
+function statTile(label, value, tab) {
+  const link = tab ? ` class="stat stat-link" onclick="switchTab('${tab}')"` : ' class="stat"';
+  return `<div${link}><div class="stat-value">${value}</div><div class="stat-label">${escapeHtml(label)}</div></div>`;
+}
+// headers: list of labels, or [label, 'num'] for right-aligned numeric columns.
+function tableHtml(headers, rowsHtml, id) {
+  const ths = headers.map(h => Array.isArray(h) ? `<th class="${h[1]}">${h[0]}</th>` : `<th>${h}</th>`).join('');
+  return `<div class="table-wrap"><table${id ? ` id="${id}"` : ''}><thead><tr>${ths}</tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
+}
+function filterInput(tableId, placeholder) {
+  return `<input class="input" type="search" placeholder="${escapeHtml(placeholder || 'Filter…')}" oninput="filterRows(this, '${tableId}')">`;
+}
+function filterRows(input, tableId) {
+  const q = input.value.trim().toLowerCase();
+  document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+    tr.hidden = !!q && !tr.textContent.toLowerCase().includes(q);
+  });
+}
+function main() { return document.getElementById('main'); }
+function setPage(html) { main().innerHTML = `<div class="page">${html}</div>`; }
+
+function toast(message, kind) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind === 'err' ? ' toast-err' : '');
+  el.textContent = message;
+  document.getElementById('toasts').append(el);
+  setTimeout(() => el.remove(), kind === 'err' ? 6000 : 2600);
+}
+function copyText(text, label) {
+  navigator.clipboard.writeText(text).then(() => toast(`${label || 'Text'} copied`), () => toast('Copy failed', 'err'));
+}
+
+// ---- Auth ----
 
 // Returns true when the dashboard may load: auth is off (local dev) or a session exists.
 async function initAuth() {
@@ -329,6 +491,7 @@ function showLogin(message) {
 
 function showAccount(email) {
   document.getElementById('account-email').textContent = email || '';
+  document.getElementById('account-email').title = email || '';
   document.getElementById('account-wrap').hidden = false;
 }
 
@@ -358,15 +521,91 @@ async function authHeaders(extra) {
   return headers;
 }
 
+async function fetchJSON(url, options) {
+  const opts = Object.assign({}, options || {});
+  opts.headers = await authHeaders(opts.headers);
+  const res = await fetch(API + url, opts);
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) showLogin('Your session has expired. Please log in again.');
+  if (res.status === 403) showLogin('This account does not have the admin role.');
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
 async function downloadFeedbackCsv() {
   const res = await fetch(API + '/api/admin/beta/feedback.csv', { headers: await authHeaders() });
-  if (!res.ok) return alert(`Export failed: HTTP ${res.status}`);
+  if (!res.ok) return toast(`Export failed: HTTP ${res.status}`, 'err');
   const link = document.createElement('a');
   link.href = URL.createObjectURL(await res.blob());
   link.download = 'beta-feedback.csv';
   link.click();
   URL.revokeObjectURL(link.href);
 }
+
+// ---- Routing: the URL hash is the source of truth so reload / back / links keep context ----
+//   #/sessions/<id>/<tab>            #/sessions/<id>/npcs/<npcId>/<subtab>
+//   #/users[/<id>]   #/feedback   #/reliability[/<window>]   #/settings
+
+function go(hash) {
+  if (location.hash === hash) route();
+  else location.hash = hash;
+}
+
+function sessionHash(sessionId, tab) {
+  if (tab === 'npc-detail') return `#/sessions/${sessionId}/npcs/${currentNpcId}/${currentNpcTab}`;
+  return `#/sessions/${sessionId}/${tab || 'overview'}`;
+}
+
+function route() {
+  const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  const view = VIEWS.includes(parts[0]) ? parts[0] : 'sessions';
+  currentView = view;
+  VIEWS.forEach(v => document.getElementById('nav-' + v).classList.toggle('active', v === view));
+  document.getElementById('sessions-nav-content').hidden = view !== 'sessions';
+  document.getElementById('users-nav-content').hidden = view !== 'users';
+  document.getElementById('list-panel').hidden = view !== 'sessions' && view !== 'users';
+
+  if (view === 'sessions') {
+    currentSessionId = parts[1] || null;
+    const tab = parts[2] || 'overview';
+    if (tab === 'npcs' && parts[3]) {
+      currentTab = 'npc-detail';
+      currentNpcId = parts[3];
+      currentNpcTab = parts[4] || 'state';
+    } else {
+      currentTab = SESSION_TABS.some(([key]) => key === tab) ? tab : 'overview';
+    }
+    markActive('session-list', currentSessionId);
+    renderTab();
+  } else if (view === 'users') {
+    currentUserId = parts[1] || null;
+    document.getElementById('nav-invites').classList.toggle('active', !currentUserId);
+    loadUsers();
+    if (currentUserId) renderUserDetail();
+    else renderUsersHome();
+  } else if (view === 'feedback') {
+    renderFeedbackView();
+  } else if (view === 'reliability') {
+    if (_RELIABILITY_WINDOWS.includes(parts[1])) _reliabilityWindow = parts[1];
+    renderReliabilityView();
+  } else {
+    renderSettingsView();
+  }
+}
+
+function showView(view) {
+  if (view === 'sessions' && currentSessionId) return go(sessionHash(currentSessionId, currentTab));
+  if (view === 'users' && currentUserId) return go('#/users/' + currentUserId);
+  go('#/' + view);
+}
+
+function markActive(listId, id) {
+  document.querySelectorAll(`#${listId} .list-item`).forEach(el => {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+}
+
+// ---- Sessions list ----
 
 function currentSearchTerm() {
   const el = document.getElementById('session-search');
@@ -393,51 +632,42 @@ function badgeClass(state) {
   if (state === 'idle') return 'badge-idle';
   return 'badge-awaiting';
 }
-
-async function fetchJSON(url, options) {
-  const opts = Object.assign({}, options || {});
-  opts.headers = await authHeaders(opts.headers);
-  const res = await fetch(API + url, opts);
-  const data = await res.json();
-  if (res.status === 401) showLogin('Your session has expired. Please log in again.');
-  if (res.status === 403) showLogin('This account does not have the admin role.');
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data;
-}
+function stateBadge(state) { return `<span class="badge ${badgeClass(state)}">${escapeHtml(state || '—')}</span>`; }
 
 async function loadSessions(search) {
   const term = (search ?? currentSearchTerm()).trim();
   const qs = term ? '?search=' + encodeURIComponent(term) : '';
   const data = await fetchJSON('/api/sessions' + qs);
+  const sessions = data.sessions || [];
+  sessions.forEach(s => { _sessionsById[s.id] = s; });
+  document.getElementById('session-count').textContent = sessions.length;
   const list = document.getElementById('session-list');
-  list.innerHTML = data.sessions.map(s => {
-    const idShort = (s.id || '').slice(0, 8);
-    return `
-    <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
-      <div class="chat-id">Web <span class="badge ${badgeClass(s.state)}">${escapeHtml(s.state)}</span></div>
-      <div class="meta"><span class="session-id-short">${idShort}</span> | ${renderOwnerLabel(s)}</div>
-      <div class="meta">${escapeHtml(s.language)} | Turn ${s.turn_count ?? 0} | ${escapeHtml(s.game_time ?? '-')}</div>
-    </div>`;
-  }).join('');
+  if (!sessions.length) {
+    list.innerHTML = `<div class="empty" style="padding:14px">${term ? 'No matching sessions' : 'No sessions yet'}</div>`;
+    return;
+  }
+  list.innerHTML = sessions.map(s => `
+    <div class="list-item ${s.id === currentSessionId ? 'active' : ''}" data-id="${escapeHtml(s.id)}" onclick="selectSession('${s.id}')">
+      <div class="li-top"><span class="li-title">${escapeHtml(s.title || s.setting || 'Untitled game')}</span>${stateBadge(s.state)}</div>
+      <div class="li-meta">${renderOwnerLabel(s)} · ${fmtRel(s.updated_at)}</div>
+      <div class="li-meta"><span class="mono faint">${escapeHtml((s.id || '').slice(0, 8))}</span> · ${escapeHtml(s.language || '')} · turn ${s.turn_count ?? 0}${s.game_time ? ' · ' + escapeHtml(s.game_time) : ''}</div>
+    </div>`).join('');
 }
 
 function renderOwnerLabel(s) {
   if (s.account_email && s.account_id) {
     return `<span class="view-link" onclick="event.stopPropagation(); openUserFromCrossLink('${s.account_id}')">${escapeHtml(s.account_email)}</span>`;
   }
-  return '—';
+  return '<span class="faint">no owner</span>';
 }
 
-async function openUserFromCrossLink(accountId) {
-  currentUserId = accountId;
-  showView('users');
+function openUserFromCrossLink(accountId) { go('#/users/' + accountId); }
+
+function selectSession(id) {
+  go(sessionHash(id, currentTab === 'npc-detail' ? 'npcs' : currentTab));
 }
 
-async function selectSession(id) {
-  currentSessionId = id;
-  loadSessions();
-  renderTab();
-}
+// ---- Users ----
 
 async function loadUsers() {
   const term = currentUserSearchTerm();
@@ -445,44 +675,30 @@ async function loadUsers() {
   const data = await fetchJSON('/api/admin/users' + qs);
   const list = document.getElementById('user-list');
   const users = data.users || [];
+  document.getElementById('user-count').textContent = users.length;
   if (!users.length) {
-    list.innerHTML = '<div class="empty">No users</div>';
+    list.innerHTML = '<div class="empty" style="padding:14px">No users</div>';
     return;
   }
   list.innerHTML = users.map(u => {
     const id = String(u.id || '');
-    const idShort = id.slice(0, 8);
-    const email = escapeHtml(u.email || idShort || 'Unknown user');
-    const sessions = u.session_count ?? 0;
-    const calls = u.call_count ?? 0;
-    const tokens = u.total_tokens ?? 0;
+    const email = escapeHtml(u.email || id.slice(0, 8) || 'Unknown user');
     return `
-    <div class="session-item ${id === currentUserId ? 'active' : ''}" onclick="selectUser('${id}')">
-      <div class="chat-id">${email} ${u.is_admin ? '<span class="badge badge-playing">admin</span>' : ''}</div>
-      <div class="meta"><span class="session-id-short">${escapeHtml(idShort)}</span> | ${escapeHtml(u.plan || '-')}</div>
-      <div class="meta">${sessions} sessions | ${calls} calls | ${tokens} tokens</div>
+    <div class="list-item ${id === currentUserId ? 'active' : ''}" data-id="${escapeHtml(id)}" onclick="selectUser('${id}')">
+      <div class="li-top"><span class="li-title">${email}</span>${u.is_admin ? '<span class="badge badge-info">admin</span>' : ''}</div>
+      <div class="li-meta">${escapeHtml(u.plan || '—')} · ${fmtNum(u.session_count ?? 0)} sessions</div>
+      <div class="li-meta">${fmtNum(u.call_count ?? 0)} calls · ${fmtNum(u.total_tokens ?? 0)} tokens</div>
     </div>`;
   }).join('');
 }
 
-async function selectUser(id) {
-  currentUserId = id;
-  await loadUsers();
-  await renderUserDetail();
-}
+function selectUser(id) { go('#/users/' + id); }
 
-async function openUserSession(id) {
-  currentSessionId = id;
-  currentTab = 'scenes';
-  showView('sessions');
-  await loadSessions();
-  await renderTab();
-}
+function openUserSession(id) { go(`#/sessions/${id}/scenes`); }
 
 async function renderUserDetail() {
   if (!currentUserId) return;
-  const main = document.getElementById('main');
-  main.innerHTML = '<div class="empty">Loading user…</div>';
+  setPage(LOADING);
   try {
     const data = await fetchJSON(`/api/admin/users/${currentUserId}`);
     const account = data.account || {};
@@ -490,26 +706,29 @@ async function renderUserDetail() {
     const sessions = data.sessions || [];
     const invites = data.invites || [];
     const feedback = data.feedback || [];
-    main.innerHTML = `<div class="card"><h3>User</h3><div class="kv">
+    const sub = [idChip(account.id), escapeHtml(account.plan || '—'), `joined ${fmtRel(account.created_at)}`].join('<span class="dot">·</span>');
+    setPage(`${pageHeader(`${escapeHtml(account.email || 'User')} ${account.is_admin ? '<span class="badge badge-info">admin</span>' : ''}`, sub)}
+    <div class="stats">
+      ${statTile('Sessions', fmtNum(sessions.length))}
+      ${statTile('AI calls', fmtNum(usage.call_count ?? 0))}
+      ${statTile('Prompt tokens', fmtNum(usage.prompt_tokens ?? 0))}
+      ${statTile('Completion tokens', fmtNum(usage.completion_tokens ?? 0))}
+      ${statTile('Total tokens', fmtNum(usage.total_tokens ?? 0))}
+    </div>
+    <div class="card"><h3>Account</h3><div class="kv">
       <div class="label">Email</div><div>${escapeHtml(account.email || '')}</div>
       <div class="label">Account ID</div><div><code>${escapeHtml(account.id || '')}</code></div>
-      <div class="label">Supabase ID</div><div><code>${escapeHtml(account.supabase_user_id || '')}</code></div>
-      <div class="label">Plan</div><div>${escapeHtml(account.plan || '-')}</div>
+      <div class="label">Supabase ID</div><div><code>${escapeHtml(account.supabase_user_id || '—')}</code></div>
+      <div class="label">Plan</div><div>${escapeHtml(account.plan || '—')}</div>
       <div class="label">Admin</div><div>${account.is_admin ? 'yes' : 'no'}</div>
-      <div class="label">Created</div><div>${escapeHtml(account.created_at ? new Date(account.created_at).toLocaleString() : '-')}</div>
-      <div class="label">Updated</div><div>${escapeHtml(account.updated_at ? new Date(account.updated_at).toLocaleString() : '-')}</div>
+      <div class="label">Created</div><div>${fmtDate(account.created_at)}</div>
+      <div class="label">Updated</div><div>${fmtDate(account.updated_at)}</div>
     </div></div>
-    <div class="card"><h3>AI Usage</h3><div class="kv">
-      <div class="label">Calls</div><div>${usage.call_count ?? 0}</div>
-      <div class="label">Prompt tokens</div><div>${usage.prompt_tokens ?? 0}</div>
-      <div class="label">Completion tokens</div><div>${usage.completion_tokens ?? 0}</div>
-      <div class="label">Total tokens</div><div>${usage.total_tokens ?? 0}</div>
-    </div></div>
-    <div class="card"><h3>Sessions</h3>${renderUserSessionsTable(sessions)}</div>
-    <div class="card"><h3>Invites</h3>${renderUserInvitesTable(invites)}</div>
-    <div class="card"><h3>Feedback</h3>${renderUserFeedbackTable(feedback)}</div>`;
+    <div class="card"><h3>Sessions <span class="count">${sessions.length}</span></h3>${renderUserSessionsTable(sessions)}</div>
+    <div class="card"><h3>Invites <span class="count">${invites.length}</span></h3>${renderUserInvitesTable(invites)}</div>
+    <div class="card"><h3>Feedback <span class="count">${feedback.length}</span></h3>${renderUserFeedbackTable(feedback)}</div>`);
   } catch (e) {
-    main.innerHTML = `<div class="empty">Error loading user: ${escapeHtml(e.message)}</div>`;
+    setPage(errorBox('user', e));
   }
 }
 
@@ -521,34 +740,32 @@ function renderUserInvitesTable(invites) {
 
 function renderUserFeedbackTable(rows) {
   if (!rows.length) return '<div class="empty">No feedback from this user.</div>';
-  return `<table><tr><th>Time</th><th>Game</th><th>Turn</th><th>Category</th><th>Message</th></tr>
-    ${rows.map(row => `<tr>
-      <td>${escapeHtml(row.created_at ? new Date(row.created_at).toLocaleString() : '-')}</td>
-      <td><span class="session-id-short">${escapeHtml((row.game_id || '').slice(0, 8))}</span><br>${escapeHtml(row.setting || '')}</td>
-      <td>${row.turn_number ?? ''}</td>
-      <td>${escapeHtml(row.category || '')}</td>
-      <td>${escapeHtml(row.message || '')}</td>
-    </tr>`).join('')}
-  </table>`;
+  return tableHtml(['Time', 'Game', ['Turn', 'num'], 'Category', 'Message'], rows.map(row => `<tr>
+      <td>${fmtRel(row.created_at)}</td>
+      <td>${idChip(row.game_id)}<div class="muted">${escapeHtml(row.setting || '')}</div></td>
+      <td class="num">${row.turn_number ?? ''}</td>
+      <td>${row.category ? `<span class="chip">${escapeHtml(row.category)}</span>` : ''}</td>
+      <td class="wrap">${escapeHtml(row.message || '')}</td>
+    </tr>`).join(''));
 }
 
 function renderUserSessionsTable(sessions) {
   if (!sessions.length) return '<div class="empty">No sessions for this user.</div>';
-  return `<table><tr><th>Session</th><th>Title</th><th>State</th><th>Turns</th><th>AI calls</th><th>Tokens</th><th>Created</th><th>Updated</th><th>Logs</th></tr>
-    ${sessions.map(s => {
-      const id = String(s.id || '');
-      return `<tr>
-        <td><span class="session-id-short">${escapeHtml(id.slice(0, 8))}</span></td>
-        <td>${escapeHtml(s.title || '-')}</td>
-        <td><span class="badge ${badgeClass(s.state)}">${escapeHtml(s.state || '-')}</span></td>
-        <td>${s.turn_count ?? 0}</td>
-        <td>${s.call_count ?? 0}</td>
-        <td>${s.total_tokens ?? 0}</td>
-        <td>${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString() : '-')}</td>
-        <td>${escapeHtml(s.updated_at ? new Date(s.updated_at).toLocaleString() : '-')}</td>
-        <td><span class="view-link" onclick="openUserSession('${id}')">Open full session</span></td>
-      </tr><tr><td colspan="9">${renderUserSessionLogs(s)}</td></tr>`;
-    }).join('')}</table>`;
+  const headers = ['Session', 'Title', 'State', ['Turns', 'num'], ['AI calls', 'num'], ['Tokens', 'num'], 'Created', 'Updated', ''];
+  return tableHtml(headers, sessions.map(s => {
+    const id = String(s.id || '');
+    return `<tr>
+        <td>${idChip(id)}</td>
+        <td>${escapeHtml(s.title || '—')}</td>
+        <td>${stateBadge(s.state)}</td>
+        <td class="num">${fmtNum(s.turn_count ?? 0)}</td>
+        <td class="num">${fmtNum(s.call_count ?? 0)}</td>
+        <td class="num">${fmtNum(s.total_tokens ?? 0)}</td>
+        <td>${fmtRel(s.created_at)}</td>
+        <td>${fmtRel(s.updated_at)}</td>
+        <td><button class="btn btn-sm" onclick="openUserSession('${id}')">Open →</button></td>
+      </tr><tr><td colspan="9" style="padding-top:0">${renderUserSessionLogs(s)}</td></tr>`;
+  }).join(''));
 }
 
 function renderUserSessionLogs(session) {
@@ -563,45 +780,44 @@ function renderUserSessionLogs(session) {
 }
 
 function renderUserLogGroup(label, entries) {
-  if (!entries.length) {
-    return `<details class="user-log-group"><summary>${escapeHtml(label)} (0)</summary><div class="empty">No entries</div></details>`;
-  }
-  return `<details class="user-log-group"><summary>${escapeHtml(label)} (${entries.length})</summary>
-    ${entries.map(entry => `<pre class="user-log-entry">${escapeHtml(JSON.stringify(entry, null, 2))}</pre>`).join('')}
-  </details>`;
+  const body = entries.length
+    ? entries.map(entry => `<pre class="code-block user-log-entry">${escapeHtml(JSON.stringify(entry, null, 2))}</pre>`).join('')
+    : '<div class="empty">No entries</div>';
+  return `<details class="user-log-group disclosure"><summary>${escapeHtml(label)} <span class="count">${entries.length}</span></summary>${body}</details>`;
 }
 
 async function renderUsersHome() {
-  const main = document.getElementById('main');
-  main.innerHTML = '<div class="empty">Loading beta invites…</div>';
+  setPage(LOADING);
   try {
     const data = await fetchJSON('/api/admin/beta/invites');
     const invites = data.invites || [];
-    main.innerHTML = `<div class="card"><h3>Beta Invites</h3>
-      <p class="token-help">Invite or re-enable beta testers without using the Fly shell.</p>
-      <form onsubmit="submitBetaInvite(event)" class="settings-row" style="margin-top:10px">
-        <label for="beta-invite-email" class="label" style="align-self:center">Tester email</label>
-        <input id="beta-invite-email" type="email" placeholder="tester@example.com" required>
-        <button type="submit">Invite tester</button>
-      </form>
-      <div id="beta-invite-banner" class="settings-banner" style="display:none"></div>
-      ${renderBetaInvitesTable(invites)}
-    </div>`;
+    setPage(`${pageHeader('Beta invites', `${invites.length} invite${invites.length === 1 ? '' : 's'} · invite or re-enable testers without the Fly shell`)}
+      <div class="card"><h3>Invite a tester</h3>
+        <form onsubmit="submitBetaInvite(event)" class="settings-row">
+          <input id="beta-invite-email" class="input" type="email" placeholder="tester@example.com" required aria-label="Tester email">
+          <button class="btn btn-primary" type="submit">Send invite</button>
+        </form>
+      </div>
+      ${invites.length ? `<div class="toolbar">${filterInput('invites-table', 'Filter invites…')}</div>` : ''}
+      ${renderBetaInvitesTable(invites, 'invites-table')}`);
   } catch (e) {
-    main.innerHTML = `<div class="empty">Error loading beta invites: ${escapeHtml(e.message)}</div>`;
+    setPage(errorBox('beta invites', e));
   }
 }
 
-function renderBetaInvitesTable(invites) {
+function inviteBadge(status) {
+  const cls = status === 'accepted' ? 'badge-playing' : 'badge-awaiting';
+  return `<span class="badge ${cls}">${escapeHtml(status || '—')}</span>`;
+}
+
+function renderBetaInvitesTable(invites, tableId) {
   if (!invites.length) return '<div class="empty">No beta invites yet.</div>';
-  return `<table><tr><th>Email</th><th>Status</th><th>Invited</th><th>Accepted</th></tr>
-    ${invites.map(invite => `<tr>
+  return tableHtml(['Email', 'Status', 'Invited', 'Accepted'], invites.map(invite => `<tr>
       <td>${renderInviteEmailCell(invite)}</td>
-      <td><span class="badge badge-idle">${escapeHtml(invite.status || '')}</span></td>
-      <td>${escapeHtml(invite.invited_at ? new Date(invite.invited_at).toLocaleString() : '-')}</td>
-      <td>${escapeHtml(invite.accepted_at ? new Date(invite.accepted_at).toLocaleString() : '-')}</td>
-    </tr>`).join('')}
-  </table>`;
+      <td>${inviteBadge(invite.status)}</td>
+      <td>${fmtRel(invite.invited_at)}</td>
+      <td>${fmtRel(invite.accepted_at)}</td>
+    </tr>`).join(''), tableId);
 }
 
 function renderInviteEmailCell(invite) {
@@ -615,7 +831,6 @@ function renderInviteEmailCell(invite) {
 async function submitBetaInvite(event) {
   event.preventDefault();
   const input = document.getElementById('beta-invite-email');
-  const banner = document.getElementById('beta-invite-banner');
   const email = (input?.value || '').trim();
   if (!email) return;
   try {
@@ -624,55 +839,57 @@ async function submitBetaInvite(event) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email}),
     });
-    if (banner) {
-      banner.className = 'settings-banner ok';
-      banner.textContent = `Invited ${data.invite.email}`;
-      banner.style.display = '';
-    }
-    if (input) input.value = '';
-    setTimeout(renderUsersHome, 500);
+    toast(`Invited ${data.invite.email}`);
+    renderUsersHome();
   } catch (e) {
-    if (banner) {
-      banner.className = 'settings-banner err';
-      banner.textContent = e.message;
-      banner.style.display = '';
-    }
+    toast(e.message, 'err');
   }
+}
+
+// ---- Session view ----
+
+function sessionHeader() {
+  const s = _sessionsById[currentSessionId] || { id: currentSessionId };
+  const owner = s.account_email ? renderOwnerLabel(s) : '';
+  const sub = [
+    idChip(s.id), s.state ? stateBadge(s.state) : '', owner, escapeHtml(s.language || ''),
+    s.turn_count != null ? `turn ${s.turn_count}` : '', s.updated_at ? `updated ${fmtRel(s.updated_at)}` : '',
+  ].filter(Boolean).join('<span class="dot">·</span>');
+  return pageHeader(escapeHtml(s.title || s.setting || 'Session'), sub,
+    '<button class="btn" onclick="renderTab()" title="Reload this tab">↻ Refresh</button>');
 }
 
 async function renderTab() {
-  if (!currentSessionId) return;
-  const main = document.getElementById('main');
-  if (currentTab === 'npc-detail') {
-    main.innerHTML = '<div id="tab-content"></div>';
-    const content = document.getElementById('tab-content');
-    try {
-      await renderNpcDetail(content);
-    } catch (e) {
-      content.innerHTML = `<div class="empty">Error loading NPC: ${escapeHtml(e.message)}</div>`;
-    }
+  if (currentView !== 'sessions') return;
+  if (!currentSessionId) {
+    main().innerHTML = emptyState('Select a session', 'Pick a game on the left to inspect its scenes, NPCs and AI calls. Press <kbd>/</kbd> to search.');
     return;
   }
-  const tabs = `<div class="tabs">
-    ${['overview','npcs','locations','events','scenes','knowledge','models','agent flow'].map(t =>
-      `<div class="tab ${t === currentTab ? 'active' : ''}" onclick="switchTab('${t}')">${t}</div>`
-    ).join('')}
-  </div><div id="tab-content"></div>`;
-  main.innerHTML = tabs;
+  const activeTab = currentTab === 'npc-detail' ? 'npcs' : currentTab;
+  const tabs = `<nav class="tabs">${SESSION_TABS.map(([key, label]) =>
+    `<button class="tab ${key === activeTab ? 'active' : ''}" onclick="switchTab('${key}')">${label}</button>`).join('')}</nav>`;
+  setPage(sessionHeader() + tabs + `<div id="tab-content">${LOADING}</div>`);
 
   const content = document.getElementById('tab-content');
+  const renderers = {
+    overview: renderOverview, npcs: renderNPCs, locations: renderLocations, events: renderEvents,
+    scenes: renderScenes, knowledge: renderKnowledge, models: renderSessionModels, flow: renderAgentFlow,
+    'npc-detail': renderNpcDetail,
+  };
   try {
-    if (currentTab === 'overview') await renderOverview(content);
-    else if (currentTab === 'npcs') await renderNPCs(content);
-    else if (currentTab === 'locations') await renderLocations(content);
-    else if (currentTab === 'events') await renderEvents(content);
-    else if (currentTab === 'scenes') await renderScenes(content);
-    else if (currentTab === 'conversation') await renderScenes(content);
-    else if (currentTab === 'knowledge') await renderKnowledge(content);
-    else if (currentTab === 'models') await renderSessionModels(content);
-    else if (currentTab === 'agent flow') await renderAgentFlow(content);
-  } catch (e) { content.innerHTML = `<div class="empty">Error loading data: ${escapeHtml(e.message)}</div>`; }
+    await renderers[currentTab](content);
+  } catch (e) {
+    content.innerHTML = errorBox(currentTab === 'npc-detail' ? 'NPC' : 'data', e);
+  }
 }
+
+function switchTab(tab) { go(sessionHash(currentSessionId, tab)); }
+
+function viewNPC(npcId) { go(`#/sessions/${currentSessionId}/npcs/${npcId}/state`); }
+
+function backToNpcs() { go(`#/sessions/${currentSessionId}/npcs`); }
+
+function switchNpcTab(tab) { go(`#/sessions/${currentSessionId}/npcs/${currentNpcId}/${tab}`); }
 
 async function renderSessionModels(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/models`);
@@ -681,15 +898,11 @@ async function renderSessionModels(el) {
     el.innerHTML = '<div class="empty">No AI calls recorded for this session yet.</div>';
     return;
   }
-  el.innerHTML = `<div class="card"><h3>Models used in this session</h3>
-    <table><tr><th>Agent</th><th>Model</th><th>Calls</th></tr>
-      ${models.map(m => `<tr>
-        <td><span class="agent-badge agent-${m.agent_name}">${m.agent_name}</span></td>
-        <td><code>${m.model}</code></td>
-        <td>${m.calls}</td>
-      </tr>`).join('')}
-    </table>
-  </div>`;
+  el.innerHTML = tableHtml(['Agent', 'Model', ['Calls', 'num']], models.map(m => `<tr>
+      <td>${agentBadge(m.agent_name)}</td>
+      <td><code>${escapeHtml(m.model)}</code></td>
+      <td class="num">${fmtNum(m.calls)}</td>
+    </tr>`).join(''));
 }
 
 // ---- Agent-flow graph (n8n-style per-turn pipeline: LLM vs deterministic nodes) ----
@@ -776,32 +989,39 @@ async function renderAgentFlow(el) {
     .sort((a, b) => a - b);
   // Default to the latest turn so the rich per-turn pipeline is what loads first.
   const defaultTurn = turns.length ? String(turns[turns.length - 1]) : 'all';
-  window.__agentFlow = { calls, events, turn: defaultTurn, nodes: [] };
+  window.__agentFlow = { calls, events, turns, turn: defaultTurn, nodes: [] };
   const turnOpts = ['<option value="all">All turns (overview)</option>']
     .concat(turns.map(t => `<option value="${t}"${String(t) === defaultTurn ? ' selected' : ''}>Turn ${t}</option>`)).join('');
   el.innerHTML = `
-    <div class="card">
-      <h3>Agent flow</h3>
-      <div class="agent-flow-bar">
-        <label for="agent-flow-turn">Show</label>
-        <select id="agent-flow-turn" onchange="changeAgentFlowTurn(this.value)">${turnOpts}</select>
-        <span class="agent-flow-hint">Pick a turn to trace its pipeline left→right. Each node shows the data it produced — click to inspect. "All turns" shows call counts across the session.</span>
-      </div>
-      <div class="agent-flow-legend">
-        <span class="lg"><span class="sw sw-llm"></span> LLM node — non-deterministic</span>
-        <span class="lg"><span class="sw sw-det"></span> Deterministic node — clock / dice / rules</span>
-        <span class="lg"><span class="ln"></span> agent call</span>
-        <span class="lg"><span class="ln ln-det"></span> deterministic op</span>
-      </div>
-      <div class="agent-flow-canvas" id="agent-flow-graph"></div>
-      <div id="agent-flow-detail"></div>
-    </div>`;
+    <div class="toolbar">
+      <button class="btn btn-sm" onclick="stepAgentFlowTurn(-1)" title="Previous turn">←</button>
+      <select id="agent-flow-turn" class="input" onchange="changeAgentFlowTurn(this.value)">${turnOpts}</select>
+      <button class="btn btn-sm" onclick="stepAgentFlowTurn(1)" title="Next turn">→</button>
+      <span class="help" style="margin:0">Trace a turn's pipeline left→right; click a node to inspect. "All turns" shows call counts.</span>
+    </div>
+    <div class="agent-flow-legend">
+      <span class="lg"><span class="sw sw-llm"></span> LLM node — non-deterministic</span>
+      <span class="lg"><span class="sw sw-det"></span> Deterministic node — clock / dice / rules</span>
+      <span class="lg"><span class="ln"></span> agent call</span>
+      <span class="lg"><span class="ln ln-det"></span> deterministic op</span>
+    </div>
+    <div class="agent-flow-canvas" id="agent-flow-graph"></div>
+    <div id="agent-flow-detail"></div>`;
   drawAgentFlow();
 }
 
 function changeAgentFlowTurn(value) {
   if (window.__agentFlow) window.__agentFlow.turn = value;
   drawAgentFlow();
+}
+
+function stepAgentFlowTurn(delta) {
+  const select = document.getElementById('agent-flow-turn');
+  if (!select) return;
+  const next = Math.min(Math.max(select.selectedIndex + delta, 0), select.options.length - 1);
+  if (next === select.selectedIndex) return;
+  select.selectedIndex = next;
+  changeAgentFlowTurn(select.value);
 }
 
 // Build the per-turn graph: LLM call tree + deterministic events as leaves on their agent.
@@ -1038,64 +1258,49 @@ function _detDetailCard(ev) {
   const rows = Object.entries(p).map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(_fmtVal(v))}</dd>`).join('');
   const origin = ev.agent_name ? `emitted by ${escapeHtml(ev.agent_name)} · ` : '';
   return `<div class="card">
-    <h3>${meta.icon} ${escapeHtml(meta.title)} <span style="color:#5bd5c8;font-size:12px;font-weight:400;">· deterministic</span></h3>
-    <div style="font-size:12px;color:#8a93b8;margin-bottom:8px;">${origin}seq #${ev.sequence ?? ''}</div>
+    <h3>${meta.icon} ${escapeHtml(meta.title)} <span class="badge badge-plain" style="color:#5bd5c8">deterministic</span></h3>
+    <div class="help">${origin}seq #${ev.sequence ?? ''}</div>
     ${rows ? `<dl class="det-kv">${rows}</dl>` : ''}
-    <div class="det-payload">${escapeHtml(JSON.stringify(p, null, 2))}</div>
+    <pre class="code-block">${escapeHtml(JSON.stringify(p, null, 2))}</pre>
   </div>`;
 }
 
-function switchTab(tab) { currentTab = tab; renderTab(); }
-
-function viewNPC(npcId) {
-  currentNpcId = npcId;
-  currentNpcTab = 'state';
-  currentTab = 'npc-detail';
-  renderTab();
-}
-
-function backToNpcs() {
-  currentNpcId = null;
-  currentTab = 'npcs';
-  renderTab();
-}
-
-function switchNpcTab(tab) {
-  currentNpcTab = tab;
-  renderTab();
-}
+// ---- Overview / entity tabs ----
 
 async function renderOverview(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}`);
   if (d.error) { el.innerHTML = `<div class="empty">${escapeHtml(d.error)}</div>`; return; }
   const s = d.session, gs = d.game_state, p = d.player, st = d.setting;
-  el.innerHTML = `
-    <div class="card"><h3>Session</h3><div class="kv">
-      <div class="label">State</div><div><span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
-      <div class="label">Language</div><div>${escapeHtml(s.language)}</div>
-      <div class="label">Created</div><div>${new Date(s.created_at).toLocaleString()}</div>
-    </div></div>
-    ${renderSessionOwnerCard(s)}
-    ${gs ? `<div class="card"><h3>Game State</h3><div class="kv">
-      <div class="label">Turn</div><div>${gs.turn_count}</div>
-      <div class="label">Game Clock</div><div>${gs.game_clock.toFixed(1)}h</div>
-      <div class="label">Time of Day</div><div>${escapeHtml(gs.game_time)}</div>
-      <div class="label">Locations</div><div>${d.location_count}</div>
-      <div class="label">NPCs</div><div>${d.npc_count}</div>
-      <div class="label">Knowledge</div><div>${d.knowledge_node_count} nodes</div>
-      <div class="label">Events</div><div>${d.event_count}</div>
-    </div></div>` : '<div class="empty">No active game</div>'}
-    ${st ? `<div class="card"><h3>Setting</h3><div class="kv">
-      <div class="label">Name</div><div>${escapeHtml(st.name)}</div>
-      <div class="label">Period</div><div>${escapeHtml(st.time_period)}</div>
-      <div class="label">Region</div><div>${escapeHtml(st.region)}</div>
-      <div class="label">Summary</div><div>${escapeHtml(st.summary)}</div>
-    </div></div>` : ''}
-    ${p ? `<div class="card"><h3>Player</h3><div class="kv">
-      <div class="label">Name</div><div>${escapeHtml(p.name)}</div>
-      <div class="label">Inventory</div><div>${(p.inventory||[]).map(escapeHtml).join(', ') || 'empty'}</div>
-      <div class="label">Appearance</div><div>${escapeHtml(p.appearance || '-')}</div>
-    </div></div>` : ''}`;
+  const stats = gs ? `<div class="stats">
+      ${statTile('Turn', fmtNum(gs.turn_count), 'scenes')}
+      ${statTile(`Game clock · ${gs.game_time || ''}`, `${gs.game_clock.toFixed(1)}h`)}
+      ${statTile('NPCs', fmtNum(d.npc_count), 'npcs')}
+      ${statTile('Locations', fmtNum(d.location_count), 'locations')}
+      ${statTile('Knowledge nodes', fmtNum(d.knowledge_node_count), 'knowledge')}
+      ${statTile('Events', fmtNum(d.event_count), 'events')}
+    </div>` : '<div class="empty">No active game</div>';
+  el.innerHTML = `${stats}
+    <div class="grid">
+      <div class="card"><h3>Session</h3><div class="kv">
+        <div class="label">State</div><div>${stateBadge(s.state)}</div>
+        <div class="label">Language</div><div>${escapeHtml(s.language)}</div>
+        <div class="label">Session ID</div><div><code>${escapeHtml(s.id)}</code></div>
+        <div class="label">Created</div><div>${fmtDate(s.created_at)}</div>
+        <div class="label">Updated</div><div>${fmtDate(s.updated_at)}</div>
+      </div></div>
+      ${renderSessionOwnerCard(s)}
+      ${st ? `<div class="card"><h3>Setting</h3><div class="kv">
+        <div class="label">Name</div><div>${escapeHtml(st.name)}</div>
+        <div class="label">Period</div><div>${escapeHtml(st.time_period)}</div>
+        <div class="label">Region</div><div>${escapeHtml(st.region)}</div>
+        <div class="label">Summary</div><div>${escapeHtml(st.summary)}</div>
+      </div></div>` : ''}
+      ${p ? `<div class="card"><h3>Player</h3><div class="kv">
+        <div class="label">Name</div><div>${escapeHtml(p.name)}</div>
+        <div class="label">Inventory</div><div>${_renderChipList(p.inventory, 'inv-chip')}</div>
+        <div class="label">Appearance</div><div>${escapeHtml(p.appearance || '—')}</div>
+      </div></div>` : ''}
+    </div>`;
 }
 
 function renderSessionOwnerCard(s) {
@@ -1103,7 +1308,7 @@ function renderSessionOwnerCard(s) {
   const emailCell = hasOwner ? escapeHtml(s.account_email) : '—';
   const idCell = s.account_id ? `<code>${escapeHtml(s.account_id)}</code>` : '—';
   const actionCell = hasOwner
-    ? `<span class="view-link" onclick="openUserFromCrossLink('${s.account_id}')">View user</span>`
+    ? `<span class="view-link" onclick="openUserFromCrossLink('${s.account_id}')">View user →</span>`
     : '—';
   return `<div class="card"><h3>Owner</h3><div class="kv">
     <div class="label">Email</div><div>${emailCell}</div>
@@ -1113,35 +1318,56 @@ function renderSessionOwnerCard(s) {
 }
 
 async function renderNPCs(el) {
-  const d = await fetchJSON(`/api/sessions/${currentSessionId}/npcs`);
+  const [d, locData] = await Promise.all([
+    fetchJSON(`/api/sessions/${currentSessionId}/npcs`),
+    fetchJSON(`/api/sessions/${currentSessionId}/locations`).catch(() => ({ locations: [] })),
+  ]);
   if (!d.npcs.length) { el.innerHTML = '<div class="empty">No NPCs</div>'; return; }
-  el.innerHTML = `<table><tr><th>Name</th><th>Occupation</th><th>Mood</th><th>Status</th><th>Location</th><th>Inventory</th><th>Actions</th></tr>
-    ${d.npcs.map(n => `<tr><td>${escapeHtml(n.name)}</td><td>${escapeHtml(n.occupation || '')}</td><td>${escapeHtml(n.current_mood || '')}</td><td>${escapeHtml(n.physical_status || 'healthy')}</td><td>${escapeHtml(n.location_id || '-')}</td><td>${(n.inventory||[]).map(escapeHtml).join(', ') || '-'}</td><td><span class="view-link" onclick="viewNPC('${n.id}')">View</span></td></tr>`).join('')}</table>`;
+  const locName = {};
+  for (const l of (locData.locations || [])) locName[l.id] = l.name;
+  const rows = d.npcs.map(n => `<tr class="row-link" onclick="viewNPC('${n.id}')">
+      <td><span class="view-link">${escapeHtml(n.name)}</span></td>
+      <td>${escapeHtml(n.occupation || '')}</td>
+      <td>${escapeHtml(n.current_mood || '')}</td>
+      <td>${escapeHtml(n.physical_status || 'healthy')}</td>
+      <td>${escapeHtml(locName[n.location_id] || n.location_id || '—')}</td>
+      <td>${_renderChipList(n.inventory, 'inv-chip', '—')}</td>
+    </tr>`).join('');
+  el.innerHTML = `<div class="toolbar">${filterInput('npc-table', 'Filter NPCs…')}<span class="count">${d.npcs.length}</span></div>
+    ${tableHtml(['Name', 'Occupation', 'Mood', 'Status', 'Location', 'Inventory'], rows, 'npc-table')}`;
 }
 
 async function renderLocations(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/locations`);
   if (!d.locations.length) { el.innerHTML = '<div class="empty">No locations</div>'; return; }
-  el.innerHTML = `<table><tr><th>Name</th><th>Type</th><th>NPCs Present</th><th>Tags</th></tr>
-    ${d.locations.map(l => `<tr><td>${escapeHtml(l.name)}</td><td>${escapeHtml(l.location_type)}</td><td>${(l.npcs_present||[]).length}</td><td>${(l.tags||[]).map(escapeHtml).join(', ')}</td></tr>`).join('')}</table>`;
+  const rows = d.locations.map(l => `<tr>
+      <td>${escapeHtml(l.name)}</td>
+      <td>${escapeHtml(l.location_type)}</td>
+      <td class="num">${(l.npcs_present || []).length}</td>
+      <td>${_renderChipList(l.tags, 'chip', '')}</td>
+    </tr>`).join('');
+  el.innerHTML = `<div class="toolbar">${filterInput('loc-table', 'Filter locations…')}<span class="count">${d.locations.length}</span></div>
+    ${tableHtml(['Name', 'Type', ['NPCs present', 'num'], 'Tags'], rows, 'loc-table')}`;
 }
 
 async function renderEvents(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/events`);
   if (!d.events.length) { el.innerHTML = '<div class="empty">No events</div>'; return; }
-  el.innerHTML = `<table><tr><th>Name</th><th>Status</th><th>Scheduled</th><th>Completes</th><th>Scope</th></tr>
-    ${d.events.map(e => `<tr><td>${escapeHtml(e.name)}</td><td><span class="badge ${e.status === 'pending' ? 'badge-awaiting' : e.status === 'completed' ? 'badge-playing' : 'badge-idle'}">${e.status}</span></td><td>${e.scheduled_at.toFixed(1)}h</td><td>${e.completes_at.toFixed(1)}h</td><td>${escapeHtml(e.scope)}</td></tr>`).join('')}</table>`;
-}
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+  const statusCls = s => s === 'pending' ? 'badge-awaiting' : s === 'completed' ? 'badge-playing' : 'badge-idle';
+  const rows = d.events.map(e => `<tr>
+      <td>${escapeHtml(e.name)}</td>
+      <td><span class="badge ${statusCls(e.status)}">${escapeHtml(e.status)}</span></td>
+      <td class="num">${e.scheduled_at.toFixed(1)}h</td>
+      <td class="num">${e.completes_at.toFixed(1)}h</td>
+      <td>${escapeHtml(e.scope)}</td>
+    </tr>`).join('');
+  el.innerHTML = `<div class="toolbar">${filterInput('event-table', 'Filter events…')}<span class="count">${d.events.length}</span></div>
+    ${tableHtml(['Name', 'Status', ['Scheduled', 'num'], ['Completes', 'num'], 'Scope'], rows, 'event-table')}`;
 }
 
 function renderSystemPrompt(text) {
-  return `<details><summary><h4 style="display:inline">System Prompt</h4></summary>
-    <pre style="background:#0a0f1e;padding:8px;border-radius:4px;font-size:11px;color:#aaa;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto">${escapeHtml(text || '')}</pre>
+  return `<details class="disclosure"><summary>System prompt</summary>
+    <pre class="code-block" style="margin-top:6px">${escapeHtml(text || '')}</pre>
   </details>`;
 }
 
@@ -1169,7 +1395,7 @@ function renderResponse(text) {
   } catch (e) {
     // not JSON — fall through to plain rendering
   }
-  return `<pre style="background:#0a0f1e;padding:8px;border-radius:4px;font-size:12px;color:#ddd;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto">${escapeHtml(raw)}</pre>`;
+  return `<pre class="code-block">${escapeHtml(raw)}</pre>`;
 }
 
 const _JSON_MAX_DEPTH = 6;
@@ -1198,27 +1424,21 @@ function renderJsonTree(obj, depth) {
 
 window.__aiCallCache = window.__aiCallCache || {};
 
-function copyCallPrompt(uid, kind, btn) {
+function copyCallPrompt(uid, kind) {
   const c = window.__aiCallCache[uid];
   if (!c) return;
-  let text;
   if (kind === 'system') {
-    text = c.system_prompt || '';
+    copyText(c.system_prompt || '', 'System prompt');
   } else {
-    text = JSON.stringify({ system: c.system_prompt || '', messages: c.messages || [] }, null, 2);
+    copyText(JSON.stringify({ system: c.system_prompt || '', messages: c.messages || [] }, null, 2), 'Full prompt');
   }
-  navigator.clipboard.writeText(text).then(() => {
-    const original = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = original; }, 1200);
-  });
 }
 
 function renderSingleCall(c, turnNumber) {
   const tokens = [c.prompt_tokens, c.completion_tokens].filter(x => x != null);
   const tokenStr = tokens.length ? tokens.join('+') + ' tok' : '';
-  const durStr = c.duration_ms != null ? c.duration_ms + 'ms' : '';
-  const metaParts = [c.model, tokenStr, durStr].filter(Boolean).join(' | ');
+  const durStr = c.duration_ms != null ? _fmtDur(c.duration_ms) : '';
+  const metaParts = [c.model, tokenStr, durStr].filter(Boolean).map(escapeHtml).join(' · ');
   const uid = 'aic-' + Math.random().toString(36).slice(2, 10);
   window.__aiCallCache[uid] = { system_prompt: c.system_prompt, messages: c.messages };
   const seqBadge = c.call_sequence != null ? `<span class="call-seq-badge">${turnNumber != null ? turnNumber + '.' + c.call_sequence : '#' + c.call_sequence}</span>` : '';
@@ -1226,21 +1446,20 @@ function renderSingleCall(c, turnNumber) {
     <div class="ai-call-entry">
       <div class="ai-call-header">
         ${seqBadge}
-        <span class="agent-badge agent-${c.agent_name}">${c.agent_name}</span>
+        ${agentBadge(c.agent_name)}
         <span class="ai-call-meta">${metaParts}</span>
       </div>
-      <div class="ai-call-detail-toggle" onclick="toggleDetail('${uid}')">Show prompt &amp; response</div>
-      <div class="ai-call-detail" id="${uid}">
+      <details class="ai-call-detail disclosure"><summary>Prompt &amp; response</summary>
         <div class="ai-call-copy-bar">
-          <button type="button" class="copy-btn" onclick="copyCallPrompt('${uid}', 'system', this)">Copy system</button>
-          <button type="button" class="copy-btn" onclick="copyCallPrompt('${uid}', 'full', this)">Copy full prompt (JSON)</button>
+          <button type="button" class="btn btn-sm" onclick="copyCallPrompt('${uid}', 'system')">Copy system</button>
+          <button type="button" class="btn btn-sm" onclick="copyCallPrompt('${uid}', 'full')">Copy full prompt (JSON)</button>
         </div>
         ${renderSystemPrompt(c.system_prompt)}
-        <h4>Messages Sent</h4>
+        <h4>Messages sent</h4>
         ${renderMessages(c.messages)}
         <h4>Response</h4>
         ${renderResponse(c.response_content)}
-      </div>
+      </details>
     </div>`;
 }
 
@@ -1274,29 +1493,19 @@ function renderAiCallEntries(calls, turnNumber) {
   return roots.map(node => {
     const rootHtml = renderSingleCall(node.call, turnNumber);
     if (!node.children.length) return rootHtml;
-    const childHtml = node.children
-      .map(c => `<div class="ai-call-tree-child">${renderSingleCall(c, turnNumber)}</div>`)
-      .join('');
-    return `
-      <div class="ai-call-tree-root">
-        ${rootHtml}
-        <div class="ai-call-tree-children">${childHtml}</div>
-      </div>`;
+    const childHtml = node.children.map(c => renderSingleCall(c, turnNumber)).join('');
+    return `${rootHtml}<div class="ai-call-tree-children">${childHtml}</div>`;
   }).join('');
 }
 
-function toggleAiCalls(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.toggle('open');
-}
-function toggleDetail(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.toggle('open');
+function aiCallsSection(calls, turnNumber) {
+  if (!calls || !calls.length) return '';
+  return `<details class="ai-calls disclosure"><summary>AI calls <span class="count">${calls.length}</span></summary>
+    <div class="ai-calls-body">${renderAiCallEntries(calls, turnNumber)}</div></details>`;
 }
 
-function toggleScene(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.toggle('collapsed');
+function setScenesCollapsed(collapsed) {
+  document.querySelectorAll('.scene-block').forEach(b => b.classList.toggle('collapsed', collapsed));
 }
 
 function _chipOutcomeClass(outcome) {
@@ -1357,12 +1566,18 @@ function renderTurnChips(events, npcsById) {
     if (ev.npc_id && !seenNpcIds.has(ev.npc_id)) {
       seenNpcIds.add(ev.npc_id);
       const npc = npcsById && npcsById[ev.npc_id];
-      const name = npc ? npc.name : ev.npc_id.slice(0, 8);
+      const name = (npc && npc.name) || ev.npc_id.slice(0, 8);
       parts.push(`<span class="npc-tag" onclick="viewNPC('${ev.npc_id}')">${escapeHtml(name)}</span>`);
     }
   }
   const html = parts.filter(Boolean).join('');
   return html ? `<div class="turn-chips">${html}</div>` : '';
+}
+
+function _sceneInfoGroup(label, headers, rows) {
+  return `<details class="disclosure"><summary>${label} <span class="count">${rows.length}</span></summary>
+    <table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>
+  </details>`;
 }
 
 async function renderScenes(el) {
@@ -1414,27 +1629,27 @@ async function renderScenes(el) {
     return;
   }
 
-  let html = '';
+  let html = `<div class="toolbar">
+    <span class="count">${allSceneNums.length} scene${allSceneNums.length === 1 ? '' : 's'}</span>
+    <span class="count">${(convData.log || []).length} turns</span>
+    <span class="count">${aiCalls.length} AI calls</span>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" onclick="setScenesCollapsed(false)">Expand all</button>
+    <button class="btn btn-sm" onclick="setScenesCollapsed(true)">Collapse all</button>
+  </div>`;
 
   // Setup calls (turn_number = null) — before any scene
   if (callsByTurn['setup'] && callsByTurn['setup'].length) {
-    const sid = 'ai-setup-' + Math.random().toString(36).slice(2, 10);
     html += `
-      <div class="log-entry">
-        <div class="setup-header">Game Setup</div>
-        <div class="ai-calls-toggle" onclick="toggleAiCalls('${sid}')">
-          AI Calls (${callsByTurn['setup'].length})
-        </div>
-        <div class="ai-calls-container" id="${sid}">
-          ${renderAiCallEntries(callsByTurn['setup'])}
-        </div>
+      <div class="log-entry" style="margin:0 0 14px">
+        <div class="setup-header">Game setup</div>
+        ${aiCallsSection(callsByTurn['setup'])}
       </div>`;
   }
 
   for (const sn of allSceneNums) {
     const scene = scenesByNum[sn];
     const turns = turnsByScene[sn] || [];
-    const bodyId = 'scene-body-' + sn;
     const isCurrent = scene && scene.is_current;
     const turnCount = turns.length;
 
@@ -1442,100 +1657,59 @@ async function renderScenes(el) {
     let locDesc = 'Unknown location';
     let timeOfDay = '';
     if (scene) {
-      locDesc = scene.description ? scene.description.substring(0, 120) : (scene.location_id || 'Unknown');
-      if (scene.description && scene.description.length > 120) locDesc += '...';
+      locDesc = scene.description ? _truncate(scene.description, 120) : (scene.location_id || 'Unknown');
       timeOfDay = scene.time_of_day || '';
     }
 
-    // NPC table
     const npcs = (scene && scene.npcs_present) || [];
     const pois = (scene && scene.points_of_interest) || [];
 
     let infoHtml = '';
     if (npcs.length || pois.length) {
-      infoHtml = '<div class="scene-info">';
-
+      const groups = [];
       if (npcs.length) {
-        const npcTableId = 'npc-tbl-' + sn;
-        const npcRows = npcs.map((npc, i) => {
+        groups.push(_sceneInfoGroup('NPCs', ['#', 'Role', 'UUID'], npcs.map((npc, i) => {
           const role = typeof npc === 'object' ? (npc.role || '-') : npc;
           const uuid = typeof npc === 'object' ? (npc.uuid || '-') : '-';
-          return `<tr><td>${i + 1}</td><td>${escapeHtml(role)}</td><td style="color:#666">${escapeHtml(uuid)}</td></tr>`;
-        }).join('');
-        infoHtml += `<div class="scene-info-group">
-          <div class="scene-info-toggle" onclick="document.getElementById('${npcTableId}').classList.toggle('open')">
-            NPCs <span class="count-badge">${npcs.length}</span>
-          </div>
-          <table class="scene-info-table" id="${npcTableId}">
-            <tr><th>#</th><th>Role</th><th>UUID</th></tr>
-            ${npcRows}
-          </table>
-        </div>`;
+          return `<tr><td>${i + 1}</td><td>${escapeHtml(role)}</td><td class="faint mono">${escapeHtml(uuid)}</td></tr>`;
+        })));
       }
-
       if (pois.length) {
-        const poiTableId = 'poi-tbl-' + sn;
-        const poiRows = pois.map((p, i) => {
-          const label = typeof p === 'object'
-            ? ((p.names && p.names.join(', ')) || '-')
-            : p;
+        groups.push(_sceneInfoGroup('Points of interest', ['#', 'Name'], pois.map((p, i) => {
+          const label = typeof p === 'object' ? ((p.names && p.names.join(', ')) || '-') : p;
           return `<tr><td>${i + 1}</td><td>${escapeHtml(label)}</td></tr>`;
-        }).join('');
-        infoHtml += `<div class="scene-info-group">
-          <div class="scene-info-toggle" onclick="document.getElementById('${poiTableId}').classList.toggle('open')">
-            Points of Interest <span class="count-badge">${pois.length}</span>
-          </div>
-          <table class="scene-info-table" id="${poiTableId}">
-            <tr><th>#</th><th>Name</th></tr>
-            ${poiRows}
-          </table>
-        </div>`;
+        })));
       }
-
-      infoHtml += '</div>';
+      infoHtml = `<div class="scene-info">${groups.join('')}</div>`;
     }
 
-    // Scene description
-    let descHtml = '';
-    if (scene && scene.description) {
-      descHtml = `<div class="scene-desc">${escapeHtml(scene.description)}</div>`;
-    }
+    const descHtml = scene && scene.description ? `<div class="scene-desc">${escapeHtml(scene.description)}</div>` : '';
 
-    // Turns
-    const turnsHtml = turns.map(e => {
-      const turnCalls = callsByTurn[e.turn] || [];
-      const cid = 'ai-turn-' + e.turn + '-' + Math.random().toString(36).slice(2, 10);
-      const aiSection = turnCalls.length ? `
-        <div class="ai-calls-toggle" onclick="toggleAiCalls('${cid}')">
-          AI Calls (${turnCalls.length})
-        </div>
-        <div class="ai-calls-container" id="${cid}">
-          ${renderAiCallEntries(turnCalls, e.turn)}
-        </div>` : '';
-      const chips = renderTurnChips(eventsByTurn[e.turn], npcsById);
-      return `
-        <div class="log-entry">
-          <div class="turn-info">Turn ${e.turn} | ${e.game_clock?.toFixed(1) ?? '?'}h</div>
-          <div class="action">&gt; ${escapeHtml(e.player_action)}</div>
+    const turnsHtml = turns.map(e => `
+        <article class="log-entry">
+          <div class="turn-info">Turn ${e.turn} · ${e.game_clock?.toFixed(1) ?? '?'}h</div>
+          <div class="action">› ${escapeHtml(e.player_action)}</div>
           <div class="response">${escapeHtml(e.response)}</div>
-          ${chips}
-          ${aiSection}
-        </div>`;
-    }).join('');
+          ${renderTurnChips(eventsByTurn[e.turn], npcsById)}
+          ${aiCallsSection(callsByTurn[e.turn], e.turn)}
+        </article>`).join('');
 
     html += `
-      <div class="scene-block">
-        <div class="scene-header" onclick="toggleScene('${bodyId}')">
-          <div class="scene-title">Scene ${sn}${isCurrent ? ' (current)' : ''}</div>
-          <div class="scene-meta">${escapeHtml(locDesc)}${timeOfDay ? ' | ' + timeOfDay : ''} | ${turnCount} turn${turnCount !== 1 ? 's' : ''}</div>
-        </div>
-        <div class="scene-body" id="${bodyId}">
+      <section class="scene-block${isCurrent ? ' current' : ''}">
+        <header class="scene-header" onclick="this.parentElement.classList.toggle('collapsed')">
+          <span class="chev"></span>
+          <div>
+            <div class="scene-title">Scene ${sn}${isCurrent ? ' <span class="badge badge-playing">current</span>' : ''}</div>
+            <div class="scene-meta">${escapeHtml(locDesc)}${timeOfDay ? ' · ' + escapeHtml(timeOfDay) : ''} · ${turnCount} turn${turnCount !== 1 ? 's' : ''}</div>
+          </div>
+        </header>
+        <div class="scene-body">
           ${!scene ? '<div class="empty">Scene metadata unavailable (pre-migration)</div>' : ''}
           ${infoHtml}
           ${descHtml}
-          <div class="scene-turns">${turnsHtml || '<div class="empty">No turns in this scene</div>'}</div>
+          ${turnsHtml || '<div class="empty">No turns in this scene</div>'}
         </div>
-      </div>`;
+      </section>`;
   }
 
   el.innerHTML = html;
@@ -1545,14 +1719,14 @@ function _renderKvGrid(rows) {
   return `<div class="kv">${rows.map(([label, val]) => `<div class="label">${escapeHtml(label)}</div><div>${val}</div>`).join('')}</div>`;
 }
 
-function _renderChipList(items, cls) {
-  if (!items || !items.length) return '<span style="color:#666">empty</span>';
+function _renderChipList(items, cls, emptyText) {
+  if (!items || !items.length) return `<span class="faint">${emptyText ?? 'empty'}</span>`;
   return items.map(it => `<span class="${cls}">${escapeHtml(String(it))}</span>`).join('');
 }
 
 function _renderObjectKv(obj) {
   const keys = Object.keys(obj || {});
-  if (!keys.length) return '<span style="color:#666">empty</span>';
+  if (!keys.length) return '<span class="faint">empty</span>';
   return `<div class="kv">${keys.map(k => `<div class="label">${escapeHtml(k)}</div><div>${escapeHtml(String(obj[k]))}</div>`).join('')}</div>`;
 }
 
@@ -1570,9 +1744,9 @@ function renderNpcStateTab(npc) {
   const invCard = `<div class="card"><h3>Inventory</h3>${_renderChipList(npc.inventory, 'inv-chip')}</div>`;
   const traitsCard = `<div class="card"><h3>Personality Traits</h3>${_renderChipList(npc.personality_traits, 'traits-chip')}</div>`;
   const relsCard = `<div class="card"><h3>Relationships</h3>${_renderObjectKv(npc.relationships)}</div>`;
-  const bioCard = `<div class="card"><h3>Biography</h3><pre style="white-space:pre-wrap;color:#ccc;font-size:13px">${escapeHtml(npc.biography || '-')}</pre></div>`;
-  const appCard = `<div class="card"><h3>Appearance</h3><pre style="white-space:pre-wrap;color:#ccc;font-size:13px">${escapeHtml(npc.appearance || '-')}</pre></div>`;
-  return scalarCard + attrsCard + invCard + traitsCard + relsCard + bioCard + appCard;
+  const bioCard = `<div class="card"><h3>Biography</h3><div class="prose">${escapeHtml(npc.biography || '-')}</div></div>`;
+  const appCard = `<div class="card"><h3>Appearance</h3><div class="prose">${escapeHtml(npc.appearance || '-')}</div></div>`;
+  return `<div class="grid">${scalarCard + attrsCard + relsCard + invCard + traitsCard + appCard}</div>${bioCard}`;
 }
 
 async function renderNpcHistoryTab(npcId) {
@@ -1590,8 +1764,7 @@ async function renderNpcHistoryTab(npcId) {
     (evByTurn[ev.turn_number] = evByTurn[ev.turn_number] || []).push(ev);
   }
 
-  // Only keep AI calls where the NPC's name appears in response or messages — best-effort
-  // Simpler: group calls per turn, so we show all calls for turns where the NPC acted.
+  // Show all calls for turns where the NPC acted (matching the NPC inside prompts is too fuzzy).
   const callsByTurn = {};
   for (const c of aiCalls) {
     const key = c.turn_number != null ? c.turn_number : 'setup';
@@ -1602,23 +1775,11 @@ async function renderNpcHistoryTab(npcId) {
   if (!turns.length) return '<div class="empty">No recorded events for this NPC</div>';
 
   const npcsById = { [npcId]: { name: '' } };
-  return turns.map(tn => {
-    const chips = renderTurnChips(evByTurn[tn], npcsById);
-    const turnCalls = callsByTurn[tn] || [];
-    const cid = 'npc-ai-' + tn + '-' + Math.random().toString(36).slice(2, 10);
-    const aiSection = turnCalls.length ? `
-      <div class="ai-calls-toggle" onclick="toggleAiCalls('${cid}')">
-        AI Calls (${turnCalls.length})
-      </div>
-      <div class="ai-calls-container" id="${cid}">
-        ${renderAiCallEntries(turnCalls, tn)}
-      </div>` : '';
-    return `<div class="log-entry">
+  return turns.map(tn => `<div class="log-entry">
       <div class="turn-info">Turn ${tn}</div>
-      ${chips}
-      ${aiSection}
-    </div>`;
-  }).join('');
+      ${renderTurnChips(evByTurn[tn], npcsById)}
+      ${aiCallsSection(callsByTurn[tn], tn)}
+    </div>`).join('');
 }
 
 function renderNpcMemoryTab(nodes, edges) {
@@ -1627,99 +1788,115 @@ function renderNpcMemoryTab(nodes, edges) {
   }
   const nodesById = {};
   for (const n of nodes) nodesById[n.id] = n;
-  const nodesTable = nodes.length ? `<div class="card"><h3>Memory Nodes (${nodes.length})</h3>
-    <table><tr><th>Content</th><th>Scope</th><th>Source</th><th>Canon</th><th>Confidence</th><th>Tags</th><th>Time</th></tr>
-    ${nodes.map(n => `<tr>
-      <td>${escapeHtml((n.content || '').substring(0, 200))}${(n.content || '').length > 200 ? '…' : ''}</td>
+  const nodesTable = nodes.length ? `<div class="card"><h3>Memory nodes <span class="count">${nodes.length}</span></h3>
+    ${tableHtml(['Content', 'Scope', 'Source', 'Canon', ['Confidence', 'num'], 'Tags', 'Time'], nodes.map(n => `<tr>
+      <td class="wrap">${escapeHtml(_truncate(n.content, 200))}</td>
       <td>${escapeHtml(n.scope || '')}</td>
       <td>${escapeHtml(n.source || '')}</td>
       <td>${escapeHtml(n.canon || '')}</td>
-      <td>${n.confidence ?? '-'}</td>
-      <td>${(n.tags || []).map(escapeHtml).join(', ')}</td>
+      <td class="num">${n.confidence ?? '-'}</td>
+      <td>${_renderChipList(n.tags, 'chip', '')}</td>
       <td>${n.timestamp ?? '-'}</td>
-    </tr>`).join('')}
-    </table></div>` : '';
-  const edgesTable = edges.length ? `<div class="card"><h3>Edges (${edges.length})</h3>
-    <table><tr><th>Type</th><th>→ Target node (snippet)</th></tr>
-    ${edges.map(e => {
+    </tr>`).join(''))}</div>` : '';
+  const edgesTable = edges.length ? `<div class="card"><h3>Edges <span class="count">${edges.length}</span></h3>
+    ${tableHtml(['Type', '→ Target node (snippet)'], edges.map(e => {
       const target = nodesById[e.to_node_id];
-      const snippet = target ? (target.content || '').substring(0, 120) : e.to_node_id;
-      return `<tr><td>${escapeHtml(e.edge_type || '')}</td><td>${escapeHtml(snippet)}${target && (target.content || '').length > 120 ? '…' : ''}</td></tr>`;
-    }).join('')}
-    </table></div>` : '';
+      const snippet = target ? _truncate(target.content, 120) : e.to_node_id;
+      return `<tr><td><span class="chip">${escapeHtml(e.edge_type || '')}</span></td><td>${escapeHtml(snippet)}</td></tr>`;
+    }).join(''))}</div>` : '';
   return nodesTable + edgesTable;
 }
 
 async function renderNpcDetail(el) {
   const data = await fetchJSON(`/api/sessions/${currentSessionId}/npcs/${encodeURIComponent(currentNpcId)}`);
-  if (data.error) { el.innerHTML = `<div class="empty">${data.error}</div>`; return; }
+  if (data.error) { el.innerHTML = `<div class="empty">${escapeHtml(data.error)}</div>`; return; }
   const npc = data.npc;
   const nodes = data.memory_nodes || [];
   const edges = data.memory_edges || [];
 
   const subtabs = ['state', 'history', 'memory'];
-  const header = `<div class="npc-detail-header">
-    <button class="back-button" onclick="backToNpcs()">← NPCs</button>
+  el.innerHTML = `<div class="npc-detail-header">
+    <button class="btn btn-sm" onclick="backToNpcs()">← NPCs</button>
     <h2>${escapeHtml(npc.name || 'NPC')}</h2>
+    ${npc.occupation ? `<span class="muted">${escapeHtml(npc.occupation)}</span>` : ''}
   </div>
   <div class="subtabs">
-    ${subtabs.map(t => `<div class="subtab ${t === currentNpcTab ? 'active' : ''}" onclick="switchNpcTab('${t}')">${t}</div>`).join('')}
+    ${subtabs.map(t => `<button class="subtab ${t === currentNpcTab ? 'active' : ''}" onclick="switchNpcTab('${t}')">${t}</button>`).join('')}
   </div>
   <div id="npc-subtab-content"></div>`;
-  el.innerHTML = header;
 
   const content = document.getElementById('npc-subtab-content');
-  if (currentNpcTab === 'state') {
-    content.innerHTML = renderNpcStateTab(npc);
-  } else if (currentNpcTab === 'history') {
-    content.innerHTML = '<div class="empty">Loading…</div>';
+  if (currentNpcTab === 'history') {
+    content.innerHTML = LOADING;
     content.innerHTML = await renderNpcHistoryTab(currentNpcId);
   } else if (currentNpcTab === 'memory') {
     content.innerHTML = renderNpcMemoryTab(nodes, edges);
+  } else {
+    content.innerHTML = renderNpcStateTab(npc);
   }
 }
 
+const _KNOWLEDGE_ROW_CAP = 200;
+let _knowledgeNodes = [];
+
 async function renderKnowledge(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/knowledge`);
-  const nodes = d.nodes || [];
+  _knowledgeNodes = d.nodes || [];
   const edges = d.edges || [];
-  el.innerHTML = `<div class="card"><h3>Stats</h3><div class="kv">
-    <div class="label">Nodes</div><div>${nodes.length}</div>
-    <div class="label">Edges</div><div>${edges.length}</div>
-  </div></div>
-  <table><tr><th>Content</th><th>Scope</th><th>Source</th><th>Confidence</th><th>Tags</th></tr>
-    ${nodes.slice(0, 100).map(n => `<tr><td>${n.content.substring(0, 120)}${n.content.length > 120 ? '...' : ''}</td><td>${n.scope}</td><td>${n.source}</td><td>${n.confidence}</td><td>${(n.tags||[]).join(', ')}</td></tr>`).join('')}
-  </table>
-  ${nodes.length > 100 ? `<div class="empty">Showing first 100 of ${nodes.length} nodes</div>` : ''}`;
+  el.innerHTML = `<div class="stats">
+      ${statTile('Nodes', fmtNum(_knowledgeNodes.length))}
+      ${statTile('Edges', fmtNum(edges.length))}
+    </div>
+    <div class="toolbar"><input class="input" type="search" placeholder="Filter by content, scope, source, tag…" oninput="drawKnowledgeRows(this.value)">
+      <span id="knowledge-shown" class="help" style="margin:0"></span></div>
+    <div id="knowledge-table"></div>`;
+  drawKnowledgeRows('');
 }
 
-// View switching (Sessions vs. Settings top-level nav)
-let currentView = 'sessions';
+function drawKnowledgeRows(query) {
+  const q = query.trim().toLowerCase();
+  const matches = q
+    ? _knowledgeNodes.filter(n => [n.content, n.scope, n.source, ...(n.tags || [])].join(' ').toLowerCase().includes(q))
+    : _knowledgeNodes;
+  const shown = matches.slice(0, _KNOWLEDGE_ROW_CAP);
+  document.getElementById('knowledge-shown').textContent = matches.length > shown.length
+    ? `Showing ${shown.length} of ${matches.length} — refine the filter to see more`
+    : `${matches.length} node${matches.length === 1 ? '' : 's'}`;
+  document.getElementById('knowledge-table').innerHTML = shown.length
+    ? tableHtml(['Content', 'Scope', 'Source', ['Confidence', 'num'], 'Tags'], shown.map(n => `<tr>
+        <td class="wrap">${escapeHtml(_truncate(n.content, 160))}</td>
+        <td>${escapeHtml(n.scope)}</td>
+        <td>${escapeHtml(n.source)}</td>
+        <td class="num">${escapeHtml(n.confidence)}</td>
+        <td>${_renderChipList(n.tags, 'chip', '')}</td>
+      </tr>`).join(''))
+    : '<div class="empty">No matching nodes</div>';
+}
+
+// ---- Feedback ----
 
 async function renderFeedbackView() {
-  const main = document.getElementById('main');
-  main.innerHTML = '<div class="empty">Loading beta feedback…</div>';
+  setPage(LOADING);
   try {
     const data = await fetchJSON('/api/admin/beta/feedback');
     const rows = data.feedback || [];
-    const exportLink = '<p><a href="#" onclick="downloadFeedbackCsv(); return false;">Export CSV</a></p>';
+    const header = pageHeader('Beta feedback', `${rows.length} entr${rows.length === 1 ? 'y' : 'ies'}`,
+      '<button class="btn" onclick="downloadFeedbackCsv()">⤓ Export CSV</button>');
     if (!rows.length) {
-      main.innerHTML = `<div class="card"><h3>Beta Feedback</h3>${exportLink}<div class="empty">No feedback yet.</div></div>`;
+      setPage(header + '<div class="empty">No feedback yet.</div>');
       return;
     }
-    main.innerHTML = `<div class="card"><h3>Beta Feedback</h3>${exportLink}
-      <table><tr><th>Time</th><th>User</th><th>Game</th><th>Turn</th><th>Category</th><th>Message</th></tr>
-        ${rows.map(row => `<tr>
-          <td>${escapeHtml(new Date(row.created_at).toLocaleString())}</td>
+    setPage(`${header}<div class="toolbar">${filterInput('feedback-table', 'Filter by user, setting, message…')}</div>
+      ${tableHtml(['Time', 'User', 'Game', ['Turn', 'num'], 'Category', 'Message'], rows.map(row => `<tr>
+          <td>${fmtRel(row.created_at)}</td>
           <td>${renderFeedbackUserCell(row)}</td>
-          <td><span class="session-id-short">${escapeHtml((row.game_id || '').slice(0, 8))}</span><br>${escapeHtml(row.setting || '')}</td>
-          <td>${row.turn_number ?? ''}</td>
-          <td>${escapeHtml(row.category || '')}</td>
-          <td>${escapeHtml(row.message || '')}</td>
-        </tr>`).join('')}
-      </table></div>`;
+          <td>${idChip(row.game_id)}<div class="muted">${escapeHtml(row.setting || '')}</div></td>
+          <td class="num">${row.turn_number ?? ''}</td>
+          <td>${row.category ? `<span class="chip">${escapeHtml(row.category)}</span>` : ''}</td>
+          <td class="wrap">${escapeHtml(row.message || '')}</td>
+        </tr>`).join(''), 'feedback-table')}`);
   } catch (e) {
-    main.innerHTML = `<div class="empty">Error loading feedback: ${e.message}</div>`;
+    setPage(errorBox('feedback', e));
   }
 }
 
@@ -1732,66 +1909,28 @@ function renderFeedbackUserCell(row) {
   return fallback ? escapeHtml(fallback) : '—';
 }
 
-function showView(view) {
-  currentView = view;
-  document.getElementById('nav-sessions').classList.toggle('active', view === 'sessions');
-  document.getElementById('nav-users').classList.toggle('active', view === 'users');
-  document.getElementById('nav-feedback').classList.toggle('active', view === 'feedback');
-  document.getElementById('nav-reliability').classList.toggle('active', view === 'reliability');
-  document.getElementById('nav-settings').classList.toggle('active', view === 'settings');
-  const sessionsNav = document.getElementById('sessions-nav-content');
-  const usersNav = document.getElementById('users-nav-content');
-  if (sessionsNav) sessionsNav.style.display = view === 'sessions' ? '' : 'none';
-  if (usersNav) usersNav.style.display = view === 'users' ? '' : 'none';
-  if (view === 'settings') {
-    renderSettingsView();
-  } else if (view === 'feedback') {
-    renderFeedbackView();
-  } else if (view === 'reliability') {
-    renderReliabilityView();
-  } else if (view === 'users') {
-    loadUsers();
-    if (currentUserId) {
-      renderUserDetail();
-    } else {
-      renderUsersHome();
-    }
-  } else {
-    const main = document.getElementById('main');
-    if (currentSessionId) {
-      renderTab();
-    } else {
-      main.innerHTML = '<div class="placeholder">Select a session to inspect</div>';
-    }
-  }
-}
+// ---- Reliability ----
 
 const _RELIABILITY_WINDOWS = ['24h', '7d', '30d'];
 let _reliabilityWindow = '24h';
 
 async function renderReliabilityView() {
-  const main = document.getElementById('main');
-  main.innerHTML = '<div class="empty">Loading reliability data…</div>';
+  setPage(LOADING);
   try {
     const data = await fetchJSON('/api/admin/reliability?window=' + _reliabilityWindow);
-    main.innerHTML = renderReliabilityHtml(data);
+    setPage(renderReliabilityHtml(data));
   } catch (e) {
-    main.innerHTML = `<div class="empty">Error loading reliability: ${escapeHtml(e.message)}</div>`;
+    setPage(errorBox('reliability', e));
   }
 }
 
 function _reliabilityWindowButtons() {
-  return _RELIABILITY_WINDOWS.map(w =>
-    `<button class="copy-btn${w === _reliabilityWindow ? ' active' : ''}"
-             style="${w === _reliabilityWindow ? 'background:#e94560;color:#fff;border-color:#e94560' : ''}"
-             onclick="switchReliabilityWindow('${w}')">${w}</button>`
-  ).join('');
+  return `<div class="segmented">${_RELIABILITY_WINDOWS.map(w =>
+    `<button class="${w === _reliabilityWindow ? 'active' : ''}" onclick="switchReliabilityWindow('${w}')">${w}</button>`
+  ).join('')}</div>`;
 }
 
-function switchReliabilityWindow(w) {
-  _reliabilityWindow = w;
-  renderReliabilityView();
-}
+function switchReliabilityWindow(w) { go('#/reliability/' + w); }
 
 function _groupReliabilityRows(rows) {
   const byAgent = {};
@@ -1805,71 +1944,57 @@ function _groupReliabilityRows(rows) {
 function renderReliabilityHtml(data) {
   const rows = data.rows || [];
   const windowLabel = data.window || _reliabilityWindow;
-  const windowControls = `<div class="settings-row" style="margin-bottom:14px">${_reliabilityWindowButtons()}</div>`;
+  const header = pageHeader('Reliability', `Per-agent fallback / retry / schema-failure counts · last ${escapeHtml(windowLabel)}`,
+    _reliabilityWindowButtons());
 
   if (!rows.length) {
-    return `<div class="card"><h3>Reliability — ${escapeHtml(windowLabel)}</h3>
-      ${windowControls}
-      <div class="empty">No reliability snapshots in the last ${escapeHtml(windowLabel)}.</div>
-    </div>`;
+    return `${header}<div class="empty">No reliability snapshots in the last ${escapeHtml(windowLabel)}.</div>`;
   }
 
   const eventTypes = [...new Set(rows.map(r => r.event_type))].sort();
   const byAgent = _groupReliabilityRows(rows);
   const agents = Object.keys(byAgent).sort();
 
-  const headerCols = eventTypes.map(et =>
-    `<th style="text-align:right">${escapeHtml(et)}</th>`
-  ).join('');
-
   const bodyRows = agents.map(agent => {
     const cells = eventTypes.map(et => {
       const val = byAgent[agent][et] || 0;
-      const style = val > 0 ? 'color:#ff8a80;font-weight:600' : 'color:#666';
-      return `<td style="text-align:right;${style}">${val}</td>`;
+      return `<td class="num ${val > 0 ? 'hot' : 'zero'}">${fmtNum(val)}</td>`;
     }).join('');
-    return `<tr>
-      <td><span class="agent-badge agent-${escapeHtml(agent)}">${escapeHtml(agent)}</span></td>
-      ${cells}
-    </tr>`;
+    return `<tr><td>${agentBadge(agent)}</td>${cells}</tr>`;
   }).join('');
 
-  return `<div class="card"><h3>Reliability — ${escapeHtml(windowLabel)}</h3>
-    ${windowControls}
-    <p class="token-help" style="margin-bottom:12px">
-      Per-agent fallback / retry / schema-failure counts summed from
-      <code>turn_events.payload</code> reliability snapshots.
-      Non-zero cells are highlighted in red.
-    </p>
-    <table>
-      <tr><th>Agent</th>${headerCols}</tr>
-      ${bodyRows}
-    </table>
-  </div>`;
+  return `${header}
+    <p class="help">Summed from <code>turn_events.payload</code> reliability snapshots. Non-zero cells are highlighted.</p>
+    ${tableHtml(['Agent', ...eventTypes.map(et => [escapeHtml(et), 'num'])], bodyRows)}`;
 }
 
+// ---- Settings ----
+
 async function renderSettingsView() {
-  const main = document.getElementById('main');
-  main.innerHTML = '<div class="empty">Loading settings…</div>';
+  setPage(LOADING);
   try {
     const [keys, models, search] = await Promise.all([
       fetchJSON('/api/settings/keys'),
       fetchJSON('/api/settings/models'),
       fetchJSON('/api/settings/search'),
     ]);
-    main.innerHTML = renderSettingsHtml(keys, models, search);
+    setPage(renderSettingsHtml(keys, models, search));
   } catch (e) {
-    main.innerHTML = `<div class="empty">Error loading settings: ${e.message}</div>`;
+    setPage(errorBox('settings', e));
   }
+}
+
+function sourceBadge(source) {
+  return `<span class="badge ${source === 'db' ? 'badge-info' : 'badge-idle'}" title="Where the active value comes from">source: ${escapeHtml(source || '?')}</span>`;
 }
 
 function renderSettingsHtml(keys, models, search) {
   _settingsCatalog = models.catalog || [];
   _settingsKeys = keys || {};
 
-  const keysCard = `<div class="card"><h3>API Keys</h3>
+  const keysCard = `<div class="card"><h3>API keys</h3>
     <div class="kv">
-      ${['openai','anthropic','openrouter'].map(p =>
+      ${['openai', 'anthropic', 'openrouter'].map(p =>
         `<div class="label">${p}</div><div>${keys[p]
           ? '<span class="badge badge-green">Configured</span>'
           : '<span class="badge badge-red">Missing</span>'}</div>`
@@ -1880,8 +2005,10 @@ function renderSettingsHtml(keys, models, search) {
   const roles = models.roles || {};
   const providers = [...new Set(_settingsCatalog.map(m => m.provider))].sort();
 
-  const rolesCard = `<div class="card"><h3>Model Roles</h3>
-    ${['director','agent','narrator','dramaturge'].map(role => {
+  const rolesCard = `<div class="card"><h3>Model roles</h3>
+    <p class="help">Pick a model from the catalog or type any model id. Providers without an API key are disabled.</p>
+    <div class="role-grid">
+    ${['director', 'agent', 'narrator', 'dramaturge'].map(role => {
       const current = roles[role] || {provider: '', model_id: '', source: 'default'};
       const currentProvider = providers.includes(current.provider) ? current.provider : '';
 
@@ -1893,31 +2020,33 @@ function renderSettingsHtml(keys, models, search) {
 
       return `<div class="settings-role" data-role="${role}">
         <h4>${role}</h4>
-        <div class="current">Current: <code>${escapeHtml(current.provider || '?')}</code> / <code>${escapeHtml(current.model_id || '?')}</code>
-          &nbsp;<span class="badge badge-${current.source === 'db' ? 'playing' : 'idle'}">source: ${escapeHtml(current.source || '?')}</span>
+        <div class="current"><code>${escapeHtml(current.provider || '?')}</code> / <code>${escapeHtml(current.model_id || '?')}</code>
+          ${sourceBadge(current.source)}
         </div>
         <div class="settings-row">
-          <select class="settings-provider-${role}" onchange="onProviderPick('${role}', this.value)">
-            <option value="">-- provider --</option>
+          <select class="input settings-provider-${role}" onchange="onProviderPick('${role}', this.value)" aria-label="${role} provider">
+            <option value="">— provider —</option>
             ${providerOptions}
           </select>
-          <select class="settings-model-sel settings-model-${role}" onchange="onModelPick('${role}', this.value)">
-            <option value="">-- model --</option>
+          <select class="input settings-model-${role}" onchange="onModelPick('${role}', this.value)" aria-label="${role} model">
+            <option value="">— model —</option>
             ${modelOptions}
           </select>
         </div>
         <div class="settings-row">
-          <input type="text" class="settings-input-${role}"
+          <input type="text" class="input settings-input-${role}" aria-label="${role} model id"
                  placeholder="or type a custom model_id (e.g. deepseek/deepseek-chat-v3.1)"
-                 value="${escapeHtml(current.model_id || '')}">
-          <button onclick="saveModel('${role}')">Save</button>
+                 value="${escapeHtml(current.model_id || '')}"
+                 onkeydown="if (event.key === 'Enter') saveModel('${role}')">
+          <button class="btn btn-primary" onclick="saveModel('${role}')">Save</button>
         </div>
-        <div class="settings-banner-${role}" style="display:none"></div>
       </div>`;
     }).join('')}
+    </div>
   </div>`;
 
-  return keysCard + renderSearchCard(search) + rolesCard;
+  return pageHeader('Settings', 'Runtime overrides stored in the database take precedence over env defaults')
+    + `<div class="grid">${keysCard}${renderSearchCard(search)}</div>` + rolesCard;
 }
 
 function _buildModelOptions(provider, currentModelId) {
@@ -1944,7 +2073,7 @@ function detectProviderFromModelId(modelId) {
 function onProviderPick(role, provider) {
   const modelSelect = document.querySelector(`.settings-model-${role}`);
   if (modelSelect) {
-    modelSelect.innerHTML = '<option value="">-- model --</option>' + _buildModelOptions(provider, '');
+    modelSelect.innerHTML = '<option value="">— model —</option>' + _buildModelOptions(provider, '');
     modelSelect.value = '';
   }
   const input = document.querySelector(`.settings-input-${role}`);
@@ -1956,14 +2085,6 @@ function onModelPick(role, modelId) {
   if (input) input.value = modelId;
 }
 
-function showBanner(role, message, ok) {
-  const banner = document.querySelector(`.settings-banner-${role}`);
-  if (!banner) return;
-  banner.className = `settings-banner ${ok ? 'ok' : 'err'} settings-banner-${role}`;
-  banner.textContent = message;
-  banner.style.display = '';
-}
-
 function renderSearchCard(search) {
   const s = search || {};
   const providers = s.providers || ['wikipedia', 'tavily', 'searxng'];
@@ -1972,37 +2093,25 @@ function renderSearchCard(search) {
     `<option value="${escapeHtml(p)}" ${p === cur ? 'selected' : ''}>${escapeHtml(p)}</option>`
   ).join('');
   const keyHint = s.tavily_api_key_set ? 'configured — leave blank to keep' : 'tvly-...';
-  return `<div class="card"><h3>Search Provider</h3>
-    <div class="settings-role" data-search="1">
-      <div class="current">Current: <code>${escapeHtml(cur)}</code>
-        &nbsp;<span class="badge badge-${s.source === 'db' ? 'playing' : 'idle'}">source: ${escapeHtml(s.source || 'env')}</span>
-      </div>
-      <div class="settings-row">
-        <select id="search-provider">${opts}</select>
-      </div>
-      <div class="settings-row">
-        <input type="password" id="search-tavily-key" placeholder="Tavily API key (${escapeHtml(keyHint)})">
-      </div>
-      <div class="settings-row">
-        <input type="text" id="search-searxng-url" placeholder="SearXNG base URL" value="${escapeHtml(s.searxng_base_url || '')}">
-      </div>
-      <div class="settings-row">
-        <button onclick="saveSearch()">Save</button>
-        <button onclick="clearSearch()">Reset to default</button>
-      </div>
-      <div id="search-banner" class="settings-banner" style="display:none"></div>
+  return `<div class="card"><h3>Search provider</h3>
+    <div class="current help"><code>${escapeHtml(cur)}</code> ${sourceBadge(s.source || 'env')}</div>
+    <div class="settings-row">
+      <label class="field-label" for="search-provider">Provider</label>
+      <select id="search-provider" class="input">${opts}</select>
+    </div>
+    <div class="settings-row">
+      <label class="field-label" for="search-tavily-key">Tavily API key</label>
+      <input type="password" id="search-tavily-key" class="input" placeholder="${escapeHtml(keyHint)}">
+    </div>
+    <div class="settings-row">
+      <label class="field-label" for="search-searxng-url">SearXNG URL</label>
+      <input type="text" id="search-searxng-url" class="input" placeholder="https://searx.example.org" value="${escapeHtml(s.searxng_base_url || '')}">
+    </div>
+    <div class="settings-row" style="justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="clearSearch()">Reset to default</button>
+      <button class="btn btn-primary" onclick="saveSearch()">Save</button>
     </div>
   </div>`;
-}
-
-function showSearchBanner(message, ok) {
-  const banner = document.getElementById('search-banner');
-  if (!banner) {
-    return;
-  }
-  banner.textContent = message;
-  banner.className = 'settings-banner ' + (ok ? 'ok' : 'err');
-  banner.style.display = 'block';
 }
 
 async function saveSearch() {
@@ -2018,20 +2127,20 @@ async function saveSearch() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body),
     });
-    showSearchBanner(`Saved: ${provider}`, true);
-    setTimeout(renderSettingsView, 600);
+    toast(`Search provider saved: ${provider}`);
+    renderSettingsView();
   } catch (e) {
-    showSearchBanner(e.message, false);
+    toast(e.message, 'err');
   }
 }
 
 async function clearSearch() {
   try {
     await fetchJSON('/api/settings/search', {method: 'DELETE'});
-    showSearchBanner('Reset to env/default', true);
-    setTimeout(renderSettingsView, 600);
+    toast('Search provider reset to env/default');
+    renderSettingsView();
   } catch (e) {
-    showSearchBanner(e.message, false);
+    toast(e.message, 'err');
   }
 }
 
@@ -2040,12 +2149,12 @@ async function saveModel(role) {
   const providerSelect = document.querySelector(`.settings-provider-${role}`);
   const modelId = (input?.value || '').trim();
   if (!modelId) {
-    showBanner(role, 'model_id is empty', false);
+    toast(`${role}: model_id is empty`, 'err');
     return;
   }
-  let provider = providerSelect?.value || detectProviderFromModelId(modelId);
+  const provider = providerSelect?.value || detectProviderFromModelId(modelId);
   if (!provider) {
-    showBanner(role, 'could not detect provider from model_id — please pick from catalog', false);
+    toast(`${role}: could not detect provider from model_id — pick one from the catalog`, 'err');
     return;
   }
   try {
@@ -2054,17 +2163,30 @@ async function saveModel(role) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({role, provider, model_id: modelId}),
     });
-    showBanner(role, `Saved: ${provider} / ${modelId}`, true);
-    setTimeout(renderSettingsView, 600);
+    toast(`${role} → ${provider} / ${modelId}`);
+    renderSettingsView();
   } catch (e) {
-    showBanner(role, e.message, false);
+    toast(`${role}: ${e.message}`, 'err');
   }
 }
 
-// Auto-refresh session list every 5s (preserving the active search)
-function startDashboard() {
-  loadSessions();
-  setInterval(() => { if (currentView === 'sessions') loadSessions(currentSearchTerm()); }, 5000);
+// ---- Boot ----
+
+// "/" focuses the visible list search, like most admin tools.
+document.addEventListener('keydown', e => {
+  if (e.key !== '/' || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+  const input = [...document.querySelectorAll('.list-panel .search')].find(el => el.offsetParent);
+  if (input) { e.preventDefault(); input.focus(); input.select(); }
+});
+
+// Auto-refresh session list every 5s (preserving the active search) while the tab is visible.
+async function startDashboard() {
+  window.addEventListener('hashchange', route);
+  try { await loadSessions(); } catch (e) { toast('Could not load sessions: ' + e.message, 'err'); }
+  route();
+  setInterval(() => {
+    if (currentView === 'sessions' && !document.hidden) loadSessions(currentSearchTerm()).catch(() => {});
+  }, 5000);
 }
 
 initAuth().then(ready => { if (ready) startDashboard(); });

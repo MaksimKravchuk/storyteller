@@ -183,6 +183,23 @@ class TestListSessionsFiltering:
         assert str(match["account_id"]) == str(account["id"])
 
     @allure.story("List sessions")
+    @allure.title("list_sessions includes the setting name so the admin list can label each game")
+    @pytest.mark.asyncio
+    async def test_list_sessions_includes_setting_name(
+        self,
+        repo: GameRepository,
+        async_session,
+        populated_game_state,
+    ) -> None:
+        account, _game_id = await _seed_account_with_saved_game(
+            repo, async_session, populated_game_state, "setting@example.com"
+        )
+
+        rows = await repo.admin.list_sessions(web_player_id=str(account["id"]))
+        assert rows[0]["setting"] == populated_game_state[0].setting.name
+        assert "title" in rows[0]
+
+    @allure.story("List sessions")
     @allure.title("list_sessions returns null account fields for sessions whose web_player_id has no matching account")
     @pytest.mark.asyncio
     async def test_list_sessions_account_email_null_for_orphan_session(
