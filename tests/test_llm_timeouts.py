@@ -49,3 +49,18 @@ async def test_app_retry_covers_rate_limit() -> None:
     with patch("llm.openai_client.asyncio.sleep", new=AsyncMock()):
         assert await _call_with_retry(create) == "ok"
     assert create.await_count == 2
+
+
+@allure.title("A 429 with Retry-After waits the server-directed cooldown (capped at 60 s) before retrying")
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("headers", "expected_delay"), [({"retry-after": "10"}, 10), ({"retry-after-ms": "900000"}, 60)]
+)
+async def test_app_retry_honors_retry_after(headers: dict[str, str], expected_delay: float) -> None:
+    request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
+    response = httpx.Response(429, request=request, headers=headers)
+    create = AsyncMock(side_effect=[RateLimitError("slow down", response=response, body=None), "ok"])
+    sleep = AsyncMock()
+    with patch("llm.openai_client.asyncio.sleep", new=sleep):
+        assert await _call_with_retry(create) == "ok"
+    sleep.assert_awaited_once_with(expected_delay)

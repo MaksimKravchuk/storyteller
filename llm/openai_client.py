@@ -28,6 +28,8 @@ _RETRY_MAX_ATTEMPTS = 3
 _RETRY_BASE_DELAY = 2.0
 # SDK default is 600 s; retries live only in ``_call_with_retry`` so they don't multiply.
 _REQUEST_TIMEOUT_S = 120
+# Same ceiling the SDK applied to server-directed ``Retry-After`` delays.
+_MAX_SERVER_DELAY_S = 60.0
 
 # Models whose API default is ``reasoning_effort: medium`` but which accept
 # ``none``. Pinning ``none`` keeps the GPT-5.4-era wire contract: Chat
@@ -51,7 +53,8 @@ async def _call_with_retry(
     Retries on :class:`openai.InternalServerError` (5xx),
     :class:`openai.APIConnectionError` (includes :class:`openai.APITimeoutError`)
     and :class:`openai.RateLimitError` (429; the SDK's own retries are off).
-    Backoff is ``base_delay * 2**attempt``. Other errors (4xx, validation) propagate
+    Backoff is ``base_delay * 2**attempt``, or the server's ``Retry-After`` when longer
+    (capped at 60 s, as the SDK did). Other errors (4xx, validation) propagate
     immediately. Implemented via tail recursion so the retry loop carries its own
     attempt counter without an ``await`` inside a ``for`` loop body.
     """
@@ -63,7 +66,7 @@ async def _call_with_retry(
     except (InternalServerError, APIConnectionError, RateLimitError) as exc:
         if attempt + 1 >= max_attempts:
             raise
-        delay = base_delay * (2**attempt)
+        delay = max(base_delay * (2**attempt), _server_delay(exc))
         _reliability_metrics.record_retry("openai_client", attempt + 1)
         logger.warning(
             "OpenAI transient error (attempt {}/{}); retrying in {}s: {}",
@@ -74,6 +77,22 @@ async def _call_with_retry(
         )
         await asyncio.sleep(delay)
     return await _call_with_retry(create, max_attempts, base_delay, attempt + 1)
+
+
+def _server_delay(exc: Exception) -> float:
+    """Return the response's ``retry-after-ms`` / ``retry-after`` seconds, capped; 0 when absent or unparsable."""
+    response = getattr(exc, "response", None)
+    if response is None:
+        return 0
+    retry_after_ms = response.headers.get("retry-after-ms")
+    try:
+        if retry_after_ms is None:
+            seconds = float(response.headers.get("retry-after", 0))
+        else:
+            seconds = float(retry_after_ms) / 1000
+    except ValueError:  # HTTP-date form: fall back to our own backoff
+        return 0
+    return min(max(seconds, 0), _MAX_SERVER_DELAY_S)
 
 
 def _is_printable(ch: str) -> bool:
