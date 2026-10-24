@@ -86,9 +86,9 @@ async def _prepare_started_engine(
     await policy.ensure_active_game_quota(start_request.player_id, start_request.plan)
     session_row = await repo.sessions.create_web(start_request.player_id)
     session_id = session_row["id"]
-    # Committed up front so a failed start can still log its spend against this session.
-    await repo.commit()
     engine = await begin_session(repo, cfg, session_id, start_request.language)
+    # Committed before any paid LLM call so a failed start can still log its spend against this session.
+    await repo.commit()
     return session_id, engine
 
 

@@ -35,7 +35,7 @@ class StartPersistence:
             await self.repo.rollback()
             # Hide the half-built session so the player's previous game stays current.
             await self.repo.sessions.archive(self.session_id)
-            await _commit_failed_spend(self.repo, None, self.user_id)
+            await _commit_failed_spend(self.repo, self.user_id)
             raise
 
     async def _start_and_persist(self) -> None:
@@ -66,8 +66,7 @@ class ActionPersistence:
             narration = await self._process_and_persist()
         except Exception:
             await self.repo.rollback()
-            game_state, _, _ = self.engine.assert_running()
-            await _commit_failed_spend(self.repo, game_state.turn_count, self.user_id)
+            await _commit_failed_spend(self.repo, self.user_id)
             raise
         game_state, _, _ = self.engine.assert_running()
         return ActionResponse(
@@ -106,9 +105,12 @@ class ActionPersistence:
             raise
 
 
-async def _commit_failed_spend(repo: GameRepository, turn_number: int | None, user_id: str | None) -> None:
-    """Commit a rolled-back turn's buffered AI call logs: the budget gate and quotas read only that table."""
+async def _commit_failed_spend(repo: GameRepository, user_id: str | None) -> None:
+    """Commit a rolled-back turn's buffered AI call logs so the budget gate sees the spend.
+
+    Saved without a turn number: turn quotas count only numbered (successful) turns.
+    """
     ai_logs = get_and_clear_buffer()
     if ai_logs:
-        await repo.ai_logs.save(ai_logs, turn_number=turn_number, user_id=user_id)
+        await repo.ai_logs.save(ai_logs, turn_number=None, user_id=user_id)
     await repo.commit()

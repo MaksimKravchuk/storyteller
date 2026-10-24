@@ -112,7 +112,8 @@ async def test_failed_turn_commits_spend() -> None:
         await persistence.run()
 
     repo.rollback.assert_awaited_once()
-    _assert_spend_saved(repo, "Director", turn_number=4)
+    # No turn number: the spend counts toward the budget but not toward successful-turn quotas.
+    _assert_spend_saved(repo, "Director", turn_number=None)
     repo.commit.assert_awaited_once()
 
 
@@ -130,3 +131,17 @@ async def test_failed_start_commits_spend() -> None:
     repo.rollback.assert_awaited_once()
     repo.sessions.archive.assert_awaited_once_with(_SESSION_ID)
     _assert_spend_saved(repo, "DataMiner", turn_number=None)
+
+
+@allure.story("Failed game start")
+@allure.title("A start that fails while building the engine commits no placeholder session")
+@pytest.mark.asyncio
+async def test_engine_build_failure_commits_no_session() -> None:
+    repo = _repo()
+    start_request = service.StartGameParams(player_id=_PLAYER_ID, setting="Rome", language="English")
+
+    with patch.object(service, "begin_session", new=AsyncMock(side_effect=RuntimeError("no search key"))):
+        with pytest.raises(RuntimeError, match="no search key"):
+            await service.start_game_for_player(repo, Config(), start_request)
+
+    repo.commit.assert_not_awaited()
