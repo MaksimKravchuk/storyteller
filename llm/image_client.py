@@ -45,13 +45,17 @@ def _usage_tokens(usage: Any, field: str) -> int | None:
     return int(token_count)
 
 
+# Image generation is slow, but the SDK default of 600 s per attempt is not a useful bound.
+_REQUEST_TIMEOUT_S = 180
+
+
 class OpenAIImageClient:
     """Portrait poster images from an OpenAI ``gpt-image`` model."""
 
     def __init__(self, api_key: str, model: str, quality: str) -> None:
         from openai import AsyncOpenAI
 
-        self._client = AsyncOpenAI(api_key=api_key)
+        self._client = AsyncOpenAI(api_key=api_key, timeout=_REQUEST_TIMEOUT_S)
         self._model = model
         self._quality = quality
 

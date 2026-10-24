@@ -93,7 +93,7 @@ class TestAnthropicClient:
         sdk_class, _ = _install_sdk_mock()
         with patch(_ANTHROPIC_CTOR, sdk_class):
             client = AnthropicClient(model=_MODEL, api_key="ak-xyz")
-        sdk_class.assert_called_once_with(api_key="ak-xyz")
+        sdk_class.assert_called_once_with(api_key="ak-xyz", timeout=120)
         assert client.model == _MODEL
 
     @allure.story("send_message")
