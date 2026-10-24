@@ -1,0 +1,1 @@
+{"id":"fabc996a77000d42b95c089aa2e7a7b9","fullName":"tests.test_dice_contest.TestContestRollToDict#test_serializes_every_field_under_exact_key","name":"contest_roll_to_dict emits the exact key set with each value placed under the right key","status":"passed","testResultsByEnv":{"default":"24b49816b3756d94ff0108db43094b87"}}

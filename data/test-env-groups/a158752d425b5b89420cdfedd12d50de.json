@@ -1,0 +1,1 @@
+{"id":"a158752d425b5b89420cdfedd12d50de","fullName":"tests.test_director_context.TestPlayerCharacterContext#test_default_inventory","name":"format_player_inventory returns 'nothing of note' for an empty inventory","status":"passed","testResultsByEnv":{"default":"d7620175a220c75b4bc95c7cef45f341"}}

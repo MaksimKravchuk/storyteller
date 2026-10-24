@@ -1,0 +1,1 @@
+{"id":"e35d720baebb323143a352203c9e4721","fullName":"tests.test_knowledge.TestWitnessMemoryIndex#test_query_engine_uses_graph_index","name":"KnowledgeQueryEngine._personal_memories_for delegates to the graph index","status":"passed","testResultsByEnv":{"default":"093ea94c955fb8a49ac7482c380c8c93"}}

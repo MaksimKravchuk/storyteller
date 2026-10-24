@@ -1,0 +1,1 @@
+{"id":"25cd2947416509d1afda169f0057f02c","fullName":"tests.test_web_api#test_build_transcript_skips_malformed_visible_entities","name":"build_transcript tolerates every shape of malformed visible_entities payload","status":"passed","testResultsByEnv":{"default":"67811cd44e8a8a56949aaf19aa7b6fcd"}}

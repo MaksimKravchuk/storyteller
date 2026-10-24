@@ -1,0 +1,1 @@
+{"id":"2e96bd5413a3fed9970a961f8a9fa43c","fullName":"tests.test_npc_background_tick.TestOffSceneNonKillResolvers#test_acquire_secures_after_threshold","name":"ACQUIRE goal completes once it has accrued enough off-scene steps","status":"passed","testResultsByEnv":{"default":"14446995f1a0934976a0f8d35d82a907"}}

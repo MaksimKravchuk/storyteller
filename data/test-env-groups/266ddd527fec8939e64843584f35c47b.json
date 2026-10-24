@@ -1,0 +1,1 @@
+{"id":"266ddd527fec8939e64843584f35c47b","fullName":"tests.test_npc_goal_resolution.TestGoalProgress#test_kill_goal_stays_active_when_target_alive","name":"Live target leaves KILL goal active and matching thread open","status":"passed","testResultsByEnv":{"default":"b073ccc97b5476a132bebe6b052c3950"}}

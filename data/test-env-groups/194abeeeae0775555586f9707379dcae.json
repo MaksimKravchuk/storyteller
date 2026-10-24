@@ -1,0 +1,1 @@
+{"id":"194abeeeae0775555586f9707379dcae","fullName":"tests.test_effect_applier.TestNpcIdResolution#test_add_item_prefers_npc_id_over_target_id","name":"ADD_ITEM applies to the npc_id NPC even when target_id points elsewhere","status":"passed","testResultsByEnv":{"default":"59fb52b7339d6cab854f220331bfe8d3"}}

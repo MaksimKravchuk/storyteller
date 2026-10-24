@@ -1,0 +1,1 @@
+{"id":"ec8c1793c22ca915dc90e6b9973c747f","fullName":"tests.test_npc_turn.TestBuildTurnPromptPositiveOpportunity#test_positive_keyword_fires","name":"Positive-intent knowledge fact naming a co-located NPC fires the clause","status":"passed","testResultsByEnv":{"default":"3eafe9655f264d45520ddc37d2a9994b"}}

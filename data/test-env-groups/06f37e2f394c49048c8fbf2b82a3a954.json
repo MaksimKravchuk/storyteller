@@ -1,0 +1,1 @@
+{"id":"06f37e2f394c49048c8fbf2b82a3a954","fullName":"tests.test_relationship_model.TestRelationshipKindCoercion#test_kind_is_case_insensitive","name":"An uppercase kind string is normalised to the correct enum member","status":"passed","testResultsByEnv":{"default":"aecee0401d0acd9f8c8380016b74226a"}}

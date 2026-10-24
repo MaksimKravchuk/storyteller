@@ -1,0 +1,1 @@
+{"id":"a0801c822885b3283db4868575b7f5c3","fullName":"tests.test_memory_manager_consolidate_scene#test_summary_per_npc_plus_significant_node","name":"Phase 1 produces one summary memory per present NPC; Phase 2 fires per significant entry","status":"passed","testResultsByEnv":{"default":"a2e7cd952a97f8d8b9d98f15f5563cc3"}}

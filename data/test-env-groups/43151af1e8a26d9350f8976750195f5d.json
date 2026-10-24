@@ -1,0 +1,1 @@
+{"id":"43151af1e8a26d9350f8976750195f5d","fullName":"tests.test_known_npcs.TestApplyRevealedReply#test_empty_revealed_names_is_noop","name":"apply_revealed_reply is a no-op when the reply carries no revealed_names","status":"passed","testResultsByEnv":{"default":"2a284262d9d2d42aca6ff9af6a32552e"}}

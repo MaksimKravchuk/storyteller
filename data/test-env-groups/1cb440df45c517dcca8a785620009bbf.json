@@ -1,0 +1,1 @@
+{"id":"1cb440df45c517dcca8a785620009bbf","fullName":"tests.test_safety_web_api#test_post_action_returns_400_for_flagged_input","name":"POST /api/games/{id}/actions returns 400 with the refusal message when the input is flagged","status":"passed","testResultsByEnv":{"default":"ce2a72d62a569ec807ebf290685e22a8"}}

@@ -1,0 +1,1 @@
+{"id":"a267b9a02f4139360cf7aae13f65639f","fullName":"tests.test_scene_builder.TestSceneBuilder#test_poi_dict_form_preserves_head_aliases","name":"SceneBuilder accepts dict-form POIs so head-noun aliases flow through to PointOfInterest.names","status":"passed","testResultsByEnv":{"default":"dfde3a932c7d6875e35f907f958f9a68"}}

@@ -1,0 +1,1 @@
+{"id":"15bd4fbad49aad8ac91bce12af9ec65c","fullName":"tests.test_benchmarks_scoring.TestAggregateVerdict#test_empty_votes_produce_panel_collapsed","name":"_aggregate_verdict reports PANEL_COLLAPSED on an empty vote list (no judges dispatched)","status":"passed","testResultsByEnv":{"default":"ca141d219d72cdc11b7e71890e7489e5"}}

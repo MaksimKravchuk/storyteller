@@ -1,0 +1,1 @@
+{"id":"b37a2a20d4ffe00f52e198573e50f55f","fullName":"tests.test_apply_contest_outcome.TestPredictContestOutcome#test_attack_dominates_predicts_dead","name":"ATTACK with ACTOR_DOMINATES predicts a lethal physical outcome","status":"passed","testResultsByEnv":{"default":"6e2822bb9115d64f9d807fd44ed04979"}}

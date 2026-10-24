@@ -1,0 +1,1 @@
+{"id":"667994924ee57048fe91212dc4de33e3","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_openai_provider","name":"create_llm_client returns an OpenAIClient when the provider is openai","status":"passed","testResultsByEnv":{"default":"bb4f5ed0f5c13db8010ababefe9a2384"}}

@@ -1,0 +1,1 @@
+{"id":"4eb4a84ba9ecb3b64b3474dc2907b581","fullName":"tests.test_item_generator.TestItemGenerator#test_setting_summary_truncation","name":"ItemGenerator truncates the setting summary to 1500 characters before rendering the system prompt","status":"passed","testResultsByEnv":{"default":"28dcce1752b2c5f61186c43afbac6727"}}

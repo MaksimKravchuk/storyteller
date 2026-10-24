@@ -1,0 +1,1 @@
+{"id":"8900e02c147197adb3e308abd22c2c55","fullName":"tests.test_director_npc_ticker.TestPlanExecutorTickerGate#test_chronicler_sees_departures","name":"WorldChronicler sees npc_departures in the TurnOutputs it receives","status":"passed","testResultsByEnv":{"default":"92c86192273b22f02146be66b27a912d"}}

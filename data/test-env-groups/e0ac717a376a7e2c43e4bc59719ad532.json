@@ -1,0 +1,1 @@
+{"id":"e0ac717a376a7e2c43e4bc59719ad532","fullName":"tests.test_npc_identity_resolution.TestMemoryManagerStampsSubjectId#test_local_event_stamps_subject_id_on_every_witness","name":"create_memory_from_event stamps subject_id on the shared LOCAL node every witness sees","status":"passed","testResultsByEnv":{"default":"1473b467a64521e715ae4f866967aef0"}}

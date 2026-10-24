@@ -1,0 +1,1 @@
+{"id":"e4ff1bd1c8c6dd24bce741071cae0e1e","fullName":"tests.test_benchmarks_bayes.TestElementInferiority#test_prefers_judge_votes","name":"judge votes are preferred over iteration pass-counts when present","status":"passed","testResultsByEnv":{"default":"422f680f2bad08cfff1234a4e7c86c72"}}

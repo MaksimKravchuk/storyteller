@@ -1,0 +1,1 @@
+{"id":"3aad1c797d17d5d85c8d5dcee4cb654d","fullName":"tests.test_director_retaliation.TestNPCRetaliation#test_no_retaliation_when_mood_unchanged","name":"An NPC that stays neutral through a friendly greet receives no retaliation call","status":"passed","testResultsByEnv":{"default":"82df8eec59c97c6a054e54c52ca4879f"}}

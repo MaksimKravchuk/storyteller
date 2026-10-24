@@ -1,0 +1,1 @@
+{"id":"8fa652884a9c8b7a42adfc64920f5087","fullName":"tests.e2e.test_dramaturge_real.TestDramaturgeRealModel#test_real_model_returns_string_for_innocuous_narration","name":"A real Dramaturge model returns innocuous narration as a non-empty string","status":"passed","testResultsByEnv":{"default":"94803e6902497cf680ea295459fe816f"}}

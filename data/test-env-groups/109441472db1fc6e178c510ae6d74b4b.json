@@ -1,0 +1,1 @@
+{"id":"109441472db1fc6e178c510ae6d74b4b","fullName":"tests.test_benchmarks_scenario_elements.TestMemoryScenarioPredicates#test_marcus_speaks_awards_point_when_marcus_replies","name":"marcus_speaks_turn1 awards one point when Marcus appears in the turn's dialogue entries","status":"passed","testResultsByEnv":{"default":"530ba317acc13e0f6976822a834de579"}}

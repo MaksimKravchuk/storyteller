@@ -1,0 +1,1 @@
+{"id":"d6c4bdbbe755a9967538f117b87b937a","fullName":"tests.test_scene_builder.TestSceneBuilder#test_deltas_injected_into_system_prompt","name":"SceneBuilder injects scene_state deltas grouped by location_id into the system prompt","status":"passed","testResultsByEnv":{"default":"a5d04e808a6aca3a9bc199a68b09e791"}}

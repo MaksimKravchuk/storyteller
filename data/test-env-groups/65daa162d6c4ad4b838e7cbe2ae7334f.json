@@ -1,0 +1,1 @@
+{"id":"65daa162d6c4ad4b838e7cbe2ae7334f","fullName":"tests.test_benchmarks_model_sets_score.TestFromAggregate#test_raises_on_missing_required_key","name":"Missing required keys raise KeyError instead of silently scoring zero","status":"passed","testResultsByEnv":{"default":"99f852b130a3d4922e3d5e3e76e193ac"}}

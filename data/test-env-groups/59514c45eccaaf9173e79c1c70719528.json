@@ -1,0 +1,1 @@
+{"id":"59514c45eccaaf9173e79c1c70719528","fullName":"tests.test_memory_slots.TestEffectMemorySlotsAtConsumerSeam#test_add_item_carries_acquired_slots","name":"ADD_ITEM writes subject=NPC, action=acquired, object=item","status":"passed","testResultsByEnv":{"default":"4c27f11da47c878611d03c9a0d59a5e3"}}

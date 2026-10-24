@@ -1,0 +1,1 @@
+{"id":"521170b84d2a7b9e1638ea99282dd447","fullName":"tests.test_log_scrubbing.TestScrubSecretsPatterns#test_anthropic_key_pattern","name":"scrub_secrets replaces an ``sk-ant-`` Anthropic key and keeps the provider hint","status":"passed","testResultsByEnv":{"default":"12d049a9dabe7853bf28d43c3b69936a"}}

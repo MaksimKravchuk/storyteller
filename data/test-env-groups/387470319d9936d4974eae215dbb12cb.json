@@ -1,0 +1,1 @@
+{"id":"387470319d9936d4974eae215dbb12cb","fullName":"tests.test_director_events.TestProcessRemoteEvents#test_creates_memory_for_each_event","name":"process_remote_events() feeds each event into MemoryManager.create_memory_from_event","status":"passed","testResultsByEnv":{"default":"20bd083b620d9bf6a9dc82d1b25ed68a"}}

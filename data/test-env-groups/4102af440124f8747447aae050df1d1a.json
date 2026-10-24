@@ -1,0 +1,1 @@
+{"id":"4102af440124f8747447aae050df1d1a","fullName":"tests.test_npc_turn.TestBuildTurnPromptOpportunityWindow#test_russian_violent_knowledge_keyword_fires_hostile_clause","name":"Russian violent knowledge naming a co-located NPC fires the hostile clause","status":"passed","testResultsByEnv":{"default":"0697185148f6fe61fcd72df35ab7064c"}}

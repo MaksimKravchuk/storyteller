@@ -1,0 +1,1 @@
+{"id":"696f14b9ccf59621b06714c3dfe7449b","fullName":"tests.test_benchmarks_scoring.TestEvidenceAwarded#test_partial_credit_rounded","name":"_evidence_awarded scales points proportionally and rounds to the nearest integer","status":"passed","testResultsByEnv":{"default":"4a0f4ddeae72f31873fd2036773052aa"}}

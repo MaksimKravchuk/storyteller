@@ -1,0 +1,1 @@
+{"id":"fddaf158ea1827adeb6ab070d16dde2a","fullName":"tests.test_benchmarks_archive.TestFileStem#test_happy_path_stem","name":"file_stem builds <timestamp>_<short-sha>_<scenario>_iter<N> from the report metadata","status":"passed","testResultsByEnv":{"default":"e1163c2b3729d2d7bd6a06574324d337"}}

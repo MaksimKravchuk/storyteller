@@ -1,0 +1,1 @@
+{"id":"56bd3f9f8a3b5e4576ebf01032dcd812","fullName":"tests.test_narrator.TestNarratorSceneType#test_continuation_passes_scene_type","name":"Narrator receives CONTINUATION marker when the turn extends the current scene","status":"passed","testResultsByEnv":{"default":"354b2e3426f98597914bb33add58a52f"}}

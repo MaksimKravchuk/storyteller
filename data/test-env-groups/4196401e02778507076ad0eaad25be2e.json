@@ -1,0 +1,1 @@
+{"id":"4196401e02778507076ad0eaad25be2e","fullName":"tests.test_benchmarks_judge.TestRunJudge#test_send_failure_becomes_error_vote","name":"run_judge surfaces LLM send failures as ERROR votes tagged with a send-error reason","status":"passed","testResultsByEnv":{"default":"e5c65bcd3e8fdd4545db0bd3dcabc4af"}}

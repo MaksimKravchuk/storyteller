@@ -1,0 +1,1 @@
+{"id":"c5aeeaf2fc33db91f7dbbd0301eb90b1","fullName":"tests.test_benchmarks_judge.TestVoteConstruction#test_no_verdict_preserved","name":"_build_vote_from_payload preserves NO verdicts unchanged regardless of quote validity","status":"passed","testResultsByEnv":{"default":"05d14a939e43a4ffb3d65504ec722dfb"}}

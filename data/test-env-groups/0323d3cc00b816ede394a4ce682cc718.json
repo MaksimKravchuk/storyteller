@@ -1,0 +1,1 @@
+{"id":"0323d3cc00b816ede394a4ce682cc718","fullName":"tests.test_web_api#test_start_game_happy_path","name":"POST /api/games returns 201 with the opening snapshot on success","status":"passed","testResultsByEnv":{"default":"a87028789e0042c35a3016b09328b708"}}

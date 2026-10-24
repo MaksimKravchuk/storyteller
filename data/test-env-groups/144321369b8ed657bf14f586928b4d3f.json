@@ -1,0 +1,1 @@
+{"id":"144321369b8ed657bf14f586928b4d3f","fullName":"tests.test_actor_prompt.TestActorPromptOutputModes#test_action_mode_preserves_common_constraints","name":"Action mode keeps the shared constraints block (dice, in-character, physical status)","status":"passed","testResultsByEnv":{"default":"5b6de674716ee8177ed3cc26d6546c47"}}

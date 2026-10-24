@@ -1,0 +1,1 @@
+{"id":"df2a985137044bf496d8792e21564f8f","fullName":"tests.test_emotional_charge.TestValuesVectorBounds#test_axis_bounds_rejected","name":"ValuesVector rejects an axis weight outside [-1, 1]","status":"passed","testResultsByEnv":{"default":"e2ede13f1ddde16a9399eaee9fba3a5f"}}

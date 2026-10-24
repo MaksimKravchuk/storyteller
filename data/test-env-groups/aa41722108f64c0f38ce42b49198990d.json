@@ -1,0 +1,1 @@
+{"id":"aa41722108f64c0f38ce42b49198990d","fullName":"tests.test_safety_factory#test_build_moderator_adds_openai_when_key_present","name":"build_moderator adds an OpenAIModerationProvider when an API key is configured","status":"passed","testResultsByEnv":{"default":"4132177b2c6249d7c785b817bf872bc6"}}

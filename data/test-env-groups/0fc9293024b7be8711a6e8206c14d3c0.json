@@ -1,0 +1,1 @@
+{"id":"0fc9293024b7be8711a6e8206c14d3c0","fullName":"tests.test_npc_goal_resolution.TestResolveActionsAftermath#test_non_lethal_attack_persists_wounded_resolution","name":"Non-lethal ATTACK wounds target and the wound shape reaches the persisted memory","status":"passed","testResultsByEnv":{"default":"20a161113653768b96ecdc348e15ea18"}}

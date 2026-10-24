@@ -1,0 +1,1 @@
+{"id":"48105b904087002b350f536578e4dd30","fullName":"tests.test_memory_manager#test_summarize_batch_links_to_existing_npc","name":"summarize_interactions_batch creates a memory node and links it to an existing NPC with WITNESSED","status":"passed","testResultsByEnv":{"default":"ac2789b26af596221ef15fa3ae888a64"}}

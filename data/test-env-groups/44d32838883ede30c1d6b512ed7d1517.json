@@ -1,0 +1,1 @@
+{"id":"44d32838883ede30c1d6b512ed7d1517","fullName":"tests.test_anachronism_classifier.TestAnachronismPrompt#test_system_prompt_contains_required_sections","name":"System prompt has worldview, setting, and action sections plus seed reuse guidance","status":"passed","testResultsByEnv":{"default":"cb96c99d5eb4fc6796f5405f072bf0e2"}}

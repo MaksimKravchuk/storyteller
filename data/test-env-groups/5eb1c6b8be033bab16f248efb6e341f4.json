@@ -1,0 +1,1 @@
+{"id":"5eb1c6b8be033bab16f248efb6e341f4","fullName":"tests.test_relationship_model.TestRelationshipValidation#test_round_trip_via_model_dump","name":"Relationship round-trips through model_dump(mode=json) without losing any field","status":"passed","testResultsByEnv":{"default":"dc4cd1035a9ea52dd3271f94ea9d1ef6"}}

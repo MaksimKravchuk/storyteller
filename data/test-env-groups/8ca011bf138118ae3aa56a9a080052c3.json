@@ -1,0 +1,1 @@
+{"id":"8ca011bf138118ae3aa56a9a080052c3","fullName":"tests.test_scene_builder.TestSceneBuilder#test_empty_response_defaults","name":"SceneBuilder defaults every optional scene field when the LLM response is empty","status":"passed","testResultsByEnv":{"default":"44ecb63e9544efd85273d3ece86fe85a"}}

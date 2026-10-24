@@ -1,0 +1,1 @@
+{"id":"a806ddafa3034d22efe8e39ea740a47c","fullName":"tests.test_benchmarks_panel.TestPanelAssembly#test_missing_openai_key_drops_openai_candidates","name":"assemble_panel drops openai candidates and records a skip reason when no openai key is set","status":"passed","testResultsByEnv":{"default":"2d88f717071d95901de578e31d8f262a"}}

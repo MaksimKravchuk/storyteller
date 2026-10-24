@@ -1,0 +1,1 @@
+{"id":"8c9dd5c6a0d67d599a72d8d04cb24e5e","fullName":"tests.test_effect_applier.TestChangeAttributeDefaults#test_missing_value_defaults_to_zero","name":"CHANGE_ATTRIBUTE with no value key writes the numeric default of 0","status":"passed","testResultsByEnv":{"default":"c6373f22781a4081cdca1e6586f9d9a9"}}

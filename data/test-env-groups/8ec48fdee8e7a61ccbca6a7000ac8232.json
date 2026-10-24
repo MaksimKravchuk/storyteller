@@ -1,0 +1,1 @@
+{"id":"8ec48fdee8e7a61ccbca6a7000ac8232","fullName":"tests.test_knowledge.TestKnowledgeGraphSerialization#test_serialise_round_trip","name":"Serializing a populated graph to a dict and back preserves the total node count","status":"passed","testResultsByEnv":{"default":"7e8e4d8a7289ac4034ac044898deeb37"}}

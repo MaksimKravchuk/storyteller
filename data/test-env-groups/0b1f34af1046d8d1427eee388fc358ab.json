@@ -1,0 +1,1 @@
+{"id":"0b1f34af1046d8d1427eee388fc358ab","fullName":"tests.test_world_state.TestWorldStateDefaults#test_default_values","name":"A new WorldState starts with no threads, no world_mood, and last_chronicled_scene=0","status":"passed","testResultsByEnv":{"default":"81a8449b4f87b430e30df759b825ed61"}}

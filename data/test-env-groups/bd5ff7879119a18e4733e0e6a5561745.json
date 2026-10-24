@@ -1,0 +1,1 @@
+{"id":"bd5ff7879119a18e4733e0e6a5561745","fullName":"tests.test_npc_ticker.TestNPCScheduleSlot#test_slot_is_frozen","name":"NPCScheduleSlot rejects mutation — frozen dataclass","status":"passed","testResultsByEnv":{"default":"fce504453a6fc4c285406ed0aee8552b"}}

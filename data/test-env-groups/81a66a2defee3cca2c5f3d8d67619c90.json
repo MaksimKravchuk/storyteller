@@ -1,0 +1,1 @@
+{"id":"81a66a2defee3cca2c5f3d8d67619c90","fullName":"tests.test_npc_generator.TestNPCGenerator#test_one_card_per_request","name":"NPCGenerator produces one NPCCard per requested role with all fields populated","status":"passed","testResultsByEnv":{"default":"afb8ec8327ccd226fcfe29739def2f15"}}

@@ -1,0 +1,1 @@
+{"id":"7e38de7e32b581ffffb886ce093b919f","fullName":"tests.test_relationship_model.TestRelationshipIntensity#test_default_intensity_is_zero","name":"Default intensity is 0 when not specified","status":"passed","testResultsByEnv":{"default":"5e9e967f6a134b9ad1e0096f7a728255"}}

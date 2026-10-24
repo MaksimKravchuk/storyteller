@@ -1,0 +1,1 @@
+{"id":"b480546346097c9b8c56bc08e3962e31","fullName":"tests.test_dice_contest.TestContestSkillMap#test_deception_maps_to_deception_skill","name":"Deception contests use the deception_skill attribute on both sides","status":"passed","testResultsByEnv":{"default":"7b2e03cff926123406af9c88bdf67ce0"}}

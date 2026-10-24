@@ -1,0 +1,1 @@
+{"id":"e2940ce2a984707fabb158b641a2c609","fullName":"tests.test_npc_background_tick.TestOffSceneNonKillResolvers#test_non_kill_goal_is_eligible","name":"Eligibility is no longer KILL-only — a non-KILL goal-holder ticks off-scene","status":"passed","testResultsByEnv":{"default":"bed35c1d52e0090de23be5118c0363ca"}}

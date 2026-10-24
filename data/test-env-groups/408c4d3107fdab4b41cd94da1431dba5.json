@@ -1,0 +1,1 @@
+{"id":"408c4d3107fdab4b41cd94da1431dba5","fullName":"tests.test_npc_generator.TestNPCGenerator#test_missing_fields_defaulted","name":"NPCGenerator defaults every missing LLM field including occupation from the request string","status":"passed","testResultsByEnv":{"default":"d9c9160377644dd7c500c8005c572312"}}

@@ -1,0 +1,1 @@
+{"id":"98bdf1c53d5f0c33d052c8fef8b6bb9c","fullName":"tests.test_npc_turn_prompt_scene_log.TestPromptCapsLogSize#test_long_description_is_truncated","name":"Per-entry description is truncated so a runaway entry cannot blow up the prompt","status":"passed","testResultsByEnv":{"default":"f2b4fe0e8d2a7cfc856ec5a598768f4f"}}

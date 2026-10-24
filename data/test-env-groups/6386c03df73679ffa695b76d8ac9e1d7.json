@@ -1,0 +1,1 @@
+{"id":"6386c03df73679ffa695b76d8ac9e1d7","fullName":"tests.test_director_dialogue_memory.TestHandleDialogueSceneLogWiring#test_handle_dialogue_records_reply_in_scene_log","name":"handle_dialogue appends the NPC's reply to scene_action_log, attributed to that NPC","status":"passed","testResultsByEnv":{"default":"b71dfedeb26ce8bba0e4c6df0bae5cd6"}}

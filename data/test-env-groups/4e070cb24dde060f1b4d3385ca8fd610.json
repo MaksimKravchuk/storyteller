@@ -1,0 +1,1 @@
+{"id":"4e070cb24dde060f1b4d3385ca8fd610","fullName":"tests.test_safety_moderator#test_fallback_narration_returns_safe_text","name":"fallback_narration returns a non-empty safe replacement for flagged narrator output","status":"passed","testResultsByEnv":{"default":"0300b6548e8dbcffaace104197353d5f"}}

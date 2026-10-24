@@ -1,0 +1,1 @@
+{"id":"f0e850f34648de825cf6819f7ba59911","fullName":"tests.test_memory_slots.TestMemorySlotsDataclass#test_slots_are_frozen","name":"MemorySlots is frozen — fields cannot be mutated post-construction","status":"passed","testResultsByEnv":{"default":"c4fc070366c264b310f1727ada5e5ef5"}}

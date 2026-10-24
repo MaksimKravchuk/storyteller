@@ -1,0 +1,1 @@
+{"id":"6ab2cc67f08a4471605c4501a0b7e1d0","fullName":"tests.test_models.TestLocation#test_record_object_state_writes_normalized_key","name":"record_object_state writes a normalized entry into object_states and returns True","status":"passed","testResultsByEnv":{"default":"b8dcf3dc21b38c12a1385c778a460848"}}

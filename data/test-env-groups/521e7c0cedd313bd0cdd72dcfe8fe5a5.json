@@ -1,0 +1,1 @@
+{"id":"521e7c0cedd313bd0cdd72dcfe8fe5a5","fullName":"tests.test_director_escalation.TestForcedRetaliation#test_high_hostility_forces_retaliation","name":"An NPC whose hostility has crossed the retaliation threshold gets a forced counter-attack call","status":"passed","testResultsByEnv":{"default":"4127c6b3f0a02681bbccb0b78cda564a"}}

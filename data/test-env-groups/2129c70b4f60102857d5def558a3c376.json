@@ -1,0 +1,1 @@
+{"id":"2129c70b4f60102857d5def558a3c376","fullName":"tests.test_anthropic_client.TestAnthropicClient#test_send_message_json_schema_api_error_propagates_unchanged","name":"AnthropicClient.send_message lets beta API errors propagate without translation","status":"passed","testResultsByEnv":{"default":"7bc9275a51c331ad2e1a22d732e2a0af"}}

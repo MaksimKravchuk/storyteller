@@ -1,0 +1,1 @@
+{"id":"e86db7e71c8f7f27ecfb058ca9e9fe6d","fullName":"tests.test_db_engine.TestEngineAndGetDb#test_create_async_engine_returns_engine","name":"create_async_engine returns a SQLAlchemy AsyncEngine for a plain postgres URL","status":"passed","testResultsByEnv":{"default":"1217c63d3c5397d4c5b6106d710ff07f"}}

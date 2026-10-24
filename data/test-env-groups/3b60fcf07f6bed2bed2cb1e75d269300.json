@@ -1,0 +1,1 @@
+{"id":"3b60fcf07f6bed2bed2cb1e75d269300","fullName":"tests.test_search_factory#test_factory_routes_wikipedia","name":"create_search_client routes wikipedia to the zero-config Wikipedia adapter","status":"passed","testResultsByEnv":{"default":"dbf6a24cd9c17e8dd858604c8b88db8f"}}

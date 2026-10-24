@@ -1,0 +1,1 @@
+{"id":"6b2a28b8524edfd4176c668bb6c7f30f","fullName":"tests.test_reliability_metering_inert#test_narration_byte_identical_when_fallback_fires","name":"Narrator output is byte-identical when a fallback site fires under metering","status":"passed","testResultsByEnv":{"default":"dbb8f5efc300a3253641280f41e0a773"}}

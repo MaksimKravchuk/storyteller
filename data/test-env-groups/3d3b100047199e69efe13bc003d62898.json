@@ -1,0 +1,1 @@
+{"id":"3d3b100047199e69efe13bc003d62898","fullName":"tests.test_memory_slots.TestEffectMemorySlotsAtConsumerSeam#test_each_effect_verb_lands_on_node","name":"REMOVE_ITEM, MOVE_NPC, CHANGE_ATTRIBUTE, REMOVE_NPC, and unknown all map to the right verb","status":"passed","testResultsByEnv":{"default":"056dc15c460b9192eeef1e2f32e1e522"}}

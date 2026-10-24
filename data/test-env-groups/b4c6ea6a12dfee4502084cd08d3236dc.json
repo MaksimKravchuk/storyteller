@@ -1,0 +1,1 @@
+{"id":"b4c6ea6a12dfee4502084cd08d3236dc","fullName":"tests.test_openai_client.TestToStrictSchema#test_caller_schema_is_not_mutated","name":"_to_strict_schema does not mutate the caller's schema dict","status":"passed","testResultsByEnv":{"default":"0d6b21bad834449dfb394ee6982557b9"}}

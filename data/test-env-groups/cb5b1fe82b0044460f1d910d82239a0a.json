@@ -1,0 +1,1 @@
+{"id":"cb5b1fe82b0044460f1d910d82239a0a","fullName":"tests.test_memory_charge_stamping#test_broadcast_node_is_neutral_while_witness_copy_is_charged","name":"The broadcast node stays neutral while the witness copy is charged","status":"passed","testResultsByEnv":{"default":"6dab913d0d74833f230047f68c163e9d"}}

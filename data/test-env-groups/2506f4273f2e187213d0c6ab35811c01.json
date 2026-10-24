@@ -1,0 +1,1 @@
+{"id":"2506f4273f2e187213d0c6ab35811c01","fullName":"tests.test_director_object_interaction.TestApplyObjectInteractionsDualSink#test_normalizes_paraphrased_keys","name":"apply_object_interactions normalizes paraphrased object keys to a single object_states slot","status":"passed","testResultsByEnv":{"default":"86a074a15de7dca02a423ad5c5788f4c"}}

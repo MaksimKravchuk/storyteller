@@ -1,0 +1,1 @@
+{"id":"aecb84098e05a1ea1c9523b738129938","fullName":"tests.test_models.TestLocation#test_record_object_state_empty_description","name":"record_object_state returns False without writing when the state description is empty","status":"passed","testResultsByEnv":{"default":"2bf4b854bf2251a09502f2d2d1f195b6"}}

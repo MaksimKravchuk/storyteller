@@ -1,0 +1,1 @@
+{"id":"bdda6688ecf432ff08534eee97fb4a34","fullName":"tests.benchmarks.test_golden_narration.TestGoldenNarration#test_committed_goldens_cover_registry","name":"Committed golden narration snapshots cover every registered benchmark scenario","status":"skipped","testResultsByEnv":{"default":"384248ec049e6b052a89572e1acc95a2"}}

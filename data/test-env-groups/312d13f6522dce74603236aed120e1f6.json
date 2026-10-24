@@ -1,0 +1,1 @@
+{"id":"312d13f6522dce74603236aed120e1f6","fullName":"tests.test_db_converters.TestNPCConverter#test_legacy_dict_relationships_upcast","name":"row_to_npc upcasts a legacy dict[str, str] relationships payload to list[Relationship]","status":"passed","testResultsByEnv":{"default":"e8f788f4925e9b30642b53a2acd02b41"}}

@@ -1,0 +1,1 @@
+{"id":"b7b877fc293359b7af9157f849f8de1f","fullName":"tests.test_entity_markup.TestWrapEntities#test_russian_partial_alias_does_not_wrap","name":"A single-word match does NOT wrap a multi-word alias: lemma order matters","status":"passed","testResultsByEnv":{"default":"81608d5227404dd2d5510f124bc85d98"}}

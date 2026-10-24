@@ -1,0 +1,1 @@
+{"id":"3a07611c3d02920c849631b133378df9","fullName":"tests.test_game_engine_lifecycle#test_start_game_web_snapshot_hides_synthetic_opening_prompt","name":"start_game keeps the web transcript focused on opening narration instead of the synthetic prompt","status":"passed","testResultsByEnv":{"default":"2a4b95c01dbcfe578379be82c9d52530"}}

@@ -1,0 +1,1 @@
+{"id":"17657b5ccbdcc65fea85b01fbd537836","fullName":"tests.test_npc_background_tick.TestOffSceneNonKillResolvers#test_unresolved_goal_kind_skipped","name":"A goal kind without a resolver is still skipped off-scene","status":"passed","testResultsByEnv":{"default":"05865ea7388565288dfd9bcd0bfb6fd9"}}

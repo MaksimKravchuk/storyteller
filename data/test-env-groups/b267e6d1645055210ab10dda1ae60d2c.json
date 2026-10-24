@@ -1,0 +1,1 @@
+{"id":"b267e6d1645055210ab10dda1ae60d2c","fullName":"tests.test_benchmarks_classify_stdev.TestClassifyStdevOverlap#test_noise_overlap","name":"noise when k-sigma bands overlap (even partially)","status":"passed","testResultsByEnv":{"default":"bd56461d688859551fd26d88374dca8e"}}

@@ -1,0 +1,1 @@
+{"id":"6fb173a1b0e8ccd2df3fde9960db0f76","fullName":"tests.test_benchmarks_aggregate.TestAggregateReports#test_single_iteration_collapses_to_point","name":"aggregate_reports on a single iteration reports mean == min == max (covers --quick)","status":"passed","testResultsByEnv":{"default":"1653c479d3efd4f2e68e3390196089a8"}}

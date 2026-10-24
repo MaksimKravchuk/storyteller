@@ -1,0 +1,1 @@
+{"id":"6d0c20ed2d45f5fc0c4f9be245e75b3f","fullName":"tests.test_effect_applier.TestChangeStatusEffect#test_changes_physical_status","name":"CHANGE_STATUS effect updates the target NPC's physical_status field in place","status":"passed","testResultsByEnv":{"default":"7cd544c964ef42e0d66897acd15a2b29"}}

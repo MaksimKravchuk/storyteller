@@ -1,0 +1,1 @@
+{"id":"7ded6706a9376b866140a2366e06a837","fullName":"tests.test_config.TestOpenRouterDetection#test_openrouter_prefixes_resolve_to_openrouter","name":"Model ids with OpenRouter-family prefixes resolve to the openrouter provider","status":"passed","testResultsByEnv":{"default":"cda37a67ae2100b42bfc01fd1b8b4496"}}

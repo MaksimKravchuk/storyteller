@@ -1,0 +1,1 @@
+{"id":"19ef95969ba58a4fc107085083668f54","fullName":"tests.test_benchmarks_cli.TestClassifyPassRate#test_noise_when_both_majority","name":"2/3 baseline → 3/3 current is noise — both sides remain in the majority","status":"passed","testResultsByEnv":{"default":"3384629b268658f084306b46e99bfc65"}}

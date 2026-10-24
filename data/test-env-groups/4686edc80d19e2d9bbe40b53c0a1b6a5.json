@@ -1,0 +1,1 @@
+{"id":"4686edc80d19e2d9bbe40b53c0a1b6a5","fullName":"tests.test_web_api#test_post_feedback_rejects_blank_message","name":"POST /api/games/{game_id}/feedback rejects blank messages","status":"passed","testResultsByEnv":{"default":"c0358aad4ffe41e5b41f6d1aa48ccce6"}}

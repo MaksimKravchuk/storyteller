@@ -1,0 +1,1 @@
+{"id":"f33eceb7cf49795590595d2a02b82845","fullName":"tests.test_web_playbill#test_summary_row_tolerates_bad_playbill","name":"game_summary_from_row shows the plain card for a missing or unreadable playbill","status":"passed","testResultsByEnv":{"default":"aedb7983ce423f3b389b4b4da24dc857"}}

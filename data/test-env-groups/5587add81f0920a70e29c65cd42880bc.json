@@ -1,0 +1,1 @@
+{"id":"5587add81f0920a70e29c65cd42880bc","fullName":"tests.test_benchmarks_prose_quality.TestProseQualityFactories#test_no_action_repetition_returns_spec","name":"no_action_repetition returns an EvidencePromptSpec with a non-empty brief and question","status":"passed","testResultsByEnv":{"default":"66a39e6edfa9b3686bcc306b27a4b617"}}

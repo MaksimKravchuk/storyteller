@@ -1,0 +1,1 @@
+{"id":"34f9bd6ca457f7ff96fe81ae8691c742","fullName":"tests.test_knowledge.TestQueryEngineNpcContext#test_npc_filter_unknown_scope_defaults_local","name":"An unknown knowledge_scope string on a Character falls back to LOCAL scope in the filter","status":"passed","testResultsByEnv":{"default":"06203024756807b87b24d888ce4274b4"}}

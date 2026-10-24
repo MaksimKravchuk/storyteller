@@ -1,0 +1,1 @@
+{"id":"f9baac904b63c33d15714ed3709a083a","fullName":"tests.test_benchmarks_scoring.TestAggregateVerdict#test_tie_is_split","name":"_aggregate_verdict reports SPLIT on an even tie so judges' disagreement is visible in the report","status":"passed","testResultsByEnv":{"default":"ffc5c4ce9d565d5f6c43bbc370e7ff2c"}}

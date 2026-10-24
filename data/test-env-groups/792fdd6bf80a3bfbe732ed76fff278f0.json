@@ -1,0 +1,1 @@
+{"id":"792fdd6bf80a3bfbe732ed76fff278f0","fullName":"tests.test_director_escalation.TestDirectorBumpsHostility#test_aggressive_turn_bumps_hostility","name":"Aggressive turn bumps the target NPC's hostility_level and raises current_mood deterministically","status":"passed","testResultsByEnv":{"default":"eee8d558469fbcd82efde9719b22e98a"}}

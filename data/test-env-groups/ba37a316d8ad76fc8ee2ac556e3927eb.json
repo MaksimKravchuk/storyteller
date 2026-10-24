@@ -1,0 +1,1 @@
+{"id":"ba37a316d8ad76fc8ee2ac556e3927eb","fullName":"tests.test_director_history.TestDelegation#test_scene_builder_called_via_execute","name":"Director delegates to the SceneBuilder via execute() so the call chain is recorded","status":"passed","testResultsByEnv":{"default":"572860473a0cd88eb86475e27e9c2f16"}}

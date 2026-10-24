@@ -1,0 +1,1 @@
+{"id":"283ef0e3586232903cdbaee4a68bd0d0","fullName":"tests.test_benchmarks_scoring.TestScoreScenario#test_order_preserved_mixed_kinds","name":"score_scenario preserves element order and dispatches each kind to its scorer","status":"passed","testResultsByEnv":{"default":"ceef69457391c86668369b44ff7dff33"}}

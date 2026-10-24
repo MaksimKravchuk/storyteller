@@ -1,0 +1,1 @@
+{"id":"2663b72bdf514d4c4fabbb694acb55c4","fullName":"tests.test_models_game.TestGameStateClockAdvance#test_advance_clock_night","name":"Advancing the clock by 3 hours from the start places the game into 'night'","status":"passed","testResultsByEnv":{"default":"e214fd5e10ec23e959b5507039018f9d"}}

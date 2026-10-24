@@ -1,0 +1,1 @@
+{"id":"a67d75e290e26a19ae30feb2ba175b3b","fullName":"tests.test_scene_builder.TestSceneBuilder#test_no_deltas_section_omitted","name":"SceneBuilder omits the persistent_world_changes section when no scene_state deltas exist","status":"passed","testResultsByEnv":{"default":"40d2c6f42897bf9cae59025f98ffabb4"}}

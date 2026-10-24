@@ -1,0 +1,1 @@
+{"id":"1e676d69a53a459e6d16bbaa86aded9f","fullName":"tests.test_effect_applier.TestAddKnowledgeEffect#test_adds_node_with_scope_and_tags","name":"ADD_KNOWLEDGE inserts a FACT KnowledgeNode into the graph with scope/tags/location","status":"passed","testResultsByEnv":{"default":"8096c86fd4f33a2f50b76379ce171dec"}}

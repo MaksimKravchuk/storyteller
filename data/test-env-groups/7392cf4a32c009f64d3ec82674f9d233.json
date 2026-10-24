@@ -1,0 +1,1 @@
+{"id":"7392cf4a32c009f64d3ec82674f9d233","fullName":"tests.test_npc_turn.TestBuildTurnPromptPositiveOpportunity#test_positive_keyword_about_absent_npc_does_not_fire","name":"Positive keyword naming an absent NPC does not fire","status":"passed","testResultsByEnv":{"default":"2186d76674c143babccb97debdc53c5e"}}

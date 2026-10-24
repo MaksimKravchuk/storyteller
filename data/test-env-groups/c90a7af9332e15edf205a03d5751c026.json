@@ -1,0 +1,1 @@
+{"id":"c90a7af9332e15edf205a03d5751c026","fullName":"tests.test_npc_turn.TestBuildTurnPromptTacticalClause#test_tactical_clause_absent_on_peaceful_peer","name":"Peaceful peer sees no TACTICAL CHOICE clause","status":"passed","testResultsByEnv":{"default":"c6d500c04f4ae44783cb166e4501972c"}}

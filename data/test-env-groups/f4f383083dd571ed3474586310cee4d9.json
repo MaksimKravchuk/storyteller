@@ -1,0 +1,1 @@
+{"id":"f4f383083dd571ed3474586310cee4d9","fullName":"tests.test_admin_routes_settings_search#test_validate_payload_ok","name":"validate_set_search_payload accepts a valid provider and normalises blanks to None","status":"passed","testResultsByEnv":{"default":"50cd2a700bb37b402ac41749a3722f1e"}}

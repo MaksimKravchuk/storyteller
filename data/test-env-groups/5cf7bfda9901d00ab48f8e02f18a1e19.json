@@ -1,0 +1,1 @@
+{"id":"5cf7bfda9901d00ab48f8e02f18a1e19","fullName":"tests.test_director_scene_consolidation#test_unremarkable_appearance_passes_none","name":"Unremarkable appearance is normalised to None so the summariser falls back to the bare form","status":"passed","testResultsByEnv":{"default":"749073cc3f21b543db2da44cff94cbc7"}}

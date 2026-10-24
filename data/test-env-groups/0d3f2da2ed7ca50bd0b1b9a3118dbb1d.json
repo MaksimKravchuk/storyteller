@@ -1,0 +1,1 @@
+{"id":"0d3f2da2ed7ca50bd0b1b9a3118dbb1d","fullName":"tests.test_object_state_persists.TestSceneBuilderPreservesObjectStates#test_scene_fallback_when_player_location_unset","name":"SceneBuilder falls back to the current scene's location_id when the player has not been placed","status":"passed","testResultsByEnv":{"default":"d4b32e10e738e06c5224613b416104c0"}}

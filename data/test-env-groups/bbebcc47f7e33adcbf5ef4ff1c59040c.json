@@ -1,0 +1,1 @@
+{"id":"bbebcc47f7e33adcbf5ef4ff1c59040c","fullName":"tests.test_director_dialogue_memory.TestDialogueHandlerLongTermMemory#test_handle_dialogue_skips_uninitialised_scene_stubs","name":"handle_dialogue skips uninitialised scene NPC stubs when broadcasting co-witness memories (KER-11)","status":"passed","testResultsByEnv":{"default":"0fe0218aaf63e78b2fa1929887bceb8b"}}

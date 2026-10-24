@@ -1,0 +1,1 @@
+{"id":"de70e454708191f57725ceb2e3ff9436","fullName":"tests.test_npc_ticker.TestNPCTickerEvictions#test_extends_existing_departures","name":"tick() extends an existing npc_departures list without replacing it","status":"passed","testResultsByEnv":{"default":"4ceaaffcde3fa0f94ec06edb831ed725"}}

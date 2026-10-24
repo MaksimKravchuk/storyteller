@@ -1,0 +1,1 @@
+{"id":"c90ad36b8b240bb2f7f6bf22afe637c2","fullName":"tests.test_actor_prompt.TestActorPromptRoleScopedReactions#test_constraints_no_enumerated_role_menu","name":"Actor constraints no longer enumerate guard / merchant / warrior reactions","status":"passed","testResultsByEnv":{"default":"3666d2d1f588ebca5927ba5e11794941"}}

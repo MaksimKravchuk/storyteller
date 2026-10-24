@@ -1,0 +1,1 @@
+{"id":"c80c8c188cf7ccda579843d648e96578","fullName":"tests.test_benchmarks_scenario_elements.TestAutonomyScenarioPredicates#test_both_bystanders_act","name":"bystanders_not_idle awards full credit when both Bassus and Cato produce non-IDLE npc_turns","status":"passed","testResultsByEnv":{"default":"b6609220b7bcb6a4311b8ee70a4d938d"}}

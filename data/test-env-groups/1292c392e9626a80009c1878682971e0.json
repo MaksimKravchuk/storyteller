@@ -1,0 +1,1 @@
+{"id":"1292c392e9626a80009c1878682971e0","fullName":"tests.test_director_context.TestPlayerCharacterContext#test_appearance_round_trip","name":"format_player_appearance returns the player's appearance verbatim when set","status":"passed","testResultsByEnv":{"default":"19c2359c3c38ccf22816a84bf38b407b"}}

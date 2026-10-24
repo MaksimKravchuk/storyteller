@@ -1,0 +1,1 @@
+{"id":"bc813f0b2d738fbff5994d064bf524b9","fullName":"tests.test_director_mood.TestActorStatusUpdate#test_conversation_history_excludes_status_tag","name":"The conversation history stores the narration, not raw JSON","status":"passed","testResultsByEnv":{"default":"5d6bf03d72ddb154bfc33f151aff2f77"}}

@@ -1,0 +1,1 @@
+{"id":"877b2545afbe8ac6b120f5a9cea339d0","fullName":"tests.test_game_engine_lifecycle#test_assert_running_covers_both_states","name":"assert_running raises before start and returns live objects after start","status":"passed","testResultsByEnv":{"default":"3d3cd5026a2228ba8cf2c4977a183a6f"}}

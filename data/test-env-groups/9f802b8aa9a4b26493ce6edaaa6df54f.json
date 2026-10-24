@@ -1,0 +1,1 @@
+{"id":"9f802b8aa9a4b26493ce6edaaa6df54f","fullName":"tests.test_effect_applier.TestNpcIdResolution#test_change_status_falls_back_to_target_id","name":"CHANGE_STATUS falls back to target_id when no npc_id key is present","status":"passed","testResultsByEnv":{"default":"594e7fa446d34168999b385bd686609d"}}

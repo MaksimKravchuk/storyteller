@@ -1,0 +1,1 @@
+{"id":"011153c01ffad60aef556bd92200e4e5","fullName":"tests.test_apply_contest_outcome.TestCommitOutcome#test_physical_commit_writes_physical_status","name":"commit_outcome with PHYSICAL kind writes physical_status","status":"passed","testResultsByEnv":{"default":"f051aed95c8bc8016800ab3929162e8a"}}

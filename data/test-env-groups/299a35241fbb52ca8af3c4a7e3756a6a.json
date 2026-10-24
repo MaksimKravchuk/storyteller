@@ -1,0 +1,1 @@
+{"id":"299a35241fbb52ca8af3c4a7e3756a6a","fullName":"tests.test_goal_model.TestGoalModel#test_goal_round_trips_through_json","name":"Goal preserves every field through pydantic JSON dump and reparse","status":"passed","testResultsByEnv":{"default":"9834f8d117bc6a5afd02432816a7c5be"}}

@@ -1,0 +1,1 @@
+{"id":"f4fe41cb0efecc75fe53244303b9dee4","fullName":"tests.test_scene_builder.TestSceneBuilder#test_russian_social_investigation_opening_adds_localized_contact","name":"Russian social-investigation openings use localized deterministic fallback contact text","status":"passed","testResultsByEnv":{"default":"a398c0aa4e95c521372d907e6c9e4593"}}

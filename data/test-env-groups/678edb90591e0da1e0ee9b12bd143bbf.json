@@ -1,0 +1,1 @@
+{"id":"678edb90591e0da1e0ee9b12bd143bbf","fullName":"tests.test_director_context.TestFormatNpcsPresent#test_wounded_npc_shows_status","name":"A wounded NPC renders the physical status suffix in its bullet line","status":"passed","testResultsByEnv":{"default":"445a00341326c10c0e10e03da6f29b2a"}}

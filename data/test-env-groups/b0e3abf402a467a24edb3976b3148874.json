@@ -1,0 +1,1 @@
+{"id":"b0e3abf402a467a24edb3976b3148874","fullName":"tests.test_image_client#test_generate_without_usage","name":"OpenAIImageClient reports missing usage as None so spend reports flag it","status":"passed","testResultsByEnv":{"default":"5ba87eefb4945ec14d1dded7d5de4cec"}}

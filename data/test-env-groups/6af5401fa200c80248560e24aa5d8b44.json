@@ -1,0 +1,1 @@
+{"id":"6af5401fa200c80248560e24aa5d8b44","fullName":"tests.test_game_engine_lifecycle#test_process_action_delegates_to_director","name":"process_action delegates the raw player input to director.execute and returns its narration","status":"passed","testResultsByEnv":{"default":"84b73e9538cb8e7f7e2d51a599a881ac"}}

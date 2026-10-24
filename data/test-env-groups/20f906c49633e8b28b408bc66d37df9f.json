@@ -1,0 +1,1 @@
+{"id":"20f906c49633e8b28b408bc66d37df9f","fullName":"tests.test_engine_wiring#test_wire_director_uses_injected_data_miner","name":"wire_director uses the injected DataMiner instance instead of creating a fresh one","status":"passed","testResultsByEnv":{"default":"a0e0bf93748befe3a0a83b92594a0352"}}

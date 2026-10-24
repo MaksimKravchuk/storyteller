@@ -1,0 +1,1 @@
+{"id":"bf31a634dfdeaf284952a3ae67266091","fullName":"tests.test_witness_broadcast.TestDirectorWitnessHelpers#test_is_guard_occupation_rejects_civilians","name":"is_guard_occupation rejects civilian occupations and empty input","status":"passed","testResultsByEnv":{"default":"dca4ac6054fbfd66b37a65d237df5e3b"}}

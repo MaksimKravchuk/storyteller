@@ -1,0 +1,1 @@
+{"id":"e26ace2d77c00d0c39d6d39f147f08f0","fullName":"tests.prompts.test_actor_memory_relevance.TestActorPromptMemoryRelevance#test_actor_prompt_falls_back_to_held_memory_without_interlocutor_scope","name":"Actor prompt falls back to held memory when no interlocutor-scoped memory exists","status":"passed","testResultsByEnv":{"default":"f0a3600a06aa1b434c85ffe358a68d74"}}

@@ -1,0 +1,1 @@
+{"id":"c19e48cb2b8b57cd4211f574c82fe57b","fullName":"tests.test_contested_action.TestBuildContestedActionSocial#test_intimidation_contest","name":"An intimidation contest produces an INTIMIDATION contest roll classification","status":"passed","testResultsByEnv":{"default":"8796deaa4c4c64b72c886fc6919e2621"}}

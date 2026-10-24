@@ -1,0 +1,1 @@
+{"id":"7121d60c6d433ea3485e828257e8f1db","fullName":"tests.test_admin_auth#test_token_allows_correct_token","name":"Admin API allows the request through with a 200 response when the correct Bearer token is provided","status":"passed","testResultsByEnv":{"default":"a0c988e05095703b88bac52f8ffa370c"}}

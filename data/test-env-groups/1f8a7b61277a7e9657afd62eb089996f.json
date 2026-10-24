@@ -1,0 +1,1 @@
+{"id":"1f8a7b61277a7e9657afd62eb089996f","fullName":"tests.test_safety_moderator#test_openai_provider_error_is_generic","name":"OpenAIModerationProvider error message does not leak the raw OpenAI exception body","status":"passed","testResultsByEnv":{"default":"c0e9f9af7688c3dd91dad6a290153dfb"}}

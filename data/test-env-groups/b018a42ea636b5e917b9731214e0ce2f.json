@@ -1,0 +1,1 @@
+{"id":"b018a42ea636b5e917b9731214e0ce2f","fullName":"tests.test_okf_bundle.TestStorytellerOkfAgents#test_colocated_agents_have_required_okf_type","name":"Every colocated AGENTS file has parseable OKF frontmatter with type","status":"passed","testResultsByEnv":{"default":"2b228ea499dbe5d61800c0b90b0aeb43"}}

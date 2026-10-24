@@ -1,0 +1,1 @@
+{"id":"b37018ee052e0739de33d06b9d36c4c1","fullName":"tests.test_director_routing.TestSceneChanges#test_explore_preserves_current_scene","name":"EXPLORE reuses the current scene so pre-seeded or previously-generated NPCs are not orphaned","status":"passed","testResultsByEnv":{"default":"417e650b9bd14009ed5729d20562bad5"}}

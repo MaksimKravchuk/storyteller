@@ -1,0 +1,1 @@
+{"id":"b0e5a7623eefa48115c7df54c7aca81c","fullName":"tests.test_search_clients#test_tavily_missing_key_raises","name":"TavilySearchClient with no API key raises ValueError at construction","status":"passed","testResultsByEnv":{"default":"ed178abb0f6250c803b11360562d46aa"}}

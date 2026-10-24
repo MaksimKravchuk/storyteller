@@ -1,0 +1,1 @@
+{"id":"2362950b12aceb062974fd5360798024","fullName":"tests.test_models_game.TestGameStateClockAdvance#test_advance_clock_morning","name":"Advancing the clock to 8.0 hours places the game in the 'morning' time-of-day bucket","status":"passed","testResultsByEnv":{"default":"74817429c091f0594905602c6b8469a6"}}

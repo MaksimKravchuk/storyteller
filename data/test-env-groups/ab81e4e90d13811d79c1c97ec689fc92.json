@@ -1,0 +1,1 @@
+{"id":"ab81e4e90d13811d79c1c97ec689fc92","fullName":"tests.test_benchmarks_judge.TestVoteConstruction#test_yes_with_short_quote_becomes_no","name":"_build_vote_from_payload downgrades YES to NO when the cited quote is too short to verify","status":"passed","testResultsByEnv":{"default":"4de13b3b304c7ce53abf574860a100d6"}}

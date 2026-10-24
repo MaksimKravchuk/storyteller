@@ -1,0 +1,1 @@
+{"id":"89def246b56807084ff468bcd053faf8","fullName":"tests.test_benchmarks_model_sets_score.TestFromAggregate#test_reads_required_keys","name":"Reads required keys from a well-formed aggregate payload","status":"passed","testResultsByEnv":{"default":"e9d6a56fd73d45490a9d977d1c146e98"}}

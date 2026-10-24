@@ -1,0 +1,1 @@
+{"id":"5ea9bdb332d25f6eaf0b6a76f1425004","fullName":"tests.test_emotional_charge.TestNodeChargeBounds#test_charge_intensity_bounds_rejected","name":"KnowledgeNode rejects charge_intensity outside [0, 1]","status":"passed","testResultsByEnv":{"default":"43ea901ea18dfdae251f4d386ca1fcfe"}}

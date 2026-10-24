@@ -1,0 +1,8 @@
+usage: benchmarks run [-h] [--scenario SCENARIO] [--iterations ITERATIONS]
+                      [--judges JUDGES] [--max-judges MAX_JUDGES]
+                      [--no-compare] [--update-baselines-on-improvement]
+benchmarks run: error: argument --iterations: iterations must be >= 1, got 0
+usage: benchmarks run [-h] [--scenario SCENARIO] [--iterations ITERATIONS]
+                      [--judges JUDGES] [--max-judges MAX_JUDGES]
+                      [--no-compare] [--update-baselines-on-improvement]
+benchmarks run: error: argument --iterations: iterations must be >= 1, got -3

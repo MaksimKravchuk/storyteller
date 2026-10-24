@@ -1,0 +1,1 @@
+{"id":"2b1163dd8c72cfaea103b95790facc3f","fullName":"tests.test_object_state_persists.TestSceneBuilderPreservesObjectStates#test_section_omitted_when_no_states","name":"SceneBuilder omits the known_object_states section when the current location has no tracked state","status":"passed","testResultsByEnv":{"default":"c9915139a2f49e5116c7f8cae5880c18"}}

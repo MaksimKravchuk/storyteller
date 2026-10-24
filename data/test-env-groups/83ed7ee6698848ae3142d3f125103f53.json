@@ -1,0 +1,1 @@
+{"id":"83ed7ee6698848ae3142d3f125103f53","fullName":"tests.test_item_generator.TestItemGenerator#test_interact_returns_narration_and_delta","name":"ItemGenerator interact mode returns a structured response carrying narration and delta","status":"passed","testResultsByEnv":{"default":"869e6b41291cb2ca82776ee43317238d"}}

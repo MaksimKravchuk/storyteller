@@ -1,0 +1,1 @@
+{"id":"527429160e18c6d50ada788c5aa312a8","fullName":"tests.test_web_api#test_build_transcript_pairs_entries","name":"build_transcript emits a player+narrator pair for each conversation_log entry","status":"passed","testResultsByEnv":{"default":"fa5cc10578c81570f2cc7bd37dbe7cc6"}}

@@ -1,0 +1,1 @@
+{"id":"08673646c94d68a241ec6548c305563d","fullName":"tests.test_game_engine#test_assert_running_raises_before_start","name":"GameEngine.assert_running raises RuntimeError before start_game has been called","status":"passed","testResultsByEnv":{"default":"7766c330f76e6d921f22cab6993c92d6"}}

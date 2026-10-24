@@ -1,0 +1,1 @@
+{"id":"4938a46f3c9717071d921704225eeab6","fullName":"tests.test_director_dialogue_memory.TestDialogueHandlerLongTermMemory#test_handle_dialogue_creates_queryable_memory","name":"handle_dialogue summarises the exchange into a queryable memory for each participating NPC","status":"passed","testResultsByEnv":{"default":"710221963e350f96e585dc03bccdaf0c"}}

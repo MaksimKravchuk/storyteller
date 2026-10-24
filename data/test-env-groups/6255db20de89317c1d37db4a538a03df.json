@@ -1,0 +1,1 @@
+{"id":"6255db20de89317c1d37db4a538a03df","fullName":"tests.test_web_schemas#test_character_input_accepts_empty_payload","name":"CharacterCreationInput accepts a fully-empty payload (anonymous start)","status":"passed","testResultsByEnv":{"default":"fc1624e799a924914ff3d3072b863169"}}

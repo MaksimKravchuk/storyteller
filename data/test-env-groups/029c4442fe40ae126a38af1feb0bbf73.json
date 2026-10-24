@@ -1,0 +1,1 @@
+{"id":"029c4442fe40ae126a38af1feb0bbf73","fullName":"tests.test_admin_routes_settings#test_post_set_model_unknown_provider","name":"POST rejects an unknown provider with 400","status":"passed","testResultsByEnv":{"default":"884733fb6feb36e8ca7891dc1bd046a6"}}

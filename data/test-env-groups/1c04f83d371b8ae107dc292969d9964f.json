@@ -1,0 +1,1 @@
+{"id":"1c04f83d371b8ae107dc292969d9964f","fullName":"tests.test_rumor_propagation#test_npc_at_event_location_excluded_from_recipients","name":"An NPC standing at the event location is excluded even when absent from the witness list","status":"passed","testResultsByEnv":{"default":"d01cb31cc1a371f75bff31956b5b60f5"}}

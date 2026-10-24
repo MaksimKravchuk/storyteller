@@ -1,0 +1,1 @@
+{"id":"cd139c8bea8fa37c2baffc90d3c3a91f","fullName":"tests.test_director_history.TestSceneHistory#test_with_history_sets_scene_history_summary","name":"Director populates scene_history_summary with the recent player actions when history is present","status":"passed","testResultsByEnv":{"default":"bc1be5e745d06fabb708de545d71de64"}}

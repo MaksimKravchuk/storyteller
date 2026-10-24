@@ -1,0 +1,1 @@
+{"id":"ca5f93106ffdc4ff0c4118243d8b5ca8","fullName":"tests.test_chronicler_goals.TestApplyGoalDrafts#test_valid_draft_assigns_life_goal","name":"Valid GoalDraft assigns life_goal on the named NPC","status":"passed","testResultsByEnv":{"default":"80afd4715d2118b2875ed1c7ac0687ac"}}

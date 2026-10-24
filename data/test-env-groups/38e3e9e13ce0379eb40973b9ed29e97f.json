@@ -1,0 +1,1 @@
+{"id":"38e3e9e13ce0379eb40973b9ed29e97f","fullName":"tests.test_visible_entities.TestCollectVisibleEntities#test_none_scene","name":"A None scene yields no entities and never raises","status":"passed","testResultsByEnv":{"default":"913ea39747ecca27f07eb563a8fb1e4c"}}

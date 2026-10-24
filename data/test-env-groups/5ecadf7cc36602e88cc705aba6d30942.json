@@ -1,0 +1,1 @@
+{"id":"5ecadf7cc36602e88cc705aba6d30942","fullName":"tests.test_jev_experiment.TestJevReactionPilot#test_jev_request_shape","name":"Jev request uses pinned choice model and returns distribution","status":"passed","testResultsByEnv":{"default":"bd560ac7be9c1a213edf60359239a6ec"}}

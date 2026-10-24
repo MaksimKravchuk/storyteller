@@ -1,0 +1,1 @@
+{"id":"77e67eba7dbdd69cd333ab00980ff695","fullName":"tests.test_director_object_interaction.TestApplyObjectInteractions#test_uninitialised_scene_stub_skipped","name":"apply_object_interactions does not emit witness memories for uninitialised scene NPC stubs","status":"passed","testResultsByEnv":{"default":"d2858003ca365fb59a0ee80bb535bd32"}}

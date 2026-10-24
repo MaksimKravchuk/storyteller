@@ -1,0 +1,1 @@
+{"id":"0bff4555f34695e7976fb95cd36af53d","fullName":"tests.test_web_api#test_get_index_exposes_beta_feedback_form","name":"GET / exposes the in-app beta feedback form","status":"passed","testResultsByEnv":{"default":"1ea159d3a54eaba16ca6a41234aafc73"}}

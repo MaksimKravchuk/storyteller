@@ -1,0 +1,1 @@
+{"id":"0fb9e19495918524bb10dd1e8fad8b21","fullName":"tests.test_config.TestDeepSeekDetection#test_get_api_key_returns_deepseek","name":"get_api_key_for_provider returns the DeepSeek key when requested","status":"passed","testResultsByEnv":{"default":"fb4103976d7674938919a8611cb90c97"}}

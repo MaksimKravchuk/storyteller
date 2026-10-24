@@ -1,0 +1,1 @@
+{"id":"a681b3fb4fbdfbb30d61de47f42fefe5","fullName":"tests.test_knowledge.TestWitnessMemoryIndex#test_index_rebuilt_after_serialisation","name":"Round-tripping the graph through to_dict/from_dict rebuilds the witness-memory index","status":"passed","testResultsByEnv":{"default":"e9375058b4b3f6508924b157b593c1f9"}}

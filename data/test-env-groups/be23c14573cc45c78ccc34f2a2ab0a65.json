@@ -1,0 +1,1 @@
+{"id":"be23c14573cc45c78ccc34f2a2ab0a65","fullName":"tests.test_benchmarks_registry.TestScenarioRegistry#test_registry_contains_flagship_scenarios","name":"ALL_SCENARIOS exposes every flagship scenario with unique, stable ids","status":"passed","testResultsByEnv":{"default":"6a340ca8f7e4eccbfb00f62e038f8554"}}

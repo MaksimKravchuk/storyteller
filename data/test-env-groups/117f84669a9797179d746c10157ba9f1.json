@@ -1,0 +1,1 @@
+{"id":"117f84669a9797179d746c10157ba9f1","fullName":"tests.test_web_api#test_start_game_rejects_empty_setting","name":"POST /api/games rejects an empty setting with HTTP 422","status":"passed","testResultsByEnv":{"default":"a89872b96950cd842a8bc9553f5572a9"}}

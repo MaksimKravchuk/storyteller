@@ -1,0 +1,1 @@
+{"id":"f0ee9bdf82791deb69cf2a46ca30a8e8","fullName":"tests.test_narrator_branches.TestNarratorWorldMood#test_world_mood_rendered_on_new_scene","name":"Narrator system prompt includes world_mood on NEW_SCENE turns when world_state.world_mood is set","status":"passed","testResultsByEnv":{"default":"184b8e754bf1becd280428ae360b5241"}}

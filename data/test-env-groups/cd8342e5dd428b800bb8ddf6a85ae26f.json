@@ -1,0 +1,1 @@
+{"id":"cd8342e5dd428b800bb8ddf6a85ae26f","fullName":"tests.test_effect_applier.TestObjectDamageResolution#test_missing_state_description_records_nothing","name":"APPLY_OBJECT_DAMAGE with no state_description records nothing","status":"passed","testResultsByEnv":{"default":"a644e2c9a12d59100b44bfa5b69f2ff0"}}

@@ -1,0 +1,1 @@
+{"id":"5bb8e4781244a293df9263649d6a8065","fullName":"tests.test_memory_slots.TestSummariserWritesSlotsOntoNode#test_summariser_threads_slots_to_node","name":"summarize_interactions_batch carries DialoguePair.slots through to the produced KnowledgeNode","status":"passed","testResultsByEnv":{"default":"037efa1d3b47a77f02bb8f6a1d0ce70c"}}

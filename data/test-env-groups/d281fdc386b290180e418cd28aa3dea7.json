@@ -1,0 +1,1 @@
+{"id":"d281fdc386b290180e418cd28aa3dea7","fullName":"tests.test_engine_wiring#test_wire_director_builds_director_with_deps","name":"wire_director builds a Director bound to the supplied game_state and knowledge graph","status":"passed","testResultsByEnv":{"default":"c0ddcd1f968b1bf614a49e6dbaf2d40d"}}

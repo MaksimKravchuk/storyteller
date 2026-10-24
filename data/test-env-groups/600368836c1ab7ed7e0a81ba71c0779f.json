@@ -1,0 +1,1 @@
+{"id":"600368836c1ab7ed7e0a81ba71c0779f","fullName":"tests.test_effect_emit_memory.TestCapturePreState#test_resolves_via_npc_id_key","name":"capture_pre_state resolves the NPC via the effect_data npc_id, not target_id","status":"passed","testResultsByEnv":{"default":"f945c43896b0d8e146ab31292325572d"}}

@@ -1,0 +1,1 @@
+{"id":"15596719d97d14a226f4d1892cde1408","fullName":"tests.test_anthropic_client.TestAnthropicClient#test_send_message_other_400_propagates","name":"AnthropicClient.send_message lets non-complexity 400s propagate as BadRequestError so genuine API failures are not silently downgraded","status":"passed","testResultsByEnv":{"default":"ecaa8b0d81d10541f7b98fdeae435e71"}}

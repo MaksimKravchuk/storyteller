@@ -1,0 +1,1 @@
+{"id":"b6ec85eb54bba898be52bf5ff96e82a5","fullName":"tests.test_admin_users#test_admin_user_detail_returns_invites_section","name":"/api/admin/users/{id} returns the invites section in the payload","status":"passed","testResultsByEnv":{"default":"79f54f063ae5618390c35a120c5d9f4c"}}

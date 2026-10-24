@@ -1,0 +1,1 @@
+{"id":"09f69b050aabe319f9be802e322a3dda","fullName":"tests.test_openai_client.TestOpenAIClient#test_send_message_serialises_tools","name":"OpenAIClient.send_message serialises tools into the chat completion payload","status":"passed","testResultsByEnv":{"default":"ae4f92f9a4005de227131ee89d5af34b"}}

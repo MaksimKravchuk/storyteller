@@ -1,0 +1,1 @@
+{"id":"300d49407285a6e0ca214522ade1cff2","fullName":"tests.test_models.TestCharacter#test_update_and_get_attribute","name":"Character.update_attribute and get_attribute round-trip values and honor default fallbacks","status":"passed","testResultsByEnv":{"default":"33be2c91a9fb6db26679ff18ea825f2e"}}

@@ -1,0 +1,1 @@
+{"id":"9425b8978c2e3660edefa058516ace16","fullName":"tests.test_effect_apply_object_damage.TestApplyObjectDamageEffect#test_writes_state_into_location","name":"APPLY_OBJECT_DAMAGE writes the state description into Location.object_states under object_key","status":"passed","testResultsByEnv":{"default":"31ca1599c4b15e289469733e1c0ddf18"}}

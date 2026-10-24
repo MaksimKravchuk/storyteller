@@ -1,0 +1,1 @@
+{"id":"f0d8713cadfa8c411cf51bf7acbda155","fullName":"tests.test_safety_moderator#test_refusal_message_falls_back_to_generic","name":"refusal_message falls back to the generic refusal when no tailored entry exists","status":"passed","testResultsByEnv":{"default":"c1ea718fc0dd660a46ae39fd9136084a"}}

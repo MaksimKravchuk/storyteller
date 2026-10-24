@@ -1,0 +1,1 @@
+{"id":"c677c28e71a22488f46d3ac8a66bb54d","fullName":"tests.test_benchmarks_reliability_report#test_aggregate_counts_sums_iterations","name":"aggregate_counts sums per-iteration counters by (agent, event_type)","status":"passed","testResultsByEnv":{"default":"1b9e46b0ad5c132b1341fe5037cffd38"}}

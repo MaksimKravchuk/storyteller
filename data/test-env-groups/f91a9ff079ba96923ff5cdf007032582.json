@@ -1,0 +1,1 @@
+{"id":"f91a9ff079ba96923ff5cdf007032582","fullName":"tests.test_emotional_memory.TestMoodPrecedence#test_derived_mood_floor_survives_llm_downgrade","name":"A memory-only grudge (hostility 0) survives a later LLM mood downgrade","status":"passed","testResultsByEnv":{"default":"bbd8444182dbcfcdd6ac29aca67e61a2"}}

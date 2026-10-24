@@ -1,0 +1,1 @@
+{"id":"85ba62844021a2782852c4b52b55cd2f","fullName":"tests.test_web_poster#test_posters_available","name":"posters_available needs both the operator flag and an OpenAI key","status":"passed","testResultsByEnv":{"default":"eef71f821d7fb8f745774d86dd004c65"}}

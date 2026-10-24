@@ -1,0 +1,1 @@
+{"id":"7a5ca0ef295158644703e2bd684649af","fullName":"tests.test_director_dialogue_memory.TestDirectorRegistersNpcGraphNode#test_register_new_npc_adds_graph_node","name":"_register_new_npc adds the NPC uuid as a node to the knowledge graph","status":"passed","testResultsByEnv":{"default":"6463ae3dc41ae77868df7b3beee7b144"}}

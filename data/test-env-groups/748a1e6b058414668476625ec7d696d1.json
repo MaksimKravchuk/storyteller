@@ -1,0 +1,1 @@
+{"id":"748a1e6b058414668476625ec7d696d1","fullName":"tests.test_web_api#test_process_turn_raises_when_no_session","name":"process_turn_for_player raises GameNotFoundError when the player has no session row at all","status":"passed","testResultsByEnv":{"default":"6b4c280cdf78b2a5fe4470acea092649"}}

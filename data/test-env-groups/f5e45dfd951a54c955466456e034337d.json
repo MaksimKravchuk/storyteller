@@ -1,0 +1,1 @@
+{"id":"f5e45dfd951a54c955466456e034337d","fullName":"tests.test_benchmarks_scenario_elements.TestAutonomyScenarioPredicates#test_both_moods_shift","name":"bystander_moods_shifted awards one point per bystander whose mood changed from the baseline","status":"passed","testResultsByEnv":{"default":"b7d35e2ce0936fd297ea41279c9c3a65"}}

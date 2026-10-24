@@ -1,0 +1,1 @@
+{"id":"9763eefec0d024ef14cfc7efaf9e354b","fullName":"tests.test_reliability_metrics#test_snapshot_returns_empty_when_uninitialised","name":"snapshot_counters returns {0} when counters were never initialised","status":"passed","testResultsByEnv":{"default":"4bc1c3fd82140e1d2ae8664ee845b83c"}}

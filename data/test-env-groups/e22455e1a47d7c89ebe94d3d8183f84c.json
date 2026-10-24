@@ -1,0 +1,1 @@
+{"id":"e22455e1a47d7c89ebe94d3d8183f84c","fullName":"tests.test_log_scrubbing.TestTracebackDiagnoseSecretSafety#test_diagnose_enabled_sink_would_leak_secret","name":"Control: with diagnose enabled the same secret WOULD leak, proving the guard is load-bearing","status":"passed","testResultsByEnv":{"default":"8e69e87a990f508e7ff6240c44bde6b6"}}

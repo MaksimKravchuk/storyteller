@@ -1,0 +1,1 @@
+{"id":"27855cd925e596b41bdf041cd677c24a","fullName":"tests.test_call_chain.TestExecuteAndParent#test_nested_agent_has_parent","name":"A delegated child agent records its parent agent's name in its call log entry","status":"passed","testResultsByEnv":{"default":"ba691b32a3c5c66da6e2775a03d2767c"}}

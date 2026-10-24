@@ -1,0 +1,1 @@
+{"id":"ce4eb64cca52f9eeb6558a8d0b82be1f","fullName":"tests.test_known_names_for_player.TestKnownNamesForPlayer#test_introduced_without_occupation","name":"Introduced NPC without an occupation returns only the name","status":"passed","testResultsByEnv":{"default":"4386d2b48f5777ccc577b7ef36b6b86d"}}

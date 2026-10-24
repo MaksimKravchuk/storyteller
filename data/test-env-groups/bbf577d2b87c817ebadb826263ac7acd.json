@@ -1,0 +1,1 @@
+{"id":"bbf577d2b87c817ebadb826263ac7acd","fullName":"tests.test_benchmarks_model_sets_score.TestFromIters#test_raises_on_missing_total_base","name":"Missing total_base raises KeyError","status":"passed","testResultsByEnv":{"default":"18fcb9775d722fd50dbb872a756b1642"}}

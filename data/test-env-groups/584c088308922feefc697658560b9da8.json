@@ -1,0 +1,1 @@
+{"id":"584c088308922feefc697658560b9da8","fullName":"tests.test_location_init#test_materialise_empty_setting_leaves_player_unanchored","name":"materialise_setting_locations leaves player.location_id None when the setting carries no locations","status":"passed","testResultsByEnv":{"default":"745af3ed8a089f9c4a7ecfb4da24fd91"}}

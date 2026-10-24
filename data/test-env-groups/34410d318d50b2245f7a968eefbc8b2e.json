@@ -1,0 +1,1 @@
+{"id":"34410d318d50b2245f7a968eefbc8b2e","fullName":"tests.test_actor_revealed.TestActorEnvelopeIntegrationWithLLMClient#test_exhausted_retries_fall_back_to_placeholder","name":"Three consecutive bad JSON responses yield a placeholder ActorReply instead of a 500","status":"passed","testResultsByEnv":{"default":"6100fada94161a0cc6a8da6c23268b3a"}}

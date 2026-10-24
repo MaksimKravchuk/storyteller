@@ -1,0 +1,1 @@
+{"id":"6e5f73384085d020d5929dc7ff5c7d09","fullName":"tests.test_effect_applier.TestChangeStatusEffect#test_sets_multi_word_status","name":"CHANGE_STATUS effect accepts free-form multi-word status strings like 'wounded left arm'","status":"passed","testResultsByEnv":{"default":"92756045dd3af35d0fda55a913502442"}}

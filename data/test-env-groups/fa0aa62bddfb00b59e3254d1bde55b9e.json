@@ -1,0 +1,1 @@
+{"id":"fa0aa62bddfb00b59e3254d1bde55b9e","fullName":"tests.test_item_generator.TestItemGenerator#test_interact_prompt_contains_player_action_and_object","name":"ItemGenerator interact prompt embeds the player action, object name, and scene hint","status":"passed","testResultsByEnv":{"default":"e128e23b5a50ee82d1561bf6b03d7c5b"}}

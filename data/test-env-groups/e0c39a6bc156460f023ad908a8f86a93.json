@@ -1,0 +1,1 @@
+{"id":"e0c39a6bc156460f023ad908a8f86a93","fullName":"tests.test_director_retaliation.TestNPCRetaliation#test_aggressive_target_not_retaliated_twice","name":"An NPC directly attacked by the player resolves combat in a single actor call, not two","status":"passed","testResultsByEnv":{"default":"8336cda2afed0fbe45f63f601cf591b4"}}

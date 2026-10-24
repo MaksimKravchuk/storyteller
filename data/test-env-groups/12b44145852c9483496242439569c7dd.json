@@ -1,0 +1,1 @@
+{"id":"12b44145852c9483496242439569c7dd","fullName":"tests.test_npc_generator.TestNPCGenerator#test_short_descriptor_copied","name":"NPCGenerator copies short_descriptor from the LLM response onto each card","status":"passed","testResultsByEnv":{"default":"9f805c777760c53a99d99219ef331fe3"}}

@@ -1,0 +1,1 @@
+{"id":"6870319939e39244c7daea60e161f3dd","fullName":"tests.test_game_engine_lifecycle#test_process_action_before_start_raises","name":"process_action raises RuntimeError when called before start_game","status":"passed","testResultsByEnv":{"default":"13250125d2e96cc6b01e67d3d53d8cb2"}}

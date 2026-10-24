@@ -1,0 +1,1 @@
+{"id":"60d93fd7f8dd758afe8dcfe74734c771","fullName":"tests.test_openai_sanitize#test_sanitize_lone_surrogate","name":"_sanitize replaces a lone UTF-16 surrogate with three U+FFFD replacement characters","status":"passed","testResultsByEnv":{"default":"07f77803a3cfcf2790b57079832a7041"}}

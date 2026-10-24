@@ -1,0 +1,1 @@
+{"id":"5ca81a15a60c08c184b0c747313facc4","fullName":"tests.test_director_wait.TestForcedWaitFromIncapacitation#test_stunned_player_is_forced_to_wait","name":"A stunned player is forced into a wait and the Narrator still produces output","status":"passed","testResultsByEnv":{"default":"2d073625757b8ce4b38560f20234c85c"}}

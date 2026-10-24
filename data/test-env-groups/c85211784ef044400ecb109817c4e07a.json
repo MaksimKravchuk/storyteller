@@ -1,0 +1,1 @@
+{"id":"c85211784ef044400ecb109817c4e07a","fullName":"tests.test_emotional_charge.TestValuesAdjustedValence#test_unknown_category_returns_clamped_base","name":"An unknown category returns the clamped base valence","status":"passed","testResultsByEnv":{"default":"d14cc16a8d257fa2702771d2be144d73"}}

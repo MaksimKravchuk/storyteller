@@ -1,0 +1,1 @@
+{"id":"42da2814d8a84d7593510ef5fc0142c8","fullName":"tests.test_benchmarks_scoring.TestScoreEvidenceElement#test_non_spec_check_raises","name":"score_evidence_element raises TypeError when the element's check is not an EvidencePromptSpec","status":"passed","testResultsByEnv":{"default":"4cf2e05a6f18100c9a253dbcc2f48577"}}

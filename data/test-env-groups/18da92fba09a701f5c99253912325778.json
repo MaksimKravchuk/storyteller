@@ -1,0 +1,1 @@
+{"id":"18da92fba09a701f5c99253912325778","fullName":"tests.test_effect_memory_internals.TestPlanTextExactWording#test_returns_none_when_no_memory","name":"_plan_text returns None for effect types and states that produce no memory","status":"passed","testResultsByEnv":{"default":"f270e997f8b746108f56d736c4964ba3"}}

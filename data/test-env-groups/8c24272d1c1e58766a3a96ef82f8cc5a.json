@@ -1,0 +1,1 @@
+{"id":"8c24272d1c1e58766a3a96ef82f8cc5a","fullName":"tests.test_npc_turn.TestBuildTurnPromptPositiveOpportunity#test_positive_resolver_handles_malformed_uuid","name":"Positive resolver tolerates a malformed relationship target UUID without crashing","status":"passed","testResultsByEnv":{"default":"36c6b6d37a98ecd1aa5618f3ff8c24d9"}}

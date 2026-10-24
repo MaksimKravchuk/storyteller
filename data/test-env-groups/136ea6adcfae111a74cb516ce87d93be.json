@@ -1,0 +1,1 @@
+{"id":"136ea6adcfae111a74cb516ce87d93be","fullName":"tests.test_small_coverage_gaps.TestAdminJsonSerial#test_json_response_serialises_datetime","name":"_json_response round-trips datetime values through the custom serializer","status":"passed","testResultsByEnv":{"default":"5a0e379ac84a5a243aecb30c08a73a9f"}}

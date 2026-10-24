@@ -1,0 +1,1 @@
+{"id":"3f2cbf06ae29efcc39c1720fc1e925fc","fullName":"tests.test_event_manager.TestEventManagerSchedule#test_cancel_pending_event","name":"cancel() marks a pending event as CANCELLED and returns True","status":"passed","testResultsByEnv":{"default":"228f0b71859b1f8aeaa1368159a63841"}}

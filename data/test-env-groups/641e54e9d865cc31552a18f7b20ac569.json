@@ -1,0 +1,1 @@
+{"id":"641e54e9d865cc31552a18f7b20ac569","fullName":"tests.test_db_engine.TestEngineAndGetDb#test_create_async_engine_sets_pool_recycle","name":"create_async_engine sets a finite pool_recycle so stale connections are proactively retired","status":"passed","testResultsByEnv":{"default":"5cd934f67e7437d657a48016abd10151"}}

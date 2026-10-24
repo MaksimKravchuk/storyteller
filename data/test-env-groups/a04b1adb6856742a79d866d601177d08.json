@@ -1,0 +1,1 @@
+{"id":"a04b1adb6856742a79d866d601177d08","fullName":"tests.test_memory_manager#test_summarize_batch_keeps_dissimilar_memories","name":"dissimilar dialogue summaries for the same NPC are kept as distinct memories","status":"passed","testResultsByEnv":{"default":"742d78475599a7edfa8ebd370cfb6e8f"}}

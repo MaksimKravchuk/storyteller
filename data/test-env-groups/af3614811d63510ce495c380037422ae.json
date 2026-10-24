@@ -1,0 +1,1 @@
+{"id":"af3614811d63510ce495c380037422ae","fullName":"tests.test_npc_ticker.TestGetScheduleFor#test_tavern_aliases_share_schedule","name":"Multiple aliases (bartender / innkeeper / tavern keeper) share the tavern schedule","status":"passed","testResultsByEnv":{"default":"3436e2da5e48f4a0196ac6359873c972"}}

@@ -1,0 +1,1 @@
+{"id":"41b9db179112698cce05eaf7d5c71046","fullName":"tests.test_dramaturge.TestDramaturgeRewrites#test_rewrites_contradicting_scene_dialogue","name":"Dramaturge rewrites a sentence that contradicts an earlier in-scene NPC statement","status":"passed","testResultsByEnv":{"default":"ddb6ef63ae0801b0c4c3e3b1ef8036ca"}}

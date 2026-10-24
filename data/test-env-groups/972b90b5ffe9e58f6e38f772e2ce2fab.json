@@ -1,0 +1,1 @@
+{"id":"972b90b5ffe9e58f6e38f772e2ce2fab","fullName":"tests.test_llm_tools.TestParseToolCall#test_unknown_tool_raises","name":"parse_tool_call raises UnknownToolError when the tool name is unregistered","status":"passed","testResultsByEnv":{"default":"f4e640d9b2cc8b062db4bc7c810294d0"}}

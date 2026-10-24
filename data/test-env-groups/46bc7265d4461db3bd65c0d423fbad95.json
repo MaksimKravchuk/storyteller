@@ -1,0 +1,1 @@
+{"id":"46bc7265d4461db3bd65c0d423fbad95","fullName":"tests.test_goal_model.TestGoalKindVocabulary#test_legacy_kind_string_validates","name":"A legacy kind stored as a bare string still validates (old DB rows load)","status":"passed","testResultsByEnv":{"default":"b0193f37e33e15cf8c19a23292b62eb7"}}

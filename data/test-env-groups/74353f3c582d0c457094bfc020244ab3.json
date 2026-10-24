@@ -1,0 +1,1 @@
+{"id":"74353f3c582d0c457094bfc020244ab3","fullName":"tests.test_npc_generator.TestNPCGenerator#test_short_descriptor_truncated","name":"NPCGenerator truncates the short_descriptor to 80 characters when the LLM overshoots","status":"passed","testResultsByEnv":{"default":"449ab9de4da5a27c7bf10a0d51a04e43"}}

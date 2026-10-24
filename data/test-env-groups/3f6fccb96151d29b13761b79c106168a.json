@@ -1,0 +1,1 @@
+{"id":"3f6fccb96151d29b13761b79c106168a","fullName":"tests.test_effect_applier.TestItemEffects#test_add_item_empty_item_is_noop","name":"ADD_ITEM is a no-op when the item string is empty","status":"passed","testResultsByEnv":{"default":"2890754ef19c5d233caece32fb5d80c3"}}

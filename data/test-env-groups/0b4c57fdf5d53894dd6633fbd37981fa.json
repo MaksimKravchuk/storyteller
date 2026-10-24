@@ -1,0 +1,1 @@
+{"id":"0b4c57fdf5d53894dd6633fbd37981fa","fullName":"tests.e2e.test_scene_builder_real.TestSceneBuilderRealModel#test_real_model_surfaces_landmark_from_player_action","name":"A real SceneBuilder model includes the player's named landmark in the scene","status":"passed","testResultsByEnv":{"default":"051999c8b96f05831268b4d9ad87d6e6"}}

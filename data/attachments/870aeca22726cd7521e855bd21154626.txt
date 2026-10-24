@@ -1,0 +1,1 @@
+[auto-compare] s1: improvement  (baseline=5.00 → current=7.00, Δ/noise=4.00)

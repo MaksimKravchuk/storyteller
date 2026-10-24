@@ -1,0 +1,1 @@
+{"id":"ad6aac09e2bc0a20583e1b7e064646fe","fullName":"tests.test_item_generator.TestItemGenerator#test_examine_returns_description","name":"ItemGenerator examine mode returns the description string from the LLM response","status":"passed","testResultsByEnv":{"default":"176ce018d2c91a212510a197b467b01d"}}

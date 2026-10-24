@@ -1,0 +1,1 @@
+{"id":"21e99f5349741356b3f44669d7ace7cd","fullName":"tests.test_memory_manager#test_create_memory_propagates_location_id","name":"create_memory_from_event propagates location_id to every node it creates","status":"passed","testResultsByEnv":{"default":"42e8925d5d2cf749e70c1283f255beaa"}}

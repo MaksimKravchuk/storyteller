@@ -1,0 +1,1 @@
+{"id":"f6269c93c869f52042a8943a6a0283dc","fullName":"tests.test_benchmarks_archive.TestResolveGitSha#test_missing_pointer_returns_empty","name":"resolve_git_sha returns the empty string when the .git pointer is unreadable","status":"passed","testResultsByEnv":{"default":"564cae7698b7131bba0e98b0e1e78ef1"}}

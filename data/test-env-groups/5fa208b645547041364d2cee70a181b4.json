@@ -1,0 +1,1 @@
+{"id":"5fa208b645547041364d2cee70a181b4","fullName":"tests.test_db_engine.TestEngineAndGetDb#test_get_db_rolls_back_before_aexit","name":"get_db rolls back before __aexit__ when the caller raises inside the context","status":"passed","testResultsByEnv":{"default":"8a101274715c06dfacaba04c2bf5a7b9"}}

@@ -1,0 +1,1 @@
+{"id":"417753e74aea25bbdb1803477f8a3e65","fullName":"tests.test_benchmarks_prose_quality.TestProseQualityFactories#test_no_purple_prose_returns_spec","name":"no_purple_prose returns an EvidencePromptSpec with a non-empty brief and question","status":"passed","testResultsByEnv":{"default":"9a81e6c15005711ac4b2f251d75055d3"}}

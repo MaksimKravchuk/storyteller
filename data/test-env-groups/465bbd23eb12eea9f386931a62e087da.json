@@ -1,0 +1,1 @@
+{"id":"465bbd23eb12eea9f386931a62e087da","fullName":"tests.test_scene_action_log.TestSceneActionEntryRoundTrip#test_json_round_trip_preserves_all_fields","name":"SceneActionEntry round-trips through model_dump(mode='json') losslessly","status":"passed","testResultsByEnv":{"default":"ad4837ba5a1ee546f4a8338f698951ef"}}

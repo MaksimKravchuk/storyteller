@@ -1,0 +1,1 @@
+{"id":"d72f33f4314680d68d8299e7782f2a7b","fullName":"tests.test_prompt_localization.TestDramaturgePromptCatalog#test_bundles_distinct_and_fallback","name":"get_dramaturge_prompts returns distinct bundles per locale and falls back on unknown","status":"passed","testResultsByEnv":{"default":"dfc1d91ff1eb7d8147f81ba9232467c6"}}

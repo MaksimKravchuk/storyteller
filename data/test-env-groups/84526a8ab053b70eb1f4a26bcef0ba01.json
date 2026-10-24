@@ -1,0 +1,1 @@
+{"id":"84526a8ab053b70eb1f4a26bcef0ba01","fullName":"tests.test_npc_turn.TestBuildTurnPromptOpportunityWindowIntegration#test_positive_relationship_agenda_flows_into_actor_input","name":"Positive FRIEND/ALLY/KIN agenda reaches Actor.execute input_data via the resolver path","status":"passed","testResultsByEnv":{"default":"04f17d18bfcd0b9083d610721ee7c472"}}

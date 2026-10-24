@@ -1,0 +1,1 @@
+{"id":"745342d72cd01a842b1eef55e66d3be1","fullName":"tests.test_web_character#test_builder_handles_empty_state","name":"build_character_info returns an empty payload for a fresh GameState","status":"passed","testResultsByEnv":{"default":"97774d427a6162df4e5d32d527e32e4e"}}

@@ -1,0 +1,1 @@
+{"id":"cf19f13d8a8ca9eb42b6a4572ecd750e","fullName":"tests.test_benchmarks_aggregate.TestAggregateReports#test_mean_min_max","name":"aggregate_reports computes mean, min, and max across iteration totals","status":"passed","testResultsByEnv":{"default":"d408b9898de98053cf222c0ca8539819"}}

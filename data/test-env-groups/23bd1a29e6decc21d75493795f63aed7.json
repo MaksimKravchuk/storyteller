@@ -1,0 +1,1 @@
+{"id":"23bd1a29e6decc21d75493795f63aed7","fullName":"tests.test_effect_applier_memory_preservation#test_remove_npc_propagates_session_memory_as_hearsay","name":"REMOVE_NPC propagates the victim's session memory as HEARSAY for same-city non-witnesses","status":"passed","testResultsByEnv":{"default":"952c9de0826a16bb6aaacc97f3ff8d35"}}

@@ -1,0 +1,1 @@
+{"id":"eb37b3a89d4a38143cedfa311d8a9ab9","fullName":"tests.test_safety_moderator#test_severities_from_response_merges_subcategories","name":"severities_from_response folds violence/graphic and violence into a single VIOLENCE bucket","status":"passed","testResultsByEnv":{"default":"dedc2902cd95825178968c29dd81e78a"}}

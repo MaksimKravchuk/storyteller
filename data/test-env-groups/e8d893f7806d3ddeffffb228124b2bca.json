@@ -1,0 +1,1 @@
+{"id":"e8d893f7806d3ddeffffb228124b2bca","fullName":"tests.test_contested_action.TestBuildContestedActionSocial#test_contest_info_overrides_non_aggressive","name":"Contest info from the routing plan triggers a roll even when is_aggressive is False","status":"passed","testResultsByEnv":{"default":"22d663882c82fb384fe4ae239ab1b9c9"}}

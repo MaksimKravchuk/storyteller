@@ -1,0 +1,1 @@
+{"id":"f007ee4ee6a37ab10c62ab84b4b88192","fullName":"tests.test_director.TestGameStateSceneFields#test_initial_scene_conversation_log","name":"A freshly created GameState has an empty scene_conversation_log","status":"passed","testResultsByEnv":{"default":"5ed1859d122c94c626b7df84bb4da56f"}}

@@ -1,0 +1,1 @@
+{"id":"6caf898f3443d9aa8903ea9801719898","fullName":"tests.test_npc_background_tick.TestOffSceneNonKillResolvers#test_rest_heals_free_form_status","name":"REST heals a free-form injury status, not just exact-match statuses","status":"passed","testResultsByEnv":{"default":"9ecf72f655da28f0a9c4c51bada7c158"}}

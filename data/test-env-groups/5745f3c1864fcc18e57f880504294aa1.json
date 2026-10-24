@@ -1,0 +1,1 @@
+{"id":"5745f3c1864fcc18e57f880504294aa1","fullName":"tests.test_npc_ticker_memory_preservation#test_second_eviction_after_return_does_not_duplicate_hearsay","name":"Re-entry regression: evict, return, evict again — only one hearsay per recipient","status":"passed","testResultsByEnv":{"default":"924b075d4e3de458b6de3652bb6d2c80"}}

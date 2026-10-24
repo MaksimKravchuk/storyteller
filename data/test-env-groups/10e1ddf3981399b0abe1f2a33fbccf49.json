@@ -1,0 +1,1 @@
+{"id":"10e1ddf3981399b0abe1f2a33fbccf49","fullName":"tests.test_director_routing.TestTurnCounting#test_all_counting_actions_increment","name":"Every action type in TURN_COUNTING_ACTIONS advances the turn count by one","status":"passed","testResultsByEnv":{"default":"e215bc4b0565596a4d3f59d068509eb3"}}

@@ -1,0 +1,1 @@
+{"id":"ad6f5f9fb6a1c02d4c8d33c15ccbeacc","fullName":"tests.test_actor_prompt.TestActorPromptRoleScopedReactions#test_constraints_preserve_physical_action_rule","name":"Actor constraints still instruct NPCs to act physically when attacked","status":"passed","testResultsByEnv":{"default":"05cdd28f6271c95deff9248fd0095b28"}}

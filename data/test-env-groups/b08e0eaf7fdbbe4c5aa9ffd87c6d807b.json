@@ -1,0 +1,1 @@
+{"id":"b08e0eaf7fdbbe4c5aa9ffd87c6d807b","fullName":"tests.test_known_npcs.TestDirectorAppliesSignals#test_clarification_turn_skips_signal_b","name":"A clarification turn does not add any scene-NPC UUIDs to known_npcs (Signal B is skipped)","status":"passed","testResultsByEnv":{"default":"45727d9dbac81dff7f3b94e35d2dbef8"}}

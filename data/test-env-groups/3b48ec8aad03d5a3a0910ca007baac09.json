@@ -1,0 +1,1 @@
+{"id":"3b48ec8aad03d5a3a0910ca007baac09","fullName":"tests.test_search_factory#test_factory_tavily_missing_key_raises","name":"Selecting tavily without TAVILY_API_KEY raises at construction (no silent Wikipedia fallback)","status":"passed","testResultsByEnv":{"default":"1632b9d0a0a17b4f9b53e76af14d0ff1"}}

@@ -1,0 +1,1 @@
+{"id":"13f6d753284ac23f9ce47a8540a65e1f","fullName":"tests.test_benchmarks_transcript.TestNarratorCapturePopNext#test_pop_next_fifo","name":"pop_next returns buffered payloads in FIFO order","status":"passed","testResultsByEnv":{"default":"8e7dd187c22fac53d1714700d9ee9e1b"}}

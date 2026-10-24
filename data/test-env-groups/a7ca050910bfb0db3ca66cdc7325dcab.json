@@ -1,0 +1,1 @@
+{"id":"a7ca050910bfb0db3ca66cdc7325dcab","fullName":"tests.test_config.TestDefaultsExports#test_modelconfig_is_dataclass","name":"ModelConfig constructs with explicit provider and model_id and exposes them as attributes","status":"passed","testResultsByEnv":{"default":"9033f50b9cd199dced9ea7a21beffcf6"}}

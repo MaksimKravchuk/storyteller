@@ -1,0 +1,1 @@
+{"id":"5f7721d384c2113cc48efbacee06e800","fullName":"tests.test_npc_generator.TestNPCGenerator#test_forbidden_names_accumulate_across_batch","name":"NPCGenerator accumulates forbidden_names so each serial call sees earlier picks (KER-25)","status":"passed","testResultsByEnv":{"default":"78107c52baa72bbd321bf591d60fa816"}}

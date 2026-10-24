@@ -1,0 +1,1 @@
+{"id":"c585eda8a27d62ba4e2d6f61f229a9f7","fullName":"tests.test_director_routing.TestSceneChanges#test_examine_does_not_trigger_scene_change","name":"EXAMINE actions do not increment the scene number nor invoke the SceneBuilder","status":"passed","testResultsByEnv":{"default":"4c21cf154ff9fb0cd5f7d0a8aec45521"}}

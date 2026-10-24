@@ -1,0 +1,12 @@
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/games "HTTP/1.1 201 Created"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"

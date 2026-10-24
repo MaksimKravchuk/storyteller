@@ -1,0 +1,1 @@
+{"id":"517fba273f273fc0b73c86df75151462","fullName":"tests.prompts.test_actor_derived_mood_seam#test_derived_mood_reaches_rendered_prompt","name":"The derived mood appears verbatim in the rendered Actor prompt (EN + RU)","status":"passed","testResultsByEnv":{"default":"a0d938c3de12f9c2653daa36aa0b5063"}}

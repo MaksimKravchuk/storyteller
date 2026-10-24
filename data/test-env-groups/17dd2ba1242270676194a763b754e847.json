@@ -1,0 +1,1 @@
+{"id":"17dd2ba1242270676194a763b754e847","fullName":"tests.test_benchmarks_model_sets_score.TestSetScoreMean#test_empty_iterations_returns_zero","name":"Empty iterations report a mean of zero rather than dividing by zero","status":"passed","testResultsByEnv":{"default":"de62b51bc19296d0c0f096399954fb96"}}

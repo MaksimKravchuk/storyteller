@@ -1,0 +1,1 @@
+{"id":"0f5593a5c4058161615b17ea26f6b558","fullName":"tests.test_director_history.TestSceneHistory#test_no_history_no_scene_history_summary","name":"Director does not inject a scene_history_summary prompt variable when no history exists","status":"passed","testResultsByEnv":{"default":"d9343fe817c3cc81d64e4704ed1120be"}}

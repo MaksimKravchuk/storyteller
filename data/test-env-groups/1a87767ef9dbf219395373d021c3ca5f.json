@@ -1,0 +1,1 @@
+{"id":"1a87767ef9dbf219395373d021c3ca5f","fullName":"tests.test_director_context.TestFormatNpcsPresent#test_healthy_npc_shows_name_only","name":"A healthy NPC with no appearance renders as a name-and-occupation bullet line","status":"passed","testResultsByEnv":{"default":"f80c30c58be522d916fe86661639907d"}}

@@ -1,0 +1,1 @@
+{"id":"52672cd2ef4a384c4fb03ffd47aaa1b6","fullName":"tests.test_anthropic_client.TestAnthropicClient#test_send_message_json_schema_strips_integer_range","name":"AnthropicClient.send_message strips minimum/maximum from integer schema nodes (Anthropic beta rejects them with invalid_request_error)","status":"passed","testResultsByEnv":{"default":"406213eaf4209955a0b94a7e54325a16"}}

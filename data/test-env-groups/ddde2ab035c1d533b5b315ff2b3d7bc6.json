@@ -1,0 +1,1 @@
+{"id":"ddde2ab035c1d533b5b315ff2b3d7bc6","fullName":"tests.test_player_gestures#test_unknown_ids_raise","name":"stale or not-currently-visible ids raise GestureResolutionError","status":"passed","testResultsByEnv":{"default":"f519ae73dfa3d8c35556f8c4e9b0d987"}}

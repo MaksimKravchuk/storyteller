@@ -1,0 +1,1 @@
+{"id":"073dc5cd88c42262c0a6dbfab2c28e79","fullName":"tests.test_npc_ticker.TestNPCTickerEvictions#test_active_tactical_goal_shields_from_eviction","name":"NPC with active tactical goal is shielded from schedule eviction","status":"passed","testResultsByEnv":{"default":"58c921e5ed33484a57ad0ebb65c61cb5"}}

@@ -1,0 +1,1 @@
+{"id":"153f68eb46760cff51247c9386deff7c","fullName":"tests.test_dice_contest.TestRollContestBoundaries#test_boundary_actor_succeeds_at_minus_one","name":"A contest with margin -1 (one point in the actor's favor) flips to ACTOR_SUCCEEDS","status":"passed","testResultsByEnv":{"default":"6c4b242946826b383ef549c64c1dd83f"}}

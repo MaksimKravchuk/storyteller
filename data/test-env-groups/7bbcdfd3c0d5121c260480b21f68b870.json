@@ -1,0 +1,1 @@
+{"id":"7bbcdfd3c0d5121c260480b21f68b870","fullName":"tests.test_scene_consolidation_errors#test_summary_phase_failure_does_not_skip_significant_phase","name":"A phase-1 LLM failure is swallowed so the significant-event phase still runs","status":"passed","testResultsByEnv":{"default":"be098af82bf85efa5fc4a9e562b8ca85"}}

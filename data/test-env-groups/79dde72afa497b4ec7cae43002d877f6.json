@@ -1,0 +1,1 @@
+{"id":"79dde72afa497b4ec7cae43002d877f6","fullName":"tests.test_openai_client.TestOpenAIClient#test_send_message_payload","name":"OpenAIClient.send_message builds a chat completion payload with model, messages, and token cap","status":"passed","testResultsByEnv":{"default":"0d4b7d83c48fc345d1921e6fae5f7ba2"}}

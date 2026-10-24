@@ -1,0 +1,1 @@
+{"id":"4775aefc6b9bfa6f15e0830b87d08380","fullName":"tests.test_director_wait.TestWaitSkipsDialogue#test_wait_does_not_call_actor_for_dialogue","name":"WAIT action invokes the Actor only for the NPC's turn and never for dialogue generation","status":"passed","testResultsByEnv":{"default":"ee0b3c9adef434117c95f10b56f44938"}}

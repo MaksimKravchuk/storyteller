@@ -1,0 +1,1 @@
+{"id":"884164f5a2bd2a6142b031f147f2552b","fullName":"tests.test_routing_plan_intent.TestRoutingPlanIntent#test_routing_prompt_mentions_intent","name":"Director routing prompt instructs the LLM to restate player intent","status":"passed","testResultsByEnv":{"default":"b4e3ed2341668c431f19e1f7d9edbf59"}}

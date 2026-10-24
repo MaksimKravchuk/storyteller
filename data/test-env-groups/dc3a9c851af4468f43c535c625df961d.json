@@ -1,0 +1,1 @@
+{"id":"dc3a9c851af4468f43c535c625df961d","fullName":"tests.test_benchmarks_memory_graph_only_state.TestMemoryGraphOnlyState#test_graph_has_marcus_witnessed_edges","name":"KnowledgeGraph contains at least two WITNESSED edges from Marcus's actor node","status":"passed","testResultsByEnv":{"default":"545bf65a0648b8ae98bc59a982da8eb9"}}

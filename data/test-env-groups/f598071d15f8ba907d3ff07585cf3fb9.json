@@ -1,0 +1,1 @@
+{"id":"f598071d15f8ba907d3ff07585cf3fb9","fullName":"tests.test_prompt_localization.TestWorldChroniclerPromptCatalog#test_enum_values_stay_english","name":"Russian Chronicler advance prompt preserves category / status / scope enum values in English","status":"passed","testResultsByEnv":{"default":"5ff565fa40076558585a5c05e90d6979"}}

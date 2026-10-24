@@ -1,0 +1,1 @@
+{"id":"0ee133f2fb541a2fc8ebb8501c833572","fullName":"tests.test_game_state_turns.TestPlayerStatePhysicalStatus#test_default_is_healthy","name":"A freshly constructed PlayerState defaults to 'healthy' physical status","status":"passed","testResultsByEnv":{"default":"5e98b25eeacbfb9a8e90ac7afc025a5f"}}

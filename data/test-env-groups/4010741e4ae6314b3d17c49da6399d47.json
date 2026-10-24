@@ -1,0 +1,1 @@
+{"id":"4010741e4ae6314b3d17c49da6399d47","fullName":"tests.test_safety_moderator#test_refusal_message_tailored_to_self_harm","name":"refusal_message returns a tailored self-harm line including a support hint","status":"passed","testResultsByEnv":{"default":"bfc8bb80f0b67dc6af3094b925f5d16d"}}

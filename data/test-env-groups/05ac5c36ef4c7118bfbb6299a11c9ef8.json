@@ -1,0 +1,1 @@
+{"id":"05ac5c36ef4c7118bfbb6299a11c9ef8","fullName":"tests.test_knowledge.TestKnowledgeScopeOrdering#test_local_lt_city","name":"KnowledgeScope.LOCAL is ordered strictly below KnowledgeScope.CITY","status":"passed","testResultsByEnv":{"default":"a8c8d6ff380912d747cf6470b3d70495"}}

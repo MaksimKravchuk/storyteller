@@ -1,0 +1,1 @@
+{"id":"f3b931dbcc7cc2b7bc9af8a959eb5e6a","fullName":"tests.test_benchmarks_bayes.TestNormalCdf#test_degenerate_stdev","name":"normal_cdf collapses to a step function when stdev is zero","status":"passed","testResultsByEnv":{"default":"668b8023dcad468a27d51df85e7532ba"}}

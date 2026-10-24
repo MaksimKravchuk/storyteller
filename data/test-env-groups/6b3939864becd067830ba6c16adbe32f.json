@@ -1,0 +1,1 @@
+{"id":"6b3939864becd067830ba6c16adbe32f","fullName":"tests.test_web_schemas#test_action_request_xor","name":"ActionRequest rejects both, neither, or a blank action","status":"passed","testResultsByEnv":{"default":"c64a0475a9ee722999006f654b86a9f5"}}

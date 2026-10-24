@@ -1,0 +1,1 @@
+{"id":"4d03f08bc7220a2dffab941e038770fa","fullName":"tests.test_call_logger.TestGetAndClearBuffer#test_returned_list_is_a_copy","name":"Mutating the list returned by get_and_clear_buffer does not bleed back into the shared buffer","status":"passed","testResultsByEnv":{"default":"6c9f6124f7cdc7ce45ca10a15e62c7c6"}}

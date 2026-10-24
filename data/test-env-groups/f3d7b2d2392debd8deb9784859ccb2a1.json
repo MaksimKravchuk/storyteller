@@ -1,0 +1,1 @@
+{"id":"f3d7b2d2392debd8deb9784859ccb2a1","fullName":"tests.test_npc_turn_prompt_scene_log.TestPromptLiteraryPlayerEntries#test_player_entries_render_literarily","name":"Player scene-log entries render via PlayerUtterance when player.appearance is set","status":"passed","testResultsByEnv":{"default":"8033bf5016265af028fdb15c4d17ed6f"}}

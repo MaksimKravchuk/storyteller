@@ -1,0 +1,1 @@
+{"id":"df254996aa31ede7c0cd40a535085386","fullName":"tests.test_director_dialogue_memory.TestDialogueHandlerConversationHistory#test_handle_dialogue_appends_player_and_npc_entries","name":"handle_dialogue appends one user/assistant pair to a freshly initialised NPC","status":"passed","testResultsByEnv":{"default":"bf3d63c5fc889eddf735dd5e53763825"}}

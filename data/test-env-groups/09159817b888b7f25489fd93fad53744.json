@@ -1,0 +1,1 @@
+{"id":"09159817b888b7f25489fd93fad53744","fullName":"tests.test_benchmarks_scenario_elements.TestAutonomyScenarioPredicates#test_no_mood_shift","name":"bystander_moods_shifted awards zero when both bystanders' moods stayed at the baseline value","status":"passed","testResultsByEnv":{"default":"f9e3502d892dca777761bfcd85ac017f"}}

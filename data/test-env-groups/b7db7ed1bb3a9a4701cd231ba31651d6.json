@@ -1,0 +1,1 @@
+{"id":"b7db7ed1bb3a9a4701cd231ba31651d6","fullName":"tests.test_dice.TestCombatOutcomeCategories#test_npc_defends","name":"NPC holding a small edge over the player is classified as NPC_DEFENDS","status":"passed","testResultsByEnv":{"default":"205a4491639796e62e1acb4225b43224"}}

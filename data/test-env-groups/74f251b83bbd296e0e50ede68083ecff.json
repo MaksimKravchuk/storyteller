@@ -1,0 +1,1 @@
+{"id":"74f251b83bbd296e0e50ede68083ecff","fullName":"tests.test_benchmarks_transcript.TestNarratorCapturePopNext#test_pop_next_empty_raises","name":"pop_next raises IndexError when the buffer is empty so short-circuit turns fail loudly","status":"passed","testResultsByEnv":{"default":"44cb12740bec743e3c8af0a20069839f"}}

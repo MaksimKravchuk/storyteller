@@ -1,0 +1,1 @@
+{"id":"8f0a0cd24c11e9d450578aafbcc89731","fullName":"tests.test_world_state.TestWorldThreadDefaults#test_involved_locations_independent_per_instance","name":"WorldThread.involved_locations is independent across instances thanks to default_factory","status":"passed","testResultsByEnv":{"default":"7eff4f9ea590a3b6dfdbc995a49a8abf"}}

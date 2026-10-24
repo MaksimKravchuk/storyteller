@@ -1,0 +1,1 @@
+{"id":"27ea72386ecc1ea86f7d9c716fc69af1","fullName":"tests.test_safety_moderator#test_refusal_message_tailored_to_prompt_injection","name":"refusal_message returns a prompt-injection-tailored line when that category triggers","status":"passed","testResultsByEnv":{"default":"ccbaa447f0b030e4f6411e484e2d1cfb"}}

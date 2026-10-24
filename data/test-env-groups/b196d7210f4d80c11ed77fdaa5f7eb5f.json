@@ -1,0 +1,1 @@
+{"id":"b196d7210f4d80c11ed77fdaa5f7eb5f","fullName":"tests.test_benchmarks_scoring.TestScoreEvidenceElement#test_panel_collapsed_awards_zero","name":"score_evidence_element records PANEL_COLLAPSED and awards zero when every judge errored","status":"passed","testResultsByEnv":{"default":"0a447dc065aad41fe36239b6ab080c78"}}

@@ -1,0 +1,1 @@
+{"id":"9b86bece76d9db28070140d2d6381f55","fullName":"tests.test_base_performer.TestBasePerformerExecuteBasic#test_propagates_exception_unchanged","name":"Exceptions raised inside act() propagate out of execute() unchanged","status":"passed","testResultsByEnv":{"default":"7e067ec74955cd94f97d7d2220635f05"}}

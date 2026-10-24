@@ -1,0 +1,1 @@
+{"id":"7bc621eac0c97f6128d5b76b2f84816a","fullName":"tests.test_actor_prompt.TestActorPromptRoleScopedReactions#test_constraints_preserve_dice_mood_status_rules","name":"Actor constraints still emit DICE ROLL instruction and describe the mood/status JSON fields","status":"passed","testResultsByEnv":{"default":"537981dcc14e8500e75ba8b90df01145"}}

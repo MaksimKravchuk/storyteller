@@ -1,0 +1,1 @@
+{"id":"b6466d99804523465053ac2b30eb5d42","fullName":"tests.test_models.TestLocation#test_poi_names_drop_whitespace_only_alias","name":"POI name cleaning drops whitespace-only aliases instead of keeping a blank entry","status":"passed","testResultsByEnv":{"default":"746a446afce001df53812f1a13aee30b"}}

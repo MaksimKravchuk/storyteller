@@ -1,0 +1,1 @@
+{"id":"aa576d64e92c94ed184c834f2ed19c6d","fullName":"tests.test_web_character#test_builder_sorts_set_backed_fields_by_uuid","name":"build_character_info sorts known_npcs and learned_facts by UUID for a stable payload","status":"passed","testResultsByEnv":{"default":"49bf5de4a70863cb70ee260511b2d41c"}}

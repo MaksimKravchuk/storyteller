@@ -1,0 +1,3 @@
+[auto-compare] s1: improvement  (baseline=5.00 → current=8.00, Δ/noise=10.00)
+[auto-compare] s1: noise  (baseline=5.00 → current=5.10, Δ/noise=0.33)
+[auto-compare] unmapped: no_baseline  (baseline=0.00 → current=7.00, Δ/noise=0.00)

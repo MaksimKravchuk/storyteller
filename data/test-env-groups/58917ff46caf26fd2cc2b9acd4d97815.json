@@ -1,0 +1,1 @@
+{"id":"58917ff46caf26fd2cc2b9acd4d97815","fullName":"tests.test_knowledge.TestKnowledgeScopeOrdering#test_world_gt_region","name":"KnowledgeScope.WORLD is ordered strictly above KnowledgeScope.REGION","status":"passed","testResultsByEnv":{"default":"63c785909d9414a3de0dfb4cb3bf8a75"}}

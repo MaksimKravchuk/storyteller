@@ -1,0 +1,1 @@
+{"id":"f7665da9a2886ff399e3562550596ddb","fullName":"tests.test_effect_apply_object_damage.TestApplyObjectDamageEffect#test_overwrites_existing_entry","name":"APPLY_OBJECT_DAMAGE overwrites the prior state when the same object_key is written twice","status":"passed","testResultsByEnv":{"default":"a6e3f02eedc80e5ce6f74ae08742e0f1"}}

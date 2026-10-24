@@ -1,0 +1,1 @@
+{"id":"bc892b772cc129894adeedb812f54166","fullName":"tests.test_world_chronicler.TestChroniclerResponseSchemaDefaults#test_scheduled_event_draft_defaults","name":"ScheduledEventDraft defaults scope to 'remote' because most events are offscreen","status":"passed","testResultsByEnv":{"default":"4e00d3dbd1d1c9bb88aa63143a815b0c"}}

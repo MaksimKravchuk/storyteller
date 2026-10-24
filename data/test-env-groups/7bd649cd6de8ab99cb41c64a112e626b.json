@@ -1,0 +1,1 @@
+{"id":"7bd649cd6de8ab99cb41c64a112e626b","fullName":"tests.test_emotional_memory.TestRelationshipDrift#test_intensity_clamps_at_minus_three","name":"Strong negative drift clamps relationship intensity at -3 (ENEMY)","status":"passed","testResultsByEnv":{"default":"bdf3fcffda9fe5bfc29588a56d005c7a"}}

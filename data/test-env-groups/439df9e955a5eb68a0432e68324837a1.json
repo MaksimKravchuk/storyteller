@@ -1,0 +1,1 @@
+{"id":"439df9e955a5eb68a0432e68324837a1","fullName":"tests.test_narrator_branches.TestTurnOutputsUuidValidation#test_invalid_dialogue_npc_uuid_rejected","name":"DialogueEntry rejects a non-UUID npc_uuid","status":"passed","testResultsByEnv":{"default":"e303e0c39ccca9bfb2a6ec913c437b5f"}}

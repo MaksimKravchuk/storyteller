@@ -1,0 +1,1 @@
+{"id":"387077c6805e32f16a3be9643d35517b","fullName":"tests.test_narrator_branches.TestNarratorNpcDepartures#test_populated_departures_rendered","name":"Narrator renders npc_departures lines under a 'Someone departs:' prefix","status":"passed","testResultsByEnv":{"default":"24c3de5fb6c1b2f1fead4e6192c49495"}}

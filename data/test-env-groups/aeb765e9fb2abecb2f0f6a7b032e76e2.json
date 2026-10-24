@@ -1,0 +1,1 @@
+{"id":"aeb765e9fb2abecb2f0f6a7b032e76e2","fullName":"tests.test_openai_client.TestOpenAIClient#test_constructor_wires_sdk","name":"OpenAIClient instantiates AsyncOpenAI with the supplied api_key on construction","status":"passed","testResultsByEnv":{"default":"308394183630bcde97a64ec6a5417905"}}

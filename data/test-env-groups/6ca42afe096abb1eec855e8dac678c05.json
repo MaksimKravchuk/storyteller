@@ -1,0 +1,1 @@
+{"id":"6ca42afe096abb1eec855e8dac678c05","fullName":"tests.test_wait_action.TestWaitInActionTypes#test_wait_in_turn_counting_actions","name":"WAIT appears in the TURN_COUNTING_ACTIONS set so it advances the turn count","status":"passed","testResultsByEnv":{"default":"3ec8c4e04a6de7a74486d6c2fbffd953"}}

@@ -1,0 +1,1 @@
+{"id":"2dee87fe98c0b94713a3a230f28b619c","fullName":"tests.test_effect_applier.TestNpcIdResolution#test_add_item_missing_item_key_is_noop","name":"ADD_ITEM with no item key is a no-op (the absent-item default is falsy)","status":"passed","testResultsByEnv":{"default":"0b8fb74cbfd99274720eead112597fb0"}}

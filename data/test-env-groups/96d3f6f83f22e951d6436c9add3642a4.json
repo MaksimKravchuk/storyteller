@@ -1,0 +1,1 @@
+{"id":"96d3f6f83f22e951d6436c9add3642a4","fullName":"tests.test_openai_client.TestOpenAIClient#test_format_messages_omits_empty_system","name":"OpenAIClient._format_messages omits the system role when the system_prompt is empty","status":"passed","testResultsByEnv":{"default":"30eee4b9b44b11e8dde64ed30176d8d7"}}

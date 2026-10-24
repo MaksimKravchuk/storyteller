@@ -1,0 +1,1 @@
+{"id":"ed68b6c94952b5146498f47a2dfbfc5d","fullName":"tests.test_db_converters.TestKnowledgeConverter#test_round_trip","name":"KnowledgeNode round-trips preserving scope, source, canon, education, and salience","status":"passed","testResultsByEnv":{"default":"98c43012543f18dfd8ec068761150ba8"}}

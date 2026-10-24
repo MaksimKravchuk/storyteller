@@ -1,0 +1,1 @@
+{"id":"011e1e510b62343de019f7fea30e6062","fullName":"tests.test_npc_ticker.TestNPCTickerNameGating#test_unintroduced_departure_hides_name","name":"An unintroduced NPC's departure line hides the proper name behind the role","status":"passed","testResultsByEnv":{"default":"ff74313fbb6b0e9f1ccb7dee2b789a03"}}

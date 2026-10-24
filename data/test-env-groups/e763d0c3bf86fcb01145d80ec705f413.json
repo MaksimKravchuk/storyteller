@@ -1,0 +1,1 @@
+{"id":"e763d0c3bf86fcb01145d80ec705f413","fullName":"tests.test_director_object_interaction.TestApplyObjectInteractions#test_no_item_generator_returns_empty","name":"apply_object_interactions returns early when the cast has no item_generator","status":"passed","testResultsByEnv":{"default":"bd5e5aa025dd6afb34cfc0e97695e739"}}

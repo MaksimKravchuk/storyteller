@@ -1,0 +1,1 @@
+{"id":"ea2b6d464fec562fdd58afdfc562fb5c","fullName":"tests.test_director_dialogue_memory.TestDialogueHandlerConversationHistory#test_handle_dialogue_persists_bare_player_action_when_aggressive","name":"handle_dialogue persists the bare player utterance, not the dice-wrapped action_text","status":"passed","testResultsByEnv":{"default":"63fa6035e88703a9ed63bb481cf3777b"}}

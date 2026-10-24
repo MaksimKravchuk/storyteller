@@ -1,0 +1,1 @@
+{"id":"4fb7d3d97ce960e36447007d68eb182a","fullName":"tests.test_benchmarks_reliability_capture#test_collect_reliability_counts_nested_shape","name":"collect_reliability_counts renders counters into nested per-agent shape","status":"passed","testResultsByEnv":{"default":"c28a5767e710c989723d830cd49daa8c"}}

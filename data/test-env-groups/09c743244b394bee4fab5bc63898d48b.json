@@ -1,0 +1,1 @@
+{"id":"09c743244b394bee4fab5bc63898d48b","fullName":"tests.test_scene_builder.TestSceneBuilder#test_social_investigation_prompt_text_alone_does_not_add_contact","name":"Social affordance fallback is keyed to the premise, not synthetic opening prompt wording","status":"passed","testResultsByEnv":{"default":"9bc5bf51f24ca328a034e053508fda12"}}

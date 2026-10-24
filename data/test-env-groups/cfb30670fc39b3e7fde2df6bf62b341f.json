@@ -1,0 +1,1 @@
+{"id":"cfb30670fc39b3e7fde2df6bf62b341f","fullName":"tests.test_benchmarks_calibrate.TestCalibrateCommandDriftIntegration#test_compare_to_baselines_detects_drift","name":"calibrate_command reads old calibration before persisting, returns 1 on drift","status":"passed","testResultsByEnv":{"default":"96aa36b9447ae44e5f698550350537d1"}}

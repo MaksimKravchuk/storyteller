@@ -1,0 +1,1 @@
+{"id":"ecf29e64a82738780e7ef8b3d213ba1d","fullName":"tests.test_markdown_render.TestToHtml#test_strong_and_em","name":"Generic HTML renderer emits <strong> for bold and <em> for italic Markdown","status":"passed","testResultsByEnv":{"default":"e5781ad5b5f19c0c2cb02258185c4ef7"}}

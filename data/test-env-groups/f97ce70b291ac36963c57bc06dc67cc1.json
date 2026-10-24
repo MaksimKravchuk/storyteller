@@ -1,0 +1,1 @@
+{"id":"f97ce70b291ac36963c57bc06dc67cc1","fullName":"tests.test_models.TestNPCCardLabelForPlayer#test_unknown_npc_without_descriptor_falls_back_to_role","name":"label_for_player falls back to role when the card has no short_descriptor","status":"passed","testResultsByEnv":{"default":"e66c2397dd56eb727d22ff402708ba7e"}}

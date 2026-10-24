@@ -1,0 +1,1 @@
+{"id":"db18e76e81709672a790b13e00e2b3e5","fullName":"tests.test_npc_turn.TestBuildTurnPromptPositiveOpportunity#test_russian_positive_keyword_fires","name":"Russian positive keyword naming a co-located NPC fires the positive clause","status":"passed","testResultsByEnv":{"default":"fc2cd87b1b85b457560a318b8b57dfc9"}}

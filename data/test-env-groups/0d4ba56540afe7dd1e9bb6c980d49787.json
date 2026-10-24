@@ -1,0 +1,1 @@
+{"id":"0d4ba56540afe7dd1e9bb6c980d49787","fullName":"tests.test_object_state_persists.TestSceneBuilderPreservesObjectStates#test_safety_net_fires_on_word_fragment_collision","name":"SceneBuilder safety net fires when a short object_key only appears as a substring of another word","status":"passed","testResultsByEnv":{"default":"95e31ec3de2882d9acb32e988ba0893b"}}

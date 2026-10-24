@@ -1,0 +1,1 @@
+{"id":"792afc2ff2a089248e36f509df8bbf13","fullName":"tests.test_director_dramaturge.TestPlanExecutorDramaturgeGate#test_dramaturge_runs_on_new_scene","name":"PlanExecutor calls Dramaturge and returns its corrected narration on a new-scene turn","status":"passed","testResultsByEnv":{"default":"514da14c1cd8fbb2a7d06d5ac7293264"}}

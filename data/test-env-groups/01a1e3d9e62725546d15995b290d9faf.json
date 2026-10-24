@@ -1,0 +1,1 @@
+{"id":"01a1e3d9e62725546d15995b290d9faf","fullName":"tests.test_narrator_honors_intent.TestNarratorHonorsIntent#test_intent_section_skipped_when_absent","name":"Narrator prompt omits the turn-intent section when TurnOutputs.intent is None","status":"passed","testResultsByEnv":{"default":"81f8ea85951849eb683f7e786a9cf1c1"}}

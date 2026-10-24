@@ -1,0 +1,1 @@
+{"id":"196868293c4fd9f23dbe2be0cdf31cb4","fullName":"tests.test_director_events.TestBuildMemoryEvent#test_uses_on_complete_description","name":"build_memory_event() uses on_complete_description as the event summary when present","status":"passed","testResultsByEnv":{"default":"d61b83fb954964f316e045d907f12335"}}
