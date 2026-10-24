@@ -139,6 +139,9 @@ def _parse_tool_calls(response: Any) -> list[ToolCall]:
     return parsed
 
 
+_REQUEST_TIMEOUT_S = 120
+
+
 class AnthropicClient(BaseLLMClient):
     """Anthropic API provider (Claude models)."""
 
@@ -152,7 +155,8 @@ class AnthropicClient(BaseLLMClient):
         # Lazy import so anthropic is not required when using another provider
         from anthropic import AsyncAnthropic
 
-        self._client = AsyncAnthropic(api_key=self.api_key)
+        # SDK default is 600 s; the SDK's own retries cover 429 / connection errors.
+        self._client = AsyncAnthropic(api_key=self.api_key, timeout=_REQUEST_TIMEOUT_S)
         # Schemas the beta endpoint already rejected as "too complex".
         # Subsequent calls with the same ``schema_name`` skip the strict
         # path entirely so we don't pay the 400-roundtrip every turn.

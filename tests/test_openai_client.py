@@ -61,7 +61,7 @@ class TestOpenAIClient:
         sdk_class, _ = _install_sdk_mock()
         with patch(_OPENAI_CTOR, sdk_class):
             client = OpenAIClient(model=_MODEL, api_key="sk-xyz")
-        sdk_class.assert_called_once_with(api_key="sk-xyz")
+        sdk_class.assert_called_once_with(api_key="sk-xyz", timeout=120, max_retries=0)
         assert client.model == _MODEL
 
     @allure.story("send_message")

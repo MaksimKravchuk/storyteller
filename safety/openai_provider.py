@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 _DEFAULT_OPENAI_MODEL = "omni-moderation-latest"
+# Moderation runs on every action and narration; it must not stall a turn.
+_REQUEST_TIMEOUT_S = 15
 
 # Buckets are open-on-the-right (``score >= bucket``); anything below the
 # LOW threshold is treated as ``NONE`` so we don't churn on noise.
@@ -103,7 +105,7 @@ class OpenAIModerationProvider:
         if self._client is None:
             from openai import AsyncOpenAI
 
-            kwargs: dict[str, Any] = {}
+            kwargs: dict[str, Any] = {"timeout": _REQUEST_TIMEOUT_S}
             if self.api_key is not None:
                 kwargs["api_key"] = self.api_key
             self._client = AsyncOpenAI(**kwargs)

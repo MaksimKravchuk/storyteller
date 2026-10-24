@@ -190,3 +190,35 @@ class TestSceneActionLogRoundTrip:
         assert event_entry.actor_uuid is None
         assert event_entry.metadata["already_persisted"] is True
         assert event_entry.metadata["witness_ids"] == [str(actor_uuid)]
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("Round trip")
+class TestLongLLMFields:
+    @allure.story("Free-text LLM fields")
+    @allure.title("Long LLM-written mood, status, scope and time-of-day survive save → load untruncated")
+    @pytest.mark.asyncio
+    async def test_long_llm_fields_round_trip(
+        self,
+        repo: GameRepository,
+        populated_game_state,
+        test_session_id: str,
+    ) -> None:
+        game_state, kg, events = populated_game_state
+        npc = next(iter(game_state.npcs.values()))
+        npc.current_mood = "настороженный, но втайне любопытный, почти полный надежды"
+        npc.physical_status = "limping, " * 20
+        npc.knowledge_scope = "the whole eastern quarter"
+        game_state.player.physical_status = "bruised, " * 20
+        game_state.current_scene.time_of_day = "late afternoon, just before vespers"
+        await repo.save_game_state(test_session_id, game_state, kg, events)
+
+        loaded = await repo.load_game_state(test_session_id)
+        assert loaded is not None
+        loaded_state = loaded[0]
+        loaded_npc = loaded_state.npcs[npc.uuid]
+        assert loaded_npc.current_mood == npc.current_mood
+        assert loaded_npc.physical_status == npc.physical_status
+        assert loaded_npc.knowledge_scope == npc.knowledge_scope
+        assert loaded_state.player.physical_status == game_state.player.physical_status
+        assert loaded_state.current_scene.time_of_day == game_state.current_scene.time_of_day
