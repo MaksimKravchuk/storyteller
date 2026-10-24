@@ -1,1 +1,1 @@
-{"id":"49365d1d351adb9898a110ad5165d590","fullName":"tests.test_admin#test_middleware_does_not_block_dashboard","name":"Non-API dashboard routes bypass the token check even when a token is configured","status":"passed","testResultsByEnv":{"default":"26eb0685fe37a9ffd2e1f26c22392bb4"}}
+{"id":"49365d1d351adb9898a110ad5165d590","fullName":"tests.test_admin#test_middleware_does_not_block_dashboard","name":"Non-API dashboard routes bypass the token check even when a token is configured","status":"passed","testResultsByEnv":{"default":"4b18d3fbcb31722da1b15e1c47851881"}}

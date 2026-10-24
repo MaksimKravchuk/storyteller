@@ -1,1 +1,1 @@
-{"id":"dbb644340d4d017ed28bffc51915e6c1","fullName":"tests.test_models_game.TestSceneNPCSerialization#test_model_dump","name":"SceneNPC.model_dump serializes role and UUID into a plain dict","status":"passed","testResultsByEnv":{"default":"a8ce1b9300e6c0f6f13d2782734555d8"}}
+{"id":"dbb644340d4d017ed28bffc51915e6c1","fullName":"tests.test_models_game.TestSceneNPCSerialization#test_model_dump","name":"SceneNPC.model_dump serializes role and UUID into a plain dict","status":"passed","testResultsByEnv":{"default":"31009caded188a07413ea1fc0f71a26d"}}

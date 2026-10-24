@@ -1,1 +1,1 @@
-{"id":"a9531705295cd51dd8afbd014109a339","fullName":"tests.test_knowledge.TestKnowledgeScopeOrdering#test_full_ordering","name":"The full scope ordering runs LOCAL < CITY < REGION < COUNTRY < WORLD","status":"passed","testResultsByEnv":{"default":"22d33d9009b3cf4ed9da37ea21d3cf1c"}}
+{"id":"a9531705295cd51dd8afbd014109a339","fullName":"tests.test_knowledge.TestKnowledgeScopeOrdering#test_full_ordering","name":"The full scope ordering runs LOCAL < CITY < REGION < COUNTRY < WORLD","status":"passed","testResultsByEnv":{"default":"60c4403bc7d66ffb9c0f28001cc82788"}}

@@ -1,1 +1,1 @@
-{"id":"fba377e7d306c6f94470606ccb3dc0d8","fullName":"tests.test_model_pricing#test_known_model_cost_uses_decimal_prices","name":"Known model token usage produces an exact Decimal USD cost","status":"passed","testResultsByEnv":{"default":"6eabf31964957ef83ff24f50e0af24dc"}}
+{"id":"fba377e7d306c6f94470606ccb3dc0d8","fullName":"tests.test_model_pricing#test_known_model_cost_uses_decimal_prices","name":"Known model token usage produces an exact Decimal USD cost","status":"passed","testResultsByEnv":{"default":"12ecf547a0c35563f7d82a2b13af0009"}}

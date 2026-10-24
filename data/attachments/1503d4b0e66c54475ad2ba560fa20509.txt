@@ -1,1 +1,0 @@
-2026-10-24 19:28:02.273 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=NPCGenerator model=gpt-6-luna parent=None | prompt_tokens=2252 completion_tokens=398 duration_ms=4988

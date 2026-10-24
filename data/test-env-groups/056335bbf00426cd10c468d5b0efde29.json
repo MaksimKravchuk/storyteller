@@ -1,1 +1,1 @@
-{"id":"056335bbf00426cd10c468d5b0efde29","fullName":"tests.test_admin#test_middleware_no_token_allows_api","name":"Admin API requests pass through the auth middleware when no token is configured","status":"passed","testResultsByEnv":{"default":"32db1d1d5b2a529ffcbf75efdf636618"}}
+{"id":"056335bbf00426cd10c468d5b0efde29","fullName":"tests.test_admin#test_middleware_no_token_allows_api","name":"Admin API requests pass through the auth middleware when no token is configured","status":"passed","testResultsByEnv":{"default":"63400d0a6bdf378f068bad618874c006"}}

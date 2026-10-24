@@ -1,1 +1,1 @@
-{"id":"72ca77be93ba1d6f1adb72968d08e34d","fullName":"tests.test_dice_contest.TestRollContestOutcomes#test_zero_skill_no_bonus","name":"With zero skill on both sides a tied roll defaults to TARGET_RESISTS","status":"passed","testResultsByEnv":{"default":"e04efc982c32a7362c294588d29b0f80"}}
+{"id":"72ca77be93ba1d6f1adb72968d08e34d","fullName":"tests.test_dice_contest.TestRollContestOutcomes#test_zero_skill_no_bonus","name":"With zero skill on both sides a tied roll defaults to TARGET_RESISTS","status":"passed","testResultsByEnv":{"default":"e568195e96e5bd9ed9b50ba2936d6e46"}}

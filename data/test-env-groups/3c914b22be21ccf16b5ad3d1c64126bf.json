@@ -1,1 +1,1 @@
-{"id":"3c914b22be21ccf16b5ad3d1c64126bf","fullName":"tests.test_web_api#test_start_game_rejects_oversize_setting","name":"POST /api/games rejects a setting longer than 500 characters","status":"passed","testResultsByEnv":{"default":"59f98f96e4eec5f7d8d3f481005954c0"}}
+{"id":"3c914b22be21ccf16b5ad3d1c64126bf","fullName":"tests.test_web_api#test_start_game_rejects_oversize_setting","name":"POST /api/games rejects a setting longer than 500 characters","status":"passed","testResultsByEnv":{"default":"38a2ab7d8439dfc51a9cb0ab57e49955"}}

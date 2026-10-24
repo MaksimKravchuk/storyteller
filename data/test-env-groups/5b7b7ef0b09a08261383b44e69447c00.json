@@ -1,1 +1,1 @@
-{"id":"5b7b7ef0b09a08261383b44e69447c00","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_do_nothing_variant","name":"The variant 'I do nothing' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"fd2e1fd7e9bc3c0a7b16daf77f9b0848"}}
+{"id":"5b7b7ef0b09a08261383b44e69447c00","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_do_nothing_variant","name":"The variant 'I do nothing' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"ce6f1d7a654879393912c0152cd7687c"}}

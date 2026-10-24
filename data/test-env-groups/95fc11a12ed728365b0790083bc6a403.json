@@ -1,1 +1,1 @@
-{"id":"95fc11a12ed728365b0790083bc6a403","fullName":"tests.test_effect_applier.TestAddKnowledgeEffect#test_empty_content_is_noop","name":"ADD_KNOWLEDGE is a no-op when content is empty","status":"passed","testResultsByEnv":{"default":"f63da3fafb2305794622ef813b397e90"}}
+{"id":"95fc11a12ed728365b0790083bc6a403","fullName":"tests.test_effect_applier.TestAddKnowledgeEffect#test_empty_content_is_noop","name":"ADD_KNOWLEDGE is a no-op when content is empty","status":"passed","testResultsByEnv":{"default":"36fb188554be45a22eb4f8d4570bc9a7"}}

@@ -1,1 +1,1 @@
-{"id":"f5ef7642ba57149e94d922a86c580980","fullName":"tests.test_effect_applier.TestItemEffects#test_remove_item_absent_is_noop","name":"REMOVE_ITEM silently ignores items the NPC does not currently hold","status":"passed","testResultsByEnv":{"default":"62209ce13a62ed8d7984da7eaf90ae20"}}
+{"id":"f5ef7642ba57149e94d922a86c580980","fullName":"tests.test_effect_applier.TestItemEffects#test_remove_item_absent_is_noop","name":"REMOVE_ITEM silently ignores items the NPC does not currently hold","status":"passed","testResultsByEnv":{"default":"2c504c403c35581e3ce97faf0652655e"}}

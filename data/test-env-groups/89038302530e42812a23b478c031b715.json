@@ -1,1 +1,1 @@
-{"id":"89038302530e42812a23b478c031b715","fullName":"tests.test_dice_contest.TestRollContestSocialTypes#test_persuasion_contest","name":"Persuasion contests resolve using the generic contest machinery","status":"passed","testResultsByEnv":{"default":"541dad87060c32243f7614b030434991"}}
+{"id":"89038302530e42812a23b478c031b715","fullName":"tests.test_dice_contest.TestRollContestSocialTypes#test_persuasion_contest","name":"Persuasion contests resolve using the generic contest machinery","status":"passed","testResultsByEnv":{"default":"caf21e37464dd71dd07f36d587ee7b7c"}}

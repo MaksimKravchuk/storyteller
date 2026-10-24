@@ -1,1 +1,1 @@
-{"id":"51b4fc7f25ec95a88de80cda4de2d2d0","fullName":"tests.test_web_auth#test_static_shell_includes_auth_controls","name":"Static UI includes Supabase login/logout controls and auth fetch wiring","status":"passed","testResultsByEnv":{"default":"552f2fa090b000de493b518e5e241954"}}
+{"id":"51b4fc7f25ec95a88de80cda4de2d2d0","fullName":"tests.test_web_auth#test_static_shell_includes_auth_controls","name":"Static UI includes Supabase login/logout controls and auth fetch wiring","status":"passed","testResultsByEnv":{"default":"daed56eb5bd21d7614069be2daf9d56b"}}

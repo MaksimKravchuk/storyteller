@@ -1,0 +1,2 @@
+2026-10-24 19:43:20.166 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=Director model=gpt-6-luna parent=None | prompt_tokens=2434 completion_tokens=66 duration_ms=1924
+2026-10-24 19:43:20.166 | INFO     | cast.director_routing:route_action:78 - Director route | tool=clarify

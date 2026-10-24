@@ -1,1 +1,1 @@
-{"id":"7af93d30dca2aa0945af70725eeb3a89","fullName":"tests.test_benchmarks_narration_diff#test_format_report_empty_current","name":"format_report renders the empty-current placeholder","status":"passed","testResultsByEnv":{"default":"29921b667311460771cfcd8b81a519c1"}}
+{"id":"7af93d30dca2aa0945af70725eeb3a89","fullName":"tests.test_benchmarks_narration_diff#test_format_report_empty_current","name":"format_report renders the empty-current placeholder","status":"passed","testResultsByEnv":{"default":"c1a1860c2ba7f9207a598330f4cf3fa4"}}
