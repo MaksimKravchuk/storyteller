@@ -76,6 +76,7 @@ class AdminQueries:
                 tbl.sessions.c.web_player_id,
                 tbl.sessions.c.state,
                 tbl.sessions.c.language,
+                tbl.sessions.c.title,
                 tbl.sessions.c.created_at,
                 tbl.sessions.c.updated_at,
                 tbl.game_states.c.turn_count,
@@ -83,8 +84,10 @@ class AdminQueries:
                 tbl.game_states.c.game_time,
                 tbl.accounts.c.id.label("account_id"),
                 tbl.accounts.c.email.label("account_email"),
+                tbl.settings.c.name.label("setting"),
             )
             .outerjoin(tbl.game_states, tbl.game_states.c.session_id == tbl.sessions.c.id)
+            .outerjoin(tbl.settings, tbl.settings.c.game_state_id == tbl.game_states.c.id)
             .outerjoin(tbl.accounts, tbl.accounts.c.id == tbl.sessions.c.web_player_id)
             .order_by(tbl.sessions.c.updated_at.desc(), tbl.sessions.c.id.desc())
             .limit(limit)
