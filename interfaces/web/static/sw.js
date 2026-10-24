@@ -71,6 +71,9 @@ async function networkFirst(request) {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
+  const url = new URL(request.url);
+  // Leave cross-origin calls (Supabase auth, CDN) to the browser so their real errors surface.
+  if (url.origin !== self.location.origin) return;
   if (isApiOrMutation(request)) {
     event.respondWith(fetch(request).catch(() => offlineJson()));
     return;
