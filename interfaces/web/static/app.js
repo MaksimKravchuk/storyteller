@@ -11,7 +11,11 @@
     authPanel: $("auth-panel"),
     loginForm: $("login-form"),
     loginEmail: $("login-email"),
+    loginPassword: $("login-password"),
     signupBtn: $("signup-btn"),
+    resetPasswordBtn: $("reset-password-btn"),
+    newPasswordForm: $("new-password-form"),
+    newPassword: $("new-password"),
     logoutBtn: $("logout-btn"),
     authStatus: $("auth-status"),
     settingPanel: $("setting-panel"),
@@ -82,6 +86,9 @@
   let currentGameId = null;
   let supabaseClient = null;
   let authRequired = false;
+  // A password-reset email link lands here with type=recovery in the hash
+  // (supabase-js implicit flow); read it before the client consumes the hash.
+  const recoveringPassword = /type=recovery/.test(window.location.hash);
   // Whether players may ask for a painted poster (ADR-0020, operator flag).
   let postersEnabled = false;
   // Object URLs of painted posters on screen; revoked when the library re-renders.
@@ -721,48 +728,97 @@
     if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
   }
 
+  // Resolves true when the app may load stories: auth is off or a session exists.
   async function loadPublicConfig() {
     const response = await fetch("/api/config/public");
-    if (!response.ok) return;
+    if (!response.ok) return true;
     const cfg = await response.json();
     postersEnabled = Boolean(cfg.poster_images_enabled);
     authRequired = Boolean(cfg.beta_auth_required);
-    if (!authRequired) return;
+    if (!authRequired) return true;
     if (els.authPanel) show(els.authPanel);
     const supabaseBrowserKey = cfg.supabase_publishable_key;
     if (!(cfg.supabase_url && supabaseBrowserKey && window.supabase)) {
       setStatus(els.authStatus, "Login is not configured for this deployment yet.");
-      return;
+      return false;
     }
     supabaseClient = window.supabase.createClient(cfg.supabase_url, supabaseBrowserKey);
     const { data } = await supabaseClient.auth.getSession();
-    setSignedIn(Boolean(data && data.session));
+    const signedIn = Boolean(data && data.session);
+    if (signedIn && recoveringPassword) {
+      showNewPasswordForm();
+      return false;
+    }
+    setSignedIn(signedIn);
+    return signedIn;
   }
 
-  async function sendMagicLink(shouldCreateUser) {
-    if (!supabaseClient || !els.loginEmail) return;
-    const email = els.loginEmail.value.trim();
-    if (!email) return;
-    const { error } = await supabaseClient.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: shouldCreateUser,
-        emailRedirectTo: window.location.origin,
-      },
-    });
-    const successMessage = shouldCreateUser
-      ? "Check your email to finish signing up."
-      : "Check your email to log in.";
-    setStatus(els.authStatus, error ? error.message : successMessage, error ? "" : "info");
+  function showNewPasswordForm() {
+    show(els.authPanel);
+    hide(els.loginForm);
+    show(els.newPasswordForm);
+    setStatus(els.authStatus, "Choose a new password.", "info");
+  }
+
+  function onSignedIn() {
+    hide(els.newPasswordForm);
+    setSignedIn(true);
+    setStatus(els.authStatus, "");
+    show(els.loading);
+    loadStories();
+  }
+
+  function finishAuth(error) {
+    if (error) {
+      setStatus(els.authStatus, error.message);
+      return;
+    }
+    onSignedIn();
+  }
+
+  function credentials() {
+    return { email: els.loginEmail.value.trim(), password: els.loginPassword.value };
   }
 
   async function onLogin(event) {
     event.preventDefault();
-    await sendMagicLink(false);
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.auth.signInWithPassword(credentials());
+    finishAuth(error);
   }
 
   async function onSignup() {
-    await sendMagicLink(true);
+    if (!supabaseClient || !els.loginForm.reportValidity()) return;
+    const { data, error } = await supabaseClient.auth.signUp(
+      Object.assign(credentials(), { options: { emailRedirectTo: window.location.origin } }),
+    );
+    if (error || data.session) {
+      finishAuth(error);
+    } else {
+      setStatus(els.authStatus, "Check your email to confirm your account, then log in.", "info");
+    }
+  }
+
+  async function onResetPassword() {
+    if (!supabaseClient) return;
+    const email = els.loginEmail.value.trim();
+    if (!email) {
+      setStatus(els.authStatus, "Enter your email first.");
+      els.loginEmail.focus();
+      return;
+    }
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    const message = error ? error.message : "Check your email for a link to set a new password.";
+    setStatus(els.authStatus, message, error ? "" : "info");
+  }
+
+  async function onSetNewPassword(event) {
+    event.preventDefault();
+    if (!supabaseClient) return;
+    const { error } = await supabaseClient.auth.updateUser({ password: els.newPassword.value });
+    finishAuth(error);
   }
 
   async function onLogout() {
@@ -1406,6 +1462,12 @@
   if (els.signupBtn) {
     els.signupBtn.addEventListener("click", onSignup);
   }
+  if (els.resetPasswordBtn) {
+    els.resetPasswordBtn.addEventListener("click", onResetPassword);
+  }
+  if (els.newPasswordForm) {
+    els.newPasswordForm.addEventListener("submit", onSetNewPassword);
+  }
   if (els.logoutBtn) {
     els.logoutBtn.addEventListener("click", onLogout);
   }
@@ -1414,5 +1476,7 @@
   setOfflineNotice(!navigator.onLine);
   initFoldableSections();
   initPlayScreen();
-  loadPublicConfig().finally(loadStories);
+  loadPublicConfig()
+    .catch(() => true)
+    .then((ready) => (ready ? loadStories() : hide(els.loading)));
 })();

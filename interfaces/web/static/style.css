@@ -341,6 +341,7 @@ h2 {
 textarea,
 input[type="text"],
 input[type="email"],
+input[type="password"],
 select {
   width: 100%;
   margin: 0.45rem 0 0;
@@ -363,6 +364,7 @@ input::placeholder { color: var(--ink-faint); opacity: 0.85; }
 textarea:focus,
 input[type="text"]:focus,
 input[type="email"]:focus,
+input[type="password"]:focus,
 select:focus {
   outline: none;
   border-color: var(--brass-dim);

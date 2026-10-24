@@ -56,12 +56,22 @@
       <h2>Take your seat</h2>
       <form id="login-form">
         <label for="login-email">Email</label>
-        <input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        <input id="login-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+        <label for="login-password">Password</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" minlength="6" required />
         <div class="auth-actions">
           <button type="submit" id="login-btn" class="btn-primary">Log in</button>
           <button type="button" id="signup-btn" class="btn-secondary">Sign up</button>
+          <button type="button" id="reset-password-btn" class="btn-quiet">Forgot password?</button>
         </div>
-        <p class="hint">Both flows send a Supabase magic link. Use the invited email address.</p>
+        <p class="hint">Use the email address you were invited with.</p>
+      </form>
+      <form id="new-password-form" hidden>
+        <label for="new-password">New password</label>
+        <input id="new-password" name="new-password" type="password" autocomplete="new-password" minlength="6" required />
+        <div class="auth-actions">
+          <button type="submit" class="btn-primary">Save password</button>
+        </div>
       </form>
       <p id="auth-status" class="status"></p>
     </section>

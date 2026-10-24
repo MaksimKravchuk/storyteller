@@ -94,6 +94,7 @@ Consequences / guardrails:
 - Keep all Supabase URLs/keys in environment variables; never commit secrets.
 - Gate beta play behind invited/allowlisted accounts.
 - Max may still override the provider before implementation starts.
+- Login method is Supabase email + password with Supabase-owned reset (replaced magic links). Admin dashboard access is the `accounts.is_admin` role on the same Supabase session; there is no shared admin token. See `docs/decisions/0021-admin-role-gate-and-password-login.md`.
 
 Verification:
 

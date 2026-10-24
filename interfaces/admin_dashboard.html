@@ -230,20 +230,36 @@
   .inv-chip { display: inline-block; background: #453015; color: #ffb347; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin: 2px; }
   .view-link { color: #7c83ff; cursor: pointer; text-decoration: underline; }
   .view-link:hover { color: #aab0ff; }
-  .token-wrap { padding: 10px 12px; border-bottom: 1px solid #0f3460; font-size: 12px; }
-  .token-wrap label { display: block; color: #999; margin-bottom: 5px; }
-  .token-wrap input { width: 100%; padding: 7px 9px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 12px; }
-  .token-help { color: #999; margin: 8px 0; line-height: 1.35; }
+  .account-wrap { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #0f3460; font-size: 12px; color: #999; }
+  .login-overlay { position: fixed; inset: 0; background: #1a1a2e; display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .login-overlay[hidden], .account-wrap[hidden] { display: none; }
+  .login-card { width: 340px; background: #16213e; border: 1px solid #0f3460; border-radius: 8px; padding: 24px; }
+  .login-card h2 { color: #e94560; font-size: 18px; margin-bottom: 16px; }
+  .login-card label { display: block; color: #999; font-size: 12px; margin: 12px 0 5px; }
+  .login-card input { width: 100%; padding: 8px 10px; background: #0f1a30; color: #e0e0e0; border: 1px solid #0f3460; border-radius: 4px; font-size: 14px; }
+  .login-card button { width: 100%; margin-top: 18px; padding: 9px; background: #e94560; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; }
+  .login-status { color: #ffb347; font-size: 12px; margin-top: 12px; min-height: 1em; }
 </style>
 </head>
 <body>
 
+<div id="login-overlay" class="login-overlay" hidden>
+  <form class="login-card" onsubmit="onAdminLogin(event)">
+    <h2>Storyteller Admin</h2>
+    <label for="login-email">Email</label>
+    <input id="login-email" type="email" autocomplete="email" required>
+    <label for="login-password">Password</label>
+    <input id="login-password" type="password" autocomplete="current-password" required>
+    <button type="submit">Log in</button>
+    <div id="login-status" class="login-status" role="status"></div>
+  </form>
+</div>
+
 <div class="sidebar">
   <h2>Storyteller</h2>
-  <div class="token-wrap">
-    <label for="admin-token-input">Admin API token</label>
-    <input id="admin-token-input" type="password" placeholder="Bearer token" oninput="saveAdminToken(this.value)">
-    <div class="token-help">Saved locally. Leave blank when ADMIN_TOKEN is not configured.</div>
+  <div id="account-wrap" class="account-wrap" hidden>
+    <span id="account-email"></span>
+    <button class="copy-btn" type="button" onclick="onAdminLogout()">Log out</button>
   </div>
   <div class="sidebar-nav">
     <div id="nav-sessions" class="nav-link active" onclick="showView('sessions')">Sessions</div>
@@ -273,6 +289,7 @@
   <div class="placeholder">Select a session to inspect</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const API = '';
 let _settingsCatalog = [];
@@ -285,23 +302,70 @@ let currentNpcTab = 'state';
 let searchDebounceTimer = null;
 let userSearchDebounceTimer = null;
 const SEARCH_DEBOUNCE_MS = 250;
-const ADMIN_TOKEN_KEY = 'storyteller.adminToken';
+let supabaseClient = null;
 
-function getAdminToken() {
-  return localStorage.getItem(ADMIN_TOKEN_KEY) || '';
+// Returns true when the dashboard may load: auth is off (local dev) or a session exists.
+async function initAuth() {
+  const cfg = await (await fetch(API + '/config/public')).json();
+  if (!cfg.beta_auth_required) return true;
+  if (!(cfg.supabase_url && cfg.supabase_publishable_key && window.supabase)) {
+    showLogin('Login is not configured for this deployment.');
+    return false;
+  }
+  supabaseClient = window.supabase.createClient(cfg.supabase_url, cfg.supabase_publishable_key);
+  const { data } = await supabaseClient.auth.getSession();
+  if (!data.session) {
+    showLogin('');
+    return false;
+  }
+  showAccount(data.session.user.email);
+  return true;
 }
 
-function saveAdminToken(token) {
-  const value = (token || '').trim();
-  if (value) localStorage.setItem(ADMIN_TOKEN_KEY, value);
-  else localStorage.removeItem(ADMIN_TOKEN_KEY);
+function showLogin(message) {
+  document.getElementById('login-overlay').hidden = false;
+  document.getElementById('login-status').textContent = message;
 }
 
-function authHeaders(extra) {
+function showAccount(email) {
+  document.getElementById('account-email').textContent = email || '';
+  document.getElementById('account-wrap').hidden = false;
+}
+
+async function onAdminLogin(event) {
+  event.preventDefault();
+  if (!supabaseClient) return;
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    showLogin(error.message);
+    return;
+  }
+  location.reload();
+}
+
+async function onAdminLogout() {
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  location.reload();
+}
+
+async function authHeaders(extra) {
   const headers = Object.assign({}, extra || {});
-  const token = getAdminToken();
-  if (token) headers.Authorization = 'Bearer ' + token;
+  if (!supabaseClient) return headers;
+  const { data } = await supabaseClient.auth.getSession();
+  if (data.session) headers.Authorization = 'Bearer ' + data.session.access_token;
   return headers;
+}
+
+async function downloadFeedbackCsv() {
+  const res = await fetch(API + '/api/admin/beta/feedback.csv', { headers: await authHeaders() });
+  if (!res.ok) return alert(`Export failed: HTTP ${res.status}`);
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(await res.blob());
+  link.download = 'beta-feedback.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 function currentSearchTerm() {
@@ -332,20 +396,11 @@ function badgeClass(state) {
 
 async function fetchJSON(url, options) {
   const opts = Object.assign({}, options || {});
-  opts.headers = authHeaders(opts.headers);
+  opts.headers = await authHeaders(opts.headers);
   const res = await fetch(API + url, opts);
   const data = await res.json();
-  if (res.status === 401) {
-    const token = prompt('Admin token required. Paste ADMIN_TOKEN:');
-    if (token) {
-      saveAdminToken(token);
-      opts.headers = authHeaders(options?.headers);
-      const retry = await fetch(API + url, opts);
-      const retryData = await retry.json();
-      if (!retry.ok) throw new Error(retryData.error || `HTTP ${retry.status}`);
-      return retryData;
-    }
-  }
+  if (res.status === 401) showLogin('Your session has expired. Please log in again.');
+  if (res.status === 403) showLogin('This account does not have the admin role.');
   if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
 }
@@ -1647,7 +1702,7 @@ async function renderFeedbackView() {
   try {
     const data = await fetchJSON('/api/admin/beta/feedback');
     const rows = data.feedback || [];
-    const exportLink = '<p><a href="/api/admin/beta/feedback.csv">Export CSV</a></p>';
+    const exportLink = '<p><a href="#" onclick="downloadFeedbackCsv(); return false;">Export CSV</a></p>';
     if (!rows.length) {
       main.innerHTML = `<div class="card"><h3>Beta Feedback</h3>${exportLink}<div class="empty">No feedback yet.</div></div>`;
       return;
@@ -2007,10 +2062,12 @@ async function saveModel(role) {
 }
 
 // Auto-refresh session list every 5s (preserving the active search)
-const adminTokenInput = document.getElementById('admin-token-input');
-if (adminTokenInput) adminTokenInput.value = getAdminToken();
-loadSessions();
-setInterval(() => { if (currentView === 'sessions') loadSessions(currentSearchTerm()); }, 5000);
+function startDashboard() {
+  loadSessions();
+  setInterval(() => { if (currentView === 'sessions') loadSessions(currentSearchTerm()); }, 5000);
+}
+
+initAuth().then(ready => { if (ready) startDashboard(); });
 </script>
 </body>
 </html>

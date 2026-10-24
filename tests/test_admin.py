@@ -9,6 +9,7 @@ import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
+from config import Config
 from interfaces.admin import AdminServer
 
 _API_SESSIONS = "/api/sessions"
@@ -21,15 +22,15 @@ pytestmark = [
 ]
 
 
-def _make_app(token=None) -> web.Application:
-    return AdminServer(MagicMock(), MagicMock(), port=0, token=token)._app
+def _make_app(cfg=None) -> web.Application:
+    return AdminServer(MagicMock(), cfg or MagicMock(), port=0)._app
 
 
 @allure.story("No-auth mode")
-@allure.title("Admin API requests pass through the auth middleware when no token is configured")
+@allure.title("Admin API requests pass through the auth middleware when beta auth is disabled")
 @pytest.mark.asyncio
 async def test_middleware_no_token_allows_api() -> None:
-    """Without a token configured, all API requests pass through."""
+    """Without beta auth (local dev), all API requests pass through."""
     async with TestClient(TestServer(_make_app())) as client:
         mock_repo = AsyncMock()
         mock_repo.admin.list_sessions.return_value = []
@@ -44,10 +45,10 @@ async def test_middleware_no_token_allows_api() -> None:
 
 
 @allure.story("No-auth mode")
-@allure.title("Non-API dashboard routes bypass the token check even when a token is configured")
+@allure.title("Non-API dashboard routes bypass the admin check even when beta auth is enabled")
 @pytest.mark.asyncio
 async def test_middleware_does_not_block_dashboard() -> None:
-    """Non-/api/ routes are not subject to token check."""
-    async with TestClient(TestServer(_make_app(token="secret"))) as client:
+    """Non-/api/ routes are not subject to the admin check."""
+    async with TestClient(TestServer(_make_app(Config(beta_auth_required=True)))) as client:
         resp = await client.get("/")
         assert resp.status not in {_HTTP_UNAUTHORIZED, 403}

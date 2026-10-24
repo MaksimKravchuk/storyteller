@@ -25,7 +25,7 @@ _API_MODELS = "/api/settings/models"
 
 def _make_app_with_cfg(cfg: MagicMock) -> web.Application:
     """Build an AdminServer app bound to a specific Config mock."""
-    return AdminServer(MagicMock(), cfg, port=0, token=None)._app
+    return AdminServer(MagicMock(), cfg, port=0)._app
 
 
 def _make_cfg(
