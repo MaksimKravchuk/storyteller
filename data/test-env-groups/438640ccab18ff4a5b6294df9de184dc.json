@@ -1,1 +1,1 @@
-{"id":"438640ccab18ff4a5b6294df9de184dc","fullName":"tests.test_director_opening#test_normal_turn_still_runs_npc_turns","name":"A normal (non-opening) turn still runs NPC autonomous turns","status":"passed","testResultsByEnv":{"default":"34223a3fe2c5cd3bf62656d027a89ec3"}}
+{"id":"438640ccab18ff4a5b6294df9de184dc","fullName":"tests.test_director_opening#test_normal_turn_still_runs_npc_turns","name":"A normal (non-opening) turn still runs NPC autonomous turns","status":"passed","testResultsByEnv":{"default":"a47878a9d4716326587b35d6aa821c17"}}

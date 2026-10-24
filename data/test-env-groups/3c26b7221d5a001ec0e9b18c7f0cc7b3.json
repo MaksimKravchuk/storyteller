@@ -1,0 +1,1 @@
+{"id":"3c26b7221d5a001ec0e9b18c7f0cc7b3","fullName":"tests.test_admin_auth#test_allows_admin","name":"Admin API lets an account with the admin role through","status":"passed","testResultsByEnv":{"default":"b3f25356e14b5623cf4cca53f40e6801"}}

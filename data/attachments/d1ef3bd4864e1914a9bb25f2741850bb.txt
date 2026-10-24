@@ -1,3 +1,0 @@
-2026-10-24 19:43:23.641 | WARNING  | cast.visible_entities:_make_npc_entity:64 - visible_entities._npc_entities: scene uuid=2ef4ae34-e356-497b-a5f9-2f9018d81bfa role=guard missing from game_state.npcs
-2026-10-24 19:43:23.642 | WARNING  | cast.narrator:_resolve_current_location:55 - Narrator._resolve_current_location: location_id=732d18e7-1a68-4741-bbb8-52aed581cf2f not in game_state.locations
-2026-10-24 19:43:25.486 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=Narrator model=gpt-6-luna parent=None | prompt_tokens=591 completion_tokens=31 duration_ms=1844

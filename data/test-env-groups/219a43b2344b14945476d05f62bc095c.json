@@ -1,1 +1,1 @@
-{"id":"219a43b2344b14945476d05f62bc095c","fullName":"tests.test_db_engine.TestStripSslmode#test_preserves_other_params","name":"_strip_sslmode leaves other query parameters like connect_timeout untouched","status":"passed","testResultsByEnv":{"default":"b17576ff4b356323870c1c5050952a42"}}
+{"id":"219a43b2344b14945476d05f62bc095c","fullName":"tests.test_db_engine.TestStripSslmode#test_preserves_other_params","name":"_strip_sslmode leaves other query parameters like connect_timeout untouched","status":"passed","testResultsByEnv":{"default":"bca4bf23ab8d500ce7164d97ae99630a"}}

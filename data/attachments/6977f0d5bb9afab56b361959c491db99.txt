@@ -1,0 +1,10 @@
+[32m2026-10-24 19:46:00.184[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-24 19:46:00.188[0m | [31m[1mERROR   [0m | [36mknowledge.memory[0m | session=[33m-[0m | Per-NPC interaction summary failed (npc=8a49d970-b485-4d80-b37d-8d9b6a42f9d9)
+[33m[1mTraceback (most recent call last):[0m
+> File "[32m/home/runner/work/storyteller/storyteller/knowledge/[0m[32m[1mmemory.py[0m", line [33m306[0m, in [35m_summarize_one[0m
+    [1mresponse[0m [35m[1m=[0m [35m[1mawait[0m [1mself[0m[35m[1m.[0m[1m_llm[0m[35m[1m.[0m[1msend_message[0m[1m([0m
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/unittest/mock.py", line 2253, in _execute_mock_call
+    result = effect(*args, **kwargs)
+  File "[32m/home/runner/work/storyteller/storyteller/tests/[0m[32m[1mtest_summarize_batch_resilience.py[0m", line [33m39[0m, in [35m_fail_summary_on_bad_pair[0m
+    [35m[1mraise[0m [1mRuntimeError[0m[1m([0m[36m"LLM timeout for one NPC"[0m[1m)[0m
+[31m[1mRuntimeError[0m:[1m LLM timeout for one NPC[0m

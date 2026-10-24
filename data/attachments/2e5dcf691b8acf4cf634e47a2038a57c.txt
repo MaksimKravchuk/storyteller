@@ -1,1 +1,0 @@
-[32m2026-10-24 19:42:33.431[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector

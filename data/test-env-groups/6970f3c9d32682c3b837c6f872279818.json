@@ -1,1 +1,1 @@
-{"id":"6970f3c9d32682c3b837c6f872279818","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_unknown_provider","name":"create_llm_client raises ValueError when the provider is unknown","status":"passed","testResultsByEnv":{"default":"72553aac270cfba3a1405b9ffa92204a"}}
+{"id":"6970f3c9d32682c3b837c6f872279818","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_unknown_provider","name":"create_llm_client raises ValueError when the provider is unknown","status":"passed","testResultsByEnv":{"default":"6e818d97bc7a5f8b760aa104d505d31b"}}

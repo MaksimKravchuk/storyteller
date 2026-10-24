@@ -1,0 +1,1 @@
+2026-10-24 19:46:25.937 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=Dramaturge model=gpt-6-luna parent=None | prompt_tokens=808 completion_tokens=58 duration_ms=1396
