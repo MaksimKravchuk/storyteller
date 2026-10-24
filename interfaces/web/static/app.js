@@ -214,10 +214,37 @@
     const div = document.createElement("div");
     div.className = "turn pending";
     div.setAttribute("role", "status");
-    div.innerHTML = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>';
-    div.append("The AI narrator is resolving your action...");
+    div.innerHTML = '<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="pending-label"></span>';
+    div.lastChild.textContent = "The AI narrator is resolving your action...";
     els.log.appendChild(div);
     return div;
+  }
+
+  const STAGE_LABELS = {
+    acting: "The world is answering your action...",
+    narrating: "The narrator is writing...",
+  };
+
+  // Reads a turn's server-sent events, passing each stage/delta to ``onEvent``.
+  // Resolves with the "done" payload; throws on an "error" event or a cut stream.
+  async function readTurnStream(response, onEvent) {
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) throw new Error("Connection lost before the turn finished. Reload to see it.");
+      buffer += value;
+      let end;
+      while ((end = buffer.indexOf("\n\n")) !== -1) {
+        const frame = buffer.slice(0, end);
+        buffer = buffer.slice(end + 2);
+        const name = frame.match(/^event: (.*)$/m)[1];
+        const data = JSON.parse(frame.match(/^data: (.*)$/m)[1]);
+        if (name === "done") return data;
+        if (name === "error") throw new Error(data.detail);
+        onEvent(name, data);
+      }
+    }
   }
 
   function renderInventoryItem(item) {
@@ -1047,11 +1074,13 @@
     selectPane("story");
     let cue = optimisticEcho ? appendTurnHTML("player", escapeHTML(optimisticEcho)) : null;
     const pending = showPending();
+    // The live passage shows streamed prose as plain text until the final HTML replaces it.
+    let live = null;
     scrollToTurn(cue || pending, true);
     setStatus(els.actionStatus, "");
     try {
       const response = await apiFetch(
-        "/api/games/" + encodeURIComponent(gameId) + "/actions",
+        "/api/games/" + encodeURIComponent(gameId) + "/actions/stream",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1062,18 +1091,35 @@
         throw new Error(await parseError(response));
       }
       setOfflineNotice(false);
-      const data = await response.json();
+      const data = await readTurnStream(response, (name, payload) => {
+        if (currentGameId !== gameId) return;
+        if (name === "stage" && STAGE_LABELS[payload.stage]) {
+          pending.querySelector(".pending-label").textContent = STAGE_LABELS[payload.stage];
+        } else if (name === "delta") {
+          if (!live) {
+            live = appendTurnHTML("narrator is-streaming", "");
+            pending.remove();
+          }
+          // shortcut: markdown markers are hidden, not rendered, until the final HTML arrives.
+          live.textContent += payload.text.replace(/\*/g, "");
+        }
+      });
       pending.remove();
       // The player may have opened another story while this turn resolved.
       if (currentGameId !== gameId) return;
-      if (!cue && data.action_html) cue = appendTurnHTML("player", data.action_html);
+      if (!cue && data.action_html) {
+        cue = appendTurnHTML("player", data.action_html);
+        if (live) els.log.insertBefore(cue, live);
+      }
       const passage = appendTurnHTML("narrator", data.narration_html);
-      passage.classList.add("is-arriving");
+      if (live) live.replaceWith(passage);
+      else passage.classList.add("is-arriving");
       renderCharacter(data.character);
       renderWorld(data.world);
       scrollToTurn(cue || passage, true);
     } catch (err) {
       pending.remove();
+      if (live) live.remove();
       if (isNetworkError(err)) setOfflineNotice(true);
       if (currentGameId === gameId) setStatus(els.actionStatus, "Error: " + err.message);
     } finally {

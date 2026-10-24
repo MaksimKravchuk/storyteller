@@ -16,6 +16,7 @@ from cast import (
     visible_entities,
 )
 from cast.base_performer_class import BasePerformer
+from llm import turn_stream
 from cast.schemas.turn_outputs import TurnOutputs
 from prompts.narrator_prompts import get_narrator_prompts
 
@@ -111,6 +112,8 @@ class Narrator(BasePerformer):
     :func:`prompts.locales.resolve_locale`.
     """
 
+    streams_text = True
+
     def __init__(self, *, llm_client: Any, language: str = "English"):
         prompts = get_narrator_prompts(language)
         super().__init__(
@@ -149,17 +152,19 @@ class Narrator(BasePerformer):
 
         raw_parts = self._build_raw_parts(input_data, game_state, context.get("scene_history", []), is_new_scene)
 
-        narrated = await self._send(
-            self._narrate_template.render(
-                **self._build_narration_kwargs(
-                    context.get("player_action", ""),
-                    "\n".join(raw_parts) if raw_parts else self._labels.no_scene_data,
-                    is_new_scene,
-                    input_data,
-                )
-            ),
-            max_tokens=_NARRATION_MAX_TOKENS,
-        )
+        await turn_stream.emit_stage("narrating")
+        with turn_stream.muted(not context.get("stream_live", True)):
+            narrated = await self._send(
+                self._narrate_template.render(
+                    **self._build_narration_kwargs(
+                        context.get("player_action", ""),
+                        "\n".join(raw_parts) if raw_parts else self._labels.no_scene_data,
+                        is_new_scene,
+                        input_data,
+                    )
+                ),
+                max_tokens=_NARRATION_MAX_TOKENS,
+            )
         return narrated.strip()
 
     def _build_raw_parts(

@@ -192,6 +192,44 @@ class OpenAIClient(BaseLLMClient):
             tool_calls=_parse_response_tool_calls(choice),
         )
 
+    async def stream_message(
+        self,
+        messages: list[Message],
+        on_delta: Callable[[str], Awaitable[None]],
+        system_prompt: str = "",
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        """Stream a plain-text completion; only opening the stream is retried, never a half-sent body."""
+        kwargs = self._build_request_kwargs(messages, system_prompt, None, max_tokens, None)
+        kwargs.update(stream=True, stream_options={"include_usage": True})
+        try:
+            stream = await _call_with_retry(lambda: self._client.chat.completions.create(**kwargs))
+        except self._api_status_error as exc:
+            self._log_api_error(exc, kwargs, system_prompt)
+            raise
+        return await self._drain_stream(stream, on_delta)
+
+    async def _drain_stream(self, stream: Any, on_delta: Callable[[str], Awaitable[None]]) -> LLMResponse:
+        """Forward each text chunk to ``on_delta`` and assemble the final response."""
+        parts: list[str] = []
+        usage = None
+        model = self.model
+        async for chunk in stream:
+            model = chunk.model or model
+            usage = chunk.usage or usage
+            text = chunk.choices[0].delta.content if chunk.choices else None
+            if text:
+                parts.append(text)
+                await on_delta(text)
+        return LLMResponse(
+            body="".join(parts),
+            usage={
+                "prompt_tokens": usage.prompt_tokens if usage else 0,
+                "completion_tokens": usage.completion_tokens if usage else 0,
+            },
+            model=model,
+        )
+
     def _build_request_kwargs(
         self,
         messages: list[Message],
