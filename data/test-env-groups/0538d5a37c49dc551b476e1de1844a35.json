@@ -1,1 +1,1 @@
-{"id":"0538d5a37c49dc551b476e1de1844a35","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_strips_plain_fence","name":"_strip_markdown_fence strips plain fences without language tag","status":"passed","testResultsByEnv":{"default":"4f8bc9ac597da1e17f42d6fb24faa216"}}
+{"id":"0538d5a37c49dc551b476e1de1844a35","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_strips_plain_fence","name":"_strip_markdown_fence strips plain fences without language tag","status":"passed","testResultsByEnv":{"default":"0d9d1dd524ff07813897c3bf3985f5c6"}}

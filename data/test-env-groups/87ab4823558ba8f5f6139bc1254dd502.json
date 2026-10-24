@@ -1,1 +1,1 @@
-{"id":"87ab4823558ba8f5f6139bc1254dd502","fullName":"tests.test_data_miner.TestDataMiner#test_default_wikipedia_client","name":"DataMiner creates a default WikipediaClient when none is injected","status":"passed","testResultsByEnv":{"default":"c9ea43e90a774b49361be2a05cfffd9f"}}
+{"id":"87ab4823558ba8f5f6139bc1254dd502","fullName":"tests.test_data_miner.TestDataMiner#test_default_wikipedia_client","name":"DataMiner creates a default WikipediaClient when none is injected","status":"passed","testResultsByEnv":{"default":"b970a5031c2833ccf392cde51d4742a5"}}

@@ -1,0 +1,1 @@
+[32m2026-10-24 23:05:35.454[0m | [33m[1mWARNING [0m | [36mcast._chronicler_goals[0m | session=[33m-[0m | Chronicler GoalDraft skipped: npc '70062302-c836-4fd2-9648-21d4baffc5e0' already carries ACTIVE life_goal

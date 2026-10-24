@@ -1,0 +1,7 @@
+[32m2026-10-24 23:05:36.701[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-24 23:05:36.720[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | start
+[32m2026-10-24 23:05:36.722[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | LLM | agent=Actor model=test parent=None | prompt_tokens=None completion_tokens=None duration_ms=0
+[32m2026-10-24 23:05:36.722[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | done | duration_ms=2
+[32m2026-10-24 23:05:36.724[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | start
+[32m2026-10-24 23:05:36.725[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | LLM | agent=Actor model=test parent=None | prompt_tokens=None completion_tokens=None duration_ms=0
+[32m2026-10-24 23:05:36.725[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | done | duration_ms=0

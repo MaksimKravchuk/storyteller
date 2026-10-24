@@ -1,1 +1,1 @@
-{"id":"b4c6ea6a12dfee4502084cd08d3236dc","fullName":"tests.test_openai_client.TestToStrictSchema#test_caller_schema_is_not_mutated","name":"_to_strict_schema does not mutate the caller's schema dict","status":"passed","testResultsByEnv":{"default":"de6d5b0a816ca5146b0d8b543eebf7c1"}}
+{"id":"b4c6ea6a12dfee4502084cd08d3236dc","fullName":"tests.test_openai_client.TestToStrictSchema#test_caller_schema_is_not_mutated","name":"_to_strict_schema does not mutate the caller's schema dict","status":"passed","testResultsByEnv":{"default":"bd12566dc8c59973568d3920d9ce0598"}}

@@ -1,1 +1,1 @@
-{"id":"897c5ff403a6f9b89a1da620b6462319","fullName":"tests.test_benchmarks_bayes.TestScenarioDelta#test_zero_noise_floor_is_degenerate","name":"a zero noise floor produces a degenerate point-mass verdict","status":"passed","testResultsByEnv":{"default":"1ef9f89caf62297a4ad6cbe09eb15f03"}}
+{"id":"897c5ff403a6f9b89a1da620b6462319","fullName":"tests.test_benchmarks_bayes.TestScenarioDelta#test_zero_noise_floor_is_degenerate","name":"a zero noise floor produces a degenerate point-mass verdict","status":"passed","testResultsByEnv":{"default":"ca0d3656c56bc57f7666f0ceb290f772"}}
