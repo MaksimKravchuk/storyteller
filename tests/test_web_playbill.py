@@ -168,7 +168,7 @@ async def test_start_game_saves_playbill_before_commit(game_state: GameState) ->
     session_id, stored = save.await_args.args
     assert session_id == "sess-1"
     assert stored["place"] == "Forum Romanum"
-    assert calls == ["playbill", "commit"]
+    assert calls == ["commit", "playbill", "commit"]
 
 
 @allure.story(_STORY)

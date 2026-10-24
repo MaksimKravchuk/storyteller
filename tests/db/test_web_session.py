@@ -59,3 +59,17 @@ class TestWebSessionLifecycle:
         latest = await repo.sessions.get_latest_web(player_id)
         assert latest is not None
         assert latest["id"] == newest["id"]
+
+    @allure.story("Web session bootstrap")
+    @allure.title("archive hides a failed-start session so the player's previous game stays current")
+    @pytest.mark.asyncio
+    async def test_archive_hides_failed_start(self, repo: GameRepository) -> None:
+        player_id = _player_id()
+        previous = await repo.sessions.create_web(player_id)
+        failed = await repo.sessions.create_web(player_id)
+
+        await repo.sessions.archive(failed["id"])
+
+        latest = await repo.sessions.get_latest_web(player_id)
+        assert latest is not None
+        assert latest["id"] == previous["id"]

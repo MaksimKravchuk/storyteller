@@ -164,5 +164,6 @@ def _category_scores_from_payload(payload: Any) -> Mapping[str, float]:
     if isinstance(scores, dict):
         return scores
     if hasattr(scores, "model_dump"):
-        return scores.model_dump()
+        # The SDK's Python field names are ``sexual_minors``; the map keys are the wire names.
+        return scores.model_dump(by_alias=True)
     return dict(scores.__dict__)

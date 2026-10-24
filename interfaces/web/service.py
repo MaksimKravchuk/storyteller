@@ -87,6 +87,8 @@ async def _prepare_started_engine(
     session_row = await repo.sessions.create_web(start_request.player_id)
     session_id = session_row["id"]
     engine = await begin_session(repo, cfg, session_id, start_request.language)
+    # Committed before any paid LLM call so a failed start can still log its spend against this session.
+    await repo.commit()
     return session_id, engine
 
 
@@ -109,7 +111,6 @@ async def start_game_for_player(
             ).run()
         except Exception as exc:
             logger.exception("Failed to start web game for player {}", start_request.player_id)
-            await repo.rollback()
             if is_provider_auth_error(exc):
                 raise GameStartUnavailableError("LLM provider credentials rejected game start") from exc
             raise GameStartFailedError("Game start failed at runtime") from exc

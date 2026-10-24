@@ -80,7 +80,11 @@ def _record_llm_call(
     session_id = call_logger.current_session_id.get(None)
     if session_id is None:
         return
-    buf = call_logger.call_log_buffer.get(None) or []
+    buf = call_logger.call_log_buffer.get(None)
+    if buf is None:
+        buf = []
+        call_logger.call_log_buffer.set(buf)
+    # Append in place: tasks spawned by ``asyncio.gather`` share this list through their context copy.
     buf.append(
         {
             "session_id": session_id,
@@ -95,7 +99,6 @@ def _record_llm_call(
             "call_sequence": call_logger.next_sequence(),
         }
     )
-    call_logger.call_log_buffer.set(buf)
 
 
 async def _retry_after_validation_failure(

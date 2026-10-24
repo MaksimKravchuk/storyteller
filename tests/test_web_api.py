@@ -1419,7 +1419,8 @@ async def test_start_game_commits_before_returning_snapshot() -> None:
         await service.start_game_for_player(repo=repo, cfg=MagicMock(), start_request=start_request)
 
     repo.sessions.update.assert_awaited_once_with("sess-1", state="playing", language="English")
-    repo.commit.assert_awaited_once_with()
+    # One commit for the session row (before paid LLM work), one for the playing state.
+    assert repo.commit.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -1480,6 +1481,7 @@ async def test_start_game_for_player_classifies_provider_auth_failure() -> None:
     repo.sessions.create_web = AsyncMock(return_value={"id": "sess-1", "language": "English"})
     repo.sessions.update = AsyncMock()
     repo.rollback = AsyncMock()
+    repo.sessions.archive = AsyncMock()
 
     engine = MagicMock()
     engine.start_game = AsyncMock(side_effect=RuntimeError("invalid_api_key: bad provider key"))
@@ -1498,4 +1500,5 @@ async def test_start_game_for_player_classifies_provider_auth_failure() -> None:
             await service.start_game_for_player(repo=repo, cfg=MagicMock(), start_request=start_request)
 
     repo.rollback.assert_awaited_once()
+    repo.sessions.archive.assert_awaited_once_with("sess-1")
     repo.sessions.update.assert_not_awaited()
