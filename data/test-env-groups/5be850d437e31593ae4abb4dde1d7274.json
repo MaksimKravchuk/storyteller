@@ -1,1 +1,1 @@
-{"id":"5be850d437e31593ae4abb4dde1d7274","fullName":"tests.test_admin_routes_settings_search#test_get_search_masks_secret","name":"GET /api/settings/search never echoes the stored Tavily key back","status":"passed","testResultsByEnv":{"default":"9c8675a430b8dc189220a1141f61464d"}}
+{"id":"5be850d437e31593ae4abb4dde1d7274","fullName":"tests.test_admin_routes_settings_search#test_get_search_masks_secret","name":"GET /api/settings/search never echoes the stored Tavily key back","status":"passed","testResultsByEnv":{"default":"36a5ef27e0ffbf4dc0fda8b1ddf8c6f7"}}

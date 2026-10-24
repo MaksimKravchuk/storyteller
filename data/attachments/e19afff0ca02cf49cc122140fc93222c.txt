@@ -1,2 +1,0 @@
-[32m2026-10-24 19:45:57.945[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-24 19:45:57.947[0m | [33m[1mWARNING [0m | [36mcast.npc_turn[0m | session=[33m-[0m | NPC 07c779eb-24c5-47c6-9bc5-460b268cc7b5 MOVEd away but location_id UUID('732d18e7-1a68-4741-bbb8-52aed581cf2f') is not registered; scene.npcs_present updated but location.npcs_present was not

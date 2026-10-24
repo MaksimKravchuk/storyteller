@@ -1,1 +1,1 @@
-{"id":"5c03a563f684261a4ca4a8869480548c","fullName":"tests.test_models_game.TestSceneNPCInit#test_repr","name":"SceneNPC repr exposes role and uuid=None before init and the UUID afterwards","status":"passed","testResultsByEnv":{"default":"116533af751a4b09095cb2a3c065a671"}}
+{"id":"5c03a563f684261a4ca4a8869480548c","fullName":"tests.test_models_game.TestSceneNPCInit#test_repr","name":"SceneNPC repr exposes role and uuid=None before init and the UUID afterwards","status":"passed","testResultsByEnv":{"default":"53c86efd985dd20da08c94cf44e11422"}}

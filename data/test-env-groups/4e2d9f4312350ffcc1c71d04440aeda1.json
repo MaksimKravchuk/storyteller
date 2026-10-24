@@ -1,1 +1,1 @@
-{"id":"4e2d9f4312350ffcc1c71d04440aeda1","fullName":"tests.test_web_api#test_current_game_hides_unexpected_exception_detail","name":"GET /api/games/current hides unexpected service exceptions from players","status":"passed","testResultsByEnv":{"default":"3870ee3e7fe10325f5c96f96cfecd99f"}}
+{"id":"4e2d9f4312350ffcc1c71d04440aeda1","fullName":"tests.test_web_api#test_current_game_hides_unexpected_exception_detail","name":"GET /api/games/current hides unexpected service exceptions from players","status":"passed","testResultsByEnv":{"default":"6be81cf95af6e618bf3f946d8830256b"}}

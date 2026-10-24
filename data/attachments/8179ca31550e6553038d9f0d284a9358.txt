@@ -1,0 +1,1 @@
+[32m2026-10-24 21:18:48.077[0m | [31m[1mERROR   [0m | [36mcast.npc_turn[0m | session=[33m-[0m | NPC turn failed for Alpha (uuid-a): LLM timeout

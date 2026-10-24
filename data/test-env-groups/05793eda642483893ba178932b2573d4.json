@@ -1,1 +1,1 @@
-{"id":"05793eda642483893ba178932b2573d4","fullName":"tests.test_benchmarks_archive.TestFileStem#test_missing_sha_uses_nosha","name":"file_stem falls back to 'nosha' when the engine_git_sha field is empty","status":"passed","testResultsByEnv":{"default":"15da74a1e0b284535ca79aa985beee04"}}
+{"id":"05793eda642483893ba178932b2573d4","fullName":"tests.test_benchmarks_archive.TestFileStem#test_missing_sha_uses_nosha","name":"file_stem falls back to 'nosha' when the engine_git_sha field is empty","status":"passed","testResultsByEnv":{"default":"ba6348c680ba4b2f933841500b664855"}}

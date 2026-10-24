@@ -1,1 +1,1 @@
-{"id":"6255db20de89317c1d37db4a538a03df","fullName":"tests.test_web_schemas#test_character_input_accepts_empty_payload","name":"CharacterCreationInput accepts a fully-empty payload (anonymous start)","status":"passed","testResultsByEnv":{"default":"13b3b1f3a1f424e5f70b03971e814458"}}
+{"id":"6255db20de89317c1d37db4a538a03df","fullName":"tests.test_web_schemas#test_character_input_accepts_empty_payload","name":"CharacterCreationInput accepts a fully-empty payload (anonymous start)","status":"passed","testResultsByEnv":{"default":"895e2ec4e747c3bb10020bcb1093e8fa"}}

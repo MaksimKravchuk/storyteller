@@ -1,4 +1,0 @@
-2026-10-24 19:46:43.253 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=732d18e7-1a68-4741-bbb8-52aed581cf2f not in game_state.locations
-2026-10-24 19:46:49.020 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=SceneBuilder model=gpt-6-luna parent=None | prompt_tokens=976 completion_tokens=504 duration_ms=5765
-2026-10-24 19:46:49.021 | WARNING  | cast._scene_location:coerce_scene_location_id:35 - _scene_location.coerce_scene_location_id: location_id='roman_forum_market' unparseable, collapsed to sentinel
-2026-10-24 19:46:49.021 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=732d18e7-1a68-4741-bbb8-52aed581cf2f not in game_state.locations

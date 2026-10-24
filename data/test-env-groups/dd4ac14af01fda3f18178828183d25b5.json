@@ -1,1 +1,1 @@
-{"id":"dd4ac14af01fda3f18178828183d25b5","fullName":"tests.test_web_poster_routes#test_route_get_image_missing","name":"GET /api/games/{id}/poster is 404 when the player's story has no illustration","status":"passed","testResultsByEnv":{"default":"68d888e876b828fb7e37d71d90581527"}}
+{"id":"dd4ac14af01fda3f18178828183d25b5","fullName":"tests.test_web_poster_routes#test_route_get_image_missing","name":"GET /api/games/{id}/poster is 404 when the player's story has no illustration","status":"passed","testResultsByEnv":{"default":"dbf1ac3846a51ca351acb5502e87d6a9"}}

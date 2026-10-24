@@ -1,1 +1,1 @@
-{"id":"091a3622d91b8d139c43ed039a3d2507","fullName":"tests.test_admin_routes_detail#test_ai_calls_no_turn_passes_none","name":"/ai-calls without a turn query passes turn_number=None to ai_logs.get","status":"passed","testResultsByEnv":{"default":"a5fcb56a6049d323e2ddfa259b0b9674"}}
+{"id":"091a3622d91b8d139c43ed039a3d2507","fullName":"tests.test_admin_routes_detail#test_ai_calls_no_turn_passes_none","name":"/ai-calls without a turn query passes turn_number=None to ai_logs.get","status":"passed","testResultsByEnv":{"default":"a0bfbb30ba96836e1ed423d0871376e1"}}

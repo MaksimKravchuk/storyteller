@@ -1,1 +1,1 @@
-{"id":"27280ec19d10af4e04b4651d3dfd9d24","fullName":"tests.test_player_gestures#test_item","name":"examine→item resolves a tracked object_states key at the scene location","status":"passed","testResultsByEnv":{"default":"0feb322bf54395b56dc2cb23366098e6"}}
+{"id":"27280ec19d10af4e04b4651d3dfd9d24","fullName":"tests.test_player_gestures#test_item","name":"examine→item resolves a tracked object_states key at the scene location","status":"passed","testResultsByEnv":{"default":"78482809060f9c0ac393be40e72421b0"}}

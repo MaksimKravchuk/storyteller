@@ -1,1 +1,1 @@
-{"id":"aa55ab170d9fa59886e458155987ca56","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_gpt5_4_nano","name":"AI_MODELS.gpt5_4_nano is preconfigured as the OpenAI gpt-5.4-nano model","status":"passed","testResultsByEnv":{"default":"91f4b3b67945066b8eebec575885ebad"}}
+{"id":"aa55ab170d9fa59886e458155987ca56","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_gpt5_4_nano","name":"AI_MODELS.gpt5_4_nano is preconfigured as the OpenAI gpt-5.4-nano model","status":"passed","testResultsByEnv":{"default":"ed4c775e420b32b80c9a789ecd5b3a71"}}

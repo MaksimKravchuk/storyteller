@@ -1,1 +1,1 @@
-{"id":"e78b51a14a33473cc3cfb3e54a088d4b","fullName":"tests.test_emotional_charge.TestNodeChargeBounds#test_valence_bounds_rejected","name":"KnowledgeNode rejects valence outside [-1, 1]","status":"passed","testResultsByEnv":{"default":"741e3b327c66d2a7e7c3fcb4623ccb7a"}}
+{"id":"e78b51a14a33473cc3cfb3e54a088d4b","fullName":"tests.test_emotional_charge.TestNodeChargeBounds#test_valence_bounds_rejected","name":"KnowledgeNode rejects valence outside [-1, 1]","status":"passed","testResultsByEnv":{"default":"1762f6a46419eb99553a3aa882c5105b"}}

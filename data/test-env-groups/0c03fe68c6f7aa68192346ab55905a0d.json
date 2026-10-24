@@ -1,1 +1,1 @@
-{"id":"0c03fe68c6f7aa68192346ab55905a0d","fullName":"tests.test_models.TestLocation#test_defaults","name":"A new Location has its name set and empty npcs_present and points_of_interest lists","status":"passed","testResultsByEnv":{"default":"b8dd4ca0062bb462f21a9e33452ea6ab"}}
+{"id":"0c03fe68c6f7aa68192346ab55905a0d","fullName":"tests.test_models.TestLocation#test_defaults","name":"A new Location has its name set and empty npcs_present and points_of_interest lists","status":"passed","testResultsByEnv":{"default":"07c2d862be31a6b519b61c8737fd30a0"}}

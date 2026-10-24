@@ -1,1 +1,1 @@
-{"id":"71a9791aa8d041ee31d3757721a8d5f5","fullName":"tests.test_models.TestBaseModel#test_unique_uuids","name":"100 StorytellerBase instances produce 100 unique UUIDs","status":"passed","testResultsByEnv":{"default":"77dfa9e3c06f53f2938935bc5f4e5e51"}}
+{"id":"71a9791aa8d041ee31d3757721a8d5f5","fullName":"tests.test_models.TestBaseModel#test_unique_uuids","name":"100 StorytellerBase instances produce 100 unique UUIDs","status":"passed","testResultsByEnv":{"default":"2fa7175934335a1bf3f0b87c28fb457b"}}

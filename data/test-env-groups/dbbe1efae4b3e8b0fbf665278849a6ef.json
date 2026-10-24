@@ -1,1 +1,1 @@
-{"id":"dbbe1efae4b3e8b0fbf665278849a6ef","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_deception_type","name":"Deception is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"a46e95a9b9b9f94dffecc0959cc6b447"}}
+{"id":"dbbe1efae4b3e8b0fbf665278849a6ef","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_deception_type","name":"Deception is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"e24c9815b989f5d4d44a5de69a6debe0"}}

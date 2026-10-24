@@ -1,1 +1,1 @@
-{"id":"dd4bb17138d84e4178f8905260ea38ee","fullName":"tests.test_call_logger.TestAgentStack#test_default_is_empty_list","name":"After reset_buffer the agent_stack context variable defaults to an empty list","status":"passed","testResultsByEnv":{"default":"a04fcd754e87624198a640b8eaaacc39"}}
+{"id":"dd4bb17138d84e4178f8905260ea38ee","fullName":"tests.test_call_logger.TestAgentStack#test_default_is_empty_list","name":"After reset_buffer the agent_stack context variable defaults to an empty list","status":"passed","testResultsByEnv":{"default":"6028bc07cb3ec7c852a849ed22343586"}}

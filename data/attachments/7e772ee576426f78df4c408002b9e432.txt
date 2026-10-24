@@ -1,1 +1,0 @@
-[32m2026-10-24 19:45:59.224[0m | [33m[1mWARNING [0m | [36msafety.factory[0m | session=[33m-[0m | content_safety.threshold_invalid field=violence value='not-a-severity' falling_back_to=HIGH

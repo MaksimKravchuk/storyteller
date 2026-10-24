@@ -1,1 +1,1 @@
-{"id":"029c4442fe40ae126a38af1feb0bbf73","fullName":"tests.test_admin_routes_settings#test_post_set_model_unknown_provider","name":"POST rejects an unknown provider with 400","status":"passed","testResultsByEnv":{"default":"5078f07aaa3972ada87b3f6af48f0a64"}}
+{"id":"029c4442fe40ae126a38af1feb0bbf73","fullName":"tests.test_admin_routes_settings#test_post_set_model_unknown_provider","name":"POST rejects an unknown provider with 400","status":"passed","testResultsByEnv":{"default":"536b9d56c8c3b4902f49d4ba971f275f"}}

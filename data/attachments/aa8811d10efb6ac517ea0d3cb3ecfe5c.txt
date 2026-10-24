@@ -1,2 +1,0 @@
-DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
-INFO     aiohttp.access:web_log.py:214 127.0.0.1 [24/Oct/2026:19:45:43 +0000] "GET /api/sessions/sess-xyz/turn-events?turn=2&npc_id=npc-1&event_type=item_list HTTP/1.1" 200 205 "-" "Python/3.11 aiohttp/3.13.3"

@@ -1,1 +1,1 @@
-{"id":"e5d90229d14e78b35961b9bf65435a4f","fullName":"tests.test_dice_contest.TestRollContestSocialTypes#test_intimidation_contest","name":"Intimidation contests resolve using the generic contest machinery","status":"passed","testResultsByEnv":{"default":"2fc13159361f2b67d9d326c4c250cdbe"}}
+{"id":"e5d90229d14e78b35961b9bf65435a4f","fullName":"tests.test_dice_contest.TestRollContestSocialTypes#test_intimidation_contest","name":"Intimidation contests resolve using the generic contest machinery","status":"passed","testResultsByEnv":{"default":"a57467b4c544c9739a132fd312881151"}}
