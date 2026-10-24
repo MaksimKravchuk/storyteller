@@ -32,7 +32,7 @@ from cast import (
 )
 from cast.director_witness import WitnessedAggression, is_guard_occupation
 from cast.wait_detection import INCAPACITATING_STATES
-from models import game_state as gs_mod
+from models import game_state as gs_mod, scene_action_log as scene_action_log_mod
 
 GameState = gs_mod.GameState
 PlayerUtterance = player_context.PlayerUtterance
@@ -523,6 +523,9 @@ def _optional_turn_clauses(
     scene_history = _format_scene_log_clause(game_state.scene_action_log, game_state.player)
     if scene_history:
         clauses.append(scene_history)
+    replies = _format_turn_replies_clause(game_state.scene_action_log)
+    if replies:
+        clauses.append(replies)
     if peer_actions:
         clauses.append(_format_peer_actions_clause(peer_actions))
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
@@ -583,6 +586,29 @@ def _format_scene_log_clause(scene_action_log: list[Any], player: Any) -> str | 
     tail = scene_action_log[-_MAX_SCENE_LOG_ENTRIES:]
     lines = [_format_scene_log_entry(entry, player) for entry in tail]
     return "THIS SCENE SO FAR:\n{0}".format("\n".join(lines))
+
+
+def _format_turn_replies_clause(scene_action_log: list[Any]) -> str | None:
+    """Render this turn's NPC replies to the player with an anti-echo warning.
+
+    Replies are the NPC ``TALK`` entries logged after the player's latest
+    action. Without this clause every bystander re-answers the question
+    the addressed NPC already answered, and the addressed NPC repeats its
+    own gesture on its autonomous turn.
+    """
+    replies = [
+        "- {0}: {1}".format(entry.actor_name, entry.description[:_MAX_SCENE_LOG_DESC_CHARS])
+        for entry in scene_action_log_mod.this_turn_npc_replies(scene_action_log)
+    ]
+    if not replies:
+        return None
+    return (
+        "Already said to the player this turn:\n"
+        "{0}\n"
+        "Do not repeat, rephrase or confirm these replies or their gestures. "
+        "If the player was not talking to you, speak only to add something genuinely new; "
+        "otherwise go on with your own business."
+    ).format("\n".join(replies))
 
 
 def _format_peer_actions_clause(peer_actions: list[tuple[str, str]]) -> str:

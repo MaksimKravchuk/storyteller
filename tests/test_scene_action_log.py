@@ -12,7 +12,7 @@ from cast import scene_log as scene_log_mod
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState
 from models.npc_card import NPCCard
-from models.scene_action_log import ActorKind, SceneActionEntry
+from models.scene_action_log import ActorKind, SceneActionEntry, this_turn_npc_replies
 from models.setting import Setting
 from tests._uuid_helpers import make_uuid
 
@@ -295,3 +295,33 @@ class TestActorKindInvariant:
         assert player.actor_kind == ActorKind.PLAYER
         assert event.actor_kind == ActorKind.EVENT
         assert SceneActionEntry(**event.model_dump()).actor_kind == ActorKind.EVENT
+
+
+@allure.epic("NPC short-term memory")
+@allure.feature("Scene action log")
+class TestThisTurnNPCReplies:
+    @allure.story("Anti-echo")
+    @allure.title("Only NPC TALK entries after the latest player action are returned, in log order")
+    def test_returns_this_turns_replies_in_order(self):
+        gs = _make_gs()
+        npc = _make_npc()
+        scene_log_mod.append_player_action(gs, "TALK", "Who are you?")
+        scene_log_mod.append_npc_dialogue(gs, npc, "Earlier reply.")
+        scene_log_mod.append_player_action(gs, "TALK", "Where am I?")
+        scene_log_mod.append_npc_dialogue(gs, npc, "First reply.")
+        scene_log_mod.append_npc_action(gs, npc, _FakeNPCAction(npc.uuid, "Marcus", "Shrugs.", "IDLE", None, None))
+        scene_log_mod.append_event(gs, scene_log_mod.WitnessedEvent(event_type="WITNESS", description="A bell."))
+        scene_log_mod.append_npc_dialogue(gs, npc, "Second reply.")
+
+        replies = this_turn_npc_replies(gs.scene_action_log)
+
+        assert [entry.description for entry in replies] == ["First reply.", "Second reply."]
+
+    @allure.story("Anti-echo")
+    @allure.title("A log ending with the player's action has no replies yet")
+    def test_no_replies_after_fresh_player_action(self):
+        gs = _make_gs()
+        scene_log_mod.append_npc_dialogue(gs, _make_npc(), "Old reply.")
+        scene_log_mod.append_player_action(gs, "WAIT", "I wait.")
+
+        assert this_turn_npc_replies(gs.scene_action_log) == []
