@@ -1809,6 +1809,7 @@ function renderNpcMemoryTab(nodes, edges) {
 
 async function renderNpcDetail(el) {
   const data = await fetchJSON(`/api/sessions/${currentSessionId}/npcs/${encodeURIComponent(currentNpcId)}`);
+  if (!el.isConnected) return;  // stale response: the subtab lookup below is by global id
   if (data.error) { el.innerHTML = `<div class="empty">${escapeHtml(data.error)}</div>`; return; }
   const npc = data.npc;
   const nodes = data.memory_nodes || [];
@@ -1828,7 +1829,8 @@ async function renderNpcDetail(el) {
   const content = document.getElementById('npc-subtab-content');
   if (currentNpcTab === 'history') {
     content.innerHTML = LOADING;
-    content.innerHTML = await renderNpcHistoryTab(currentNpcId);
+    const html = await renderNpcHistoryTab(currentNpcId);
+    if (content.isConnected) content.innerHTML = html;
   } else if (currentNpcTab === 'memory') {
     content.innerHTML = renderNpcMemoryTab(nodes, edges);
   } else {
@@ -1841,6 +1843,7 @@ let _knowledgeNodes = [];
 
 async function renderKnowledge(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/knowledge`);
+  if (!el.isConnected) return;  // user navigated away; don't clobber the newer view's state
   _knowledgeNodes = d.nodes || [];
   const edges = d.edges || [];
   el.innerHTML = `<div class="stats">
