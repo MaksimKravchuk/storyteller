@@ -522,19 +522,14 @@ jobs:
           name: allure-results
           path: allure-results
 
-      - name: Load Allure report history
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages
-
+      # Same CLI as the PR ``allure-report`` job; simple-elf/allure-report-action's image lacks xargs.
       - name: Build Allure report
-        uses: simple-elf/allure-report-action@v1.13
-        with:
-          gh_pages: gh-pages
-          allure_history: allure-history
-          allure_results: allure-results
+        run: |
+          set -euo pipefail
+          mapfile -t RESULT_DIRS < <(find allure-results -type f -name '*-result.json' -exec dirname {} \; | sort -u)
+          npx --yes allure@3.12.0 awesome "${RESULT_DIRS[@]}" \
+            --output allure-history \
+            --report-name "Storyteller main"
 
       - name: Publish Allure report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
