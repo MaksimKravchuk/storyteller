@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hmac
-
 from aiohttp import web
 from aiohttp.typedefs import Handler
 from loguru import logger
@@ -19,22 +17,18 @@ from interfaces import (
     admin_routes_feedback,
     admin_routes_settings,
 )
-from interfaces import admin_routes_reliability, admin_routes_settings_search
-
-_HTTP_UNAUTHORIZED = 401
+from interfaces import admin_auth, admin_routes_reliability, admin_routes_settings_search
+from interfaces.web.auth import is_auth_required
 
 
 @web.middleware
 async def _auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
-    """Bearer-token auth middleware for API routes."""
-    token = request.app.get(admin_route_helpers.AUTH_TOKEN_KEY)
-    if token and request.path.startswith("/api/"):
-        auth = request.headers.get("Authorization", "")
-        if not hmac.compare_digest(auth.encode(), "Bearer {0}".format(token).encode()):
-            return admin_route_helpers._json_response(
-                {"error": "Unauthorized"},
-                status=_HTTP_UNAUTHORIZED,
-            )
+    """Gate API routes on a Supabase session whose account has the admin role."""
+    cfg = admin_route_helpers.get_cfg(request)
+    if request.path.startswith("/api/") and is_auth_required(cfg):
+        denial = await admin_auth.admin_denial(request, cfg)
+        if denial is not None:
+            return denial
     return await handler(request)
 
 
@@ -75,12 +69,9 @@ class AdminServer:
         cfg: Config,
         *,
         port: int = 8080,
-        token: str | None = None,
     ):
         self._port = port
         self._app = web.Application(middlewares=[_auth_middleware])
-        if token is not None:
-            self._app[admin_route_helpers.AUTH_TOKEN_KEY] = token
         self._app[admin_route_helpers.DB_FACTORY_KEY] = db_session_factory
         self._app[admin_route_helpers.CFG_KEY] = cfg
         self._setup_routes()
@@ -120,6 +111,7 @@ class AdminServer:
         self._setup_settings_routes()
 
     def _setup_settings_routes(self) -> None:
+        self._app.router.add_get("/config/public", admin_auth.public_config)
         self._app.router.add_get("/api/settings/keys", admin_routes_settings.get_keys)
         self._app.router.add_get("/api/settings/models", admin_routes_settings.get_models)
         self._app.router.add_post("/api/settings/models", admin_routes_settings.set_model)

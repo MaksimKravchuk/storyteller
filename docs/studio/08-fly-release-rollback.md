@@ -32,7 +32,15 @@ Fly app secrets / runtime environment:
 - `DATABASE_URL`
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
-- `ADMIN_TOKEN`
+- `BETA_AUTH_REQUIRED=true` plus the `SUPABASE_*` auth settings — the boot refuses to start on Fly without beta auth, because the admin dashboard is gated by the account admin role (there is no admin token).
+
+Granting the admin role: the account must have logged in to the player UI once, then
+
+```sql
+UPDATE accounts SET is_admin = true WHERE email = 'you@example.com';
+```
+
+Log in to the admin dashboard with the same email and password.
 
 Optional Fly app secrets / runtime environment, depending on enabled providers:
 

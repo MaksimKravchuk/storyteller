@@ -18,7 +18,6 @@ from db.repository import GameRepository
 _HTTP_NOT_FOUND = 404
 _SESSION_ID_PARAM = "id"
 _DASHBOARD_HTML = Path(__file__).parent / "admin_dashboard.html"
-AUTH_TOKEN_KEY: web.AppKey[str] = web.AppKey("storyteller_admin_auth_token", str)
 CFG_KEY: web.AppKey[Config] = web.AppKey("storyteller_admin_cfg", Config)
 DB_FACTORY_KEY: web.AppKey[Any] = web.AppKey("storyteller_admin_db_factory", object)
 

@@ -28,7 +28,7 @@ _API_SEARCH = "/api/settings/search"
 
 
 def _make_app(cfg: Config) -> web.Application:
-    return AdminServer(MagicMock(), cfg, port=0, token=None)._app
+    return AdminServer(MagicMock(), cfg, port=0)._app
 
 
 def _repo_with(stored: dict) -> AsyncMock:

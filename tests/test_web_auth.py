@@ -355,7 +355,7 @@ def test_public_supabase_key_supports_modern_legacy_and_fly_secret_names(
 
 
 @allure.story("Static shell")
-@allure.title("Static UI includes Supabase login/logout controls and auth fetch wiring")
+@allure.title("Static UI includes Supabase email/password login, reset and logout controls")
 def test_static_shell_includes_auth_controls(client: TestClient) -> None:
     index_response = client.get("/")
     script_response = client.get("/static/app.js")
@@ -364,13 +364,18 @@ def test_static_shell_includes_auth_controls(client: TestClient) -> None:
     assert script_response.status_code == _HTTP_OK
     assert 'id="auth-panel"' in index_response.text
     assert 'id="login-email"' in index_response.text
+    assert 'id="login-password"' in index_response.text
+    assert 'id="reset-password-btn"' in index_response.text
+    assert 'id="new-password-form"' in index_response.text
     assert 'id="login-btn"' in index_response.text
     assert 'id="signup-btn"' in index_response.text
     assert 'id="logout-btn"' in index_response.text
     assert "Log in" in index_response.text
     assert "Sign up" in index_response.text
     assert "supabase-js" in index_response.text
-    assert "sendMagicLink(false)" in script_response.text
-    assert "sendMagicLink(true)" in script_response.text
+    assert "auth.signInWithPassword(" in script_response.text
+    assert "auth.signUp(" in script_response.text
+    assert "auth.resetPasswordForEmail(" in script_response.text
+    assert "auth.updateUser(" in script_response.text
     assert "cfg.supabase_publishable_key" in script_response.text
     assert "Authorization" in script_response.text

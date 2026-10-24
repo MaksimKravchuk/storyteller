@@ -10,6 +10,7 @@ from loguru import logger
 from config import load_config
 from db import engine as db_engine
 from interfaces.admin import AdminServer
+from interfaces.web.auth import is_auth_required
 from interfaces.web.runner import build_web_server
 from log_scrubbing import LOGURU_DIAGNOSE_ENABLED, scrub_log_record
 
@@ -81,25 +82,19 @@ async def _run_server(cfg) -> None:
     await web_server.serve()
 
 
-def admin_token() -> str | None:
-    """Return ``ADMIN_TOKEN``; refuse to boot a Fly deploy without one (the admin API would be public)."""
-    token = os.getenv("ADMIN_TOKEN")
-    if not token and os.getenv("FLY_APP_NAME"):
-        sys.exit("ADMIN_TOKEN must be set on Fly: without it the admin API on :8080 is open to anyone.")
-    return token
+def require_admin_auth_on_fly(cfg) -> None:
+    """Refuse to boot a Fly deploy without beta auth: the admin API is gated by the account admin role."""
+    if os.getenv("FLY_APP_NAME") and not is_auth_required(cfg):
+        sys.exit("BETA_AUTH_REQUIRED must be true on Fly: without it the admin API on :8080 is open to anyone.")
 
 
 async def main() -> None:
     cfg = load_config()
+    require_admin_auth_on_fly(cfg)
     engine = db_engine.create_async_engine(os.environ["DATABASE_URL"])
     session_factory = db_engine.create_session_factory(engine)
 
-    admin = AdminServer(
-        session_factory,
-        cfg,
-        port=_ADMIN_PORT,
-        token=admin_token(),
-    )
+    admin = AdminServer(session_factory, cfg, port=_ADMIN_PORT)
     await admin.start()
 
     try:
