@@ -82,6 +82,15 @@ class SessionStore:
         query_result = await self._session.execute(stmt)
         return int(query_result.scalar() or 0)
 
+    async def archive(self, session_id: str) -> None:
+        """Soft-delete a session row by id (e.g. a game start that failed)."""
+        stmt = (
+            update(tbl.sessions)
+            .where(tbl.sessions.c.id == session_id)
+            .values(archived_at=func.clock_timestamp(), updated_at=func.clock_timestamp())
+        )
+        await self._session.execute(stmt)
+
     async def update(
         self,
         session_id: str,

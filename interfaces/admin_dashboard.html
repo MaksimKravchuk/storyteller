@@ -359,9 +359,9 @@ async function loadSessions(search) {
     const idShort = (s.id || '').slice(0, 8);
     return `
     <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="selectSession('${s.id}')">
-      <div class="chat-id">Web <span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
+      <div class="chat-id">Web <span class="badge ${badgeClass(s.state)}">${escapeHtml(s.state)}</span></div>
       <div class="meta"><span class="session-id-short">${idShort}</span> | ${renderOwnerLabel(s)}</div>
-      <div class="meta">${s.language} | Turn ${s.turn_count ?? 0} | ${s.game_time ?? '-'}</div>
+      <div class="meta">${escapeHtml(s.language)} | Turn ${s.turn_count ?? 0} | ${escapeHtml(s.game_time ?? '-')}</div>
     </div>`;
   }).join('');
 }
@@ -594,7 +594,7 @@ async function renderTab() {
     try {
       await renderNpcDetail(content);
     } catch (e) {
-      content.innerHTML = `<div class="empty">Error loading NPC: ${e.message}</div>`;
+      content.innerHTML = `<div class="empty">Error loading NPC: ${escapeHtml(e.message)}</div>`;
     }
     return;
   }
@@ -616,7 +616,7 @@ async function renderTab() {
     else if (currentTab === 'knowledge') await renderKnowledge(content);
     else if (currentTab === 'models') await renderSessionModels(content);
     else if (currentTab === 'agent flow') await renderAgentFlow(content);
-  } catch (e) { content.innerHTML = `<div class="empty">Error loading data: ${e.message}</div>`; }
+  } catch (e) { content.innerHTML = `<div class="empty">Error loading data: ${escapeHtml(e.message)}</div>`; }
 }
 
 async function renderSessionModels(el) {
@@ -1012,34 +1012,34 @@ function switchNpcTab(tab) {
 
 async function renderOverview(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}`);
-  if (d.error) { el.innerHTML = `<div class="empty">${d.error}</div>`; return; }
+  if (d.error) { el.innerHTML = `<div class="empty">${escapeHtml(d.error)}</div>`; return; }
   const s = d.session, gs = d.game_state, p = d.player, st = d.setting;
   el.innerHTML = `
     <div class="card"><h3>Session</h3><div class="kv">
       <div class="label">State</div><div><span class="badge ${badgeClass(s.state)}">${s.state}</span></div>
-      <div class="label">Language</div><div>${s.language}</div>
+      <div class="label">Language</div><div>${escapeHtml(s.language)}</div>
       <div class="label">Created</div><div>${new Date(s.created_at).toLocaleString()}</div>
     </div></div>
     ${renderSessionOwnerCard(s)}
     ${gs ? `<div class="card"><h3>Game State</h3><div class="kv">
       <div class="label">Turn</div><div>${gs.turn_count}</div>
       <div class="label">Game Clock</div><div>${gs.game_clock.toFixed(1)}h</div>
-      <div class="label">Time of Day</div><div>${gs.game_time}</div>
+      <div class="label">Time of Day</div><div>${escapeHtml(gs.game_time)}</div>
       <div class="label">Locations</div><div>${d.location_count}</div>
       <div class="label">NPCs</div><div>${d.npc_count}</div>
       <div class="label">Knowledge</div><div>${d.knowledge_node_count} nodes</div>
       <div class="label">Events</div><div>${d.event_count}</div>
     </div></div>` : '<div class="empty">No active game</div>'}
     ${st ? `<div class="card"><h3>Setting</h3><div class="kv">
-      <div class="label">Name</div><div>${st.name}</div>
-      <div class="label">Period</div><div>${st.time_period}</div>
-      <div class="label">Region</div><div>${st.region}</div>
-      <div class="label">Summary</div><div>${st.summary}</div>
+      <div class="label">Name</div><div>${escapeHtml(st.name)}</div>
+      <div class="label">Period</div><div>${escapeHtml(st.time_period)}</div>
+      <div class="label">Region</div><div>${escapeHtml(st.region)}</div>
+      <div class="label">Summary</div><div>${escapeHtml(st.summary)}</div>
     </div></div>` : ''}
     ${p ? `<div class="card"><h3>Player</h3><div class="kv">
-      <div class="label">Name</div><div>${p.name}</div>
-      <div class="label">Inventory</div><div>${(p.inventory||[]).join(', ') || 'empty'}</div>
-      <div class="label">Appearance</div><div>${p.appearance || '-'}</div>
+      <div class="label">Name</div><div>${escapeHtml(p.name)}</div>
+      <div class="label">Inventory</div><div>${(p.inventory||[]).map(escapeHtml).join(', ') || 'empty'}</div>
+      <div class="label">Appearance</div><div>${escapeHtml(p.appearance || '-')}</div>
     </div></div>` : ''}`;
 }
 
@@ -1068,14 +1068,14 @@ async function renderLocations(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/locations`);
   if (!d.locations.length) { el.innerHTML = '<div class="empty">No locations</div>'; return; }
   el.innerHTML = `<table><tr><th>Name</th><th>Type</th><th>NPCs Present</th><th>Tags</th></tr>
-    ${d.locations.map(l => `<tr><td>${l.name}</td><td>${l.location_type}</td><td>${(l.npcs_present||[]).length}</td><td>${(l.tags||[]).join(', ')}</td></tr>`).join('')}</table>`;
+    ${d.locations.map(l => `<tr><td>${escapeHtml(l.name)}</td><td>${escapeHtml(l.location_type)}</td><td>${(l.npcs_present||[]).length}</td><td>${(l.tags||[]).map(escapeHtml).join(', ')}</td></tr>`).join('')}</table>`;
 }
 
 async function renderEvents(el) {
   const d = await fetchJSON(`/api/sessions/${currentSessionId}/events`);
   if (!d.events.length) { el.innerHTML = '<div class="empty">No events</div>'; return; }
   el.innerHTML = `<table><tr><th>Name</th><th>Status</th><th>Scheduled</th><th>Completes</th><th>Scope</th></tr>
-    ${d.events.map(e => `<tr><td>${e.name}</td><td><span class="badge ${e.status === 'pending' ? 'badge-awaiting' : e.status === 'completed' ? 'badge-playing' : 'badge-idle'}">${e.status}</span></td><td>${e.scheduled_at.toFixed(1)}h</td><td>${e.completes_at.toFixed(1)}h</td><td>${e.scope}</td></tr>`).join('')}</table>`;
+    ${d.events.map(e => `<tr><td>${escapeHtml(e.name)}</td><td><span class="badge ${e.status === 'pending' ? 'badge-awaiting' : e.status === 'completed' ? 'badge-playing' : 'badge-idle'}">${e.status}</span></td><td>${e.scheduled_at.toFixed(1)}h</td><td>${e.completes_at.toFixed(1)}h</td><td>${escapeHtml(e.scope)}</td></tr>`).join('')}</table>`;
 }
 
 function escapeHtml(s) {

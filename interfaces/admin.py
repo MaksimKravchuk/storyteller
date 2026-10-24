@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hmac
+
 from aiohttp import web
 from aiohttp.typedefs import Handler
 from loguru import logger
@@ -28,7 +30,7 @@ async def _auth_middleware(request: web.Request, handler: Handler) -> web.Stream
     token = request.app.get(admin_route_helpers.AUTH_TOKEN_KEY)
     if token and request.path.startswith("/api/"):
         auth = request.headers.get("Authorization", "")
-        if auth != "Bearer {0}".format(token):
+        if not hmac.compare_digest(auth.encode(), "Bearer {0}".format(token).encode()):
             return admin_route_helpers._json_response(
                 {"error": "Unauthorized"},
                 status=_HTTP_UNAUTHORIZED,

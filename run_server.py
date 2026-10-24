@@ -81,6 +81,14 @@ async def _run_server(cfg) -> None:
     await web_server.serve()
 
 
+def admin_token() -> str | None:
+    """Return ``ADMIN_TOKEN``; refuse to boot a Fly deploy without one (the admin API would be public)."""
+    token = os.getenv("ADMIN_TOKEN")
+    if not token and os.getenv("FLY_APP_NAME"):
+        sys.exit("ADMIN_TOKEN must be set on Fly: without it the admin API on :8080 is open to anyone.")
+    return token
+
+
 async def main() -> None:
     cfg = load_config()
     engine = db_engine.create_async_engine(os.environ["DATABASE_URL"])
@@ -90,7 +98,7 @@ async def main() -> None:
         session_factory,
         cfg,
         port=_ADMIN_PORT,
-        token=os.getenv("ADMIN_TOKEN"),
+        token=admin_token(),
     )
     await admin.start()
 
