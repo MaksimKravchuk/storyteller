@@ -1,1 +1,1 @@
-{"id":"667994924ee57048fe91212dc4de33e3","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_openai_provider","name":"create_llm_client returns an OpenAIClient when the provider is openai","status":"passed","testResultsByEnv":{"default":"615cdf608b8778a1832ac103a45ee0fc"}}
+{"id":"667994924ee57048fe91212dc4de33e3","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_openai_provider","name":"create_llm_client returns an OpenAIClient when the provider is openai","status":"passed","testResultsByEnv":{"default":"5df60e21ebb5e0f9c2ffcaf38681338a"}}

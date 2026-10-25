@@ -1,1 +1,0 @@
-{"id":"6664ed5f0bae1f7a7b7717dba74114e2","fullName":"tests.test_uuid_coerce_helpers.TestCoerceSceneLocationId#test_garbage_string_yields_sentinel","name":"Garbage non-UUID string collapses to the all-zero UUID","status":"passed","testResultsByEnv":{"default":"56ca7e2816e3e9ae166c1fdaa08823b2"}}

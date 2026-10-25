@@ -1,1 +1,1 @@
-{"id":"a2e4edd58491b9537ea4e24afd4e8a7a","fullName":"tests.test_knowledge.TestKnowledgeGraphNodes#test_node_count","name":"graph_serialization.node_count correctly reflects how many nodes are in the graph","status":"passed","testResultsByEnv":{"default":"e6bb6cc43fd8ba9ca93fc015bec74b9a"}}
+{"id":"a2e4edd58491b9537ea4e24afd4e8a7a","fullName":"tests.test_knowledge.TestKnowledgeGraphNodes#test_node_count","name":"graph_serialization.node_count correctly reflects how many nodes are in the graph","status":"passed","testResultsByEnv":{"default":"72beae95450efb8c4256d5e7bf73489d"}}

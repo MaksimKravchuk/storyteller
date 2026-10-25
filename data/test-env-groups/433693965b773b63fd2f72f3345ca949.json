@@ -1,1 +1,1 @@
-{"id":"433693965b773b63fd2f72f3345ca949","fullName":"tests.test_web_playbill#test_build_playbill_unnamed_hero","name":"build_playbill leaves the hero unbilled for a player who kept the default name","status":"passed","testResultsByEnv":{"default":"e3660a0e05054a28fcf5cfdd97f77438"}}
+{"id":"433693965b773b63fd2f72f3345ca949","fullName":"tests.test_web_playbill#test_build_playbill_unnamed_hero","name":"build_playbill leaves the hero unbilled for a player who kept the default name","status":"passed","testResultsByEnv":{"default":"3244b93869a67afc120a73df30116683"}}

@@ -1,1 +1,0 @@
-{"id":"2ded925f32b03e25a0900373a123c293","fullName":"tests.test_uuid_coerce_helpers.TestCoerceSceneLocationId#test_legacy_unknown_yields_sentinel","name":"Legacy 'unknown' sentinel collapses to the all-zero UUID","status":"passed","testResultsByEnv":{"default":"99d30ba33995ef52d46e91f669a101cb"}}

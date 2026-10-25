@@ -1,1 +1,1 @@
-{"id":"689a9f4e15b4bbe2741d9bfbdaa4d03c","fullName":"tests.test_log_scrubbing.TestScrubSecretsPatterns#test_bearer_inline","name":"scrub_secrets redacts a naked ``Bearer <token>`` reference","status":"passed","testResultsByEnv":{"default":"b73e956810a1dbd300aca9c38bd21be7"}}
+{"id":"689a9f4e15b4bbe2741d9bfbdaa4d03c","fullName":"tests.test_log_scrubbing.TestScrubSecretsPatterns#test_bearer_inline","name":"scrub_secrets redacts a naked ``Bearer <token>`` reference","status":"passed","testResultsByEnv":{"default":"c2428e1037dd2226cf411d77d36fc44f"}}

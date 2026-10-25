@@ -1,0 +1,1 @@
+{"id":"897b7a763e2d82b643b70a2f54e8c7ea","fullName":"tests.test_uuid_coerce_helpers.TestResolveSceneLocationId#test_short_key_is_case_insensitive","name":"The short key matches case-insensitively and ignores surrounding whitespace","status":"passed","testResultsByEnv":{"default":"21ab0c5a53bc13f1ed42a200ef0d2da5"}}

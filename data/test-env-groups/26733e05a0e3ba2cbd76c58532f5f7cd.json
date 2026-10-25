@@ -1,1 +1,1 @@
-{"id":"26733e05a0e3ba2cbd76c58532f5f7cd","fullName":"tests.test_image_client#test_generate_without_image_raises","name":"OpenAIImageClient raises when the provider returns no image","status":"passed","testResultsByEnv":{"default":"df116d65678173814c8d242cc375b3dd"}}
+{"id":"26733e05a0e3ba2cbd76c58532f5f7cd","fullName":"tests.test_image_client#test_generate_without_image_raises","name":"OpenAIImageClient raises when the provider returns no image","status":"passed","testResultsByEnv":{"default":"e632c5d233da559080f0b2dcbf517615"}}

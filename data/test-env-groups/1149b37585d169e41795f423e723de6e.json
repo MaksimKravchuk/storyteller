@@ -1,1 +1,1 @@
-{"id":"1149b37585d169e41795f423e723de6e","fullName":"tests.test_npc_ticker.TestGetScheduleFor#test_empty_occupation_falls_back","name":"Empty and None occupations fall back to the always-present schedule","status":"passed","testResultsByEnv":{"default":"3a3c880139b17bce0501c513cdc46895"}}
+{"id":"1149b37585d169e41795f423e723de6e","fullName":"tests.test_npc_ticker.TestGetScheduleFor#test_empty_occupation_falls_back","name":"Empty and None occupations fall back to the always-present schedule","status":"passed","testResultsByEnv":{"default":"9fc561b9612884726ce4d479fea17a22"}}

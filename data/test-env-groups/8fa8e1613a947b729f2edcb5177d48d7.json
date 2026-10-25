@@ -1,0 +1,1 @@
+{"id":"8fa8e1613a947b729f2edcb5177d48d7","fullName":"tests.test_uuid_coerce_helpers.TestResolveSceneLocationId#test_new_key_yields_sentinel","name":"A new snake_case key resolves to the sentinel","status":"passed","testResultsByEnv":{"default":"64d739f032b79941205f5f85f1f61a7c"}}

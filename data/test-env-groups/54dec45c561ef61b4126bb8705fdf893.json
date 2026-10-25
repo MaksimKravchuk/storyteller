@@ -1,1 +1,1 @@
-{"id":"54dec45c561ef61b4126bb8705fdf893","fullName":"tests.test_model_overrides#test_wraps_rows_into_model_configs","name":"DB rows are wrapped into ModelConfig objects with provider and model_id","status":"passed","testResultsByEnv":{"default":"e21bdeeb85611561afe10a70df51b608"}}
+{"id":"54dec45c561ef61b4126bb8705fdf893","fullName":"tests.test_model_overrides#test_wraps_rows_into_model_configs","name":"DB rows are wrapped into ModelConfig objects with provider and model_id","status":"passed","testResultsByEnv":{"default":"97df9b7fb037b4c0fd595c0d6d4fe3e6"}}

@@ -1,1 +1,1 @@
-{"id":"8393804a5ac2df3afa81fd15237fc9af","fullName":"tests.test_rumor_propagation#test_region_scope_also_propagates","name":"Region-scope events also propagate city-locally through the same path","status":"passed","testResultsByEnv":{"default":"accc20370ee071ccd7162905175b4434"}}
+{"id":"8393804a5ac2df3afa81fd15237fc9af","fullName":"tests.test_rumor_propagation#test_region_scope_also_propagates","name":"Region-scope events also propagate city-locally through the same path","status":"passed","testResultsByEnv":{"default":"deae45bdd5838bacef130cfb11cf32b5"}}

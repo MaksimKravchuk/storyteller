@@ -1,1 +1,1 @@
-{"id":"e5fe646a4cfebe45a992ec527f7816cb","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_persuasion_type","name":"Persuasion is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"a8fe84683886c77966ab5d29c883cdc3"}}
+{"id":"e5fe646a4cfebe45a992ec527f7816cb","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_persuasion_type","name":"Persuasion is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"29c1c34a41d8bc7b8c275253ab161fe6"}}

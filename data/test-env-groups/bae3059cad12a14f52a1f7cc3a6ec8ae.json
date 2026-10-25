@@ -1,0 +1,1 @@
+{"id":"bae3059cad12a14f52a1f7cc3a6ec8ae","fullName":"tests.test_uuid_coerce_helpers.TestResolveSceneLocationId#test_unknown_uuid_yields_sentinel","name":"A UUID that is not a known place resolves to the sentinel","status":"passed","testResultsByEnv":{"default":"0c6525b7951a9dea48a1f27bda6b7bc4"}}

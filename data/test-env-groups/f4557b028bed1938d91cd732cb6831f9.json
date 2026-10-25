@@ -1,1 +1,1 @@
-{"id":"f4557b028bed1938d91cd732cb6831f9","fullName":"tests.test_web_auth#test_me_rejects_malformed_bearer_header","name":"GET /api/me returns 401 for a malformed bearer header","status":"passed","testResultsByEnv":{"default":"dc9e23cf93b596f917f7a1e2aea14557"}}
+{"id":"f4557b028bed1938d91cd732cb6831f9","fullName":"tests.test_web_auth#test_me_rejects_malformed_bearer_header","name":"GET /api/me returns 401 for a malformed bearer header","status":"passed","testResultsByEnv":{"default":"ef4e681c4d6679a7ce6faa18cece0f71"}}

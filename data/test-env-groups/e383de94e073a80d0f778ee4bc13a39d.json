@@ -1,1 +1,1 @@
-{"id":"e383de94e073a80d0f778ee4bc13a39d","fullName":"tests.test_beta_web_policy#test_daily_turn_quota_blocks_action_before_resume","name":"Daily turn quota blocks action before engine resume","status":"passed","testResultsByEnv":{"default":"dc69d1c8c3c5093903781a63ba0a8eb5"}}
+{"id":"e383de94e073a80d0f778ee4bc13a39d","fullName":"tests.test_beta_web_policy#test_daily_turn_quota_blocks_action_before_resume","name":"Daily turn quota blocks action before engine resume","status":"passed","testResultsByEnv":{"default":"36bbeba59e25935f8179e419e9b25c75"}}

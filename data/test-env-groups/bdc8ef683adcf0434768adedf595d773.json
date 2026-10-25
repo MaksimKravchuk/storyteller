@@ -1,1 +1,1 @@
-{"id":"bdc8ef683adcf0434768adedf595d773","fullName":"tests.test_npc_ticker_memory_preservation#test_no_memories_means_no_hearsay","name":"Evicting a bartender with no WITNESSED memories creates no hearsay","status":"passed","testResultsByEnv":{"default":"f86f5d589436c825fa28de03d7b54c19"}}
+{"id":"bdc8ef683adcf0434768adedf595d773","fullName":"tests.test_npc_ticker_memory_preservation#test_no_memories_means_no_hearsay","name":"Evicting a bartender with no WITNESSED memories creates no hearsay","status":"passed","testResultsByEnv":{"default":"931fb82fdc284a66f9a3d4cc1f0f612a"}}

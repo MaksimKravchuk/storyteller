@@ -1,1 +1,1 @@
-{"id":"7d8d498a2a953c505e241096f19ead9a","fullName":"tests.test_search_factory#test_factory_unknown_provider_raises","name":"create_search_client raises ValueError for an unknown provider","status":"passed","testResultsByEnv":{"default":"123fb3038f11237a88fcdcefae3b7c5d"}}
+{"id":"7d8d498a2a953c505e241096f19ead9a","fullName":"tests.test_search_factory#test_factory_unknown_provider_raises","name":"create_search_client raises ValueError for an unknown provider","status":"passed","testResultsByEnv":{"default":"570ac3788ad3add77619da7f5e4ac479"}}

@@ -1,1 +1,1 @@
-{"id":"3f42556023df332c16a2f1acbbf123b1","fullName":"tests.test_web_api#test_build_transcript_empty","name":"build_transcript returns an empty list for an empty conversation log","status":"passed","testResultsByEnv":{"default":"ddabddd8222c64f2dd45982b545b9643"}}
+{"id":"3f42556023df332c16a2f1acbbf123b1","fullName":"tests.test_web_api#test_build_transcript_empty","name":"build_transcript returns an empty list for an empty conversation log","status":"passed","testResultsByEnv":{"default":"872b8c4d314c04ae5187915ea7cc29af"}}

@@ -1,1 +1,1 @@
-{"id":"bd5ff7879119a18e4733e0e6a5561745","fullName":"tests.test_npc_ticker.TestNPCScheduleSlot#test_slot_is_frozen","name":"NPCScheduleSlot rejects mutation — frozen dataclass","status":"passed","testResultsByEnv":{"default":"e400df3df761eb87cc565b4db3dfbde4"}}
+{"id":"bd5ff7879119a18e4733e0e6a5561745","fullName":"tests.test_npc_ticker.TestNPCScheduleSlot#test_slot_is_frozen","name":"NPCScheduleSlot rejects mutation — frozen dataclass","status":"passed","testResultsByEnv":{"default":"bb3b805c1a758a8945ec6b62bf503b7e"}}

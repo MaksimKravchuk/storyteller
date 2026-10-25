@@ -1,0 +1,2 @@
+[32m2026-10-25 21:40:27.876[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-25 21:40:27.879[0m | [31m[1mERROR   [0m | [36mcast.npc_generator[0m | session=[33m-[0m | NPCGenerator: scene.location_id is UNKNOWN_SCENE_LOCATION; falling back to player location 732d18e7-1a68-4741-bbb8-52aed581cf2f

@@ -1,0 +1,1 @@
+{"id":"cdc33d60f6715d2a96e7851cf0d82604","fullName":"tests.test_npc_generator.TestNameUniquenessAcrossStory#test_names_from_other_scenes_are_forbidden","name":"NPCGenerator forbids names of NPCs met in other scenes, not only the current one","status":"passed","testResultsByEnv":{"default":"e3c050c77af203bd73841ad5ead28a5c"}}

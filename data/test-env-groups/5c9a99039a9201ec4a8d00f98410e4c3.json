@@ -1,1 +1,0 @@
-{"id":"5c9a99039a9201ec4a8d00f98410e4c3","fullName":"tests.test_npc_turn.TestNPCTurnSceneMutationLocation#test_move_action_removes_npc_from_location","name":"An NPC MOVE also removes the NPC from location.npcs_present","status":"passed","testResultsByEnv":{"default":"60787ec07f940d1ed47685f0097ccfcf"}}

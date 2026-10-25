@@ -1,0 +1,1 @@
+{"id":"48cf34e16a5f97fe48d4bab03aa3ba79","fullName":"tests.test_scene_place.TestPresentResidents#test_unknown_location_and_stale_ids","name":"An unknown or missing location has no residents, and stale NPC ids are skipped","status":"passed","testResultsByEnv":{"default":"cdd75901d2cdeea927d3e4737f905d8f"}}

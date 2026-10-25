@@ -1,1 +1,0 @@
-{"id":"a95bb67d81dd76774aa59af5a9231ba6","fullName":"tests.test_uuid_coerce_helpers.TestCoerceSceneLocationId#test_empty_string_yields_sentinel","name":"Empty input collapses to the all-zero sentinel","status":"passed","testResultsByEnv":{"default":"16eacd44052260311b7edff442f80655"}}

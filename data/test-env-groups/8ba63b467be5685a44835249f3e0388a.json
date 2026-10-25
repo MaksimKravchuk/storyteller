@@ -1,0 +1,1 @@
+{"id":"8ba63b467be5685a44835249f3e0388a","fullName":"tests.test_uuid_coerce_helpers.TestResolveSceneLocationId#test_empty_yields_sentinel","name":"Empty and None input resolve to the sentinel","status":"passed","testResultsByEnv":{"default":"a8a7093324d7500e2cab45ae906cb5a1"}}

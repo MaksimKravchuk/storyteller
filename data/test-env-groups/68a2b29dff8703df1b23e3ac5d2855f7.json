@@ -1,0 +1,1 @@
+{"id":"68a2b29dff8703df1b23e3ac5d2855f7","fullName":"tests.test_scene_place.TestEnterScene#test_move_to_unknown_place_creates_location","name":"Travelling to an unknown place registers a new Location named by the Scene Builder","status":"passed","testResultsByEnv":{"default":"c4a80d67a52d143bcbc2c8dece005325"}}
