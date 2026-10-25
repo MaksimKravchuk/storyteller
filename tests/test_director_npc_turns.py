@@ -181,10 +181,9 @@ class TestDirectorCallsNPCTurns:
 @allure.epic("NPC Interaction")
 @allure.feature("NPC turn integration")
 class TestDirectorThreadsIsAggressive:
-    """KER-21: aggressive plans must propagate the flag to NPCTurnResolver.
+    """Aggressive plans must propagate the flag to NPCTurnResolver.
 
-    The resolver uses ``is_aggressive`` to serialize NPC reactions so each one
-    sees what its peers already did, breaking the template-convergence chorus.
+    The resolver uses ``is_aggressive`` so routine NPCs never sit out visible violence.
     """
 
     @allure.story("Aggressive flag propagation")
