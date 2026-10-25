@@ -1,1 +1,1 @@
-{"id":"0f9fc7ccd3744e20f9f6a1e2b7f46fb8","fullName":"tests.test_dice_contest.TestRollContestFields#test_contest_type_recorded","name":"ContestRoll carries its originating contest type on the result object","status":"passed","testResultsByEnv":{"default":"db978a5a9a3fc03201f2d97ce05ae4de"}}
+{"id":"0f9fc7ccd3744e20f9f6a1e2b7f46fb8","fullName":"tests.test_dice_contest.TestRollContestFields#test_contest_type_recorded","name":"ContestRoll carries its originating contest type on the result object","status":"passed","testResultsByEnv":{"default":"5f423a22df7242c0aaa656de600a511d"}}

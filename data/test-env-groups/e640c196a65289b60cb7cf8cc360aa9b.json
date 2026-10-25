@@ -1,1 +1,1 @@
-{"id":"e640c196a65289b60cb7cf8cc360aa9b","fullName":"tests.test_effect_applier.TestChangeAttributeEffect#test_updates_attribute","name":"CHANGE_ATTRIBUTE updates an NPC's attribute dict in place","status":"passed","testResultsByEnv":{"default":"e82fcb7f64be89751482dc2459cb852d"}}
+{"id":"e640c196a65289b60cb7cf8cc360aa9b","fullName":"tests.test_effect_applier.TestChangeAttributeEffect#test_updates_attribute","name":"CHANGE_ATTRIBUTE updates an NPC's attribute dict in place","status":"passed","testResultsByEnv":{"default":"bee8e255ae9054ec60be919ba41a80d2"}}

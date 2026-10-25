@@ -1,1 +1,1 @@
-{"id":"706bc1bb543def4022837e49ba904fd6","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_plain_wait","name":"The bare word 'wait' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"84e76b9da7b7b2a555f101ee2588339e"}}
+{"id":"706bc1bb543def4022837e49ba904fd6","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_plain_wait","name":"The bare word 'wait' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"3723bd26cd3919cd9d2dd21e308a0f20"}}

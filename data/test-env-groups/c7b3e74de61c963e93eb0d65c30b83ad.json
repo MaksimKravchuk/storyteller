@@ -1,1 +1,1 @@
-{"id":"c7b3e74de61c963e93eb0d65c30b83ad","fullName":"tests.test_npc_ticker.TestGetScheduleFor#test_matching_is_case_insensitive","name":"Known occupations are matched case-insensitively after stripping","status":"passed","testResultsByEnv":{"default":"3ff3b6ff43c7849474fb1b107a345157"}}
+{"id":"c7b3e74de61c963e93eb0d65c30b83ad","fullName":"tests.test_npc_ticker.TestGetScheduleFor#test_matching_is_case_insensitive","name":"Known occupations are matched case-insensitively after stripping","status":"passed","testResultsByEnv":{"default":"e1a93f4283b02e3d85c4658088a75e86"}}

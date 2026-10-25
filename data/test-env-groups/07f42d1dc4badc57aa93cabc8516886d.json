@@ -1,1 +1,1 @@
-{"id":"07f42d1dc4badc57aa93cabc8516886d","fullName":"tests.test_npc_ticker.TestNPCTickerNoOp#test_no_scene_is_no_op","name":"tick() is a no-op when there is no current scene","status":"passed","testResultsByEnv":{"default":"c83af62c4fd99c01c4b86ef3f6b1e55c"}}
+{"id":"07f42d1dc4badc57aa93cabc8516886d","fullName":"tests.test_npc_ticker.TestNPCTickerNoOp#test_no_scene_is_no_op","name":"tick() is a no-op when there is no current scene","status":"passed","testResultsByEnv":{"default":"de74c599899b3731ca072dc2fbc9e593"}}

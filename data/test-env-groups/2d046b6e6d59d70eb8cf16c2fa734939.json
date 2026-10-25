@@ -1,1 +1,1 @@
-{"id":"2d046b6e6d59d70eb8cf16c2fa734939","fullName":"tests.test_web_api#test_get_manifest_serves_installable_metadata","name":"GET /manifest.webmanifest serves installable app metadata","status":"passed","testResultsByEnv":{"default":"4854156533135cb30e34f58cc7fcf501"}}
+{"id":"2d046b6e6d59d70eb8cf16c2fa734939","fullName":"tests.test_web_api#test_get_manifest_serves_installable_metadata","name":"GET /manifest.webmanifest serves installable app metadata","status":"passed","testResultsByEnv":{"default":"b0789b6d80ef68105c3783d591a96d80"}}

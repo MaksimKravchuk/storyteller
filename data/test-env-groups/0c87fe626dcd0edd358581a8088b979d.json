@@ -1,1 +1,1 @@
-{"id":"0c87fe626dcd0edd358581a8088b979d","fullName":"tests.test_web_mature_content#test_preferences_update_requires_auth","name":"PUT /api/me/preferences requires a signed-in account","status":"passed","testResultsByEnv":{"default":"aea9970a2f13cef1d3213c403ce64d0d"}}
+{"id":"0c87fe626dcd0edd358581a8088b979d","fullName":"tests.test_web_mature_content#test_preferences_update_requires_auth","name":"PUT /api/me/preferences requires a signed-in account","status":"passed","testResultsByEnv":{"default":"ba2285e487f976fabef04bc9f20dfcfe"}}

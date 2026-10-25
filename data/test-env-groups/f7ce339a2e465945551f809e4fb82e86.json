@@ -1,1 +1,1 @@
-{"id":"f7ce339a2e465945551f809e4fb82e86","fullName":"tests.test_wikipedia_client#test_get_summary_returns_dict_on_200","name":"get_summary returns title, extract, and description on a 200 response","status":"passed","testResultsByEnv":{"default":"29b9907e018343ff289373887054a4f6"}}
+{"id":"f7ce339a2e465945551f809e4fb82e86","fullName":"tests.test_wikipedia_client#test_get_summary_returns_dict_on_200","name":"get_summary returns title, extract, and description on a 200 response","status":"passed","testResultsByEnv":{"default":"0881a57ba4d8f9c609f7a34d233f8f97"}}

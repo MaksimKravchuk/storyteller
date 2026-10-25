@@ -1,1 +1,1 @@
-{"id":"df6cc50a5cef7be4c01fbd749642b6d6","fullName":"tests.test_search_factory#test_search_result_fields","name":"SearchResult is a frozen three-field dataclass (title, url, snippet)","status":"passed","testResultsByEnv":{"default":"1d3ce097abf1dade147390844c36aa64"}}
+{"id":"df6cc50a5cef7be4c01fbd749642b6d6","fullName":"tests.test_search_factory#test_search_result_fields","name":"SearchResult is a frozen three-field dataclass (title, url, snippet)","status":"passed","testResultsByEnv":{"default":"376571c127d3a8c5a5722bd7822c3122"}}

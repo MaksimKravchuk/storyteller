@@ -1,1 +1,1 @@
-{"id":"b61567f2a2db19b9e333ef4fa48054a8","fullName":"tests.test_openai_client.TestToStrictSchema#test_defaults_are_stripped","name":"_to_strict_schema strips default keys from every nested property","status":"passed","testResultsByEnv":{"default":"be6ccd435f88ebb474c60d3ed0702adb"}}
+{"id":"b61567f2a2db19b9e333ef4fa48054a8","fullName":"tests.test_openai_client.TestToStrictSchema#test_defaults_are_stripped","name":"_to_strict_schema strips default keys from every nested property","status":"passed","testResultsByEnv":{"default":"ec076b53eb6cccb55178cd70e51c936b"}}

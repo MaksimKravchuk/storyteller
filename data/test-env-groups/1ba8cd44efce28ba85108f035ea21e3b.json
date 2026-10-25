@@ -1,1 +1,1 @@
-{"id":"1ba8cd44efce28ba85108f035ea21e3b","fullName":"tests.test_player_gestures#test_npc_introduced","name":"talk→npc resolves an introduced NPC to its gated label, composed per locale","status":"passed","testResultsByEnv":{"default":"a7ff9f0cc94bd7b90f5e18342690bfe8"}}
+{"id":"1ba8cd44efce28ba85108f035ea21e3b","fullName":"tests.test_player_gestures#test_npc_introduced","name":"talk→npc resolves an introduced NPC to its gated label, composed per locale","status":"passed","testResultsByEnv":{"default":"7bb407dfcbc4bdf907d50d0fe3b5f1c6"}}

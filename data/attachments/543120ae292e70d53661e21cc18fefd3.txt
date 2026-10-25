@@ -1,0 +1,2 @@
+[32m2026-10-25 16:45:11.912[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-25 16:45:11.914[0m | [31m[1mERROR   [0m | [36mknowledge.memory[0m | session=[33m-[0m | Summary node 3f5b0377-3f8a-482c-b4f7-4d862d242ee7 created for unregistered NPC 630bbf3d-cbc0-4c92-95cd-c6f97586615d; WITNESSED edge dropped, NPC has no scene memory — NPC registration is out of sync

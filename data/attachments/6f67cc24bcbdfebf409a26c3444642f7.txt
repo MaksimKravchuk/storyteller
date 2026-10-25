@@ -1,0 +1,2 @@
+2026-10-25 16:45:20.097 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=DataMiner model=gpt-6-luna parent=None | prompt_tokens=266 completion_tokens=51 duration_ms=1773
+2026-10-25 16:45:45.499 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=DataMiner model=gpt-6-luna parent=None | prompt_tokens=1040 completion_tokens=2072 duration_ms=25398

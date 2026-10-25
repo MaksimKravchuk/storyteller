@@ -1,1 +1,1 @@
-{"id":"268caa23c9dbef71252d3f5d9284ab34","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_strips_whitespace","name":"_strip_markdown_fence strips leading and trailing whitespace","status":"passed","testResultsByEnv":{"default":"432ef339837c30003b04588b36c47634"}}
+{"id":"268caa23c9dbef71252d3f5d9284ab34","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_strips_whitespace","name":"_strip_markdown_fence strips leading and trailing whitespace","status":"passed","testResultsByEnv":{"default":"5425fcfab54e98edd4ade084a0abc22a"}}

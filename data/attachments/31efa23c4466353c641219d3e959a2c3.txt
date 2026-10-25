@@ -1,4 +1,0 @@
-2026-10-25 12:04:06.865 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=732d18e7-1a68-4741-bbb8-52aed581cf2f not in game_state.locations
-2026-10-25 12:04:13.352 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=SceneBuilder model=gpt-6-luna parent=None | prompt_tokens=982 completion_tokens=431 duration_ms=6486
-2026-10-25 12:04:13.353 | WARNING  | cast._scene_location:coerce_scene_location_id:35 - _scene_location.coerce_scene_location_id: location_id='pharos_lighthouse_summit' unparseable, collapsed to sentinel
-2026-10-25 12:04:13.353 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=732d18e7-1a68-4741-bbb8-52aed581cf2f not in game_state.locations

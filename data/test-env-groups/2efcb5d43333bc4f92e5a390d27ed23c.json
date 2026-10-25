@@ -1,1 +1,1 @@
-{"id":"2efcb5d43333bc4f92e5a390d27ed23c","fullName":"tests.test_world_chronicler.TestChroniclerHelpers#test_summarize_turn_empty","name":"_summarize_turn returns a placeholder when the turn was a no-op","status":"passed","testResultsByEnv":{"default":"8d0564b24e9bd708502ca79a2ac4f83a"}}
+{"id":"2efcb5d43333bc4f92e5a390d27ed23c","fullName":"tests.test_world_chronicler.TestChroniclerHelpers#test_summarize_turn_empty","name":"_summarize_turn returns a placeholder when the turn was a no-op","status":"passed","testResultsByEnv":{"default":"43f865fe3a31083e3ba50bc8d0cf65d4"}}

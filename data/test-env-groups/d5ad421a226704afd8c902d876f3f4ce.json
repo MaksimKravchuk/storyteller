@@ -1,1 +1,1 @@
-{"id":"d5ad421a226704afd8c902d876f3f4ce","fullName":"tests.test_log_scrubbing.TestScrubSecretsPatterns#test_noop","name":"scrub_secrets returns the input unchanged when no secrets are present","status":"passed","testResultsByEnv":{"default":"bd6c1aff8f0f1950e1124190f6c80a7f"}}
+{"id":"d5ad421a226704afd8c902d876f3f4ce","fullName":"tests.test_log_scrubbing.TestScrubSecretsPatterns#test_noop","name":"scrub_secrets returns the input unchanged when no secrets are present","status":"passed","testResultsByEnv":{"default":"7b1f6fc75e5773b589ee764ae811b69f"}}

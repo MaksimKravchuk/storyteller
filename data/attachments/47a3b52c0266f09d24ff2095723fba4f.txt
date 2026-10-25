@@ -1,2 +1,0 @@
-DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
-INFO     aiohttp.access:web_log.py:214 127.0.0.1 [25/Oct/2026:12:03:02 +0000] "GET /api/admin/beta/feedback.csv HTTP/1.1" 200 447 "-" "Python/3.11 aiohttp/3.13.3"

@@ -1,1 +1,1 @@
-{"id":"51b4fc7f25ec95a88de80cda4de2d2d0","fullName":"tests.test_web_auth#test_static_shell_includes_auth_controls","name":"Static UI includes Supabase email/password login, reset and logout controls","status":"passed","testResultsByEnv":{"default":"4b5346b5cbe797dbe2e2911978e32354"}}
+{"id":"51b4fc7f25ec95a88de80cda4de2d2d0","fullName":"tests.test_web_auth#test_static_shell_includes_auth_controls","name":"Static UI includes Supabase email/password login, reset and logout controls","status":"passed","testResultsByEnv":{"default":"f3d56a1e09dc661fcc77b6dfc7107e00"}}

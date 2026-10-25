@@ -1,1 +1,1 @@
-{"id":"981ac2d264276d0902b7dd55a2843511","fullName":"tests.test_models.TestBaseModel#test_uuid_is_uuid4_instance","name":"StorytellerBase generates a uuid.UUID with version 4","status":"passed","testResultsByEnv":{"default":"94d43135f1352203b5b8f75bc2c5d7c3"}}
+{"id":"981ac2d264276d0902b7dd55a2843511","fullName":"tests.test_models.TestBaseModel#test_uuid_is_uuid4_instance","name":"StorytellerBase generates a uuid.UUID with version 4","status":"passed","testResultsByEnv":{"default":"7be8a6e43bb3a5a56c61aae87c44c502"}}

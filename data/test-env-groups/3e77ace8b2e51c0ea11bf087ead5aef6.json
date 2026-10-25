@@ -1,1 +1,1 @@
-{"id":"3e77ace8b2e51c0ea11bf087ead5aef6","fullName":"tests.test_dice_contest.TestContestOutcomeEnum#test_target_resists","name":"TARGET_RESISTS is a recognized contest outcome","status":"passed","testResultsByEnv":{"default":"8256dbe1c580f8e5c5ea2d9af2da60c4"}}
+{"id":"3e77ace8b2e51c0ea11bf087ead5aef6","fullName":"tests.test_dice_contest.TestContestOutcomeEnum#test_target_resists","name":"TARGET_RESISTS is a recognized contest outcome","status":"passed","testResultsByEnv":{"default":"d4549433424c750aefa442f4f3dc2fc3"}}
