@@ -1,1 +1,1 @@
-{"id":"c5b0b4c31e4100a64fe868f5f1b173ae","fullName":"tests.test_admin_routes_detail#test_npc_detail_404_when_missing","name":"/npcs/{npc_id} returns 404 when the NPC row is not found for the session","status":"passed","testResultsByEnv":{"default":"7a8ae7ea51c0a4b895bd512b236f60e9"}}
+{"id":"c5b0b4c31e4100a64fe868f5f1b173ae","fullName":"tests.test_admin_routes_detail#test_npc_detail_404_when_missing","name":"/npcs/{npc_id} returns 404 when the NPC row is not found for the session","status":"passed","testResultsByEnv":{"default":"ef19a897da849d6423401d8f88422904"}}

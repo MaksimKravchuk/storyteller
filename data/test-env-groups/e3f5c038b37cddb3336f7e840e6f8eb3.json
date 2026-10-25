@@ -1,1 +1,1 @@
-{"id":"e3f5c038b37cddb3336f7e840e6f8eb3","fullName":"tests.test_default_player_character#test_template_is_player_character_input","name":"TEMPLATE_CHARACTER is a valid PlayerCharacterInput instance","status":"passed","testResultsByEnv":{"default":"b4df331355a04ecf5d5d0bf35e6f11a0"}}
+{"id":"e3f5c038b37cddb3336f7e840e6f8eb3","fullName":"tests.test_default_player_character#test_template_is_player_character_input","name":"TEMPLATE_CHARACTER is a valid PlayerCharacterInput instance","status":"passed","testResultsByEnv":{"default":"22c3fa40080ff160b47c8afcc7a5a608"}}

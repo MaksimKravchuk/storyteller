@@ -1,1 +1,1 @@
-{"id":"3c2a66607fe946aa8600c85f81de3b7f","fullName":"tests.test_benchmarks_archive.TestResolveGitSha#test_plain_git_dir","name":"resolve_git_sha reads HEAD directly from a plain .git directory","status":"passed","testResultsByEnv":{"default":"e805c7f81486f187618df0a051737fab"}}
+{"id":"3c2a66607fe946aa8600c85f81de3b7f","fullName":"tests.test_benchmarks_archive.TestResolveGitSha#test_plain_git_dir","name":"resolve_git_sha reads HEAD directly from a plain .git directory","status":"passed","testResultsByEnv":{"default":"40a5329c626057b2850053c79be4166e"}}

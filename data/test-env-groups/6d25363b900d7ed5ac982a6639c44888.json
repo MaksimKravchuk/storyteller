@@ -1,1 +1,1 @@
-{"id":"6d25363b900d7ed5ac982a6639c44888","fullName":"tests.test_models.TestLocation#test_remove_npc_not_present_is_noop","name":"Removing an NPC not currently in the Location is a silent no-op","status":"passed","testResultsByEnv":{"default":"da839d2822b9b8f186086688dd40c19a"}}
+{"id":"6d25363b900d7ed5ac982a6639c44888","fullName":"tests.test_models.TestLocation#test_remove_npc_not_present_is_noop","name":"Removing an NPC not currently in the Location is a silent no-op","status":"passed","testResultsByEnv":{"default":"bbf108beb1775f488e5022a19265c245"}}

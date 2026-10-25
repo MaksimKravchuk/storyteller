@@ -1,1 +1,1 @@
-{"id":"4abdad26eb95059f68ebb86d6d51cfca","fullName":"tests.test_benchmarks_bayes_cli.TestBayesReportCommand#test_skips_unpinned","name":"bayes-report skips scenarios with no pinned baseline","status":"passed","testResultsByEnv":{"default":"ab0584b92d2e72d597e9fe415952e4c6"}}
+{"id":"4abdad26eb95059f68ebb86d6d51cfca","fullName":"tests.test_benchmarks_bayes_cli.TestBayesReportCommand#test_skips_unpinned","name":"bayes-report skips scenarios with no pinned baseline","status":"passed","testResultsByEnv":{"default":"a62e1540c8cea67cf99c90928d42a336"}}

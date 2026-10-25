@@ -1,0 +1,2 @@
+[32m2026-10-25 12:03:03.304[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-25 12:03:03.314[0m | [1mINFO    [0m | [36maiohttp.web_log[0m | session=[33m-[0m | 127.0.0.1 [25/Oct/2026:12:03:03 +0000] "GET /api/sessions/sess-xyz/turn-events?turn=2&npc_id=npc-1&event_type=item_list HTTP/1.1" 200 205 "-" "Python/3.11 aiohttp/3.13.3"

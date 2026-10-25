@@ -1,1 +1,1 @@
-{"id":"92f8dc0dc08feb5b87c52b07d6c7cfd2","fullName":"tests.test_web_poster_routes#test_route_get_image","name":"GET /api/games/{id}/poster serves the stored image as an immutable private resource","status":"passed","testResultsByEnv":{"default":"a5d0c8fe2af36571c1a712cade6d9b42"}}
+{"id":"92f8dc0dc08feb5b87c52b07d6c7cfd2","fullName":"tests.test_web_poster_routes#test_route_get_image","name":"GET /api/games/{id}/poster serves the stored image as an immutable private resource","status":"passed","testResultsByEnv":{"default":"aa48eb679f2f97d732b54039a3a50553"}}

@@ -1,3 +1,0 @@
-[32m2026-10-25 10:11:43.378[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 10:11:43.383[0m | [33m[1mWARNING [0m | [36minterfaces.web.errors[0m | session=[33m-[0m | Account-store query failed in auth gate: SQLAlchemyError
-[32m2026-10-25 10:11:43.384[0m | [1mINFO    [0m | [36mhttpx._client[0m | session=[33m-[0m | HTTP Request: POST http://testserver/api/games "HTTP/1.1 503 Service Unavailable"

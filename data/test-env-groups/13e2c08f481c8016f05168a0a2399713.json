@@ -1,1 +1,1 @@
-{"id":"13e2c08f481c8016f05168a0a2399713","fullName":"tests.test_log_scrubbing.TestScrubSecretsPatterns#test_openai_key_pattern","name":"scrub_secrets replaces an ``sk-`` OpenAI-style API key inline","status":"passed","testResultsByEnv":{"default":"85134d5019d937128197265312a6401b"}}
+{"id":"13e2c08f481c8016f05168a0a2399713","fullName":"tests.test_log_scrubbing.TestScrubSecretsPatterns#test_openai_key_pattern","name":"scrub_secrets replaces an ``sk-`` OpenAI-style API key inline","status":"passed","testResultsByEnv":{"default":"cb471ba95e16be1f7a745022411017da"}}

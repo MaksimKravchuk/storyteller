@@ -1,1 +1,1 @@
-{"id":"1420091a07bb98ae29359a07a8692fa4","fullName":"tests.test_web_world#test_builder_handles_empty_state","name":"build_world_view returns an empty world for a fresh GameState","status":"passed","testResultsByEnv":{"default":"862b0552c3e767a97d9796ecd24ad14b"}}
+{"id":"1420091a07bb98ae29359a07a8692fa4","fullName":"tests.test_web_world#test_builder_handles_empty_state","name":"build_world_view returns an empty world for a fresh GameState","status":"passed","testResultsByEnv":{"default":"13315709ad832bc03bb610b3efa6ef8c"}}

@@ -1,1 +1,1 @@
-{"id":"6b91fbf67d11bbabb38b8ff566e77ea1","fullName":"tests.test_known_npcs.TestScanPlayerText#test_no_scene_returns_empty","name":"A game with no current scene returns an empty match set","status":"passed","testResultsByEnv":{"default":"60856ba47f76a9a301c6389fc3e006ce"}}
+{"id":"6b91fbf67d11bbabb38b8ff566e77ea1","fullName":"tests.test_known_npcs.TestScanPlayerText#test_no_scene_returns_empty","name":"A game with no current scene returns an empty match set","status":"passed","testResultsByEnv":{"default":"8d3570725ddd3f0256668c493306d7fb"}}

@@ -1,1 +1,1 @@
-{"id":"bb646adbab0babf75c9d7290b92463af","fullName":"tests.test_actor_goal_coaching.TestGoalCoachingSelection#test_hostile_kinds_get_hostile_bank","name":"Hostile kinds get the combat escalation bank","status":"passed","testResultsByEnv":{"default":"b5e0aa129920195f4938fdc0d4512b36"}}
+{"id":"bb646adbab0babf75c9d7290b92463af","fullName":"tests.test_actor_goal_coaching.TestGoalCoachingSelection#test_hostile_kinds_get_hostile_bank","name":"Hostile kinds get the combat escalation bank","status":"passed","testResultsByEnv":{"default":"4cf8fcba663e539fe5d4f3eaad54dab7"}}

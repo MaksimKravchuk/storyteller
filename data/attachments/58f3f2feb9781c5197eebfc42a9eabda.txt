@@ -1,3 +1,0 @@
-[32m2026-10-25 10:11:41.204[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 10:11:41.208[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | Strict structured outputs unavailable for _JsonPerformer; falling back to prompt-based JSON
-[32m2026-10-25 10:11:41.208[0m | [33m[1mWARNING [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | LLM JSON failed schema validation on attempt 1/3: [{'type': 'int_parsing', 'loc': ('count',), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'not-a-number', 'url': 'https://errors.pydantic.dev/2.12/v/int_parsing'}]

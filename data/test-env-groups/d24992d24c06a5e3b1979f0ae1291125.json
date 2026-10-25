@@ -1,1 +1,1 @@
-{"id":"d24992d24c06a5e3b1979f0ae1291125","fullName":"tests.test_memory_slots.TestKnowledgeNodeSlotDefaults#test_slots_default_to_none","name":"KnowledgeNode defaults all four structured slots to None","status":"passed","testResultsByEnv":{"default":"9a646d82d56579eee5293da0647719f0"}}
+{"id":"d24992d24c06a5e3b1979f0ae1291125","fullName":"tests.test_memory_slots.TestKnowledgeNodeSlotDefaults#test_slots_default_to_none","name":"KnowledgeNode defaults all four structured slots to None","status":"passed","testResultsByEnv":{"default":"8f6c1793addbf0c78da1fa7f7e3a8a53"}}

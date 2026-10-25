@@ -1,0 +1,1 @@
+[32m2026-10-25 12:03:17.599[0m | [33m[1mWARNING [0m | [36mcast._npc_generator_goals[0m | session=[33m-[0m | NPCGenerator: dropping goal of kind 'avoid' for role 'wary trader' (not allowed at creation)
