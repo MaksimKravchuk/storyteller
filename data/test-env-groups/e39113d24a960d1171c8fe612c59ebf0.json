@@ -1,1 +1,1 @@
-{"id":"e39113d24a960d1171c8fe612c59ebf0","fullName":"tests.test_small_coverage_gaps.TestAdminJsonSerial#test_uuid_serialises_to_str","name":"_json_serial converts uuid.UUID to its canonical string form","status":"passed","testResultsByEnv":{"default":"bae1078a141a939372116513dc3d0418"}}
+{"id":"e39113d24a960d1171c8fe612c59ebf0","fullName":"tests.test_small_coverage_gaps.TestAdminJsonSerial#test_uuid_serialises_to_str","name":"_json_serial converts uuid.UUID to its canonical string form","status":"passed","testResultsByEnv":{"default":"331df0202239cf33ad223fbe02b7d5d7"}}

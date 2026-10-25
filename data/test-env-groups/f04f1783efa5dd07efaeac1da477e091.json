@@ -1,1 +1,1 @@
-{"id":"f04f1783efa5dd07efaeac1da477e091","fullName":"tests.test_benchmarks_bayes.TestScenarioDelta#test_masses_partition","name":"the three posterior masses sum to one","status":"passed","testResultsByEnv":{"default":"18c54b6f042c643a5b69d1ebc5c0c96f"}}
+{"id":"f04f1783efa5dd07efaeac1da477e091","fullName":"tests.test_benchmarks_bayes.TestScenarioDelta#test_masses_partition","name":"the three posterior masses sum to one","status":"passed","testResultsByEnv":{"default":"f2ec1ca0874fac70f871b628481b4a31"}}

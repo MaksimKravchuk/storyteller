@@ -1,1 +1,1 @@
-{"id":"0ae3c90eac3cc085885159ee158feaf5","fullName":"tests.test_dice_contest.TestContestOutcomeEnum#test_four_outcomes_total","name":"Exactly four contest outcome categories are defined","status":"passed","testResultsByEnv":{"default":"2213a2eba7c56b99b5c17bd705cf8d88"}}
+{"id":"0ae3c90eac3cc085885159ee158feaf5","fullName":"tests.test_dice_contest.TestContestOutcomeEnum#test_four_outcomes_total","name":"Exactly four contest outcome categories are defined","status":"passed","testResultsByEnv":{"default":"2f3afb4a09ae5f9bca9c33ee844b32b8"}}

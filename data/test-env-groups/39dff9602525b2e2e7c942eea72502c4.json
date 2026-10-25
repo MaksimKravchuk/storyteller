@@ -1,1 +1,1 @@
-{"id":"39dff9602525b2e2e7c942eea72502c4","fullName":"tests.test_npc_generator_goals.TestGoalApplier#test_acquire_kind_accepted","name":"ACQUIRE is a valid generator life goal (standing material ambition)","status":"passed","testResultsByEnv":{"default":"0ea5b8d4f792fcf78016e397eea1b9cb"}}
+{"id":"39dff9602525b2e2e7c942eea72502c4","fullName":"tests.test_npc_generator_goals.TestGoalApplier#test_acquire_kind_accepted","name":"ACQUIRE is a valid generator life goal (standing material ambition)","status":"passed","testResultsByEnv":{"default":"d5fee4d981d3587c2345e86b17700ffb"}}

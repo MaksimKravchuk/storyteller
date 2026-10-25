@@ -1,1 +1,1 @@
-{"id":"c5c48d978f08cf5389503b6fccbb36d8","fullName":"tests.test_hostility.TestBumpHostility#test_high_severity_bumps_by_two","name":"High severity bumps by two","status":"passed","testResultsByEnv":{"default":"8e9dc69d04f5bd8e97a9e186fa080fb5"}}
+{"id":"c5c48d978f08cf5389503b6fccbb36d8","fullName":"tests.test_hostility.TestBumpHostility#test_high_severity_bumps_by_two","name":"High severity bumps by two","status":"passed","testResultsByEnv":{"default":"31c6bfecd09e5d7eb89d931454a8245c"}}

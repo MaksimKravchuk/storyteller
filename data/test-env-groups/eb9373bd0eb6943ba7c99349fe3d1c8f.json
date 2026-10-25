@@ -1,1 +1,1 @@
-{"id":"eb9373bd0eb6943ba7c99349fe3d1c8f","fullName":"tests.test_effect_applier.TestAddKnowledgeEffect#test_defaults_to_local_scope","name":"ADD_KNOWLEDGE defaults to LOCAL scope when 'scope' is omitted","status":"passed","testResultsByEnv":{"default":"8d8eade009c632093926786a390ea07b"}}
+{"id":"eb9373bd0eb6943ba7c99349fe3d1c8f","fullName":"tests.test_effect_applier.TestAddKnowledgeEffect#test_defaults_to_local_scope","name":"ADD_KNOWLEDGE defaults to LOCAL scope when 'scope' is omitted","status":"passed","testResultsByEnv":{"default":"85afc3479108d54f7c37de60ea4b097d"}}

@@ -1,0 +1,1 @@
+{"id":"0c87fe626dcd0edd358581a8088b979d","fullName":"tests.test_web_mature_content#test_preferences_update_requires_auth","name":"PUT /api/me/preferences requires a signed-in account","status":"passed","testResultsByEnv":{"default":"cfe10e2a047c974fb9655aa36a1f87cf"}}

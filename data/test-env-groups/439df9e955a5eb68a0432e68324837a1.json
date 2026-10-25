@@ -1,1 +1,1 @@
-{"id":"439df9e955a5eb68a0432e68324837a1","fullName":"tests.test_narrator_branches.TestTurnOutputsUuidValidation#test_invalid_dialogue_npc_uuid_rejected","name":"DialogueEntry rejects a non-UUID npc_uuid","status":"passed","testResultsByEnv":{"default":"190542dca7dc2818c5c4a1523850adfe"}}
+{"id":"439df9e955a5eb68a0432e68324837a1","fullName":"tests.test_narrator_branches.TestTurnOutputsUuidValidation#test_invalid_dialogue_npc_uuid_rejected","name":"DialogueEntry rejects a non-UUID npc_uuid","status":"passed","testResultsByEnv":{"default":"378d59020473d515a3370b5d62bbdb72"}}

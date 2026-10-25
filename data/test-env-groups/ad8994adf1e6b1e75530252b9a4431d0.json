@@ -1,1 +1,1 @@
-{"id":"ad8994adf1e6b1e75530252b9a4431d0","fullName":"tests.test_web_api#test_current_game_returns_snapshot","name":"GET /api/games/current returns 200 with the snapshot when a game exists","status":"passed","testResultsByEnv":{"default":"cc2962aae934543a8bf17e28111efec9"}}
+{"id":"ad8994adf1e6b1e75530252b9a4431d0","fullName":"tests.test_web_api#test_current_game_returns_snapshot","name":"GET /api/games/current returns 200 with the snapshot when a game exists","status":"passed","testResultsByEnv":{"default":"1f24ecacf30d671b8cb034fd411321bf"}}

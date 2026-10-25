@@ -1,1 +1,1 @@
-{"id":"b5dd74704e7280c84725f45f9c8785b5","fullName":"tests.test_wikipedia_client#test_get_full_article_handles_empty_pages","name":"get_full_article returns an empty string when the query returns no pages","status":"passed","testResultsByEnv":{"default":"ea0533af8894b18be5c0ae20b3e71a42"}}
+{"id":"b5dd74704e7280c84725f45f9c8785b5","fullName":"tests.test_wikipedia_client#test_get_full_article_handles_empty_pages","name":"get_full_article returns an empty string when the query returns no pages","status":"passed","testResultsByEnv":{"default":"bcb8ddb03a3bd0d127288e9ba31b9deb"}}

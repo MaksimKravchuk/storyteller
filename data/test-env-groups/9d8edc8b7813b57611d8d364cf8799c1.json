@@ -1,1 +1,1 @@
-{"id":"9d8edc8b7813b57611d8d364cf8799c1","fullName":"tests.test_benchmarks_judge.TestRunJudge#test_happy_path_returns_vote","name":"run_judge returns a parsed JudgeVote for a well-formed LLM response","status":"passed","testResultsByEnv":{"default":"a460d9dcbd0d88b68b3d3b5d54e520f1"}}
+{"id":"9d8edc8b7813b57611d8d364cf8799c1","fullName":"tests.test_benchmarks_judge.TestRunJudge#test_happy_path_returns_vote","name":"run_judge returns a parsed JudgeVote for a well-formed LLM response","status":"passed","testResultsByEnv":{"default":"88c063f46023a22377f3f59238037ec2"}}

@@ -1,1 +1,1 @@
-{"id":"5aef3a388ea9a37cbd41bbbe9f33b9bf","fullName":"tests.test_admin_beta_invites#test_admin_beta_invites_post_rejects_invalid_email","name":"POST /api/admin/beta/invites rejects invalid email","status":"passed","testResultsByEnv":{"default":"56720ba882b3dcf2c43071528ea21f77"}}
+{"id":"5aef3a388ea9a37cbd41bbbe9f33b9bf","fullName":"tests.test_admin_beta_invites#test_admin_beta_invites_post_rejects_invalid_email","name":"POST /api/admin/beta/invites rejects invalid email","status":"passed","testResultsByEnv":{"default":"e5758515a44db17a373ae29923f4f546"}}

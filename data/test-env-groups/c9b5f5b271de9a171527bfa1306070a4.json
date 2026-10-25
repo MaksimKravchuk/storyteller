@@ -1,1 +1,1 @@
-{"id":"c9b5f5b271de9a171527bfa1306070a4","fullName":"tests.test_web_world#test_builder_resolves_current_location","name":"build_world_view resolves the current location from player.location_id","status":"passed","testResultsByEnv":{"default":"888d9c51227044ff613e0fec77df8763"}}
+{"id":"c9b5f5b271de9a171527bfa1306070a4","fullName":"tests.test_web_world#test_builder_resolves_current_location","name":"build_world_view resolves the current location from player.location_id","status":"passed","testResultsByEnv":{"default":"6f1513ab000da09730622cbe416306f7"}}
