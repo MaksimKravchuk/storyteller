@@ -227,10 +227,13 @@ class DialogueHandler:
         for target in target_names:
             if target.lower() in known:
                 continue
-            # Calling out to someone who lives here brings *them* in, not a namesake.
+            # Calling out to someone who lives here brings *them* in. A name that
+            # belongs to someone elsewhere must not spawn a stranger under it.
             resident = place_residents.resident_named(self._gs, scene.location_id, target)
-            resident_uuid = resident.uuid if resident else None
-            scene.npcs_present.append(SceneNPC(role=target, uuid=resident_uuid))
+            if resident is not None:
+                scene.npcs_present.append(SceneNPC(role=target, uuid=resident.uuid))
+            elif not place_residents.is_known_name(self._gs, target):
+                scene.npcs_present.append(SceneNPC(role=target))
 
     async def init_scene_npcs(
         self,

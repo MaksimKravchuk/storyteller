@@ -38,6 +38,13 @@ def resident_named(game_state: GameState, location_id: UUID | None, name: str) -
     return None
 
 
+def is_known_name(game_state: GameState, name: str) -> bool:
+    """Return True when some NPC anywhere in the story is called *name*."""
+    wanted = name.strip().lower()
+    names = {npc.name.lower() for npc in game_state.npcs.values()}
+    return wanted in names
+
+
 def _residents(game_state: GameState, location_id: UUID | None) -> list[NPCCard]:
     location = game_state.locations.get(location_id) if location_id else None
     if location is None:

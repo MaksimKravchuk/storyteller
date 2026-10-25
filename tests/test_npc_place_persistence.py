@@ -26,6 +26,7 @@ from cast import (
     director_retaliation,
     npc_ticker,
     npc_turn,
+    scene_place,
 )
 from cast._scene_location import UNKNOWN_SCENE_LOCATION
 from knowledge import graph as graph_mod, memory as memory_mod, query as query_mod
@@ -249,3 +250,35 @@ class TestWalkingBackToAnNPC:
         assert world.gs.player.location_id == _LANDING
         assert world.gs.current_scene is not None
         assert _EIRA in {snpc.uuid for snpc in world.gs.current_scene.npcs_present}
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("NPC place persistence")
+class TestResidentWandersOff:
+    @allure.story("Residency")
+    @allure.title("A resident who walks off on their own turn leaves the scene but keeps their place and comes back")
+    def test_autonomous_move_keeps_residency(self) -> None:
+        world = _World()
+
+        npc_turn._apply_scene_mutation(_EIRA, "MOVE", "up the path", world.gs)
+
+        assert world.gs.current_scene is not None
+        assert _EIRA not in {snpc.uuid for snpc in world.gs.current_scene.npcs_present}
+        assert _EIRA in world.gs.locations[_LANDING].npcs_present
+        later = Scene(location_id=_LANDING, description="The landing, later.")
+        scene_place.enter_scene(world.gs, later, allow_new_place=True)
+        assert _EIRA in {snpc.uuid for snpc in later.npcs_present}
+
+    @allure.story("Name targeting")
+    @allure.title("Calling for an NPC who lives elsewhere never spawns a stranger for their name")
+    def test_known_name_elsewhere_spawns_no_stranger(self) -> None:
+        world = _World()
+        path = location_mod.Location(name="Upper path")
+        world.gs.locations[path.uuid] = path
+        world.gs.player.location_id = path.uuid
+        world.gs.current_scene = Scene(location_id=path.uuid, description="A path.")
+        handler = director_dialogue.DialogueHandler(world.gs, world.actors, AsyncMock())
+
+        handler.ensure_targets_in_scene(["Eira"])
+
+        assert world.gs.current_scene.npcs_present == []

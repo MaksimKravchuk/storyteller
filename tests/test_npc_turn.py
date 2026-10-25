@@ -1147,9 +1147,9 @@ class TestNPCActionDataclass:
 @allure.feature("NPC turn resolution")
 class TestNPCTurnSceneMutationLocation:
     @allure.story("Scene mutation")
-    @allure.title("An NPC MOVE also removes the NPC from location.npcs_present")
+    @allure.title("An NPC MOVE leaves the scene but keeps the NPC's home place (ADR-0023)")
     @pytest.mark.asyncio
-    async def test_move_action_removes_npc_from_location(self):
+    async def test_move_action_keeps_npc_residency(self):
         gs = _make_gs()
         npc = _make_npc(_NPC_UUID_A, _MERCHANT)
         gs.npcs[_NPC_UUID_A] = npc
@@ -1170,7 +1170,8 @@ class TestNPCTurnSceneMutationLocation:
 
         await resolver.resolve_npc_turns("Player waited.")
 
-        assert _NPC_UUID_A not in gs.locations[_FORUM].npcs_present
+        assert _NPC_UUID_A not in {snpc.uuid for snpc in scene.npcs_present}
+        assert _NPC_UUID_A in gs.locations[_FORUM].npcs_present
 
     @allure.story("Scene mutation")
     @allure.title("An NPC IDLE action does not remove the NPC from location.npcs_present")

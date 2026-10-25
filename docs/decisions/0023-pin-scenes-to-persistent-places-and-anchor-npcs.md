@@ -32,13 +32,13 @@ One more problem made recall weak even when the right NPC answered. The memory s
 
 **NPCs are anchored to places.**
 
-- A place's residents are its `Location.npcs_present`. An NPC is added when it is registered (`Director._register_new_npc`, using the scene's `location_id` set by `NPCGenerator`) and removed when it dies or leaves (`npc_turn` MOVE).
+- A place's residents are its `Location.npcs_present`. An NPC is added when it is registered (`Director._register_new_npc`, using the scene's `location_id` set by `NPCGenerator`). It is removed when it dies or moves house (`REMOVE_NPC` / `MOVE_NPC` effects). An NPC that walks off on its own autonomous turn (`npc_turn` MOVE) only leaves the current scene. It keeps its home place and is back the next time the place is rebuilt and its schedule has it there. Before, that MOVE also struck the NPC from `npcs_present`, so a resident who followed the player up a path was gone from home for good.
 - When the player arrives, `_place_seating.seat_residents` puts the residents who are there now at the head of `scene.npcs_present`, with their real UUIDs, before any new NPC is generated. "There now" means alive and on shift according to `cast.npc_ticker.get_schedule_for(occupation)` at the current `game_time`.
   - Residents the player has met come first.
   - At most 5 residents are seated.
 - If a Scene Builder role re-describes a resident (the role contains their name, or shares a word of 4 or more letters with their occupation), that role is dropped, so the resident is not duplicated.
 - The prompt tells the Scene Builder not to list residents in `npcs_present`.
-- When the player calls someone by name (`DialogueHandler`) and that name matches a living resident of the place, the resident is brought into the scene. The schedule does not matter here, and no namesake is generated.
+- When the player calls someone by name (`DialogueHandler`) and that name matches a living resident of the place, the resident is brought into the scene. The schedule does not matter here, and no namesake is generated. A name that belongs to an NPC living elsewhere never spawns a new NPC under it.
 
 **NPC names are unique across the whole story.** `NPCGenerator._taken_names` is now every named NPC in `game_state.npcs`, not just the current scene.
 
@@ -98,7 +98,7 @@ What future agents must preserve:
 - **The Scene Builder picks a place from the known-places list.** Keep the `known_places` section and `location_name` in both EN and RU prompts. Keep `place_key` as the only format shown to the LLM, and keep `resolve_scene_location_id` accepting it.
 - **"Walking over to someone" means they are in the current scene.** Do not widen the MOVE skip-rebuild check back to NPCs known anywhere in the story.
 - **Only a MOVE or the first scene may create a `Location`.** Other rebuilds must not move the player to a new place they never travelled to.
-- **Residents live in `Location.npcs_present`.** Add to it on registration and remove on death or departure. Do not add a second residency store.
+- **Residents live in `Location.npcs_present`.** Add to it on registration and remove on death or moving house. An autonomous walk-off leaves the scene, not the home place. Do not add a second residency store.
 - **NPC names stay unique across the story** unless a different, UUID-based disambiguation exists for every name-targeted path.
 - **The summariser prompt must ask for concrete facts and the player's name.** Do not go back to an impression-only summary.
 
