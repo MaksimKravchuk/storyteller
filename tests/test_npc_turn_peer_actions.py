@@ -33,9 +33,6 @@ _GUARD = "Guard"
 _MERCHANT = "Merchant"
 _COOK = "Cook"
 
-_PEER_CLAUSE_MARKER = "Other NPCs in this scene have already reacted"
-_PEER_ECHO_WARNING = "do not echo"
-
 
 def _make_gs() -> GameState:
     kg = KnowledgeGraph()
