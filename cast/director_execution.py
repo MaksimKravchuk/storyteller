@@ -515,10 +515,8 @@ class PlanExecutor:
         the vandalism is committed — the witness broadcast step ran
         earlier inside :meth:`_interact_with_objects`.
 
-        ``is_aggressive`` (KER-21) is forwarded so the resolver can
-        serialize NPC reactions when the player attacks, letting each
-        successive NPC see what its peers just did and diversifying
-        the combat response away from a single template. An aggressive
+        ``is_aggressive`` is forwarded so routine NPCs never sit out
+        visible violence (see :meth:`NPCTurnResolver.resolve_npc_turns`). An aggressive
         turn also bypasses the ``TURN_COUNTING_ACTIONS`` gate (KER-33):
         the router sometimes classifies a punch as ``OTHER`` while
         still flagging it aggressive, and bystanders must react to
