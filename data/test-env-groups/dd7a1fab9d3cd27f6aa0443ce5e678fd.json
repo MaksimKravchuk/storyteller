@@ -1,1 +1,1 @@
-{"id":"dd7a1fab9d3cd27f6aa0443ce5e678fd","fullName":"tests.test_known_npcs.TestScanPlayerText#test_cyrillic_name_matches","name":"A Cyrillic NPC name is matched via Unicode-aware word boundaries","status":"passed","testResultsByEnv":{"default":"02d3bafb324f4e4fa530faebaf659d73"}}
+{"id":"dd7a1fab9d3cd27f6aa0443ce5e678fd","fullName":"tests.test_known_npcs.TestScanPlayerText#test_cyrillic_name_matches","name":"A Cyrillic NPC name is matched via Unicode-aware word boundaries","status":"passed","testResultsByEnv":{"default":"b03a31dd608e56bdc4d44013af5c21aa"}}

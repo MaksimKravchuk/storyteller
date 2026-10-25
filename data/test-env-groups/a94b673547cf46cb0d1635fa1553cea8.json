@@ -1,1 +1,1 @@
-{"id":"a94b673547cf46cb0d1635fa1553cea8","fullName":"tests.test_call_logger.TestResetBuffer#test_clears_call_log_buffer","name":"reset_buffer clears the accumulated call_log_buffer back to an empty list","status":"passed","testResultsByEnv":{"default":"37b048a07d69d6a7a99e317f4d7e8107"}}
+{"id":"a94b673547cf46cb0d1635fa1553cea8","fullName":"tests.test_call_logger.TestResetBuffer#test_clears_call_log_buffer","name":"reset_buffer clears the accumulated call_log_buffer back to an empty list","status":"passed","testResultsByEnv":{"default":"3cf57df0184a49cbe94d4d55d0adbe99"}}

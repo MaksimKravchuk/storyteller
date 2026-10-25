@@ -1,2 +1,0 @@
-[32m2026-10-25 22:19:07.337[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-Wrote 8 cases to /tmp/pytest-of-runner/pytest-0/test_live_output_defaults_to_p0/storyteller-jev-dialogue-results/results_iter0.json

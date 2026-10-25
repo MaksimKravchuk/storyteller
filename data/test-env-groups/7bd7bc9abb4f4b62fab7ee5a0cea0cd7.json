@@ -1,1 +1,1 @@
-{"id":"7bd7bc9abb4f4b62fab7ee5a0cea0cd7","fullName":"tests.test_apply_contest_outcome.TestCommitOutcome#test_mood_commit_writes_current_mood","name":"commit_outcome with MOOD kind writes current_mood","status":"passed","testResultsByEnv":{"default":"d8b7537c0f051a31024b9ddefb81ce90"}}
+{"id":"7bd7bc9abb4f4b62fab7ee5a0cea0cd7","fullName":"tests.test_apply_contest_outcome.TestCommitOutcome#test_mood_commit_writes_current_mood","name":"commit_outcome with MOOD kind writes current_mood","status":"passed","testResultsByEnv":{"default":"32a35a15fba151d8600a7b6efecf6436"}}

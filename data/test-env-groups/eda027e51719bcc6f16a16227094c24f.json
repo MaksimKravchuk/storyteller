@@ -1,1 +1,1 @@
-{"id":"eda027e51719bcc6f16a16227094c24f","fullName":"tests.test_emotional_memory.TestMoodDerivation#test_no_memories_is_neutral","name":"An NPC with no memories derives a neutral mood","status":"passed","testResultsByEnv":{"default":"56418344c5e2bfe91f6c4caf444947a3"}}
+{"id":"eda027e51719bcc6f16a16227094c24f","fullName":"tests.test_emotional_memory.TestMoodDerivation#test_no_memories_is_neutral","name":"An NPC with no memories derives a neutral mood","status":"passed","testResultsByEnv":{"default":"00f2d3ebeca5b4ab4021aaf64a5378d8"}}

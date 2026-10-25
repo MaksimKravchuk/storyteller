@@ -1,1 +1,1 @@
-{"id":"bf896a9df79a567c7e591002c5fe2c9d","fullName":"tests.test_prompt_localization.TestResolveLocale#test_resolve_english_aliases","name":"resolve_locale maps common English aliases onto Locale.ENGLISH","status":"passed","testResultsByEnv":{"default":"6cc1da4c4a45751663d03ef6139cf015"}}
+{"id":"bf896a9df79a567c7e591002c5fe2c9d","fullName":"tests.test_prompt_localization.TestResolveLocale#test_resolve_english_aliases","name":"resolve_locale maps common English aliases onto Locale.ENGLISH","status":"passed","testResultsByEnv":{"default":"33052f1011e108b7e687dd6f6f87b47f"}}

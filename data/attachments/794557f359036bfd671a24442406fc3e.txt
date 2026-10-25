@@ -1,2 +1,0 @@
-[32m2026-10-25 22:19:14.287[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 22:19:14.293[0m | [1mINFO    [0m | [36mhttpx._client[0m | session=[33m-[0m | HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"

@@ -1,1 +1,1 @@
-{"id":"2b1e2de57db557b7a3226b31b29ad54c","fullName":"tests.test_admin_routes_settings_search#test_clear_search","name":"DELETE /api/settings/search clears the stored settings","status":"passed","testResultsByEnv":{"default":"2dbf99fb0dc2d38b9397b29fcd44d369"}}
+{"id":"2b1e2de57db557b7a3226b31b29ad54c","fullName":"tests.test_admin_routes_settings_search#test_clear_search","name":"DELETE /api/settings/search clears the stored settings","status":"passed","testResultsByEnv":{"default":"6ada91f41541dd41f62b533fd85bca7c"}}

@@ -1,1 +1,1 @@
-{"id":"ae16e599a3dee976881117121db61f3c","fullName":"tests.test_turn_event_logger#test_record_inherits_agent_from_stack","name":"record_turn_event picks up agent_name from the agent_stack top","status":"passed","testResultsByEnv":{"default":"53e4bcf647ab1c3c96c2a7c771b44e46"}}
+{"id":"ae16e599a3dee976881117121db61f3c","fullName":"tests.test_turn_event_logger#test_record_inherits_agent_from_stack","name":"record_turn_event picks up agent_name from the agent_stack top","status":"passed","testResultsByEnv":{"default":"4cb8eaa4c2f5f64dd06d72611cfc8230"}}

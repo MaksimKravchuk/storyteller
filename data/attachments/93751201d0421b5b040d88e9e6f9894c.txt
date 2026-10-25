@@ -1,1 +1,0 @@
-[32m2026-10-25 22:19:13.861[0m | [33m[1mWARNING [0m | [36mcast.visible_entities[0m | session=[33m-[0m | visible_entities._npc_entities: scene uuid=5b54b58a-1094-4b75-a441-32a04cea02ac role=guard missing from game_state.npcs

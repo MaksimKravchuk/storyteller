@@ -1,1 +1,1 @@
-{"id":"bab2e15607210f71e5c9f2ccc0a589f2","fullName":"tests.test_models.TestSetting#test_optional_metadata_defaults_empty","name":"A new Setting has empty traditions and technologies metadata lists","status":"passed","testResultsByEnv":{"default":"e90c48236e432a71b3b43e3bf6dc784a"}}
+{"id":"bab2e15607210f71e5c9f2ccc0a589f2","fullName":"tests.test_models.TestSetting#test_optional_metadata_defaults_empty","name":"A new Setting has empty traditions and technologies metadata lists","status":"passed","testResultsByEnv":{"default":"f34224320f9a52539289a5c820795fb4"}}

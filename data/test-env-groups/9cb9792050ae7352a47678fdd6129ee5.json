@@ -1,1 +1,1 @@
-{"id":"9cb9792050ae7352a47678fdd6129ee5","fullName":"tests.test_models.TestSetting#test_has_uuid","name":"A Setting inherits a UUID from BaseModel","status":"passed","testResultsByEnv":{"default":"736dd074cd1a34f6ca9c13948dae48e4"}}
+{"id":"9cb9792050ae7352a47678fdd6129ee5","fullName":"tests.test_models.TestSetting#test_has_uuid","name":"A Setting inherits a UUID from BaseModel","status":"passed","testResultsByEnv":{"default":"a27182f25203b99339744fa823a701c5"}}

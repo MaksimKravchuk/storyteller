@@ -1,1 +1,1 @@
-{"id":"e6dae7ed1b80efbc15a2590f2900928d","fullName":"tests.test_log_scrubbing.TestScrubLogRecord#test_leaves_numeric_extras_alone","name":"scrub_log_record leaves non-string extras untouched","status":"passed","testResultsByEnv":{"default":"20436d4cb2a67bf4a0ae17235334cdf6"}}
+{"id":"e6dae7ed1b80efbc15a2590f2900928d","fullName":"tests.test_log_scrubbing.TestScrubLogRecord#test_leaves_numeric_extras_alone","name":"scrub_log_record leaves non-string extras untouched","status":"passed","testResultsByEnv":{"default":"646493a1f6c539b5c8ed56886888d308"}}

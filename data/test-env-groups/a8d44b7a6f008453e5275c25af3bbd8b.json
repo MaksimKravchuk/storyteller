@@ -1,1 +1,1 @@
-{"id":"a8d44b7a6f008453e5275c25af3bbd8b","fullName":"tests.test_llm_tools.TestParseToolCall#test_parse_talk_with_contest","name":"parse_tool_call builds a TalkPlan with a contest attached","status":"passed","testResultsByEnv":{"default":"afd174b0523ba55c506393cf3bc465ff"}}
+{"id":"a8d44b7a6f008453e5275c25af3bbd8b","fullName":"tests.test_llm_tools.TestParseToolCall#test_parse_talk_with_contest","name":"parse_tool_call builds a TalkPlan with a contest attached","status":"passed","testResultsByEnv":{"default":"f9719c2a4ac00ddb1d2b65876b674a0f"}}

@@ -1,1 +1,1 @@
-{"id":"bd2d32a20067f723f280d07db62bd752","fullName":"tests.test_admin_auth#test_rejects_invalid_token","name":"Admin API returns 401 when the Supabase token fails verification","status":"passed","testResultsByEnv":{"default":"93e4aeafcfcbea00ddecd4ab7d96f2dc"}}
+{"id":"bd2d32a20067f723f280d07db62bd752","fullName":"tests.test_admin_auth#test_rejects_invalid_token","name":"Admin API returns 401 when the Supabase token fails verification","status":"passed","testResultsByEnv":{"default":"3365ebc6244bebba9c637a6297c34c26"}}

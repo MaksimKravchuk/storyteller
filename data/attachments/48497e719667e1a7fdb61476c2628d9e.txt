@@ -1,2 +1,0 @@
-[32m2026-10-25 22:18:50.657[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 22:18:50.660[0m | [33m[1mWARNING [0m | [36mcast.actor[0m | session=[33m-[0m | Actor envelope parse failed for NPC Marcus (0c403973-3c64-475b-a54a-b3c02011bb76): decode failed

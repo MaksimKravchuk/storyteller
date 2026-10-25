@@ -1,1 +1,1 @@
-{"id":"a015b6e6e9186d9127387b93afba459d","fullName":"tests.test_log_scrubbing.TestTracebackDiagnoseSecretSafety#test_production_diagnose_is_disabled","name":"Production keeps loguru diagnose disabled","status":"passed","testResultsByEnv":{"default":"9fb78159db08896db7487654de8678e6"}}
+{"id":"a015b6e6e9186d9127387b93afba459d","fullName":"tests.test_log_scrubbing.TestTracebackDiagnoseSecretSafety#test_production_diagnose_is_disabled","name":"Production keeps loguru diagnose disabled","status":"passed","testResultsByEnv":{"default":"4ae0bda7ef2cad7b2b08ea65bae73e8b"}}
