@@ -1,1 +1,1 @@
-{"id":"babe37963fb59843a59d05984773e4ac","fullName":"tests.test_benchmarks_types.TestScenarioValidation#test_empty_elements_raises","name":"Scenario rejects an empty elements tuple at construction","status":"passed","testResultsByEnv":{"default":"a288f6d6a3c067a785d8a38a2a494941"}}
+{"id":"babe37963fb59843a59d05984773e4ac","fullName":"tests.test_benchmarks_types.TestScenarioValidation#test_empty_elements_raises","name":"Scenario rejects an empty elements tuple at construction","status":"passed","testResultsByEnv":{"default":"26f6932625e408eb8362c1a65b7b79ee"}}

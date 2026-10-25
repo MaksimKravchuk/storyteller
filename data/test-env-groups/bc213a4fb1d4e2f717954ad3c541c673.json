@@ -1,1 +1,1 @@
-{"id":"bc213a4fb1d4e2f717954ad3c541c673","fullName":"tests.test_admin_routes_settings#test_post_set_model_happy_path","name":"POST /api/settings/models persists a valid override and echoes the payload","status":"passed","testResultsByEnv":{"default":"05ce2ce196ac4049aecd2dec6c364df7"}}
+{"id":"bc213a4fb1d4e2f717954ad3c541c673","fullName":"tests.test_admin_routes_settings#test_post_set_model_happy_path","name":"POST /api/settings/models persists a valid override and echoes the payload","status":"passed","testResultsByEnv":{"default":"fec9601d2e74c1a759377de6c7070dc5"}}

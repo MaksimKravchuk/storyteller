@@ -1,1 +1,1 @@
-{"id":"48298eb65367d9f213dffea084189e53","fullName":"tests.test_actor_goal_coaching.TestGoalCoachingSelection#test_social_kinds_get_social_bank","name":"Social and neutral kinds get the social bank","status":"passed","testResultsByEnv":{"default":"315c4d437c68809b3bf1917c138335bf"}}
+{"id":"48298eb65367d9f213dffea084189e53","fullName":"tests.test_actor_goal_coaching.TestGoalCoachingSelection#test_social_kinds_get_social_bank","name":"Social and neutral kinds get the social bank","status":"passed","testResultsByEnv":{"default":"a2c976edc4390d6bca8eaf425a031339"}}

@@ -1,1 +1,1 @@
-{"id":"984cec980b31aa79ba8bb66bb4dd54fc","fullName":"tests.test_npc_ticker.TestNPCTickerNoOp#test_empty_scene_is_no_op","name":"tick() is a no-op when the scene has no NPCs","status":"passed","testResultsByEnv":{"default":"2de08d10074fc44737e3b5ef6adc319e"}}
+{"id":"984cec980b31aa79ba8bb66bb4dd54fc","fullName":"tests.test_npc_ticker.TestNPCTickerNoOp#test_empty_scene_is_no_op","name":"tick() is a no-op when the scene has no NPCs","status":"passed","testResultsByEnv":{"default":"d8997eabf27e9b2d641b7e7530bbdd54"}}

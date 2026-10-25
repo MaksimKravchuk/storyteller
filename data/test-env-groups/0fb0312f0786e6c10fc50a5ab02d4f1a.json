@@ -1,1 +1,1 @@
-{"id":"0fb0312f0786e6c10fc50a5ab02d4f1a","fullName":"tests.test_failed_turn_spend#test_failed_turn_commits_spend","name":"A turn that fails after paid LLM calls rolls back state but commits the call logs","status":"passed","testResultsByEnv":{"default":"814eda6d0611f79e3262213c9b7aecd0"}}
+{"id":"0fb0312f0786e6c10fc50a5ab02d4f1a","fullName":"tests.test_failed_turn_spend#test_failed_turn_commits_spend","name":"A turn that fails after paid LLM calls rolls back state but commits the call logs","status":"passed","testResultsByEnv":{"default":"935f1e46c87c898084b2a6ab9e933465"}}

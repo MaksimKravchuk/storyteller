@@ -1,1 +1,1 @@
-{"id":"02928a759988e1baa2a54371c35e2cf7","fullName":"tests.test_web_world#test_builder_people_role_fallback","name":"build_world_view falls back to the scene role when a SceneNPC has no card","status":"passed","testResultsByEnv":{"default":"be365cf0a73cd583aa745ef5d8ff48f0"}}
+{"id":"02928a759988e1baa2a54371c35e2cf7","fullName":"tests.test_web_world#test_builder_people_role_fallback","name":"build_world_view falls back to the scene role when a SceneNPC has no card","status":"passed","testResultsByEnv":{"default":"fdea06d1ca840a123addcd2884721850"}}

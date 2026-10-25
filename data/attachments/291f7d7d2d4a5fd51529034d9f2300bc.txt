@@ -1,2 +1,0 @@
-[32m2026-10-25 05:59:42.816[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 05:59:42.819[0m | [31m[1mERROR   [0m | [36mknowledge.memory[0m | session=[33m-[0m | WITNESSED edge for unregistered witness e86b05a2-2483-46cb-b247-69f06987554a on memory 9f860733-888d-456c-8d56-04e8ef4673cb; auto-creating a phantom actor node (graph pollution) — NPC registration is out of sync

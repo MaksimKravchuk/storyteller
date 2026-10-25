@@ -1,1 +1,1 @@
-{"id":"6041fa355750a3da433fc5791f7b8861","fullName":"tests.test_rumor_propagation#test_local_scope_does_not_propagate","name":"LOCAL-scope events do not propagate beyond the original witness","status":"passed","testResultsByEnv":{"default":"0adb227100e2fdd38b810602617055d4"}}
+{"id":"6041fa355750a3da433fc5791f7b8861","fullName":"tests.test_rumor_propagation#test_local_scope_does_not_propagate","name":"LOCAL-scope events do not propagate beyond the original witness","status":"passed","testResultsByEnv":{"default":"7876dda14e30ad8cd03e4a801a65925f"}}

@@ -1,4 +1,0 @@
-[32m2026-10-25 05:59:29.406[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 05:59:29.409[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=ItemGenerator parent=None | start
-[32m2026-10-25 05:59:29.410[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=ItemGenerator parent=None | done | duration_ms=0
-[32m2026-10-25 05:59:29.410[0m | [33m[1mWARNING [0m | [36mcast.director_object_interaction[0m | session=[33m-[0m | _persist_delta: scene.location_id=c4745785-181d-4931-8fd5-bd79294cb168 not in game_state.locations; typed channel skipped

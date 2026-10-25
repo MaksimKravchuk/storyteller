@@ -1,3 +1,0 @@
-[32m2026-10-25 05:59:29.677[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 05:59:29.722[0m | [33m[1mWARNING [0m | [36mcast.scene_swap[0m | session=[33m-[0m | Scene action log has 1 entries but no present NPC resolved at swap (location=732d18e7-1a68-4741-bbb8-52aed581cf2f); scene memory will be dropped
-[32m2026-10-25 05:59:29.749[0m | [33m[1mWARNING [0m | [36mcast.scene_swap[0m | session=[33m-[0m | Scene action log has 1 entries but no present NPC resolved at swap (location=732d18e7-1a68-4741-bbb8-52aed581cf2f); scene memory will be dropped

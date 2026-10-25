@@ -1,3 +1,0 @@
-[32m2026-10-25 05:59:24.051[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-25 05:59:24.054[0m | [1mINFO    [0m | [36minterfaces.admin[0m | session=[33m-[0m | Admin dashboard running on http://0.0.0.0:0
-[32m2026-10-25 05:59:24.055[0m | [1mINFO    [0m | [36maiohttp.web_log[0m | session=[33m-[0m | 127.0.0.1 [25/Oct/2026:05:59:24 +0000] "GET /healthz HTTP/1.1" 200 175 "-" "Python/3.11 aiohttp/3.13.3"

@@ -1,0 +1,1 @@
+[32m2026-10-25 06:39:57.434[0m | [33m[1mWARNING [0m | [36mcast.hostility[0m | session=[33m-[0m | Actor Иван (e31f6573-4a4f-4c63-8c54-1205dd2653fd) emitted unknown mood 'worried'; will be overridden on next hostility bump.

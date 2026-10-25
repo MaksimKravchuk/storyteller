@@ -1,1 +1,1 @@
-{"id":"543174088f55bb7b8c7e0fe6a0a23081","fullName":"tests.test_prompt_localization.TestNarratorLabels#test_labels_differ_per_locale","name":"Russian and English narrator labels are distinct","status":"passed","testResultsByEnv":{"default":"b2480f0429309b8866f58ffdb56b5dd9"}}
+{"id":"543174088f55bb7b8c7e0fe6a0a23081","fullName":"tests.test_prompt_localization.TestNarratorLabels#test_labels_differ_per_locale","name":"Russian and English narrator labels are distinct","status":"passed","testResultsByEnv":{"default":"b5bf2e917e01d1e18b59b72413e9d081"}}

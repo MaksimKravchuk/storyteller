@@ -1,0 +1,2 @@
+[32m2026-10-25 06:40:01.781[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-25 06:40:01.796[0m | [31m[1mERROR   [0m | [36mllm.openai_client[0m | session=[33m-[0m | OpenAI API error | model=gpt-4 status=400 has_response_format=True num_messages=2 temperature=0.7 max_completion_tokens=2048 system_prompt[:200]='director system prompt' body={'error': {'message': "response_format of type 'json_object' is not supported with this model", 'type': 'invalid_request_error'}}
