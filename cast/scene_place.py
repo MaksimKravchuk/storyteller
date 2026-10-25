@@ -59,6 +59,24 @@ def enter_scene(game_state: GameState, scene: Scene, *, allow_new_place: bool) -
     seat_residents(game_state, scene)
 
 
+def all_targets_in_scene(targets: list[str], game_state: GameState) -> bool:
+    """Return True when every target names (or roles) an NPC in the current scene.
+
+    Only then is a MOVE "walk over to them" rather than travel: an NPC the
+    player knows from elsewhere ("back to Eira at the landing") is not here.
+    """
+    scene = game_state.current_scene
+    if scene is None:
+        return False
+    here: set[str] = set()
+    for snpc in scene.npcs_present:
+        here.add(snpc.role.lower())
+        npc = game_state.npcs.get(snpc.uuid) if snpc.uuid else None
+        if npc is not None:
+            here.update((npc.name.lower(), npc.occupation.lower()))
+    return all(target.lower() in here for target in targets)
+
+
 def format_known_places(game_state: GameState) -> str:
     """Render the Scene Builder's list of known places with the people there now."""
     current = game_state.player.location_id

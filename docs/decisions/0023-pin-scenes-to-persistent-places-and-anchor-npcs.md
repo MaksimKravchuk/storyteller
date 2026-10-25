@@ -28,6 +28,7 @@ One more problem made recall weak even when the right NPC answered. The memory s
   - On any other rebuild (for example SLEEP), the player stays at their current place.
 - Then the origin and destination are linked both ways in `connected_locations`, and `player.location_id` moves to the scene's place.
 - `persistent_world_changes` lines in the Scene Builder prompt now use the same short key.
+- A MOVE skips the scene rebuild ("walk over to the guard") only when every target is an NPC in the *current scene*, matched by role, name or occupation (`scene_place.all_targets_in_scene`). Before, any NPC known anywhere in the story counted. "Walk back to Eira at the landing" from somewhere else then kept the player in the old scene, and Eira answered through the walls.
 
 **NPCs are anchored to places.**
 
@@ -95,6 +96,7 @@ What future agents must preserve:
 
 - **NPC identity across scenes goes by UUID, never by LLM text.** Do not reintroduce a path where a scene rebuild fills a place's known people from free-text roles before seating its residents.
 - **The Scene Builder picks a place from the known-places list.** Keep the `known_places` section and `location_name` in both EN and RU prompts. Keep `place_key` as the only format shown to the LLM, and keep `resolve_scene_location_id` accepting it.
+- **"Walking over to someone" means they are in the current scene.** Do not widen the MOVE skip-rebuild check back to NPCs known anywhere in the story.
 - **Only a MOVE or the first scene may create a `Location`.** Other rebuilds must not move the player to a new place they never travelled to.
 - **Residents live in `Location.npcs_present`.** Add to it on registration and remove on death or departure. Do not add a second residency store.
 - **NPC names stay unique across the story** unless a different, UUID-based disambiguation exists for every name-targeted path.
@@ -103,7 +105,7 @@ What future agents must preserve:
 ## Verification / tests
 
 - `tests/test_scene_place.py`: place resolution and registration rules (MOVE vs non-travel, coarse vs fine parent, fallback names), two-way links with no self or duplicate links, seating order, dropping re-described roles, the dead and off-shift filter, met-first ordering and the cap, `resident_named`, and `format_known_places` (lines, the cap keeping the current place, the empty case).
-- `tests/test_npc_place_persistence.py`: end-to-end through the Director. A resident comes back with the same identity, the returning NPC's prompt recalls the first conversation (a consumer-seam check), a new place becomes a connected location, and a resident named as a dialogue target joins the scene.
+- `tests/test_npc_place_persistence.py`: end-to-end through the Director. A resident comes back with the same identity, the returning NPC's prompt recalls the first conversation (a consumer-seam check), a new place becomes a connected location, a resident named as a dialogue target joins the scene, and walking back to an NPC who is not in the current scene travels instead of staying put.
 - `tests/test_scene_builder_known_places.py`: a known short id resolves, a new key keeps the sentinel and the name, and the known-places text reaches the rendered system prompt in both EN and RU (a consumer-seam check).
 - `tests/test_npc_generator.py`: names are unique across the story.
 - `benchmarks/scenarios/memory_return_visit/` and `tests/test_benchmarks_memory_return_visit.py`: a replay of the production report. Deterministic elements check that the player is back at the landing and that the original Eira (seeded UUID), not a duplicate, is in the final scene. Evidence-LLM elements check that her reply recalls the player's name, the brother, the scarf and the boat.
@@ -111,7 +113,7 @@ What future agents must preserve:
 
 ## Related files
 
-- `cast/scene_place.py`: `place_key`, `resolve_scene_location_id`, `enter_scene`, `format_known_places`
+- `cast/scene_place.py`: `place_key`, `resolve_scene_location_id`, `enter_scene`, `all_targets_in_scene`, `format_known_places`
 - `cast/_place_registry.py`: registering new places and the links between places
 - `cast/_place_residents.py`: residency, schedule gating, `resident_named`
 - `cast/_place_seating.py`: seating residents and dropping duplicate roles

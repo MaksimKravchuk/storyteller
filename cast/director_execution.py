@@ -615,9 +615,7 @@ class PlanExecutor:
         # Skip rebuild when MOVE targets are all NPCs already in the scene
         # (e.g. "walk to the guard" — no location change).
         if needs_rebuild and action_type == "MOVE" and targets:
-            known = _filter_known_npc_targets(targets, self._gs)
-            if len(known) == len(targets):
-                needs_rebuild = False
+            needs_rebuild = not _scene_log_modules()[3].all_targets_in_scene(targets, self._gs)
         if needs_rebuild:
             scene = await self._scene_builder.execute(
                 input_data=player_action,

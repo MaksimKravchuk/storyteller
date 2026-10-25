@@ -227,3 +227,25 @@ class TestCallingOutToAResident:
             ("Eira", _EIRA),
             ("the ferryman", None),
         ]
+
+
+@allure.epic("Memory & Persistence")
+@allure.feature("NPC place persistence")
+class TestWalkingBackToAnNPC:
+    @allure.story("Leave and return")
+    @allure.title("Walking back to an NPC who is not in the current scene travels instead of staying put")
+    @pytest.mark.asyncio
+    async def test_move_toward_absent_npc_rebuilds_scene(self) -> None:
+        world = _World()
+        executor = _build_executor(world, [_path_scene(), _landing_return_scene()])
+        await _play(executor, route_plan("MOVE", direction="up the path"), "I walk up the village path.")
+
+        await _play(
+            executor,
+            route_plan("MOVE", direction="the landing", targets=["Eira"]),
+            "I walk back down to the landing where Eira mends her net.",
+        )
+
+        assert world.gs.player.location_id == _LANDING
+        assert world.gs.current_scene is not None
+        assert _EIRA in {snpc.uuid for snpc in world.gs.current_scene.npcs_present}

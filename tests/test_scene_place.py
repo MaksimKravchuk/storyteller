@@ -312,3 +312,24 @@ class TestFormatKnownPlaces:
         gs.locations.clear()
 
         assert scene_place.format_known_places(gs) == ""
+
+
+@allure.epic("Scene & Exploration")
+@allure.feature("Scene places")
+class TestAllTargetsInScene:
+    @allure.story("Walking over vs travelling")
+    @allure.title("Targets match scene NPCs by role, name or occupation; anyone absent means travel")
+    def test_matching(self) -> None:
+        gs = _state()
+        eira = _resident(gs, "Eira", "net-mender")
+        gs.current_scene = Scene(location_id=_LANDING, npcs_present=[SceneNPC(role="woman at the net", uuid=eira.uuid)])
+
+        assert scene_place.all_targets_in_scene(["Woman at the net", "eira", "NET-MENDER"], gs)
+        assert not scene_place.all_targets_in_scene(["Eira", "Ulf"], gs)
+
+    @allure.story("Walking over vs travelling")
+    @allure.title("Without a current scene nobody is here")
+    def test_no_scene(self) -> None:
+        gs = _state()
+
+        assert not scene_place.all_targets_in_scene(["Eira"], gs)
