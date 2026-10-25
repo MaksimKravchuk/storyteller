@@ -30,7 +30,7 @@ _SCORE_BUCKETS: tuple[tuple[float, ModerationSeverity], ...] = (
 
 _OPENAI_CATEGORY_MAP: Mapping[str, ModerationCategory] = types.MappingProxyType(
     {
-        "violence": ModerationCategory.VIOLENCE,
+        # Plain "violence" (a scuffle, a sword blow) is the stuff of the story; only gore is gated.
         "violence/graphic": ModerationCategory.VIOLENCE,
         "sexual": ModerationCategory.SEXUAL,
         "sexual/minors": ModerationCategory.SEXUAL_MINORS,

@@ -9,7 +9,7 @@ one map entry to wire up. Operators override defaults via the
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from safety.result import ModerationCategory, ModerationSeverity
 
@@ -31,6 +31,8 @@ class ModerationThresholds:
     self_harm: ModerationSeverity = ModerationSeverity.MEDIUM
     illicit: ModerationSeverity = ModerationSeverity.HIGH
     prompt_injection: ModerationSeverity = ModerationSeverity.MEDIUM
+    # Categories the player opted into (mature content); never a violation.
+    exempt: frozenset[ModerationCategory] = field(default_factory=frozenset)
 
     def threshold_for(self, category: ModerationCategory) -> ModerationSeverity:
         """Return the configured severity threshold for ``category``."""
@@ -38,4 +40,4 @@ class ModerationThresholds:
 
     def is_violation(self, category: ModerationCategory, severity: ModerationSeverity) -> bool:
         """Return True if ``severity`` meets or exceeds the configured threshold."""
-        return severity >= self.threshold_for(category)
+        return category not in self.exempt and severity >= self.threshold_for(category)

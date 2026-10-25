@@ -54,6 +54,11 @@
     actionInput: $("action-input"),
     actionSubmit: $("action-submit"),
     actionStatus: $("action-status"),
+    accountBtn: $("account-btn"),
+    accountDialog: $("account-dialog"),
+    accountCloseBtn: $("account-close-btn"),
+    matureContent: $("mature-content"),
+    accountStatus: $("account-status"),
     feedbackDialog: $("feedback-dialog"),
     feedbackOpenBtn: $("feedback-open-btn"),
     feedbackCloseBtn: $("feedback-close-btn"),
@@ -753,6 +758,41 @@
     if (els.authPanel) els.authPanel.hidden = signedIn;
     if (els.loginForm) els.loginForm.hidden = signedIn;
     if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
+    if (els.accountBtn) els.accountBtn.hidden = !signedIn;
+  }
+
+  async function openAccount() {
+    setStatus(els.accountStatus, "Loading...", "info");
+    els.matureContent.disabled = true;
+    els.accountDialog.showModal();
+    try {
+      const response = await apiFetch("/api/me");
+      if (!response.ok) throw new Error(await parseError(response));
+      els.matureContent.checked = Boolean((await response.json()).mature_content);
+      els.matureContent.disabled = false;
+      setStatus(els.accountStatus, "");
+    } catch (err) {
+      setStatus(els.accountStatus, "Could not load your settings: " + err.message);
+    }
+  }
+
+  async function onMatureContentChange() {
+    const wanted = els.matureContent.checked;
+    els.matureContent.disabled = true;
+    try {
+      const response = await apiFetch("/api/me/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mature_content: wanted }),
+      });
+      if (!response.ok) throw new Error(await parseError(response));
+      setStatus(els.accountStatus, "Saved. Applies from your next turn.", "info");
+    } catch (err) {
+      els.matureContent.checked = !wanted;
+      setStatus(els.accountStatus, "Could not save: " + err.message);
+    } finally {
+      els.matureContent.disabled = false;
+    }
   }
 
   // Resolves true when the app may load stories: auth is off or a session exists.
@@ -1516,6 +1556,11 @@
   }
   if (els.logoutBtn) {
     els.logoutBtn.addEventListener("click", onLogout);
+  }
+  if (els.accountBtn) {
+    els.accountBtn.addEventListener("click", openAccount);
+    els.accountCloseBtn.addEventListener("click", () => els.accountDialog.close());
+    els.matureContent.addEventListener("change", onMatureContentChange);
   }
 
   registerServiceWorker();

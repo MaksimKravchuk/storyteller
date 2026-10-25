@@ -31,6 +31,7 @@ from interfaces.web.schemas import (
 from interfaces.web.service_helpers import (
     StartGameParams,
     owned_session_context,
+    player_cfg,
     restore_engine,
     session_language,
     snapshot_from_engine,
@@ -86,7 +87,9 @@ async def _prepare_started_engine(
     await policy.ensure_active_game_quota(start_request.player_id, start_request.plan)
     session_row = await repo.sessions.create_web(start_request.player_id)
     session_id = session_row["id"]
-    engine = await begin_session(repo, cfg, session_id, start_request.language)
+    engine = await begin_session(
+        repo, player_cfg(cfg, start_request.mature_content), session_id, start_request.language
+    )
     # Committed before any paid LLM call so a failed start can still log its spend against this session.
     await repo.commit()
     return session_id, engine
@@ -156,7 +159,12 @@ async def process_turn_for_player(
             "friend_beta" if isinstance(player_id, str) else str(player_id.plan),
         )
         session_id, language = await owned_session_context(repo, player_identifier, game_id)
-        engine = await resume_session(repo, cfg, session_id, language)
+        engine = await resume_session(
+            repo,
+            player_cfg(cfg, getattr(player_id, "mature_content", False)),
+            session_id,
+            language,
+        )
         if engine is None:
             raise GameNotFoundError(player_identifier)
 

@@ -1828,6 +1828,9 @@ button.map-place:focus-visible .mp-go { opacity: 1; transform: translateX(2px); 
 .sheet-head h2 { margin: 0; font-size: 1.75rem; }
 
 .sheet #feedback-submit { margin-top: 1rem; }
+.toggle-row { display: flex; align-items: center; gap: 0.6rem; font-size: 1.1rem; cursor: pointer; }
+.toggle-row input { width: 1.2rem; height: 1.2rem; accent-color: var(--accent, currentColor); }
+.toggle-hint { margin: 0.5rem 0 0; opacity: 0.75; font-size: 0.95rem; }
 
 @media (max-width: 600px) {
   .sheet {

@@ -78,6 +78,7 @@ accounts = Table(
     Column("email", Text, nullable=False),
     Column("plan", _SHORT_STR, nullable=False, server_default="friend_beta"),
     Column("is_admin", Boolean, nullable=False, server_default="false"),
+    Column("mature_content", Boolean, nullable=False, server_default="false"),
     Column(_COL_CREATED_AT, _TZ_TS, nullable=False, server_default=func.now()),
     Column("updated_at", _TZ_TS, nullable=False, server_default=func.now()),
     CheckConstraint(

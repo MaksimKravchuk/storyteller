@@ -86,6 +86,7 @@ async def start_game(
         language=body.language,
         plan=player.plan,
         character=body.character,
+        mature_content=player.mature_content,
     )
     try:
         return await service.start_game_for_player(repo, cfg, start_request)

@@ -31,6 +31,12 @@ class StartGameParams:
     language: str
     plan: str = _DEFAULT_USER_PLAN
     character: CharacterCreationInput | None = None
+    mature_content: bool = False
+
+
+def player_cfg(cfg: Config, mature_content: bool) -> Config:
+    """Return ``cfg`` with the player's 18+ opt-in applied to content moderation."""
+    return cfg.model_copy(update={"safety_mature_content": True}) if mature_content else cfg
 
 
 def snapshot_from_engine(engine: GameEngine, language: str = _DEFAULT_LANGUAGE) -> GameSnapshot:
