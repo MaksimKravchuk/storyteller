@@ -24,6 +24,8 @@ Per-category thresholds are configurable via env vars (`SAFETY_THRESHOLD_VIOLENC
 
 The moderation gate lives at the **engine seam** (`process_action`), not in any single client. The web route only translates the resulting exception to HTTP.
 
+**Amendment (2026-10-25):** when a turn stream is bound, outbound moderation also runs sentence by sentence before each streamed chunk is released, and the full-passage check still runs afterwards. See [ADR-0022](0022-stream-narrator-prose-over-sse.md).
+
 ## Rationale
 
 - Guarding at the engine seam means every current and future engine-driven surface inherits both inbound and outbound moderation for free — there is no per-client moderation to forget to wire. This is the consumer-seam lesson from prior regressions applied to safety.

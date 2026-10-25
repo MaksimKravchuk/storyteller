@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Awaitable, Callable
 
 from llm.message import LLMResponse, Message, OutputFormat
 
@@ -61,3 +62,20 @@ class BaseLLMClient(ABC):
           with already-decoded argument dicts.
         """
         ...
+
+    async def stream_message(
+        self,
+        messages: list[Message],
+        on_delta: Callable[[str], Awaitable[None]],
+        system_prompt: str = "",
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        """Send a plain-text request, feeding body chunks to ``on_delta`` as they arrive.
+
+        Returns the same assembled :class:`LLMResponse` as :meth:`send_message`.
+        This default delivers the whole body as one chunk, so providers without
+        native streaming (and test fakes) still satisfy the contract.
+        """
+        response = await self.send_message(messages, system_prompt=system_prompt, max_tokens=max_tokens)
+        await on_delta(response.body)
+        return response

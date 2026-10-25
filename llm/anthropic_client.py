@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import types
 from typing import Any, Awaitable, Callable
 
@@ -139,6 +140,24 @@ def _parse_tool_calls(response: Any) -> list[ToolCall]:
     return parsed
 
 
+def _to_llm_response(response: Any) -> LLMResponse:
+    """Assemble an :class:`LLMResponse` from an Anthropic ``Message``."""
+    response_text = ""
+    for block in response.content:
+        if block.type == "text":
+            response_text += block.text
+
+    return LLMResponse(
+        body=response_text,
+        usage={
+            "prompt_tokens": response.usage.input_tokens,
+            "completion_tokens": response.usage.output_tokens,
+        },
+        model=response.model,
+        tool_calls=_parse_tool_calls(response),
+    )
+
+
 _REQUEST_TIMEOUT_S = 120
 
 
@@ -189,21 +208,25 @@ class AnthropicClient(BaseLLMClient):
             response = await self._send_strict(kwargs, output_format.schema_name)
         else:
             response = await _call_with_retry(lambda: self._client.messages.create(**kwargs))
+        return _to_llm_response(response)
 
-        response_text = ""
-        for block in response.content:
-            if block.type == "text":
-                response_text += block.text
-
-        return LLMResponse(
-            body=response_text,
-            usage={
-                "prompt_tokens": response.usage.input_tokens,
-                "completion_tokens": response.usage.output_tokens,
-            },
-            model=response.model,
-            tool_calls=_parse_tool_calls(response),
-        )
+    async def stream_message(
+        self,
+        messages: list[Message],
+        on_delta: Callable[[str], Awaitable[None]],
+        system_prompt: str = "",
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        """Stream a plain-text completion; only opening the stream is retried, never a half-sent body."""
+        kwargs = self._build_request_kwargs(messages, system_prompt, None, max_tokens, None)
+        async with contextlib.AsyncExitStack() as stack:
+            stream = await _call_with_retry(
+                lambda: stack.enter_async_context(self._client.messages.stream(**kwargs)),
+            )
+            async for text in stream.text_stream:
+                await on_delta(text)
+            response = await stream.get_final_message()
+        return _to_llm_response(response)
 
     def _guard_strict_supported(self, schema_name: str | None) -> None:
         """Raise ``NotImplementedError`` if strict outputs are off for this schema.

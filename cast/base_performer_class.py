@@ -14,7 +14,7 @@ from cast._performer_retry import (
     validate_strict_json,
     validate_strict_retry_json,
 )
-from llm import call_logger
+from llm import call_logger, turn_stream
 from llm.base_client import BaseLLMClient, LLMJSONError, OutputFormat
 from llm.message import LLMResponse, Message, Role, Tool, ToolCall
 from loguru import logger
@@ -251,7 +251,12 @@ async def _call_llm(
         call_kwargs.update(overrides)
 
     start = time.monotonic()
-    response: LLMResponse = await performer.llm_client.send_message(**call_kwargs)
+    if "on_delta" in call_kwargs:
+        # Streaming is plain-text only, so the stream API takes no output format.
+        call_kwargs.pop("output_format")
+        response: LLMResponse = await performer.llm_client.stream_message(**call_kwargs)
+    else:
+        response = await performer.llm_client.send_message(**call_kwargs)
     response.usage["duration_ms"] = int((time.monotonic() - start) * 1000)
 
     _record_llm_call(
@@ -271,6 +276,9 @@ class BasePerformer(ABC):
     The base class provides helpers for building system prompts and
     sending messages through the LLM.
     """
+
+    # Plain-text ``_send`` calls feed the live turn stream (only the Narrator's prose is player-facing).
+    streams_text = False
 
     def __init__(
         self,
@@ -358,7 +366,8 @@ class BasePerformer(ABC):
     ) -> str:
         """Send a message through the LLM with this agent's system prompt.
 
-        Returns the content string of the response.
+        Returns the content string of the response. A performer with
+        :attr:`streams_text` streams the call into the bound turn stream.
         """
         output_format = OutputFormat(response_format=response_format) if response_format else None
         overrides: dict[str, Any] = {}
@@ -366,6 +375,9 @@ class BasePerformer(ABC):
             overrides["temperature"] = temperature
         if max_tokens is not None:
             overrides["max_tokens"] = max_tokens
+        on_delta = turn_stream.delta_handler() if self.streams_text else None
+        if on_delta is not None:
+            overrides["on_delta"] = on_delta
         response = await _call_llm(
             self,
             user_message=user_message,

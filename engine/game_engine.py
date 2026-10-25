@@ -7,7 +7,7 @@ from cast.director import Director
 from defaults.models import AI_MODELS, ModelConfig
 from engine import graph_populator, location_init
 from engine.engine_wiring import LLMClients, create_llm_clients, restore_actors, wire_director
-from engine.moderation import Moderator, moderate_input, moderate_output
+from engine.moderation import Moderator, moderate_input, moderate_narration
 from knowledge.graph import KnowledgeGraph
 from models.game_state import GameState, PlayerState
 from models.player_character_input import PlayerCharacterInput
@@ -158,12 +158,14 @@ class GameEngine:
         :class:`safety.moderator.SafetyRejectedError`. The narrator's prose
         is then checked on the way back out; if that response is flagged,
         the original is suppressed and a safe-fallback string is returned.
+        Inside a bound :mod:`llm.turn_stream` the prose also streams live,
+        moderated sentence by sentence; the returned string stays final.
         """
-        if not self._director:
+        director = self._director
+        if not director:
             raise RuntimeError("Game not started. Call start_game() first.")
         await moderate_input(self._moderator, player_action)
-        narration = await self._director.execute(player_action)
-        return await moderate_output(self._moderator, narration)
+        return await moderate_narration(self._moderator, lambda: director.execute(player_action))
 
     def assert_running(self) -> tuple[GameState, KnowledgeGraph, event_manager_mod.EventManager]:
         """Return (game_state, knowledge_graph, event_manager), raising if not started."""

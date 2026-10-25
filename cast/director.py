@@ -16,6 +16,7 @@ from cast.npc_turn import NPCTurnResolver
 from cast.schemas.action_plan import ClarificationRequest, ExplorePlan, WaitPlan
 from cast.wait_detection import build_forced_wait_plan, detect_wait_intent, is_incapacitated
 from knowledge import memory as memory_mod
+from llm import turn_stream
 from llm.turn_event_logger import record_turn_event
 from models import game_state as gs_mod
 from prompts.director_prompts import get_director_prompts
@@ -136,6 +137,7 @@ class Director(BasePerformer):
             return plan.question or _DEFAULT_CLARIFICATION
 
         self._game_state.pending_clarification = None
+        await turn_stream.emit_stage("acting")
         mark_player_text_introductions(input_data, self._game_state)
         completed = await self._advance_clock_and_tick_background(plan.action_type, plan.time_cost_override)
         narrated = await self._executor.execute_plan(plan, input_data, completed, run_npc_turns=not is_opening)

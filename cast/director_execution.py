@@ -329,6 +329,8 @@ class PlanExecutor:
                 _KEY_PLAYER_ACTION: player_action,
                 _KEY_GAME_STATE: self._gs,
                 "scene_history": self._gs.scene_conversation_log[-5:],
+                # A passage the Dramaturge may rewrite must not stream: the player would watch it change.
+                "stream_live": self._dramaturge is None or raw_outputs.scene is None,
             },
         )
         if self._dramaturge is None or raw_outputs.scene is None:

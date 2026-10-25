@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from config import Config
 from db.repository import GameRepository
 from defaults.player_character import TEMPLATE_CHARACTER
-from interfaces.web import action_errors, deps, pwa, schemas, service
+from interfaces.web import action_errors, deps, pwa, routes_stream, schemas, service
 from interfaces.web.auth_models import PlayerFeedbackContext
 from interfaces.web.beta_auth import get_beta_player_context
 from interfaces.web.readiness import readiness_payload
@@ -23,6 +23,7 @@ from interfaces.web.readiness import readiness_payload
 router = APIRouter()
 router.add_api_route("/manifest.webmanifest", pwa.manifest, include_in_schema=False)
 router.add_api_route("/sw.js", pwa.service_worker, include_in_schema=False)
+router.include_router(routes_stream.router)
 
 _STATIC_DIR = Path(__file__).parent / "static"
 _INDEX_HTML = _STATIC_DIR / "index.html"
