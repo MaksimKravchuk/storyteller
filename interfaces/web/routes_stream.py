@@ -34,11 +34,6 @@ async def post_action_stream(
     carrying the same ``ActionResponse`` as ``POST .../actions``, or one
     ``error`` carrying the status and detail that route would have returned.
     """
-    frames = action_stream.stream_turn(
+    return action_stream.TurnStreamResponse(
         lambda: service.process_turn_for_player(repo, cfg, player, game_id, body),
-    )
-    return StreamingResponse(
-        frames,
-        media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

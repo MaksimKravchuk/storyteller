@@ -10,10 +10,10 @@ import allure
 import pytest
 from fastapi.testclient import TestClient
 
-from interfaces.web import action_stream, deps, service
+from interfaces.web import action_stream, deps, schemas, service
 from interfaces.web.app import app
-from interfaces.web.schemas import ActionResponse
 from llm import turn_stream
+from tests._turn_stream_helpers import VanishedClient
 from tests.test_web_api import _empty_character, _sample_world
 
 pytestmark = [
@@ -22,7 +22,7 @@ pytestmark = [
 ]
 
 _URL = "/api/games/game-1/actions/stream"
-_RESPONSE = ActionResponse(
+_RESPONSE = schemas.ActionResponse(
     narration="Rain falls.",
     narration_html="<p>Rain falls.</p>",
     action_html="<p>wait</p>",
@@ -41,7 +41,7 @@ def _events(body: str) -> list[tuple[str, dict]]:
     return parsed
 
 
-async def _fake_turn(*args: object) -> ActionResponse:
+async def _fake_turn(*args: object) -> schemas.ActionResponse:
     await turn_stream.emit_stage("acting")
     handler = turn_stream.delta_handler()
     assert handler is not None
@@ -50,7 +50,7 @@ async def _fake_turn(*args: object) -> ActionResponse:
     return _RESPONSE
 
 
-async def _slow_turn(release: asyncio.Event, finished: list[bool]) -> ActionResponse:
+async def _slow_turn(release: asyncio.Event, finished: list[bool]) -> schemas.ActionResponse:
     await turn_stream.emit_stage("acting")
     await release.wait()
     finished.append(True)
@@ -112,14 +112,14 @@ def test_stream_maps_unexpected_error(client) -> None:
 
 
 @allure.story("Streamed turn")
-@allure.title("Closing the stream early still lets the turn finish so a paid turn is persisted")
+@allure.title("A disconnect mid-frame still waits for the turn before the response (and its DB session) ends")
 @pytest.mark.asyncio
-async def test_stream_close_waits_for_turn() -> None:
+async def test_stream_disconnect_waits_for_turn() -> None:
     release = asyncio.Event()
     finished: list[bool] = []
-    frames = action_stream.stream_turn(lambda: _slow_turn(release, finished))
-    first = await frames.__anext__()
-    assert first.startswith("event: stage")
-    asyncio.get_running_loop().call_later(0.01, release.set)
-    await frames.aclose()
+    response = action_stream.TurnStreamResponse(lambda: _slow_turn(release, finished))
+    asyncio.get_running_loop().call_later(0.05, release.set)
+    scope = {"type": "http", "asgi": {"spec_version": "2.3"}}
+    client = VanishedClient()
+    await response(scope, client.receive, client.send)
     assert finished == [True]

@@ -13,6 +13,7 @@ from llm.anthropic_client import AnthropicClient
 from llm.message import Message, Role
 from llm.openai_client import OpenAIClient
 from tests._turn_stream_helpers import RecordingSink
+from tests.test_anthropic_client import _make_anthropic_5xx
 
 pytestmark = [
     allure.epic("Engine & LLM Infrastructure"),
@@ -49,6 +50,24 @@ class _AnthropicStream:
         return self._final
 
 
+class _FailingAnthropicStream:
+    """``messages.stream`` manager whose request fails before any text arrives."""
+
+    async def __aenter__(self) -> None:
+        raise _make_anthropic_5xx()
+
+    async def __aexit__(self, *exc: object) -> bool:
+        return False
+
+
+def _final_message(text: str) -> SimpleNamespace:
+    return SimpleNamespace(
+        content=[SimpleNamespace(type="text", text=text)],
+        usage=SimpleNamespace(input_tokens=5, output_tokens=3),
+        model="claude-test",
+    )
+
+
 @allure.story("OpenAI")
 @allure.title("OpenAI stream_message forwards each content delta and assembles body, usage and model")
 @pytest.mark.asyncio
@@ -79,13 +98,8 @@ async def test_openai_stream_message() -> None:
 @allure.title("Anthropic stream_message forwards text deltas and builds the response from the final message")
 @pytest.mark.asyncio
 async def test_anthropic_stream_message() -> None:
-    final = SimpleNamespace(
-        content=[SimpleNamespace(type="text", text="Dusk falls.")],
-        usage=SimpleNamespace(input_tokens=5, output_tokens=3),
-        model="claude-test",
-    )
     sdk_class = MagicMock()
-    stream = MagicMock(return_value=_AnthropicStream(["Dusk ", "falls."], final))
+    stream = MagicMock(return_value=_AnthropicStream(["Dusk ", "falls."], _final_message("Dusk falls.")))
     sdk_class.return_value.messages.stream = stream
     sink = RecordingSink()
 
@@ -97,3 +111,22 @@ async def test_anthropic_stream_message() -> None:
     assert response.body == "Dusk falls."
     assert response.usage == {"prompt_tokens": 5, "completion_tokens": 3}
     assert stream.call_args.kwargs["system"] == "sys"
+
+
+@allure.story("Anthropic")
+@allure.title("Anthropic stream_message retries a 5xx raised while opening the stream, before any text")
+@pytest.mark.asyncio
+async def test_anthropic_stream_message_retries_opening() -> None:
+    sdk_class = MagicMock()
+    healthy = _AnthropicStream(["Dawn."], _final_message("Dawn."))
+    stream = MagicMock(side_effect=[_FailingAnthropicStream(), healthy])
+    sdk_class.return_value.messages.stream = stream
+    sink = RecordingSink()
+
+    with patch("anthropic.AsyncAnthropic", sdk_class), patch("llm.anthropic_client.asyncio.sleep", new=AsyncMock()):
+        client = AnthropicClient(model="claude-test", api_key="k")
+        response = await client.stream_message(list(_USER), on_delta=sink.delta)
+
+    assert stream.call_count == 2
+    assert sink.deltas == ["Dawn."]
+    assert response.body == "Dawn."

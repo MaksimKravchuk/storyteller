@@ -1,4 +1,4 @@
-"""Server-sent-event stream for one player turn.
+"""Server-sent-event response for one player turn.
 
 The turn runs in its own task and pushes ``stage`` / ``delta`` events
 through a queue; the response body drains that queue as SSE frames and
@@ -14,7 +14,9 @@ import json
 from typing import AsyncGenerator, Awaitable, Callable
 
 import anyio
+from fastapi.responses import StreamingResponse
 from loguru import logger
+from starlette.types import Receive, Scope, Send
 
 from interfaces.web import action_errors
 from interfaces.web.schemas import ActionResponse
@@ -73,12 +75,33 @@ async def _finish_shielded(turn: asyncio.Task[None]) -> None:
         await turn
 
 
-async def stream_turn(run_turn: TurnRunner) -> AsyncGenerator[str, None]:
-    """Run ``run_turn`` with a bound turn stream and yield its SSE frames until the terminal event."""
-    queue: asyncio.Queue[_Event | None] = asyncio.Queue()
-    async with contextlib.AsyncExitStack() as cleanup:
-        cleanup.push_async_callback(_finish_shielded, asyncio.create_task(_run_to_queue(run_turn, queue)))
+async def _drain(queue: asyncio.Queue[_Event | None]) -> AsyncGenerator[str, None]:
+    """Yield queued events as SSE frames until the end-of-stream marker."""
+    event = await queue.get()
+    while event is not None:
+        yield _sse_frame(event)
         event = await queue.get()
-        while event is not None:
-            yield _sse_frame(event)
-            event = await queue.get()
+
+
+class TurnStreamResponse(StreamingResponse):
+    """SSE response that owns the turn task and never returns before the turn ends.
+
+    The wait lives here, not in the body generator: a disconnect while a frame
+    is being sent cancels the send and leaves the generator suspended, but this
+    call still blocks request teardown (and the DB session) until the turn is done.
+    """
+
+    def __init__(self, run_turn: TurnRunner) -> None:
+        self._queue: asyncio.Queue[_Event | None] = asyncio.Queue()
+        self._run_turn = run_turn
+        super().__init__(
+            _drain(self._queue),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        async with contextlib.AsyncExitStack() as cleanup:
+            turn = asyncio.create_task(_run_to_queue(self._run_turn, self._queue))
+            cleanup.push_async_callback(_finish_shielded, turn)
+            await super().__call__(scope, receive, send)

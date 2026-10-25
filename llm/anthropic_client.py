@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import types
 from typing import Any, Awaitable, Callable
 
@@ -216,9 +217,12 @@ class AnthropicClient(BaseLLMClient):
         system_prompt: str = "",
         max_tokens: int | None = None,
     ) -> LLMResponse:
-        """Stream a plain-text completion, forwarding each text delta as it arrives."""
+        """Stream a plain-text completion; only opening the stream is retried, never a half-sent body."""
         kwargs = self._build_request_kwargs(messages, system_prompt, None, max_tokens, None)
-        async with self._client.messages.stream(**kwargs) as stream:
+        async with contextlib.AsyncExitStack() as stack:
+            stream = await _call_with_retry(
+                lambda: stack.enter_async_context(self._client.messages.stream(**kwargs)),
+            )
             async for text in stream.text_stream:
                 await on_delta(text)
             response = await stream.get_final_message()
