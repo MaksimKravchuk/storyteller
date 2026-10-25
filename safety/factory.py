@@ -44,6 +44,9 @@ def build_moderator(cfg: "Config") -> Moderator | None:
     return Moderator(providers=providers, thresholds=_thresholds_from_config(cfg))
 
 
+_MATURE_CATEGORIES = frozenset((ModerationCategory.VIOLENCE, ModerationCategory.SEXUAL))
+
+
 def _thresholds_from_config(cfg: "Config") -> ModerationThresholds:
     """Translate the env-derived threshold names into a :class:`ModerationThresholds`.
 
@@ -58,7 +61,8 @@ def _thresholds_from_config(cfg: "Config") -> ModerationThresholds:
         )
         for category in ModerationCategory
     }
-    return ModerationThresholds(**overrides)
+    exempt = _MATURE_CATEGORIES if cfg.safety_mature_content else frozenset()
+    return ModerationThresholds(**overrides, exempt=exempt)
 
 
 def _severity_from_name(name: str, field_name: str) -> ModerationSeverity:

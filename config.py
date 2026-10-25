@@ -133,6 +133,8 @@ class Config(BaseSettings):
     safety_threshold_self_harm: str = _SAFETY_MEDIUM
     safety_threshold_illicit: str = _SAFETY_HIGH
     safety_threshold_prompt_injection: str = _SAFETY_MEDIUM
+    # Per-request override for accounts that opted into 18+ (see safety.factory); server-wide when set in env.
+    safety_mature_content: bool = False
 
     @property
     def public_supabase_key(self) -> str | None:

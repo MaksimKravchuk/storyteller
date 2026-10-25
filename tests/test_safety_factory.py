@@ -9,10 +9,14 @@ and return ``None`` when safety is disabled outright.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import cast
 
 import allure
 
+from config import Config
+
 from safety.factory import build_moderator
+from safety.moderator import Moderator
 from safety.heuristic import HeuristicProvider
 from safety.openai_provider import OpenAIModerationProvider
 from safety.result import ModerationCategory, ModerationSeverity
@@ -37,6 +41,7 @@ class _CfgStub:
     safety_threshold_self_harm: str = "MEDIUM"
     safety_threshold_illicit: str = "HIGH"
     safety_threshold_prompt_injection: str = "MEDIUM"
+    safety_mature_content: bool = False
 
 
 @allure.story("Factory wiring")
@@ -85,3 +90,29 @@ def test_build_moderator_falls_back_on_unknown_severity() -> None:
     assert moderator is not None
     # The default for violence is HIGH, so a typo must not silently widen the gate.
     assert moderator.thresholds.threshold_for(ModerationCategory.VIOLENCE) == ModerationSeverity.HIGH
+
+
+def _build(stub: _CfgStub) -> Moderator | None:
+    return build_moderator(cast(Config, stub))
+
+
+@allure.story("Mature content")
+@allure.title("Mature content exempts violence and sexual content but keeps minors, self-harm and hate gated")
+def test_build_moderator_mature_content_exemptions() -> None:
+    moderator = _build(_CfgStub(safety_mature_content=True))
+    assert moderator is not None
+    thresholds = moderator.thresholds
+    assert not thresholds.is_violation(ModerationCategory.VIOLENCE, ModerationSeverity.HIGH)
+    assert not thresholds.is_violation(ModerationCategory.SEXUAL, ModerationSeverity.HIGH)
+    assert thresholds.is_violation(ModerationCategory.SEXUAL_MINORS, ModerationSeverity.LOW)
+    assert thresholds.is_violation(ModerationCategory.SELF_HARM, ModerationSeverity.MEDIUM)
+    assert thresholds.is_violation(ModerationCategory.HATE, ModerationSeverity.MEDIUM)
+
+
+@allure.story("Mature content")
+@allure.title("Without mature content every category stays gated")
+def test_build_moderator_default_has_no_exemptions() -> None:
+    moderator = _build(_CfgStub())
+    assert moderator is not None
+    assert moderator.thresholds.is_violation(ModerationCategory.VIOLENCE, ModerationSeverity.HIGH)
+    assert moderator.thresholds.is_violation(ModerationCategory.SEXUAL, ModerationSeverity.HIGH)

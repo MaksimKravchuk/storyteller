@@ -38,6 +38,10 @@
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
         <span class="nav-label">New game</span>
       </button>
+      <button id="account-btn" class="nav-btn" type="button" title="Account settings" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="nav-label">Account</span>
+      </button>
       <button id="logout-btn" class="nav-btn" type="button" title="Logout" hidden>
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M14 4H5v16h9M10 12h10M17 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
         <span class="nav-label">Logout</span>
@@ -313,6 +317,24 @@
       </div>
     </section>
   </main>
+
+  <dialog id="account-dialog" class="sheet" aria-labelledby="account-title">
+    <div class="sheet-head">
+      <h2 id="account-title">Account</h2>
+      <button type="button" id="account-close-btn" class="icon-btn" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.6"/></svg>
+      </button>
+    </div>
+    <label class="toggle-row" for="mature-content">
+      <input type="checkbox" id="mature-content">
+      <span>18+ stories</span>
+    </label>
+    <p class="toggle-hint">
+      I am 18 or older. Allow graphic violence and sexual scenes. Fights and arrests are always allowed;
+      self-harm, hate and anything involving minors stay blocked.
+    </p>
+    <p id="account-status" class="status"></p>
+  </dialog>
 
   <dialog id="feedback-dialog" class="sheet" aria-labelledby="feedback-title">
     <div class="sheet-head">

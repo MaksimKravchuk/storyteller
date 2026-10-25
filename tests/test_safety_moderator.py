@@ -122,6 +122,14 @@ def test_threshold_for_every_category() -> None:
     assert thresholds.threshold_for(ModerationCategory.SEXUAL) == ModerationSeverity.HIGH
 
 
+@allure.story("Threshold policy")
+@allure.title("An exempt category never counts as a violation, whatever its severity")
+def test_exempt_category_is_never_a_violation() -> None:
+    thresholds = ModerationThresholds(exempt=frozenset((ModerationCategory.VIOLENCE,)))
+    assert not thresholds.is_violation(ModerationCategory.VIOLENCE, ModerationSeverity.HIGH)
+    assert thresholds.is_violation(ModerationCategory.SEXUAL, ModerationSeverity.HIGH)
+
+
 # ---------------------------------------------------------------------------
 # Heuristic provider
 # ---------------------------------------------------------------------------
@@ -226,7 +234,7 @@ def test_score_to_severity_bucketing(score: float, expected: ModerationSeverity)
 
 
 @allure.story("OpenAI provider")
-@allure.title("severities_from_response folds violence/graphic and violence into a single VIOLENCE bucket")
+@allure.title("severities_from_response maps violence/graphic onto the VIOLENCE bucket")
 def test_severities_from_response_merges_subcategories() -> None:
     response = {
         "results": [
@@ -247,9 +255,17 @@ def test_severities_from_response_merges_subcategories() -> None:
 @allure.story("OpenAI provider")
 @allure.title("severities_from_response ignores unknown wire categories without raising")
 def test_severities_from_response_ignores_unknown_categories() -> None:
-    response = {"results": [{"category_scores": {"unknown/category": 0.95, "violence": 0.85}}]}
+    response = {"results": [{"category_scores": {"unknown/category": 0.95, "violence/graphic": 0.85}}]}
     severities = severities_from_response(response)
     assert severities == {ModerationCategory.VIOLENCE: ModerationSeverity.HIGH}
+
+
+@allure.story("OpenAI provider")
+@allure.title("Plain non-graphic violence (a scuffle, a sword blow) is not scored, so it never blocks a turn")
+def test_severities_from_response_ignores_plain_violence() -> None:
+    # Real omni-moderation scores for "Он хватает тебя за плащ, валит на землю и выкручивает руку за спину".
+    response = {"results": [{"category_scores": {"violence": 0.855, "violence/graphic": 0.006}}]}
+    assert severities_from_response(response) == {}
 
 
 @allure.story("OpenAI provider")

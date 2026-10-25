@@ -35,4 +35,9 @@ async def get_beta_player_context(
     if not is_auth_required(cfg):
         return PlayerFeedbackContext(player_id=player_id, email=None)
     user = await get_current_user(request, cfg, repo)
-    return PlayerFeedbackContext(player_id=user.account_id, email=user.email, plan=user.plan)
+    return PlayerFeedbackContext(
+        player_id=user.account_id,
+        email=user.email,
+        plan=user.plan,
+        mature_content=user.mature_content,
+    )

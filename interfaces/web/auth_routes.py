@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel
 
 from config import Config
 from db.repository import GameRepository
@@ -39,12 +40,30 @@ async def get_public_config(cfg: CfgDep) -> dict[str, str | bool | None]:
     }
 
 
+class PreferencesUpdate(BaseModel):
+    """Body of ``PUT /api/me/preferences``."""
+
+    mature_content: bool
+
+
 @router.get("/api/me")
 async def get_me(user: CurrentUserDep) -> dict[str, str | bool]:
     """Return the current authenticated beta account metadata."""
+    return _me(user, user.mature_content)
+
+
+@router.put("/api/me/preferences")
+async def put_preferences(body: PreferencesUpdate, user: CurrentUserDep, repo: RepoDep) -> dict[str, str | bool]:
+    """Store the account's 18+ switch; it applies from the next turn on."""
+    await repo.accounts.set_mature_content(user.account_id, body.mature_content)
+    return _me(user, body.mature_content)
+
+
+def _me(user: AuthenticatedUser, mature_content: bool) -> dict[str, str | bool]:
     return {
         "account_id": user.account_id,
         "email": user.email,
         "plan": user.plan,
         "is_admin": user.is_admin,
+        "mature_content": mature_content,
     }

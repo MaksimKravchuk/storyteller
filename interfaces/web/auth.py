@@ -104,4 +104,5 @@ def _authenticated_user(account: Mapping[str, Any], claims: SupabaseClaims) -> A
         email=str(account.get("email") or claims.email).strip().lower(),
         plan=normalize_user_plan(account.get("plan")),
         is_admin=bool(account.get("is_admin")),
+        mature_content=bool(account.get("mature_content")),
     )

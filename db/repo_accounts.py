@@ -59,8 +59,14 @@ class AccountStore:
             .returning(accounts)
         )
         account_rows = await self._session.execute(create_stmt)
-        await self._mark_invite_accepted(normalized)
+        await _mark_invite_accepted(self._session, normalized)
         return cast("Mapping[str, Any]", account_rows.mappings().one())
+
+    async def set_mature_content(self, account_id: str, enabled: bool) -> None:
+        """Store the account's 18+ opt-in (violence and sexual content pass moderation)."""
+        stmt = update(accounts).where(accounts.c.id == account_id)
+        changes = {"mature_content": enabled, "updated_at": func.now()}
+        await self._session.execute(stmt.values(**changes))
 
     async def is_email_invited(self, email: str) -> bool:
         """Return True when the normalized email has a non-revoked invite."""
@@ -69,15 +75,16 @@ class AccountStore:
             return False
         return invite["status"] in {_INVITED_STATUS, _ACCEPTED_STATUS} and invite["status"] != _REVOKED_STATUS
 
-    async def _mark_invite_accepted(self, email: str) -> None:
-        await self._session.execute(
-            update(beta_invites)
-            .where(beta_invites.c.email == email)
-            .where(beta_invites.c.status == _INVITED_STATUS)
-            .values(status=_ACCEPTED_STATUS, accepted_at=func.now()),
-        )
-
 
 def normalize_email(email: str) -> str:
     """Normalize email addresses for invite lookups."""
     return email.strip().lower()
+
+
+async def _mark_invite_accepted(session: AsyncSession, email: str) -> None:
+    await session.execute(
+        update(beta_invites)
+        .where(beta_invites.c.email == email)
+        .where(beta_invites.c.status == _INVITED_STATUS)
+        .values(status=_ACCEPTED_STATUS, accepted_at=func.now()),
+    )

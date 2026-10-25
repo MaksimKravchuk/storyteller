@@ -24,6 +24,7 @@ class AuthenticatedUser:
     email: str
     plan: str
     is_admin: bool
+    mature_content: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,3 +34,4 @@ class PlayerFeedbackContext:
     player_id: str
     email: str | None
     plan: str = DEFAULT_USER_PLAN
+    mature_content: bool = False

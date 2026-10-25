@@ -192,6 +192,7 @@ def test_me_returns_invited_account_metadata(
         "email": _USER_EMAIL.lower(),
         "plan": "friend_beta",
         "is_admin": False,
+        "mature_content": False,
     }
     mock_repo.accounts.is_email_invited.assert_awaited_once_with(_USER_EMAIL)
     mock_repo.accounts.get_or_create_for_invited_user.assert_awaited_once_with(_USER_ID, _USER_EMAIL)
