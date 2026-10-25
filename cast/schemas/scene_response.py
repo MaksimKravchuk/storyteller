@@ -29,6 +29,7 @@ class SceneResponse(BaseModel):
     """
 
     location_id: str = "unknown"
+    location_name: str = ""
     description: str = ""
     npcs_present: list[str] = Field(default_factory=list)
     points_of_interest: list[str | PointOfInterestResponse] = Field(default_factory=list)

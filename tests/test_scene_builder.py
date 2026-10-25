@@ -260,5 +260,6 @@ class TestSceneBuilder:
 
         rendered_system = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "Persistent world changes" in rendered_system
-        assert "{0}: The front window is broken.".format(make_uuid("tavern")) in rendered_system
-        assert "{0}: The statue of Jupiter is toppled.".format(make_uuid("forum")) in rendered_system
+        # Deltas are keyed by the short place id the Scene Builder sees in "Known places".
+        assert "{0}: The front window is broken.".format(make_uuid("tavern").hex[:8]) in rendered_system
+        assert "{0}: The statue of Jupiter is toppled.".format(make_uuid("forum").hex[:8]) in rendered_system

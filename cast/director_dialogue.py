@@ -13,6 +13,7 @@ from cast import (
     emotional_memory,
     known_npcs,
     scene_log,
+    _place_residents as place_residents,
 )
 from cast.dice import ContestRoll, ContestType
 from knowledge import charge as charge_presets, salience as salience_presets
@@ -224,8 +225,12 @@ class DialogueHandler:
             return
         known = _known_scene_identifiers(scene, self._gs)
         for target in target_names:
-            if target.lower() not in known:
-                scene.npcs_present.append(SceneNPC(role=target))
+            if target.lower() in known:
+                continue
+            # Calling out to someone who lives here brings *them* in, not a namesake.
+            resident = place_residents.resident_named(self._gs, scene.location_id, target)
+            resident_uuid = resident.uuid if resident else None
+            scene.npcs_present.append(SceneNPC(role=target, uuid=resident_uuid))
 
     async def init_scene_npcs(
         self,

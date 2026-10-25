@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import AsyncMock
 
-from cast import director_context, player_context
+from cast import director_context, player_context, scene_place
 from cast.actor_config import format_past_memories, goal_outcome_var, goal_prompt_vars
 from cast.actor_memory import format_accessible_knowledge, select_actor_memories
 from cast.hostility import format_hostile_actions_summary
@@ -150,7 +150,8 @@ def _scene_builder_optional_lines(game_state: GameState) -> tuple[str, str]:
     location = game_state.locations[state_mod.LOCATION_ID]
     deltas = all_scene_deltas(game_state.knowledge_graph)
     delta_lines = "\n".join(
-        "- {0}: {1}".format(loc_id, " ".join(texts)) for loc_id, texts in sorted(deltas.items(), key=_sort_by_str_key)
+        "- {0}: {1}".format(scene_place.place_key(loc_id), " ".join(texts))
+        for loc_id, texts in sorted(deltas.items(), key=_sort_by_str_key)
     )
     object_state_lines = "\n".join(
         "- {0}: {1}".format(obj_key, obj_state) for obj_key, obj_state in sorted(location.object_states.items())
@@ -169,6 +170,7 @@ def scene_builder_system_kwargs(game_state: GameState, language: str) -> dict[st
         "language": language,
         "persistent_world_changes": delta_lines,
         "known_object_states": object_state_lines,
+        "known_places": scene_place.format_known_places(game_state),
     }
 
 

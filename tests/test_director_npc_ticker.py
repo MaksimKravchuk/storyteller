@@ -84,6 +84,9 @@ def _build_executor(*, game_time: str, with_chronicler: bool = False):
     narrator = AsyncMock()
     narrator.execute = AsyncMock(return_value="Narrated.")
     scene_builder = AsyncMock()
+    scene_builder.execute = AsyncMock(
+        return_value=scene_mod.Scene(location_id=make_uuid("street"), description="A street."),
+    )
     npc_generator = AsyncMock()
     npc_generator.execute = AsyncMock(return_value=[])
 
