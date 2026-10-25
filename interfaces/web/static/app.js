@@ -1140,7 +1140,7 @@
             live = appendTurnHTML("narrator is-streaming", "");
             pending.remove();
           }
-          // shortcut: markdown markers are hidden, not rendered, until the final HTML arrives.
+          // shortcut: markdown markers are hidden, not rendered, until the final HTML arrives; render them live if players miss emphasis mid-stream.
           live.textContent += payload.text.replace(/\*/g, "");
         }
       });
