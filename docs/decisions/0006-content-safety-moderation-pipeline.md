@@ -90,6 +90,7 @@ What future agents must preserve:
 - `tests/test_safety_web_api.py` — flagged input returns HTTP 400 at the route seam.
 - `tests/test_safety_factory.py` — provider selection from config (heuristic always; OpenAI only when keyed); `test_build_moderator_mature_content_exemptions` / `test_build_moderator_default_has_no_exemptions` lock the exempt set to exactly `VIOLENCE` + `SEXUAL`.
 - `tests/test_safety_moderator.py::test_severities_from_response_ignores_plain_violence` — plain `violence` scores are dropped; `test_exempt_category_is_never_a_violation` covers the exemption rule.
+- `tests/test_safety_recorded_scores.py` — default moderation decisions on scores recorded from the live `omni-moderation-latest` endpoint (`tests/fixtures/moderation_scores.json`): ordinary EN/RU fights, threats, theft, arson and fight narration pass; gore and self-harm block. Hand-picked scores elsewhere never matched the real distribution (a sword blow scores `violence` ≈ 0.9, not MEDIUM). Re-record with `tests/fixtures/record_moderation_scores.py` when the moderation model changes.
 - `tests/test_web_mature_content.py` — `/api/me` reports the switch, `PUT /api/me/preferences` stores it (auth required), and start/turn engines get the player's mature config.
 - `tests/db/test_repo_accounts_mature.py` — `accounts.mature_content` DB round-trip.
 
