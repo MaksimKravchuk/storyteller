@@ -1073,14 +1073,19 @@
   }
 
   // Live preview of formatting/markdown_render.to_html's inline subset: a marker
-  // renders once its pair has arrived, and unpaired asterisks stay hidden meanwhile.
+  // renders once its pair has arrived, and unpaired markers stay hidden meanwhile.
   function streamingHTML(md) {
+    // Odd parts are code spans, kept literal as the server does.
     return escapeHTML(md)
-      .replace(/`([^`\n]+)`/g, "<code>$1</code>")
-      .replace(/\*\*(.+?)\*\*/gs, "<strong>$1</strong>")
-      .replace(/(?<!\*)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\*)/g, "<em>$1</em>")
-      .replace(/(?<![A-Za-z0-9_])_(?!\s)([^_\n]+?)(?<!\s)_(?![A-Za-z0-9_])/g, "<em>$1</em>")
-      .replace(/\*/g, "");
+      .split(/(`[^`\n]+`)/)
+      .map((part, i) => i % 2
+        ? "<code>" + part.slice(1, -1) + "</code>"
+        : part
+          .replace(/\*\*(.+?)\*\*/gs, "<strong>$1</strong>")
+          .replace(/(?<!\*)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\*)/g, "<em>$1</em>")
+          .replace(/(?<![A-Za-z0-9_])_(?!\s)([^_\n]+?)(?<!\s)_(?![A-Za-z0-9_])/g, "<em>$1</em>")
+          .replace(/[*`]|(?<![A-Za-z0-9_])_(?!\s)/g, ""))
+      .join("");
   }
 
   function escapeHTML(text) {
