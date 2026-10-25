@@ -35,6 +35,21 @@ on:
         required: false
         default: ""
         type: string
+      director_model:
+        description: "Experiment only: Director model"
+        required: false
+        default: "gpt-5.4-mini"
+        type: string
+      agent_model:
+        description: "Experiment only: agent model"
+        required: false
+        default: "gpt-5.4-nano"
+        type: string
+      narrator_model:
+        description: "Experiment only: Narrator model"
+        required: false
+        default: "gpt-5.4-mini"
+        type: string
 
 jobs:
   benchmark:
@@ -62,9 +77,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           # Engine models stay on the GPT-5.4 set the committed baselines were
           # calibrated on (ADR-0002); move them with a baseline re-pin (ADR-0018).
-          DIRECTOR_MODEL: gpt-5.4-mini
-          AGENT_MODEL: gpt-5.4-nano
-          NARRATOR_MODEL: gpt-5.4-mini
+          DIRECTOR_MODEL: ${{ inputs.director_model }}
+          AGENT_MODEL: ${{ inputs.agent_model }}
+          NARRATOR_MODEL: ${{ inputs.narrator_model }}
           DRAMATURGE_MODEL: gpt-5.4-nano
           SCENARIO_INPUT: ${{ inputs.scenario }}
           ITERATIONS_INPUT: ${{ inputs.iterations }}
@@ -91,6 +106,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results
+          name: benchmark-results-${{ inputs.director_model }}-${{ inputs.agent_model }}-${{ inputs.narrator_model }}
           path: benchmarks/results/
           if-no-files-found: warn
