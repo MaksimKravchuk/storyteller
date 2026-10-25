@@ -213,13 +213,13 @@ class TestNPCRetaliation:
         hello_reply = actor_reply(text="Hello there.")
         idle_reply = actor_reply(text='{"action": "nods", "type": "IDLE", "target": null}')
         mock_actor.act = AsyncMock(return_value=hello_reply)
-        # 1st call: dialogue, 2nd call: NPC turn
+        # Dialogue reply; the spare NPC-turn reply goes unused (routine addressee skips its turn)
         mock_actor.execute = AsyncMock(side_effect=[hello_reply, idle_reply])
         director._actors[_NPC_A] = mock_actor
 
         await director.act("greet the guard")
-        # 2 calls: dialogue + NPC turn (no retaliation since mood unchanged)
-        assert mock_actor.execute.call_count == 2
+        # Dialogue only: no retaliation since mood unchanged, and the routine addressee skips its NPC turn
+        assert mock_actor.execute.call_count == 1
 
     @allure.story("Aggression roll integration")
     @allure.title("A newly hostile NPC whose aggression roll fails does not retaliate this turn")

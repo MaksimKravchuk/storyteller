@@ -77,21 +77,37 @@ def _idle_reply():
 @allure.feature("NPC turn integration")
 class TestDirectorCallsNPCTurns:
     @allure.story("NPC turn after talk")
-    @allure.title("After a TALK action the actor is invoked twice: once for dialogue and once for the NPC turn")
+    @allure.title("After a TALK action a routine addressee answers once and sits its autonomous turn out")
     @pytest.mark.asyncio
-    async def test_npc_turns_called_after_talk(self):
+    async def test_npc_turns_skip_routine_addressee_after_talk(self):
         gs = make_game_state()
         _setup_guard(gs)
         director = make_director(game_state=gs, route_response=_talk_route())
 
-        # Mock actor for dialogue + NPC turn (returns dialogue first, then turn JSON)
         mock_actor = AsyncMock()
         mock_actor.execute = AsyncMock(side_effect=[actor_reply(text="Hello traveler."), _idle_reply()])
         director._actors[_NPC_A] = mock_actor
 
         await director.act("talk to the guard")
 
-        # Actor should be called twice: once for dialogue, once for NPC turn
+        # Dialogue reply only: a second, autonomous turn would just repeat the reply.
+        assert mock_actor.execute.call_count == 1
+
+    @allure.story("NPC turn after talk")
+    @allure.title("After a TALK action a hostile addressee still takes its autonomous turn")
+    @pytest.mark.asyncio
+    async def test_npc_turns_called_after_talk_for_hostile_addressee(self):
+        gs = make_game_state()
+        _setup_guard(gs)
+        gs.npcs[_NPC_A].hostility_level = 1
+        director = make_director(game_state=gs, route_response=_talk_route())
+
+        mock_actor = AsyncMock()
+        mock_actor.execute = AsyncMock(side_effect=[actor_reply(text="Hello traveler."), _idle_reply()])
+        director._actors[_NPC_A] = mock_actor
+
+        await director.act("talk to the guard")
+
         assert mock_actor.execute.call_count == 2
 
     @allure.story("NPC turn after wait")

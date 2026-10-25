@@ -20,6 +20,7 @@ the per-NPC summary.
 from __future__ import annotations
 
 from enum import Enum
+from itertools import takewhile
 from typing import Any
 from uuid import UUID
 
@@ -87,3 +88,15 @@ class SceneActionEntry(StorytellerBase):
         if self.actor_uuid is None:
             raise ValueError("{0} entries require a non-null actor_uuid".format(self.actor_kind.value))
         return self
+
+
+def this_turn_npc_replies(scene_action_log: list[SceneActionEntry]) -> list[SceneActionEntry]:
+    """Return the NPC ``TALK`` entries logged after the player's latest action."""
+    this_turn = takewhile(lambda entry: entry.actor_kind != ActorKind.PLAYER, reversed(scene_action_log))
+    replies = [entry for entry in this_turn if _is_npc_reply(entry)]
+    replies.reverse()
+    return replies
+
+
+def _is_npc_reply(entry: SceneActionEntry) -> bool:
+    return entry.actor_kind == ActorKind.NPC and entry.action_type == "TALK"
