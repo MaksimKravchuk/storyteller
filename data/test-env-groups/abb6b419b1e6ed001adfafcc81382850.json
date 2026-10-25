@@ -1,1 +1,1 @@
-{"id":"abb6b419b1e6ed001adfafcc81382850","fullName":"tests.test_search_factory#test_base_search_client_is_abstract","name":"BaseSearchClient cannot be instantiated directly (search is abstract)","status":"passed","testResultsByEnv":{"default":"38dfa9ced05164d893fbb66328a3fe3c"}}
+{"id":"abb6b419b1e6ed001adfafcc81382850","fullName":"tests.test_search_factory#test_base_search_client_is_abstract","name":"BaseSearchClient cannot be instantiated directly (search is abstract)","status":"passed","testResultsByEnv":{"default":"f9eb4fb71a178fcaa8c0c9b7c6d9f5bf"}}

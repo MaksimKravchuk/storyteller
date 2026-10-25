@@ -1,1 +1,1 @@
-{"id":"95e8b13afa7eb0408c75e16f91ef9769","fullName":"tests.test_log_scrubbing.TestScrubLogRecord#test_mutates_string_extras","name":"scrub_log_record sanitizes string values inside ``record['extra']``","status":"passed","testResultsByEnv":{"default":"0ede61ce12b7df724a12b62c32f9495d"}}
+{"id":"95e8b13afa7eb0408c75e16f91ef9769","fullName":"tests.test_log_scrubbing.TestScrubLogRecord#test_mutates_string_extras","name":"scrub_log_record sanitizes string values inside ``record['extra']``","status":"passed","testResultsByEnv":{"default":"c745190dab2f761e2aba14b81a83116d"}}

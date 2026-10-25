@@ -1,1 +1,1 @@
-{"id":"68c018ac07bdc215b0fa8212c481a489","fullName":"tests.test_admin_beta_invites#test_admin_beta_invites_returns_invites_envelope","name":"GET /api/admin/beta/invites returns invites from the repository","status":"passed","testResultsByEnv":{"default":"a8bc6c6cfb6c1253f6c225d985c4d039"}}
+{"id":"68c018ac07bdc215b0fa8212c481a489","fullName":"tests.test_admin_beta_invites#test_admin_beta_invites_returns_invites_envelope","name":"GET /api/admin/beta/invites returns invites from the repository","status":"passed","testResultsByEnv":{"default":"8bf9f13a6cf760f13425b71813f76a8c"}}

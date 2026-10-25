@@ -1,1 +1,1 @@
-{"id":"d36c72ac4afee0053146dea89251f7a3","fullName":"tests.test_run_server_admin_auth#test_fly_requires_beta_auth","name":"On Fly, disabled beta auth aborts startup instead of serving an open admin API","status":"passed","testResultsByEnv":{"default":"a02358d09a3b6c68febf65982e4d3bc8"}}
+{"id":"d36c72ac4afee0053146dea89251f7a3","fullName":"tests.test_run_server_admin_auth#test_fly_requires_beta_auth","name":"On Fly, disabled beta auth aborts startup instead of serving an open admin API","status":"passed","testResultsByEnv":{"default":"b8c79cd5b86732d4f54c601e7321e47f"}}

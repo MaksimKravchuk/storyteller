@@ -1,0 +1,2 @@
+[32m2026-10-25 22:40:22.403[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-25 22:40:22.404[0m | [33m[1mWARNING [0m | [36msafety.moderator[0m | session=[33m-[0m | content_safety.flagged direction=input categories=['self_harm'] severities={'self_harm': 'HIGH'} length=62 provider=heuristic,openai

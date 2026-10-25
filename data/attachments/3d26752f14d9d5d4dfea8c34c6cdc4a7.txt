@@ -1,2 +1,0 @@
-[32m2026-10-25 22:32:29.647[0m | [1mINFO    [0m | [36mpymorphy3.opencorpora_dict.wrapper[0m | session=[33m-[0m | Loading dictionaries from /home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pymorphy3_dicts_ru/data
-[32m2026-10-25 22:32:29.674[0m | [1mINFO    [0m | [36mpymorphy3.opencorpora_dict.wrapper[0m | session=[33m-[0m | format: 2.4, revision: 417150, updated: 2022-01-08T22:09:24.565962

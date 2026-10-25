@@ -1,1 +1,1 @@
-{"id":"66462d11b81a142ec57f890a51e66f78","fullName":"tests.test_db_converters.TestPlayerConverter#test_round_trip","name":"PlayerState round-trips including inventory and known NPCs","status":"passed","testResultsByEnv":{"default":"2c2b5c055b4337c56a882f0420921dee"}}
+{"id":"66462d11b81a142ec57f890a51e66f78","fullName":"tests.test_db_converters.TestPlayerConverter#test_round_trip","name":"PlayerState round-trips including inventory and known NPCs","status":"passed","testResultsByEnv":{"default":"d0a8a273961be63040f91eef5aea905f"}}

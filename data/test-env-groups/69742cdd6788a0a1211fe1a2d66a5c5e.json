@@ -1,1 +1,1 @@
-{"id":"69742cdd6788a0a1211fe1a2d66a5c5e","fullName":"tests.test_model_pricing#test_poster_image_model_price","name":"Poster image model is priced so illustrations count against the beta budget","status":"passed","testResultsByEnv":{"default":"df12574a722f1989fd95602ed6db5ea9"}}
+{"id":"69742cdd6788a0a1211fe1a2d66a5c5e","fullName":"tests.test_model_pricing#test_poster_image_model_price","name":"Poster image model is priced so illustrations count against the beta budget","status":"passed","testResultsByEnv":{"default":"c2e49598ba07f5c68f3c5df0bb777583"}}

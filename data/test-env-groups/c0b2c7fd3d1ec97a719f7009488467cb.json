@@ -1,1 +1,1 @@
-{"id":"c0b2c7fd3d1ec97a719f7009488467cb","fullName":"tests.test_web_schemas#test_responses_expose_world","name":"GameSnapshot and ActionResponse expose a WorldView under the ``world`` field","status":"passed","testResultsByEnv":{"default":"06fa50dcc2454fadc4ec8dc16b2099d5"}}
+{"id":"c0b2c7fd3d1ec97a719f7009488467cb","fullName":"tests.test_web_schemas#test_responses_expose_world","name":"GameSnapshot and ActionResponse expose a WorldView under the ``world`` field","status":"passed","testResultsByEnv":{"default":"e087ce32eaf40fa448d4b2e2241868bd"}}

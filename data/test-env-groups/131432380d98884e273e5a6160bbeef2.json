@@ -1,1 +1,1 @@
-{"id":"131432380d98884e273e5a6160bbeef2","fullName":"tests.test_admin_routes_settings#test_post_set_model_invalid_json","name":"POST returns 400 when the body is not valid JSON","status":"passed","testResultsByEnv":{"default":"c7c98ff775b0972e8fdf9fb3a30d79df"}}
+{"id":"131432380d98884e273e5a6160bbeef2","fullName":"tests.test_admin_routes_settings#test_post_set_model_invalid_json","name":"POST returns 400 when the body is not valid JSON","status":"passed","testResultsByEnv":{"default":"56d8798f5365e3565233ca0caba178a5"}}

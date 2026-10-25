@@ -1,1 +1,1 @@
-{"id":"f8e06fd02dbbeafb0a6f9f5fbae687bf","fullName":"tests.test_dice_default_rng.TestPerTaskSeeding#test_seed_task_dice_noop_unseeded","name":"seed_task_dice is a no-op when no base is installed","status":"passed","testResultsByEnv":{"default":"7bdc9fb621dfd865123ec3c7646f4fc8"}}
+{"id":"f8e06fd02dbbeafb0a6f9f5fbae687bf","fullName":"tests.test_dice_default_rng.TestPerTaskSeeding#test_seed_task_dice_noop_unseeded","name":"seed_task_dice is a no-op when no base is installed","status":"passed","testResultsByEnv":{"default":"daae905ca1af9658f8a7eeaac8c00bd5"}}

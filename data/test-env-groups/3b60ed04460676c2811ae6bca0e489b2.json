@@ -1,1 +1,1 @@
-{"id":"3b60ed04460676c2811ae6bca0e489b2","fullName":"tests.test_web_poster#test_illustrate_moderation_flagged","name":"illustrate_poster refuses a flagged prompt through the shared moderation path","status":"passed","testResultsByEnv":{"default":"a9b1efb576c735dc5ed2dde5bb9bae51"}}
+{"id":"3b60ed04460676c2811ae6bca0e489b2","fullName":"tests.test_web_poster#test_illustrate_moderation_flagged","name":"illustrate_poster refuses a flagged prompt through the shared moderation path","status":"passed","testResultsByEnv":{"default":"aeb72c645f79d5489352ba0e89099b4e"}}

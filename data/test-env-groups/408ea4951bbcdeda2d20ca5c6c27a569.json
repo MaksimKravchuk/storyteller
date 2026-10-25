@@ -1,1 +1,1 @@
-{"id":"408ea4951bbcdeda2d20ca5c6c27a569","fullName":"tests.test_web_api#test_archive_game_commits_owned_story","name":"POST /api/games/{id}/archive commits the caller's own story","status":"passed","testResultsByEnv":{"default":"8d5158fa9b897e701c4a389a9aa50dd4"}}
+{"id":"408ea4951bbcdeda2d20ca5c6c27a569","fullName":"tests.test_web_api#test_archive_game_commits_owned_story","name":"POST /api/games/{id}/archive commits the caller's own story","status":"passed","testResultsByEnv":{"default":"7e9322f5a9c0fb30d1b780d0c1acad7c"}}

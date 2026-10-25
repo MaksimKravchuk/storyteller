@@ -1,1 +1,1 @@
-{"id":"3d60d15c840c9574ae478ac6a696d17b","fullName":"tests.test_web_character#test_builder_projects_known_npcs","name":"build_character_info projects known NPCs as name/occupation/descriptor rows","status":"passed","testResultsByEnv":{"default":"4554b69a7a32834593ba5a0ee16cfaf0"}}
+{"id":"3d60d15c840c9574ae478ac6a696d17b","fullName":"tests.test_web_character#test_builder_projects_known_npcs","name":"build_character_info projects known NPCs as name/occupation/descriptor rows","status":"passed","testResultsByEnv":{"default":"0cbd5b5967b8c5bfbde738c781ba977f"}}

@@ -1,0 +1,1 @@
+[32m2026-10-25 22:40:20.545[0m | [31m[1mERROR   [0m | [36mcast.npc_turn[0m | session=[33m-[0m | Resolved NPC action dropped from scene log: 3e5c240d-1bae-4ad4-a0c5-1b191a19a982 (IDLE) not in game_state.npcs

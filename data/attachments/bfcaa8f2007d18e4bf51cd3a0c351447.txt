@@ -1,1 +1,0 @@
-2026-10-25 22:33:28.455 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=WorldChronicler model=gpt-6-luna parent=None | prompt_tokens=2438 completion_tokens=99 duration_ms=1757

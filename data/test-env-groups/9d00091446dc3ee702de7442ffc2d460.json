@@ -1,1 +1,1 @@
-{"id":"9d00091446dc3ee702de7442ffc2d460","fullName":"tests.test_anthropic_reasoning_models#test_haiku_keeps_temperature","name":"Haiku 4.5 keeps its temperature and gets no effort setting","status":"passed","testResultsByEnv":{"default":"ce1f55d316855a6680202c75664239e0"}}
+{"id":"9d00091446dc3ee702de7442ffc2d460","fullName":"tests.test_anthropic_reasoning_models#test_haiku_keeps_temperature","name":"Haiku 4.5 keeps its temperature and gets no effort setting","status":"passed","testResultsByEnv":{"default":"8871f4cc4d870d905bb92fe68fe34c33"}}

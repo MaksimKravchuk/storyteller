@@ -1,1 +1,1 @@
-{"id":"ab144bb54363a143a458c84981fe4232","fullName":"tests.test_models.TestLocation#test_remove_npc","name":"Location.remove_npc drops the NPC UUID from the npcs_present list","status":"passed","testResultsByEnv":{"default":"91acb1bbb2153779a7266c2704fcd704"}}
+{"id":"ab144bb54363a143a458c84981fe4232","fullName":"tests.test_models.TestLocation#test_remove_npc","name":"Location.remove_npc drops the NPC UUID from the npcs_present list","status":"passed","testResultsByEnv":{"default":"cf71417f86942b7c7811fcce748df61a"}}

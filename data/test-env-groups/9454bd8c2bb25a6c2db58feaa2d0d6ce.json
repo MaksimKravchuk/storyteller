@@ -1,1 +1,1 @@
-{"id":"9454bd8c2bb25a6c2db58feaa2d0d6ce","fullName":"tests.test_benchmarks_judge.TestVerdictCoercion#test_yes_normalised","name":"_coerce_verdict normalises a YES string regardless of whitespace or case","status":"passed","testResultsByEnv":{"default":"a286319c890ad182075224b98c589477"}}
+{"id":"9454bd8c2bb25a6c2db58feaa2d0d6ce","fullName":"tests.test_benchmarks_judge.TestVerdictCoercion#test_yes_normalised","name":"_coerce_verdict normalises a YES string regardless of whitespace or case","status":"passed","testResultsByEnv":{"default":"03a308046f963c466aa076600560f84d"}}

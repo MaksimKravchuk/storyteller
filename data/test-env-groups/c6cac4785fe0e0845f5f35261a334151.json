@@ -1,1 +1,1 @@
-{"id":"c6cac4785fe0e0845f5f35261a334151","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_openai_api_key_forwarded","name":"create_llm_client forwards an explicit api_key to the OpenAI client","status":"passed","testResultsByEnv":{"default":"23a97714122a905111e52f3f3e3271ce"}}
+{"id":"c6cac4785fe0e0845f5f35261a334151","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_openai_api_key_forwarded","name":"create_llm_client forwards an explicit api_key to the OpenAI client","status":"passed","testResultsByEnv":{"default":"a433378187a000989973bdd87419182a"}}

@@ -1,1 +1,1 @@
-{"id":"b6ec85eb54bba898be52bf5ff96e82a5","fullName":"tests.test_admin_users#test_admin_user_detail_returns_invites_section","name":"/api/admin/users/{id} returns the invites section in the payload","status":"passed","testResultsByEnv":{"default":"73827f0b1e240ac7ef5ffd3627535366"}}
+{"id":"b6ec85eb54bba898be52bf5ff96e82a5","fullName":"tests.test_admin_users#test_admin_user_detail_returns_invites_section","name":"/api/admin/users/{id} returns the invites section in the payload","status":"passed","testResultsByEnv":{"default":"624d85f6ba2704f883792c52c7372e6e"}}
