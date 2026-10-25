@@ -1,1 +1,1 @@
-{"id":"490db04083403ffa6af1305c991b0fb2","fullName":"tests.test_npc_generator.TestNPCGenerator#test_short_descriptor_empty_preserved","name":"NPCGenerator tolerates an empty short_descriptor from the LLM","status":"passed","testResultsByEnv":{"default":"b12ec128ef262c9945f7a65118ac5890"}}
+{"id":"490db04083403ffa6af1305c991b0fb2","fullName":"tests.test_npc_generator.TestNPCGenerator#test_short_descriptor_empty_preserved","name":"NPCGenerator tolerates an empty short_descriptor from the LLM","status":"passed","testResultsByEnv":{"default":"e156591946ea97b9eb130301444f8050"}}

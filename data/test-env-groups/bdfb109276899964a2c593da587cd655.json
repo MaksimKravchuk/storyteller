@@ -1,0 +1,1 @@
+{"id":"bdfb109276899964a2c593da587cd655","fullName":"tests.test_director_npc_turns.TestDirectorCallsNPCTurns#test_npc_turns_skip_routine_addressee_after_talk","name":"After a TALK action a routine addressee answers once and sits its autonomous turn out","status":"passed","testResultsByEnv":{"default":"c04f2fbccd452974f41582ee14a6151a"}}

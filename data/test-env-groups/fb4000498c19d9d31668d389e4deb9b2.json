@@ -1,1 +1,1 @@
-{"id":"fb4000498c19d9d31668d389e4deb9b2","fullName":"tests.test_prompt_localization.TestResolveLocale#test_resolve_fallback","name":"resolve_locale falls back to DEFAULT_LOCALE for unknown or empty values","status":"passed","testResultsByEnv":{"default":"876d02974b2be80120ed7b81527b87ea"}}
+{"id":"fb4000498c19d9d31668d389e4deb9b2","fullName":"tests.test_prompt_localization.TestResolveLocale#test_resolve_fallback","name":"resolve_locale falls back to DEFAULT_LOCALE for unknown or empty values","status":"passed","testResultsByEnv":{"default":"7290d3f345b98c50209c918ba82f9e26"}}

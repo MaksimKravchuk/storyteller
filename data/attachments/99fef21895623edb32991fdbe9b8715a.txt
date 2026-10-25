@@ -1,0 +1,1 @@
+2026-10-25 05:59:14.483 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=Actor model=gpt-6-luna parent=None | prompt_tokens=1043 completion_tokens=63 duration_ms=2294

@@ -1,1 +1,1 @@
-{"id":"b38bea340bbd1cebcb9b55780a690cae","fullName":"tests.test_npc_ticker.TestNPCTickerEvictions#test_guard_present_in_morning","name":"A guard in the morning stays in the scene (day shift is present)","status":"passed","testResultsByEnv":{"default":"dbcfc05fd15883ef377d90e358a3d528"}}
+{"id":"b38bea340bbd1cebcb9b55780a690cae","fullName":"tests.test_npc_ticker.TestNPCTickerEvictions#test_guard_present_in_morning","name":"A guard in the morning stays in the scene (day shift is present)","status":"passed","testResultsByEnv":{"default":"e8278b348ab5eddff7f4140301eaaea2"}}

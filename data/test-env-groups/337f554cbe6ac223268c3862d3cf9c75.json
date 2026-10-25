@@ -1,1 +1,1 @@
-{"id":"337f554cbe6ac223268c3862d3cf9c75","fullName":"tests.test_model_pricing#test_pricing_json_override_replaces_default","name":"Model pricing JSON override replaces a checked-in default","status":"passed","testResultsByEnv":{"default":"36332654122072438ad7b1e84a73fe8d"}}
+{"id":"337f554cbe6ac223268c3862d3cf9c75","fullName":"tests.test_model_pricing#test_pricing_json_override_replaces_default","name":"Model pricing JSON override replaces a checked-in default","status":"passed","testResultsByEnv":{"default":"9b0d4a9f8257957fe23c1f06cc2beb08"}}

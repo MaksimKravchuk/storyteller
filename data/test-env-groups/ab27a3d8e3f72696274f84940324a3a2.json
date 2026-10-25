@@ -1,1 +1,1 @@
-{"id":"ab27a3d8e3f72696274f84940324a3a2","fullName":"tests.test_admin_users#test_admin_user_detail_returns_repository_payload","name":"/api/admin/users/{id} returns account usage and sessions","status":"passed","testResultsByEnv":{"default":"5f4e3aedd9d33ed07192577d02fd8994"}}
+{"id":"ab27a3d8e3f72696274f84940324a3a2","fullName":"tests.test_admin_users#test_admin_user_detail_returns_repository_payload","name":"/api/admin/users/{id} returns account usage and sessions","status":"passed","testResultsByEnv":{"default":"5b77e6a26b9769f0102ba7732488d899"}}

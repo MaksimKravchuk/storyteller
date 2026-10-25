@@ -1,1 +1,1 @@
-{"id":"92e0cc5c75608798b00d9290fda83713","fullName":"tests.test_models_game.TestPlayerState#test_has_own_fields","name":"PlayerState declares fields for name, location_id, and inventory","status":"passed","testResultsByEnv":{"default":"e7b30b89401b9bf4934a1887a1dbb175"}}
+{"id":"92e0cc5c75608798b00d9290fda83713","fullName":"tests.test_models_game.TestPlayerState#test_has_own_fields","name":"PlayerState declares fields for name, location_id, and inventory","status":"passed","testResultsByEnv":{"default":"709fc591be3b0d630c3a2a7d79b7c7ce"}}

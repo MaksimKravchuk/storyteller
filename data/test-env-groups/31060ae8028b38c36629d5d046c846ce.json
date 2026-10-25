@@ -1,1 +1,1 @@
-{"id":"31060ae8028b38c36629d5d046c846ce","fullName":"tests.benchmarks.test_temperature_override#test_load_global_applies_to_all_roles","name":"Global var applies to every role","status":"passed","testResultsByEnv":{"default":"d371092c87574faea0beaa5c73567c9b"}}
+{"id":"31060ae8028b38c36629d5d046c846ce","fullName":"tests.benchmarks.test_temperature_override#test_load_global_applies_to_all_roles","name":"Global var applies to every role","status":"passed","testResultsByEnv":{"default":"6d3e6eb51956d771e749350186f70739"}}

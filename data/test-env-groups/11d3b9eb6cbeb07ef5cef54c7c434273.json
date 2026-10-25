@@ -1,1 +1,1 @@
-{"id":"11d3b9eb6cbeb07ef5cef54c7c434273","fullName":"tests.test_admin_users#test_admin_user_detail_returns_404_when_unknown","name":"/api/admin/users/{id} returns 404 for an unknown user","status":"passed","testResultsByEnv":{"default":"9ffbf3185d6b919668d05c999b3dc131"}}
+{"id":"11d3b9eb6cbeb07ef5cef54c7c434273","fullName":"tests.test_admin_users#test_admin_user_detail_returns_404_when_unknown","name":"/api/admin/users/{id} returns 404 for an unknown user","status":"passed","testResultsByEnv":{"default":"f36a04813868ad431aee832eaf8ddf50"}}

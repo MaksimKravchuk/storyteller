@@ -1,4 +1,0 @@
-[32m2026-10-24 23:05:31.238[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-10-24 23:05:31.244[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | start
-[32m2026-10-24 23:05:31.250[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | LLM | agent=Actor model=<AsyncMock name='mock.send_message().model' id='139776859590992'> parent=None | prompt_tokens=<coroutine object AsyncMockMixin._execute_mock_call at 0x7f20560a7540> completion_tokens=<coroutine object AsyncMockMixin._execute_mock_call at 0x7f20560a7640> duration_ms=<coroutine object AsyncMockMixin._execute_mock_call at 0x7f20560a7940>
-[32m2026-10-24 23:05:31.250[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | done | duration_ms=6

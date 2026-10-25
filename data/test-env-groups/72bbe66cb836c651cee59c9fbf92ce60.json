@@ -1,1 +1,1 @@
-{"id":"72bbe66cb836c651cee59c9fbf92ce60","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_anthropic_provider","name":"create_llm_client returns an AnthropicClient when the provider is anthropic","status":"passed","testResultsByEnv":{"default":"28e05617a2d212041e4b974ceb7882f3"}}
+{"id":"72bbe66cb836c651cee59c9fbf92ce60","fullName":"tests.test_llm_factory.TestCreateLLMClient#test_anthropic_provider","name":"create_llm_client returns an AnthropicClient when the provider is anthropic","status":"passed","testResultsByEnv":{"default":"40d93eb3cf56f07e3c0f528b72f141c1"}}

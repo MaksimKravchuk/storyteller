@@ -1,0 +1,4 @@
+[32m2026-10-25 05:59:40.257[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-25 05:59:40.258[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | start
+[32m2026-10-25 05:59:40.260[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | LLM | agent=Actor model=fake parent=None | prompt_tokens=50 completion_tokens=10 duration_ms=0
+[32m2026-10-25 05:59:40.260[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=Actor parent=None | done | duration_ms=1
