@@ -148,7 +148,7 @@ class TestForcedWaitFromIncapacitation:
         }
         director = make_director(game_state=gs, route_response=route)
         mock_actor = AsyncMock()
-        # First call: dialogue, second call: NPC turn
+        # Dialogue reply; the spare NPC-turn reply goes unused (routine addressee skips its turn)
         mock_actor.execute = AsyncMock(
             side_effect=[
                 actor_reply(text="Hello"),
@@ -159,8 +159,8 @@ class TestForcedWaitFromIncapacitation:
 
         await director.act("talk to the guard")
 
-        # Actor called twice: dialogue + NPC turn
-        assert mock_actor.execute.call_count == 2
+        # Dialogue only: the routine addressee sits its autonomous turn out
+        assert mock_actor.execute.call_count == 1
 
 
 @allure.epic("Game Timeline")

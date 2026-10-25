@@ -9,7 +9,7 @@ from uuid import UUID
 import allure
 import pytest
 
-from cast import dice as _dice, npc_opportunity as _npo_mod, npc_turn as npc_turn_mod, scene_log as scene_log_mod
+from cast import dice as _dice, npc_opportunity as _npo_mod, npc_turn as npc_turn_mod
 from cast.schemas.actor_reply import ActorReply
 from knowledge.graph import KnowledgeGraph
 from knowledge.node import CanonSource, EdgeType, KnowledgeNode, KnowledgeScope, KnowledgeSource
@@ -1076,56 +1076,6 @@ class TestPlayerActionTypeFlowsIntoActorInput:
 
         actor_input = actor.execute.await_args.kwargs["input_data"]
         assert 'Recent events: The 190 cm Slav in dark furs says: "Hand over the silver."' in actor_input
-
-
-@allure.epic("NPC Interaction")
-@allure.feature("NPC autonomous turn — anti-echo")
-class TestThisTurnRepliesReachActorInput:
-    """A bystander's autonomous turn on a TALK must be told the addressed
-    NPC already answered, or every NPC in the scene repeats the same
-    answer (the "Где я?" chorus: three NPCs all reply "Constantinople,
-    at the inner gate"). Asserted at the Actor input boundary.
-    """
-
-    @allure.story("Anti-echo")
-    @allure.title("This turn's dialogue reply reaches every NPC turn prompt; earlier turns' replies do not")
-    @pytest.mark.asyncio
-    async def test_reply_clause_lists_only_this_turns_replies(self):
-        gs = _make_gs()
-        merchant = _make_npc(_NPC_UUID_A, _MERCHANT)
-        guard = _make_npc(_NPC_UUID_B, _GUARD)
-        gs.npcs[_NPC_UUID_A] = merchant
-        gs.npcs[_NPC_UUID_B] = guard
-        gs.current_scene = _make_scene(_NPC_UUID_A, _NPC_UUID_B)
-        scene_log_mod.append_player_action(gs, "TALK", "Who are you?")
-        scene_log_mod.append_npc_dialogue(gs, merchant, "Just a baker.")
-        scene_log_mod.append_player_action(gs, "TALK", "Where am I?")
-        scene_log_mod.append_npc_dialogue(gs, merchant, "In Constantinople, by the inner gate.")
-        guard_actor = _make_actor(_idle_response())
-        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_B: guard_actor})
-
-        await resolver.resolve_npc_turns("Where am I?", player_action_type="TALK")
-
-        actor_input = guard_actor.execute.await_args.kwargs["input_data"]
-        clause = actor_input.split("Already said to the player this turn:")[1]
-        assert "- Merchant: In Constantinople, by the inner gate." in clause
-        assert "Do not repeat" in clause
-        assert "Just a baker." not in clause
-
-    @allure.story("Anti-echo")
-    @allure.title("No dialogue this turn ⇒ no reply clause")
-    @pytest.mark.asyncio
-    async def test_no_reply_clause_without_dialogue(self):
-        gs = _make_gs()
-        gs.npcs[_NPC_UUID_A] = _make_npc(_NPC_UUID_A, _GUARD)
-        gs.current_scene = _make_scene(_NPC_UUID_A)
-        scene_log_mod.append_player_action(gs, "WAIT", "I wait.")
-        actor = _make_actor(_idle_response())
-        resolver = NPCTurnResolver(game_state=gs, actors={_NPC_UUID_A: actor})
-
-        await resolver.resolve_npc_turns("I wait.", player_action_type="WAIT")
-
-        assert "Already said to the player this turn:" not in actor.execute.await_args.kwargs["input_data"]
 
 
 @allure.epic("NPC Interaction")

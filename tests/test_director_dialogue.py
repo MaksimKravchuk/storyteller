@@ -106,8 +106,8 @@ class TestDuplicateNPCNames:
         await director.act("talk to the guard")
         calls_a = director._actors[_NPC_A].execute.call_count
         calls_b = director._actors[_NPC_B].execute.call_count
-        # 1 dialogue call (deduped by name) + 2 NPC turn calls (both NPCs in scene)
-        assert calls_a + calls_b == 3
+        # 1 dialogue call (deduped by name); both routine guards then sit the autonomous turn out
+        assert calls_a + calls_b == 1
 
     @allure.story("Duplicate NPC names")
     @allure.title("Attacking 'the guard' when two guards exist runs dialogue once and no redundant retaliation")

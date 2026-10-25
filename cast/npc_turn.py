@@ -24,6 +24,7 @@ from cast.dice import (
     seed_task_dice,
 )
 from cast import (
+    _npc_turn_gate,
     emotional_memory as _em,
     npc_goal_resolution as _ngr,
     npc_opportunity as _npo,
@@ -355,6 +356,8 @@ class NPCTurnResolver:
         converging on the same template.
         """
         eligible = self._eligible_npcs()
+        if not is_aggressive and scene_action_log_mod.this_turn_npc_replies(self._gs.scene_action_log):
+            eligible = _drop_routine_npcs(eligible, self._gs, witnessed_events or [])
         if not eligible:
             return []
         utterance = _build_player_utterance(self._gs, player_action_summary, player_action_type)
@@ -467,6 +470,26 @@ def _pick_incident_for_npc(
     return None
 
 
+def _drop_routine_npcs(
+    eligible: list[tuple[str, Any, Any]],
+    game_state: GameState,
+    witnessed_events: list[WitnessedAggression],
+) -> list[tuple[str, Any, Any]]:
+    """Keep only NPCs with their own reason to act; the player addressed someone else.
+
+    Every NPC still gets its emotional state derived (ADR-0012) so a
+    skipped NPC's mood and relationships stay fresh for its next turn.
+    """
+    kept: list[tuple[str, Any, Any]] = []
+    for entry in eligible:
+        npc = entry[1]
+        _em.apply_emotional_state(npc, game_state.knowledge_graph, game_state.game_clock, turn=game_state.turn_count)
+        witnessed = _pick_incident_for_npc(npc, game_state, witnessed_events) is not None
+        if witnessed or _npc_turn_gate.has_own_reason_to_act(npc, game_state):
+            kept.append(entry)
+    return kept
+
+
 def _coerce_player_utterance(player_input: PlayerUtterance | str) -> PlayerUtterance:
     """Wrap a bare string in a placeholder :class:`PlayerUtterance`.
 
@@ -523,9 +546,6 @@ def _optional_turn_clauses(
     scene_history = _format_scene_log_clause(game_state.scene_action_log, game_state.player)
     if scene_history:
         clauses.append(scene_history)
-    replies = _format_turn_replies_clause(game_state.scene_action_log)
-    if replies:
-        clauses.append(replies)
     if peer_actions:
         clauses.append(_format_peer_actions_clause(peer_actions))
     incident = _pick_incident_for_npc(npc, game_state, witnessed_events)
@@ -586,29 +606,6 @@ def _format_scene_log_clause(scene_action_log: list[Any], player: Any) -> str | 
     tail = scene_action_log[-_MAX_SCENE_LOG_ENTRIES:]
     lines = [_format_scene_log_entry(entry, player) for entry in tail]
     return "THIS SCENE SO FAR:\n{0}".format("\n".join(lines))
-
-
-def _format_turn_replies_clause(scene_action_log: list[Any]) -> str | None:
-    """Render this turn's NPC replies to the player with an anti-echo warning.
-
-    Replies are the NPC ``TALK`` entries logged after the player's latest
-    action. Without this clause every bystander re-answers the question
-    the addressed NPC already answered, and the addressed NPC repeats its
-    own gesture on its autonomous turn.
-    """
-    replies = [
-        "- {0}: {1}".format(entry.actor_name, entry.description[:_MAX_SCENE_LOG_DESC_CHARS])
-        for entry in scene_action_log_mod.this_turn_npc_replies(scene_action_log)
-    ]
-    if not replies:
-        return None
-    return (
-        "Already said to the player this turn:\n"
-        "{0}\n"
-        "Do not repeat, rephrase or confirm these replies or their gestures. "
-        "If the player was not talking to you, speak only to add something genuinely new; "
-        "otherwise go on with your own business."
-    ).format("\n".join(replies))
 
 
 def _format_peer_actions_clause(peer_actions: list[tuple[str, str]]) -> str:
