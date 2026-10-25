@@ -292,3 +292,21 @@ class TestNPCGenerator:
         with patch.object(gen, _SEND_JSON, new=AsyncMock(side_effect=[payload])):
             cards = await gen.act(["guard"], {"game_state": game_state})
         assert cards[0].short_descriptor == ""
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("NPC Generator")
+class TestNameUniquenessAcrossStory:
+    @allure.story("Duplicate prevention")
+    @allure.title("NPCGenerator forbids names of NPCs met in other scenes, not only the current one")
+    @pytest.mark.asyncio
+    async def test_names_from_other_scenes_are_forbidden(self, game_state) -> None:
+        elsewhere = NPCCard(name="Eira", occupation="net-mender")
+        game_state.npcs[elsewhere.uuid] = elsewhere
+        game_state.current_scene = Scene(location_id=make_uuid("npc-gen-path"), description="a path")
+        gen = NPCGenerator(llm_client=MagicMock())
+        send_json = AsyncMock(side_effect=[_full_npc_payload("Eira")])
+        with patch.object(gen, _SEND_JSON, new=send_json):
+            cards = await gen.act(["net-mender"], {"game_state": game_state})
+        assert "Eira" in send_json.await_args_list[0].args[0]
+        assert cards[0].name != "Eira"

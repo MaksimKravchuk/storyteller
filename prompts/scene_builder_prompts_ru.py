@@ -1,7 +1,7 @@
 """Russian-locale prompt templates for the Scene Builder agent.
 
 Mirrors :mod:`prompts.scene_builder_prompts`. Structured JSON keys
-stay in English (``location_id``, ``description``, ``npcs_present``,
+stay in English (``location_id``, ``location_name``, ``description``, ``npcs_present``,
 ``points_of_interest``, ``ambient_description``, ``time_of_day``) —
 the SceneResponse pydantic model expects them verbatim. Only the
 human-readable field descriptions and guidance translate.
@@ -27,6 +27,20 @@ SCENE_BUILDER_SYSTEM_RU = PromptTemplate(
             name="setting",
             template=("Сеттинг: {setting_summary}\nТекущая локация: {current_location}\nВремя суток: {time_of_day}"),
             required_vars=["setting_summary", "current_location", "time_of_day"],
+        ),
+        PromptSection(
+            name="known_places",
+            template=(
+                "Известные места этой истории. Если новая сцена происходит в одном из них — "
+                "в том числе когда игрок остаётся там или возвращается туда, — укажи в "
+                "location_id id этого места в точности как написано (например a3f09c1d). "
+                "Новый snake_case location_id придумывай только для места, которого нет в "
+                "списке; когда игрок уходит из места куда-то ещё, никогда не используй id покинутого места. "
+                "Люди, перечисленные у места, находятся там прямо сейчас, и движок "
+                "сам помещает их в сцену: их можно описать, но НЕ включай их в npcs_present.\n"
+                "{known_places}"
+            ),
+            required_vars=["known_places"],
         ),
         PromptSection(
             name="persistent_world_changes",
@@ -55,7 +69,7 @@ SCENE_BUILDER_SYSTEM_RU = PromptTemplate(
         PromptSection(
             name="language",
             template=(
-                "Все текстовые поля (description, npcs_present, points_of_interest, "
+                "Все текстовые поля (location_name, description, npcs_present, points_of_interest, "
                 "ambient_description) заполняй на языке: {language}. Ключи JSON и "
                 "значения location_id / time_of_day оставляй на английском — они "
                 "читаются кодом."
@@ -70,10 +84,13 @@ SCENE_BUILDER_GENERATE_RU = (
     'Действие игрока: "{player_action}"\n\n'
     "Сгенерируй сцену. Выведи ТОЛЬКО валидный JSON:\n"
     "{{\n"
-    '  "location_id": "короткий snake_case идентификатор локации (на английском)",\n'
+    '  "location_id": "id известного места, где идёт сцена, или новый короткий snake_case идентификатор '
+    'нового места (на английском)",\n'
+    '  "location_name": "короткое название места, напр. пристань у гавани",\n'
     '  "description": "Подробное визуальное описание сцены (что видно, '
     'архитектура, предметы)",\n'
-    '  "npcs_present": ["КАЖДЫЙ человек/персонаж, видимый в сцене — '
+    '  "npcs_present": ["КАЖДЫЙ другой человек/персонаж, видимый в сцене (кроме людей, '
+    "уже перечисленных у известного места) — "
     "стражники, торговцы, попрошайки, прохожие и т.п. Используй ролевые "
     "описания: стражник, торговец, попрошайка, писарь. Если фактический "
     "сеттинг/замысел предполагает социальное расследование, сбор слухов, "

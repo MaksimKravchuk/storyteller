@@ -16,6 +16,8 @@ on:
         options:
           - ""
           - "memory_follow_up_marcus"
+          - "memory_return_visit"
+          - "player_appearance_in_scene"
           - "autonomy_three_guards_tavern"
           - "narrator_prose_quiet_exploration"
           - "scene_builder_re_entry_consistency"

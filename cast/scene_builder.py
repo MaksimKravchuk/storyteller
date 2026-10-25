@@ -8,7 +8,7 @@ from uuid import UUID
 
 from loguru import logger
 
-from cast._scene_location import coerce_scene_location_id
+from cast.scene_place import format_known_places, place_key, resolve_scene_location_id
 from cast.base_performer_class import BasePerformer
 from cast.schemas.scene_response import SceneResponse
 from knowledge.scene_state import all_scene_deltas
@@ -89,7 +89,7 @@ def _format_persistent_world_changes(deltas: dict[UUID, list[str]]) -> str:
     for location_id in sorted(deltas, key=str):
         location_deltas = deltas[location_id]
         joined = " ".join(location_deltas)
-        lines.append("- {0}: {1}".format(location_id, joined))
+        lines.append("- {0}: {1}".format(place_key(location_id), joined))
     return "\n".join(lines)
 
 
@@ -171,21 +171,25 @@ def _current_object_states(game_state: Any) -> dict[str, str]:
     return dict(location.object_states)
 
 
-def _scene_from_response(scene_data: SceneResponse, fallback_time_of_day: str) -> Scene:
-    """Convert a raw LLM ``SceneResponse`` payload into a typed ``Scene``."""
+def _scene_from_response(scene_data: SceneResponse, game_state: Any) -> Scene:
+    """Convert a raw LLM ``SceneResponse`` payload into a typed ``Scene``.
+
+    A known place id resolves to its ``Location``; anything else leaves the
+    sentinel plus ``place_name`` for the Director to register a new place.
+    """
     npcs = [SceneNPC(role=role_str) for role_str in scene_data.npcs_present]
     pois = [
         coerce_point_of_interest(raw if isinstance(raw, str) else raw.model_dump())
         for raw in scene_data.points_of_interest
     ]
-    location_id = coerce_scene_location_id(scene_data.location_id)
     return Scene(
-        location_id=location_id,
+        location_id=resolve_scene_location_id(scene_data.location_id, game_state.locations),
+        place_name=scene_data.location_name,
         description=scene_data.description,
         npcs_present=npcs,
         points_of_interest=pois,
         ambient_description=scene_data.ambient_description,
-        time_of_day=scene_data.time_of_day or fallback_time_of_day,
+        time_of_day=scene_data.time_of_day or game_state.game_time,
     )
 
 
@@ -220,7 +224,7 @@ class SceneBuilder(BasePerformer):
             time_of_day=game_state.game_time,
         )
         scene_data = await self._send_json(prompt, response_model=SceneResponse)
-        scene = _scene_from_response(scene_data, game_state.game_time)
+        scene = _scene_from_response(scene_data, game_state)
         _merge_known_object_states(scene, _current_object_states(game_state))
         self._ensure_social_opening_affordance(scene, input_data, game_state)
         return scene
@@ -292,6 +296,7 @@ class SceneBuilder(BasePerformer):
             setting_summary=game_state.setting.summary[:_SETTING_SUMMARY_MAX],
             current_location=current_loc,
             time_of_day=game_state.game_time,
+            known_places=format_known_places(game_state),
         )
         deltas_block = _format_persistent_world_changes(all_scene_deltas(game_state.knowledge_graph))
         if deltas_block:

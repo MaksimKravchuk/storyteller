@@ -107,6 +107,9 @@ class Scene(StorytellerBase):
     ambient_description: str = ""
     time_of_day: str = "day"
     narrated_text: str = ""  # Filled by the Narrator
+    # Scene Builder's name for a place it has not seen before. Transient: only
+    # read when the Director registers the new Location, so it is not persisted.
+    place_name: str = ""
 
     @field_validator("points_of_interest", mode="before")
     @classmethod

@@ -34,6 +34,20 @@ SCENE_BUILDER_SYSTEM = PromptTemplate(
             required_vars=["setting_summary", "current_location", "time_of_day"],
         ),
         PromptSection(
+            name="known_places",
+            template=(
+                "Known places in this story. If the new scene takes place at one of them — "
+                "including when the player stays or returns there — set location_id to that "
+                "place's id exactly as written (for example a3f09c1d). Only invent a new "
+                "snake_case location_id for a place that is not on this list; when the player leaves a place "
+                "for somewhere else, never reuse the id of the place they left. People listed "
+                "under a place are there right now and the engine puts them in the scene "
+                "itself: you may describe them, but do NOT list them in npcs_present.\n"
+                "{known_places}"
+            ),
+            required_vars=["known_places"],
+        ),
+        PromptSection(
             name="persistent_world_changes",
             template=(
                 "Persistent world changes — these are durable deltas caused by the player "
@@ -58,7 +72,7 @@ SCENE_BUILDER_SYSTEM = PromptTemplate(
         PromptSection(
             name="language",
             template=(
-                "Fill every human-readable text field (description, npcs_present, "
+                "Fill every human-readable text field (location_name, description, npcs_present, "
                 "points_of_interest, ambient_description) in {language}. Keep the JSON "
                 "keys and the location_id / time_of_day values in English — they are "
                 "machine-read."
@@ -73,9 +87,11 @@ SCENE_BUILDER_GENERATE = (
     'Player action: "{player_action}"\n\n'
     "Generate a scene. Output ONLY valid JSON:\n"
     "{{\n"
-    '  "location_id": "a short snake_case id for this location",\n'
+    '  "location_id": "the id of the known place this scene is at, or a new short snake_case id for a new place",\n'
+    '  "location_name": "a short name for this place, e.g. the harbour landing",\n'
     '  "description": "Detailed visual description of the scene (what you see, architecture, objects)",\n'
-    '  "npcs_present": ["EVERY person/character visible in the scene — guards, merchants,'
+    '  "npcs_present": ["EVERY other person/character visible in the scene (not the people the known'
+    " place already lists) — guards, merchants,"
     " beggars, passers-by, etc. Use role descriptions like: guard, merchant, beggar, scribe."
     " When the actual setting/premise involves social investigation, rumor-gathering, bargaining,"
     " testimony, or asking locals for information, include at least one actionable contact,"

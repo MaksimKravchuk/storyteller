@@ -22,10 +22,14 @@ _SUMMARY_MAX_TOKENS = 200
 _SUMMARISER_SYSTEM_PROMPT = (
     "You are a memory summariser for a text adventure game. Output only the summary, nothing else."
 )
+# Concrete facts are what the player later tests the NPC on ("what was my
+# brother's boat called?"); an impression-only summary silently drops them.
 _SUMMARISER_USER_PROMPT = (
     "Summarise the following conversation from the NPC's perspective "
-    "in 1-2 sentences. Focus on: what did the NPC learn? "
-    "What is their impression of the player?\n\n"
+    "in 1-3 sentences. Keep every concrete fact the player shared or asked about: "
+    "names (including the player's own name), people, places, objects, dates, "
+    "requests, offers and promises. Then add the NPC's impression of the player. "
+    "Write in the language of the conversation.\n\n"
 )
 
 # A 2-tuple ``(npc_id, transcript)`` carries no slots; a 3-tuple

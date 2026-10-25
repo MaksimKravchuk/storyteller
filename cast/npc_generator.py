@@ -40,17 +40,15 @@ def _sanitize_short_descriptor(raw: str, npc_request: str) -> str:
     return trimmed[:_SHORT_DESCRIPTOR_MAX]
 
 
-def _existing_scene_names(game_state: Any) -> set[str]:
-    """Collect names of NPCs already materialised in the current scene."""
-    scene = getattr(game_state, "current_scene", None)
-    if not scene:
-        return set()
-    taken: set[str] = set()
-    for scene_npc in scene.npcs_present:
-        card = game_state.npcs.get(scene_npc.uuid) if scene_npc.uuid else None
-        if card and card.name:
-            taken.add(card.name)
-    return taken
+def _taken_names(game_state: Any) -> set[str]:
+    """Collect the names of every NPC in the story, not just this scene.
+
+    A newcomer sharing a name with someone the player met elsewhere makes
+    name-based dialogue targeting pick either of them — the player then
+    talks to a stranger who has none of the other NPC's memories.
+    """
+    # shortcut: grows with the cast (one name per NPC in the prompt); cap or rank if long games bloat it.
+    return {card.name for card in game_state.npcs.values() if card.name}
 
 
 def _render_vars_for(npc_request: str, game_state: Any, taken_names: set[str]) -> dict[str, str]:
@@ -166,7 +164,7 @@ class NPCGenerator(BasePerformer):
         return await self._generate_batch(
             list(input_data),
             game_state,
-            _existing_scene_names(game_state),
+            _taken_names(game_state),
         )
 
     async def _generate_batch(

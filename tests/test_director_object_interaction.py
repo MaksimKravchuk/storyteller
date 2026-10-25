@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import allure
 import pytest
 
+from cast.scene_place import place_key
 from cast import director_object_interaction as doi_mod, item_generator as ig_mod, scene_builder as sb_mod
 from cast.schemas import item_response as item_resp, scene_response as scene_resp
 from knowledge import memory as _km, query as _kq, salience as salience_presets, scene_state
@@ -305,7 +306,7 @@ class TestSceneBuilderDeltaInjection:
         # Capture the system prompt the Scene Builder renders on the
         # second visit: it must contain the broken-window delta.
         tavern_response = scene_resp.SceneResponse(
-            location_id=str(_TAVERN),
+            location_id=place_key(_TAVERN),
             description="The Rusty Anchor — now with a shattered front window.",
             npcs_present=[],
             points_of_interest=["broken window"],
@@ -316,7 +317,7 @@ class TestSceneBuilderDeltaInjection:
 
         rendered_system_prompt = builder.system_prompt_template.render(**builder._system_prompt_vars)
         assert "The front window is broken." in rendered_system_prompt
-        assert str(_TAVERN) in rendered_system_prompt
+        assert place_key(_TAVERN) in rendered_system_prompt
         # Sanity: the delta did not evaporate during the round-trip.
         assert len(query_scene_deltas(gs.knowledge_graph, _TAVERN)) == 1
 

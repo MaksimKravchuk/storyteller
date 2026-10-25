@@ -48,7 +48,7 @@ _WAIT_HOURS_DEFAULT = 0.1
 _PLAYER_EVENT_LOG_CAP = 30
 
 
-def _scene_log_modules() -> tuple[Any, Any, Any]:
+def _scene_log_modules() -> tuple[Any, Any, Any, Any]:
     """Lazily import support helpers as a single statement.
 
     ``cast``'s module-level import group is already at the WPS235 name
@@ -56,9 +56,9 @@ def _scene_log_modules() -> tuple[Any, Any, Any]:
     here keeps this module within the WPS201 import-statement budget
     instead of separate local imports.
     """
-    from cast import _npc_social_events, scene_log, scene_swap
+    from cast import _npc_social_events, scene_log, scene_place, scene_swap
 
-    return scene_log, scene_swap, _npc_social_events
+    return scene_log, scene_swap, _npc_social_events, scene_place
 
 
 def _snapshot_moods(npcs: dict) -> dict[UUID, str]:
@@ -615,27 +615,14 @@ class PlanExecutor:
         # Skip rebuild when MOVE targets are all NPCs already in the scene
         # (e.g. "walk to the guard" — no location change).
         if needs_rebuild and action_type == "MOVE" and targets:
-            known = _filter_known_npc_targets(targets, self._gs)
-            if len(known) == len(targets):
-                needs_rebuild = False
+            needs_rebuild = not _scene_log_modules()[3].all_targets_in_scene(targets, self._gs)
         if needs_rebuild:
             scene = await self._scene_builder.execute(
                 input_data=player_action,
                 context={_KEY_GAME_STATE: self._gs},
             )
             raw_outputs.scene = scene
-            outgoing = self._gs.current_scene
-            if outgoing is not None:
-                # Consolidate-then-clear is atomic: only wipe the log once
-                # its entries (including this turn's just-appended player
-                # trigger) have been handed to the consolidator. On the
-                # first turn there is no outgoing scene, so the player's
-                # opening action must survive into the new scene's log.
-                await self._consolidate_outgoing_scene(outgoing)
-                self._gs.scene_action_log = []
-            self._gs.current_scene = scene
-            self._gs.scene_number += 1
-            self._gs.scene_conversation_log = []
+            await self._swap_in_scene(scene, is_move=action_type == "MOVE")
 
         new_npcs = await self._dialogue.init_scene_npcs(
             self._npc_generator,
@@ -648,6 +635,28 @@ class PlanExecutor:
         # no co-located target exists.
         tactical_mod.promote_life_goals_on_sight(self._gs)
         return {npc.uuid for npc in new_npcs}
+
+    async def _swap_in_scene(self, scene: Any, *, is_move: bool) -> None:
+        """Retire the outgoing scene, then pin *scene* to its place and seat its residents.
+
+        A MOVE (or the very first scene) may open a new place; any other
+        rebuild (e.g. SLEEP) keeps the player where they are unless the
+        Scene Builder named a known place (see :mod:`cast.scene_place`).
+        """
+        outgoing = self._gs.current_scene
+        if outgoing is not None:
+            # Consolidate-then-clear is atomic: only wipe the log once
+            # its entries (including this turn's just-appended player
+            # trigger) have been handed to the consolidator. On the
+            # first turn there is no outgoing scene, so the player's
+            # opening action must survive into the new scene's log.
+            await self._consolidate_outgoing_scene(outgoing)
+            self._gs.scene_action_log = []
+        self._gs.current_scene = scene
+        self._gs.scene_number += 1
+        self._gs.scene_conversation_log = []
+        scene_place = _scene_log_modules()[3]
+        scene_place.enter_scene(self._gs, scene, allow_new_place=is_move or outgoing is None)
 
     async def _consolidate_outgoing_scene(self, outgoing_scene: Any) -> None:
         """Persist the outgoing scene's action log as long-term memory.

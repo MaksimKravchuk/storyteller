@@ -180,7 +180,13 @@ def _apply_scene_mutation(
     action_target: str | None,
     game_state: GameState,
 ) -> None:
-    """Mutate the scene and location when an NPC moves away."""
+    """Take an NPC who walks away out of the current scene.
+
+    Their home place (``Location.npcs_present``) is kept: they stepped out,
+    they did not move house, so they are back the next time the place is
+    rebuilt and their schedule has them there (ADR-0023). Moving house is
+    the ``MOVE_NPC`` effect's job.
+    """
     if action_type != "MOVE":
         return
     scene = game_state.current_scene
@@ -189,17 +195,6 @@ def _apply_scene_mutation(
     if _is_targeting_scene_npc(action_target, npc_uuid, scene, game_state):
         return
     scene.npcs_present = [snpc for snpc in scene.npcs_present if snpc.uuid != npc_uuid]
-    # npc.location_id is not updated here — we know the NPC left but not their destination.
-    location = game_state.locations.get(scene.location_id)
-    if location is None:
-        logger.warning(
-            "NPC {} MOVEd away but location_id {!r} is not registered; "
-            "scene.npcs_present updated but location.npcs_present was not",
-            npc_uuid,
-            scene.location_id,
-        )
-        return
-    location.remove_npc(npc_uuid)
 
 
 def _peer_matches(snpc: Any, self_uuid: UUID, lower_target: str, game_state: GameState) -> bool:
