@@ -1,1 +1,1 @@
-{"id":"16290700a21645f48e209b511d786dfa","fullName":"tests.test_admin_routes_settings#test_post_set_model_empty_model_id","name":"POST rejects an empty model_id with 400","status":"passed","testResultsByEnv":{"default":"0d2c54a7d93e9666cf2de0373e37dc85"}}
+{"id":"16290700a21645f48e209b511d786dfa","fullName":"tests.test_admin_routes_settings#test_post_set_model_empty_model_id","name":"POST rejects an empty model_id with 400","status":"passed","testResultsByEnv":{"default":"5ecffbdae5e549c84c9db1b5db63cbc1"}}

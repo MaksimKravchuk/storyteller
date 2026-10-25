@@ -1,1 +1,1 @@
-{"id":"6754d927c22cbbe9743c153cae47655f","fullName":"tests.test_search_clients#test_searxng_missing_url_raises","name":"SearXNGSearchClient with no base URL raises ValueError at construction","status":"passed","testResultsByEnv":{"default":"ec1f1cb8c1cf6ce00b1740fe34d4930b"}}
+{"id":"6754d927c22cbbe9743c153cae47655f","fullName":"tests.test_search_clients#test_searxng_missing_url_raises","name":"SearXNGSearchClient with no base URL raises ValueError at construction","status":"passed","testResultsByEnv":{"default":"e8b5e5b9fbcc14e226a35639f4521edc"}}

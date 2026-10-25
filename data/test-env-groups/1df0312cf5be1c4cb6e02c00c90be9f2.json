@@ -1,1 +1,1 @@
-{"id":"1df0312cf5be1c4cb6e02c00c90be9f2","fullName":"tests.test_benchmarks_judge.TestVerdictCoercion#test_no_preserved","name":"_coerce_verdict preserves NO verdicts regardless of whitespace or case","status":"passed","testResultsByEnv":{"default":"c8db9904224fad5be31afff832325404"}}
+{"id":"1df0312cf5be1c4cb6e02c00c90be9f2","fullName":"tests.test_benchmarks_judge.TestVerdictCoercion#test_no_preserved","name":"_coerce_verdict preserves NO verdicts regardless of whitespace or case","status":"passed","testResultsByEnv":{"default":"b95e6d3f9b6e3bd4ab3c184d62d7379e"}}

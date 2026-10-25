@@ -1,1 +1,1 @@
-{"id":"0692377f4f96afd876df3aba334f154f","fullName":"tests.test_base_client.TestBaseLLMClient#test_api_key_default_none","name":"BaseLLMClient defaults api_key to None when no argument is passed","status":"passed","testResultsByEnv":{"default":"81fbb83d1e2abb44a3fddbd2ab251cf2"}}
+{"id":"0692377f4f96afd876df3aba334f154f","fullName":"tests.test_base_client.TestBaseLLMClient#test_api_key_default_none","name":"BaseLLMClient defaults api_key to None when no argument is passed","status":"passed","testResultsByEnv":{"default":"0b2d47358e2784780102a422da122071"}}

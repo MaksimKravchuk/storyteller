@@ -1,1 +1,1 @@
-{"id":"8cf262d96199d61f8f298d518e56b29c","fullName":"tests.test_admin_auth#test_public_config","name":"Public config exposes only browser-safe Supabase settings, without auth","status":"passed","testResultsByEnv":{"default":"0d4218e55c16b83f21f95f3386551386"}}
+{"id":"8cf262d96199d61f8f298d518e56b29c","fullName":"tests.test_admin_auth#test_public_config","name":"Public config exposes only browser-safe Supabase settings, without auth","status":"passed","testResultsByEnv":{"default":"0af9127ed390b8674462ff235ed37a8e"}}

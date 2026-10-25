@@ -1,1 +1,1 @@
-{"id":"b0f201598bbaaf7b4f4b063a97856284","fullName":"tests.test_web_auth#test_public_config_exposes_public_supabase_values_only","name":"GET /api/config/public exposes only public Supabase auth settings","status":"passed","testResultsByEnv":{"default":"a93acd0509ed68190e5e42da269d7a28"}}
+{"id":"b0f201598bbaaf7b4f4b063a97856284","fullName":"tests.test_web_auth#test_public_config_exposes_public_supabase_values_only","name":"GET /api/config/public exposes only public Supabase auth settings","status":"passed","testResultsByEnv":{"default":"f4c44d25d8222792bc02b28af8ff3555"}}

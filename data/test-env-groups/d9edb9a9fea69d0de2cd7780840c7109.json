@@ -1,1 +1,1 @@
-{"id":"d9edb9a9fea69d0de2cd7780840c7109","fullName":"tests.test_web_auth#test_me_returns_invited_account_metadata","name":"GET /api/me returns account metadata for an invited Supabase user","status":"passed","testResultsByEnv":{"default":"efcd18f920bf0636d07176f0b761cb24"}}
+{"id":"d9edb9a9fea69d0de2cd7780840c7109","fullName":"tests.test_web_auth#test_me_returns_invited_account_metadata","name":"GET /api/me returns account metadata for an invited Supabase user","status":"passed","testResultsByEnv":{"default":"60d00d6425ad695a9bcf975e5c03dc0e"}}

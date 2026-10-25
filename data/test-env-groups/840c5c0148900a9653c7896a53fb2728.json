@@ -1,1 +1,1 @@
-{"id":"840c5c0148900a9653c7896a53fb2728","fullName":"tests.test_admin_auth#test_rejects_non_admin","name":"Admin API returns 403 for a signed-in account without the admin role, or with no account yet","status":"passed","testResultsByEnv":{"default":"a8c63bb5989253c02330082524b99a20"}}
+{"id":"840c5c0148900a9653c7896a53fb2728","fullName":"tests.test_admin_auth#test_rejects_non_admin","name":"Admin API returns 403 for a signed-in account without the admin role, or with no account yet","status":"passed","testResultsByEnv":{"default":"7a8c6dc52959a5f7b223d4fe814f1376"}}

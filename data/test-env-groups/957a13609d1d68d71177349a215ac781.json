@@ -1,1 +1,1 @@
-{"id":"957a13609d1d68d71177349a215ac781","fullName":"tests.test_llm_streaming#test_openai_stream_message","name":"OpenAI stream_message forwards each content delta and assembles body, usage and model","status":"passed","testResultsByEnv":{"default":"9c0d7c2237df934c838772d2b802bd15"}}
+{"id":"957a13609d1d68d71177349a215ac781","fullName":"tests.test_llm_streaming#test_openai_stream_message","name":"OpenAI stream_message forwards each content delta and assembles body, usage and model","status":"passed","testResultsByEnv":{"default":"8ee610af5e123614933c54e366e64e11"}}

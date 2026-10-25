@@ -1,1 +1,1 @@
-{"id":"64b2c8f11a4924ec5e53c506e7e1c1ae","fullName":"tests.test_web_api#test_start_game_hides_provider_exception_detail","name":"POST /api/games hides provider exception details from players","status":"passed","testResultsByEnv":{"default":"a3d098ea8fa30d85678d453569a673b1"}}
+{"id":"64b2c8f11a4924ec5e53c506e7e1c1ae","fullName":"tests.test_web_api#test_start_game_hides_provider_exception_detail","name":"POST /api/games hides provider exception details from players","status":"passed","testResultsByEnv":{"default":"bebd16e3f49afb9b18af094a5003654f"}}

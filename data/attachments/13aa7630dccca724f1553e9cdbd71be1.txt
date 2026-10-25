@@ -1,0 +1,6 @@
+[32m2026-10-25 22:19:12.651[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-10-25 22:19:12.655[0m | [31m[1mERROR   [0m | [36mknowledge.scene_consolidation[0m | session=[33m-[0m | Significant-event consolidation failed (action=ATTACK actor=Marcus target=None location=57e7d1da-c9aa-4a3f-acf5-d9a24c38810a clock=1.0 desc='a')
+[33m[1mTraceback (most recent call last):[0m
+> File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/unittest/mock.py", line 2249, in _execute_mock_call
+    raise result
+[31m[1mRuntimeError[0m:[1m graph write failed[0m
