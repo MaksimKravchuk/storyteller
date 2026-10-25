@@ -32,10 +32,10 @@ SCRIPT: tuple[ScriptTurn, ...] = (
         note="A beat at the new place so the player has clearly left the landing.",
     ),
     ScriptTurn(
-        player_action="I walk back down the path to the landing where Eira mends her net.",
+        player_action="I walk back down the path to the landing.",
         note=(
-            "Return — names Eira, who is not in the path scene, so this must travel (not 'walk over to her') "
-            "and land in the same place with the same Eira in it."
+            "Return — the landing must be the same place, with the same Eira in it. Eira is not named: naming "
+            "someone who is not in the scene sometimes makes the Director ask a clarifying question instead."
         ),
     ),
     ScriptTurn(
