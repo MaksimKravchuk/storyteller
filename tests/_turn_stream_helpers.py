@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Mapping
 from dataclasses import dataclass, field
 
 from starlette.types import Message
+
+from safety.result import ModerationCategory, ModerationSeverity
+
+_IDLE_WAIT_S = 0.01
 
 
 @dataclass
@@ -36,3 +41,27 @@ class VanishedClient:
     async def receive(self) -> Message:
         await self.stalled.wait()
         return {"type": "http.disconnect"}
+
+
+@dataclass
+class HeldProvider:
+    """Moderation provider that records each check, then waits for ``release`` before passing it."""
+
+    name: str = "held"
+    seen: list[str] = field(default_factory=list)
+    release: asyncio.Event = field(default_factory=asyncio.Event)
+
+    async def score(self, text: str) -> Mapping[ModerationCategory, ModerationSeverity]:
+        self.seen.append(text)
+        await self.release.wait()
+        return {}
+
+
+async def bounded(step: Awaitable[None]) -> None:
+    """Await ``step``, failing instead of hanging if it never completes."""
+    await asyncio.wait_for(step, timeout=1)
+
+
+async def settle() -> None:
+    """Let every queued task run until the loop goes idle."""
+    await asyncio.sleep(_IDLE_WAIT_S)

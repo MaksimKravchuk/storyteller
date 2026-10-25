@@ -8,6 +8,7 @@ on inbound rejection so HTTP and chat surfaces can translate it.
 
 from __future__ import annotations
 
+import asyncio
 import re
 from typing import Awaitable, Callable
 
@@ -42,7 +43,8 @@ class SentenceGate:
     """Stream sink that releases Narrator prose only after outbound moderation passes.
 
     Text is buffered to sentence boundaries and each completed chunk is
-    checked before it reaches the player. After the first hit nothing more
+    checked before it reaches the player. Checks run concurrently with the
+    Narrator stream and each other; release keeps sentence order. After the first hit nothing more
     is released and :attr:`blocked` holds the result, so the engine can
     replace the whole passage. With safety disabled, deltas pass straight
     through.
@@ -52,6 +54,7 @@ class SentenceGate:
         self._moderator = moderator
         self._sink = sink
         self._pending = ""
+        self._tail: asyncio.Task[None] | None = None
         self.blocked: ModerationResult | None = None
 
     async def stage(self, name: str) -> None:
@@ -68,19 +71,38 @@ class SentenceGate:
         if boundaries:
             ready = self._pending[: boundaries[-1]]
             self._pending = self._pending[boundaries[-1] :]
-            await self._release(ready)
+            self._schedule(ready)
 
     async def flush(self) -> None:
-        """Release the unterminated tail once the Narrator has finished."""
+        """Release the unterminated tail once the Narrator has finished, then wait out every queued check."""
         ready = self._pending
         self._pending = ""
-        await self._release(ready)
+        self._schedule(ready)
+        if self._tail is not None:
+            await self._tail
 
-    async def _release(self, text: str) -> None:
-        # shortcut: moderation runs inline, so the stream waits on each check; pipeline it if pauses show.
+    def cancel(self) -> None:
+        """Drop every queued release; used when the Narrator fails mid-stream."""
+        if self._tail is not None:
+            self._tail.cancel()
+
+    def _schedule(self, text: str) -> None:
         if self._moderator is None or self.blocked is not None or not text:
             return
-        moderation = await self._moderator.check(text, direction=ModerationDirection.OUTPUT)
+        check = asyncio.create_task(self._moderator.check(text, direction=ModerationDirection.OUTPUT))
+        self._tail = asyncio.create_task(self._release(text, check, self._tail))
+
+    async def _release(
+        self,
+        text: str,
+        check: asyncio.Task[ModerationResult],
+        previous: asyncio.Task[None] | None,
+    ) -> None:
+        if previous is not None:
+            await previous
+        moderation = await check
+        if self.blocked is not None:
+            return
         if moderation.flagged:
             self.blocked = moderation
             return
@@ -99,8 +121,12 @@ async def moderate_narration(moderator: Moderator | None, narrate: Callable[[], 
     if sink is None:
         return await moderate_output(moderator, await narrate())
     gate = SentenceGate(moderator, sink)
-    with turn_stream.bound(gate):
-        narration = await narrate()
+    try:
+        with turn_stream.bound(gate):
+            narration = await narrate()
+    except BaseException:
+        gate.cancel()
+        raise
     await gate.flush()
     if gate.blocked is not None and moderator is not None:
         return moderator.fallback_narration(gate.blocked)
