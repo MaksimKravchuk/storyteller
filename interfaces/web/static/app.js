@@ -1072,6 +1072,17 @@
     }
   }
 
+  // Live preview of formatting/markdown_render.to_html's inline subset: a marker
+  // renders once its pair has arrived, and unpaired asterisks stay hidden meanwhile.
+  function streamingHTML(md) {
+    return escapeHTML(md)
+      .replace(/`([^`\n]+)`/g, "<code>$1</code>")
+      .replace(/\*\*(.+?)\*\*/gs, "<strong>$1</strong>")
+      .replace(/(?<!\*)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\*)/g, "<em>$1</em>")
+      .replace(/(?<![A-Za-z0-9_])_(?!\s)([^_\n]+?)(?<!\s)_(?![A-Za-z0-9_])/g, "<em>$1</em>")
+      .replace(/\*/g, "");
+  }
+
   function escapeHTML(text) {
     const div = document.createElement("div");
     div.textContent = text;
@@ -1114,7 +1125,8 @@
     selectPane("story");
     let cue = optimisticEcho ? appendTurnHTML("player", escapeHTML(optimisticEcho)) : null;
     const pending = showPending();
-    // The live passage shows streamed prose as plain text until the final HTML replaces it.
+    // The live passage previews streamed prose until the final HTML replaces it.
+    let streamed = "";
     let live = null;
     scrollToTurn(cue || pending, true);
     setStatus(els.actionStatus, "");
@@ -1140,8 +1152,8 @@
             live = appendTurnHTML("narrator is-streaming", "");
             pending.remove();
           }
-          // shortcut: markdown markers are hidden, not rendered, until the final HTML arrives.
-          live.textContent += payload.text.replace(/\*/g, "");
+          streamed += payload.text;
+          live.innerHTML = streamingHTML(streamed);
         }
       });
       pending.remove();

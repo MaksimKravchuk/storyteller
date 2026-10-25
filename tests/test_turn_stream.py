@@ -14,7 +14,7 @@ from engine.moderation import SentenceGate, moderate_narration
 from llm import turn_stream
 from safety.moderator import Moderator
 from safety.result import ModerationCategory, ModerationSeverity
-from tests._turn_stream_helpers import RecordingSink
+from tests._turn_stream_helpers import HeldProvider, RecordingSink, bounded, settle
 
 pytestmark = [
     allure.epic("Narrative Delivery"),
@@ -45,6 +45,11 @@ async def _narrate_with_hit() -> str:
     await _emit("Fine. ")
     await _emit("A slur. ")
     return "Fine. A slur."
+
+
+async def _narrate_then_fail() -> str:
+    await _emit("Half a passage. ")
+    raise RuntimeError("narrator down")
 
 
 async def _director_execute(_: str) -> str:
@@ -97,11 +102,27 @@ async def test_gate_releases_checked_sentences() -> None:
     sink = RecordingSink()
     gate = SentenceGate(Moderator(providers=[provider]), sink)
     await gate.delta("The door creaks. A gu")
-    assert sink.deltas == ["The door creaks. "]
     await gate.delta("ard «waits.» Then")
     await gate.flush()
     assert sink.deltas == ["The door creaks. ", "A guard «waits.» ", "Then"]
     assert provider.seen == sink.deltas
+
+
+@allure.story("Sentence gate")
+@allure.title("Sentence checks run while the Narrator keeps streaming; release still waits for each check, in order")
+@pytest.mark.asyncio
+async def test_gate_pipelines_checks() -> None:
+    provider = HeldProvider()
+    sink = RecordingSink()
+    gate = SentenceGate(Moderator(providers=[provider]), sink)
+    await bounded(gate.delta("One. "))
+    await bounded(gate.delta("Two. "))
+    await settle()
+    assert provider.seen == ["One. ", "Two. "]
+    assert sink.deltas == []
+    provider.release.set()
+    await gate.flush()
+    assert sink.deltas == ["One. ", "Two. "]
 
 
 @allure.story("Sentence gate")
@@ -115,6 +136,17 @@ async def test_gate_blocks_after_flagged_sentence() -> None:
     await gate.flush()
     assert sink.deltas == []
     assert gate.blocked is not None
+
+
+@allure.story("Engine wiring")
+@allure.title("moderate_narration drops queued sentences when the Narrator fails mid-stream")
+@pytest.mark.asyncio
+async def test_moderate_narration_cancels_gate_on_failure() -> None:
+    sink = RecordingSink()
+    with turn_stream.bound(sink), pytest.raises(RuntimeError):
+        await moderate_narration(Moderator(providers=[_FlagSubstringProvider()]), _narrate_then_fail)
+    await settle()
+    assert sink.deltas == []
 
 
 @allure.story("Engine wiring")
