@@ -43,7 +43,7 @@ Do not commit if this fails. Fix the code properly.
 These may hit paid LLM APIs and require keys. Ask before running if credentials/cost are not explicitly approved.
 
 ```bash
-uv run pytest tests/e2e/ --alluredir=allure-results -v
+uv run pytest tests/e2e/ -m live --alluredir=allure-results -v
 uv run python -m benchmarks run
 ```
 

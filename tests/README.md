@@ -19,7 +19,7 @@ uv run pytest tests/test_dice.py -v
 uv run pytest tests/test_dice.py::TestCombatOutcomeCategories::test_npc_overpowers -v
 
 # E2E tests (slow; real LLM calls)
-uv run pytest tests/e2e/ --alluredir=allure-results -v
+uv run pytest tests/e2e/ -m live --alluredir=allure-results -v
 ```
 
 ## Coverage standard

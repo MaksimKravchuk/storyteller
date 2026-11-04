@@ -30,6 +30,9 @@ _FORUM_ID = make_uuid("narrator-real-forum")
 _QUINTUS_ID = make_uuid("narrator-real-quintus")
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("Narrator real-model rendering")
 class TestNarratorRealModel:

@@ -103,7 +103,7 @@ jobs:
         if: inputs.run_live_e2e
         run: |
           set -euo pipefail
-          e2e_command="test -n \"\$OPENAI_API_KEY\" && uv run pytest tests/e2e/ --alluredir=allure-results -v"
+          e2e_command="test -n \"\$OPENAI_API_KEY\" && uv run pytest tests/e2e/ -m live --alluredir=allure-results -v"
           flyctl ssh console --app "$FLY_TEST_APP" --command "$e2e_command"
 
       - name: Suspend Fly test app

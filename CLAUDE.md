@@ -33,7 +33,7 @@ uv run mypy .
 uv run pytest tests/ --ignore=tests/e2e --ignore=tests/benchmarks -v
 
 # E2E tests (requires OPENAI_API_KEY, ANTHROPIC_API_KEY)
-uv run pytest tests/e2e/ --alluredir=allure-results -v
+uv run pytest tests/e2e/ -m live --alluredir=allure-results -v
 
 # Benchmarks (opt-in, requires API keys; hits paid LLMs)
 uv run python -m benchmarks run

@@ -109,7 +109,7 @@ PATH_TRIGGERS: tuple[Rule, ...] = (
     ("tests/e2e/_real_llm.py", ALL_AGENTS),
     ("tests/e2e/_agent_matrix.py", ALL_AGENTS),
     ("tests/e2e/_select_agents.py", ALL_AGENTS),
-    (".github/workflows/ci.yml", ALL_AGENTS),
+    (".github/workflows/live-api.yml", ALL_AGENTS),
     ("tests/conftest.py", ALL_AGENTS),
     ("tests/base_performer_helpers.py", ALL_AGENTS),
     # Shared fixture scaffolding for the e2e suite — a change here

@@ -47,6 +47,9 @@ _BLINDNESS_MARKERS = (
 )
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("NPCGenerator real-model materialisation")
 class TestNPCGeneratorRealModel:
