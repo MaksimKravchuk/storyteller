@@ -87,7 +87,7 @@ class AILogStore:
     async def usage_by_model(self) -> list[dict[str, Any]]:
         """Aggregate all-time token usage by model only (enough for budget checks, one row per model)."""
         rows = await self._session.execute(_usage_by_model_stmt())
-        return [_row_dict(row) for row in rows.mappings()]
+        return [dict(row) for row in rows.mappings()]
 
     async def turn_count_for_user(
         self,
