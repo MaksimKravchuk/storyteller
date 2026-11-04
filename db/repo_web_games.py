@@ -2,17 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import tables as tbl
 from db.repo_posters import PosterStore
-
-
-def _row_dict(row: Any) -> dict:
-    return dict(row)
 
 
 class WebGameStore:
@@ -44,7 +39,7 @@ class WebGameStore:
             .order_by(tbl.sessions.c.updated_at.desc(), tbl.sessions.c.id.desc())
         )
         query_result = await self._session.execute(stmt)
-        return [_row_dict(row) for row in query_result.mappings().all()]
+        return [dict(row) for row in query_result.mappings().all()]
 
     async def get_by_game(self, web_player_id: str, game_id: str) -> dict | None:
         """Return an owned, non-archived web session by game id, or None."""
@@ -58,7 +53,7 @@ class WebGameStore:
         )
         query_result = await self._session.execute(stmt)
         row = query_result.mappings().first()
-        return _row_dict(row) if row else None
+        return dict(row) if row else None
 
     async def archive(self, web_player_id: str, game_id: str) -> bool:
         """Soft-delete an owned web game, returning False for absent/foreign ids."""

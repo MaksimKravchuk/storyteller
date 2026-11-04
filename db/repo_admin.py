@@ -98,7 +98,7 @@ class AdminQueries:
         if search:
             stmt = repo_admin_users.apply_search_filter(stmt, search)
         sessions_query = await self.session.execute(stmt)
-        return list(map(helpers._row_dict, sessions_query.mappings()))
+        return list(map(dict, sessions_query.mappings()))
 
     async def get_session_detail(self, session_id: str) -> dict | None:
         """Get full session detail for admin view."""
@@ -121,7 +121,7 @@ class AdminQueries:
         session_row = (await self.session.execute(stmt)).mappings().first()
         if not session_row:
             return None
-        detail: dict[str, Any] = {"session": helpers._row_dict(session_row)}
+        detail: dict[str, Any] = {"session": dict(session_row)}
 
         gs_stmt = select(tbl.game_states).where(tbl.game_states.c.session_id == session_id)
         gs_mapping = (await self.session.execute(gs_stmt)).mappings().first()
@@ -129,7 +129,7 @@ class AdminQueries:
             detail["game_state"] = None
             return detail
 
-        detail["game_state"] = helpers._row_dict(gs_mapping)
+        detail["game_state"] = dict(gs_mapping)
         await helpers.populate_detail(self.session, detail, gs_mapping[_COL_ID])
         return detail
 
