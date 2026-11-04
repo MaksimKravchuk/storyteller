@@ -68,7 +68,7 @@ def _repo() -> MagicMock:
     return MagicMock(
         rollback=AsyncMock(),
         commit=AsyncMock(),
-        ai_logs=SimpleNamespace(save=AsyncMock(), usage_summary=AsyncMock(return_value=[])),
+        ai_logs=SimpleNamespace(save=AsyncMock(), usage_by_model=AsyncMock(return_value=[])),
         sessions=SimpleNamespace(
             count_active_web=AsyncMock(return_value=0),
             create_web=AsyncMock(return_value={"id": _SESSION_ID}),

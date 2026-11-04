@@ -76,7 +76,7 @@ class BetaPolicy:
 
     async def _estimated_total_spend(self) -> Decimal:
         """Return current estimated beta spend from AI log aggregates."""
-        rows = await self._repo.ai_logs.usage_summary()
+        rows = await self._repo.ai_logs.usage_by_model()
         summary = build_cost_summary(rows, self._cfg)
         return Decimal(summary["total"]["estimated_cost_usd"])
 

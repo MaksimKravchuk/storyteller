@@ -28,7 +28,7 @@ pytestmark = [
 
 def _quota_repo() -> Any:
     ai_logs = SimpleNamespace(
-        usage_summary=AsyncMock(return_value=[]),
+        usage_by_model=AsyncMock(return_value=[]),
         turn_count_for_user=AsyncMock(return_value=0),
     )
     sessions = SimpleNamespace(
@@ -106,7 +106,7 @@ async def test_allowed_action_reaches_resume_after_quota_checks() -> None:
 @allure.title("Global budget exhaustion blocks action before engine resume")
 async def test_global_budget_blocks_action_before_resume() -> None:
     repo = _quota_repo()
-    repo.ai_logs.usage_summary.return_value = [
+    repo.ai_logs.usage_by_model.return_value = [
         {
             "user_id": _PLAYER_ID,
             "session_id": "session-1",
