@@ -8,9 +8,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
-from tests.test_admin import _make_app
+from tests.admin_app import admin_client, make_admin_app as _make_app
 
 pytestmark = [
     allure.epic("Player Interfaces"),
@@ -31,15 +30,15 @@ async def _reliability_request(
     mock_repo: AsyncMock,
     window: str = "24h",
 ) -> tuple[int, Any]:
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("{0}?window={1}".format(_BASE_URL, window))
-            status = resp.status
-            body = await resp.json()
+            status = resp.status_code
+            body = resp.json()
     return status, body
 
 

@@ -377,7 +377,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const API = '';
+const API = '/admin';
 let _settingsCatalog = [];
 let _settingsKeys = {};
 let currentView = 'sessions';
@@ -468,7 +468,7 @@ function copyText(text, label) {
 
 // Returns true when the dashboard may load: auth is off (local dev) or a session exists.
 async function initAuth() {
-  const cfg = await (await fetch(API + '/config/public')).json();
+  const cfg = await (await fetch('/api/config/public')).json();
   if (!cfg.beta_auth_required) return true;
   if (!(cfg.supabase_url && cfg.supabase_publishable_key && window.supabase)) {
     showLogin('Login is not configured for this deployment.');
@@ -528,7 +528,7 @@ async function fetchJSON(url, options) {
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) showLogin('Your session has expired. Please log in again.');
   if (res.status === 403) showLogin('This account does not have the admin role.');
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  if (!res.ok) throw new Error(data.error || data.detail || `HTTP ${res.status}`);
   return data;
 }
 

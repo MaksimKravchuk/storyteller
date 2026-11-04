@@ -4,7 +4,7 @@ Issue: #202
 Release target: Public Web Demo v0.1
 App: `storyteller-quest`
 Primary URL: `https://storyteller-quest.fly.dev`
-Admin URL: `https://storyteller-quest.fly.dev:8080`
+Admin URL: `https://storyteller-quest.fly.dev/admin`
 
 This procedure is for preparing and operating the Fly.io deployment. Agents may prepare release artifacts, checks, branches, and pull requests, but must not publish a public deploy or merge a deploy-triggering change to `main` without explicit approval from Max.
 
@@ -12,7 +12,7 @@ This procedure is for preparing and operating the Fly.io deployment. Agents may 
 
 - Runtime config lives in `fly.toml`.
 - The Docker image runs `uv run python run_server.py`.
-- `run_server.py` applies Alembic migrations, starts the admin dashboard on port 8080, and starts the player web UI on port 8070.
+- `run_server.py` applies Alembic migrations, and starts the player web UI on port 8070 (the admin dashboard is mounted at `/admin` in the same app).
 - GitHub Actions deploys on push to `main` when the `CI` workflow runs and the `lint`, `test`, and `test-db` jobs pass.
 - The `CI` workflow ignores docs-only changes, so this documentation PR by itself does not publish a Fly deploy.
 - The deploy job runs `flyctl deploy --remote-only` with the GitHub Actions secret `FLY_API_TOKEN`.
@@ -102,7 +102,7 @@ Preferred path: merge the reviewed release PR after Max approval, then let GitHu
 
    ```bash
    curl -fsS https://storyteller-quest.fly.dev/healthz
-   curl -kfsS https://storyteller-quest.fly.dev:8080/healthz
+   curl -kfsS https://storyteller-quest.fly.dev/healthz
    ```
 
 6. Open the player URL in a browser and run the release checklist gameplay smoke gate.
@@ -126,7 +126,7 @@ Use this when the public deployment is unhealthy or has a severe player-facing r
    flyctl status --app storyteller-quest
    flyctl logs --app storyteller-quest
    curl -fsS https://storyteller-quest.fly.dev/healthz
-   curl -kfsS https://storyteller-quest.fly.dev:8080/healthz
+   curl -kfsS https://storyteller-quest.fly.dev/healthz
    ```
 
 2. List releases and choose the last known-good release version:
@@ -147,7 +147,7 @@ Use this when the public deployment is unhealthy or has a severe player-facing r
    flyctl status --app storyteller-quest
    flyctl releases --app storyteller-quest
    curl -fsS https://storyteller-quest.fly.dev/healthz
-   curl -kfsS https://storyteller-quest.fly.dev:8080/healthz
+   curl -kfsS https://storyteller-quest.fly.dev/healthz
    ```
 
 5. Check logs for continuing startup, database, or provider errors:

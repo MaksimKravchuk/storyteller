@@ -10,7 +10,7 @@ import allure
 import pytest
 
 from config import Config, get_api_key_for_provider, load_config
-from interfaces.admin_route_helpers import _json_response, _json_serial
+from interfaces.admin_json import _json_response, _json_serial
 from knowledge.node import KnowledgeNode, KnowledgeScope
 from knowledge.query_filters import passes_location
 from prompts.base_template import PromptSection, PromptTemplate
@@ -125,7 +125,7 @@ class TestAdminJsonSerial:
         moment = datetime(2026, 4, 11, 12, 30, 0)
         resp = _json_response({"when": moment})
 
-        payload = json.loads(resp.text)
+        payload = json.loads(resp.body)
         assert payload == {"when": moment.isoformat()}
 
     @allure.story("JSON serialisation")
@@ -140,6 +140,6 @@ class TestAdminJsonSerial:
         row = {"id": uuid4(), "created_at": datetime(2026, 4, 11, 12, 30, 0)}
         resp = _json_response({"sessions": [row]})
 
-        payload = json.loads(resp.text)
+        payload = json.loads(resp.body)
         assert payload["sessions"][0]["id"] == str(row["id"])
         assert payload["sessions"][0]["created_at"] == row["created_at"].isoformat()

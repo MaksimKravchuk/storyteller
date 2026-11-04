@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from datetime import date
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
 from config import Config
-from interfaces.admin import AdminServer
+from tests.admin_app import admin_client, make_admin_app
 
 pytestmark = [
     allure.epic("Player Interfaces"),
@@ -22,7 +21,7 @@ pytestmark = [
 @allure.title("Admin beta cost summary returns computed costs without prompt material")
 @pytest.mark.asyncio
 async def test_admin_beta_cost_summary_redacts_prompt_material() -> None:
-    app = AdminServer(MagicMock(), Config(), port=0)._app
+    app = make_admin_app(Config())
     mock_repo = AsyncMock()
     mock_repo.ai_logs.usage_summary.return_value = [
         {
@@ -43,7 +42,7 @@ async def test_admin_beta_cost_summary_redacts_prompt_material() -> None:
         },
     ]
 
-    async with TestClient(TestServer(app)) as client:
+    async with admin_client(app) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
@@ -51,11 +50,11 @@ async def test_admin_beta_cost_summary_redacts_prompt_material() -> None:
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
             response = await client.get("/api/admin/beta/cost-summary")
-            payload = await response.json()
+            payload = response.json()
 
     rendered = repr(payload)
 
-    assert response.status == 200
+    assert response.status_code == 200
     assert payload["total"]["estimated_cost_usd"] == "3.000000"
     assert "system_prompt" not in rendered
     assert "messages" not in rendered
@@ -66,11 +65,11 @@ async def test_admin_beta_cost_summary_redacts_prompt_material() -> None:
 @allure.title("Admin beta cost summary rejects invalid date filters")
 @pytest.mark.asyncio
 async def test_admin_beta_cost_summary_rejects_invalid_datetime() -> None:
-    app = AdminServer(MagicMock(), Config(), port=0)._app
+    app = make_admin_app(Config())
 
-    async with TestClient(TestServer(app)) as client:
+    async with admin_client(app) as client:
         response = await client.get("/api/admin/beta/cost-summary?start_at=not-a-date")
-        payload = await response.json()
+        payload = response.json()
 
-    assert response.status == 400
+    assert response.status_code == 400
     assert payload == {"error": "Invalid ISO datetime query parameter"}

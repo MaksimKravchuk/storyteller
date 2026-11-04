@@ -6,9 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
-from tests.test_admin import _make_app
+from tests.admin_app import admin_client, make_admin_app as _make_app
 
 pytestmark = [
     allure.epic("Player Interfaces"),
@@ -34,10 +33,10 @@ async def test_dashboard_returns_404_when_html_missing() -> None:
     """If _DASHBOARD_HTML.exists() is False, dashboard responds with 404."""
     with patch("interfaces.admin_routes._DASHBOARD_HTML") as dash_html:
         dash_html.exists.return_value = False
-        async with TestClient(TestServer(_make_app())) as client:
+        async with admin_client(_make_app()) as client:
             resp = await client.get("/")
-            status = resp.status
-            body = await resp.text()
+            status = resp.status_code
+            body = resp.text
         assert status == _HTTP_NOT_FOUND
         assert "not found" in body.lower()
 
@@ -51,15 +50,15 @@ async def test_session_detail_returns_payload_when_found() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_session_detail.return_value = payload
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get(_DETAIL_URL)
-            assert resp.status == _HTTP_OK
-            body = await resp.json()
+            assert resp.status_code == _HTTP_OK
+            body = resp.json()
             assert body == payload
     mock_repo.admin.get_session_detail.assert_awaited_once_with(_SESSION_ID)
 
@@ -72,15 +71,15 @@ async def test_session_detail_returns_404_when_not_found() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_session_detail.return_value = None
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get(_DETAIL_URL)
-            assert resp.status == _HTTP_NOT_FOUND
-            body = await resp.json()
+            assert resp.status_code == _HTTP_NOT_FOUND
+            body = resp.json()
             assert body == {"error": "Session not found"}
 
 
@@ -100,16 +99,16 @@ async def test_list_sessions_returns_account_email_when_owner_exists() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.list_sessions.return_value = rows
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/sessions")
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body["sessions"][0]["account_email"] == "owner@example.com"
     assert body["sessions"][0]["account_id"] == "11111111-1111-1111-1111-111111111111"
 
@@ -122,16 +121,16 @@ async def test_list_sessions_orphan_renders_null_account_email() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.list_sessions.return_value = rows
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/sessions")
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body["sessions"][0]["account_email"] is None
     assert body["sessions"][0]["account_id"] is None
 
@@ -147,16 +146,16 @@ async def test_session_detail_returns_account_email() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_session_detail.return_value = payload
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get(_DETAIL_URL)
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body["session"]["account_email"] == "owner@example.com"
     assert body["session"]["account_id"] == "abc"
 
@@ -173,14 +172,14 @@ async def test_conversation_returns_log_envelope() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_conversation_log.return_value = log_entries
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get(_CONVO_URL)
-            assert resp.status == _HTTP_OK
-            body = await resp.json()
+            assert resp.status_code == _HTTP_OK
+            body = resp.json()
             assert body == {"log": log_entries}
     mock_repo.admin.get_conversation_log.assert_awaited_once_with(_SESSION_ID)

@@ -18,5 +18,4 @@ repos:
       - id: mypy
         exclude: ^alembic/
         additional_dependencies:
-          - aiohttp
           - types-aiofiles

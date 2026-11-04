@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
-from aiohttp import web
-from aiohttp.test_utils import TestClient, TestServer
+from fastapi import FastAPI
+from starlette.responses import Response
 
 from config import Config
-from interfaces.admin import AdminServer
+from tests.admin_app import admin_client, make_admin_app
 from interfaces.admin_routes_settings_search_helpers import (
     build_search_view,
     missing_search_credential,
@@ -27,8 +27,8 @@ _HTTP_BAD_REQUEST = 400
 _API_SEARCH = "/api/settings/search"
 
 
-def _make_app(cfg: Config) -> web.Application:
-    return AdminServer(MagicMock(), cfg, port=0)._app
+def _make_app(cfg: Config) -> FastAPI:
+    return make_admin_app(cfg)
 
 
 def _repo_with(stored: dict) -> AsyncMock:
@@ -55,11 +55,11 @@ def _patched(repo: AsyncMock):
 async def test_get_search_default() -> None:
     repo = _repo_with({})
     get_db_patch, repo_patch = _patched(repo)
-    async with TestClient(TestServer(_make_app(Config(openai_api_key="k", tavily_api_key=None)))) as client:
+    async with admin_client(_make_app(Config(openai_api_key="k", tavily_api_key=None))) as client:
         with get_db_patch as mock_get_db, repo_patch:
             _prime_get_db(mock_get_db)
             resp = await client.get(_API_SEARCH)
-            body = await resp.json()
+            body = resp.json()
     assert body["provider"] == "wikipedia"
     assert body["source"] == "env"
     assert body["tavily_api_key_set"] is False
@@ -71,11 +71,11 @@ async def test_get_search_default() -> None:
 async def test_get_search_masks_secret() -> None:
     repo = _repo_with({"provider": "tavily", "tavily_api_key": "tvly-super-secret"})
     get_db_patch, repo_patch = _patched(repo)
-    async with TestClient(TestServer(_make_app(Config(openai_api_key="k")))) as client:
+    async with admin_client(_make_app(Config(openai_api_key="k"))) as client:
         with get_db_patch as mock_get_db, repo_patch:
             _prime_get_db(mock_get_db)
             resp = await client.get(_API_SEARCH)
-            body = await resp.json()
+            body = resp.json()
     assert body["provider"] == "tavily"
     assert body["source"] == "db"
     assert body["tavily_api_key_set"] is True
@@ -88,11 +88,11 @@ async def test_get_search_masks_secret() -> None:
 async def test_set_search_tavily_with_key() -> None:
     repo = _repo_with({})
     get_db_patch, repo_patch = _patched(repo)
-    async with TestClient(TestServer(_make_app(Config(openai_api_key="k")))) as client:
+    async with admin_client(_make_app(Config(openai_api_key="k"))) as client:
         with get_db_patch as mock_get_db, repo_patch:
             _prime_get_db(mock_get_db)
             resp = await client.post(_API_SEARCH, json={"provider": "tavily", "tavily_api_key": "tvly-x"})
-            assert resp.status == _HTTP_OK
+            assert resp.status_code == _HTTP_OK
     repo.settings.save_search.assert_any_await("provider", "tavily")
     repo.settings.save_search.assert_any_await("tavily_api_key", "tvly-x")
 
@@ -103,11 +103,11 @@ async def test_set_search_tavily_with_key() -> None:
 async def test_set_search_tavily_missing_key() -> None:
     repo = _repo_with({})
     get_db_patch, repo_patch = _patched(repo)
-    async with TestClient(TestServer(_make_app(Config(openai_api_key="k")))) as client:
+    async with admin_client(_make_app(Config(openai_api_key="k"))) as client:
         with get_db_patch as mock_get_db, repo_patch:
             _prime_get_db(mock_get_db)
             resp = await client.post(_API_SEARCH, json={"provider": "tavily"})
-            assert resp.status == _HTTP_BAD_REQUEST
+            assert resp.status_code == _HTTP_BAD_REQUEST
     repo.settings.save_search.assert_not_awaited()
 
 
@@ -117,11 +117,11 @@ async def test_set_search_tavily_missing_key() -> None:
 async def test_set_search_invalid_provider() -> None:
     repo = _repo_with({})
     get_db_patch, repo_patch = _patched(repo)
-    async with TestClient(TestServer(_make_app(Config(openai_api_key="k")))) as client:
+    async with admin_client(_make_app(Config(openai_api_key="k"))) as client:
         with get_db_patch as mock_get_db, repo_patch:
             _prime_get_db(mock_get_db)
             resp = await client.post(_API_SEARCH, json={"provider": "bing"})
-            assert resp.status == _HTTP_BAD_REQUEST
+            assert resp.status_code == _HTTP_BAD_REQUEST
 
 
 @allure.story("Search settings API")
@@ -130,11 +130,11 @@ async def test_set_search_invalid_provider() -> None:
 async def test_clear_search() -> None:
     repo = _repo_with({"provider": "tavily"})
     get_db_patch, repo_patch = _patched(repo)
-    async with TestClient(TestServer(_make_app(Config(openai_api_key="k")))) as client:
+    async with admin_client(_make_app(Config(openai_api_key="k"))) as client:
         with get_db_patch as mock_get_db, repo_patch:
             _prime_get_db(mock_get_db)
             resp = await client.delete(_API_SEARCH)
-            assert resp.status == _HTTP_OK
+            assert resp.status_code == _HTTP_OK
     repo.settings.clear_search.assert_awaited_once()
 
 
@@ -147,8 +147,8 @@ def test_validate_payload_ok() -> None:
 @allure.story("Search settings helpers")
 @allure.title("validate_set_search_payload rejects an unknown provider and non-string credentials")
 def test_validate_payload_rejects() -> None:
-    assert isinstance(validate_set_search_payload({"provider": "bing"}), web.Response)
-    assert isinstance(validate_set_search_payload({"provider": "tavily", "tavily_api_key": 5}), web.Response)
+    assert isinstance(validate_set_search_payload({"provider": "bing"}), Response)
+    assert isinstance(validate_set_search_payload({"provider": "tavily", "tavily_api_key": 5}), Response)
 
 
 @allure.story("Search settings helpers")

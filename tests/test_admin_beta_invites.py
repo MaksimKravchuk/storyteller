@@ -6,9 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
-from tests.test_admin import _make_app
+from tests.admin_app import admin_client, make_admin_app as _make_app
 
 pytestmark = [
     allure.epic("Player Interfaces"),
@@ -34,16 +33,16 @@ async def test_admin_beta_invites_returns_invites_envelope() -> None:
     mock_store = AsyncMock()
     mock_store.list_invites.return_value = invites
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_routes_beta_invites.BetaInviteStore", return_value=mock_store),
         ):
             db_session = _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/beta/invites")
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body == {"invites": invites}
     mock_store.list_invites.assert_awaited_once_with()
     assert mock_get_db.called
@@ -64,16 +63,16 @@ async def test_admin_beta_invites_returns_account_id_field() -> None:
     mock_store = AsyncMock()
     mock_store.list_invites.return_value = invites
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_routes_beta_invites.BetaInviteStore", return_value=mock_store),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/beta/invites")
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body["invites"][0]["account_id"] == "22222222-2222-2222-2222-222222222222"
 
 
@@ -85,16 +84,16 @@ async def test_admin_beta_invites_post_normalizes_and_commits() -> None:
     mock_store = AsyncMock()
     mock_store.upsert_invite.return_value = invite
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_routes_beta_invites.BetaInviteStore", return_value=mock_store),
         ):
             db_session = _prime_get_db(mock_get_db)
             resp = await client.post("/api/admin/beta/invites", json={"email": " Tester@Example.COM "})
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body == {"invite": invite}
     mock_store.upsert_invite.assert_awaited_once_with("tester@example.com")
     db_session.commit.assert_awaited_once_with()
@@ -106,16 +105,16 @@ async def test_admin_beta_invites_post_normalizes_and_commits() -> None:
 async def test_admin_beta_invites_post_rejects_invalid_email() -> None:
     mock_store = AsyncMock()
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_routes_beta_invites.BetaInviteStore", return_value=mock_store),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.post("/api/admin/beta/invites", json={"email": "not-an-email"})
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_BAD_REQUEST
+    assert resp.status_code == _HTTP_BAD_REQUEST
     assert body == {"error": "Valid email is required"}
     mock_store.upsert_invite.assert_not_awaited()
     assert not mock_get_db.called

@@ -32,31 +32,6 @@ primary_region = "ams"
   path = "/healthz"
   timeout = "5s"
 
-# Secondary HTTP service: the admin dashboard (aiohttp).
-# Reachable at https://storyteller-quest.fly.dev:8080
-# Same machine as the web UI — both are spawned by run_server.py.
-#
-# Note: when a port has `handlers = ["tls", "http"]`, Fly terminates TLS
-# at the edge and then forwards HTTP to the app. `force_https` is NOT
-# allowed on such a port — the TLS handler already guarantees the inbound
-# connection is encrypted. (The primary [http_service] block above is a
-# shorthand Fly knows how to expand correctly; this raw [[services]]
-# form does not accept force_https alongside the tls handler.)
-[[services]]
-  internal_port = 8080
-  protocol = "tcp"
-
-  [[services.ports]]
-    port = 8080
-    handlers = ["tls", "http"]
-
-  [[services.http_checks]]
-    grace_period = "30s"
-    interval = "15s"
-    method = "get"
-    path = "/healthz"
-    timeout = "5s"
-
 [[vm]]
   size = "shared-cpu-1x"
   memory = "512mb"

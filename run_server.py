@@ -1,4 +1,4 @@
-"""Production entry point — runs the admin dashboard and web UI."""
+"""Production entry point — runs the web UI (which also serves the admin dashboard at /admin)."""
 
 import asyncio
 import logging
@@ -8,13 +8,10 @@ import sys
 from loguru import logger
 
 from config import load_config
-from db import engine as db_engine
-from interfaces.admin import AdminServer
 from interfaces.web.auth import is_auth_required
 from interfaces.web.runner import build_web_server
 from log_scrubbing import LOGURU_DIAGNOSE_ENABLED, scrub_log_record
 
-_ADMIN_PORT = 8080
 _LOG_FORMAT = (
     "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
     "<level>{level: <8}</level> | "
@@ -25,7 +22,7 @@ _LOG_FORMAT = (
 
 
 class _InterceptHandler(logging.Handler):
-    """Route stdlib logging (aiohttp, uvicorn, ...) through loguru."""
+    """Route stdlib logging (uvicorn, ...) through loguru."""
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
@@ -85,26 +82,17 @@ async def _run_server(cfg) -> None:
 def require_admin_auth_on_fly(cfg) -> None:
     """Refuse to boot a Fly deploy without beta auth: the admin API is gated by the account admin role."""
     if os.getenv("FLY_APP_NAME") and not is_auth_required(cfg):
-        sys.exit("BETA_AUTH_REQUIRED must be true on Fly: without it the admin API on :8080 is open to anyone.")
+        sys.exit("BETA_AUTH_REQUIRED must be true on Fly: without it the admin API under /admin is open to anyone.")
 
 
 async def main() -> None:
     cfg = load_config()
     require_admin_auth_on_fly(cfg)
-    engine = db_engine.create_async_engine(os.environ["DATABASE_URL"])
-    session_factory = db_engine.create_session_factory(engine)
-
-    admin = AdminServer(session_factory, cfg, port=_ADMIN_PORT)
-    await admin.start()
-
     try:
         await _run_server(cfg)
     except Exception:
         logger.exception("Fatal error in main loop")
         raise
-    finally:
-        await admin.stop()
-        await engine.dispose()
 
 
 if __name__ == "__main__":

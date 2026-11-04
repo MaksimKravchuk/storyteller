@@ -6,9 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
-from tests.test_admin import _make_app
+from tests.admin_app import admin_client, make_admin_app as _make_app
 
 pytestmark = [
     allure.epic("Player Interfaces"),
@@ -28,15 +27,15 @@ def _prime_get_db(mock_get_db) -> None:
 
 
 async def _do_request(mock_repo, url: str) -> tuple[int, object]:
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get(url)
-            status = resp.status
-            body = await resp.json()
+            status = resp.status_code
+            body = resp.json()
     return status, body
 
 
@@ -64,7 +63,7 @@ async def test_events_route_wraps_fetch_events() -> None:
     events_list = [{"id": "e1", "description": "thunderstorm"}]
     mock_repo = AsyncMock()
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
@@ -75,8 +74,8 @@ async def test_events_route_wraps_fetch_events() -> None:
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("{0}/events".format(_BASE))
-            status = resp.status
-            body = await resp.json()
+            status = resp.status_code
+            body = resp.json()
             fetch_mock.assert_awaited_once()
 
     assert status == _HTTP_OK
@@ -123,7 +122,7 @@ async def test_scenes_route_wraps_fetch_scenes() -> None:
     scene_rows = [{"id": "s1"}, {"id": "s2"}]
     mock_repo = AsyncMock()
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
@@ -134,8 +133,8 @@ async def test_scenes_route_wraps_fetch_scenes() -> None:
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("{0}/scenes".format(_BASE))
-            status = resp.status
-            body = await resp.json()
+            status = resp.status_code
+            body = resp.json()
             fetch_mock.assert_awaited_once()
 
     assert status == _HTTP_OK
@@ -260,7 +259,7 @@ async def test_session_models_returns_distinct_agents() -> None:
     ]
     mock_repo = AsyncMock()
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
@@ -271,8 +270,8 @@ async def test_session_models_returns_distinct_agents() -> None:
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("{0}/models".format(_BASE))
-            status = resp.status
-            body = await resp.json()
+            status = resp.status_code
+            body = resp.json()
             fetch_mock.assert_awaited_once()
 
     assert status == _HTTP_OK
