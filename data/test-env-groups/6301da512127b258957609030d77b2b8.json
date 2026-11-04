@@ -1,1 +1,1 @@
-{"id":"6301da512127b258957609030d77b2b8","fullName":"tests.test_web_mature_content#test_start_game_route_passes_switch","name":"POST /api/games hands the account's switch to the start-game service","status":"passed","testResultsByEnv":{"default":"28643651224383ea548dd31ff9dcabd9"}}
+{"id":"6301da512127b258957609030d77b2b8","fullName":"tests.test_web_mature_content#test_start_game_route_passes_switch","name":"POST /api/games hands the account's switch to the start-game service","status":"passed","testResultsByEnv":{"default":"bed7210c1ab049e3e0007c1799aaec4d"}}

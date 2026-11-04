@@ -1,0 +1,2 @@
+2026-11-04 18:57:56.794 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:57:56.810 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector

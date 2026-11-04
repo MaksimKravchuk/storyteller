@@ -1,1 +1,1 @@
-{"id":"71d741303079b3e3c82089bafc583061","fullName":"tests.test_benchmarks_reliability_report#test_format_table_empty_state","name":"format_table renders an empty-state line when counters are empty","status":"passed","testResultsByEnv":{"default":"c75141283292defeabb04574ee9e6b42"}}
+{"id":"71d741303079b3e3c82089bafc583061","fullName":"tests.test_benchmarks_reliability_report#test_format_table_empty_state","name":"format_table renders an empty-state line when counters are empty","status":"passed","testResultsByEnv":{"default":"61fbab2a00da1696ff47c489c4098f24"}}

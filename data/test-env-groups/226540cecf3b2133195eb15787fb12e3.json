@@ -1,1 +1,1 @@
-{"id":"226540cecf3b2133195eb15787fb12e3","fullName":"tests.test_admin_beta_invites#test_admin_beta_invites_post_normalizes_and_commits","name":"POST /api/admin/beta/invites normalizes and commits invite","status":"passed","testResultsByEnv":{"default":"b4aeffa2e992ada901f35105ce727d31"}}
+{"id":"226540cecf3b2133195eb15787fb12e3","fullName":"tests.test_admin_beta_invites#test_admin_beta_invites_post_normalizes_and_commits","name":"POST /api/admin/beta/invites normalizes and commits invite","status":"passed","testResultsByEnv":{"default":"a3008a53f926f07b27e167ec6f70c0f2"}}

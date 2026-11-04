@@ -1,2 +1,0 @@
-[32m2026-11-04 18:54:03.499[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-11-04 18:54:03.509[0m | [1mINFO    [0m | [36mhttpx._client[0m | session=[33m-[0m | HTTP Request: POST http://test/admin/api/settings/models "HTTP/1.1 400 Bad Request"

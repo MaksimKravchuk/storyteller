@@ -1,1 +1,1 @@
-{"id":"3708fa22e4fca7c9c43476042ea1b48e","fullName":"tests.test_admin_routes_detail#test_npcs_route_returns_npc_list","name":"/npcs detail route wraps repo.admin.get_npcs output in an npcs envelope","status":"passed","testResultsByEnv":{"default":"570c7709e8498540a42b724db6137c54"}}
+{"id":"3708fa22e4fca7c9c43476042ea1b48e","fullName":"tests.test_admin_routes_detail#test_npcs_route_returns_npc_list","name":"/npcs detail route wraps repo.admin.get_npcs output in an npcs envelope","status":"passed","testResultsByEnv":{"default":"edc0cb9c60f65b9dd7b20f23d0943af2"}}

@@ -1,1 +1,0 @@
-2026-11-04 18:54:20.144 | WARNING  | cast.visible_entities:_make_npc_entity:65 - visible_entities._npc_entities: scene uuid=5b54b58a-1094-4b75-a441-32a04cea02ac role=guard missing from game_state.npcs

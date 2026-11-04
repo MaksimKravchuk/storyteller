@@ -1,2 +1,0 @@
-2026-11-04 18:54:05.554 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:54:05.555 | WARNING  | cast.scene_swap:_present_npc_uuids:92 - Scene consolidation dropped 1 unregistered NPC(s) [UUID('04bf2c71-e6e7-4b29-bd3e-90b18fd723e3')] at swap (location=cdfcb5d8-e57a-4321-91b9-e981d43a6430); their scene memory will be lost

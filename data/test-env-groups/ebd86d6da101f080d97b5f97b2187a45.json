@@ -1,1 +1,1 @@
-{"id":"ebd86d6da101f080d97b5f97b2187a45","fullName":"tests.test_web_api#test_get_game_happy_path","name":"GET /api/games/{id} returns one owned game snapshot","status":"passed","testResultsByEnv":{"default":"aa22de3eee85b3d0f3a8d92e201cba9d"}}
+{"id":"ebd86d6da101f080d97b5f97b2187a45","fullName":"tests.test_web_api#test_get_game_happy_path","name":"GET /api/games/{id} returns one owned game snapshot","status":"passed","testResultsByEnv":{"default":"1e24de7993f5516abf73f632dc0815d6"}}

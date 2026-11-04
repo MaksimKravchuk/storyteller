@@ -1,1 +1,1 @@
-{"id":"4c77488cfe3e5c4696d05485e825fe82","fullName":"tests.test_call_logger.TestCallSequenceCounter#test_default_is_zero","name":"call_sequence_counter defaults to zero after reset_buffer","status":"passed","testResultsByEnv":{"default":"45ad82dc2e7d84cb3a2f9c223b964983"}}
+{"id":"4c77488cfe3e5c4696d05485e825fe82","fullName":"tests.test_call_logger.TestCallSequenceCounter#test_default_is_zero","name":"call_sequence_counter defaults to zero after reset_buffer","status":"passed","testResultsByEnv":{"default":"2f7a5919c397938464c3829f84b4b6a3"}}

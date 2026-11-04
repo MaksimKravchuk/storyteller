@@ -1,1 +1,1 @@
-{"id":"72b6173958eeb75b93fbaeb92103c18b","fullName":"tests.test_npc_generator_goals.TestCandidateTargets#test_lists_registered_names","name":"All registered NPC names are candidate targets","status":"passed","testResultsByEnv":{"default":"9f56a690d732e03e481ec4b66f398576"}}
+{"id":"72b6173958eeb75b93fbaeb92103c18b","fullName":"tests.test_npc_generator_goals.TestCandidateTargets#test_lists_registered_names","name":"All registered NPC names are candidate targets","status":"passed","testResultsByEnv":{"default":"2fa1b1b105fc8e9f13551acb4e1b7e16"}}

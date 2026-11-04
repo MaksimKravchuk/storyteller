@@ -1,0 +1,1 @@
+{"id":"311e170d7e46bcdfe44a8e14c58ef7dd","fullName":"tests.test_engine_wiring#test_wire_director_wires_anachronism_classifier","name":"wire_director gives the dialogue handler a real AnachronismClassifier","status":"passed","testResultsByEnv":{"default":"fe76e12fe460f77d08250ebdd40808f9"}}

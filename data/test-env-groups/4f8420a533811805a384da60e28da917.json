@@ -1,1 +1,1 @@
-{"id":"4f8420a533811805a384da60e28da917","fullName":"tests.test_benchmarks_golden.TestGoldenSnapshots#test_golden_path_layout","name":"golden_path uses benchmarks/golden/<scenario>.json","status":"passed","testResultsByEnv":{"default":"9447dfee3e5899a8d61ee0e27fcbce14"}}
+{"id":"4f8420a533811805a384da60e28da917","fullName":"tests.test_benchmarks_golden.TestGoldenSnapshots#test_golden_path_layout","name":"golden_path uses benchmarks/golden/<scenario>.json","status":"passed","testResultsByEnv":{"default":"311aeddd070372533d004b57d9900b5e"}}

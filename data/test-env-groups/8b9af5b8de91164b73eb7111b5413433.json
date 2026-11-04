@@ -1,1 +1,1 @@
-{"id":"8b9af5b8de91164b73eb7111b5413433","fullName":"tests.test_npc_tactical_goal.TestLifeOnSightPromotion#test_non_promotable_kinds_skipped","name":"Non-promotable kinds (PROTECT, FLEE) are left alone","status":"passed","testResultsByEnv":{"default":"133400026fb0bbf8bbc96bc88dd360e6"}}
+{"id":"8b9af5b8de91164b73eb7111b5413433","fullName":"tests.test_npc_tactical_goal.TestLifeOnSightPromotion#test_non_promotable_kinds_skipped","name":"Non-promotable kinds (PROTECT, FLEE) are left alone","status":"passed","testResultsByEnv":{"default":"f72f1df7e20e12173e743f16c0fed1cb"}}

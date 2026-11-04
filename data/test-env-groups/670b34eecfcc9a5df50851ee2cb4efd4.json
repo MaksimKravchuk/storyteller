@@ -1,1 +1,1 @@
-{"id":"670b34eecfcc9a5df50851ee2cb4efd4","fullName":"tests.test_dice.TestCombatOutcomeCategories#test_npc_overpowers","name":"NPC with +10 skill rolling 18 vs player 5 is classified as NPC_OVERPOWERS","status":"passed","testResultsByEnv":{"default":"078a008c4388262f15205a6ccfa03127"}}
+{"id":"670b34eecfcc9a5df50851ee2cb4efd4","fullName":"tests.test_dice.TestCombatOutcomeCategories#test_npc_overpowers","name":"NPC with +10 skill rolling 18 vs player 5 is classified as NPC_OVERPOWERS","status":"passed","testResultsByEnv":{"default":"d4b32b71617d82f6963001c841e3dbf8"}}

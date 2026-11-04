@@ -1,1 +1,1 @@
-{"id":"acbaf2987f20cc2f3c64d1e1b9d22664","fullName":"tests.test_beta_web_policy#test_admin_plan_bypasses_per_user_quotas","name":"Admin plan bypasses per-user game and turn quotas","status":"passed","testResultsByEnv":{"default":"39bf40e6e9a51f5380f7cf880a098bc7"}}
+{"id":"acbaf2987f20cc2f3c64d1e1b9d22664","fullName":"tests.test_beta_web_policy#test_admin_plan_bypasses_per_user_quotas","name":"Admin plan bypasses per-user game and turn quotas","status":"passed","testResultsByEnv":{"default":"a6615727152c4bafcc6d76b8b439cc18"}}

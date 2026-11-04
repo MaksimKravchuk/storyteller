@@ -1,1 +1,1 @@
-{"id":"5e7725459fcaad7e73cae9f2aa06711f","fullName":"tests.test_relationship_model.TestRelationshipValidation#test_missing_kind_raises","name":"Omitting kind raises a ValidationError","status":"passed","testResultsByEnv":{"default":"270602f4ea2265d6ff5330077ebf5578"}}
+{"id":"5e7725459fcaad7e73cae9f2aa06711f","fullName":"tests.test_relationship_model.TestRelationshipValidation#test_missing_kind_raises","name":"Omitting kind raises a ValidationError","status":"passed","testResultsByEnv":{"default":"18f06f7d9dcbf3215f8f279fc3f3b3c7"}}

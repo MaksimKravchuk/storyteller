@@ -1,1 +1,1 @@
-{"id":"938fdc326c61615ede5c76b9ef083d19","fullName":"tests.test_wait_action.TestDetectWaitIntentRussian#test_pas","name":"The Russian word 'пас' (pass) is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"f20e90b3c760674aaa0c1b10e06444ed"}}
+{"id":"938fdc326c61615ede5c76b9ef083d19","fullName":"tests.test_wait_action.TestDetectWaitIntentRussian#test_pas","name":"The Russian word 'пас' (pass) is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"3558eb2a139ee3bdbd8f684b53e0da95"}}

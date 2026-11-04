@@ -1,1 +1,1 @@
-{"id":"686e6825e1d0c09eadfaaf925547430a","fullName":"tests.test_knowledge.TestKnowledgeNode#test_custom_canon_session","name":"A KnowledgeNode accepts an explicit SESSION canon on init","status":"passed","testResultsByEnv":{"default":"8ca21f13e7f70351cc94b69ad2630f56"}}
+{"id":"686e6825e1d0c09eadfaaf925547430a","fullName":"tests.test_knowledge.TestKnowledgeNode#test_custom_canon_session","name":"A KnowledgeNode accepts an explicit SESSION canon on init","status":"passed","testResultsByEnv":{"default":"a5e1ba408db685842f34c0049d12b480"}}
