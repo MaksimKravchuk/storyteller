@@ -1,3 +1,36 @@
+---
+type: Decision
+title: "Pluggable search-provider abstraction for world research"
+status: stable
+governs:
+  - research/base_search_client.py
+  - research/search_factory.py
+  - research/wikipedia_search_client.py
+  - research/tavily_search_client.py
+  - research/searxng_search_client.py
+  - cast/data_miner.py
+  - cast/_data_miner_init.py
+  - engine/factory.py
+  - config.py
+  - prompts/data_miner_prompts.py
+  - prompts/data_miner_prompts_ru.py
+  - llm/base_client.py
+  - llm/factory.py
+  - research
+  - tests/test_search_clients.py
+  - tests/test_search_factory.py
+  - tests/test_data_miner_search_seam.py
+  - tests/test_config.py
+  - tests/test_engine_factory.py
+  - tests/test_npc_generator.py
+  - tests/test_scene_builder.py
+  - tests/test_item_generator.py
+  - benchmarks/scenarios/world_gen_vividness_florence
+  - .env.example
+  - cast/npc_generator.py
+  - cast/scene_builder.py
+  - cast/item_generator.py
+---
 # ADR-0007: Pluggable search-provider abstraction for world research
 
 Date: 2026-05-30

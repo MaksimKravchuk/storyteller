@@ -1,3 +1,24 @@
+---
+type: Decision
+title: "Refresh the benchmark judge panel to current models"
+status: stable
+governs:
+  - benchmarks/harness/panel.py
+  - defaults/models.py
+  - benchmarks/harness/judge.py
+  - benchmarks/baselines/*.json
+  - benchmarks/model_sets/smoke.py
+  - tests/test_benchmarks_panel.py
+  - tests/test_openai_reasoning_effort.py
+  - tests/test_anthropic_reasoning_models.py
+  - tests/test_benchmarks_judge_reasoning.py
+  - .github/workflows/noise-floor-recalibration.yml
+  - llm/openai_client.py
+  - llm/anthropic_client.py
+  - .github/workflows/benchmark-on-pr.yml
+  - .github/workflows/benchmark-baseline.yml
+  - benchmarks/baselines/.calibration.json
+---
 # ADR-0019: Refresh the benchmark judge panel to current models
 
 Date: 2026-09-30

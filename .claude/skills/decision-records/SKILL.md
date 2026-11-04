@@ -86,6 +86,14 @@ Name the kind of decision so future agents understand the scope:
 Use this template unless the repo already has a different ADR template:
 
 ```md
+---
+type: Decision
+title: "Short imperative title"
+status: draft  # OKF lifecycle: draft (Proposed) | stable (Accepted) | deprecated (Superseded/Rejected)
+governs:  # repo paths (globs allowed) this decision constrains; tests/test_okf_bundle.py checks they exist
+  - cast/example.py
+---
+
 # ADR-000N: Short imperative title
 
 Date: YYYY-MM-DD

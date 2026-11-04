@@ -1,3 +1,18 @@
+---
+type: Decision
+title: "Reliability counters persist on the turn_events.payload channel, not ai_call_logs"
+status: stable
+governs:
+  - cast/_reliability_metrics.py
+  - engine/session_ops.py
+  - db/tables.py
+  - llm/call_logger.py
+  - tests/test_reliability_metering_inert.py
+  - benchmarks/results
+  - tests/test_reliability_metrics.py
+  - tests/test_session_ops_reliability.py
+  - tests/test_benchmarks_reliability_report.py
+---
 # ADR-0002: Reliability counters persist on the turn_events.payload channel, not ai_call_logs
 
 Date: 2026-05-25

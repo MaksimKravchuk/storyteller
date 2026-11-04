@@ -1,3 +1,20 @@
+---
+type: Decision
+title: "Gate NPC departure-line proper names at the ticker source"
+status: stable
+governs:
+  - cast/npc_ticker.py
+  - models/npc_card.py
+  - cast/narrator.py
+  - cast/narrator_aliases.py
+  - tests/test_npc_ticker.py
+  - tests/test_director_npc_ticker.py
+  - CLAUDE.md
+  - cast/schemas/turn_outputs.py
+  - cast/npc_turn.py
+  - cast/narrator_labels.py
+  - cast/world_chronicler.py
+---
 # ADR-0007: Gate NPC departure-line proper names at the ticker source
 
 Date: 2026-05-30

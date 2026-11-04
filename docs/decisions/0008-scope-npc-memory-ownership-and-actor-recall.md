@@ -1,3 +1,22 @@
+---
+type: Decision
+title: "Scope NPC Memory Ownership And Actor Recall"
+status: stable
+governs:
+  - knowledge/graph.py
+  - knowledge/query.py
+  - db/repo_saver.py
+  - cast/actor_memory.py
+  - prompts/actor_prompts.py
+  - prompts/actor_prompts_ru.py
+  - tests/test_actor_memory_relevance.py
+  - tests/prompts/test_actor_memory_relevance.py
+  - tests/prompts/test_consumer_seam_contract.py
+  - tests/test_prompt_localization.py
+  - knowledge/query_filters.py
+  - db/converters/knowledge.py
+  - cast/actor.py
+---
 # ADR-0008: Scope NPC Memory Ownership And Actor Recall
 
 Date: 2026-05-31

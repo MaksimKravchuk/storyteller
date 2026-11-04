@@ -1,3 +1,28 @@
+---
+type: Decision
+title: "Expand mutation testing from the `models/`+`timeline/` pilot to the full deterministic core"
+status: stable
+governs:
+  - models
+  - timeline
+  - pyproject.toml
+  - .github/workflows/ci.yml
+  - .github/workflows/mutation-nightly.yml
+  - CLAUDE.md
+  - knowledge
+  - db/converters
+  - cast/dice.py
+  - config.py
+  - tests/prompts/test_consumer_seam_contract.py
+  - knowledge/memory.py
+  - knowledge/scene_consolidation.py
+  - knowledge/scene_summary_phase.py
+  - knowledge/*.py
+  - db/converters/*.py
+  - models/*.py
+  - timeline/*.py
+  - tests
+---
 # ADR-0005: Expand mutation testing from the `models/`+`timeline/` pilot to the full deterministic core
 
 Date: 2026-05-29

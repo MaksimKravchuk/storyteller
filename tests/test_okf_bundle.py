@@ -29,6 +29,8 @@ _OKF_AGENT_ROOTS = (
     "tests",
     "timeline",
 )
+_DECISIONS_DIR = _REPO_ROOT / "docs" / "decisions"
+_OKF_STATUSES = frozenset(("draft", "stable", "deprecated"))
 _LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
@@ -64,6 +66,42 @@ class TestStorytellerOkfAgents:
                 resolved_target = _resolve_link(source_path, link_target)
 
                 assert resolved_target.exists(), _message(source_path, "broken link to {0}".format(link_target))
+
+
+@allure.epic("Documentation")
+@allure.feature("Open Knowledge Format")
+@allure.story("Decision records conformance")
+class TestStorytellerOkfDecisions:
+    @allure.title("Every ADR is an OKF Decision concept with a valid lifecycle status")
+    def test_decisions_have_okf_frontmatter(self) -> None:
+        decision_paths = _decision_paths()
+
+        assert decision_paths, "No decision records found"
+
+        for decision_path in decision_paths:
+            frontmatter = _read_concept(decision_path)[0]
+
+            assert frontmatter.get("type") == "Decision", _message(decision_path, "type is not Decision")
+            assert frontmatter.get("title"), _message(decision_path, "missing title")
+            assert frontmatter.get("status") in _OKF_STATUSES, _message(decision_path, "invalid OKF status")
+
+    @allure.title("Every path an ADR governs still exists, so stale ADRs surface in CI")
+    def test_governed_paths_exist(self) -> None:
+        for decision_path in _decision_paths():
+            for governed in _governed_paths(decision_path):
+                matches = list(_REPO_ROOT.glob(governed))
+
+                assert matches, _message(decision_path, "governs missing path {0}".format(governed))
+
+
+def _decision_paths() -> list[Path]:
+    return sorted(_DECISIONS_DIR.glob("[0-9]*.md"))
+
+
+def _governed_paths(decision_path: Path) -> list[str]:
+    governed = _read_concept(decision_path)[0].get("governs", [])
+    assert isinstance(governed, list), _message(decision_path, "governs is not a list")
+    return [str(path_glob) for path_glob in governed]
 
 
 def _okf_agent_paths() -> list[Path]:

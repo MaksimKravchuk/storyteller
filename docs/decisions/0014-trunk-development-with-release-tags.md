@@ -1,3 +1,12 @@
+---
+type: Decision
+title: "Trunk development with release tags"
+status: stable
+governs:
+  - AGENTS.md
+  - CLAUDE.md
+  - docs/studio/03-release-checklist.md
+---
 # ADR-0014: Trunk development with release tags
 
 Date: 2026-06-28

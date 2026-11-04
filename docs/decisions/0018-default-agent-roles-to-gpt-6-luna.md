@@ -1,3 +1,35 @@
+---
+type: Decision
+title: "Default every agent role to gpt-6-luna with reasoning pinned off"
+status: stable
+governs:
+  - docs/studio/09-founder-decision-register.md
+  - config.py
+  - costs/model_pricing.py
+  - cast/base_performer_class.py
+  - benchmarks/baselines
+  - benchmarks/baselines/.calibration.json
+  - defaults/models.py
+  - engine/game_engine.py
+  - benchmarks/harness/panel.py
+  - costs/reports.py
+  - benchmarks/cli/_run_compare.py
+  - benchmarks/baselines/*.json
+  - tests/test_openai_reasoning_effort.py
+  - tests/test_admin_cost_reports.py
+  - llm/openai_client.py
+  - .github/workflows/benchmark-on-pr.yml
+  - .github/workflows/benchmark-baseline.yml
+  - .github/workflows/benchmark.yml
+  - .github/workflows/noise-floor-recalibration.yml
+  - .github/workflows/ci.yml
+  - .env.example
+  - README.md
+  - CLAUDE.md
+  - tests/test_config.py
+  - tests/test_game_engine.py
+  - tests/test_model_pricing.py
+---
 # ADR-0018: Default every agent role to gpt-6-luna with reasoning pinned off
 
 Date: 2026-09-30

@@ -1,3 +1,18 @@
+---
+type: Decision
+title: "Benchmark auto-compare on `run` + 2-sigma ratchet predicate"
+status: stable
+governs:
+  - cast
+  - prompts
+  - benchmarks/baselines/.calibration.json
+  - benchmarks/baselines
+  - tests/test_benchmarks_classify_stdev.py
+  - tests/test_benchmarks_baselines.py
+  - tests/test_benchmarks_auto_compare.py
+  - tests/test_benchmarks_run_auto_compare.py
+  - tests/test_benchmarks_pin.py
+---
 # ADR-0002: Benchmark auto-compare on `run` + 2-sigma ratchet predicate
 
 Date: 2026-05-25

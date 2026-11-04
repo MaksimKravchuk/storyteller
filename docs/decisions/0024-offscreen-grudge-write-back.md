@@ -1,3 +1,12 @@
+---
+type: Decision
+title: "Off-screen social write-back uses directed relationships, not `hostility_level`"
+status: stable
+governs:
+  - cast/_npc_social_consequence.py
+  - cast/_npc_outcome.py
+  - cast/_relationship_drift.py
+---
 # ADR-0024: Off-screen social write-back uses directed relationships, not `hostility_level`
 
 Date: 2026-11-04

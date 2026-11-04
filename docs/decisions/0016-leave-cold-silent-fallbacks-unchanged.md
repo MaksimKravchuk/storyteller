@@ -1,3 +1,17 @@
+---
+type: Decision
+title: "Leave cold silent fallbacks unchanged until reliability data shows heat"
+status: stable
+governs:
+  - cast/_reliability_metrics.py
+  - cast/dramaturge.py
+  - cast/narrator.py
+  - cast/data_miner.py
+  - cast/director_execution.py
+  - tests/test_reliability_metering_inert.py
+  - benchmarks/cli/_reliability_report.py
+  - tests/test_benchmarks_reliability_report.py
+---
 # ADR-0016: Leave cold silent fallbacks unchanged until reliability data shows heat
 
 Date: 2026-06-28

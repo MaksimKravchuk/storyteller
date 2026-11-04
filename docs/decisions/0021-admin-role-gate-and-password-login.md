@@ -1,3 +1,26 @@
+---
+type: Decision
+title: "Gate the admin dashboard on the account admin role; switch player login to email + password"
+status: stable
+governs:
+  - docs/studio/09-founder-decision-register.md
+  - docs/studio/08-fly-release-rollback.md
+  - run_server.py
+  - interfaces/web/auth.py
+  - db/tables.py
+  - interfaces/admin.py
+  - interfaces/web/static/app.js
+  - tests/test_admin_auth.py
+  - tests/test_run_server_admin_auth.py
+  - tests/test_admin.py
+  - tests/test_admin_lifecycle.py
+  - tests/test_admin_routes_settings*.py
+  - tests/test_web_auth.py
+  - interfaces/admin_auth.py
+  - interfaces/admin_dashboard.html
+  - interfaces/admin_route_helpers.py
+  - interfaces/web/static/index.html
+---
 # ADR-0021: Gate the admin dashboard on the account admin role; switch player login to email + password
 
 Date: 2026-10-24

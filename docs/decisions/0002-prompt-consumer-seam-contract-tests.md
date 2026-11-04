@@ -1,3 +1,13 @@
+---
+type: Decision
+title: "Prompt-template consumer-seam contract tests"
+status: stable
+governs:
+  - tests/prompts/test_consumer_seam_contract.py
+  - prompts/base_template.py
+  - CLAUDE.md
+  - cast/narrator.py
+---
 # ADR-0002: Prompt-template consumer-seam contract tests
 
 Date: 2026-05-25

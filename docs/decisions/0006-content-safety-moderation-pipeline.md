@@ -1,3 +1,34 @@
+---
+type: Decision
+title: "Content-safety moderation pipeline (web/engine surface)"
+status: stable
+governs:
+  - safety
+  - engine/moderation.py
+  - interfaces/web/auth_routes.py
+  - db/repo_accounts.py
+  - engine/game_engine.py
+  - engine/factory.py
+  - interfaces/web/routes.py
+  - config.py
+  - tests/test_safety_moderator.py
+  - tests/test_safety_engine_integration.py
+  - tests/test_safety_web_api.py
+  - tests/test_safety_factory.py
+  - tests/test_safety_recorded_scores.py
+  - tests/fixtures/moderation_scores.json
+  - tests/fixtures/record_moderation_scores.py
+  - tests/test_web_mature_content.py
+  - tests/db/test_repo_accounts_mature.py
+  - interfaces/web/action_errors.py
+  - interfaces/web/service.py
+  - interfaces/web/service_helpers.py
+  - interfaces/web/beta_auth.py
+  - interfaces/web/static
+  - db/tables.py
+  - alembic/versions/b7c8d9e0f1a2_add_mature_content_to_accounts.py
+  - docs/studio/09-founder-decision-register.md
+---
 # ADR-0006: Content-safety moderation pipeline (web/engine surface)
 
 Date: 2026-05-30

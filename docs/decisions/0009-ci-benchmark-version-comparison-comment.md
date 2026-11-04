@@ -1,3 +1,25 @@
+---
+type: Decision
+title: "CI benchmark version-over-version comparison comment (advisory)"
+status: stable
+governs:
+  - .github/workflows/benchmark-on-pr.yml
+  - .github/workflows/benchmark-baseline.yml
+  - benchmarks/cli/_narration_diff.py
+  - benchmarks/baselines
+  - cast
+  - prompts
+  - engine
+  - benchmarks/scenarios
+  - benchmarks/results
+  - benchmarks/baselines/*.json
+  - tests/test_benchmarks_narration_diff.py
+  - benchmarks/cli
+  - benchmarks/cli/_narration_diff_format.py
+  - benchmarks/cli/_narration_diff_model.py
+  - benchmarks/cli/_iteration_archives.py
+  - benchmarks/cli/_args_subcommands.py
+---
 # ADR-0009: CI benchmark version-over-version comparison comment (advisory)
 
 Date: 2026-05-31

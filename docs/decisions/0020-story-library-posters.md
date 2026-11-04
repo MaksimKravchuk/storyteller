@@ -1,3 +1,49 @@
+---
+type: Decision
+title: "Story library posters — deterministic playbills, illustrations on request"
+status: stable
+governs:
+  - docs/studio/09-founder-decision-register.md
+  - llm/image_client.py
+  - alembic/versions/a9b0c1d2e3f4_add_story_posters.py
+  - config.py
+  - costs/model_pricing.py
+  - .env.example
+  - fly.toml
+  - interfaces/web/playbill.py
+  - interfaces/web/schemas_library.py
+  - cast
+  - db/repo_posters.py
+  - interfaces/web/library_rows.py
+  - llm
+  - tests/test_web_playbill.py
+  - tests/test_web_poster.py
+  - tests/test_web_poster_routes.py
+  - tests/test_image_client.py
+  - db
+  - tests/db/test_repo_posters.py
+  - tests/test_web_auth.py
+  - interfaces/web
+  - fly.test.toml
+  - interfaces/web/service.py
+  - interfaces/web/poster_art.py
+  - interfaces/web/poster_errors.py
+  - interfaces/web/service_poster.py
+  - interfaces/web/routes_poster.py
+  - interfaces/web/app.py
+  - interfaces/web/auth_routes.py
+  - interfaces/web/static/app.js
+  - interfaces/web/static/style.css
+  - interfaces/web/beta_policy.py
+  - interfaces/web/quota_locks.py
+  - db/tables.py
+  - db/repo_web_games.py
+  - tests/test_model_pricing.py
+  - safety/factory.py
+  - tests/test_config.py
+  - tests/_poster_helpers.py
+  - docs/studio/11-friends-beta-onboarding.md
+---
 # ADR-0020: Story library posters — deterministic playbills, illustrations on request
 
 Date: 2026-09-30
