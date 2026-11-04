@@ -24,6 +24,9 @@ _ARTIFACT_PATHS: tuple[pathlib.Path, ...] = (
 )
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.feature("Narrative Quality")
 @allure.story("End-to-end Evaluation")
 @allure.severity(allure.severity_level.NORMAL)

@@ -36,6 +36,9 @@ def _seed_thread(game_state, description: str) -> WorldThread:
     return thread
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("WorldChronicler real-model world advancement")
 class TestWorldChroniclerRealModel:

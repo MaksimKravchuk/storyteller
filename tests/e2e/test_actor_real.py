@@ -83,6 +83,9 @@ def _empty_query_engine() -> KnowledgeQueryEngine:
     return KnowledgeQueryEngine(KnowledgeGraph())
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("Actor real-model dialogue and NPC-turn modes")
 class TestActorRealModel:

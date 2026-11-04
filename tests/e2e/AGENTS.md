@@ -16,6 +16,10 @@ context for `tests/e2e/`.
 `tests/e2e/` owns real-LLM checks: one `test_<agent>_real.py` per performer
 plus a full-session narrative-quality run. Every test here costs money. Mocked
 or deterministic tests belong in `tests/`, not here.
+Every test file carries `pytestmark = pytest.mark.live`, so the default run
+deselects it; run with `-m live`. CI runs this suite only in
+`.github/workflows/live-api.yml` (manual dispatch or the `live-api` PR label),
+never in `.github/workflows/ci.yml`.
 
 # Contents
 
@@ -61,7 +65,7 @@ or deterministic tests belong in `tests/`, not here.
   `AGENT_TO_MODEL_ATTR == ALL_AGENTS` drift assert in `_real_llm.py`.
 - Letting keys drift between the two maps: a typo'd key silently drops out
   of selection and CI skips the e2e step (see `_agent_matrix.py` docstring).
-- Relying on skips for coverage: `.github/workflows/ci.yml` fails loud if
+- Relying on skips for coverage: `.github/workflows/live-api.yml` fails loud if
   `OPENAI_API_KEY` is missing, since all-skipped e2e would pass green with zero real coverage.
 
 # Related

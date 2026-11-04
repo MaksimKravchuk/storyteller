@@ -64,6 +64,9 @@ def _mock_wikipedia_with_florence() -> mock.AsyncMock:
     return wiki
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("DataMiner real-model setting synthesis")
 class TestDataMinerRealModel:

@@ -30,6 +30,9 @@ _CONTRADICTORY_NARRATION = (
 )
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("Dramaturge real-model consistency oracle")
 class TestDramaturgeRealModel:

@@ -68,6 +68,9 @@ def _register_mock_actor(npc: npc_mod.NPCCard, director: director_mod.Director, 
     director._actors[npc.uuid] = actor
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("Director real-model delegation")
 class TestDirectorRealModelDelegation:

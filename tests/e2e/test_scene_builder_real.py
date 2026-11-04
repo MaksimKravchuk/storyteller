@@ -30,6 +30,9 @@ _SOCIAL_PREMISE = (
 _SOCIAL_OPENING_ACTION = "I look around the marketplace to begin my investigation."
 
 
+pytestmark = pytest.mark.live
+
+
 @allure.epic("AI Agent Orchestration")
 @allure.feature("SceneBuilder real-model generation")
 class TestSceneBuilderRealModel:
