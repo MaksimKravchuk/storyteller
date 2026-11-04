@@ -40,8 +40,6 @@ class BetaPolicy:
 
     async def ensure_open(self) -> None:
         """Enforce global kill switch and budget before engine work."""
-        if _is_mock_config(self._cfg):
-            return
         if not self._cfg.beta_enabled:
             raise BetaAccessDeniedError(self._cfg.beta_kill_message, reason="beta_disabled")
         budget = _decimal_budget(self._cfg)
@@ -58,8 +56,6 @@ class BetaPolicy:
 
     async def ensure_active_game_quota(self, player_id: str, plan: str = DEFAULT_USER_PLAN) -> None:
         """Block new games once a player reaches the active-game quota."""
-        if _is_mock_config(self._cfg):
-            return
         quotas = quota_settings_for_plan(self._cfg, plan)
         if quotas.max_active_games is None:
             return
@@ -72,8 +68,6 @@ class BetaPolicy:
 
     async def ensure_turn_quota(self, player_id: str, plan: str = DEFAULT_USER_PLAN) -> None:
         """Block player turns once daily or weekly turn quotas are exhausted."""
-        if _is_mock_config(self._cfg):
-            return
         quotas = quota_settings_for_plan(self._cfg, plan)
         now = datetime.now(UTC)
         tomorrow = now + timedelta(seconds=_BetaLimits.seconds_per_day)
@@ -127,11 +121,6 @@ class BetaPolicy:
                 _BetaLimits.friendly_quota_message,
                 reason="weekly_turn_quota",
             )
-
-
-def _is_mock_config(cfg: Config) -> bool:
-    """Return True for legacy tests that pass MagicMock instead of Config."""
-    return cfg.__class__.__module__.startswith("unittest.mock")
 
 
 def _decimal_budget(cfg: Config) -> Decimal:
