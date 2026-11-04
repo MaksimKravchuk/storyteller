@@ -1,1 +1,1 @@
-{"id":"3ed7a1f080f78b4f568182da793311c7","fullName":"tests.test_admin_routes_detail#test_events_route_wraps_fetch_events","name":"/events detail route wraps fetch_events output in an events envelope","status":"passed","testResultsByEnv":{"default":"b60672819fde78de2db771571650cc77"}}
+{"id":"3ed7a1f080f78b4f568182da793311c7","fullName":"tests.test_admin_routes_detail#test_events_route_wraps_fetch_events","name":"/events detail route wraps fetch_events output in an events envelope","status":"passed","testResultsByEnv":{"default":"d9d6b1c7b06321f479f8913bd07aa52e"}}

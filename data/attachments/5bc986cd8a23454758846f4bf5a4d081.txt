@@ -1,0 +1,2 @@
+2026-11-04 19:00:47.479 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:00:47.480 | WARNING  | safety.openai_provider:score:94 - content_safety.openai_error type=APIConnectionError message=Connection error.

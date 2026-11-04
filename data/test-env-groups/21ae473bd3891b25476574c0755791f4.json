@@ -1,1 +1,1 @@
-{"id":"21ae473bd3891b25476574c0755791f4","fullName":"tests.test_web_auth#test_me_requires_bearer_token","name":"GET /api/me returns 401 when beta auth is required and no bearer token is present","status":"passed","testResultsByEnv":{"default":"ab8f6e2fcfce04e12ee3996420ae146a"}}
+{"id":"21ae473bd3891b25476574c0755791f4","fullName":"tests.test_web_auth#test_me_requires_bearer_token","name":"GET /api/me returns 401 when beta auth is required and no bearer token is present","status":"passed","testResultsByEnv":{"default":"7128876d8232d898f43a3337f6d88bb8"}}

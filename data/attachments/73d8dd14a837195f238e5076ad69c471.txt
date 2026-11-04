@@ -1,0 +1,1 @@
+2026-11-04 19:00:46.281 | ERROR    | cast.npc_turn:_record_action_in_scene_log:148 - Resolved NPC action dropped from scene log: 3e5c240d-1bae-4ad4-a0c5-1b191a19a982 (IDLE) not in game_state.npcs

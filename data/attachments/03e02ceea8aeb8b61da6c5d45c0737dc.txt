@@ -1,0 +1,1 @@
+2026-11-04 19:00:45.594 | WARNING  | cast._npc_generator_goals:build_life_goal:83 - NPCGenerator: dropping goal of kind 'eat' for role 'guard' (not allowed at creation)

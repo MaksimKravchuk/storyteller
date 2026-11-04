@@ -1,0 +1,1 @@
+{"id":"632bf812368592a14a593435bc540550","fullName":"tests.test_okf_bundle.TestStorytellerOkfDecisions#test_decisions_have_okf_frontmatter","name":"Every ADR is an OKF Decision concept with a valid lifecycle status","status":"passed","testResultsByEnv":{"default":"2d67b41479f8b223b49e465aa1693202"}}

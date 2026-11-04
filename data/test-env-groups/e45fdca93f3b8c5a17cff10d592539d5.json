@@ -1,0 +1,1 @@
+{"id":"e45fdca93f3b8c5a17cff10d592539d5","fullName":"tests.test_okf_bundle.TestStorytellerOkfDecisions#test_governed_paths_exist","name":"Every path an ADR governs still exists, so stale ADRs surface in CI","status":"passed","testResultsByEnv":{"default":"c3422c223ad610686d7df48a12733b87"}}

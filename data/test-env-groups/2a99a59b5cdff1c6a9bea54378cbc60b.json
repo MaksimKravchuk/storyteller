@@ -1,1 +1,1 @@
-{"id":"2a99a59b5cdff1c6a9bea54378cbc60b","fullName":"tests.test_npc_ticker.TestNPCTickerSkipUuids#test_skip_uuids_partial_shield","name":"skip_uuids shields only the listed NPCs; others are still evicted","status":"passed","testResultsByEnv":{"default":"206a179d80137ec6404a06fea62d03aa"}}
+{"id":"2a99a59b5cdff1c6a9bea54378cbc60b","fullName":"tests.test_npc_ticker.TestNPCTickerSkipUuids#test_skip_uuids_partial_shield","name":"skip_uuids shields only the listed NPCs; others are still evicted","status":"passed","testResultsByEnv":{"default":"e872939046d7d6e5f5af658bc6b99daa"}}

@@ -1,2 +1,0 @@
-2026-11-04 18:57:57.982 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:57:57.984 | ERROR    | cast.npc_generator:_generate_unique:226 - NPCGenerator: LLM returned taken name 'Eira' for role 'net-mender', renaming to 'Eira (guard)'

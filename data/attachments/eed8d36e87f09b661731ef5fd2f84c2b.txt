@@ -1,0 +1,2 @@
+2026-11-04 19:00:47.365 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:00:47.367 | WARNING  | safety.moderator:_log_flagged:196 - content_safety.flagged direction=input categories=['prompt_injection'] severities={'prompt_injection': 'HIGH'} length=52 provider=scripted

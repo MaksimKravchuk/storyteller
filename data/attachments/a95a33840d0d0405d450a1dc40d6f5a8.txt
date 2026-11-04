@@ -1,0 +1,3 @@
+2026-11-04 19:00:37.724 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:00:37.733 | INFO     | cast.base_performer_class:execute:319 - agent=Director parent=None | start
+2026-11-04 19:00:37.733 | INFO     | cast.base_performer_class:execute:336 - agent=Director parent=None | done | duration_ms=0

@@ -1,1 +1,1 @@
-{"id":"c4f62a4c8d3692e2d1e3f570e341d7b2","fullName":"tests.test_benchmarks_types.TestScenarioValidation#test_empty_script_raises","name":"Scenario rejects an empty script at construction","status":"passed","testResultsByEnv":{"default":"650aaaefc04ba97e23e127c085e0b0c1"}}
+{"id":"c4f62a4c8d3692e2d1e3f570e341d7b2","fullName":"tests.test_benchmarks_types.TestScenarioValidation#test_empty_script_raises","name":"Scenario rejects an empty script at construction","status":"passed","testResultsByEnv":{"default":"9cdd26bf69447e5e78608efe32cec3d1"}}

@@ -1,1 +1,1 @@
-{"id":"00ccfecbd6c811cfeb2e1b1ad52b289d","fullName":"tests.test_npc_background_tick.TestNPCBackgroundTicker#test_short_advance_no_op","name":"Tick is a no-op when the clock barely moved","status":"passed","testResultsByEnv":{"default":"95bba88b923033c6fe29e0addab6b8ad"}}
+{"id":"00ccfecbd6c811cfeb2e1b1ad52b289d","fullName":"tests.test_npc_background_tick.TestNPCBackgroundTicker#test_short_advance_no_op","name":"Tick is a no-op when the clock barely moved","status":"passed","testResultsByEnv":{"default":"0a1f52cdf61f77d1280817b899e6a14a"}}

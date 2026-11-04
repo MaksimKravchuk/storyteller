@@ -1,0 +1,1 @@
+{"id":"298c356d4a4ac03d3a1dc620a8928a6c","fullName":"tests.test_okf_bundle.TestStorytellerOkfAgents#test_colocated_agents_have_required_sections","name":"Every colocated AGENTS file describes contents, patterns and anti-patterns","status":"passed","testResultsByEnv":{"default":"74ef7492288312880680fceac34f4c1a"}}

@@ -1,0 +1,6 @@
+2026-11-04 19:00:36.081 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:00:36.083 | ERROR    | knowledge.scene_consolidation:_significant_phase:117 - Significant-event consolidation failed (action=ATTACK actor=Marcus target=Livia location=b94ca24f-4953-4f24-9fb5-8f7721224c58 clock=7.5 desc='Marcus lunges at Livia with a dagger across the forum.')
+Traceback (most recent call last):
+> File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/unittest/mock.py", line 2240, in _execute_mock_call
+    raise effect
+RuntimeError: graph write failed
