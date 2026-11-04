@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
 
 import allure
 import pytest
@@ -123,16 +122,11 @@ class TestSceneToRowConverter:
 @allure.epic("Scene & Exploration")
 @allure.feature("Scene tracking")
 class TestAdminScenesRoute:
-    """Admin server must register the /scenes endpoint."""
+    """Admin router must register the /scenes endpoint."""
 
     @allure.story("Admin endpoint registration")
-    @allure.title("The admin server registers the /api/sessions/{id}/scenes route at startup")
+    @allure.title("The admin router registers the /admin/api/sessions/{id}/scenes route")
     def test_scenes_route_registered(self):
-        from interfaces.admin import AdminServer
+        from interfaces.admin import router
 
-        server = AdminServer(MagicMock(), MagicMock(), port=0)
-        route_paths = []
-        for route in server._app.router.routes():
-            if hasattr(route, "resource"):
-                route_paths.append(route.resource.canonical)
-        assert "/api/sessions/{id}/scenes" in route_paths
+        assert "/admin/api/sessions/{id}/scenes" in {route.path for route in router.routes}

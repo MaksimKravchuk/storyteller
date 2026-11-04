@@ -5,10 +5,11 @@ from __future__ import annotations
 import json
 from typing import Any, Union
 
-from aiohttp import web
+from fastapi import Request
+from starlette.responses import Response
 
 from db import repo_settings
-from interfaces.admin_route_helpers import _json_response
+from interfaces.admin_json import _json_response
 
 _HTTP_BAD_REQUEST = 400
 
@@ -17,15 +18,15 @@ FIELD_PROVIDER = "provider"
 FIELD_MODEL_ID = "model_id"
 
 _ValidatedTriple = tuple[str, str, str]
-_ValidationOutcome = Union[_ValidatedTriple, web.Response]
+_ValidationOutcome = Union[_ValidatedTriple, Response]
 
 
-def error_response(message: str, status: int) -> web.Response:
-    """Return a JSON error payload wrapped in an aiohttp response."""
+def error_response(message: str, status: int) -> Response:
+    """Return a JSON error payload wrapped in a response."""
     return _json_response({"error": message}, status=status)
 
 
-async def parse_json_body(request: web.Request) -> dict[str, Any] | web.Response:
+async def parse_json_body(request: Request) -> dict[str, Any] | Response:
     """Parse the request body as a JSON object, or return a 400 response."""
     try:
         payload = await request.json()

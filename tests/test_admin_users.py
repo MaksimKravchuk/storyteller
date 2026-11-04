@@ -6,9 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
-from tests.test_admin import _make_app
+from tests.admin_app import admin_client, make_admin_app as _make_app
 
 pytestmark = [
     allure.epic("Player Interfaces"),
@@ -33,16 +32,16 @@ async def test_admin_users_returns_users_envelope() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.list_users.return_value = users
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/users")
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body == {"users": users}
     mock_repo.admin.list_users.assert_awaited_once_with(email_query=None)
 
@@ -54,7 +53,7 @@ async def test_admin_users_passes_email_query_to_repo() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.list_users.return_value = []
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
@@ -62,7 +61,7 @@ async def test_admin_users_passes_email_query_to_repo() -> None:
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/users?email_query=foo")
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     mock_repo.admin.list_users.assert_awaited_once_with(email_query="foo")
 
 
@@ -80,16 +79,16 @@ async def test_admin_user_detail_returns_invites_section() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_user_detail.return_value = payload
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/users/{0}".format(_USER_ID))
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body["invites"] == [{"email": "player@example.com", "status": "accepted"}]
 
 
@@ -108,16 +107,16 @@ async def test_admin_user_detail_returns_feedback_section() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_user_detail.return_value = payload
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/users/{0}".format(_USER_ID))
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body["feedback"] == feedback
 
 
@@ -133,16 +132,16 @@ async def test_admin_user_detail_returns_repository_payload() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_user_detail.return_value = payload
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/users/{0}".format(_USER_ID))
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_OK
+    assert resp.status_code == _HTTP_OK
     assert body == payload
     mock_repo.admin.get_user_detail.assert_awaited_once_with(_USER_ID)
 
@@ -154,14 +153,14 @@ async def test_admin_user_detail_returns_404_when_unknown() -> None:
     mock_repo = AsyncMock()
     mock_repo.admin.get_user_detail.return_value = None
 
-    async with TestClient(TestServer(_make_app())) as client:
+    async with admin_client(_make_app()) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get("/api/admin/users/{0}".format(_USER_ID))
-            body = await resp.json()
+            body = resp.json()
 
-    assert resp.status == _HTTP_NOT_FOUND
+    assert resp.status_code == _HTTP_NOT_FOUND
     assert body == {"error": "User not found"}

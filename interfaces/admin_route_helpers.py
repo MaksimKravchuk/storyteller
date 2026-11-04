@@ -2,59 +2,48 @@
 
 from __future__ import annotations
 
-import json
 from contextlib import asynccontextmanager
-from datetime import date, datetime
-from pathlib import Path
 from typing import Any, AsyncIterator
-from uuid import UUID
 
-from aiohttp import web
+from fastapi import Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import Config
 from db.engine import get_db
 from db.repository import GameRepository
+from interfaces.web import deps
 
 _HTTP_NOT_FOUND = 404
 _SESSION_ID_PARAM = "id"
-_DASHBOARD_HTML = Path(__file__).parent / "admin_dashboard.html"
-CFG_KEY: web.AppKey[Config] = web.AppKey("storyteller_admin_cfg", Config)
-DB_FACTORY_KEY: web.AppKey[Any] = web.AppKey("storyteller_admin_db_factory", object)
 
 
-def get_cfg(request: web.Request) -> Config:
-    """Return the ``Config`` object stored on the admin app."""
-    return request.app[CFG_KEY]
+def _resolve(request: Request, dependency: Any) -> Any:
+    """Call a web ``deps`` provider, honouring ``app.dependency_overrides`` (tests)."""
+    return request.app.dependency_overrides.get(dependency, dependency)()
 
 
-def _json_serial(unknown: Any) -> Any:
-    """JSON serializer for objects not handled by default json."""
-    if isinstance(unknown, (date, datetime)):
-        return unknown.isoformat()
-    if isinstance(unknown, UUID):
-        return str(unknown)
-    raise TypeError(f"Type {type(unknown)} not serializable")
-
-
-def _json_response(payload: Any, status: int = 200) -> web.Response:
-    return web.Response(
-        text=json.dumps(payload, default=_json_serial),
-        content_type="application/json",
-        status=status,
-    )
+def get_cfg(request: Request) -> Config:
+    """Return the process-wide ``Config`` shared with the player web UI."""
+    return _resolve(request, deps.get_cfg)
 
 
 @asynccontextmanager
-async def open_repo(request: web.Request) -> AsyncIterator[GameRepository]:
+async def open_session(request: Request) -> AsyncIterator[AsyncSession]:
+    """Yield a fresh DB session from the web app's session factory."""
+    async with get_db(_resolve(request, deps.get_session_factory)) as db:
+        yield db
+
+
+@asynccontextmanager
+async def open_repo(request: Request) -> AsyncIterator[GameRepository]:
     """Yield a GameRepository bound to a fresh DB session."""
-    db_factory = request.app[DB_FACTORY_KEY]
-    async with get_db(db_factory) as db:
+    async with open_session(request) as db:
         yield GameRepository(db)
 
 
 @asynccontextmanager
-async def session_scope(request: web.Request) -> AsyncIterator[tuple[str, GameRepository]]:
+async def session_scope(request: Request) -> AsyncIterator[tuple[str, GameRepository]]:
     """Yield ``(session_id, repo)`` — the request's session_id plus a fresh repo."""
-    session_id = request.match_info[_SESSION_ID_PARAM]
+    session_id = request.path_params[_SESSION_ID_PARAM]
     async with open_repo(request) as repo:
         yield session_id, repo

@@ -1,128 +1,55 @@
-"""Admin dashboard — aiohttp web server for inspecting game sessions."""
+"""Admin dashboard — FastAPI router mounted at ``/admin`` for inspecting game sessions."""
 
 from __future__ import annotations
 
-from aiohttp import web
-from aiohttp.typedefs import Handler
-from loguru import logger
+from fastapi import APIRouter, Depends
 
-from config import Config
-from interfaces import (
-    admin_route_helpers,
-    admin_reports,
-    admin_routes,
-    admin_routes_beta_invites,
-    admin_routes_detail,
-    admin_routes_entity,
-    admin_routes_feedback,
-    admin_routes_settings,
+from interfaces import admin_reports, admin_routes, admin_routes_beta_invites, admin_routes_detail
+from interfaces import admin_routes_entity, admin_routes_feedback, admin_routes_reliability
+from interfaces import admin_routes_settings, admin_routes_settings_search
+from interfaces.admin_auth import require_admin
+
+_GET = "GET"
+_ROUTES = (
+    (_GET, "/sessions", admin_routes.list_sessions),
+    (_GET, "/sessions/{id}", admin_routes.session_detail),
+    (_GET, "/sessions/{id}/conversation", admin_routes.conversation),
+    (_GET, "/sessions/{id}/knowledge", admin_routes_detail.knowledge),
+    (_GET, "/sessions/{id}/events", admin_routes_detail.events),
+    (_GET, "/sessions/{id}/npcs", admin_routes_detail.npcs),
+    (_GET, "/sessions/{id}/npcs/{npc_id}", admin_routes_entity.npc_detail),
+    (_GET, "/sessions/{id}/locations", admin_routes_detail.locations),
+    (_GET, "/sessions/{id}/scenes", admin_routes_detail.scenes),
+    (_GET, "/sessions/{id}/ai-calls", admin_routes_detail.ai_calls),
+    (_GET, "/sessions/{id}/turn-events", admin_routes_entity.turn_events),
+    (_GET, "/sessions/{id}/models", admin_routes_detail.session_models),
+    (_GET, "/admin/users", admin_routes.list_users),
+    (_GET, "/admin/users/{id}", admin_routes.user_detail),
+    (_GET, "/admin/beta/cost-summary", admin_reports.beta_cost_summary),
+    (_GET, "/admin/beta/feedback", admin_routes_feedback.list_feedback),
+    (_GET, "/admin/beta/feedback.csv", admin_routes_feedback.export_feedback_csv),
+    (_GET, "/admin/beta/invites", admin_routes_beta_invites.list_beta_invites),
+    ("POST", "/admin/beta/invites", admin_routes_beta_invites.create_beta_invite),
+    (_GET, "/admin/reliability", admin_routes_reliability.reliability_summary),
+    (_GET, "/settings/keys", admin_routes_settings.get_keys),
+    (_GET, "/settings/models", admin_routes_settings.get_models),
+    ("POST", "/settings/models", admin_routes_settings.set_model),
+    (_GET, "/settings/search", admin_routes_settings_search.get_search),
+    ("POST", "/settings/search", admin_routes_settings_search.set_search),
+    ("DELETE", "/settings/search", admin_routes_settings_search.clear_search),
 )
-from interfaces import admin_auth, admin_routes_reliability, admin_routes_settings_search
-from interfaces.web.auth import is_auth_required
 
 
-@web.middleware
-async def _auth_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:  # noqa: WPS110
-    """Gate API routes on a Supabase session whose account has the admin role."""
-    cfg = admin_route_helpers.get_cfg(request)
-    if request.path.startswith("/api/") and is_auth_required(cfg):
-        denial = await admin_auth.admin_denial(request, cfg)
-        if denial is not None:
-            return denial
-    return await handler(request)
+def _build_router() -> APIRouter:
+    """Dashboard page (open) plus the admin-gated ``/api`` routes, all under ``/admin``."""
+    admin_router = APIRouter(prefix="/admin", include_in_schema=False)
+    api = APIRouter(prefix="/api", dependencies=[Depends(require_admin)])
+    for path in ("", "/"):
+        admin_router.add_api_route(path, admin_routes.dashboard, methods=[_GET])
+    for method, path, endpoint in _ROUTES:
+        api.add_api_route(path, endpoint, methods=[method])
+    admin_router.include_router(api)
+    return admin_router
 
 
-async def _healthz(_request: web.Request) -> web.Response:
-    return web.json_response({"status": "ok"})
-
-
-def _setup_session_report_routes(app: web.Application) -> None:
-    """Register session detail and beta-cost report routes."""
-    app.router.add_get("/api/admin/beta/cost-summary", admin_reports.beta_cost_summary)
-    app.router.add_get("/api/sessions/{id}/scenes", admin_routes_detail.scenes)
-    app.router.add_get("/api/sessions/{id}/ai-calls", admin_routes_detail.ai_calls)
-    app.router.add_get("/api/sessions/{id}/turn-events", admin_routes_entity.turn_events)
-    app.router.add_get("/api/sessions/{id}/models", admin_routes_detail.session_models)
-
-
-def _setup_beta_and_reliability_routes(app: web.Application) -> None:
-    """Register admin beta-feedback and reliability dashboard routes."""
-    app.router.add_get("/api/admin/beta/feedback", admin_routes_feedback.list_feedback)
-    app.router.add_get("/api/admin/beta/feedback.csv", admin_routes_feedback.export_feedback_csv)
-    app.router.add_get("/api/admin/reliability", admin_routes_reliability.reliability_summary)
-
-
-def _setup_user_routes(app: web.Application) -> None:
-    """Register admin user-management routes."""
-    app.router.add_get("/api/admin/users", admin_routes.list_users)
-    app.router.add_get("/api/admin/users/{id}", admin_routes.user_detail)
-    app.router.add_get("/api/admin/beta/invites", admin_routes_beta_invites.list_beta_invites)
-    app.router.add_post("/api/admin/beta/invites", admin_routes_beta_invites.create_beta_invite)
-
-
-class AdminServer:
-    """Lightweight admin dashboard for inspecting Storyteller sessions."""
-
-    def __init__(
-        self,
-        db_session_factory,
-        cfg: Config,
-        *,
-        port: int = 8080,
-    ):
-        self._port = port
-        self._app = web.Application(middlewares=[_auth_middleware])
-        self._app[admin_route_helpers.DB_FACTORY_KEY] = db_session_factory
-        self._app[admin_route_helpers.CFG_KEY] = cfg
-        self._setup_routes()
-        self._runner: web.AppRunner | None = None
-
-    async def start(self) -> None:
-        self._runner = web.AppRunner(self._app)
-        await self._runner.setup()
-        site = web.TCPSite(self._runner, "0.0.0.0", self._port)
-        await site.start()
-        logger.info("Admin dashboard running on http://0.0.0.0:{}", self._port)
-
-    async def stop(self) -> None:
-        if self._runner:
-            await self._runner.cleanup()
-
-    @property
-    def bound_address(self) -> tuple[str, int] | None:
-        """Return (host, port) the server is bound to, or None if not started."""
-        if self._runner is None:
-            return None
-        sockets = self._runner.addresses
-        if not sockets:
-            return None
-        host, port = sockets[0][:2]
-        return host, port
-
-    def _setup_routes(self) -> None:
-        self._app.router.add_get("/healthz", _healthz)
-        self._app.router.add_get("/", admin_routes.dashboard)
-        self._app.router.add_get("/api/sessions", admin_routes.list_sessions)
-        _setup_user_routes(self._app)
-        _setup_beta_and_reliability_routes(self._app)
-        self._app.router.add_get("/api/sessions/{id}", admin_routes.session_detail)
-        self._app.router.add_get("/api/sessions/{id}/conversation", admin_routes.conversation)
-        self._setup_detail_routes()
-        self._setup_settings_routes()
-
-    def _setup_settings_routes(self) -> None:
-        self._app.router.add_get("/config/public", admin_auth.public_config)
-        self._app.router.add_get("/api/settings/keys", admin_routes_settings.get_keys)
-        self._app.router.add_get("/api/settings/models", admin_routes_settings.get_models)
-        self._app.router.add_post("/api/settings/models", admin_routes_settings.set_model)
-        self._app.router.add_get("/api/settings/search", admin_routes_settings_search.get_search)
-        self._app.router.add_post("/api/settings/search", admin_routes_settings_search.set_search)
-        self._app.router.add_delete("/api/settings/search", admin_routes_settings_search.clear_search)
-
-    def _setup_detail_routes(self) -> None:
-        self._app.router.add_get("/api/sessions/{id}/knowledge", admin_routes_detail.knowledge)
-        self._app.router.add_get("/api/sessions/{id}/events", admin_routes_detail.events)
-        self._app.router.add_get("/api/sessions/{id}/npcs", admin_routes_detail.npcs)
-        self._app.router.add_get("/api/sessions/{id}/npcs/{npc_id}", admin_routes_entity.npc_detail)
-        self._app.router.add_get("/api/sessions/{id}/locations", admin_routes_detail.locations)
-        _setup_session_report_routes(self._app)
+router = _build_router()

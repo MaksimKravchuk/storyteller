@@ -6,10 +6,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
-from aiohttp import web
-from aiohttp.test_utils import TestClient, TestServer
+from fastapi import FastAPI
 
-from interfaces.admin import AdminServer
+from tests.admin_app import admin_client, make_admin_app
 
 pytestmark = [
     allure.epic("Player Interfaces"),
@@ -23,9 +22,9 @@ _API_KEYS = "/api/settings/keys"
 _API_MODELS = "/api/settings/models"
 
 
-def _make_app_with_cfg(cfg: MagicMock) -> web.Application:
-    """Build an AdminServer app bound to a specific Config mock."""
-    return AdminServer(MagicMock(), cfg, port=0)._app
+def _make_app_with_cfg(cfg: MagicMock) -> FastAPI:
+    """Build an admin app bound to a specific Config mock."""
+    return make_admin_app(cfg)
 
 
 def _make_cfg(
@@ -56,10 +55,10 @@ def _prime_get_db(mock_get_db) -> None:
 @pytest.mark.asyncio
 async def test_keys_route_reports_booleans() -> None:
     cfg = _make_cfg(openai="sk-o", anthropic=None, openrouter="or-key", deepseek=None)
-    async with TestClient(TestServer(_make_app_with_cfg(cfg))) as client:
+    async with admin_client(_make_app_with_cfg(cfg)) as client:
         resp = await client.get(_API_KEYS)
-        status = resp.status
-        body = await resp.json()
+        status = resp.status_code
+        body = resp.json()
     assert status == _HTTP_OK
     assert body == {
         "openai": True,
@@ -77,14 +76,14 @@ async def test_get_models_env_fallback() -> None:
     mock_repo = AsyncMock()
     mock_repo.settings.get_model_overrides.return_value = {}
 
-    async with TestClient(TestServer(_make_app_with_cfg(cfg))) as client:
+    async with admin_client(_make_app_with_cfg(cfg)) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get(_API_MODELS)
-            body = await resp.json()
+            body = resp.json()
 
     for role in ("director", "agent", "narrator", "dramaturge"):
         assert body["roles"][role]["source"] == "env"
@@ -104,14 +103,14 @@ async def test_get_models_db_override() -> None:
         "narrator": ("anthropic", "claude-opus-4-6"),
     }
 
-    async with TestClient(TestServer(_make_app_with_cfg(cfg))) as client:
+    async with admin_client(_make_app_with_cfg(cfg)) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.get(_API_MODELS)
-            body = await resp.json()
+            body = resp.json()
 
     assert body["roles"]["narrator"] == {
         "provider": "anthropic",
@@ -122,14 +121,14 @@ async def test_get_models_db_override() -> None:
 
 
 async def _post_set(cfg: MagicMock, mock_repo: AsyncMock, payload) -> tuple[int, dict]:
-    async with TestClient(TestServer(_make_app_with_cfg(cfg))) as client:
+    async with admin_client(_make_app_with_cfg(cfg)) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=mock_repo),
         ):
             _prime_get_db(mock_get_db)
             resp = await client.post(_API_MODELS, json=payload)
-            return resp.status, await resp.json()
+            return resp.status_code, resp.json()
 
 
 @allure.story("Model overrides")
@@ -203,9 +202,9 @@ async def test_post_set_model_provider_key_missing() -> None:
 @pytest.mark.asyncio
 async def test_post_set_model_invalid_json() -> None:
     cfg = _make_cfg()
-    async with TestClient(TestServer(_make_app_with_cfg(cfg))) as client:
-        resp = await client.post(_API_MODELS, data="not-json")
-        status = resp.status
+    async with admin_client(_make_app_with_cfg(cfg)) as client:
+        resp = await client.post(_API_MODELS, content="not-json")
+        status = resp.status_code
     assert status == _HTTP_BAD_REQUEST
 
 

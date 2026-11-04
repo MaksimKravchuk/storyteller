@@ -14,12 +14,8 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
-from interfaces.web.auth_routes import router as auth_router
 from interfaces.web.deps import player_id_middleware
-from interfaces.web.routes import router
-from interfaces.web.routes_feedback import router as feedback_router
-from interfaces.web.routes_library import router as library_router
-from interfaces.web.routes_poster import router as poster_router
+from interfaces.web.routers import ROUTERS
 
 _STATIC_DIR = Path(__file__).parent / "static"
 _GENERIC_PLAYER_ERROR = "Something went wrong. Please try again."
@@ -43,11 +39,8 @@ def create_app() -> FastAPI:
     fastapi_app = FastAPI(title="Storyteller Web", version="0.1.0")
     fastapi_app.add_exception_handler(Exception, _unhandled_exception_handler)
     fastapi_app.middleware("http")(player_id_middleware)
-    fastapi_app.include_router(auth_router)
-    fastapi_app.include_router(router)
-    fastapi_app.include_router(library_router)
-    fastapi_app.include_router(feedback_router)
-    fastapi_app.include_router(poster_router)
+    for api_router in ROUTERS:
+        fastapi_app.include_router(api_router)
     fastapi_app.mount(
         "/static",
         StaticFiles(directory=_STATIC_DIR),

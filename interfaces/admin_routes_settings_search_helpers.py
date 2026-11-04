@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Union
 
-from aiohttp import web
+from starlette.responses import Response
 
 from db.repo_settings_search import ALLOWED_SEARCH_PROVIDERS
 from interfaces.admin_routes_settings_validation import error_response
@@ -17,7 +17,7 @@ FIELD_TAVILY_API_KEY = "tavily_api_key"
 FIELD_SEARXNG_BASE_URL = "searxng_base_url"
 
 _ValidatedSearch = tuple[str, str | None, str | None]
-_ValidationOutcome = Union[_ValidatedSearch, web.Response]
+_ValidationOutcome = Union[_ValidatedSearch, Response]
 
 
 def _is_provider(raw: Any) -> bool:

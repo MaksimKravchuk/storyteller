@@ -1,14 +1,16 @@
-"""Tests for AdminServer start/stop lifecycle, /healthz endpoint, and auth middleware."""
+"""Tests for the admin router mounted in the player FastAPI app: routing and the auth gate."""
 
 from __future__ import annotations
 
 from unittest.mock import MagicMock
 
 import allure
+import httpx
 import pytest
-from aiohttp import ClientSession
+
 from config import Config
-from interfaces.admin import AdminServer
+from interfaces.web.app import create_app
+from interfaces.web import deps
 
 _HTTP_OK = 200
 _HTTP_UNAUTHORIZED = 401
@@ -19,66 +21,28 @@ pytestmark = [
 ]
 
 
-@allure.story("Server lifecycle")
-@allure.title("AdminServer binds and responds to /healthz, then cleans up on stop()")
+def _client(cfg: Config) -> httpx.AsyncClient:
+    app = create_app()
+    app.dependency_overrides[deps.get_cfg] = MagicMock(return_value=cfg)
+    app.dependency_overrides[deps.get_session_factory] = MagicMock(return_value=MagicMock())
+    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
+
+
+@allure.story("Mounting")
+@allure.title("The player app serves the admin dashboard at /admin and /admin/")
 @pytest.mark.asyncio
-async def test_admin_server_start_and_stop_serves_healthz() -> None:
-    server = AdminServer(MagicMock(), MagicMock(), port=0)
-
-    await server.start()
-    try:
-        await _assert_healthz_ok(server)
-    finally:
-        await server.stop()
+@pytest.mark.parametrize("path", ["/admin", "/admin/"])
+async def test_dashboard_is_served_by_player_app(path: str) -> None:
+    async with _client(Config(beta_auth_required=True)) as client:
+        resp = await client.get(path)
+    assert resp.status_code == _HTTP_OK
+    assert "text/html" in resp.headers["content-type"]
 
 
-async def _assert_healthz_ok(server: AdminServer) -> None:
-    assert server.bound_address is not None, "AdminServer did not bind any socket"
-    host, port = server.bound_address
-
-    async with ClientSession() as session:
-        async with session.get(f"http://{host}:{port}/healthz") as resp:
-            assert resp.status == _HTTP_OK
-            payload = await resp.json()
-            assert payload == {"status": "ok"}
-
-
-@allure.story("Server lifecycle")
-@allure.title("AdminServer.stop() on a server that never started is a no-op and leaves it unbound")
+@allure.story("Mounting")
+@allure.title("Admin /api/* is gated by auth in the player app, while the player /healthz stays open")
 @pytest.mark.asyncio
-async def test_admin_server_stop_without_start_is_noop() -> None:
-    server = AdminServer(MagicMock(), MagicMock(), port=0)
-
-    # No start() — _runner is still None. stop() should not raise.
-    await server.stop()
-
-    # And the invariant: an unstarted server reports no bound address.
-    assert server.bound_address is None
-
-
-@allure.story("Server lifecycle")
-@allure.title("AdminServer auth middleware rejects /api/* without a session but never gates /healthz")
-@pytest.mark.asyncio
-async def test_admin_server_auth_middleware_rejects_without_session() -> None:
-    server = AdminServer(MagicMock(), Config(beta_auth_required=True), port=0)
-
-    await server.start()
-    try:
-        await _assert_auth_middleware_behavior(server)
-    finally:
-        await server.stop()
-
-
-async def _assert_auth_middleware_behavior(server: AdminServer) -> None:
-    assert server.bound_address is not None
-    host, port = server.bound_address
-    base = f"http://{host}:{port}"
-
-    async with ClientSession() as session:
-        # No Authorization header → middleware returns 401.
-        async with session.get(f"{base}/api/sessions") as resp:
-            assert resp.status == _HTTP_UNAUTHORIZED
-
-        # /healthz is outside /api/* and must never be gated.
-        async with session.get(f"{base}/healthz") as resp:
-            assert resp.status == _HTTP_OK
+async def test_admin_api_gated_in_player_app() -> None:
+    async with _client(Config(beta_auth_required=True)) as client:
+        assert (await client.get("/admin/api/sessions")).status_code == _HTTP_UNAUTHORIZED
+        assert (await client.get("/healthz")).status_code == _HTTP_OK

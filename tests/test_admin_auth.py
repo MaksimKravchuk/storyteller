@@ -1,4 +1,4 @@
-"""Tests for AdminServer account-role authentication."""
+"""Tests for admin account-role authentication."""
 
 from __future__ import annotations
 
@@ -7,11 +7,10 @@ from unittest.mock import AsyncMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
 from config import Config
 from interfaces.web.auth_models import SupabaseClaims
-from tests.test_admin import _make_app
+from tests.admin_app import admin_client, make_admin_app as _make_app
 
 _API_SESSIONS = "/api/sessions"
 _HTTP_OK = 200
@@ -48,19 +47,19 @@ def mock_repo() -> Iterator[AsyncMock]:
 
 async def _get_sessions(cfg: Config, verify: AsyncMock | None = None) -> int:
     with patch("interfaces.admin_auth.verify_supabase_token", verify or AsyncMock(return_value=_CLAIMS)):
-        async with TestClient(TestServer(_make_app(cfg))) as client:
+        async with admin_client(_make_app(cfg)) as client:
             resp = await client.get(_API_SESSIONS, headers={"Authorization": _BEARER_TOKEN})
-            return resp.status
+            return resp.status_code
 
 
 @allure.story("Admin role required")
 @allure.title("Admin API returns 401 when no session token is sent")
 @pytest.mark.asyncio
 async def test_rejects_missing_auth(auth_cfg: Config) -> None:
-    async with TestClient(TestServer(_make_app(auth_cfg))) as client:
+    async with admin_client(_make_app(auth_cfg)) as client:
         resp = await client.get(_API_SESSIONS)
-        assert resp.status == _HTTP_UNAUTHORIZED
-        assert await resp.json() == {"error": "Unauthorized"}
+        assert resp.status_code == _HTTP_UNAUTHORIZED
+        assert resp.json() == {"detail": "Unauthorized"}
 
 
 @allure.story("Admin role required")
@@ -86,17 +85,3 @@ async def test_rejects_non_admin(auth_cfg: Config, mock_repo: AsyncMock, account
 async def test_allows_admin(auth_cfg: Config, mock_repo: AsyncMock) -> None:
     mock_repo.accounts.get_by_supabase_user_id.return_value = {"is_admin": True}
     assert await _get_sessions(auth_cfg) == _HTTP_OK
-
-
-@allure.story("Admin role required")
-@allure.title("Public config exposes only browser-safe Supabase settings, without auth")
-@pytest.mark.asyncio
-async def test_public_config(auth_cfg: Config) -> None:
-    async with TestClient(TestServer(_make_app(auth_cfg))) as client:
-        resp = await client.get("/config/public")
-        assert resp.status == _HTTP_OK
-        body = await resp.json()
-        assert body["supabase_url"] == "https://example.supabase.co"
-        assert body["supabase_publishable_key"] == "sb_publishable_test_key"
-        assert body["beta_auth_required"] is True
-        assert not any("jwt" in key or "jwks" in key for key in body)

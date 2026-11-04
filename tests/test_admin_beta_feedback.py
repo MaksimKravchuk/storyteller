@@ -6,9 +6,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import allure
 import pytest
-from aiohttp.test_utils import TestClient, TestServer
 
-from interfaces.admin import AdminServer
+from tests.admin_app import admin_client, make_admin_app
 
 _HTTP_OK = 200
 _FEEDBACK_ROUTE = "/api/admin/beta/feedback"
@@ -44,8 +43,8 @@ def feedback_repo() -> AsyncMock:
 @allure.title("Admin API lists recent beta feedback for review")
 @pytest.mark.asyncio
 async def test_admin_lists_beta_feedback(feedback_repo: AsyncMock) -> None:
-    app = AdminServer(MagicMock(), MagicMock(), port=0)._app
-    async with TestClient(TestServer(app)) as client:
+    app = make_admin_app(MagicMock())
+    async with admin_client(app) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=feedback_repo),
@@ -53,9 +52,9 @@ async def test_admin_lists_beta_feedback(feedback_repo: AsyncMock) -> None:
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
             response = await client.get(_FEEDBACK_ROUTE)
-            payload = await response.json()
+            payload = response.json()
 
-    assert response.status == _HTTP_OK
+    assert response.status_code == _HTTP_OK
     assert payload["feedback"][0]["user_email"] == "friend@example.com"
     assert payload["feedback"][0]["turn_number"] == 3
     feedback_repo.feedback.list_recent.assert_awaited_once()
@@ -80,8 +79,8 @@ async def test_admin_lists_feedback_includes_account_email() -> None:
             "message": "Issue",
         },
     ]
-    app = AdminServer(MagicMock(), MagicMock(), port=0)._app
-    async with TestClient(TestServer(app)) as client:
+    app = make_admin_app(MagicMock())
+    async with admin_client(app) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=repo),
@@ -89,9 +88,9 @@ async def test_admin_lists_feedback_includes_account_email() -> None:
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
             response = await client.get(_FEEDBACK_ROUTE)
-            payload = await response.json()
+            payload = response.json()
 
-    assert response.status == _HTTP_OK
+    assert response.status_code == _HTTP_OK
     # D008: both keys must reach the dashboard so the consumer can pick precedence.
     assert payload["feedback"][0]["account_email"] == "current@new.example.com"
     assert payload["feedback"][0]["user_email"] == "cached@old.example.com"
@@ -101,8 +100,8 @@ async def test_admin_lists_feedback_includes_account_email() -> None:
 @allure.title("Admin API exports beta feedback as CSV")
 @pytest.mark.asyncio
 async def test_admin_exports_beta_feedback_csv(feedback_repo: AsyncMock) -> None:
-    app = AdminServer(MagicMock(), MagicMock(), port=0)._app
-    async with TestClient(TestServer(app)) as client:
+    app = make_admin_app(MagicMock())
+    async with admin_client(app) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=feedback_repo),
@@ -110,9 +109,9 @@ async def test_admin_exports_beta_feedback_csv(feedback_repo: AsyncMock) -> None
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
             response = await client.get(_FEEDBACK_CSV_ROUTE)
-            body = await response.text()
+            body = response.text
 
-    assert response.status == _HTTP_OK
+    assert response.status_code == _HTTP_OK
     assert "text/csv" in response.headers["Content-Type"]
     assert "friend@example.com" in body
     assert "The scene repeated." in body
@@ -125,8 +124,8 @@ async def test_admin_feedback_csv_neutralises_formulas(feedback_repo: AsyncMock)
     feedback_row = feedback_repo.feedback.list_recent.return_value[0]
     feedback_row["message"] = '=HYPERLINK("https://bad.example")'
     feedback_row["user_email"] = " +malicious@example.com"
-    app = AdminServer(MagicMock(), MagicMock(), port=0)._app
-    async with TestClient(TestServer(app)) as client:
+    app = make_admin_app(MagicMock())
+    async with admin_client(app) as client:
         with (
             patch("interfaces.admin_route_helpers.get_db") as mock_get_db,
             patch("interfaces.admin_route_helpers.GameRepository", return_value=feedback_repo),
@@ -134,8 +133,8 @@ async def test_admin_feedback_csv_neutralises_formulas(feedback_repo: AsyncMock)
             mock_get_db.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
             mock_get_db.return_value.__aexit__ = AsyncMock(return_value=False)
             response = await client.get(_FEEDBACK_CSV_ROUTE)
-            body = await response.text()
+            body = response.text
 
-    assert response.status == _HTTP_OK
+    assert response.status_code == _HTTP_OK
     assert "'=HYPERLINK" in body
     assert "' +malicious@example.com" in body

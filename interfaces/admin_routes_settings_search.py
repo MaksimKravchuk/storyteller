@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from aiohttp import web
+from fastapi import Request
+from starlette.responses import Response
 
+from interfaces.admin_json import _json_response
 from interfaces import admin_route_helpers as helpers
 from interfaces.admin_routes_settings_search_helpers import (
     FIELD_PROVIDER,
@@ -23,12 +25,12 @@ from interfaces.admin_routes_settings_validation import error_response, parse_js
 _HTTP_BAD_REQUEST = 400
 
 
-async def get_search(request: web.Request) -> web.Response:
+async def get_search(request: Request) -> Response:
     """Report the effective search provider, its source, and credential presence."""
     cfg = helpers.get_cfg(request)
     async with helpers.open_repo(request) as repo:
         stored = await repo.settings.search_overrides()
-    return helpers._json_response(build_search_view(stored, cfg))
+    return _json_response(build_search_view(stored, cfg))
 
 
 async def _persist_search(store: Any, provider: str, tavily_api_key: str | None, searxng_base_url: str | None) -> None:
@@ -41,11 +43,11 @@ async def _persist_search(store: Any, provider: str, tavily_api_key: str | None,
 
 
 async def _write_search(
-    request: web.Request,
+    request: Request,
     provider: str,
     tavily_api_key: str | None,
     searxng_base_url: str | None,
-) -> web.Response:
+) -> Response:
     """Persist the selection, rejecting a provider whose credential is absent."""
     async with helpers.open_repo(request) as repo:
         stored = await repo.settings.search_overrides()
@@ -57,22 +59,22 @@ async def _write_search(
         if problem:
             return error_response(problem, _HTTP_BAD_REQUEST)
         await _persist_search(repo.settings, provider, tavily_api_key, searxng_base_url)
-    return helpers._json_response({"ok": True, FIELD_PROVIDER: provider})
+    return _json_response({"ok": True, FIELD_PROVIDER: provider})
 
 
-async def set_search(request: web.Request) -> web.Response:
+async def set_search(request: Request) -> Response:
     """Upsert the search provider and its credentials."""
     parsed = await parse_json_body(request)
-    if isinstance(parsed, web.Response):
+    if isinstance(parsed, Response):
         return parsed
     validated = validate_set_search_payload(parsed)
-    if isinstance(validated, web.Response):
+    if isinstance(validated, Response):
         return validated
     return await _write_search(request, *validated)
 
 
-async def clear_search(request: web.Request) -> web.Response:
+async def clear_search(request: Request) -> Response:
     """Delete all stored search settings, reverting to the env/default provider."""
     async with helpers.open_repo(request) as repo:
         await repo.settings.clear_search()
-    return helpers._json_response({"ok": True})
+    return _json_response({"ok": True})
