@@ -1,1 +1,1 @@
-{"id":"14b8566cdd9f629baad70696df4c2039","fullName":"tests.test_safety_moderator#test_exempt_category_is_never_a_violation","name":"An exempt category never counts as a violation, whatever its severity","status":"passed","testResultsByEnv":{"default":"a8b59bde3ab157081249b99dccc9f82d"}}
+{"id":"14b8566cdd9f629baad70696df4c2039","fullName":"tests.test_safety_moderator#test_exempt_category_is_never_a_violation","name":"An exempt category never counts as a violation, whatever its severity","status":"passed","testResultsByEnv":{"default":"22c360a640928b33b0fac1c1c14098f0"}}

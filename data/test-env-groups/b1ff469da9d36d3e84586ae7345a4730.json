@@ -1,1 +1,1 @@
-{"id":"b1ff469da9d36d3e84586ae7345a4730","fullName":"tests.test_web_api#test_archive_game_enforces_account_ownership","name":"POST /api/games/{id}/archive hides another user's story id","status":"passed","testResultsByEnv":{"default":"8379c235a52b3fa6169a14501a77c2a9"}}
+{"id":"b1ff469da9d36d3e84586ae7345a4730","fullName":"tests.test_web_api#test_archive_game_enforces_account_ownership","name":"POST /api/games/{id}/archive hides another user's story id","status":"passed","testResultsByEnv":{"default":"5c3ed8f97a77dbd2bb9dcdc0587e5b22"}}

@@ -1,1 +1,1 @@
-{"id":"e443f92d1cbf8e2af11fc23ab68cb265","fullName":"tests.test_web_api#test_get_index_explains_first_time_setting_prompt","name":"GET / explains the AI demo and provides example first setting prompts","status":"passed","testResultsByEnv":{"default":"99280248ff68b15a1bd7229b22dbd043"}}
+{"id":"e443f92d1cbf8e2af11fc23ab68cb265","fullName":"tests.test_web_api#test_get_index_explains_first_time_setting_prompt","name":"GET / explains the AI demo and provides example first setting prompts","status":"passed","testResultsByEnv":{"default":"690c06c022e54da5a9033b724fe40039"}}

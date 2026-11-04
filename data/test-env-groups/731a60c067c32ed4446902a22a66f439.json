@@ -1,1 +1,1 @@
-{"id":"731a60c067c32ed4446902a22a66f439","fullName":"tests.test_models.TestNPCCard#test_conversation_history_starts_empty","name":"A new NPCCard starts with an empty conversation history list","status":"passed","testResultsByEnv":{"default":"0860521c1dae31883a4d31defd49010a"}}
+{"id":"731a60c067c32ed4446902a22a66f439","fullName":"tests.test_models.TestNPCCard#test_conversation_history_starts_empty","name":"A new NPCCard starts with an empty conversation history list","status":"passed","testResultsByEnv":{"default":"1dca32f714527ef2b7bc2083b5fe6239"}}

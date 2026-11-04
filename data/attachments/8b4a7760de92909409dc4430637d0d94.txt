@@ -1,6 +1,0 @@
-[32m2026-11-04 18:01:10.785[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-11-04 18:01:10.788[0m | [31m[1mERROR   [0m | [36mknowledge.scene_consolidation[0m | session=[33m-[0m | Significant-event consolidation failed (action=ATTACK actor=Marcus target=Livia location=b94ca24f-4953-4f24-9fb5-8f7721224c58 clock=7.5 desc='Marcus lunges at Livia with a dagger across the forum.')
-[33m[1mTraceback (most recent call last):[0m
-> File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/unittest/mock.py", line 2240, in _execute_mock_call
-    raise effect
-[31m[1mRuntimeError[0m:[1m graph write failed[0m

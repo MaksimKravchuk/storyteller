@@ -1,1 +1,1 @@
-{"id":"7ca51c02413a803a208b4019d3e27afa","fullName":"tests.test_dice_contest.TestRollContestOutcomes#test_target_resists","name":"A slim target edge classifies the contest as TARGET_RESISTS","status":"passed","testResultsByEnv":{"default":"7eb56ba41bed8109446126a1ea853501"}}
+{"id":"7ca51c02413a803a208b4019d3e27afa","fullName":"tests.test_dice_contest.TestRollContestOutcomes#test_target_resists","name":"A slim target edge classifies the contest as TARGET_RESISTS","status":"passed","testResultsByEnv":{"default":"8ce7b6b10932b7f445d1c9ba39d814bf"}}

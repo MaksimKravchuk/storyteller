@@ -1,0 +1,2 @@
+[32m2026-11-04 18:07:03.327[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:07:03.332[0m | [33m[1mWARNING [0m | [36mbenchmarks.harness.judge[0m | session=[33m-[0m | Benchmark judge openai/gpt-5.4-mini failed during send: RuntimeError: connection refused

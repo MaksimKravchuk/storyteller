@@ -1,1 +1,1 @@
-{"id":"d76dbe35c0fa3efcaa714cc441757a7e","fullName":"tests.test_chronicler_goals.TestApplyGoalDrafts#test_unknown_npc_skipped","name":"Unknown npc_uuid is skipped without raising","status":"passed","testResultsByEnv":{"default":"7622a49af2f8b7d61501d68c2cad2b6d"}}
+{"id":"d76dbe35c0fa3efcaa714cc441757a7e","fullName":"tests.test_chronicler_goals.TestApplyGoalDrafts#test_unknown_npc_skipped","name":"Unknown npc_uuid is skipped without raising","status":"passed","testResultsByEnv":{"default":"3918555ca466241d8b05389d69c2762c"}}

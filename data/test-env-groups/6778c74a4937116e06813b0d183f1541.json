@@ -1,1 +1,1 @@
-{"id":"6778c74a4937116e06813b0d183f1541","fullName":"tests.test_effect_applier.TestItemEffects#test_remove_item","name":"REMOVE_ITEM drops an existing item from the NPC's inventory","status":"passed","testResultsByEnv":{"default":"d4d38f84f9b7029bde9dd85cd6f064bd"}}
+{"id":"6778c74a4937116e06813b0d183f1541","fullName":"tests.test_effect_applier.TestItemEffects#test_remove_item","name":"REMOVE_ITEM drops an existing item from the NPC's inventory","status":"passed","testResultsByEnv":{"default":"f8e4a24f4e93caf589c5f2430c6921e0"}}

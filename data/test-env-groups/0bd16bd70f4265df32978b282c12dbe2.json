@@ -1,1 +1,1 @@
-{"id":"0bd16bd70f4265df32978b282c12dbe2","fullName":"tests.test_player_gestures#test_npc_stranger_not_leaked","name":"examine→npc on a stranger uses the descriptor, never a leaked name","status":"passed","testResultsByEnv":{"default":"3b8a1060ec203ae9d7f1ceab8419552d"}}
+{"id":"0bd16bd70f4265df32978b282c12dbe2","fullName":"tests.test_player_gestures#test_npc_stranger_not_leaked","name":"examine→npc on a stranger uses the descriptor, never a leaked name","status":"passed","testResultsByEnv":{"default":"7af11634a22b8ebdcc14b62c5cd42f76"}}

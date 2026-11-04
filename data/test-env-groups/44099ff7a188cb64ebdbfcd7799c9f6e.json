@@ -1,1 +1,1 @@
-{"id":"44099ff7a188cb64ebdbfcd7799c9f6e","fullName":"tests.test_dice_contest.TestRollContestOutcomes#test_actor_succeeds","name":"A moderate actor advantage classifies the contest as ACTOR_SUCCEEDS","status":"passed","testResultsByEnv":{"default":"f5a4957024394240d6c0663bf8018f75"}}
+{"id":"44099ff7a188cb64ebdbfcd7799c9f6e","fullName":"tests.test_dice_contest.TestRollContestOutcomes#test_actor_succeeds","name":"A moderate actor advantage classifies the contest as ACTOR_SUCCEEDS","status":"passed","testResultsByEnv":{"default":"9712e2cae18540511662c33b49ac47a0"}}

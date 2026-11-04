@@ -1,1 +1,1 @@
-{"id":"aca00e1033bd55e644ac21feb4e3d317","fullName":"tests.test_config.TestPosterConfig#test_poster_quota_bounds","name":"The poster daily quota accepts zero and rejects negatives","status":"passed","testResultsByEnv":{"default":"e031ca2c647895d74fd94a7eb8d16c71"}}
+{"id":"aca00e1033bd55e644ac21feb4e3d317","fullName":"tests.test_config.TestPosterConfig#test_poster_quota_bounds","name":"The poster daily quota accepts zero and rejects negatives","status":"passed","testResultsByEnv":{"default":"bdf70426cf5ef28dc37baf2a5e73a0d9"}}

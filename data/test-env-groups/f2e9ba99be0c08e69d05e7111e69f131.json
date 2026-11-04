@@ -1,1 +1,1 @@
-{"id":"f2e9ba99be0c08e69d05e7111e69f131","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_intimidation_type","name":"Intimidation is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"67954aebbe59f1fffaf04669a6488d70"}}
+{"id":"f2e9ba99be0c08e69d05e7111e69f131","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_intimidation_type","name":"Intimidation is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"abdff9acd0b3e04d808aeb799d0fe5ea"}}

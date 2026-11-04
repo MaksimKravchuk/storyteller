@@ -1,1 +1,1 @@
-{"id":"34b791be28b0c61efc32399aa2cbcb9d","fullName":"tests.test_web_playbill#test_summary_row_carries_playbill","name":"game_summary_from_row carries a stored playbill and illustration flag to the card","status":"passed","testResultsByEnv":{"default":"8c1f53adf4e3758bc084705d1c6b610b"}}
+{"id":"34b791be28b0c61efc32399aa2cbcb9d","fullName":"tests.test_web_playbill#test_summary_row_carries_playbill","name":"game_summary_from_row carries a stored playbill and illustration flag to the card","status":"passed","testResultsByEnv":{"default":"075aef01031ee381f3acb3cf1d3b7402"}}

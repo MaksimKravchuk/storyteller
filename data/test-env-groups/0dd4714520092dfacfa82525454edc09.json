@@ -1,1 +1,1 @@
-{"id":"0dd4714520092dfacfa82525454edc09","fullName":"tests.test_web_poster_routes#test_route_paint_created","name":"POST /api/games/{id}/poster returns 201 once the illustration is stored","status":"passed","testResultsByEnv":{"default":"da3dd9234d26e116cdf1d22aa1614e74"}}
+{"id":"0dd4714520092dfacfa82525454edc09","fullName":"tests.test_web_poster_routes#test_route_paint_created","name":"POST /api/games/{id}/poster returns 201 once the illustration is stored","status":"passed","testResultsByEnv":{"default":"0f39f94ba36cb4369d9d29a2fbac5eb6"}}

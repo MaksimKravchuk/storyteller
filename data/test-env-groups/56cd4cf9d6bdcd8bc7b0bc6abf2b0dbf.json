@@ -1,1 +1,1 @@
-{"id":"56cd4cf9d6bdcd8bc7b0bc6abf2b0dbf","fullName":"tests.test_rumor_propagation#test_event_without_location_is_ignored","name":"Events with no location_id are ignored","status":"passed","testResultsByEnv":{"default":"8a257796b0df0c95c15a650234d64d63"}}
+{"id":"56cd4cf9d6bdcd8bc7b0bc6abf2b0dbf","fullName":"tests.test_rumor_propagation#test_event_without_location_is_ignored","name":"Events with no location_id are ignored","status":"passed","testResultsByEnv":{"default":"48c59ddf326f0038385f41e982283c58"}}

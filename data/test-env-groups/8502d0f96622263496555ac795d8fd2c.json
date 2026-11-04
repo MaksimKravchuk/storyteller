@@ -1,1 +1,1 @@
-{"id":"8502d0f96622263496555ac795d8fd2c","fullName":"tests.test_benchmarks_cli.TestPinAndBaselinesArgs#test_pin_args","name":"pin requires a scenario_id positional and a --from path","status":"passed","testResultsByEnv":{"default":"22ac7912796983ab8125c8dddb02f3a9"}}
+{"id":"8502d0f96622263496555ac795d8fd2c","fullName":"tests.test_benchmarks_cli.TestPinAndBaselinesArgs#test_pin_args","name":"pin requires a scenario_id positional and a --from path","status":"passed","testResultsByEnv":{"default":"3cece263c0984ea936e9a7fb4187eff2"}}
