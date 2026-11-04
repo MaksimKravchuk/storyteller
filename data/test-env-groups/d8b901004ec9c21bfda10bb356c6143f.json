@@ -1,1 +1,1 @@
-{"id":"d8b901004ec9c21bfda10bb356c6143f","fullName":"tests.test_models.TestNPCCard#test_current_mood_default","name":"A new NPCCard defaults to a 'neutral' current mood","status":"passed","testResultsByEnv":{"default":"9ae55859aedf26ecab0734f99ed56c62"}}
+{"id":"d8b901004ec9c21bfda10bb356c6143f","fullName":"tests.test_models.TestNPCCard#test_current_mood_default","name":"A new NPCCard defaults to a 'neutral' current mood","status":"passed","testResultsByEnv":{"default":"45372cf3eeb2c0c21f0af4a74075a8be"}}

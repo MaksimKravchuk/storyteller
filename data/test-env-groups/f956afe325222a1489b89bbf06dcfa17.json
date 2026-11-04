@@ -1,1 +1,1 @@
-{"id":"f956afe325222a1489b89bbf06dcfa17","fullName":"tests.test_engine_wiring#test_restore_actors_noop_on_empty_npcs","name":"restore_actors is a no-op when game_state.npcs is empty","status":"passed","testResultsByEnv":{"default":"7472771777740e21698aa72f3978f0b9"}}
+{"id":"f956afe325222a1489b89bbf06dcfa17","fullName":"tests.test_engine_wiring#test_restore_actors_noop_on_empty_npcs","name":"restore_actors is a no-op when game_state.npcs is empty","status":"passed","testResultsByEnv":{"default":"d52585af0944708cb749c190a726a93d"}}

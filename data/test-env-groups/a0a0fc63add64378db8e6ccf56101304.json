@@ -1,1 +1,1 @@
-{"id":"a0a0fc63add64378db8e6ccf56101304","fullName":"tests.test_apply_contest_outcome.TestPredictContestOutcome#test_none_roll_returns_none","name":"None roll returns None and predicts nothing","status":"passed","testResultsByEnv":{"default":"01dc6c3a306256f6d0d6d8084c747057"}}
+{"id":"a0a0fc63add64378db8e6ccf56101304","fullName":"tests.test_apply_contest_outcome.TestPredictContestOutcome#test_none_roll_returns_none","name":"None roll returns None and predicts nothing","status":"passed","testResultsByEnv":{"default":"52a7640de4898bbcf092f8b8ea15b44b"}}

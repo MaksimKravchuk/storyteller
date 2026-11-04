@@ -1,0 +1,400 @@
+[32m2026-11-04 18:10:11.225[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.226[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.228[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.228[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.230[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.230[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.235[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.235[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.309[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.310[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.312[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.312[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:11.313[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.313[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.315[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.315[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.317[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.317[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.318[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.319[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.323[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.323[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.325[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.325[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:11.327[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.327[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:11.328[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.329[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.331[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.331[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:11.332[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.333[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.334[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.334[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.336[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.337[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.338[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.339[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.340[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.341[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.342[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.342[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.403[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.403[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:11.406[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.406[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.408[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.408[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.410[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.410[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.462[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.462[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.464[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.464[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.466[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.467[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:11.468[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.468[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.470[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.470[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.472[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.472[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.474[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.474[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.476[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.476[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.478[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.479[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.480[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.480[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.482[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.482[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.483[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.484[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:11.485[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.485[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.487[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.487[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.489[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.489[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.491[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.491[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.492[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.493[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.584[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.585[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:11.723[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.723[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:11.725[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.725[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.726[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.727[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.728[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.729[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:11.774[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.774[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.776[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.776[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.813[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.813[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.814[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.815[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.816[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.817[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.819[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.819[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.821[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.821[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.862[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.862[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.866[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.866[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.868[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.868[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:11.870[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.870[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.872[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.872[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:11.875[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.875[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:11.877[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.877[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:11.879[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.879[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.880[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.881[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:11.990[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.991[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:11.993[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.993[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:11.995[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.995[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:11.997[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:11.998[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:12.036[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.036[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:12.139[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.139[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.141[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.142[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.143[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.144[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:12.145[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.145[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:12.232[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.232[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:12.234[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.235[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:12.373[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.374[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.376[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.376[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:12.378[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.378[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.380[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.380[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:12.383[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.383[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.458[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.459[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:12.461[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.461[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.463[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.463[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:12.569[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.569[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:12.642[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.642[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:12.645[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.645[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:12.647[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.647[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:12.715[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.716[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:12.718[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.718[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:12.859[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.859[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:12.920[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.920[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:12.923[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.923[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.924[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.925[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:12.987[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:12.987[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.075[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.076[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.144[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.145[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.200[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.200[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:13.202[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.203[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.204[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.204[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.264[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.265[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.267[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.267[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.280[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.280[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.282[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.283[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.287[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.288[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.289[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.290[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:13.349[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.349[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.351[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.351[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.388[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.388[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.390[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.391[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.392[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.393[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:13.447[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.448[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.508[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.508[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:13.510[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.511[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:13.512[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.512[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:13.554[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.555[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.557[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.557[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:13.598[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.599[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:13.601[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.601[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:13.676[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.677[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.723[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.724[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.726[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.726[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.728[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.728[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.730[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.730[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.800[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.800[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.803[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.803[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:13.805[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.805[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.854[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.855[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:13.900[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.900[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.950[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.951[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.952[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.953[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:13.955[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.955[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:13.957[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:13.957[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:14.020[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.021[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:14.023[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.023[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:14.025[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.025[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:14.068[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.069[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:14.070[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.071[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:14.072[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.072[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:14.074[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.074[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:14.076[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.076[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:14.121[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.122[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:14.159[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.160[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:14.284[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.284[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:14.353[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.353[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:14.355[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.356[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:14.413[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.414[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:14.416[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.416[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:14.462[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.463[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:14.541[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.542[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:14.544[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.544[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:14.661[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.661[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:14.663[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.663[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:14.743[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.744[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:14.745[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.746[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:14.748[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.748[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:14.887[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.888[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:14.890[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.890[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:14.942[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.942[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:14.991[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.992[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:14.993[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:14.994[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:15.165[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.166[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:15.235[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.235[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:15.301[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.302[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:15.306[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.306[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:15.359[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.359[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:15.435[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.435[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:15.497[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.498[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:15.500[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.501[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=explore
+[32m2026-11-04 18:10:15.557[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.558[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:15.606[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.606[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:15.608[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.608[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:15.611[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.611[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:15.664[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.664[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:15.757[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.757[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:15.806[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.806[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:15.808[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.808[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=sleep
+[32m2026-11-04 18:10:15.811[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.811[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:15.933[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.933[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:15.972[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:15.972[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:16.096[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.097[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:16.151[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.152[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:16.222[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.222[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:16.224[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.225[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:16.328[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.329[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:16.331[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.331[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:16.411[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.412[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:16.525[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.526[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:16.528[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.528[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:16.567[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.568[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:16.569[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.570[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:16.656[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.656[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=examine
+[32m2026-11-04 18:10:16.717[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.717[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=interact
+[32m2026-11-04 18:10:16.719[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.719[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:16.722[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.723[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:16.760[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.761[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:16.762[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.763[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=move
+[32m2026-11-04 18:10:16.798[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.799[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:16.801[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.801[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=talk
+[32m2026-11-04 18:10:16.856[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.856[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other
+[32m2026-11-04 18:10:16.926[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.926[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=wait
+[32m2026-11-04 18:10:16.929[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:10:16.929[0m | [1mINFO    [0m | [36mcast.director_routing[0m | session=[33m-[0m | Director route | tool=other

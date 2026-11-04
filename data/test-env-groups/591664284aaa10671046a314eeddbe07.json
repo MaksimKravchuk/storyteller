@@ -1,1 +1,1 @@
-{"id":"591664284aaa10671046a314eeddbe07","fullName":"tests.test_db_engine.TestAdaptUrlForAsyncpg#test_prefer_produces_ssl_context","name":"sslmode=prefer yields an SSLContext in the asyncpg connect args","status":"passed","testResultsByEnv":{"default":"99d3fac8e09a025f90eda287eaa4d187"}}
+{"id":"591664284aaa10671046a314eeddbe07","fullName":"tests.test_db_engine.TestAdaptUrlForAsyncpg#test_prefer_produces_ssl_context","name":"sslmode=prefer yields an SSLContext in the asyncpg connect args","status":"passed","testResultsByEnv":{"default":"3136f7fad34c32f7f2c065b366b54bf7"}}

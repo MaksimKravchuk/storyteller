@@ -1,1 +1,1 @@
-{"id":"3c26b7221d5a001ec0e9b18c7f0cc7b3","fullName":"tests.test_admin_auth#test_allows_admin","name":"Admin API lets an account with the admin role through","status":"passed","testResultsByEnv":{"default":"0085dfe46f09d1210ed7e91fab4014e5"}}
+{"id":"3c26b7221d5a001ec0e9b18c7f0cc7b3","fullName":"tests.test_admin_auth#test_allows_admin","name":"Admin API lets an account with the admin role through","status":"passed","testResultsByEnv":{"default":"094a4963b2fe4e1e710c0ac03f56ef1d"}}

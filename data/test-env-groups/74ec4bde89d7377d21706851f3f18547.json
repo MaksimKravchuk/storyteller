@@ -1,0 +1,1 @@
+{"id":"74ec4bde89d7377d21706851f3f18547","fullName":"tests.test_visible_entities.TestCollectVisibleEntities#test_shared_role_not_added","name":"A scene role shared by two NPCs is not added as an alias to either","status":"passed","testResultsByEnv":{"default":"35c36abb5502110daeb79477244f6519"}}

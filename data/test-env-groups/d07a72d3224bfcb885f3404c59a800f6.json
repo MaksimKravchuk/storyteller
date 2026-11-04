@@ -1,1 +1,1 @@
-{"id":"d07a72d3224bfcb885f3404c59a800f6","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_i_wait","name":"The phrase 'I wait' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"4ea9d891d7c5f01b8ddc6404bc66814e"}}
+{"id":"d07a72d3224bfcb885f3404c59a800f6","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_i_wait","name":"The phrase 'I wait' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"40a2a028376582051b2f7e22f12d70d2"}}

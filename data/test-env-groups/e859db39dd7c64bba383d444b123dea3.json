@@ -1,0 +1,1 @@
+{"id":"e859db39dd7c64bba383d444b123dea3","fullName":"tests.test_entity_markup.TestWrapEntities#test_short_form_yields_to_explicit_alias","name":"A short form never shadows another entity's own alias","status":"passed","testResultsByEnv":{"default":"88a85a53680e57d18bf5fcfdf39de78e"}}

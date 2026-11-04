@@ -1,1 +1,1 @@
-{"id":"0f0372902c5659fe5900b963bdba1ab3","fullName":"tests.test_web_world#test_builder_null_current_when_unset","name":"build_world_view returns a null current location when the player has none","status":"passed","testResultsByEnv":{"default":"fa532781b62165edc1f9ecca882aad35"}}
+{"id":"0f0372902c5659fe5900b963bdba1ab3","fullName":"tests.test_web_world#test_builder_null_current_when_unset","name":"build_world_view returns a null current location when the player has none","status":"passed","testResultsByEnv":{"default":"209c58130ad65dd0aae1e4b449c0bb7c"}}

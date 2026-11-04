@@ -1,1 +1,0 @@
-[s1] aggregate over 2 iter(s): mean=3.0 range=[3, 3] — wrote /tmp/pytest-of-runner/pytest-0/test_engine_models_propagated0/2026-11-04T18-07-02_cafe123_s1_aggregate.md

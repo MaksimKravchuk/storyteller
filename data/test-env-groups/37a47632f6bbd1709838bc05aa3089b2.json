@@ -1,1 +1,1 @@
-{"id":"37a47632f6bbd1709838bc05aa3089b2","fullName":"tests.test_web_poster#test_illustrate_counts_recent_paintings","name":"illustrate_poster counts this player's paintings over the last day","status":"passed","testResultsByEnv":{"default":"ab6cb4519044d3cd6c0367d5c1907af0"}}
+{"id":"37a47632f6bbd1709838bc05aa3089b2","fullName":"tests.test_web_poster#test_illustrate_counts_recent_paintings","name":"illustrate_poster counts this player's paintings over the last day","status":"passed","testResultsByEnv":{"default":"de16133698ac6b8385654c7e016559ad"}}

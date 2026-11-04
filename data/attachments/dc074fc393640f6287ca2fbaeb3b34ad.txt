@@ -1,5 +1,0 @@
-[32m2026-11-04 18:07:01.616[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-11-04 18:07:01.619[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | LLM | agent=Actor model=test parent=None | prompt_tokens=None completion_tokens=None duration_ms=0
-[32m2026-11-04 18:07:01.620[0m | [33m[1mWARNING [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | Strict structured output returned malformed JSON on attempt 1/2; retrying
-[32m2026-11-04 18:07:01.620[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | LLM | agent=Actor model=test parent=None | prompt_tokens=None completion_tokens=None duration_ms=0
-[32m2026-11-04 18:07:01.620[0m | [33m[1mWARNING [0m | [36mcast.actor[0m | session=[33m-[0m | Actor envelope parse failed for NPC Marcus (998eb6fd-7ada-452f-8b4f-a63a73ef2cb7): Strict structured output failed validation: Expecting value: line 1 column 1 (char 0)

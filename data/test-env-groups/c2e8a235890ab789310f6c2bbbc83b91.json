@@ -1,1 +1,1 @@
-{"id":"c2e8a235890ab789310f6c2bbbc83b91","fullName":"tests.test_npc_ticker.TestNPCTickerSkipUuids#test_skip_uuids_prevents_eviction","name":"skip_uuids shields a would-be-evicted NPC from removal","status":"passed","testResultsByEnv":{"default":"90a508973d6dc20ab56703b5fe0791bf"}}
+{"id":"c2e8a235890ab789310f6c2bbbc83b91","fullName":"tests.test_npc_ticker.TestNPCTickerSkipUuids#test_skip_uuids_prevents_eviction","name":"skip_uuids shields a would-be-evicted NPC from removal","status":"passed","testResultsByEnv":{"default":"0d0d4cd1091c368714197e73d35dc3a5"}}

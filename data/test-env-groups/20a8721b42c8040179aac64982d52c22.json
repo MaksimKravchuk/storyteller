@@ -1,1 +1,1 @@
-{"id":"20a8721b42c8040179aac64982d52c22","fullName":"tests.test_npc_ticker.TestNPCTickerEvictions#test_guard_evicted_at_night","name":"A guard is evicted at night with the night-watch activity line","status":"passed","testResultsByEnv":{"default":"35c7f2d7b126bf0745f03fc885ffe026"}}
+{"id":"20a8721b42c8040179aac64982d52c22","fullName":"tests.test_npc_ticker.TestNPCTickerEvictions#test_guard_evicted_at_night","name":"A guard is evicted at night with the night-watch activity line","status":"passed","testResultsByEnv":{"default":"9dd83b959f17f7f495f84fb224ce8eb2"}}

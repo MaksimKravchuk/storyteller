@@ -1,1 +1,1 @@
-{"id":"c52ba31eb22db3483c9189803aaee554","fullName":"tests.test_models.TestBaseModel#test_uuid_generated_on_init","name":"StorytellerBase assigns a UUID on construction","status":"passed","testResultsByEnv":{"default":"f7262f1f92bdf6f2654afe4ec0a0e392"}}
+{"id":"c52ba31eb22db3483c9189803aaee554","fullName":"tests.test_models.TestBaseModel#test_uuid_generated_on_init","name":"StorytellerBase assigns a UUID on construction","status":"passed","testResultsByEnv":{"default":"888d48d64bbf72d55fd3c5206571715a"}}

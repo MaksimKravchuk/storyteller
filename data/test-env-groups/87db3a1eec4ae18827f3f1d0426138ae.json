@@ -1,1 +1,1 @@
-{"id":"87db3a1eec4ae18827f3f1d0426138ae","fullName":"tests.test_models_game.TestPlayerState#test_custom_name","name":"PlayerState accepts a custom player name at construction time","status":"passed","testResultsByEnv":{"default":"0d75ba9c1c0b638565e9dc88bf308d9b"}}
+{"id":"87db3a1eec4ae18827f3f1d0426138ae","fullName":"tests.test_models_game.TestPlayerState#test_custom_name","name":"PlayerState accepts a custom player name at construction time","status":"passed","testResultsByEnv":{"default":"9887da3bfbb2cd391951648d31af71f4"}}

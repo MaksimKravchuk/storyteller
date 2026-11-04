@@ -1,1 +1,1 @@
-{"id":"c51cbfff2f654969e8a64d825f5e10f0","fullName":"tests.test_model_pricing#test_unknown_model_is_flagged_without_crashing","name":"Unknown model pricing is flagged without crashing","status":"passed","testResultsByEnv":{"default":"ee2fe1dc0929b3c7750c74ad7af41784"}}
+{"id":"c51cbfff2f654969e8a64d825f5e10f0","fullName":"tests.test_model_pricing#test_unknown_model_is_flagged_without_crashing","name":"Unknown model pricing is flagged without crashing","status":"passed","testResultsByEnv":{"default":"5f3812b6da390a5723554108840a5228"}}

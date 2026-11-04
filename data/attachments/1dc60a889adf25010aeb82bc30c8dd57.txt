@@ -1,2 +1,0 @@
-[32m2026-11-04 18:07:04.253[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-11-04 18:07:04.255[0m | [33m[1mWARNING [0m | [36mcast.scene_swap[0m | session=[33m-[0m | Scene consolidation dropped 1 unregistered NPC(s) [UUID('04bf2c71-e6e7-4b29-bd3e-90b18fd723e3')] at swap (location=cdfcb5d8-e57a-4321-91b9-e981d43a6430); their scene memory will be lost

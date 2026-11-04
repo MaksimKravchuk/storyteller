@@ -1,1 +1,1 @@
-{"id":"3b520a26d424c75e087deaf4ac45c450","fullName":"tests.test_db_engine.TestAdaptUrlForAsyncpg#test_no_sslmode_returns_empty_args","name":"A URL without sslmode produces an empty connect args dict","status":"passed","testResultsByEnv":{"default":"58a5482023b4b2e518bb7095dfb6cc86"}}
+{"id":"3b520a26d424c75e087deaf4ac45c450","fullName":"tests.test_db_engine.TestAdaptUrlForAsyncpg#test_no_sslmode_returns_empty_args","name":"A URL without sslmode produces an empty connect args dict","status":"passed","testResultsByEnv":{"default":"ab230c533665cfd9f3d9009dbb32482b"}}
