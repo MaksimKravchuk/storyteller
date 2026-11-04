@@ -101,6 +101,11 @@ class AILogStore:
             summaries.append(summary)
         return summaries
 
+    async def usage_by_model(self) -> list[dict[str, Any]]:
+        """Aggregate all-time token usage by model only (enough for budget checks, one row per model)."""
+        rows = await self._session.execute(_usage_by_model_stmt())
+        return [_row_dict(row) for row in rows.mappings()]
+
     async def turn_count_for_user(
         self,
         user_id: str,
@@ -161,3 +166,17 @@ def _usage_summary_stmt(start_at: datetime | None, end_at: datetime | None) -> A
         .group_by(logs.c.user_id, logs.c.session_id, logs.c.game_state_id, logs.c.model, day_expr)
         .order_by(day_expr, logs.c.user_id, logs.c.model)
     )
+
+
+def _usage_by_model_stmt() -> Any:
+    """Build the per-model token usage statement used by the budget guard."""
+    logs = tbl.ai_call_logs
+    return select(
+        logs.c.model,
+        sa_func.coalesce(sa_func.sum(logs.c.prompt_tokens), 0).label(_PROMPT_TOKENS_KEY),
+        sa_func.coalesce(sa_func.sum(logs.c.completion_tokens), 0).label(_COMPLETION_TOKENS_KEY),
+        sa_func.count(logs.c.id).label("call_count"),
+        sa_func.count()
+        .filter(logs.c.prompt_tokens.is_(None) | logs.c.completion_tokens.is_(None))
+        .label("missing_usage_count"),
+    ).group_by(logs.c.model)
