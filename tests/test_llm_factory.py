@@ -2,15 +2,27 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import allure
 import pytest
 
 from defaults.models import ModelConfig
 from llm.anthropic_client import AnthropicClient
-from llm.factory import create_llm_client
+from llm.factory import _cached_client, create_llm_client
 from llm.openai_client import OpenAIClient
 
 _DUMMY_KEY = "dummy"
+
+
+async def _build_in_loop(config: ModelConfig) -> object:
+    return create_llm_client(config, _DUMMY_KEY)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_client_cache() -> None:
+    """The factory caches clients process-wide; isolate each test."""
+    _cached_client.cache_clear()
 
 
 @pytest.fixture
@@ -119,3 +131,25 @@ class TestCreateLLMClient:
         client = create_llm_client(config)
         assert isinstance(client, AnthropicClient)
         assert client.supports_structured_output is False
+
+
+@allure.epic("Engine & LLM Infrastructure")
+@allure.feature("LLM provider factory")
+@allure.story("Client cache")
+class TestClientCache:
+    @allure.title("create_llm_client reuses one client per (config, api_key)")
+    def test_same_key_returns_same_client(self, _sdk_env: None) -> None:
+        config = ModelConfig(provider="openai", model_id="gpt-4")
+        assert create_llm_client(config, "k1") is create_llm_client(config, "k1")
+
+    @allure.title("create_llm_client builds separate clients for a different api_key or config")
+    def test_different_key_or_config_returns_new_client(self, _sdk_env: None) -> None:
+        config = ModelConfig(provider="openai", model_id="gpt-4")
+        client = create_llm_client(config, "k1")
+        assert create_llm_client(config, "k2") is not client
+        assert create_llm_client(ModelConfig(provider="openai", model_id="gpt-4", temperature=0.1), "k1") is not client
+
+    @allure.title("create_llm_client does not share a client across event loops")
+    def test_different_event_loop_returns_new_client(self, _sdk_env: None) -> None:
+        config = ModelConfig(provider="openai", model_id="gpt-4")
+        assert asyncio.run(_build_in_loop(config)) is not asyncio.run(_build_in_loop(config))

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import functools
 import types
 from typing import TYPE_CHECKING, Any
 
@@ -21,18 +23,47 @@ _OPENROUTER_HEADERS: types.MappingProxyType[str, str] = types.MappingProxyType(
         "X-Title": "Storyteller",
     },
 )
+_CLIENT_CACHE_SIZE = 32
 _DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
+
+
+def _running_loop() -> asyncio.AbstractEventLoop | None:
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError:
+        return None
 
 
 def create_llm_client(
     config: ModelConfig,
     api_key: str | None = None,
 ) -> "BaseLLMClient":
-    """Factory: create the right LLM client for a given ModelConfig.
+    """Return the process-wide LLM client for ``(config, api_key)``, creating it on first use.
 
-    If ``api_key`` is None the underlying SDK will fall back to its own
-    environment-variable detection (``OPENAI_API_KEY`` / ``ANTHROPIC_API_KEY``).
+    Each SDK client owns an HTTP connection pool, so rebuilding one per turn meant fresh TLS
+    handshakes every turn. The cache is keyed by the running event loop too, because a pooled
+    httpx client must not outlive its loop (benchmarks and tests call ``asyncio.run`` repeatedly).
+    If ``api_key`` is None the underlying SDK falls back to its own environment-variable
+    detection (``OPENAI_API_KEY`` / ``ANTHROPIC_API_KEY``).
     """
+    return _cached_client(config, api_key, _running_loop())
+
+
+@functools.lru_cache(maxsize=_CLIENT_CACHE_SIZE)
+def _cached_client(
+    config: ModelConfig,
+    api_key: str | None,
+    loop: asyncio.AbstractEventLoop | None,
+) -> "BaseLLMClient":
+    """Memoised ``_build_llm_client``; ``loop`` only widens the cache key."""
+    return _build_llm_client(config, api_key)
+
+
+def _build_llm_client(
+    config: ModelConfig,
+    api_key: str | None = None,
+) -> "BaseLLMClient":
+    """Create the right LLM client for a given ModelConfig (uncached)."""
     if config.provider == PROVIDER_ANTHROPIC:
         from llm.anthropic_client import AnthropicClient
 
