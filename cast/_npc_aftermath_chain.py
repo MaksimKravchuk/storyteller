@@ -54,7 +54,8 @@ async def resolve_one_aftermath(
     the player sees the engine error and the world stays consistent
     (no dead body without a memory of the kill).
     """
-    from cast.npc_goal_resolution import maybe_complete_kill_goal, maybe_complete_social_goal, update_goal_progress
+    from cast._npc_social_goal import maybe_complete_social_goal
+    from cast.npc_goal_resolution import maybe_complete_kill_goal, update_goal_progress
 
     target = resolve_target_npc(aftermath.target_name, game_state)
     predicted = predict_contest_outcome(aftermath.contest_roll)

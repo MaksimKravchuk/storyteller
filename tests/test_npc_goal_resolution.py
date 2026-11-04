@@ -5,11 +5,11 @@ from __future__ import annotations
 import allure
 import pytest
 
+from cast._npc_social_goal import maybe_complete_social_goal
 from cast.dice import ContestOutcome, ContestRoll, ContestType, NPCAction
 from cast.npc_goal_resolution import (
     ActionAftermath,
     maybe_complete_kill_goal,
-    maybe_complete_social_goal,
     resolve_actions_aftermath,
     update_goal_progress,
 )
