@@ -19,34 +19,21 @@ _HTTP_NOT_FOUND = 404
 
 
 class _FakeResp:
-    """Minimal async context manager replacing aiohttp.ClientResponse."""
+    """Minimal stand-in for an ``httpx.Response`` (``status_code`` + sync ``json``)."""
 
-    def __init__(self, status: int, payload: object) -> None:
-        self.status = status
+    def __init__(self, status_code: int, payload: object) -> None:
+        self.status_code = status_code
         self._payload = payload
 
-    async def json(self) -> object:
+    def json(self) -> object:
         return self._payload
-
-    async def __aenter__(self) -> "_FakeResp":
-        return self
-
-    async def __aexit__(self, *exc: object) -> bool:
-        return False
 
 
 class _FakeSession:
-    """Minimal async context manager replacing aiohttp.ClientSession."""
+    """Async-context-manager fake replacing ``httpx.AsyncClient``."""
 
     def __init__(self, resp: _FakeResp) -> None:
         self._resp = resp
-        self.last_url: str | None = None
-        self.last_params: object = None
-
-    def get(self, url: str, params: object = None) -> _FakeResp:
-        self.last_url = url
-        self.last_params = params
-        return self._resp
 
     async def __aenter__(self) -> "_FakeSession":
         return self
@@ -54,11 +41,14 @@ class _FakeSession:
     async def __aexit__(self, *exc: object) -> bool:
         return False
 
+    async def get(self, url: str, params: object = None) -> _FakeResp:
+        return self._resp
+
 
 def _patch_session(resp: _FakeResp):
     session = _FakeSession(resp)
     return patch(
-        "research.wikipedia_client.aiohttp.ClientSession",
+        "research.wikipedia_client.httpx.AsyncClient",
         MagicMock(return_value=session),
     ), session
 
