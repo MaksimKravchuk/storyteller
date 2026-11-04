@@ -40,28 +40,3 @@ class WikipediaClient:
             _KEY_EXTRACT: "",
             "description": "Article not found",
         }
-
-    async def get_full_article(self, title: str, max_chars: int = 5000) -> str:
-        """Fetch the full plain-text content of an article, truncated.
-
-        Uses the MediaWiki API ``extracts`` module.
-        """
-        async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
-            resp = await client.get(
-                self._mw_api,
-                params={
-                    "action": "query",
-                    "titles": title,
-                    "prop": "extracts",
-                    "explaintext": True,
-                    "exlimit": 1,
-                    "format": "json",
-                },
-            )
-        if resp.status_code != _HTTP_OK:
-            return ""
-        pages = resp.json().get("query", {}).get("pages", {})
-        first_page = next(iter(pages.values()), None)
-        if first_page is None:
-            return ""
-        return first_page.get(_KEY_EXTRACT, "")[:max_chars]
