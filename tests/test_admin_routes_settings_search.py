@@ -11,7 +11,7 @@ from starlette.responses import Response
 
 from config import Config
 from tests.admin_app import admin_client, make_admin_app
-from interfaces.admin_routes_settings_search_helpers import (
+from interfaces.admin_routes_settings_search import (
     build_search_view,
     missing_search_credential,
     validate_set_search_payload,
