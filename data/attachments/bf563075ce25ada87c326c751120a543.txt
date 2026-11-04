@@ -1,0 +1,5 @@
+2026-11-04 18:27:25.081 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:27:25.085 | INFO     | cast.base_performer_class:_send_json:473 - Strict structured outputs unavailable for _JsonPerformer; falling back to prompt-based JSON
+2026-11-04 18:27:25.085 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=_JsonPerformer model=test-model parent=None | prompt_tokens=None completion_tokens=None duration_ms=0
+2026-11-04 18:27:25.086 | WARNING  | cast.base_performer_class:_retry_after_validation_failure:117 - LLM JSON failed schema validation on attempt 1/3: [{'type': 'int_parsing', 'loc': ('count',), 'msg': 'Input should be a valid integer, unable to parse string as an integer', 'input': 'bad', 'url': 'https://errors.pydantic.dev/2.12/v/int_parsing'}]
+2026-11-04 18:27:25.086 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=_JsonPerformer model=test-model parent=None | prompt_tokens=None completion_tokens=None duration_ms=0

@@ -1,1 +1,1 @@
-{"id":"facf6fdec53e0b0df2efce6cc3e59926","fullName":"tests.test_admin_routes_settings_search#test_get_search_default","name":"GET /api/settings/search reports the env default when nothing is stored","status":"passed","testResultsByEnv":{"default":"9b065ab38b0deae914344440c46af7e3"}}
+{"id":"facf6fdec53e0b0df2efce6cc3e59926","fullName":"tests.test_admin_routes_settings_search#test_get_search_default","name":"GET /api/settings/search reports the env default when nothing is stored","status":"passed","testResultsByEnv":{"default":"07d3baa4b11c341f0f7322954968ff83"}}

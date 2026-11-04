@@ -1,0 +1,2 @@
+2026-11-04 18:27:26.411 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:27:26.415 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games "HTTP/1.1 503 Service Unavailable"

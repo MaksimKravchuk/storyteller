@@ -1,0 +1,2 @@
+[bad_scenario] iter 0: FAILED — IndexError: Narrator capture buffer is empty
+[good_scenario] iter 0: 5/10 — wrote report.md

@@ -1,0 +1,1 @@
+2026-11-04 18:27:20.550 | WARNING  | cast.hostility:apply_llm_mood_update:193 - Actor Иван (c42ced7c-8c01-4d69-9df4-2da61a567291) emitted unknown mood 'worried'; will be overridden on next hostility bump.

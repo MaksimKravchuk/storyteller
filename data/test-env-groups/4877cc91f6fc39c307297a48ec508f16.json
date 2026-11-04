@@ -1,1 +1,1 @@
-{"id":"4877cc91f6fc39c307297a48ec508f16","fullName":"tests.test_wait_action.TestWaitInActionTypes#test_wait_has_time_cost","name":"WAIT has a positive entry in BASE_ACTION_COSTS so it costs real game time","status":"passed","testResultsByEnv":{"default":"181c493faee664e535a05f9960fd1fa6"}}
+{"id":"4877cc91f6fc39c307297a48ec508f16","fullName":"tests.test_wait_action.TestWaitInActionTypes#test_wait_has_time_cost","name":"WAIT has a positive entry in BASE_ACTION_COSTS so it costs real game time","status":"passed","testResultsByEnv":{"default":"9608c4f249eec8ed335e64da436cbafe"}}

@@ -1,1 +1,1 @@
-{"id":"67aeba60b8498460a344931f64dec7a0","fullName":"tests.test_knowledge.TestKnowledgeNode#test_default_uuid","name":"A KnowledgeNode gets a UUID assigned on init","status":"passed","testResultsByEnv":{"default":"8cd53f7715c8355233932fe57d8a49ab"}}
+{"id":"67aeba60b8498460a344931f64dec7a0","fullName":"tests.test_knowledge.TestKnowledgeNode#test_default_uuid","name":"A KnowledgeNode gets a UUID assigned on init","status":"passed","testResultsByEnv":{"default":"24be6e82843f4fb1abb7d14f9800673b"}}

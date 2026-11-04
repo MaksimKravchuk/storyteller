@@ -1,1 +1,1 @@
-{"id":"5de9bd4518b4f384432c4b9c306624f0","fullName":"tests.test_player_gestures#test_poi","name":"examine→poi resolves a point of interest to its primary name","status":"passed","testResultsByEnv":{"default":"4d398bfeea84f958ff3712f2775874fb"}}
+{"id":"5de9bd4518b4f384432c4b9c306624f0","fullName":"tests.test_player_gestures#test_poi","name":"examine→poi resolves a point of interest to its primary name","status":"passed","testResultsByEnv":{"default":"ae8a1e8073a2f3690d60c31d12aa269d"}}

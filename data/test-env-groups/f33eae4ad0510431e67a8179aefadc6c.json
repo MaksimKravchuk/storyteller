@@ -1,1 +1,1 @@
-{"id":"f33eae4ad0510431e67a8179aefadc6c","fullName":"tests.test_beta_web_policy#test_global_budget_blocks_action_before_resume","name":"Global budget exhaustion blocks action before engine resume","status":"passed","testResultsByEnv":{"default":"82a77eb967a6ebc3bc0e42c66746c204"}}
+{"id":"f33eae4ad0510431e67a8179aefadc6c","fullName":"tests.test_beta_web_policy#test_global_budget_blocks_action_before_resume","name":"Global budget exhaustion blocks action before engine resume","status":"passed","testResultsByEnv":{"default":"f125f5db3e6741efc48ac67d492e4584"}}

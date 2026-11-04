@@ -1,1 +1,1 @@
-{"id":"da168f4ebd924dfcb14f3531c4cf1aca","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_gpt5_4_mini","name":"AI_MODELS.gpt5_4_mini is preconfigured as the OpenAI gpt-5.4-mini model","status":"passed","testResultsByEnv":{"default":"aaf0e9b31e17c7fc303a8680476e2a46"}}
+{"id":"da168f4ebd924dfcb14f3531c4cf1aca","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_gpt5_4_mini","name":"AI_MODELS.gpt5_4_mini is preconfigured as the OpenAI gpt-5.4-mini model","status":"passed","testResultsByEnv":{"default":"781fadcb7ee4c55af3971e29247f27ba"}}

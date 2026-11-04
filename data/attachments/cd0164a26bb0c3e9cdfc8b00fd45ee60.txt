@@ -1,0 +1,3 @@
+2026-11-04 18:27:24.613 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:27:24.615 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=e83249bd-3ba7-4932-a16f-b1fb5100dafa not in game_state.locations
+2026-11-04 18:27:24.615 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=e83249bd-3ba7-4932-a16f-b1fb5100dafa not in game_state.locations

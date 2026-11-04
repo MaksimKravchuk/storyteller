@@ -1,1 +1,1 @@
-{"id":"3b60fcf07f6bed2bed2cb1e75d269300","fullName":"tests.test_search_factory#test_factory_routes_wikipedia","name":"create_search_client routes wikipedia to the zero-config Wikipedia adapter","status":"passed","testResultsByEnv":{"default":"e9f9717ecae2d39ab5afc7d8a4da8852"}}
+{"id":"3b60fcf07f6bed2bed2cb1e75d269300","fullName":"tests.test_search_factory#test_factory_routes_wikipedia","name":"create_search_client routes wikipedia to the zero-config Wikipedia adapter","status":"passed","testResultsByEnv":{"default":"dcadd13c3e063c8af00d62aa692598ba"}}

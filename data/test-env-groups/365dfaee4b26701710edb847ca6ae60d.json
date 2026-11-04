@@ -1,1 +1,1 @@
-{"id":"365dfaee4b26701710edb847ca6ae60d","fullName":"tests.test_base_client.TestBaseLLMClient#test_stores_model_and_api_key","name":"BaseLLMClient stores the model and api_key arguments on the instance","status":"passed","testResultsByEnv":{"default":"969d42a1e417d6437e14ed91d752d333"}}
+{"id":"365dfaee4b26701710edb847ca6ae60d","fullName":"tests.test_base_client.TestBaseLLMClient#test_stores_model_and_api_key","name":"BaseLLMClient stores the model and api_key arguments on the instance","status":"passed","testResultsByEnv":{"default":"99e8690e1709623d184ebce1a6b82c2a"}}

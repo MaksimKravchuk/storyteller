@@ -1,1 +1,1 @@
-{"id":"31128a8fa4da6889779ece5928c07376","fullName":"tests.test_web_api#test_archive_game_hides_ownership_violations","name":"POST /api/games/{id}/archive returns 404 for absent or foreign games","status":"passed","testResultsByEnv":{"default":"60e5c94e03b5431101e170df69eb2d9c"}}
+{"id":"31128a8fa4da6889779ece5928c07376","fullName":"tests.test_web_api#test_archive_game_hides_ownership_violations","name":"POST /api/games/{id}/archive returns 404 for absent or foreign games","status":"passed","testResultsByEnv":{"default":"347ae29310635f99c346d4ca25ef5cea"}}

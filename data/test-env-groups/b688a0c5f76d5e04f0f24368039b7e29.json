@@ -1,1 +1,1 @@
-{"id":"b688a0c5f76d5e04f0f24368039b7e29","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_skip_turn","name":"The phrase 'skip turn' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"1ce8d4270655929fdfe132066d23d6e6"}}
+{"id":"b688a0c5f76d5e04f0f24368039b7e29","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_skip_turn","name":"The phrase 'skip turn' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"51b5e6ffdeb80624b2cf2139208a4560"}}

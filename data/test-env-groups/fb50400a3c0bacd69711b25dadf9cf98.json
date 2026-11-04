@@ -1,1 +1,1 @@
-{"id":"fb50400a3c0bacd69711b25dadf9cf98","fullName":"tests.test_models.TestCharacter#test_inventory_add_and_remove","name":"Character inventory supports adding and removing items","status":"passed","testResultsByEnv":{"default":"dad931082f4be701a63f60b178b06a30"}}
+{"id":"fb50400a3c0bacd69711b25dadf9cf98","fullName":"tests.test_models.TestCharacter#test_inventory_add_and_remove","name":"Character inventory supports adding and removing items","status":"passed","testResultsByEnv":{"default":"6e92cb58249edb7863c47d0d62154f85"}}

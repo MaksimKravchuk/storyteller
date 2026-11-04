@@ -1,1 +1,1 @@
-{"id":"901a280ea88c79bd6c34766e64e37fe0","fullName":"tests.test_small_coverage_gaps.TestLoadConfig#test_reads_env_vars","name":"load_config reads OPENAI_API_KEY and model overrides from the environment","status":"passed","testResultsByEnv":{"default":"a47c24c677e35cf0b60f2a3ef1d981b6"}}
+{"id":"901a280ea88c79bd6c34766e64e37fe0","fullName":"tests.test_small_coverage_gaps.TestLoadConfig#test_reads_env_vars","name":"load_config reads OPENAI_API_KEY and model overrides from the environment","status":"passed","testResultsByEnv":{"default":"455a88f6d2c91467171f9d0b8de172c6"}}

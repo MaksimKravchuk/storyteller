@@ -1,1 +1,1 @@
-{"id":"ab096fd960f0c72f10ec7bf9b3650db9","fullName":"tests.test_goal_prompt_vars.TestGoalPromptVars#test_no_goal_returns_none","name":"Returns None when the NPC has no goal at all","status":"passed","testResultsByEnv":{"default":"ea0bf37af0143da4744dc52f926a3b06"}}
+{"id":"ab096fd960f0c72f10ec7bf9b3650db9","fullName":"tests.test_goal_prompt_vars.TestGoalPromptVars#test_no_goal_returns_none","name":"Returns None when the NPC has no goal at all","status":"passed","testResultsByEnv":{"default":"60b9bb4bec95e565a470412957adf4f5"}}

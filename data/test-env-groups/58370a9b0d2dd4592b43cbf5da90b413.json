@@ -1,1 +1,1 @@
-{"id":"58370a9b0d2dd4592b43cbf5da90b413","fullName":"tests.test_rumor_propagation#test_city_root_terminates_on_cycle","name":"The city-anchor walk terminates on a parent cycle instead of looping forever","status":"passed","testResultsByEnv":{"default":"a349e37809214f0bc0d22a4fe0485b51"}}
+{"id":"58370a9b0d2dd4592b43cbf5da90b413","fullName":"tests.test_rumor_propagation#test_city_root_terminates_on_cycle","name":"The city-anchor walk terminates on a parent cycle instead of looping forever","status":"passed","testResultsByEnv":{"default":"3d03f5f4475a1748239ebbe909238a91"}}

@@ -1,1 +1,1 @@
-{"id":"bb571a88a2da21360ae5473233645ab0","fullName":"tests.test_models.TestLocation#test_add_npc","name":"Location.add_npc places the NPC UUID into the npcs_present list","status":"passed","testResultsByEnv":{"default":"116adabc32d5332c39eb32689f7e7c24"}}
+{"id":"bb571a88a2da21360ae5473233645ab0","fullName":"tests.test_models.TestLocation#test_add_npc","name":"Location.add_npc places the NPC UUID into the npcs_present list","status":"passed","testResultsByEnv":{"default":"a21ae8ab8c104112397cc715400cea0a"}}

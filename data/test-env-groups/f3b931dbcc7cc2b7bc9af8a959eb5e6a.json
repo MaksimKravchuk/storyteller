@@ -1,1 +1,1 @@
-{"id":"f3b931dbcc7cc2b7bc9af8a959eb5e6a","fullName":"tests.test_benchmarks_bayes.TestNormalCdf#test_degenerate_stdev","name":"normal_cdf collapses to a step function when stdev is zero","status":"passed","testResultsByEnv":{"default":"9778701887fc4c5e8edf6bf98b777031"}}
+{"id":"f3b931dbcc7cc2b7bc9af8a959eb5e6a","fullName":"tests.test_benchmarks_bayes.TestNormalCdf#test_degenerate_stdev","name":"normal_cdf collapses to a step function when stdev is zero","status":"passed","testResultsByEnv":{"default":"ddaf73257d893abc20bb99d990d6e8d0"}}

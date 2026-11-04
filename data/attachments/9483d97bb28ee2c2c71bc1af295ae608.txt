@@ -1,0 +1,2 @@
+2026-11-04 18:27:22.585 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:27:22.586 | ERROR    | knowledge.memory:_add_shared_personal_node:287 - WITNESSED edge for unregistered witness e86b05a2-2483-46cb-b247-69f06987554a on memory 7e219385-c775-4d3c-a279-edb2de04312f; auto-creating a phantom actor node (graph pollution) — NPC registration is out of sync

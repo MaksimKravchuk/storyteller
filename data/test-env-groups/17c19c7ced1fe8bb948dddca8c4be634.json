@@ -1,1 +1,1 @@
-{"id":"17c19c7ced1fe8bb948dddca8c4be634","fullName":"tests.test_dice.TestCombatOutcomeCategories#test_player_succeeds","name":"Player winning by a modest margin is classified as PLAYER_SUCCEEDS","status":"passed","testResultsByEnv":{"default":"c3ebe67b00e706d21bdabf71ddc2b6f0"}}
+{"id":"17c19c7ced1fe8bb948dddca8c4be634","fullName":"tests.test_dice.TestCombatOutcomeCategories#test_player_succeeds","name":"Player winning by a modest margin is classified as PLAYER_SUCCEEDS","status":"passed","testResultsByEnv":{"default":"78c4dfacfdc2a47d160ae7f5dda7cbca"}}

@@ -1,0 +1,3 @@
+[32m2026-11-04 18:27:08.773[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:27:08.776[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=AnachronismClassifier parent=None | start
+[32m2026-11-04 18:27:08.776[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=AnachronismClassifier parent=None | done | duration_ms=0

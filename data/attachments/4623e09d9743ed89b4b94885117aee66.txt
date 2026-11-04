@@ -1,0 +1,1 @@
+Wrote 6 cases to /tmp/pytest-of-runner/pytest-0/test_default_output_uses_platf0/storyteller_jev_results.json; live=False

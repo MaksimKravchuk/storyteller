@@ -1,0 +1,175 @@
+2026-11-04 18:27:24.096 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:27:24.099 | ERROR    | cast.narrator:act:144 - Narrator.act: collect_for_turn failed; proceeding without visible_entities (turn=0)
+Traceback (most recent call last):
+  File "/home/runner/work/storyteller/storyteller/.venv/bin/pytest", line 10, in <module>
+    sys.exit(console_main())
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py", line 223, in console_main
+    code = main()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pytest_asyncio/plugin.py", line 469, in runtest
+    super().runtest()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pytest_asyncio/plugin.py", line 716, in inner
+    runner.run(coro, context=context)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/runner/work/storyteller/storyteller/tests/test_reliability_metering_inert.py", line 109, in test_narration_byte_identical_when_fallback_fires
+    without_metering = await _run_once()
+  File "/home/runner/work/storyteller/storyteller/tests/test_reliability_metering_inert.py", line 73, in _run_once
+    return await narrator.act(
+> File "/home/runner/work/storyteller/storyteller/cast/narrator.py", line 142, in act
+    game_state.last_visible_entities = visible_entities.collect_for_turn(input_data, game_state)
+  File "/home/runner/work/storyteller/storyteller/tests/test_reliability_metering_inert.py", line 94, in _raise_collect_failure
+    raise RuntimeError("forced visible_entities failure")
+RuntimeError: forced visible_entities failure
+2026-11-04 18:27:24.100 | WARNING  | cast.narrator_aliases:format_scene_npc_label:67 - narrator_aliases.format_scene_npc_label: scene uuid=2ef4ae34-e356-497b-a5f9-2f9018d81bfa role=guard missing from game_state.npcs
+2026-11-04 18:27:24.100 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=Narrator model=test-model parent=None | prompt_tokens=10 completion_tokens=5 duration_ms=0
+2026-11-04 18:27:24.102 | ERROR    | cast.narrator:act:144 - Narrator.act: collect_for_turn failed; proceeding without visible_entities (turn=0)
+Traceback (most recent call last):
+  File "/home/runner/work/storyteller/storyteller/.venv/bin/pytest", line 10, in <module>
+    sys.exit(console_main())
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py", line 223, in console_main
+    code = main()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/config/__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pytest_asyncio/plugin.py", line 469, in runtest
+    super().runtest()
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/_pytest/python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pytest_asyncio/plugin.py", line 716, in inner
+    runner.run(coro, context=context)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/runner/work/storyteller/storyteller/tests/test_reliability_metering_inert.py", line 112, in test_narration_byte_identical_when_fallback_fires
+    with_metering = await _run_once()
+  File "/home/runner/work/storyteller/storyteller/tests/test_reliability_metering_inert.py", line 73, in _run_once
+    return await narrator.act(
+> File "/home/runner/work/storyteller/storyteller/cast/narrator.py", line 142, in act
+    game_state.last_visible_entities = visible_entities.collect_for_turn(input_data, game_state)
+  File "/home/runner/work/storyteller/storyteller/tests/test_reliability_metering_inert.py", line 94, in _raise_collect_failure
+    raise RuntimeError("forced visible_entities failure")
+RuntimeError: forced visible_entities failure
+2026-11-04 18:27:24.103 | WARNING  | cast.narrator_aliases:format_scene_npc_label:67 - narrator_aliases.format_scene_npc_label: scene uuid=2ef4ae34-e356-497b-a5f9-2f9018d81bfa role=guard missing from game_state.npcs
+2026-11-04 18:27:24.103 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=Narrator model=test-model parent=None | prompt_tokens=10 completion_tokens=5 duration_ms=0

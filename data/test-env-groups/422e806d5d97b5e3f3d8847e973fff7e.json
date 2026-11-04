@@ -1,1 +1,1 @@
-{"id":"422e806d5d97b5e3f3d8847e973fff7e","fullName":"tests.test_memory_slots.TestKnowledgeNodeSlotDefaults#test_slots_settable_on_init","name":"KnowledgeNode accepts subject/object/action/outcome on init","status":"passed","testResultsByEnv":{"default":"4b37468302248365b90db61df1b6514c"}}
+{"id":"422e806d5d97b5e3f3d8847e973fff7e","fullName":"tests.test_memory_slots.TestKnowledgeNodeSlotDefaults#test_slots_settable_on_init","name":"KnowledgeNode accepts subject/object/action/outcome on init","status":"passed","testResultsByEnv":{"default":"93c5bdfa782aaa81d1851fc3f90974b8"}}

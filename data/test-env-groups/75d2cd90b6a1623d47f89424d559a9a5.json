@@ -1,1 +1,1 @@
-{"id":"75d2cd90b6a1623d47f89424d559a9a5","fullName":"tests.test_dice_contest.TestRollContestSocialTypes#test_deception_contest","name":"Deception contests resolve using the generic contest machinery","status":"passed","testResultsByEnv":{"default":"0cacf910848839bb2da2ae35ca4b525e"}}
+{"id":"75d2cd90b6a1623d47f89424d559a9a5","fullName":"tests.test_dice_contest.TestRollContestSocialTypes#test_deception_contest","name":"Deception contests resolve using the generic contest machinery","status":"passed","testResultsByEnv":{"default":"9a5faa1be9f804c481204326df2a79de"}}
