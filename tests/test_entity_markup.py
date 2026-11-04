@@ -98,6 +98,13 @@ class TestWrapEntities:
         assert '<span class="poi" data-kind="npc" data-id="npc-1">Мужчина</span>' in wrapped
 
     @allure.story("Short forms")
+    @allure.title("A descriptor whose head has no noun yields no short form")
+    def test_adjective_only_head_does_not_wrap(self):
+        npc = VisibleEntity(kind="npc", id="npc-1", names=["Высокий, худощавый мужчина"])
+        html = "<p>Высокая башня видна за воротами.</p>"
+        assert "data-id=" not in wrap_entities(html, [npc], "Russian")
+
+    @allure.story("Short forms")
     @allure.title("A short form shared by two NPCs wraps neither")
     def test_ambiguous_short_form_does_not_wrap(self):
         armed = VisibleEntity(kind="npc", id="npc-1", names=["вооружённый мужчина"])

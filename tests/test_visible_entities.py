@@ -13,6 +13,7 @@ from tests._log_helpers import capture_warnings
 from tests._uuid_helpers import make_uuid
 
 _NPC_1 = make_uuid("npc-1")
+_NPC_2 = make_uuid("npc-2")
 _NPC_MISSING = make_uuid("npc-missing")
 _TAVERN = make_uuid("tavern")
 
@@ -74,6 +75,19 @@ class TestCollectVisibleEntities:
         )
         entity = collect_visible_entities(scene, gs, None)[0]
         assert entity.names == ["Tony (watchman)", "Tony", "the watchman", "guard"]
+
+    @allure.story("Unknown NPC")
+    @allure.title("A scene role shared by two NPCs is not added as an alias to either")
+    def test_shared_role_not_added(self):
+        gs = _make_state()
+        _register_npc(gs, _NPC_1, short_descriptor="a tall man")
+        _register_npc(gs, _NPC_2, short_descriptor="an old man")
+        scene = Scene(
+            location_id=_TAVERN,
+            npcs_present=[SceneNPC(role="guard", uuid=_NPC_1), SceneNPC(role="guard", uuid=_NPC_2)],
+        )
+        entities = collect_visible_entities(scene, gs, None)
+        assert [entity.names for entity in entities] == [["a tall man"], ["an old man"]]
 
     @allure.story("Points of interest")
     @allure.title("Typed POIs surface with their alias lists intact, tagged as 'poi'")

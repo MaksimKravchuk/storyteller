@@ -45,11 +45,12 @@ def short_forms(alias: str, is_noun: NounTest | None) -> list[TokenForm]:
     is ordered longest first without duplicates.
     """
     head = _head_tokens(alias)
-    if not head:
+    noun_idx = _noun_index(head, is_noun)
+    if noun_idx < 0:
         return []
     full = tuple(_TOKEN_RE.findall(alias))
     forms: list[TokenForm] = []
-    for form in _candidate_forms(head, _noun_index(head, is_noun)):
+    for form in _candidate_forms(head, noun_idx):
         if form != full and form not in forms:
             forms.append(form)
     return forms
@@ -93,9 +94,13 @@ def _head_tokens(alias: str) -> list[str]:
 
 
 def _noun_index(head: list[str], is_noun: NounTest | None) -> int:
-    """Return the position of the head's noun, defaulting to its last token."""
-    if is_noun is not None:
-        for idx, token in enumerate(head):
-            if is_noun(token):
-                return idx
-    return len(head) - 1
+    """Return the position of the head's noun, or -1 when the head has none.
+
+    Without a noun test the head is assumed to end in its noun.
+    """
+    if is_noun is None:
+        return len(head) - 1
+    for idx, token in enumerate(head):
+        if is_noun(token):
+            return idx
+    return -1
