@@ -1,1 +1,1 @@
-{"id":"0544c71c9e39394c042444dfac812a60","fullName":"tests.test_models.TestNPCCardPhysicalStatus#test_default_is_healthy","name":"A new NPCCard defaults to a 'healthy' physical status","status":"passed","testResultsByEnv":{"default":"0c873368997915f98d966add09d7122b"}}
+{"id":"0544c71c9e39394c042444dfac812a60","fullName":"tests.test_models.TestNPCCardPhysicalStatus#test_default_is_healthy","name":"A new NPCCard defaults to a 'healthy' physical status","status":"passed","testResultsByEnv":{"default":"aa4b79b49ccff11ac7c04e2fae134776"}}

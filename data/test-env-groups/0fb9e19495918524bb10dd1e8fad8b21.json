@@ -1,1 +1,1 @@
-{"id":"0fb9e19495918524bb10dd1e8fad8b21","fullName":"tests.test_config.TestDeepSeekDetection#test_get_api_key_returns_deepseek","name":"get_api_key_for_provider returns the DeepSeek key when requested","status":"passed","testResultsByEnv":{"default":"3607383eb362e9b1f10b6346be6d9c98"}}
+{"id":"0fb9e19495918524bb10dd1e8fad8b21","fullName":"tests.test_config.TestDeepSeekDetection#test_get_api_key_returns_deepseek","name":"get_api_key_for_provider returns the DeepSeek key when requested","status":"passed","testResultsByEnv":{"default":"c149820f030a1a026ac1c88664cbc609"}}

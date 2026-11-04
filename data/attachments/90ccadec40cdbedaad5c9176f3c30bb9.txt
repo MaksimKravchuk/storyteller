@@ -1,0 +1,8 @@
+[32m2026-11-04 18:01:12.746[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:01:12.749[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=ItemGenerator parent=None | start
+[32m2026-11-04 18:01:12.749[0m | [1mINFO    [0m | [36mcast.base_performer_class[0m | session=[33m-[0m | agent=ItemGenerator parent=None | done | duration_ms=0
+[32m2026-11-04 18:01:12.749[0m | [33m[1mWARNING [0m | [36mcast.director_object_interaction[0m | session=[33m-[0m | _persist_delta: scene.location_id=4b4b5e2f-5b45-46ed-ab1b-644ee4374376 not in game_state.locations; typed channel skipped
+[32m2026-11-04 18:01:12.751[0m | [33m[1mWARNING [0m | [36mcast.scene_builder[0m | session=[33m-[0m | SceneBuilder._current_object_states: location_id=4b4b5e2f-5b45-46ed-ab1b-644ee4374376 not in game_state.locations
+[32m2026-11-04 18:01:12.751[0m | [33m[1mWARNING [0m | [36mcast.scene_builder[0m | session=[33m-[0m | SceneBuilder._current_object_states: location_id=4b4b5e2f-5b45-46ed-ab1b-644ee4374376 not in game_state.locations
+[32m2026-11-04 18:01:12.752[0m | [33m[1mWARNING [0m | [36mcast.scene_builder[0m | session=[33m-[0m | SceneBuilder._current_object_states: location_id=00000000-0000-0000-0000-000000000000 not in game_state.locations
+[32m2026-11-04 18:01:12.752[0m | [33m[1mWARNING [0m | [36mcast.scene_builder[0m | session=[33m-[0m | SceneBuilder._current_object_states: location_id=00000000-0000-0000-0000-000000000000 not in game_state.locations

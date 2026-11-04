@@ -1,1 +1,1 @@
-{"id":"60d93fd7f8dd758afe8dcfe74734c771","fullName":"tests.test_openai_sanitize#test_sanitize_lone_surrogate","name":"_sanitize replaces a lone UTF-16 surrogate with three U+FFFD replacement characters","status":"passed","testResultsByEnv":{"default":"4281e12d8668adbe00fa6c8883126344"}}
+{"id":"60d93fd7f8dd758afe8dcfe74734c771","fullName":"tests.test_openai_sanitize#test_sanitize_lone_surrogate","name":"_sanitize replaces a lone UTF-16 surrogate with three U+FFFD replacement characters","status":"passed","testResultsByEnv":{"default":"e204b929b8961982134f872b1ee5bc1f"}}

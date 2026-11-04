@@ -1,1 +1,1 @@
-{"id":"e5dddfb77881f589b5048a7453b7fedc","fullName":"tests.test_dice_contest.TestContestSkillMap#test_has_all_types","name":"Every contest type has an entry in the CONTEST_SKILL_MAP","status":"passed","testResultsByEnv":{"default":"a6a5e6c177269fe8b2376adf0c1224a0"}}
+{"id":"e5dddfb77881f589b5048a7453b7fedc","fullName":"tests.test_dice_contest.TestContestSkillMap#test_has_all_types","name":"Every contest type has an entry in the CONTEST_SKILL_MAP","status":"passed","testResultsByEnv":{"default":"11990f987c0a06b4618a231c4858db0b"}}

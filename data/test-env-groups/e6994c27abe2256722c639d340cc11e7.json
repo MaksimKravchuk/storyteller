@@ -1,1 +1,1 @@
-{"id":"e6994c27abe2256722c639d340cc11e7","fullName":"tests.test_web_schemas#test_start_game_request_carries_character","name":"StartGameRequest defaults character to None and accepts a nested payload","status":"passed","testResultsByEnv":{"default":"3a7d9b990cdf3bc522fdf9cc61c3189f"}}
+{"id":"e6994c27abe2256722c639d340cc11e7","fullName":"tests.test_web_schemas#test_start_game_request_carries_character","name":"StartGameRequest defaults character to None and accepts a nested payload","status":"passed","testResultsByEnv":{"default":"04cea0b2c789c591704ae41d2efc8f9b"}}

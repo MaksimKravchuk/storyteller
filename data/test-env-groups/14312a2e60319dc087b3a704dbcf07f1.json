@@ -1,1 +1,1 @@
-{"id":"14312a2e60319dc087b3a704dbcf07f1","fullName":"tests.test_emotional_charge.TestNodeChargeBounds#test_defaults_are_neutral","name":"KnowledgeNode charge fields default to neutral","status":"passed","testResultsByEnv":{"default":"43f1e635feae7de3509294dac142c728"}}
+{"id":"14312a2e60319dc087b3a704dbcf07f1","fullName":"tests.test_emotional_charge.TestNodeChargeBounds#test_defaults_are_neutral","name":"KnowledgeNode charge fields default to neutral","status":"passed","testResultsByEnv":{"default":"67bbb08c94dd72004496f13a0a95ca62"}}

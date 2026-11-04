@@ -1,1 +1,1 @@
-{"id":"7dbe6b18f47c798412c86940e64fb0a0","fullName":"tests.test_prompt_localization.TestGesturePhrases#test_unknown_language_falls_back","name":"Unknown language falls back to English gesture phrases","status":"passed","testResultsByEnv":{"default":"b44288d93dcbf3117425a8ae8a6193a3"}}
+{"id":"7dbe6b18f47c798412c86940e64fb0a0","fullName":"tests.test_prompt_localization.TestGesturePhrases#test_unknown_language_falls_back","name":"Unknown language falls back to English gesture phrases","status":"passed","testResultsByEnv":{"default":"8c92670ba9a7f326ed4c00409a0712b0"}}

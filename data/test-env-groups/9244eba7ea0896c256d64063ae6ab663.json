@@ -1,1 +1,1 @@
-{"id":"9244eba7ea0896c256d64063ae6ab663","fullName":"tests.test_narrator_streaming#test_narrator_streams_into_sink","name":"Narrator streams its prose into the bound sink and announces the narrating stage","status":"passed","testResultsByEnv":{"default":"b2fa35b5b255cea6bd41eb0deac32bf6"}}
+{"id":"9244eba7ea0896c256d64063ae6ab663","fullName":"tests.test_narrator_streaming#test_narrator_streams_into_sink","name":"Narrator streams its prose into the bound sink and announces the narrating stage","status":"passed","testResultsByEnv":{"default":"08e74f39e5218cf2b724c128408d692a"}}

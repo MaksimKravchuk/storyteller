@@ -1,0 +1,3 @@
+[32m2026-11-04 18:01:22.930[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:01:22.932[0m | [31m[1mERROR   [0m | [36mcast.npc_generator[0m | session=[33m-[0m | NPCGenerator: LLM returned taken name 'Фрол Михайлов' for role 'cooper', renaming to 'Фрол Михайлов (guard)'
+[32m2026-11-04 18:01:22.932[0m | [31m[1mERROR   [0m | [36mcast.npc_generator[0m | session=[33m-[0m | NPCGenerator: LLM returned taken name 'Фрол Михайлов' for role 'smith', renaming to 'Фрол Михайлов (guard) [2]'

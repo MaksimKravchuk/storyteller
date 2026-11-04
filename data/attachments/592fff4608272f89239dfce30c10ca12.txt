@@ -1,3 +1,0 @@
-2026-10-25 22:40:44.582 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=732d18e7-1a68-4741-bbb8-52aed581cf2f not in game_state.locations
-2026-10-25 22:40:49.883 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=SceneBuilder model=gpt-6-luna parent=None | prompt_tokens=1163 completion_tokens=451 duration_ms=5299
-2026-10-25 22:40:49.883 | WARNING  | cast.scene_builder:_current_object_states:166 - SceneBuilder._current_object_states: location_id=732d18e7-1a68-4741-bbb8-52aed581cf2f not in game_state.locations

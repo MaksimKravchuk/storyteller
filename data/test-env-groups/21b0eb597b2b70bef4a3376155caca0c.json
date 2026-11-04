@@ -1,1 +1,1 @@
-{"id":"21b0eb597b2b70bef4a3376155caca0c","fullName":"tests.test_models_game.TestSceneNPCSerialization#test_model_dump_uninitialised","name":"An uninitialized SceneNPC serializes with uuid=None","status":"passed","testResultsByEnv":{"default":"11ea1bedebfcc03f5e802fc954de3446"}}
+{"id":"21b0eb597b2b70bef4a3376155caca0c","fullName":"tests.test_models_game.TestSceneNPCSerialization#test_model_dump_uninitialised","name":"An uninitialized SceneNPC serializes with uuid=None","status":"passed","testResultsByEnv":{"default":"a6be2c3854e83587cbcdbb4a20d26f4d"}}

@@ -1,0 +1,3 @@
+[32m2026-11-04 18:01:10.311[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[bad_scenario] iter 0: FAILED — IndexError: Narrator capture buffer is empty
+[good_scenario] iter 0: 5/10 — wrote report.md

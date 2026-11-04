@@ -1,1 +1,1 @@
-{"id":"858376b530ea3f732cd128d0c0929101","fullName":"tests.test_db_engine.TestAdaptUrlForAsyncpg#test_fly_postgres_url_uses_asyncpg","name":"Fly postgres attachment URLs use the asyncpg SQLAlchemy dialect","status":"passed","testResultsByEnv":{"default":"acc76e6e2d66bd1192d01a34ac904d4d"}}
+{"id":"858376b530ea3f732cd128d0c0929101","fullName":"tests.test_db_engine.TestAdaptUrlForAsyncpg#test_fly_postgres_url_uses_asyncpg","name":"Fly postgres attachment URLs use the asyncpg SQLAlchemy dialect","status":"passed","testResultsByEnv":{"default":"74d82ef91e294024d4df81df20d612e7"}}

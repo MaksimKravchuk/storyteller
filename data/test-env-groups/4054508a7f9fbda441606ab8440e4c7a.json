@@ -1,1 +1,1 @@
-{"id":"4054508a7f9fbda441606ab8440e4c7a","fullName":"tests.test_web_api#test_static_client_explains_loading_states","name":"Static web client uses understandable loading-state copy","status":"passed","testResultsByEnv":{"default":"2062333103c0c7bbd55eb3bb9edce46c"}}
+{"id":"4054508a7f9fbda441606ab8440e4c7a","fullName":"tests.test_web_api#test_static_client_explains_loading_states","name":"Static web client uses understandable loading-state copy","status":"passed","testResultsByEnv":{"default":"e22ed3b7066db7e6bb2efa5fcc61957a"}}

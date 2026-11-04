@@ -1,1 +1,1 @@
-{"id":"d8b4bdd5d44ba514c29a3aaf6cc3386f","fullName":"tests.test_dice_contest.TestContestOutcomeEnum#test_actor_succeeds","name":"ACTOR_SUCCEEDS is a recognized contest outcome","status":"passed","testResultsByEnv":{"default":"85e6b866bb7852e45ed5620acbd8566c"}}
+{"id":"d8b4bdd5d44ba514c29a3aaf6cc3386f","fullName":"tests.test_dice_contest.TestContestOutcomeEnum#test_actor_succeeds","name":"ACTOR_SUCCEEDS is a recognized contest outcome","status":"passed","testResultsByEnv":{"default":"c3422412aa17909cf330c668988e8495"}}

@@ -1,0 +1,31 @@
+[32m2026-11-04 18:01:26.308[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+[32m2026-11-04 18:01:26.311[0m | [31m[1mERROR   [0m | [36minterfaces.web.action_stream[0m | session=[33m-[0m | Streamed player turn failed
+[33m[1mTraceback (most recent call last):[0m
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/threading.py", line 1002, in _bootstrap
+    self._bootstrap_inner()
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/threading.py", line 1045, in _bootstrap_inner
+    self.run()
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/threading.py", line 982, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/anyio/from_thread.py", line 532, in run_blocking_portal
+    run_eventloop(
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/anyio/_core/_eventloop.py", line 77, in run
+    return async_backend.run(func, args, {}, backend_options)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2342, in run
+    return runner.run(wrapper())
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+> File "[32m/home/runner/work/storyteller/storyteller/interfaces/web/[0m[32m[1maction_stream.py[0m", line [33m55[0m, in [35m_run_to_queue[0m
+    [1mresponse[0m [35m[1m=[0m [35m[1mawait[0m [1mrun_turn[0m[1m([0m[1m)[0m
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/unittest/mock.py", line 2240, in _execute_mock_call
+    raise effect
+[31m[1mRuntimeError[0m:[1m db exploded[0m
+[32m2026-11-04 18:01:26.323[0m | [1mINFO    [0m | [36mhttpx._client[0m | session=[33m-[0m | HTTP Request: POST http://testserver/api/games/game-1/actions/stream "HTTP/1.1 200 OK"

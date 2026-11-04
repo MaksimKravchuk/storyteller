@@ -1,1 +1,1 @@
-{"id":"82e756f771ff9c7a2b07ec32119de457","fullName":"tests.test_web_character#test_builder_projects_identity","name":"build_character_info projects the player identity and inventory fields","status":"passed","testResultsByEnv":{"default":"7b2e99d57622b414a3bb49b0a7b180a7"}}
+{"id":"82e756f771ff9c7a2b07ec32119de457","fullName":"tests.test_web_character#test_builder_projects_identity","name":"build_character_info projects the player identity and inventory fields","status":"passed","testResultsByEnv":{"default":"d718278441104390f45da85a213f05d3"}}
