@@ -12,6 +12,7 @@ import allure
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _OKF_AGENT_ROOTS = (
+    "alembic",
     "benchmarks",
     "cast",
     "costs",
@@ -29,6 +30,10 @@ _OKF_AGENT_ROOTS = (
     "tests",
     "timeline",
 )
+_REQUIRED_AGENT_SECTIONS = ("# Boundary", "# Contents", "# Local Rules", "# Patterns", "# Anti-patterns")
+_DECISIONS_DIR = _REPO_ROOT / "docs" / "decisions"
+_OKF_STATUSES = frozenset(("draft", "stable", "deprecated"))
+_FILE_TOKEN_RE = re.compile(r"`([A-Za-z0-9_.*/-]+\.(?:py|js|css|html|toml|yml|yaml|json|md|sh|mako))`")
 _LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
@@ -57,6 +62,23 @@ class TestStorytellerOkfAgents:
             assert "Root `AGENTS.md`" in body, _message(agent_path, "does not preserve root AGENTS.md authority")
             assert "`CLAUDE.md`" in body, _message(agent_path, "does not preserve CLAUDE.md authority")
 
+    @allure.title("Every colocated AGENTS file describes contents, patterns and anti-patterns")
+    def test_colocated_agents_have_required_sections(self) -> None:
+        for agent_path in _okf_agent_paths():
+            headings = set(_read_concept(agent_path)[1].splitlines())
+
+            for section in _REQUIRED_AGENT_SECTIONS:
+                assert section in headings, _message(agent_path, "missing section {0}".format(section))
+
+    @allure.title("Every file an AGENTS file names in backticks still exists")
+    def test_named_files_exist(self) -> None:
+        for agent_path in _okf_agent_paths():
+            for file_token in set(_FILE_TOKEN_RE.findall(agent_path.read_text(encoding="utf-8"))):
+                assert _file_token_exists(agent_path, file_token), _message(
+                    agent_path,
+                    "names missing file {0}".format(file_token),
+                )
+
     @allure.title("Internal markdown links in colocated AGENTS files resolve inside the repo")
     def test_internal_links_resolve_inside_repo(self) -> None:
         for source_path in _okf_agent_paths():
@@ -64,6 +86,50 @@ class TestStorytellerOkfAgents:
                 resolved_target = _resolve_link(source_path, link_target)
 
                 assert resolved_target.exists(), _message(source_path, "broken link to {0}".format(link_target))
+
+
+@allure.epic("Documentation")
+@allure.feature("Open Knowledge Format")
+@allure.story("Decision records conformance")
+class TestStorytellerOkfDecisions:
+    @allure.title("Every ADR is an OKF Decision concept with a valid lifecycle status")
+    def test_decisions_have_okf_frontmatter(self) -> None:
+        decision_paths = _decision_paths()
+
+        assert decision_paths, "No decision records found"
+
+        for decision_path in decision_paths:
+            frontmatter = _read_concept(decision_path)[0]
+
+            assert frontmatter.get("type") == "Decision", _message(decision_path, "type is not Decision")
+            assert frontmatter.get("title"), _message(decision_path, "missing title")
+            assert frontmatter.get("status") in _OKF_STATUSES, _message(decision_path, "invalid OKF status")
+
+    @allure.title("Every path an ADR governs still exists, so stale ADRs surface in CI")
+    def test_governed_paths_exist(self) -> None:
+        for decision_path in _decision_paths():
+            for governed in _governed_paths(decision_path):
+                matches = list(_REPO_ROOT.glob(governed))
+
+                assert matches, _message(decision_path, "governs missing path {0}".format(governed))
+
+
+def _decision_paths() -> list[Path]:
+    return sorted(_DECISIONS_DIR.glob("[0-9]*.md"))
+
+
+def _file_token_exists(agent_path: Path, file_token: str) -> bool:
+    if file_token.startswith("/"):
+        return True  # URL route, not a file
+    package_root = _REPO_ROOT / agent_path.relative_to(_REPO_ROOT).parts[0]
+    candidates = (agent_path.parent.glob(file_token), _REPO_ROOT.glob(file_token))
+    return any(any(found) for found in candidates) or any(package_root.glob("**/{0}".format(file_token)))
+
+
+def _governed_paths(decision_path: Path) -> list[str]:
+    governed = _read_concept(decision_path)[0].get("governs", [])
+    assert isinstance(governed, list), _message(decision_path, "governs is not a list")
+    return [str(path_glob) for path_glob in governed]
 
 
 def _okf_agent_paths() -> list[Path]:

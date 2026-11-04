@@ -1,3 +1,23 @@
+---
+type: Decision
+title: "Feature-factory chain is the default workflow for non-trivial changes"
+status: stable
+governs:
+  - docs/studio/09-founder-decision-register.md
+  - CLAUDE.md
+  - prompts/*.py
+  - prompts/*_ru.py
+  - knowledge
+  - .claude/skills/feature-factory/SKILL.md
+  - .claude/hooks/block-secrets.sh
+  - .env*
+  - .claude/agents/codebase-researcher.md
+  - .claude/agents/story-writer.md
+  - .claude/agents/spec-writer.md
+  - .claude/settings.json
+  - .claude/agents/prompt-wiring-auditor.md
+  - .claude/skills/decision-records/SKILL.md
+---
 # ADR-0001: Feature-factory chain is the default workflow for non-trivial changes
 
 Date: 2026-05-25

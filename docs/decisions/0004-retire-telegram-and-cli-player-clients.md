@@ -1,3 +1,18 @@
+---
+type: Decision
+title: "Retire Telegram and CLI player clients"
+status: stable
+governs:
+  - interfaces
+  - run_server.py
+  - db/tables.py
+  - alembic/versions/a1b2c3d4e5f7_drop_telegram_session_identity.py
+  - config.py
+  - db/repo_sessions.py
+  - interfaces/web
+  - interfaces/admin_dashboard.html
+  - docs/studio/09-founder-decision-register.md
+---
 # ADR-0004: Retire Telegram and CLI player clients
 
 Date: 2026-05-28

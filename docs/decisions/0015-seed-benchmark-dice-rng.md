@@ -1,3 +1,14 @@
+---
+type: Decision
+title: "Seed the dice RNG in benchmark mode"
+status: stable
+governs:
+  - cast/dice.py
+  - benchmarks/harness/runner.py
+  - llm/turn_event_logger.py
+  - tests/test_dice_default_rng.py
+  - tests/test_benchmarks_runner_seed.py
+---
 # ADR-0015: Seed the dice RNG in benchmark mode
 
 Date: 2026-06-22

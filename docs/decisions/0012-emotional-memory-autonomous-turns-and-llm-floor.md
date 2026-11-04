@@ -1,3 +1,17 @@
+---
+type: Decision
+title: "Emotional memory on autonomous NPC turns + LLM-proof mood floor"
+status: stable
+governs:
+  - cast/npc_turn.py
+  - cast/emotional_memory.py
+  - cast/hostility.py
+  - cast/_relationship_drift.py
+  - knowledge/memory.py
+  - cast/director_dialogue.py
+  - models/npc_card.py
+  - db/converters/npc.py
+---
 # ADR-0012: Emotional memory on autonomous NPC turns + LLM-proof mood floor
 
 Date: 2026-06-20

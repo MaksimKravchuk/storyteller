@@ -1,3 +1,29 @@
+---
+type: Decision
+title: "Mutation-testing pilot scoped to `models/` + `timeline/` with a ratcheted CI gate"
+status: stable
+governs:
+  - models
+  - timeline
+  - CLAUDE.md
+  - .github/workflows/ci.yml
+  - models/*.py
+  - timeline/*.py
+  - .github/workflows/mutation-nightly.yml
+  - cast
+  - engine
+  - prompts
+  - db
+  - pyproject.toml
+  - tests/test_effect_memory_internals.py
+  - tests/test_effect_emit_memory.py
+  - tests/test_effect_applier.py
+  - tests/test_event_manager.py
+  - tests/test_time_costs.py
+  - tests/test_memory_slots.py
+  - tests/test_models.py
+  - tests/test_models_game.py
+---
 # ADR-0004: Mutation-testing pilot scoped to `models/` + `timeline/` with a ratcheted CI gate
 
 Date: 2026-05-28

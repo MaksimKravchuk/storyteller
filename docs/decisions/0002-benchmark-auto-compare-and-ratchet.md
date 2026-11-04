@@ -1,9 +1,26 @@
+---
+type: Decision
+title: "Benchmark auto-compare on `run` + 2-sigma ratchet predicate"
+status: stable
+governs:
+  - cast
+  - prompts
+  - benchmarks/baselines/.calibration.json
+  - benchmarks/baselines
+  - tests/test_benchmarks_classify_stdev.py
+  - tests/test_benchmarks_baselines.py
+  - tests/test_benchmarks_auto_compare.py
+  - tests/test_benchmarks_run_auto_compare.py
+  - tests/test_benchmarks_pin.py
+---
 # ADR-0002: Benchmark auto-compare on `run` + 2-sigma ratchet predicate
 
 Date: 2026-05-25
 Status: Accepted
 Decision owner: Max
 Related: [Issue #271 — benchmarks: pinned baselines + auto-compare on run + stdev in aggregates], `docs/decisions/0001-feature-factory-default-workflow.md`
+
+> **Correction (2026-11-04):** earlier text called `benchmarks/results/` git-ignored. It is not: historical run archives are tracked (read by `benchmarks/model_sets/`), and the benchmark workflows delete them before each run.
 
 ## Context
 
@@ -34,7 +51,7 @@ Adopt three coupled changes that turn `benchmarks run` into a regression gate wh
 - **Variance is real and must be modelled.** Phase 1 leaves engine temperature un-pinned. A single mean-difference threshold cannot separate "the model is actually worse" from "today's roll landed lower." Carrying stdev on every aggregate and gating on a k-sigma overlap is the cheapest statistically honest verdict for N=3 iterations per scenario.
 - **2-sigma is the safe ratchet multiplier.** Using `delta > 1 * noise_floor_stdev` would let a single lucky roll permanently raise the bar against the engine's known variance; `delta > 2 * noise_floor_stdev` requires the new mean to clear the upper 95% band of the calibrated noise floor. Strict `>` (not `≥`) avoids ratcheting on the exact boundary where calibration is imprecise.
 - **Calibrated noise_floor_stdev ≠ current run's stdev.** The aggregate's `stdev_awarded` is descriptive — the variance observed *in this run*. The baseline's `noise_floor_stdev` is the *calibrated* variance, sampled at N=5+ when the operator explicitly invoked `calibrate`. Folding the current run's stdev into the ratchet predicate would let a freak quiet run permanently lower the noise floor, defeating the safeguard.
-- **Git-tracked baselines = release-over-release diff in PRs.** Storing baselines under `benchmarks/baselines/` (not in `results/`, which is git-ignored) means every ratchet shows up in the PR diff and is reviewable. The author cannot silently raise the bar.
+- **Git-tracked baselines = release-over-release diff in PRs.** Storing baselines under `benchmarks/baselines/` (not in `results/`, whose tracked historical archives CI deletes before each run) means every ratchet shows up in the PR diff and is reviewable. The author cannot silently raise the bar.
 - **`no_baseline` is non-blocking.** New scenarios should not block CI before they are calibrated. The `no_baseline` classification preserves the pre-existing exit-0 behaviour for unpinned scenarios.
 - **Manual `compare` survives unchanged.** Two operators may still want to diff arbitrary aggregate pairs (e.g. release-over-release post-mortem). That command keeps its exit-0 contract; only the new `run`-time path can fail the build.
 
@@ -83,7 +100,7 @@ What future agents must preserve:
 - **`noise_floor_stdev` belongs to the baseline, not the aggregate.** It is set at pin/ratchet time from `calibrate`, never overwritten by a regular run.
 - **`benchmarks calibrate` never runs on CI.** It is opt-in CLI-only because it hits paid LLMs.
 - **`no_baseline` must not exit 1.** Unpinned scenarios are non-blocking by design.
-- **Baselines live under `benchmarks/baselines/` and are git-tracked.** Do not move them to `results/` (git-ignored) — the PR-diff visibility is the human review checkpoint.
+- **Baselines live under `benchmarks/baselines/` and are git-tracked.** Do not move them to `results/` (CI wipes it before every run) — the PR-diff visibility is the human review checkpoint.
 - If you supersede this ADR (e.g. once engine temperature is pinned and the noise floor collapses), preserve the exit-1-on-regression contract in `benchmarks run`; that is the user-visible release gate.
 
 ## Verification / tests

@@ -1,3 +1,14 @@
+---
+type: Decision
+title: "Opening turn builds and narrates only — no NPC reactions"
+status: stable
+governs:
+  - engine/game_engine.py
+  - cast/director.py
+  - cast/director_execution.py
+  - cast/director_routing.py
+  - tests/test_game_engine_lifecycle.py
+---
 # ADR-0007: Opening turn builds and narrates only — no NPC reactions
 
 Date: 2026-05-30

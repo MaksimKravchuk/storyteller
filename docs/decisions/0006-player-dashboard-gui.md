@@ -1,3 +1,25 @@
+---
+type: Decision
+title: "Player dashboard GUI"
+status: draft
+governs:
+  - docs/studio/09-founder-decision-register.md
+  - interfaces/web/world.py
+  - interfaces/web/world_schemas.py
+  - interfaces/web/schemas.py
+  - interfaces/web/static
+  - models/npc_card.py
+  - interfaces/web/character.py
+  - CLAUDE.md
+  - tests/test_web_world.py
+  - tests/test_web_schemas.py
+  - tests/test_web_api.py
+  - interfaces/web/static/sw.js
+  - interfaces/web
+  - interfaces/web/static/index.html
+  - interfaces/web/static/app.js
+  - interfaces/web/static/style.css
+---
 # ADR-0006: Player dashboard GUI
 
 Date: 2026-05-29

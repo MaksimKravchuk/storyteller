@@ -1,3 +1,32 @@
+---
+type: Decision
+title: "Pin scenes to persistent places and anchor NPCs to them"
+status: draft
+governs:
+  - db/converters/location.py
+  - tests/test_scene_place.py
+  - tests/test_npc_place_persistence.py
+  - tests/test_scene_builder_known_places.py
+  - tests/test_npc_generator.py
+  - benchmarks/scenarios/memory_return_visit
+  - tests/test_benchmarks_memory_return_visit.py
+  - tests/prompts/_consumer_seam_kwargs.py
+  - cast/scene_place.py
+  - cast/_place_registry.py
+  - cast/_place_residents.py
+  - cast/_place_seating.py
+  - cast/_scene_location.py
+  - cast/scene_builder.py
+  - cast/schemas/scene_response.py
+  - models/scene.py
+  - cast/director_execution.py
+  - cast/director_dialogue.py
+  - cast/director.py
+  - cast/npc_generator.py
+  - knowledge/memory.py
+  - prompts/scene_builder_prompts.py
+  - prompts/scene_builder_prompts_ru.py
+---
 # ADR-0023: Pin scenes to persistent places and anchor NPCs to them
 
 Date: 2026-10-25

@@ -1,3 +1,35 @@
+---
+type: Decision
+title: "Bayesian benchmark-comparison layer + wider judge panel + deterministic landmark conversion"
+status: stable
+governs:
+  - benchmarks/harness/bayes
+  - benchmarks/cli/_bayes_report.py
+  - benchmarks/cli/_bayes_format.py
+  - .github/workflows/benchmark-on-pr.yml
+  - benchmarks/scenarios/scene_builder_re_entry_consistency/elements.py
+  - benchmarks/harness/panel.py
+  - tests/test_benchmarks_bayes.py
+  - tests/test_benchmarks_bayes_cli.py
+  - tests/test_benchmarks_scene_builder_predicate.py
+  - tests/test_benchmarks_aggregate.py
+  - tests/test_benchmarks_pin.py
+  - benchmarks/cli
+  - benchmarks/harness/bayes/__init__.py
+  - benchmarks/harness/bayes/_types.py
+  - benchmarks/harness/bayes/_normal.py
+  - benchmarks/harness/bayes/_beta.py
+  - benchmarks/harness/bayes/_beta_quadrature.py
+  - benchmarks/harness/bayes/_report.py
+  - benchmarks/cli/_compare.py
+  - benchmarks/cli/_args.py
+  - benchmarks/cli/_pin.py
+  - benchmarks/harness/aggregate.py
+  - benchmarks/harness/types/_aggregates.py
+  - benchmarks/harness/_baselines_codec.py
+  - .github/workflows/noise-floor-recalibration.yml
+  - .github/workflows/benchmark-baseline.yml
+---
 # ADR-0013: Bayesian benchmark-comparison layer + wider judge panel + deterministic landmark conversion
 
 Date: 2026-06-20

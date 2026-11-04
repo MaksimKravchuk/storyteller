@@ -1,3 +1,18 @@
+---
+type: Decision
+title: "Engine-side temperature pinning in benchmark mode"
+status: stable
+governs:
+  - benchmarks/harness/judge.py
+  - benchmarks/harness/_run_execution.py
+  - config.py
+  - engine/factory.py
+  - engine
+  - cast
+  - tests/benchmarks/test_temperature_override.py
+  - tests/benchmarks/test_temperature_override_seam.py
+  - tests/test_engine_factory.py
+---
 # 0003 — Engine-side temperature pinning in benchmark mode
 
 - Status: accepted

@@ -22,7 +22,7 @@ Run full local stack:
 ```bash
 docker compose up -d
 # Web UI: http://localhost:8070
-# Admin:  http://localhost:8080
+# Admin:  http://localhost:8070/admin
 docker compose down
 ```
 
@@ -69,6 +69,7 @@ uv run python -m benchmarks run
 - Agents may merge low-risk PRs after required deterministic checks and CI pass. Stop and ask before merging product/release behavior changes, destructive data changes, paid/e2e/benchmark-dependent changes, or anything with unclear risk.
 - Release tags are the release boundary: cut annotated tags from `main` only after Max approval and the release checklist.
 - See `docs/decisions/0014-trunk-development-with-release-tags.md` for the accepted workflow decision.
+- ADRs in `docs/decisions/` carry Open Knowledge Format frontmatter (`type: Decision`, `status`, `governs`). Before editing a file, find the decisions that constrain it: `grep -l "^  - <path or its directory>$" docs/decisions/*.md`. When you delete or move a governed path, update that ADR's `governs` list (CI checks it).
 - Keep changes surgical and minimal.
 - Do not add speculative abstractions.
 - Do not silently change lint/type/test configuration.

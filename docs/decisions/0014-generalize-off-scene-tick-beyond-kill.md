@@ -1,3 +1,28 @@
+---
+type: Decision
+title: "Generalize the off-scene background tick beyond KILL-only"
+status: stable
+governs:
+  - cast/npc_background_tick.py
+  - cast/_npc_offscreen_resolvers.py
+  - models/goal.py
+  - prompts/actor_prompts*.py
+  - tests/test_npc_background_tick.py
+  - tests/test_goal_prompt_vars.py
+  - tests/test_npc_generator_goals.py
+  - tests/prompts/test_consumer_seam_contract.py
+  - cast/actor_config.py
+  - cast/actor.py
+  - cast/_npc_generator_goals.py
+  - prompts/actor_prompts.py
+  - prompts/actor_prompts_ru.py
+  - prompts/npc_generator_prompts.py
+  - prompts/npc_generator_prompts_ru.py
+  - prompts/chronicler_prompts.py
+  - prompts/chronicler_prompts_ru.py
+  - tests/test_actor_prompt.py
+  - tests/test_prompt_localization.py
+---
 # ADR-0014: Generalize the off-scene background tick beyond KILL-only
 
 Date: 2026-06-22

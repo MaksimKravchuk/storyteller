@@ -1,3 +1,21 @@
+---
+type: Decision
+title: "Adopt Spec Kit as Storyteller's Requirements Layer"
+status: stable
+governs:
+  - docs/studio/13-spec-driven-development.md
+  - .specify/memory/constitution.md
+  - CLAUDE.md
+  - AGENTS.md
+  - .specify
+  - .claude/skills/speckit-*
+  - .claude
+  - .specify/templates/spec-template.md
+  - .specify/templates/plan-template.md
+  - .claude/skills/speckit-specify/SKILL.md
+  - .claude/skills/speckit-plan/SKILL.md
+  - .claude/skills/speckit-tasks/SKILL.md
+---
 # ADR-0017: Adopt Spec Kit as Storyteller's Requirements Layer
 
 Date: 2026-06-30

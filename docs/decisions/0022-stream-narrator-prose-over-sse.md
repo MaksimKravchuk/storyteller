@@ -1,3 +1,30 @@
+---
+type: Decision
+title: "Stream Narrator prose to the web player over SSE, moderated sentence by sentence"
+status: draft
+governs:
+  - interfaces/web/routes_stream.py
+  - llm/turn_stream.py
+  - tests/test_turn_stream.py
+  - tests/test_narrator_streaming.py
+  - tests/test_llm_streaming.py
+  - tests/test_web_action_stream.py
+  - tests/test_safety_engine_integration.py
+  - llm/base_client.py
+  - llm/openai_client.py
+  - llm/anthropic_client.py
+  - cast/base_performer_class.py
+  - cast/narrator.py
+  - cast/director.py
+  - cast/director_execution.py
+  - engine/moderation.py
+  - engine/game_engine.py
+  - interfaces/web/action_stream.py
+  - interfaces/web/routes.py
+  - interfaces/web/static/app.js
+  - interfaces/web/static/style.css
+  - tests/_turn_stream_helpers.py
+---
 # ADR-0022: Stream Narrator prose to the web player over SSE, moderated sentence by sentence
 
 Date: 2026-10-25

@@ -1,3 +1,36 @@
+---
+type: Decision
+title: "Player web UI visual language — \"the stage\""
+status: stable
+governs:
+  - docs/studio/09-founder-decision-register.md
+  - interfaces/web/static/fonts
+  - interfaces/web/world.py
+  - interfaces/web/world_schemas.py
+  - models/location.py
+  - models/game_state.py
+  - formatting/entity_markup.py
+  - interfaces/web/static
+  - cast
+  - tests/test_web_api.py
+  - tests/test_web_world.py
+  - tests/test_web_static_icons.py
+  - interfaces/web/app.py
+  - interfaces/web
+  - docs/design/stage-ui
+  - interfaces/web/static/style.css
+  - interfaces/web/static/app.js
+  - interfaces/web/static/index.html
+  - interfaces/web/static/sw.js
+  - interfaces/web/static/manifest.webmanifest
+  - models/npc_card.py
+  - formatting/entity_short_forms.py
+  - cast/visible_entities.py
+  - formatting/entity_ambiguity.py
+  - tests/test_entity_markup.py
+  - tests/test_visible_entities.py
+  - tests/test_watchman_regression.py
+---
 # ADR-0019: Player web UI visual language — "the stage"
 
 Date: 2026-09-30

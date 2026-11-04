@@ -1,3 +1,11 @@
+---
+type: Decision
+title: "Golden narration snapshot workflow"
+status: stable
+governs:
+  - benchmarks/baselines
+  - tests/benchmarks/test_golden_narration.py
+---
 # ADR-0016: Golden narration snapshot workflow
 
 Date: 2026-06-28

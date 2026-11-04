@@ -1,3 +1,24 @@
+---
+type: Decision
+title: "Language-neutral structured player-action contract"
+status: draft
+governs:
+  - interfaces/web/schemas.py
+  - interfaces/web/player_gestures.py
+  - cast/player_gesture_phrases.py
+  - interfaces/web/service.py
+  - interfaces/web/static
+  - models/npc_card.py
+  - prompts/locales.py
+  - db
+  - cast/narrator_labels.py
+  - tests/test_web_schemas.py
+  - tests/test_player_gestures.py
+  - tests/test_web_api.py
+  - interfaces/web
+  - interfaces/web/runtime.py
+  - interfaces/web/action_errors.py
+---
 # ADR-0010: Language-neutral structured player-action contract
 
 Date: 2026-06-01

@@ -1,3 +1,27 @@
+---
+type: Decision
+title: "Deterministic Dwarf-Fortress-style emotional memory for NPCs"
+status: stable
+governs:
+  - knowledge/charge.py
+  - cast/_mood_derivation.py
+  - cast/_relationship_drift.py
+  - cast/emotional_memory.py
+  - cast/hostility.py
+  - cast/director_dialogue.py
+  - cast/_npc_combat_memory.py
+  - alembic/versions/d7e8f9a0b1c2_add_emotional_charge_and_values_vector.py
+  - knowledge/query.py
+  - prompts/actor_prompts.py
+  - prompts/actor_prompts_ru.py
+  - models
+  - knowledge
+  - db/converters
+  - knowledge/node.py
+  - models/npc_card.py
+  - models/values_vector.py
+  - models/relationship.py
+---
 # ADR-0011: Deterministic Dwarf-Fortress-style emotional memory for NPCs
 
 Date: 2026-06-19

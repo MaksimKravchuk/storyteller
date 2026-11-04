@@ -78,7 +78,7 @@ run_set() {
 run_set "max" \
   DIRECTOR_MODEL=gpt-5.4 \
   AGENT_MODEL=google/gemini-2.5-pro \
-  NARRATOR_MODEL=claude-sonnet-4-20250514 \
+  NARRATOR_MODEL=claude-sonnet-5-5 \
   DRAMATURGE_MODEL=gpt-5.4 \
   DRAMATURGE_ENABLED=true
 
