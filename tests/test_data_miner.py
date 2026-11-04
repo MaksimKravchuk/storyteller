@@ -20,6 +20,7 @@ from knowledge.graph import KnowledgeGraph
 from knowledge.node import KnowledgeScope, KnowledgeSource
 from models.setting import Setting
 from research.wikipedia_client import WikipediaClient
+from research.wikipedia_search_client import WikipediaSearchClient
 
 _SEND_JSON = "_send_json"
 
@@ -59,24 +60,11 @@ def _full_setting_payload() -> SettingResponse:
 @allure.epic("World Setup")
 @allure.feature("Data Miner")
 class TestDataMiner:
-    @allure.story("Construction")
-    @allure.title("DataMiner creates a default WikipediaClient when none is injected")
-    def test_default_wikipedia_client(self) -> None:
-        miner = DataMiner(llm_client=MagicMock())
-        assert isinstance(miner.wikipedia, WikipediaClient)
-
-    @allure.story("Construction")
-    @allure.title("DataMiner uses the injected wikipedia_client instead of creating a default")
-    def test_injected_wikipedia_client(self) -> None:
-        stub = _fake_wiki()
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=stub)
-        assert miner.wikipedia is stub
-
     @allure.story("Research flow")
     @allure.title("DataMiner runs the two-step research flow and produces a populated Setting from LLM output")
     @pytest.mark.asyncio
     async def test_happy_path(self) -> None:
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=_fake_wiki())
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(_fake_wiki()))
         responses = [
             SearchTermsResponse(search_terms=["Florence", "Medici"]),
             _full_setting_payload(),
@@ -94,7 +82,7 @@ class TestDataMiner:
     @allure.title("DataMiner defaults every missing key in the second LLM response to an empty value")
     @pytest.mark.asyncio
     async def test_defaults_when_fields_missing(self) -> None:
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=_fake_wiki([_default_summary()]))
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(_fake_wiki([_default_summary()])))
         responses = [SearchTermsResponse(search_terms=["Rome"]), SettingResponse()]
         with patch.object(miner, _SEND_JSON, new=AsyncMock(side_effect=responses)):
             result = await miner.act("Rome", {})
@@ -110,7 +98,7 @@ class TestDataMiner:
     @allure.title("DataMiner coerces null list fields in the LLM response to empty lists rather than leaving None")
     @pytest.mark.asyncio
     async def test_none_list_fields_become_empty(self) -> None:
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=_fake_wiki([_default_summary()]))
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(_fake_wiki([_default_summary()])))
         responses = [
             SearchTermsResponse(search_terms=["Rome"]),
             SettingResponse.model_validate(
@@ -140,7 +128,7 @@ class TestDataMiner:
     @pytest.mark.asyncio
     async def test_search_terms_fallback(self) -> None:
         stub = _fake_wiki([_default_summary()])
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=stub)
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(stub))
         responses = [SearchTermsResponse(), _full_setting_payload()]
         with patch.object(miner, _SEND_JSON, new=AsyncMock(side_effect=responses)):
             await miner.act("Ancient Carthage", {})
@@ -151,7 +139,7 @@ class TestDataMiner:
     @pytest.mark.asyncio
     async def test_concurrent_fetch_count(self) -> None:
         stub = _fake_wiki([_default_summary(), _default_summary(), _default_summary()])
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=stub)
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(stub))
         responses = [
             SearchTermsResponse(search_terms=["a", "b", "c"]),
             _full_setting_payload(),
@@ -170,7 +158,7 @@ class TestEnsureFact:
     @pytest.mark.asyncio
     async def test_cache_hit(self) -> None:
         wiki = _single_summary_wiki()
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(wiki))
         graph = KnowledgeGraph()
         first = await miner.ensure_fact("Rome", graph=graph)
         second = await miner.ensure_fact("Rome", graph=graph)
@@ -183,7 +171,7 @@ class TestEnsureFact:
     @pytest.mark.asyncio
     async def test_cache_miss(self) -> None:
         wiki = _single_summary_wiki("The eternal city.")
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(wiki))
         graph = KnowledgeGraph()
         node = await miner.ensure_fact("Rome", kind="city", graph=graph)
         assert node is not None
@@ -200,7 +188,7 @@ class TestEnsureFact:
     @pytest.mark.asyncio
     async def test_concurrent_calls_deduplicate(self) -> None:
         wiki = _single_summary_wiki()
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(wiki))
         graph = KnowledgeGraph()
         results = await asyncio.gather(
             miner.ensure_fact("Rome", graph=graph),
@@ -216,7 +204,7 @@ class TestEnsureFact:
     async def test_failure_returns_none(self) -> None:
         wiki = MagicMock(spec=WikipediaClient)
         wiki.get_summary = AsyncMock(side_effect=RuntimeError("network error"))
-        miner = DataMiner(llm_client=MagicMock(), wikipedia_client=wiki)
+        miner = DataMiner(llm_client=MagicMock(), search_client=WikipediaSearchClient(wiki))
         graph = KnowledgeGraph()
         result = await miner.ensure_fact("Rome", graph=graph)
         assert result is None

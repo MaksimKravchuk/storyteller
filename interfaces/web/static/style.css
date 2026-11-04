@@ -1067,16 +1067,14 @@ body[data-screen="play"] main { padding-top: 0; }
  * with Story and the tab bar is fixed to the bottom. */
 .rail { display: contents; }
 
-/* ── The stage: where, when, and who is on stage ───────── */
+/* ── The stage: where and when ───────────────────────── */
 .stage {
   position: sticky;
   top: 0;
   z-index: 20;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "place clock"
-    "cast cast";
+  grid-template-areas: "place clock";
   align-items: end;
   column-gap: 1rem;
   margin: 0 calc(-1 * var(--gutter));
@@ -1127,47 +1125,6 @@ body[data-screen="play"] main { padding-top: 0; }
   letter-spacing: 0.08em;
   color: var(--brass);
   white-space: nowrap;
-}
-
-.stage-cast {
-  grid-area: cast;
-  display: flex;
-  gap: 0.35rem;
-  margin: 0.5rem 0 0;
-  padding: 0;
-  list-style: none;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.stage-cast::-webkit-scrollbar { display: none; }
-
-.stage-cast:empty { display: none; }
-
-.stage-cast li {
-  flex: none;
-  padding: 0.12rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  white-space: nowrap;
-}
-
-.stage-cast .cast-known {
-  color: var(--person);
-  border: 1px solid var(--person-dim);
-  background: var(--person-wash);
-}
-
-.stage-cast .cast-stranger {
-  color: var(--ink-soft);
-  font-style: italic;
-  border: 1px dashed var(--line-strong);
-}
-
-.stage-cast .cast-more {
-  color: var(--ink-faint);
-  border: 1px solid var(--line);
 }
 
 /* ── The script: narrated prose and the player's cues ──── */
@@ -1447,6 +1404,13 @@ body[data-screen="play"] main { padding-top: 0; }
   font-size: 0.95rem;
   text-align: left;
   cursor: pointer;
+}
+
+/* "Act…" opens a sub-menu; its chevron says so. */
+.ent-pop .ep-act.ep-more::after {
+  content: "›";
+  float: right;
+  color: var(--ink-faint);
 }
 
 .ent-pop .ep-act:hover,

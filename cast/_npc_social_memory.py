@@ -6,51 +6,36 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from uuid import UUID
 
+from cast._npc_social_consequence import EVENT_HARM, EVENT_KINDNESS, apply_social_consequence
 from knowledge import charge as charge_presets, salience as salience_presets
 from knowledge.memory import MemoryEvent, MemoryManager
 from knowledge.memory_slots import MemorySlots
 from knowledge.node import KnowledgeScope
 from models.game_state import GameState
-from models.goal import Goal, GoalKind, GoalScope, GoalStatus
 from models.npc_card import NPCCard
 
-_EVENT_HARM = "harm"
-_EVENT_KINDNESS = "kindness"
-
-_GOAL_CANDIDATES: MappingProxyType[str, tuple[str, ...]] = MappingProxyType(
-    {
-        _EVENT_HARM: ("KILL", "PURSUE"),
-        _EVENT_KINDNESS: ("HELP", "PROTECT"),
-    },
-)
 _ACTION_BY_KIND: MappingProxyType[str, str] = MappingProxyType(
     {
-        _EVENT_HARM: "harmed",
-        _EVENT_KINDNESS: "helped",
+        EVENT_HARM: "harmed",
+        EVENT_KINDNESS: "helped",
     },
 )
 _OUTCOME_BY_KIND: MappingProxyType[str, str] = MappingProxyType(
     {
-        _EVENT_HARM: "grudge",
-        _EVENT_KINDNESS: "debt",
+        EVENT_HARM: "grudge",
+        EVENT_KINDNESS: "debt",
     },
 )
 _SALIENCE_BY_KIND: MappingProxyType[str, float] = MappingProxyType(
     {
-        _EVENT_HARM: salience_presets.RETALIATION,
-        _EVENT_KINDNESS: salience_presets.REMOTE_EVENT,
+        EVENT_HARM: salience_presets.RETALIATION,
+        EVENT_KINDNESS: salience_presets.REMOTE_EVENT,
     },
 )
 _CHARGE_BY_KIND: MappingProxyType[str, charge_presets.ChargePreset] = MappingProxyType(
     {
-        _EVENT_HARM: charge_presets.RETALIATION,
-        _EVENT_KINDNESS: charge_presets.ROUTINE_DIALOGUE,
-    },
-)
-_GOAL_DESCRIPTION_BY_KIND: MappingProxyType[str, str] = MappingProxyType(
-    {
-        _EVENT_HARM: "Retaliate against {0} for off-screen harm.",
-        _EVENT_KINDNESS: "Repay a debt to {0} after off-screen kindness.",
+        EVENT_HARM: charge_presets.RETALIATION,
+        EVENT_KINDNESS: charge_presets.ROUTINE_DIALOGUE,
     },
 )
 
@@ -114,26 +99,6 @@ def _tags_for(event: SocialMemoryEvent) -> list[str]:
     return tags
 
 
-def _spawn_follow_on_goal(event: SocialMemoryEvent) -> None:
-    goal_kind = None
-    for candidate in _GOAL_CANDIDATES.get(event.kind, ()):
-        candidate_goal_kind = getattr(GoalKind, candidate, None)
-        if isinstance(candidate_goal_kind, GoalKind):
-            goal_kind = candidate_goal_kind
-            break
-    if goal_kind is None:
-        return
-    current_goal = event.target.life_goal
-    if current_goal is not None and current_goal.status is GoalStatus.ACTIVE:
-        return
-    event.target.life_goal = Goal(
-        scope=GoalScope.LIFE,
-        kind=goal_kind,
-        description=_GOAL_DESCRIPTION_BY_KIND[event.kind].format(event.actor.name),
-        target_uuid=event.actor.uuid,
-    )
-
-
 async def persist_social_memory_and_goal(
     memory_manager: MemoryManager,
     event: SocialMemoryEvent,
@@ -146,7 +111,7 @@ async def persist_social_memory_and_goal(
     follow-on goal enum is code-owned and may not support every desired
     social stance in older saves.
     """
-    if event.kind not in _GOAL_CANDIDATES:
+    if event.kind not in _OUTCOME_BY_KIND:
         return
     location_id = _location_id_for(event, game_state)
     charge = _CHARGE_BY_KIND[event.kind]
@@ -171,4 +136,4 @@ async def persist_social_memory_and_goal(
             ),
         ),
     )
-    _spawn_follow_on_goal(event)
+    apply_social_consequence(event.actor, event.target, event.kind, game_state.turn_count)

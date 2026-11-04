@@ -22,20 +22,20 @@ async def _load_player(session: AsyncSession, game_state_id: str, game_state: Ga
     stmt = select(tbl.players).where(tbl.players.c.game_state_id == game_state_id)
     row = (await session.execute(stmt)).mappings().first()
     if row:
-        game_state.player = conv_player.row_to_player(helpers._row_dict(row))
+        game_state.player = conv_player.row_to_player(dict(row))
 
 
 async def _load_locations(session: AsyncSession, game_state_id: str, game_state: GameState) -> None:
     stmt = select(tbl.locations).where(tbl.locations.c.game_state_id == game_state_id)
     for row in (await session.execute(stmt)).mappings():
-        loc = conv_loc.row_to_location(helpers._row_dict(row))
+        loc = conv_loc.row_to_location(dict(row))
         game_state.locations[loc.uuid] = loc
 
 
 async def _load_npcs(session: AsyncSession, game_state_id: str, game_state: GameState) -> None:
     stmt = select(tbl.npcs).where(tbl.npcs.c.game_state_id == game_state_id)
     for row in (await session.execute(stmt)).mappings():
-        npc = conv_npc.row_to_npc(helpers._row_dict(row))
+        npc = conv_npc.row_to_npc(dict(row))
         game_state.npcs[npc.uuid] = npc
 
 
@@ -53,12 +53,12 @@ async def _load_scene_and_events(
     )
     scene_row = scene_query.mappings().first()
     if scene_row:
-        game_state.current_scene = conv_scene.row_to_scene(helpers._row_dict(scene_row))
+        game_state.current_scene = conv_scene.row_to_scene(dict(scene_row))
 
     events_query = await session.execute(
         select(tbl.game_events).where(tbl.game_events.c.game_state_id == game_state_id),
     )
-    return [conv_event.row_to_game_event(helpers._row_dict(event_row)) for event_row in events_query.mappings()]
+    return [conv_event.row_to_game_event(dict(event_row)) for event_row in events_query.mappings()]
 
 
 async def _load_entities_and_scene(

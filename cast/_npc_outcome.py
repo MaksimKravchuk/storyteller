@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from cast._npc_social_consequence import EVENT_HARM, apply_social_consequence
 from cast.dice import ContestOutcome, ContestRoll, ContestType
 from models.game_state import GameState
 from models.npc_card import NPCCard
@@ -86,9 +87,11 @@ def predict_contest_outcome(contest_roll: ContestRoll | None) -> PredictedOutcom
     return None
 
 
-def commit_outcome(target: NPCCard, predicted: PredictedOutcome) -> None:
-    """Apply a predicted outcome to the target NPC's mutable state."""
+def commit_outcome(actor: NPCCard, target: NPCCard, predicted: PredictedOutcome, turn: int | None = None) -> None:
+    """Apply a predicted outcome to the target and, if it survives, its grudge against ``actor``."""
     if predicted.kind is OutcomeKind.PHYSICAL:
         target.physical_status = predicted.new_value
     elif predicted.kind is OutcomeKind.MOOD:
         target.current_mood = predicted.new_value
+    if predicted.new_value != _STATUS_DEAD:
+        apply_social_consequence(actor, target, EVENT_HARM, turn)

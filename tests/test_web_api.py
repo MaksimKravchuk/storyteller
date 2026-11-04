@@ -50,6 +50,13 @@ pytestmark = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def _beta_policy_open(monkeypatch: pytest.MonkeyPatch) -> None:
+    """These tests pass a mock cfg; stub the gates (BetaPolicy itself is tested with a real Config)."""
+    for gate in ("ensure_open", "ensure_turn_quota", "ensure_active_game_quota"):
+        monkeypatch.setattr(service.beta_policy.BetaPolicy, gate, AsyncMock())
+
+
 @pytest.fixture
 def mock_repo() -> AsyncMock:
     """Return a repository mock — never hit by FastAPI but required for dep override."""
@@ -1461,7 +1468,7 @@ async def test_process_turn_commits_before_returning_response() -> None:
     engine.process_action = AsyncMock(return_value="You look around.")
     engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
 
-    with patch("engine.session_ops.create_engine_from_state", new=AsyncMock(return_value=engine)):
+    with patch("engine.session_ops.restore_engine_with_admin_settings", new=AsyncMock(return_value=engine)):
         response = await service.process_turn_for_player(
             repo=repo,
             cfg=MagicMock(),

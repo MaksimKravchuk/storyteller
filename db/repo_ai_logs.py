@@ -15,11 +15,6 @@ _PROMPT_TOKENS_KEY = "prompt_tokens"
 _COMPLETION_TOKENS_KEY = "completion_tokens"
 
 
-def _row_dict(row: Any) -> dict[str, Any]:
-    """Convert a SQLAlchemy mapping row to a plain dict."""
-    return dict(row)
-
-
 class AILogStore:
     """Persists and retrieves AI call log entries."""
 
@@ -58,18 +53,6 @@ class AILogStore:
         ]
         await self._session.execute(tbl.ai_call_logs.insert(), rows)
 
-    async def max_call_sequence(self, session_id: str, turn_number: int | None) -> int | None:
-        """Return the highest call_sequence for a session+turn, or None."""
-        logs = tbl.ai_call_logs
-        conditions = [logs.c.session_id == session_id]
-        if turn_number is None:
-            conditions.append(logs.c.turn_number.is_(None))
-        else:
-            conditions.append(logs.c.turn_number == turn_number)
-        stmt = select(sa_func.max(logs.c.call_sequence)).where(*conditions)
-        query = await self._session.execute(stmt)
-        return query.scalar()
-
     async def get(
         self,
         session_id: str,
@@ -83,7 +66,7 @@ class AILogStore:
         query = select(tbl.ai_call_logs).where(*conditions)
         stmt = query.order_by(tbl.ai_call_logs.c.created_at).limit(limit)
         ai_logs_query = await self._session.execute(stmt)
-        return [_row_dict(row) for row in ai_logs_query.mappings()]
+        return [dict(row) for row in ai_logs_query.mappings()]
 
     async def usage_summary(
         self,
@@ -96,7 +79,7 @@ class AILogStore:
         rows = await self._session.execute(stmt)
         summaries: list[dict[str, Any]] = []
         for row in rows.mappings():
-            summary = _row_dict(row)
+            summary = dict(row)
             summary["total_tokens"] = summary[_PROMPT_TOKENS_KEY] + summary[_COMPLETION_TOKENS_KEY]
             summaries.append(summary)
         return summaries

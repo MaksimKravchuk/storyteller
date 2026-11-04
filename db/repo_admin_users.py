@@ -6,7 +6,6 @@ from sqlalchemy import String, cast, desc, distinct, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 
-from db import repo_admin_helpers as helpers
 from db import repo_admin_usage
 from db import tables as tbl
 
@@ -66,7 +65,7 @@ async def list_users(session: AsyncSession, *, email_query: str | None = None) -
     if email_query:
         stmt = apply_email_filter(stmt, email_query)
     rows = await session.execute(stmt)
-    return [repo_admin_usage.with_total_tokens(helpers._row_dict(row)) for row in rows.mappings()]
+    return [repo_admin_usage.with_total_tokens(dict(row)) for row in rows.mappings()]
 
 
 async def get_user_detail(session: AsyncSession, account_id: str) -> dict | None:
@@ -80,7 +79,7 @@ async def get_user_detail(session: AsyncSession, account_id: str) -> dict | None
         return None
     account_email = account["email"]
     return {
-        "account": helpers._row_dict(account),
+        "account": dict(account),
         "usage": await repo_admin_usage.user_usage(session, account_id),
         "sessions": await repo_admin_usage.user_sessions(session, account_id),
         "invites": await _load_user_invites(session, account_email),
@@ -99,7 +98,7 @@ async def _load_user_invites(session: AsyncSession, email: str | None) -> list[d
         .order_by(desc(tbl.beta_invites.c.invited_at), desc(tbl.beta_invites.c.id))
     )
     rows = await session.execute(stmt)
-    return [helpers._row_dict(row) for row in rows.mappings()]
+    return [dict(row) for row in rows.mappings()]
 
 
 async def _load_user_feedback(session: AsyncSession, account_id: str) -> list[dict]:
@@ -123,4 +122,4 @@ async def _load_user_feedback(session: AsyncSession, account_id: str) -> list[di
         .order_by(desc(tbl.beta_feedback.c.created_at), desc(tbl.beta_feedback.c.id))
     )
     rows = await session.execute(stmt)
-    return [helpers._row_dict(row) for row in rows.mappings()]
+    return [dict(row) for row in rows.mappings()]

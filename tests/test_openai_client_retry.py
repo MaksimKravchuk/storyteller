@@ -61,7 +61,7 @@ class TestOpenAIClientRetry:
         sdk_class.return_value = sdk_instance
         with (
             patch(_OPENAI_CTOR, sdk_class),
-            patch("llm.openai_client.asyncio.sleep", new=AsyncMock()) as sleep_mock,
+            patch("llm.retry.asyncio.sleep", new=AsyncMock()) as sleep_mock,
         ):
             _reliability_metrics.reset_counters()
             client = OpenAIClient(model=_MODEL, api_key="k")
@@ -88,7 +88,7 @@ class TestOpenAIClientRetry:
         sdk_class.return_value = sdk_instance
         with (
             patch(_OPENAI_CTOR, sdk_class),
-            patch("llm.openai_client.asyncio.sleep", new=AsyncMock()),
+            patch("llm.retry.asyncio.sleep", new=AsyncMock()),
         ):
             client = OpenAIClient(model=_MODEL, api_key="k")
             with pytest.raises(InternalServerError) as exc_info:
@@ -103,7 +103,7 @@ class TestOpenAIClientRetry:
         bad = _make_openai_400()
         create = AsyncMock(side_effect=bad)
         sleep_mock = AsyncMock()
-        with patch("llm.openai_client.asyncio.sleep", new=sleep_mock):
+        with patch("llm.retry.asyncio.sleep", new=sleep_mock):
             with pytest.raises(BadRequestError):
                 await _call_with_retry(create)
         assert create.await_count == 1
@@ -114,7 +114,7 @@ class TestOpenAIClientRetry:
     @pytest.mark.asyncio
     async def test_call_with_retry_retries_on_timeout(self) -> None:
         create = AsyncMock(side_effect=[_make_openai_timeout(), _make_openai_timeout(), _make_response()])
-        with patch("llm.openai_client.asyncio.sleep", new=AsyncMock()) as sleep_mock:
+        with patch("llm.retry.asyncio.sleep", new=AsyncMock()) as sleep_mock:
             result = await _call_with_retry(create)
         assert create.await_count == 3
         assert result.choices[0].message.content == "hello"

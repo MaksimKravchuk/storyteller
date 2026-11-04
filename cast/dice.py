@@ -233,38 +233,6 @@ class NPCAction:
 
 
 # ---------------------------------------------------------------------------
-# Backward-compatible aliases so existing imports keep working during migration
-# ---------------------------------------------------------------------------
-
-CombatOutcome = ContestOutcome
-"""Deprecated alias — use ContestOutcome instead."""
-
-# Outcome aliases mapping old names → new names
-CombatOutcome.NPC_OVERPOWERS = ContestOutcome.TARGET_DOMINATES  # type: ignore[attr-defined]
-CombatOutcome.NPC_DEFENDS = ContestOutcome.TARGET_RESISTS  # type: ignore[attr-defined]
-CombatOutcome.PLAYER_SUCCEEDS = ContestOutcome.ACTOR_SUCCEEDS  # type: ignore[attr-defined]
-CombatOutcome.PLAYER_DOMINATES = ContestOutcome.ACTOR_DOMINATES  # type: ignore[attr-defined]
-
-
-@dataclass(frozen=True)
-class CombatRoll:
-    """Backward-compatible wrapper around ContestRoll for combat.
-
-    Deprecated — use ContestRoll directly.
-    """
-
-    outcome: ContestOutcome
-    npc_roll: int
-    player_roll: int
-    npc_bonus: int
-
-    @property
-    def description(self) -> str:
-        """Human-readable description of the outcome."""
-        return _COMBAT_DESCRIPTIONS[self.outcome]
-
-
-# ---------------------------------------------------------------------------
 # Aggression
 # ---------------------------------------------------------------------------
 
@@ -349,21 +317,6 @@ def roll_contest(
     )
 
 
-def roll_combat(npc_combat_skill: int, _rng: random.Random | None = None) -> CombatRoll:
-    """Roll 1d20 for each side, add NPC combat_skill bonus, determine outcome.
-
-    Deprecated — use ``roll_contest(ContestType.COMBAT, ...)`` instead.
-    Kept for backward compatibility with existing call sites.
-    """
-    contest = roll_contest(ContestType.COMBAT, 0, npc_combat_skill, _rng=_rng)
-    return CombatRoll(
-        outcome=contest.outcome,
-        npc_roll=contest.target_roll,
-        player_roll=contest.actor_roll,
-        npc_bonus=npc_combat_skill,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Serialization helpers — produce JSON-safe dicts for the turn_events log.
 # Kept alongside the dataclasses so producers don't re-implement the mapping.
@@ -379,17 +332,6 @@ def contest_roll_to_dict(roll: ContestRoll) -> dict[str, Any]:
         "target_roll": roll.target_roll,
         "actor_bonus": roll.actor_bonus,
         "target_bonus": roll.target_bonus,
-        "description": roll.description,
-    }
-
-
-def combat_roll_to_dict(roll: CombatRoll) -> dict[str, Any]:
-    """Serialize a (deprecated) :class:`CombatRoll` to a JSON-safe dict."""
-    return {
-        "outcome": roll.outcome.value,
-        "player_roll": roll.player_roll,
-        "npc_roll": roll.npc_roll,
-        "npc_bonus": roll.npc_bonus,
         "description": roll.description,
     }
 

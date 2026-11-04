@@ -13,11 +13,6 @@ from db import tables as tbl
 _DEFAULT_LIMIT = 500
 
 
-def _row_dict(row) -> dict:  # type: ignore[no-untyped-def]
-    """Convert a SQLAlchemy mapping row to a plain dict."""
-    return dict(row)
-
-
 class TurnEventStore:
     """Persists and retrieves structured per-turn events."""
 
@@ -75,4 +70,4 @@ class TurnEventStore:
             .limit(limit)
         )
         events_query = await self._session.execute(stmt)
-        return list(map(_row_dict, events_query.mappings()))
+        return list(map(dict, events_query.mappings()))

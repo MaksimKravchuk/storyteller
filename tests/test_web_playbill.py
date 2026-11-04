@@ -19,6 +19,14 @@ pytestmark = [
     allure.feature("Web UI"),
 ]
 
+
+@pytest.fixture(autouse=True)
+def _beta_policy_open(monkeypatch: pytest.MonkeyPatch) -> None:
+    """These tests pass a mock cfg; stub the gates (BetaPolicy itself is tested with a real Config)."""
+    for gate in ("ensure_open", "ensure_turn_quota", "ensure_active_game_quota"):
+        monkeypatch.setattr(service.beta_policy.BetaPolicy, gate, AsyncMock())
+
+
 _STORY = "Story posters"
 _TAGLINE_LIMIT = 161  # 160 chars of text plus the ellipsis
 _OPENING = "Morning *fog* clings to the columns of the **Forum** as you step out. A merchant waves."

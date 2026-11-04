@@ -11,7 +11,7 @@ from typing import Mapping
 
 from config import Config
 from db.repository import GameRepository
-from engine.factory import create_engine_from_state
+from engine.session_restore import restore_engine_with_admin_settings
 from engine.game_engine import GameEngine
 from interfaces.web import character, world
 from interfaces.web.errors import GameNotFoundError
@@ -78,11 +78,4 @@ async def restore_engine(
     loaded = await repo.load_game_state(session_row["id"])
     if loaded is None:
         return None
-    game_state, kg, events = loaded
-    return await create_engine_from_state(
-        cfg,
-        game_state,
-        kg,
-        events,
-        language=session_language(session_row),
-    )
+    return await restore_engine_with_admin_settings(repo, cfg, loaded, session_language(session_row))

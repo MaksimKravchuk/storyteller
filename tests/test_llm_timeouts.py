@@ -46,7 +46,7 @@ async def test_app_retry_covers_rate_limit() -> None:
     request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
     rate_limited = RateLimitError("slow down", response=httpx.Response(429, request=request), body=None)
     create = AsyncMock(side_effect=[rate_limited, "ok"])
-    with patch("llm.openai_client.asyncio.sleep", new=AsyncMock()):
+    with patch("llm.retry.asyncio.sleep", new=AsyncMock()):
         assert await _call_with_retry(create) == "ok"
     assert create.await_count == 2
 
@@ -61,6 +61,6 @@ async def test_app_retry_honors_retry_after(headers: dict[str, str], expected_de
     response = httpx.Response(429, request=request, headers=headers)
     create = AsyncMock(side_effect=[RateLimitError("slow down", response=response, body=None), "ok"])
     sleep = AsyncMock()
-    with patch("llm.openai_client.asyncio.sleep", new=sleep):
+    with patch("llm.retry.asyncio.sleep", new=sleep):
         assert await _call_with_retry(create) == "ok"
     sleep.assert_awaited_once_with(expected_delay)

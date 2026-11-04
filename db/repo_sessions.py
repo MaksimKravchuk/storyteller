@@ -17,10 +17,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db import tables as tbl
 
 
-def _row_dict(row: Any) -> dict:
-    return dict(row)
-
-
 async def _fetch_latest(db_session: AsyncSession, where_clause: Any) -> dict | None:
     stmt = (
         select(tbl.sessions)
@@ -30,7 +26,7 @@ async def _fetch_latest(db_session: AsyncSession, where_clause: Any) -> dict | N
     )
     query_result = await db_session.execute(stmt)
     row = query_result.mappings().first()
-    return _row_dict(row) if row else None
+    return dict(row) if row else None
 
 
 async def _insert_row(db_session: AsyncSession, **player_identity: Any) -> dict:
@@ -49,7 +45,7 @@ async def _insert_row(db_session: AsyncSession, **player_identity: Any) -> dict:
     }
     stmt = insert(tbl.sessions).values(**new_row_values).returning(tbl.sessions)
     query_result = await db_session.execute(stmt)
-    return _row_dict(query_result.mappings().one())
+    return dict(query_result.mappings().one())
 
 
 class SessionStore:

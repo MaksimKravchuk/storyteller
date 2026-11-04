@@ -54,7 +54,7 @@ async def test_clock_advance_lists_completed_events():
     from timeline.event import GameEvent
 
     gs = director._game_state
-    director.schedule_event(
+    director._event_manager.schedule(
         GameEvent(name="Guard patrol concludes", scheduled_at=gs.game_clock, duration=0.5),
     )
     current_session_id.set("sess-clock-completed")
