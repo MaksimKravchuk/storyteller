@@ -148,7 +148,6 @@ PATH_TRIGGERS: tuple[Rule, ...] = (
     ("tests/e2e/test_npc_generator_real.py", _NPC_GENERATOR),
     # ── DataMiner ──
     ("cast/data_miner.py", _DATA_MINER),
-    ("cast/_data_miner_init.py", _DATA_MINER),
     ("research/*", _DATA_MINER),
     ("cast/schemas/setting_response.py", _DATA_MINER),
     ("prompts/data_miner_prompts*.py", _DATA_MINER),
