@@ -12,6 +12,7 @@ import pytest
 from config import Config
 from defaults.entitlements import USER_PLAN_ADMIN, USER_PLAN_FRIEND_BETA, quota_settings_for_plan
 from interfaces.web import service
+from interfaces.web.beta_policy import BetaAccessDeniedError
 from interfaces.web.auth_models import PlayerFeedbackContext
 from interfaces.web.schemas import ActionRequest
 
@@ -183,3 +184,16 @@ def test_player_context_defaults_to_friend_beta_plan() -> None:
     context = PlayerFeedbackContext(player_id=_PLAYER_ID, email=None)
 
     assert context.plan == USER_PLAN_FRIEND_BETA
+
+
+@pytest.mark.asyncio
+@allure.title("BetaPolicy no longer skips the kill switch for a mock config")
+async def test_policy_does_not_bypass_checks_for_mock_config() -> None:
+    cfg = MagicMock()
+    cfg.beta_enabled = False
+    cfg.beta_kill_message = "closed"
+
+    with pytest.raises(BetaAccessDeniedError) as exc_info:
+        await service.beta_policy.BetaPolicy(_quota_repo(), cfg).ensure_open()
+
+    assert exc_info.value.reason == "beta_disabled"
