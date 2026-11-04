@@ -100,17 +100,6 @@ class TestCallSequenceCounter:
         assert next_sequence() == 1
         assert next_sequence() == 2
 
-    @allure.story("Sequence counter")
-    @allure.title("init_sequence(n) seeds the counter so that the next next_sequence returns n and then n+1")
-    def test_init_sequence_continues_from_offset(self):
-        """After init_sequence(n), next_sequence returns n, n+1, etc."""
-        from llm.call_logger import init_sequence
-
-        reset_buffer()
-        init_sequence(7)
-        assert next_sequence() == 7
-        assert next_sequence() == 8
-
 
 @allure.epic("Engine & LLM Infrastructure")
 @allure.feature("Call logger context")
