@@ -12,6 +12,7 @@ import allure
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _OKF_AGENT_ROOTS = (
+    "alembic",
     "benchmarks",
     "cast",
     "costs",
@@ -29,6 +30,7 @@ _OKF_AGENT_ROOTS = (
     "tests",
     "timeline",
 )
+_REQUIRED_AGENT_SECTIONS = ("# Boundary", "# Contents", "# Local Rules", "# Patterns", "# Anti-patterns")
 _DECISIONS_DIR = _REPO_ROOT / "docs" / "decisions"
 _OKF_STATUSES = frozenset(("draft", "stable", "deprecated"))
 _LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
@@ -58,6 +60,14 @@ class TestStorytellerOkfAgents:
 
             assert "Root `AGENTS.md`" in body, _message(agent_path, "does not preserve root AGENTS.md authority")
             assert "`CLAUDE.md`" in body, _message(agent_path, "does not preserve CLAUDE.md authority")
+
+    @allure.title("Every colocated AGENTS file describes contents, patterns and anti-patterns")
+    def test_colocated_agents_have_required_sections(self) -> None:
+        for agent_path in _okf_agent_paths():
+            headings = set(_read_concept(agent_path)[1].splitlines())
+
+            for section in _REQUIRED_AGENT_SECTIONS:
+                assert section in headings, _message(agent_path, "missing section {0}".format(section))
 
     @allure.title("Internal markdown links in colocated AGENTS files resolve inside the repo")
     def test_internal_links_resolve_inside_repo(self) -> None:
