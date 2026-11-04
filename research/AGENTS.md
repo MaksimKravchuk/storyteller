@@ -25,7 +25,7 @@ guards and knowledge-node creation stay in `cast/` and `prompts/`.
   `PROVIDER_*` names.
 - `wikipedia_search_client.py` — default backend; wraps `WikipediaClient`
   and exposes it as `.wikipedia`.
-- `wikipedia_client.py` — aiohttp client for Wikipedia REST/MediaWiki.
+- `wikipedia_client.py` — httpx client (per-call `AsyncClient`) for Wikipedia REST/MediaWiki.
 - `tavily_search_client.py`, `searxng_search_client.py` — httpx clients for
   hosted Tavily and self-hosted SearXNG.
 

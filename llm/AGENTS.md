@@ -27,7 +27,9 @@ performer logic live in [cast](/cast/AGENTS.md).
 - `openai_client.py` (+ `_openai_tools.py` strict-schema and tool wiring) —
   also serves OpenRouter and DeepSeek via `base_url`.
 - `anthropic_client.py` (+ `_anthropic_schema.py` schema hardening).
-- `factory.py` — `create_llm_client(ModelConfig)` picks the client.
+- `factory.py` — `create_llm_client(ModelConfig)` picks the client and
+  caches it per process and event loop (`_cached_client`).
+- `retry.py` — `call_with_retry`, the one shared retry loop with backoff.
 - `image_client.py` — poster image generation only (ADR-0020).
 - ContextVar turn buffers: `call_logger.py` (AI call log), `turn_event_logger.py`
   (typed turn events), `turn_stream.py` (live stage/delta sink, ADR-0022).
@@ -45,8 +47,9 @@ performer logic live in [cast](/cast/AGENTS.md).
 - Strict output a provider cannot honour raises `NotImplementedError` so
   `BasePerformer._send_json` falls back to prompt JSON; see
   `AnthropicClient._guard_strict_supported` and its schema quarantine.
-- Retries live in one app layer, `_call_with_retry`, with bounded backoff in
-  both clients; SDK clients get explicit `_REQUEST_TIMEOUT_S` (#362).
+- Retries live in one app layer, `llm.retry.call_with_retry`; each client
+  only names its retryable exceptions in a thin `_call_with_retry`. SDK
+  clients get explicit `_REQUEST_TIMEOUT_S` and `max_retries=0` (#362).
 - Per-turn state uses a module `ContextVar` that is a no-op when unbound
   (`turn_stream.py`, `call_logger.call_log_buffer`).
 - Import provider SDKs lazily inside the factory branch or client, as

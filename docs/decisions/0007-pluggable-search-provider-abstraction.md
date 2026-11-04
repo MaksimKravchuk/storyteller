@@ -9,7 +9,6 @@ governs:
   - research/tavily_search_client.py
   - research/searxng_search_client.py
   - cast/data_miner.py
-  - cast/_data_miner_init.py
   - engine/factory.py
   - config.py
   - prompts/data_miner_prompts.py
