@@ -6,14 +6,14 @@ import asyncio
 import json
 from uuid import UUID
 
-from cast import _data_miner_init as _dmi, _reliability_metrics as reliability_metrics, base_performer_class as _bpc
+from cast import _reliability_metrics as reliability_metrics, base_performer_class as _bpc
 from cast.schemas.setting_response import SearchTermsResponse, SettingResponse
-from knowledge.graph import KnowledgeGraph
-from knowledge.node import KnowledgeNode, KnowledgeScope, KnowledgeSource
+from knowledge import graph as knowledge_graph, node as knowledge_node
 from llm.base_client import BaseLLMClient
 from loguru import logger
 from models.setting import Setting
-from research.base_search_client import BaseSearchClient, SearchResult
+from prompts import data_miner_prompts
+from research import base_search_client, wikipedia_search_client
 
 # The synthesised ``Setting`` JSON (key persons, events, locations, traditions,
 # technologies, plus prose summary) routinely exceeds the global 2048 default
@@ -24,7 +24,7 @@ _RESEARCH_MAX_TOKENS = 8000
 _FACT_RESULT_LIMIT = 3
 
 
-def _result_to_dict(hit: SearchResult) -> dict[str, str]:
+def _result_to_dict(hit: base_search_client.SearchResult) -> dict[str, str]:
     """Flatten a search hit into the JSON shape fed to the synthesis prompt."""
     return {"title": hit.title, "url": hit.url, "snippet": hit.snippet}
 
@@ -38,17 +38,17 @@ class DataMiner(_bpc.BasePerformer):
         self,
         *,
         llm_client: BaseLLMClient,
-        search_client: BaseSearchClient | None = None,
+        search_client: base_search_client.BaseSearchClient | None = None,
         language: str = "English",
     ):
-        prompts = _dmi.resolve_prompts(language)
+        prompts = data_miner_prompts.get_data_miner_prompts(language)
         super().__init__(
             llm_client=llm_client,
             system_prompt_template=prompts.system,
         )
         self._search_terms_template = prompts.search_terms
         self._research_template = prompts.research
-        self._search = search_client or _dmi.default_search_client()
+        self._search = search_client or wikipedia_search_client.WikipediaSearchClient()
         self._fact_cache: dict[str, UUID] = {}  # entity name → node UUID
         self._fact_locks: dict[str, asyncio.Lock] = {}  # per-entity asyncio lock
         self.set_context(language=language)
@@ -95,8 +95,8 @@ class DataMiner(_bpc.BasePerformer):
         name: str,
         kind: str | None = None,
         *,
-        graph: KnowledgeGraph,
-    ) -> KnowledgeNode | None:
+        graph: knowledge_graph.KnowledgeGraph,
+    ) -> knowledge_node.KnowledgeNode | None:
         """Look up or create a world-scoped FACT node for ``name``.
 
         On a cache miss, searches the configured backend for ``name`` and
@@ -127,18 +127,18 @@ class DataMiner(_bpc.BasePerformer):
         self,
         name: str,
         kind: str | None,
-        graph: KnowledgeGraph,
-    ) -> KnowledgeNode | None:
+        graph: knowledge_graph.KnowledgeGraph,
+    ) -> knowledge_node.KnowledgeNode | None:
         hits = await self._search.search(name, max_results=_FACT_RESULT_LIMIT)
         snippets = [hit.snippet for hit in hits[:_FACT_RESULT_LIMIT] if hit.snippet]
         text = "\n\n".join(snippets)
         if not text:
             logger.warning("ensure_fact: empty search result for {!r}", name)
             return None
-        node = KnowledgeNode(
+        node = knowledge_node.KnowledgeNode(
             text=text,
-            scope=KnowledgeScope.WORLD,
-            source=KnowledgeSource.FACT,
+            scope=knowledge_node.KnowledgeScope.WORLD,
+            source=knowledge_node.KnowledgeSource.FACT,
             tags=list(filter(None, ["historical_fact", kind])),
         )
         self._fact_cache[name] = graph.add_node(node)
