@@ -114,10 +114,6 @@ class Actor(BasePerformer):
 
         return ActorReply(text=envelope.narration.strip(), revealed_names=tuple(envelope.revealed_names))
 
-    def reset_conversation(self) -> None:
-        """Clear conversation history (e.g. when player walks away)."""
-        self._conversation.clear()
-
     def clear_optional_context(self) -> None:
         """Drop optional prompt vars before rendering the next turn."""
         for context_key in _OPTIONAL_CONTEXT_KEYS:

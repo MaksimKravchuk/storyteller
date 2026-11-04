@@ -9,7 +9,7 @@ import allure
 import pytest
 
 from cast import _reliability_metrics as reliability_metrics
-from engine import session_ops
+from engine import session_ops, session_restore
 from llm import call_logger, turn_event_logger
 
 pytestmark = [
@@ -85,3 +85,25 @@ def test_bind_session_buffers_resets_counters() -> None:
     session_ops._bind_session_buffers("sess-rebind")
 
     assert reliability_metrics.snapshot_counters() == {}
+
+
+@allure.story("Admin overrides on resume")
+@allure.title("resume_session passes admin model and search overrides")
+@pytest.mark.asyncio
+async def test_resume_session_applies_admin_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Consumer seam: resume passes the admin overrides into engine construction."""
+    repo = MagicMock()
+    repo.load_game_state = AsyncMock(return_value=(MagicMock(), MagicMock(), []))
+    role_overrides, search = {"narrator": MagicMock()}, MagicMock()
+    monkeypatch.setattr(session_restore, "load_role_overrides", AsyncMock(return_value=role_overrides))
+    monkeypatch.setattr(session_restore, "load_search_override", AsyncMock(return_value=search))
+    engine = MagicMock()
+    engine.restore_session = AsyncMock()
+    create = MagicMock(return_value=engine)
+    monkeypatch.setattr(session_restore, "create_engine", create)
+
+    await session_ops.resume_session(repo, MagicMock(), "sid")
+
+    assert create.call_args.args[2] is role_overrides
+    assert create.call_args.kwargs["search_override"] is search
+    engine.restore_session.assert_awaited_once()

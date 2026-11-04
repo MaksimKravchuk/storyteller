@@ -32,10 +32,6 @@ dev = ["pytest", "pytest-asyncio", "mypy", "flake8", "wemake-python-styleguide"]
 ignore_missing_imports = true
 exclude = ["alembic/", "mutants/", ".venv-mutmut/"]
 
-[[tool.mypy.overrides]]
-module = ["llm.*", "research.*"]
-ignore_errors = true
-
 [tool.hatch.build.targets.wheel]
 packages = ["benchmarks", "cast", "config.py", "db", "defaults", "engine", "interfaces", "knowledge", "llm", "log_scrubbing.py", "models", "prompts", "research", "timeline"]
 
@@ -106,7 +102,6 @@ also_copy = [
   "db",
   "defaults",
   "engine",
-  "experiments",
   "formatting",
   "interfaces",
   "llm",

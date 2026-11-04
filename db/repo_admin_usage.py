@@ -7,7 +7,6 @@ from typing import Any
 from sqlalchemy import String, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import repo_admin_helpers as helpers
 from db import tables as tbl
 
 _COL_ID = "id"
@@ -66,7 +65,7 @@ async def user_usage(session: AsyncSession, account_id: str) -> dict[str, int]:
     row = usage_rows.mappings().first()
     if row is None:
         return _zero_usage()
-    return with_total_tokens(helpers._row_dict(row))
+    return with_total_tokens(dict(row))
 
 
 async def user_sessions(session: AsyncSession, account_id: str) -> list[dict]:
@@ -97,7 +96,7 @@ async def user_sessions(session: AsyncSession, account_id: str) -> list[dict]:
         .order_by(tbl.sessions.c.updated_at.desc(), tbl.sessions.c.id.desc())
     )
     rows = await session.execute(stmt)
-    return [with_total_tokens(helpers._row_dict(row)) for row in rows.mappings()]
+    return [with_total_tokens(dict(row)) for row in rows.mappings()]
 
 
 def _zero_usage() -> dict[str, int]:

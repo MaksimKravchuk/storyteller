@@ -70,7 +70,7 @@ async def resolve_one_aftermath(
             game_state,
         )
     if predicted is not None and target is not None:
-        commit_outcome(target, predicted)
+        commit_outcome(aftermath.actor, target, predicted, game_state.turn_count)
     update_goal_progress(aftermath.actor, aftermath.action_type, aftermath.action_description)
     if target is not None:
         maybe_complete_kill_goal(aftermath.actor, target, game_state)

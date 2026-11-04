@@ -36,15 +36,6 @@ def next_sequence() -> int:
     return seq
 
 
-def init_sequence(start: int) -> None:
-    """Set the call sequence counter to *start*.
-
-    Use this to continue numbering from a previous batch of calls
-    within the same turn (e.g. after loading the max sequence from the DB).
-    """
-    call_sequence_counter.set([start])
-
-
 def reset_buffer() -> None:
     """Clear the buffer and call-chain tracking for a new turn."""
     call_log_buffer.set([])

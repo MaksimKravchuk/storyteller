@@ -68,17 +68,6 @@ def test_record_retry_increments_per_attempt():
     assert snapshot == {("Director", "validation_retry"): 2}
 
 
-@allure.story("Record schema failure")
-@allure.title("record_schema_failure increments the schema_failure cell")
-def test_record_schema_failure_increments():
-    reliability_metrics.reset_counters()
-
-    reliability_metrics.record_schema_failure("Narrator", "bad shape")
-
-    snapshot = reliability_metrics.snapshot_counters()
-    assert snapshot == {("Narrator", "schema_failure"): 1}
-
-
 @allure.story("Snapshot")
 @allure.title("snapshot_counters returns a copy independent of further mutations")
 def test_snapshot_is_independent_copy():

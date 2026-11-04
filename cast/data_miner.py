@@ -38,7 +38,6 @@ class DataMiner(_bpc.BasePerformer):
         self,
         *,
         llm_client: BaseLLMClient,
-        wikipedia_client: _dmi.WikipediaClient | None = None,
         search_client: BaseSearchClient | None = None,
         language: str = "English",
     ):
@@ -49,10 +48,7 @@ class DataMiner(_bpc.BasePerformer):
         )
         self._search_terms_template = prompts.search_terms
         self._research_template = prompts.research
-        self._search = _dmi.resolve_search_client(search_client, wikipedia_client)
-        # Backward-compat alias: the underlying WikipediaClient on the default
-        # backend (``None`` for Tavily/SearXNG, which have no Wikipedia client).
-        self.wikipedia = getattr(self._search, "wikipedia", None)
+        self._search = search_client or _dmi.default_search_client()
         self._fact_cache: dict[str, UUID] = {}  # entity name → node UUID
         self._fact_locks: dict[str, asyncio.Lock] = {}  # per-entity asyncio lock
         self.set_context(language=language)

@@ -10,10 +10,11 @@ from __future__ import annotations
 import base64
 import time
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Final, Literal, Protocol, cast
 
-_POSTER_SIZE = "1024x1536"
-_OUTPUT_FORMAT = "webp"
+_POSTER_SIZE: Final = "1024x1536"
+_OUTPUT_FORMAT: Final = "webp"
+_ImageQuality = Literal["low", "medium", "high", "auto"]
 _OUTPUT_COMPRESSION = 82
 _WEBP_MIME = "image/webp"
 _MS_PER_SECOND = 1000
@@ -66,7 +67,7 @@ class OpenAIImageClient:
             model=self._model,
             prompt=prompt,
             size=_POSTER_SIZE,
-            quality=self._quality,
+            quality=cast(_ImageQuality, self._quality),  # config str; the API rejects unknown values
             output_format=_OUTPUT_FORMAT,
             output_compression=_OUTPUT_COMPRESSION,
             n=1,

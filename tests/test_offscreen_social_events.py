@@ -11,7 +11,7 @@ import pytest
 from cast import _npc_social_events as npc_social_events, director_events
 from cast.schemas.chronicler_response import ScheduledEventDraft
 from knowledge import charge as charge_presets, memory as memory_mod, node as node_mod, salience as salience_presets
-from models import goal as goal_mod
+from models import goal as goal_mod, relationship as relationship_mod
 from tests._aftermath_helpers import RecordingMemoryManager, make_actor_target_state
 from timeline import event as event_mod, event_manager as event_manager_mod
 
@@ -219,3 +219,37 @@ class TestOffScreenSocialEvents:
             "target_id": str(target.uuid),
             "kind": "kindness",
         }
+
+
+async def _relationship_after(kind: str) -> relationship_mod.Relationship:
+    state, actor, target, location = make_actor_target_state()
+    effect = event_mod.EventEffect(
+        effect_type=_SOCIAL_EFFECT,
+        target_id=str(target.uuid),
+        effect_data={"actor_id": str(actor.uuid), "target_id": str(target.uuid), "kind": kind},
+    )
+    memory = RecordingMemoryManager()
+    await _processor_with_memory(state, memory).process_remote_events([_remote_event(effect, location.uuid)])
+    return next(rel for rel in target.relationships if rel.target_uuid == str(actor.uuid))
+
+
+@allure.epic("NPC Interaction")
+@allure.feature("Off-screen social write-back")
+class TestOffScreenSocialRelationships:
+    """Remote social events move the target's directed relationship toward the actor."""
+
+    @pytest.mark.asyncio
+    @allure.story("Grudge event")
+    @allure.title("Off-screen harm drops the target's relationship to ENEMY")
+    async def test_harm_lowers_relationship(self) -> None:
+        rel = await _relationship_after("harm")
+        assert rel.kind is relationship_mod.RelationshipKind.ENEMY
+        assert rel.intensity == -2
+
+    @pytest.mark.asyncio
+    @allure.story("Debt event")
+    @allure.title("Off-screen kindness raises the target's relationship to ALLY")
+    async def test_kindness_raises_relationship(self) -> None:
+        rel = await _relationship_after("kindness")
+        assert rel.kind is relationship_mod.RelationshipKind.ALLY
+        assert rel.intensity == 2

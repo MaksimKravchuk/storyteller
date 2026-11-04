@@ -49,6 +49,8 @@ def compose_player_gesture(game_state: GameState, language: str, gesture: Player
     template = {
         "examine": phrases.examine,
         "talk": phrases.talk,
+        "attack": phrases.attack,
+        "steal": phrases.steal,
         "move": phrases.move,
     }[gesture.intent]
     return template.format(name)

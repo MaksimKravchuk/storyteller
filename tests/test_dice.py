@@ -9,10 +9,11 @@ import allure
 
 from cast.dice import (
     AGGRESSION_THRESHOLDS,
-    CombatOutcome,
-    CombatRoll,
+    ContestOutcome,
+    ContestRoll,
+    ContestType,
     roll_aggression,
-    roll_combat,
+    roll_contest,
 )
 
 _HOSTILE = "hostile"
@@ -92,40 +93,48 @@ class TestCombatOutcomeCategories:
     @allure.story("Outcome categories")
     @allure.title("NPC with +10 skill rolling 18 vs player 5 is classified as NPC_OVERPOWERS")
     def test_npc_overpowers(self):
-        combat_roll = roll_combat(_NPC_SKILL_HIGH, _rng=_rng(npc=_ROLL_EIGHTEEN, player=_ROLL_FIVE))
-        assert combat_roll.outcome == CombatOutcome.NPC_OVERPOWERS
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_HIGH, _rng=_rng(npc=_ROLL_EIGHTEEN, player=_ROLL_FIVE)
+        )
+        assert combat_roll.outcome == ContestOutcome.TARGET_DOMINATES
 
     @allure.story("Outcome categories")
     @allure.title("NPC holding a small edge over the player is classified as NPC_DEFENDS")
     def test_npc_defends(self):
-        combat_roll = roll_combat(_NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_FOURTEEN))
-        assert combat_roll.outcome == CombatOutcome.NPC_DEFENDS
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_FOURTEEN)
+        )
+        assert combat_roll.outcome == ContestOutcome.TARGET_RESISTS
 
     @allure.story("Outcome categories")
     @allure.title("Player winning by a modest margin is classified as PLAYER_SUCCEEDS")
     def test_player_succeeds(self):
-        combat_roll = roll_combat(_NPC_SKILL_LOW, _rng=_rng(npc=_ROLL_EIGHT, player=_ROLL_THIRTEEN))
-        assert combat_roll.outcome == CombatOutcome.PLAYER_SUCCEEDS
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_LOW, _rng=_rng(npc=_ROLL_EIGHT, player=_ROLL_THIRTEEN)
+        )
+        assert combat_roll.outcome == ContestOutcome.ACTOR_SUCCEEDS
 
     @allure.story("Outcome categories")
     @allure.title("Player winning by a large margin against an unskilled NPC is PLAYER_DOMINATES")
     def test_player_dominates(self):
-        combat_roll = roll_combat(_NPC_SKILL_ZERO, _rng=_rng(npc=_ROLL_THREE, player=_ROLL_FIFTEEN))
-        assert combat_roll.outcome == CombatOutcome.PLAYER_DOMINATES
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_ZERO, _rng=_rng(npc=_ROLL_THREE, player=_ROLL_FIFTEEN)
+        )
+        assert combat_roll.outcome == ContestOutcome.ACTOR_DOMINATES
 
     @allure.story("Outcome categories")
     @allure.title("Every combat outcome category has a human-readable description attached")
     def test_description_not_empty(self):
-        for outcome in CombatOutcome:
-            roll = CombatRoll(outcome=outcome, npc_roll=_ROLL_TEN, player_roll=_ROLL_TEN, npc_bonus=0)
+        for outcome in ContestOutcome:
+            roll = ContestRoll(ContestType.COMBAT, outcome, _ROLL_TEN, _ROLL_TEN, 0, 0)
             assert len(roll.description) > 0
 
     @allure.story("Outcome categories")
     @allure.title("An unskilled NPC tying the player's roll falls back to NPC_DEFENDS with zero bonus")
     def test_zero_skill_no_bonus(self):
-        combat_roll = roll_combat(_NPC_SKILL_ZERO, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_TEN))
-        assert combat_roll.npc_bonus == 0
-        assert combat_roll.outcome == CombatOutcome.NPC_DEFENDS
+        combat_roll = roll_contest(ContestType.COMBAT, 0, _NPC_SKILL_ZERO, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_TEN))
+        assert combat_roll.target_bonus == 0
+        assert combat_roll.outcome == ContestOutcome.TARGET_RESISTS
 
 
 @allure.epic("Combat & Action Resolution")
@@ -136,50 +145,58 @@ class TestCombatBoundariesAndStats:
     @allure.story("Boundary conditions")
     @allure.title("Combat outcome at exactly the NPC_DEFENDS / PLAYER_SUCCEEDS boundary resolves to NPC_DEFENDS")
     def test_boundary_npc_defends_at_zero(self):
-        combat_roll = roll_combat(_NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_FIFTEEN))
-        assert combat_roll.outcome == CombatOutcome.NPC_DEFENDS
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_FIFTEEN)
+        )
+        assert combat_roll.outcome == ContestOutcome.TARGET_RESISTS
 
     @allure.story("Boundary conditions")
     @allure.title("One point past the NPC_DEFENDS boundary flips the outcome to PLAYER_SUCCEEDS")
     def test_boundary_player_succeeds_at_minus_one(self):
-        combat_roll = roll_combat(_NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_SIXTEEN))
-        assert combat_roll.outcome == CombatOutcome.PLAYER_SUCCEEDS
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_SIXTEEN)
+        )
+        assert combat_roll.outcome == ContestOutcome.ACTOR_SUCCEEDS
 
     @allure.story("Boundary conditions")
     @allure.title("NPC winning by exactly five with skill bonus is classified as NPC_OVERPOWERS")
     def test_boundary_npc_overpowers_at_five(self):
-        combat_roll = roll_combat(_NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_TEN))
-        assert combat_roll.outcome == CombatOutcome.NPC_OVERPOWERS
+        combat_roll = roll_contest(ContestType.COMBAT, 0, _NPC_SKILL_MID, _rng=_rng(npc=_ROLL_TEN, player=_ROLL_TEN))
+        assert combat_roll.outcome == ContestOutcome.TARGET_DOMINATES
 
     @allure.story("Boundary conditions")
     @allure.title("Player winning by six or more against an unskilled NPC is classified as PLAYER_DOMINATES")
     def test_boundary_player_dominates_at_minus_six(self):
-        combat_roll = roll_combat(_NPC_SKILL_ZERO, _rng=_rng(npc=_ROLL_SEVEN, player=_ROLL_THIRTEEN))
-        assert combat_roll.outcome == CombatOutcome.PLAYER_DOMINATES
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_ZERO, _rng=_rng(npc=_ROLL_SEVEN, player=_ROLL_THIRTEEN)
+        )
+        assert combat_roll.outcome == ContestOutcome.ACTOR_DOMINATES
 
     @allure.story("Recorded values")
     @allure.title("CombatRoll records the raw NPC roll, player roll, and skill bonus on the result object")
     def test_roll_values_recorded(self):
-        combat_roll = roll_combat(_NPC_SKILL_SEVEN, _rng=_rng(npc=_ROLL_TWELVE, player=_ROLL_EIGHT))
-        assert combat_roll.npc_roll == _ROLL_TWELVE
-        assert combat_roll.player_roll == _ROLL_EIGHT
-        assert combat_roll.npc_bonus == _NPC_SKILL_SEVEN
+        combat_roll = roll_contest(
+            ContestType.COMBAT, 0, _NPC_SKILL_SEVEN, _rng=_rng(npc=_ROLL_TWELVE, player=_ROLL_EIGHT)
+        )
+        assert combat_roll.target_roll == _ROLL_TWELVE
+        assert combat_roll.actor_roll == _ROLL_EIGHT
+        assert combat_roll.target_bonus == _NPC_SKILL_SEVEN
 
     @allure.story("Statistical properties")
     @allure.title("All d20 dice rolls fall within the valid 1..20 range across many samples")
     def test_rolls_in_valid_range(self):
         rng = random.Random(_FUZZ_SEED)
         for _ in range(_FUZZ_ITERATIONS):
-            combat_roll = roll_combat(_NPC_SKILL_MID, _rng=rng)
-            assert 1 <= combat_roll.player_roll <= _D20
-            assert 1 <= combat_roll.npc_roll <= _D20
+            combat_roll = roll_contest(ContestType.COMBAT, 0, _NPC_SKILL_MID, _rng=rng)
+            assert 1 <= combat_roll.actor_roll <= _D20
+            assert 1 <= combat_roll.target_roll <= _D20
 
     @allure.story("Statistical properties")
     @allure.title("Combat rolls produce at least three distinct outcomes across 100 random seeds")
     def test_different_seeds_give_multiple_outcomes(self):
         outcomes = set()
         for seed in range(100):
-            outcomes.add(roll_combat(_NPC_SKILL_MID, _rng=random.Random(seed)).outcome)
+            outcomes.add(roll_contest(ContestType.COMBAT, 0, _NPC_SKILL_MID, _rng=random.Random(seed)).outcome)
         assert len(outcomes) >= 3
 
 

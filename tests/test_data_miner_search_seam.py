@@ -105,16 +105,6 @@ async def test_ensure_fact_returns_none_on_zero_results() -> None:
 
 
 @allure.story("Provider threading")
-@allure.title("An explicit search_client wins over wikipedia_client injection (precedence)")
-def test_search_client_precedence_over_wikipedia_client() -> None:
-    fake = _FakeSearchClient([])
-    miner = DataMiner(llm_client=MagicMock(), wikipedia_client=MagicMock(), search_client=fake)
-    assert miner._search is fake
-    # No Wikipedia backing on a non-Wikipedia backend.
-    assert miner.wikipedia is None
-
-
-@allure.story("Provider threading")
 @allure.title("create_engine threads the configured provider all the way to the engine's search client")
 def test_create_engine_selects_configured_provider() -> None:
     cfg = Config(openai_api_key="k", search_provider="tavily", tavily_api_key="tvly-x")

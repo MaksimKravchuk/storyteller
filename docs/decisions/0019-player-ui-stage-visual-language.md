@@ -44,7 +44,7 @@ Adopt one visual language for `interfaces/web/static/`, called **"the stage"**. 
 4. **A sticky stage header in the Story pane** (`#stage`, `position: sticky; top: 0`) shows:
    - the ancestor breadcrumb and current place name, as a button that opens the Map pane;
    - the clock, as a daypart icon plus `Day N · HH:00`;
-   - up to four cast chips plus a `+N` chip, with known people as solid rose chips and strangers as dashed italic chips.
+   - ~~up to four cast chips plus a `+N` chip, with known people as solid rose chips and strangers as dashed italic chips.~~ Removed 2026-10-04 — see "Amendment: cast lives in the prose" below.
 
    All of it is rendered from the existing `WorldView` (`map.breadcrumb`, `map.current`, `clock`, `people`). There is no new endpoint and no new field. Chip text is `ScenePerson.label` only, and the tooltip is the scene `role`. The clock also sets `body[data-daypart]`, which tints the stage-light gradient.
 5. **Player lines are stage cues.** `.turn.player` renders as a brass rule followed by a quieter italic line in `--ink-soft`. This applies to both the optimistic free-text echo and a gesture's server-composed `action_html` (ADR-0010). The change is presentational only. Cue text for gestures still comes only from the server.
@@ -160,3 +160,16 @@ What future agents must preserve:
 - `docs/decisions/0006-player-dashboard-gui.md`
 - `docs/decisions/0010-language-neutral-player-action-contract.md`
 - `docs/studio/09-founder-decision-register.md` (D006, D007)
+
+## Amendment (2026-10-04): cast lives in the prose
+
+Decision owner: Max. The stage header no longer shows cast chips; it holds only place and time. Strangers' chips repeated a long `short_descriptor` that the prose never used verbatim, and the chips themselves were not actionable.
+
+People are now addressed where the Narrator mentions them: every NPC mention in the prose is a rose `.poi[data-kind="npc"]` span, and tapping it offers **Look closer**, **Approach & talk**, and **Act…** (→ **Attack**, **Steal**, **Something else…**, the last of which hands off to the composer). To make NPC mentions reliably tappable, `formatting/entity_markup.py` also matches *short forms* of an NPC alias (`formatting/entity_short_forms.py`: the descriptor's head phrase, that head cut after its noun, and the noun alone), and `cast/visible_entities.py` adds the scene `role` as a match alias. A short form is dropped when it is ambiguous — another NPC derives it too, or it occurs inside any other entity's full alias (`formatting/entity_ambiguity.py`) — so a shared word never links the wrong person.
+
+Guardrails:
+- Match aliases only steer which prose words become tappable; they never put text on screen. The gesture target still resolves through `NPCCard.label_for_player` (ADR-0010 §3, ADR-0006 §5).
+- Prefer under-linking to mis-linking: keep the ambiguity filter whenever short forms are widened.
+- The Map pane's people list (`ScenePerson.label`) remains the full roster of who is present.
+
+Verification: `tests/test_entity_markup.py` (short forms wrap; ambiguous and nested forms do not; POIs have no short forms), `tests/test_visible_entities.py` / `tests/test_watchman_regression.py` (role alias, no name leak before introduction).

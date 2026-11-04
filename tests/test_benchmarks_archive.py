@@ -1,15 +1,16 @@
-"""Unit tests for archive I/O helpers — file_stem, write_report, read_head_sha."""
+"""Unit tests for archive I/O helpers — file_stem, write_report, git_sha."""
 
 from __future__ import annotations
 
 import json
-from pathlib import Path
+import subprocess
+from unittest import mock
 
 import allure
+import pytest
 
 from benchmarks.harness._archive_naming import file_stem
-from benchmarks.harness._git_sha import read_head_sha, resolve_git_sha
-from benchmarks.harness.archive import write_report
+from benchmarks.harness.archive import current_git_sha, write_report
 from benchmarks.harness.types._scores import (
     ElementScore,
     PanelMember,
@@ -109,76 +110,17 @@ class TestWriteReport:
 
 @allure.epic("Engine & LLM Infrastructure")
 @allure.feature("Benchmark harness")
-class TestReadHeadSha:
+class TestCurrentGitSha:
     @allure.story("Archive metadata")
-    @allure.title("read_head_sha returns a direct detached-HEAD sha with surrounding whitespace stripped")
-    def test_detached_head_returned_verbatim(self, tmp_path: Path):
-        head = tmp_path / "HEAD"
-        head.write_text("deadbeef1234567890\n", encoding="utf-8")
+    @allure.title("current_git_sha returns the empty string when git is not installed")
+    def test_missing_git_returns_empty(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(subprocess, "run", mock.Mock(side_effect=FileNotFoundError))
 
-        assert read_head_sha(head) == "deadbeef1234567890"
-
-    @allure.story("Archive metadata")
-    @allure.title("read_head_sha follows a 'ref:' HEAD into a loose-ref file inside the git directory")
-    def test_loose_ref_followed(self, tmp_path: Path):
-        head = tmp_path / "HEAD"
-        head.write_text("ref: refs/heads/main\n", encoding="utf-8")
-        loose = tmp_path / "refs" / "heads" / "main"
-        loose.parent.mkdir(parents=True)
-        loose.write_text("abc123\n", encoding="utf-8")
-
-        assert read_head_sha(head) == "abc123"
+        assert current_git_sha() == ""
 
     @allure.story("Archive metadata")
-    @allure.title("read_head_sha falls back to the packed-refs file when no loose ref exists for the branch")
-    def test_packed_ref_fallback(self, tmp_path: Path):
-        head = tmp_path / "HEAD"
-        head.write_text("ref: refs/heads/main\n", encoding="utf-8")
-        packed = tmp_path / "packed-refs"
-        packed.write_text(
-            "# pack-refs with: peeled fully-peeled sorted\naaaa1111bbbb2222cccc3333dddd4444eeee5555 refs/heads/main\n",
-            encoding="utf-8",
-        )
+    @allure.title("current_git_sha returns the stripped stdout of git rev-parse HEAD")
+    def test_returns_stripped_sha(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(subprocess, "run", mock.Mock(return_value=mock.Mock(stdout="abc123\n")))
 
-        assert read_head_sha(head) == "aaaa1111bbbb2222cccc3333dddd4444eeee5555"
-
-    @allure.story("Archive metadata")
-    @allure.title("read_head_sha returns the empty string when the HEAD file does not exist")
-    def test_missing_head_returns_empty(self, tmp_path: Path):
-        assert read_head_sha(tmp_path / "does-not-exist" / "HEAD") == ""
-
-
-@allure.epic("Engine & LLM Infrastructure")
-@allure.feature("Benchmark harness")
-class TestResolveGitSha:
-    @allure.story("Archive metadata")
-    @allure.title("resolve_git_sha reads HEAD directly from a plain .git directory")
-    def test_plain_git_dir(self, tmp_path: Path):
-        git_dir = tmp_path / ".git"
-        (git_dir / "refs" / "heads").mkdir(parents=True)
-        (git_dir / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
-        (git_dir / "refs" / "heads" / "main").write_text("abc123\n", encoding="utf-8")
-
-        assert resolve_git_sha(git_dir) == "abc123"
-
-    @allure.story("Archive metadata")
-    @allure.title("resolve_git_sha follows a linked-worktree .git pointer and resolves the ref via commondir")
-    def test_linked_worktree_pointer(self, tmp_path: Path):
-        common = tmp_path / "main" / ".git"
-        (common / "refs" / "heads").mkdir(parents=True)
-        sha = "b3afacb2aff15d5c830077b6da4a2230cdabac3e"
-        (common / "refs" / "heads" / "wt-branch").write_text("{0}\n".format(sha), encoding="utf-8")
-        wt_git_dir = common / "worktrees" / "wt"
-        wt_git_dir.mkdir(parents=True)
-        (wt_git_dir / "HEAD").write_text("ref: refs/heads/wt-branch\n", encoding="utf-8")
-        (wt_git_dir / "commondir").write_text("../..\n", encoding="utf-8")
-        worktree = tmp_path / "wt"
-        worktree.mkdir()
-        (worktree / ".git").write_text("gitdir: {0}\n".format(wt_git_dir), encoding="utf-8")
-
-        assert resolve_git_sha(worktree / ".git") == sha
-
-    @allure.story("Archive metadata")
-    @allure.title("resolve_git_sha returns the empty string when the .git pointer is unreadable")
-    def test_missing_pointer_returns_empty(self, tmp_path: Path):
-        assert resolve_git_sha(tmp_path / "absent" / ".git") == ""
+        assert current_git_sha() == "abc123"

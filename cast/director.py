@@ -149,10 +149,6 @@ class Director(BasePerformer):
         """Register an Actor agent for an NPC."""
         self._actors[npc_uuid] = actor
 
-    def schedule_event(self, event: event_mod.GameEvent) -> UUID:
-        """Convenience wrapper to schedule an event."""
-        return self._event_manager.schedule(event)
-
     # ------------------------------------------------------------------
     # Internal
     # ------------------------------------------------------------------

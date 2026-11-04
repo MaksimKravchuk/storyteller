@@ -123,7 +123,7 @@ async def test_anthropic_stream_message_retries_opening() -> None:
     sdk_class.return_value.messages.stream = stream
     sink = RecordingSink()
 
-    with patch("anthropic.AsyncAnthropic", sdk_class), patch("llm.anthropic_client.asyncio.sleep", new=AsyncMock()):
+    with patch("anthropic.AsyncAnthropic", sdk_class), patch("llm.retry.asyncio.sleep", new=AsyncMock()):
         client = AnthropicClient(model="claude-test", api_key="k")
         response = await client.stream_message(list(_USER), on_delta=sink.delta)
 
