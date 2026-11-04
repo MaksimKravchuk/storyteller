@@ -1,4 +1,0 @@
-2026-11-04 18:48:55.561 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:48:55.564 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=_JsonPerformer model=test-model parent=None | prompt_tokens=None completion_tokens=None duration_ms=0
-2026-11-04 18:48:55.565 | WARNING  | cast.base_performer_class:_send_json_strict:206 - Strict structured output returned malformed JSON on attempt 1/2; retrying
-2026-11-04 18:48:55.565 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=_JsonPerformer model=test-model parent=None | prompt_tokens=None completion_tokens=None duration_ms=0

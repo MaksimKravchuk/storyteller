@@ -1,1 +1,1 @@
-{"id":"b76cb1dae578b57f09dd03853790b36f","fullName":"tests.test_models_game.TestPlayerState#test_defaults","name":"A new PlayerState defaults to name 'Player', empty inventory, and no location","status":"passed","testResultsByEnv":{"default":"2199695cdd9ae2c0fe8a38a3fb4800c0"}}
+{"id":"b76cb1dae578b57f09dd03853790b36f","fullName":"tests.test_models_game.TestPlayerState#test_defaults","name":"A new PlayerState defaults to name 'Player', empty inventory, and no location","status":"passed","testResultsByEnv":{"default":"7c8694dacdba265fc6840ad41d9c92ba"}}

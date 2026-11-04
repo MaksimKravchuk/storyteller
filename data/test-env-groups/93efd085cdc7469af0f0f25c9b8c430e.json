@@ -1,1 +1,1 @@
-{"id":"93efd085cdc7469af0f0f25c9b8c430e","fullName":"tests.test_admin_routes_settings#test_get_models_env_fallback","name":"GET /api/settings/models returns env source when no DB override exists","status":"passed","testResultsByEnv":{"default":"ffb746a56b3eb14227a94e6571e2f7f5"}}
+{"id":"93efd085cdc7469af0f0f25c9b8c430e","fullName":"tests.test_admin_routes_settings#test_get_models_env_fallback","name":"GET /api/settings/models returns env source when no DB override exists","status":"passed","testResultsByEnv":{"default":"c6162a02579cb85bc549f3c9944d1d51"}}

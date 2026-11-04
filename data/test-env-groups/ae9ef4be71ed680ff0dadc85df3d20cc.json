@@ -1,1 +1,1 @@
-{"id":"ae9ef4be71ed680ff0dadc85df3d20cc","fullName":"tests.test_npc_ticker.TestNPCScheduleSlot#test_slot_defaults","name":"NPCScheduleSlot defaults activity to an empty string and is hashable (frozen)","status":"passed","testResultsByEnv":{"default":"1e0f1b36b1913b366ce77557b02fc470"}}
+{"id":"ae9ef4be71ed680ff0dadc85df3d20cc","fullName":"tests.test_npc_ticker.TestNPCScheduleSlot#test_slot_defaults","name":"NPCScheduleSlot defaults activity to an empty string and is hashable (frozen)","status":"passed","testResultsByEnv":{"default":"d961c0a6d9c76c23089cf0881dc4c3c7"}}

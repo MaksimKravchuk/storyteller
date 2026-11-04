@@ -1,0 +1,31 @@
+2026-11-04 18:54:20.346 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:54:20.350 | ERROR    | interfaces.web.action_stream:_run_to_queue:60 - Streamed player turn failed
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/threading.py", line 1002, in _bootstrap
+    self._bootstrap_inner()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/threading.py", line 1045, in _bootstrap_inner
+    self.run()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/threading.py", line 982, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/anyio/from_thread.py", line 532, in run_blocking_portal
+    run_eventloop(
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/anyio/_core/_eventloop.py", line 77, in run
+    return async_backend.run(func, args, {}, backend_options)
+  File "/home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2342, in run
+    return runner.run(wrapper())
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 641, in run_until_complete
+    self.run_forever()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 608, in run_forever
+    self._run_once()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/base_events.py", line 1936, in _run_once
+    handle._run()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/asyncio/events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+> File "/home/runner/work/storyteller/storyteller/interfaces/web/action_stream.py", line 55, in _run_to_queue
+    response = await run_turn()
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/unittest/mock.py", line 2240, in _execute_mock_call
+    raise effect
+RuntimeError: db exploded
+2026-11-04 18:54:20.358 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games/game-1/actions/stream "HTTP/1.1 200 OK"

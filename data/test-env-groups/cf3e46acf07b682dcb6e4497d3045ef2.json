@@ -1,1 +1,1 @@
-{"id":"cf3e46acf07b682dcb6e4497d3045ef2","fullName":"tests.test_benchmarks_golden_cli.TestGoldenUpdateArgs#test_golden_update_args","name":"golden-update is discoverable as a scenario-id subcommand","status":"passed","testResultsByEnv":{"default":"7e72f050618aa3121dfcfd5947cdbce2"}}
+{"id":"cf3e46acf07b682dcb6e4497d3045ef2","fullName":"tests.test_benchmarks_golden_cli.TestGoldenUpdateArgs#test_golden_update_args","name":"golden-update is discoverable as a scenario-id subcommand","status":"passed","testResultsByEnv":{"default":"d96fc95920f69a0724721e2a34f68e3d"}}

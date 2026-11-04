@@ -1,1 +1,1 @@
-{"id":"b84dc22cb17500b551f3a4f0ee1db90e","fullName":"tests.test_chronicler_goals.TestChroniclerSchemaUuidPinning#test_invalid_npc_uuid_rejected","name":"GoalDraft rejects a non-UUID npc_uuid at parse time","status":"passed","testResultsByEnv":{"default":"70d39675b4c6fd8bdd0e4e7d0d9582c3"}}
+{"id":"b84dc22cb17500b551f3a4f0ee1db90e","fullName":"tests.test_chronicler_goals.TestChroniclerSchemaUuidPinning#test_invalid_npc_uuid_rejected","name":"GoalDraft rejects a non-UUID npc_uuid at parse time","status":"passed","testResultsByEnv":{"default":"590fef1d1c81c25c9b6bb93d2220bd7b"}}

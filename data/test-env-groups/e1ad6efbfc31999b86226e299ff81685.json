@@ -1,1 +1,1 @@
-{"id":"e1ad6efbfc31999b86226e299ff81685","fullName":"tests.test_web_api#test_start_game_rejects_oversize_inventory_item","name":"POST /api/games rejects an inventory item longer than the per-item cap","status":"passed","testResultsByEnv":{"default":"c18c062897096cefab1bf4ff6858e255"}}
+{"id":"e1ad6efbfc31999b86226e299ff81685","fullName":"tests.test_web_api#test_start_game_rejects_oversize_inventory_item","name":"POST /api/games rejects an inventory item longer than the per-item cap","status":"passed","testResultsByEnv":{"default":"2a0f0254a7763df8b438b0fc549065c6"}}
