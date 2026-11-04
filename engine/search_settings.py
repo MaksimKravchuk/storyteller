@@ -3,8 +3,7 @@
 Mirrors :mod:`engine.model_overrides`: the admin panel stores the operator's
 chosen search provider (and its credentials) in ``admin_settings``; this module
 reads them into a :class:`SearchSettings` that a new :class:`GameEngine` build
-uses to override the env-derived defaults. Restored games do not consult these
-overrides — they keep whatever provider they started with.
+uses to override the env-derived defaults. Restored games consult them too, so they follow the current admin choice.
 """
 
 from __future__ import annotations

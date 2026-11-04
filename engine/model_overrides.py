@@ -3,8 +3,7 @@
 The admin panel stores per-role model overrides in the ``admin_settings``
 DB table. This module reads them and produces ``ModelConfig`` objects
 keyed by role, for callers that build a new :class:`GameEngine`.
-Restored games do not consult these overrides — they keep whatever
-models they started with.
+Restored games consult them too, so they follow the current admin choice.
 """
 
 from __future__ import annotations
