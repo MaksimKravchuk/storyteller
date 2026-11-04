@@ -67,8 +67,19 @@
           <button type="submit" id="login-btn" class="btn-primary">Log in</button>
           <button type="button" id="signup-btn" class="btn-secondary">Sign up</button>
           <button type="button" id="reset-password-btn" class="btn-quiet">Forgot password?</button>
+          <button type="button" id="send-code-btn" class="btn-quiet">Email me a code</button>
         </div>
-        <p class="hint">Use the email address you were invited with.</p>
+        <p class="hint">Use the email address you were invited with. No password? Get a sign-in code by email.</p>
+      </form>
+      <form id="code-form" hidden>
+        <label for="login-code">Code from the email</label>
+        <input id="login-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code"
+               pattern="[0-9]*" maxlength="10" placeholder="123456" required />
+        <div class="auth-actions">
+          <button type="submit" id="verify-btn" class="btn-primary">Sign in</button>
+          <button type="button" id="change-email-btn" class="btn-secondary">Back</button>
+        </div>
+        <p class="hint">No email? Check spam, or tap "Back" to resend.</p>
       </form>
       <form id="new-password-form" hidden>
         <label for="new-password">New password</label>
