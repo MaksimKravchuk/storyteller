@@ -11,17 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db import tables as tbl
 
 
-def _row_dict(row) -> dict:  # type: ignore[no-untyped-def]
-    """Convert a SQLAlchemy mapping row to a plain dict."""
-    return dict(row)
-
-
 async def load_first_row(session: AsyncSession, table: Any, game_state_id: str) -> dict | None:
     """Load the first row from a table filtered by game_state_id."""
     stmt = select(table).where(table.c.game_state_id == game_state_id)
     query = await session.execute(stmt)
     row = query.mappings().first()
-    return _row_dict(row) if row else None
+    return dict(row) if row else None
 
 
 def count_stmt(table, game_state_id: str):  # type: ignore[no-untyped-def]
@@ -62,11 +57,11 @@ async def joined_rows(session: AsyncSession, table: Any, session_id: str, order_
     if order_col is not None:
         stmt = stmt.order_by(order_col)
     rows = await session.execute(stmt)
-    return list(map(_row_dict, rows.mappings()))
+    return list(map(dict, rows.mappings()))
 
 
 async def joined_rows_by_gs(session: AsyncSession, table: Any, game_state_id: str) -> list[dict]:
     """Fetch every row in *table* where ``game_state_id`` matches, as plain dicts."""
     stmt = select(table).where(table.c.game_state_id == game_state_id)
     rows = await session.execute(stmt)
-    return list(map(_row_dict, rows.mappings()))
+    return list(map(dict, rows.mappings()))

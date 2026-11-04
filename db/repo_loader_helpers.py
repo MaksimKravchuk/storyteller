@@ -19,11 +19,6 @@ from models.scene_action_log import SceneActionEntry
 _COL_ID = "id"
 
 
-def _row_dict(row) -> dict:  # type: ignore[no-untyped-def]
-    """Convert a SQLAlchemy mapping row to a plain dict."""
-    return dict(row)
-
-
 def _hydrate_scene_action_log(raw_entries: list[dict] | None) -> list[SceneActionEntry]:
     """Rebuild :class:`SceneActionEntry` objects from a JSONB column.
 
@@ -76,7 +71,7 @@ async def load_gs_and_setting(session: AsyncSession, session_id: str) -> tuple[d
     gs_mapping = gs_query.mappings().first()
     if gs_mapping is None:
         return None
-    gs_row = _row_dict(gs_mapping)
+    gs_row = dict(gs_mapping)
 
     setting_query = await session.execute(
         select(tbl.settings).where(tbl.settings.c.game_state_id == gs_row[_COL_ID]),
@@ -84,7 +79,7 @@ async def load_gs_and_setting(session: AsyncSession, session_id: str) -> tuple[d
     setting_row = setting_query.mappings().first()
     if setting_row is None:
         return None
-    return gs_row, conv_setting.row_to_setting(_row_dict(setting_row))
+    return gs_row, conv_setting.row_to_setting(dict(setting_row))
 
 
 async def load_knowledge_graph(session: AsyncSession, game_state_id: str) -> KnowledgeGraph:
@@ -94,7 +89,7 @@ async def load_knowledge_graph(session: AsyncSession, game_state_id: str) -> Kno
         select(tbl.knowledge_nodes).where(tbl.knowledge_nodes.c.game_state_id == game_state_id),
     )
     for row in nodes_query.mappings():
-        node = conv_knowledge.row_to_knowledge_node(_row_dict(row))
+        node = conv_knowledge.row_to_knowledge_node(dict(row))
         kg.add_node(node)
 
     edges_query = await session.execute(
