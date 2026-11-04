@@ -9,6 +9,7 @@ from uuid import UUID
 from cast import (
     director_context,
     director_dialogue_helpers as dlg_helpers,
+    director_dialogue_anachronism as anachronism,
     director_dialogue_witness,
     emotional_memory,
     known_npcs,
@@ -141,7 +142,9 @@ class DialogueHandler:
         game_state: GameState,
         actors: dict[UUID, Any],
         memory_manager: MemoryManager,
+        anachronism_classifier: Any | None = None,
     ) -> None:
+        self._anachronism_classifier = anachronism_classifier
         self._gs = game_state
         self._actors = actors
         self._memory_manager = memory_manager
@@ -176,6 +179,8 @@ class DialogueHandler:
         sent a redundant retaliation prompt — the combat dice in the
         dialogue call already resolved the aggression.
         """
+        assessment = await anachronism.assess(self._anachronism_classifier, self._gs, player_action)
+        player_action = anachronism.perceived_action(assessment, player_action)
         work_items = self._collect_targets(target_names, player_action, is_aggressive, contest_info)
         dialogue_entries = list(
             await asyncio.gather(*(_execute_npc_dialogue(*wi, self._gs) for wi in work_items)),
@@ -194,6 +199,13 @@ class DialogueHandler:
             location_id=scene.location_id if scene else None,
             subject_id=self._gs.player.uuid,
         )
+        await anachronism.record_encounter(
+            self._memory_manager,
+            self._gs,
+            assessment,
+            player_action,
+            [work_item[0].uuid for work_item in work_items],
+        )
         await director_dialogue_witness.broadcast_cowitness_memories(
             work_items,
             dialogue_entries,
@@ -201,12 +213,11 @@ class DialogueHandler:
             self._gs,
             self._memory_manager,
         )
-        combat_engaged_uuids = {
+        return dialogue_entries, {
             work_item[0].uuid
             for work_item in work_items
             if work_item[3] is not None and work_item[3].contest_type == ContestType.COMBAT
         }
-        return dialogue_entries, combat_engaged_uuids
 
     def targets_match_scene_npcs(self, target_names: list[str]) -> bool:
         """Return True if any target name matches an initialised SceneNPC."""

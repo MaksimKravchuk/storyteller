@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import allure
 
+from cast.anachronism import AnachronismClassifier
 from cast.director import Director
 from defaults.models import ModelConfig
 from engine.engine_wiring import (
@@ -89,6 +90,17 @@ def test_wire_director_builds_director_with_deps(game_state, populated_graph) ->
     assert director._game_state is game_state
     assert director._event_manager is event_manager
     assert director._executor._memory_manager._graph is populated_graph
+
+
+@allure.story("wire_director")
+@allure.title("wire_director gives the dialogue handler a real AnachronismClassifier")
+def test_wire_director_wires_anachronism_classifier(game_state, populated_graph) -> None:
+    """The classifier must reach the DialogueHandler, not just be constructed."""
+    event_manager = EventManager(game_state=game_state, knowledge_graph=populated_graph)
+
+    director = wire_director(_fake_llm_clients(), game_state, event_manager, populated_graph, "English")
+
+    assert isinstance(director._dialogue._anachronism_classifier, AnachronismClassifier)
 
 
 @allure.story("wire_director")

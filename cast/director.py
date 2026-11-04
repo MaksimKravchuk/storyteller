@@ -65,6 +65,7 @@ class Director(BasePerformer):
         item_generator: Any,
         world_chronicler: Any | None = None,
         dramaturge: Any | None = None,
+        anachronism_classifier: Any | None = None,
         actors: dict[UUID, Any] | None = None,
         language: str = "English",
     ):
@@ -86,7 +87,12 @@ class Director(BasePerformer):
             prompts.action_routing,
         )
         self._events = director_events.EventProcessor(game_state, event_manager, memory_manager)
-        self._dialogue = director_dialogue.DialogueHandler(game_state, self._actors, memory_manager)
+        self._dialogue = director_dialogue.DialogueHandler(
+            game_state,
+            self._actors,
+            memory_manager,
+            anachronism_classifier,
+        )
         self._retaliation = director_retaliation.RetaliationHandler(game_state, self._actors)
         self._npc_turns = NPCTurnResolver(game_state, self._actors)
         self._background_ticker = npc_background_tick.NPCBackgroundTicker(game_state, memory_manager)
