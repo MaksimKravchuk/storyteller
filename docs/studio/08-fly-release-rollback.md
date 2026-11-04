@@ -26,7 +26,6 @@ GitHub Actions repository secrets:
 - `FLY_API_TOKEN`
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
-- `SUPABASE_DB_URL` — Supabase session-pooler connection string, used only by `supabase-keepalive.yml` so the Free-plan project is not paused for inactivity.
 
 Fly app secrets / runtime environment:
 

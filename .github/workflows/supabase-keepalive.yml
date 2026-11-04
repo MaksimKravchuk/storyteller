@@ -1,7 +1,7 @@
 name: Supabase keepalive
 
-# Supabase pauses Free-plan projects after ~7 days without user database
-# queries; while paused, player login is down. One query a day keeps it awake.
+# Supabase pauses Free-plan projects after ~7 days without database activity;
+# while paused, player login is down. One Auth request a day keeps it awake.
 on:
   schedule:
     - cron: '17 6 * * *'   # 06:17 UTC every day
@@ -12,13 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Query the Supabase database
+      - name: Ping Supabase Auth
         env:
-          # Session-pooler connection string (IPv4) from the Supabase dashboard "Connect" panel.
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          APP_URL: https://storyteller-quest.fly.dev
         run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "::error::SUPABASE_DB_URL secret is not set"
+          # The Supabase URL and browser key are public: the app serves them to every player.
+          cfg=$(curl -fsS --retry 3 "$APP_URL/api/config/public")
+          url=$(jq -r '.supabase_url' <<<"$cfg")
+          key=$(jq -r '.supabase_publishable_key' <<<"$cfg")
+          # A refresh-token lookup is a real query against the auth tables; a dummy token gets a 400.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            "$url/auth/v1/token?grant_type=refresh_token" \
+            -H "apikey: $key" -H 'Content-Type: application/json' \
+            -d '{"refresh_token":"keepalive"}')
+          echo "Supabase Auth answered HTTP $code"
+          if [ "$code" != "400" ]; then
+            echo "::error::Expected 400 from Supabase Auth, got $code (project paused or down?)"
             exit 1
           fi
-          psql "$SUPABASE_DB_URL" -tAc 'select 1'
