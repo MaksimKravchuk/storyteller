@@ -1,0 +1,1 @@
+{"id":"06b0b7d244a03eecec03b4bde51d5760","fullName":"tests.test_llm_factory.TestClientCache#test_different_key_or_config_returns_new_client","name":"create_llm_client builds separate clients for a different api_key or config","status":"passed","testResultsByEnv":{"default":"d249329f6ec8a34c362bdeac8a83f58f"}}

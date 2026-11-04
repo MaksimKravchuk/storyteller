@@ -1,1 +1,1 @@
-{"id":"72177c9575fc63db6ca8959baa46ccd6","fullName":"tests.test_game_engine#test_apply_character_copies_fields","name":"_apply_character_to_player copies appearance and inventory onto the player state","status":"passed","testResultsByEnv":{"default":"92d9926d9bb2c0b00c3cdda36fe80a11"}}
+{"id":"72177c9575fc63db6ca8959baa46ccd6","fullName":"tests.test_game_engine#test_apply_character_copies_fields","name":"_apply_character_to_player copies appearance and inventory onto the player state","status":"passed","testResultsByEnv":{"default":"0e3fa60c351463a4beca240a1471f528"}}

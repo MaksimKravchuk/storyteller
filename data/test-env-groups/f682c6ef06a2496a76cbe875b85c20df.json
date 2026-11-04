@@ -1,1 +1,1 @@
-{"id":"f682c6ef06a2496a76cbe875b85c20df","fullName":"tests.test_effect_applier.TestRemoveNpcEffect#test_noop_on_missing_npc","name":"REMOVE_NPC targeting an unknown NPC is a silent no-op","status":"passed","testResultsByEnv":{"default":"3140d1ce61e1d0c0d3fdb16f0ee1f1de"}}
+{"id":"f682c6ef06a2496a76cbe875b85c20df","fullName":"tests.test_effect_applier.TestRemoveNpcEffect#test_noop_on_missing_npc","name":"REMOVE_NPC targeting an unknown NPC is a silent no-op","status":"passed","testResultsByEnv":{"default":"00ae4e559057e3458415179c9947df12"}}

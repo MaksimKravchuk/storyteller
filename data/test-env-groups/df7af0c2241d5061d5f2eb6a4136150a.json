@@ -1,1 +1,1 @@
-{"id":"df7af0c2241d5061d5f2eb6a4136150a","fullName":"tests.test_entity_markup.TestWrapEntities#test_russian_inflections","name":"A Russian alias matches every grammatical case via lemmatization","status":"passed","testResultsByEnv":{"default":"418947473993fefab25fdab728029f7c"}}
+{"id":"df7af0c2241d5061d5f2eb6a4136150a","fullName":"tests.test_entity_markup.TestWrapEntities#test_russian_inflections","name":"A Russian alias matches every grammatical case via lemmatization","status":"passed","testResultsByEnv":{"default":"73838f671520379523541f0cd6dea5be"}}

@@ -1,0 +1,12 @@
+2026-11-04 18:48:57.464 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:48:57.470 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games "HTTP/1.1 201 Created"
+2026-11-04 18:48:57.471 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:48:57.476 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+2026-11-04 18:48:57.477 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:48:57.482 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+2026-11-04 18:48:57.483 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:48:57.489 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+2026-11-04 18:48:57.489 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:48:57.495 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"
+2026-11-04 18:48:57.496 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:48:57.501 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games/smoke-game/actions "HTTP/1.1 200 OK"

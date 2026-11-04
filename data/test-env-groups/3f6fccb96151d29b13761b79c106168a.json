@@ -1,1 +1,1 @@
-{"id":"3f6fccb96151d29b13761b79c106168a","fullName":"tests.test_effect_applier.TestItemEffects#test_add_item_empty_item_is_noop","name":"ADD_ITEM is a no-op when the item string is empty","status":"passed","testResultsByEnv":{"default":"cda9322725253e5a99d175140cce3708"}}
+{"id":"3f6fccb96151d29b13761b79c106168a","fullName":"tests.test_effect_applier.TestItemEffects#test_add_item_empty_item_is_noop","name":"ADD_ITEM is a no-op when the item string is empty","status":"passed","testResultsByEnv":{"default":"ec006e26f5dbddf77203472adb55e153"}}

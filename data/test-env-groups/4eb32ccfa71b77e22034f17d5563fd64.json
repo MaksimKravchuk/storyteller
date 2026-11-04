@@ -1,1 +1,1 @@
-{"id":"4eb32ccfa71b77e22034f17d5563fd64","fullName":"tests.test_web_schemas#test_character_input_rejects_oversize_inventory_list","name":"CharacterCreationInput rejects more than 20 inventory items","status":"passed","testResultsByEnv":{"default":"4532fbb4d39e62fb2e37fe73911f0062"}}
+{"id":"4eb32ccfa71b77e22034f17d5563fd64","fullName":"tests.test_web_schemas#test_character_input_rejects_oversize_inventory_list","name":"CharacterCreationInput rejects more than 20 inventory items","status":"passed","testResultsByEnv":{"default":"190eca0dc95eb0103c281d21bc69942e"}}

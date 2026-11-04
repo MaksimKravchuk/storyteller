@@ -1,1 +1,1 @@
-{"id":"97c8ba48b8f9b950d409f5272cacfe77","fullName":"tests.test_benchmarks_pin.TestPinCommand#test_rejects_scenario_mismatch","name":"pin rejects an aggregate whose scenario_id does not match the target","status":"passed","testResultsByEnv":{"default":"2d96c535401c4f39050585aa896bd39c"}}
+{"id":"97c8ba48b8f9b950d409f5272cacfe77","fullName":"tests.test_benchmarks_pin.TestPinCommand#test_rejects_scenario_mismatch","name":"pin rejects an aggregate whose scenario_id does not match the target","status":"passed","testResultsByEnv":{"default":"564971aa2129222b310e69b03cb512ae"}}

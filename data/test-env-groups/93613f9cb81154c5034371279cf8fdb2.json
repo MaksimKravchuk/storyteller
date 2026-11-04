@@ -1,0 +1,1 @@
+{"id":"93613f9cb81154c5034371279cf8fdb2","fullName":"tests.test_admin_lifecycle#test_dashboard_is_served_by_player_app","name":"The player app serves the admin dashboard at /admin and /admin/","status":"passed","testResultsByEnv":{"default":"a0c8268e3851141c06b91553df791923"}}

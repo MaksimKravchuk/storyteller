@@ -1,1 +1,0 @@
-2026-11-04 18:45:46.633 | WARNING  | cast._chronicler_goals:apply_goal_drafts:60 - Chronicler GoalDraft skipped: unknown npc_uuid 'c4745785-181d-4931-8fd5-bd79294cb168'

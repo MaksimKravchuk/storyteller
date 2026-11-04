@@ -1,1 +1,1 @@
-{"id":"f6c1697d4ac2e875acecf179dd1d660a","fullName":"tests.test_models_game.TestSceneNPCInit#test_uuid_arg_stored","name":"Constructing a SceneNPC with an explicit UUID stores it on the model","status":"passed","testResultsByEnv":{"default":"f64da4959f07807e847d2fe59317f8f2"}}
+{"id":"f6c1697d4ac2e875acecf179dd1d660a","fullName":"tests.test_models_game.TestSceneNPCInit#test_uuid_arg_stored","name":"Constructing a SceneNPC with an explicit UUID stores it on the model","status":"passed","testResultsByEnv":{"default":"99541bacfd78dc118dbab22417c6ab46"}}

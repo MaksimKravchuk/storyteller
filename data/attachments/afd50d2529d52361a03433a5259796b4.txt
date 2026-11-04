@@ -1,0 +1,2 @@
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+INFO     httpx:_client.py:1740 HTTP Request: DELETE http://test/admin/api/settings/search "HTTP/1.1 200 OK"

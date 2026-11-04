@@ -1,2 +1,0 @@
-2026-11-04 18:45:56.526 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:45:56.529 | WARNING  | llm.retry:call_with_retry:60 - anthropic_client transient error (attempt 1/3); retrying in 2.0s: Grammar compilation is temporarily unavailable.
