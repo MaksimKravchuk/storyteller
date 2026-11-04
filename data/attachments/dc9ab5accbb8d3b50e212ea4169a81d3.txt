@@ -1,0 +1,2 @@
+2026-11-04 18:39:30.067 | INFO     | pymorphy3.opencorpora_dict.wrapper:__init__:21 - Loading dictionaries from /home/runner/work/storyteller/storyteller/.venv/lib/python3.11/site-packages/pymorphy3_dicts_ru/data
+2026-11-04 18:39:30.102 | INFO     | pymorphy3.opencorpora_dict.wrapper:__init__:25 - format: 2.4, revision: 417150, updated: 2022-01-08T22:09:24.565962

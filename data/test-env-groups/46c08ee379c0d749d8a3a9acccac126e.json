@@ -1,1 +1,0 @@
-{"id":"46c08ee379c0d749d8a3a9acccac126e","fullName":"tests.test_benchmarks_archive.TestResolveGitSha#test_linked_worktree_pointer","name":"resolve_git_sha follows a linked-worktree .git pointer and resolves the ref via commondir","status":"passed","testResultsByEnv":{"default":"9516fbaa485c70932c1a537122e1d95b"}}

@@ -1,1 +1,1 @@
-{"id":"77b6cf50946de05a043531a36e533cc7","fullName":"tests.test_web_api#test_archive_game_happy_path","name":"POST /api/games/{id}/archive returns 204 when the caller owns the game","status":"passed","testResultsByEnv":{"default":"23bcb60601be363fff0a0a077891a771"}}
+{"id":"77b6cf50946de05a043531a36e533cc7","fullName":"tests.test_web_api#test_archive_game_happy_path","name":"POST /api/games/{id}/archive returns 204 when the caller owns the game","status":"passed","testResultsByEnv":{"default":"c69337741179b50bd04aeaecca478038"}}

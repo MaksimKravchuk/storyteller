@@ -1,1 +1,1 @@
-{"id":"6c5aaae2c2f8f6c14484b7549634dd10","fullName":"tests.test_admin_routes_settings#test_post_set_model_provider_key_missing","name":"POST returns 409 when the chosen provider has no API key configured","status":"passed","testResultsByEnv":{"default":"23dd467890285e8e36fd0d9b7b29bcff"}}
+{"id":"6c5aaae2c2f8f6c14484b7549634dd10","fullName":"tests.test_admin_routes_settings#test_post_set_model_provider_key_missing","name":"POST returns 409 when the chosen provider has no API key configured","status":"passed","testResultsByEnv":{"default":"884dc8e7d3981f714a1598b801f3ba30"}}

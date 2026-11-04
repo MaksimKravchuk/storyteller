@@ -1,1 +1,1 @@
-{"id":"0323d3cc00b816ede394a4ce682cc718","fullName":"tests.test_web_api#test_start_game_happy_path","name":"POST /api/games returns 201 with the opening snapshot on success","status":"passed","testResultsByEnv":{"default":"67a924ba6dee6efd1b39089cb3b67b3e"}}
+{"id":"0323d3cc00b816ede394a4ce682cc718","fullName":"tests.test_web_api#test_start_game_happy_path","name":"POST /api/games returns 201 with the opening snapshot on success","status":"passed","testResultsByEnv":{"default":"c4d1131045fcb7b091aaef89101edc8d"}}

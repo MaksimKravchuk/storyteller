@@ -1,1 +1,1 @@
-{"id":"3cfb995883a14fbe8df832c2cf7882a9","fullName":"tests.test_actor_prompt.TestActorPromptOutputModes#test_goal_section_parity","name":"English and Russian Actor templates declare the same goal vars","status":"passed","testResultsByEnv":{"default":"7c1d3319ce72f7cf20f2bc7e373d3ff6"}}
+{"id":"3cfb995883a14fbe8df832c2cf7882a9","fullName":"tests.test_actor_prompt.TestActorPromptOutputModes#test_goal_section_parity","name":"English and Russian Actor templates declare the same goal vars","status":"passed","testResultsByEnv":{"default":"017343679264538b80b75713043a767a"}}

@@ -1,0 +1,3 @@
+2026-11-04 18:39:23.968 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:39:23.989 | WARNING  | cast.scene_swap:consolidate_outgoing_scene:42 - Scene action log has 1 entries but no present NPC resolved at swap (location=732d18e7-1a68-4741-bbb8-52aed581cf2f); scene memory will be dropped
+2026-11-04 18:39:24.018 | WARNING  | cast.scene_swap:consolidate_outgoing_scene:42 - Scene action log has 1 entries but no present NPC resolved at swap (location=732d18e7-1a68-4741-bbb8-52aed581cf2f); scene memory will be dropped

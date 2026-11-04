@@ -1,1 +1,1 @@
-{"id":"c6fb72d37e8aebb8c571f8e2589ef2e3","fullName":"tests.test_prompt_localization.TestResolveLocale#test_resolve_russian_aliases","name":"resolve_locale maps common Russian aliases onto Locale.RUSSIAN","status":"passed","testResultsByEnv":{"default":"9ce1e97f21d44dbfb8ccd5a1c2e11a9b"}}
+{"id":"c6fb72d37e8aebb8c571f8e2589ef2e3","fullName":"tests.test_prompt_localization.TestResolveLocale#test_resolve_russian_aliases","name":"resolve_locale maps common Russian aliases onto Locale.RUSSIAN","status":"passed","testResultsByEnv":{"default":"28ffe25b5c7df25532dd4e6ce3f9b966"}}

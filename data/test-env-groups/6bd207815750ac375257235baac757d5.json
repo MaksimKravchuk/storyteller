@@ -1,1 +1,0 @@
-{"id":"6bd207815750ac375257235baac757d5","fullName":"tests.test_benchmarks_archive.TestReadHeadSha#test_loose_ref_followed","name":"read_head_sha follows a 'ref:' HEAD into a loose-ref file inside the git directory","status":"passed","testResultsByEnv":{"default":"c44e58e6feb137231274d3f2c07499cd"}}

@@ -1,1 +1,1 @@
-{"id":"302136edbcf3299e0c421bec27d7c353","fullName":"tests.test_config.TestDefaultsExports#test_modelconfig_importable","name":"The ModelConfig dataclass is importable from defaults.models","status":"passed","testResultsByEnv":{"default":"990612a67197180496dba1af18489e8b"}}
+{"id":"302136edbcf3299e0c421bec27d7c353","fullName":"tests.test_config.TestDefaultsExports#test_modelconfig_importable","name":"The ModelConfig dataclass is importable from defaults.models","status":"passed","testResultsByEnv":{"default":"57b33ec8705a35685e2083bff695bbaa"}}

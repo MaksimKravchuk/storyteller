@@ -1,2 +1,0 @@
-2026-11-04 18:31:30.824 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:31:30.829 | ERROR    | knowledge.memory:_summarize_one:337 - Summary node a61b18b3-4289-4fed-9d16-95781f274958 created for unregistered NPC 39adca1a-8f64-4fe9-b380-6f7a32ff2824; WITNESSED edge dropped, NPC has no scene memory — NPC registration is out of sync

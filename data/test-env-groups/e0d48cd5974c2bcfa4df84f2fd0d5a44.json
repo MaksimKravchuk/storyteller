@@ -1,1 +1,1 @@
-{"id":"e0d48cd5974c2bcfa4df84f2fd0d5a44","fullName":"tests.test_benchmarks_bayes.TestElementInferiority#test_no_data","name":"reports 'none' resolution and a coin-flip when no data exists either way","status":"passed","testResultsByEnv":{"default":"531f62ae8e640a6e25421ef4f5c8cda7"}}
+{"id":"e0d48cd5974c2bcfa4df84f2fd0d5a44","fullName":"tests.test_benchmarks_bayes.TestElementInferiority#test_no_data","name":"reports 'none' resolution and a coin-flip when no data exists either way","status":"passed","testResultsByEnv":{"default":"0892b5e50cb709101e48c0b2885c833e"}}

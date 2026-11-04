@@ -1,1 +1,1 @@
-{"id":"c56227541405ff2fad52748aaa06a711","fullName":"tests.test_web_api#test_post_action_rejects_empty_action","name":"POST /api/games/{id}/actions rejects an empty action body with HTTP 422","status":"passed","testResultsByEnv":{"default":"f9b9a085ed79d74cd92ae92c6428b6bc"}}
+{"id":"c56227541405ff2fad52748aaa06a711","fullName":"tests.test_web_api#test_post_action_rejects_empty_action","name":"POST /api/games/{id}/actions rejects an empty action body with HTTP 422","status":"passed","testResultsByEnv":{"default":"ea3311be5d27b42940904e183480ccda"}}

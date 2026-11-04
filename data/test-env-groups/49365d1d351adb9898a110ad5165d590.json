@@ -1,1 +1,1 @@
-{"id":"49365d1d351adb9898a110ad5165d590","fullName":"tests.test_admin#test_middleware_does_not_block_dashboard","name":"Non-API dashboard routes bypass the admin check even when beta auth is enabled","status":"passed","testResultsByEnv":{"default":"161af54de33ecff7032da5838d366fd8"}}
+{"id":"49365d1d351adb9898a110ad5165d590","fullName":"tests.test_admin#test_middleware_does_not_block_dashboard","name":"Non-API dashboard routes bypass the admin check even when beta auth is enabled","status":"passed","testResultsByEnv":{"default":"e9b58452097ba2577de01fda7ea25022"}}

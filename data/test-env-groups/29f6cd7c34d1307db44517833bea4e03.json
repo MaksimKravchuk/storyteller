@@ -1,1 +1,1 @@
-{"id":"29f6cd7c34d1307db44517833bea4e03","fullName":"tests.test_web_schemas#test_character_input_strips_inventory","name":"CharacterCreationInput trims whitespace and drops empty inventory items","status":"passed","testResultsByEnv":{"default":"7db07f22cb067e56fdfc1b7f1a18bc3d"}}
+{"id":"29f6cd7c34d1307db44517833bea4e03","fullName":"tests.test_web_schemas#test_character_input_strips_inventory","name":"CharacterCreationInput trims whitespace and drops empty inventory items","status":"passed","testResultsByEnv":{"default":"2731d51fa41fd3cb6fede243504d16c3"}}

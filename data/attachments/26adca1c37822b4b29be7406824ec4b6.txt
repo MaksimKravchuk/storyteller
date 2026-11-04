@@ -1,3 +1,0 @@
-2026-11-04 18:31:43.712 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:31:43.713 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=NPC-A model=gpt-test parent=None | prompt_tokens=None completion_tokens=None duration_ms=0
-2026-11-04 18:31:43.713 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=NPC-B model=gpt-test parent=None | prompt_tokens=None completion_tokens=None duration_ms=0

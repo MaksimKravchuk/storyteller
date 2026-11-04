@@ -1,0 +1,4 @@
+2026-11-04 18:39:35.674 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:39:35.678 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: GET http://testserver/api/games/current "HTTP/1.1 404 Not Found"
+2026-11-04 18:39:35.679 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:39:35.682 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: GET http://testserver/api/games/current "HTTP/1.1 404 Not Found"

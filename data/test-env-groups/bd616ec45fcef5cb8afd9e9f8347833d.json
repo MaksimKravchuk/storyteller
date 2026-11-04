@@ -1,1 +1,1 @@
-{"id":"bd616ec45fcef5cb8afd9e9f8347833d","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_slash_wait_command","name":"The '/wait' slash command is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"58f876ad60f08d1c3c20a75ae72ba7df"}}
+{"id":"bd616ec45fcef5cb8afd9e9f8347833d","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_slash_wait_command","name":"The '/wait' slash command is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"b67dd013e2a084324ef010e1c8aaae8f"}}

@@ -1,1 +1,1 @@
-{"id":"9990cb9039fc567134e7427354dcca4f","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_importable","name":"The AI_MODELS registry is importable from defaults.models","status":"passed","testResultsByEnv":{"default":"39cd3e7c451d5757fea08984d34d1a9d"}}
+{"id":"9990cb9039fc567134e7427354dcca4f","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_importable","name":"The AI_MODELS registry is importable from defaults.models","status":"passed","testResultsByEnv":{"default":"1b65c8636f8d28ab32b486941906988f"}}

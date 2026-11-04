@@ -1,1 +1,1 @@
-{"id":"2da5bd7a308139ac38a5507182f4add8","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_stealth_type","name":"Stealth is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"55f0be9a80bea019bd03e6af89d25449"}}
+{"id":"2da5bd7a308139ac38a5507182f4add8","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_stealth_type","name":"Stealth is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"f63ea123d9e240c4c8760cb4df3c3e03"}}

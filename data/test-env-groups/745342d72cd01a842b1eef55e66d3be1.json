@@ -1,1 +1,1 @@
-{"id":"745342d72cd01a842b1eef55e66d3be1","fullName":"tests.test_web_character#test_builder_handles_empty_state","name":"build_character_info returns an empty payload for a fresh GameState","status":"passed","testResultsByEnv":{"default":"f8f2bdbb7d55a569d9e0a12f0b1118b3"}}
+{"id":"745342d72cd01a842b1eef55e66d3be1","fullName":"tests.test_web_character#test_builder_handles_empty_state","name":"build_character_info returns an empty payload for a fresh GameState","status":"passed","testResultsByEnv":{"default":"bc80ff79653035c8be4eb52800a3cf22"}}

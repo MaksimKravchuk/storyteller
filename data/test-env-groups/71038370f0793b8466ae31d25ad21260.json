@@ -1,1 +1,1 @@
-{"id":"71038370f0793b8466ae31d25ad21260","fullName":"tests.test_web_api#test_get_character_template","name":"GET /api/character-template returns the canned template character","status":"passed","testResultsByEnv":{"default":"91b0d11d5a3b13a5c613e505868e4d90"}}
+{"id":"71038370f0793b8466ae31d25ad21260","fullName":"tests.test_web_api#test_get_character_template","name":"GET /api/character-template returns the canned template character","status":"passed","testResultsByEnv":{"default":"595a581a805ba59e984cdd8dc15e1454"}}

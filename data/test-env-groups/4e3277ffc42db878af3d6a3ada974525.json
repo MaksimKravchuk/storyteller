@@ -1,1 +1,1 @@
-{"id":"4e3277ffc42db878af3d6a3ada974525","fullName":"tests.test_engine_wiring#test_create_llm_clients_returns_triple","name":"create_llm_clients returns an LLMClients triple containing one client per role","status":"passed","testResultsByEnv":{"default":"8d06fdca86fbb25751a33360f90eefca"}}
+{"id":"4e3277ffc42db878af3d6a3ada974525","fullName":"tests.test_engine_wiring#test_create_llm_clients_returns_triple","name":"create_llm_clients returns an LLMClients triple containing one client per role","status":"passed","testResultsByEnv":{"default":"984a0fea0720b83d38089d64541c19ee"}}

@@ -1,0 +1,2 @@
+2026-11-04 18:39:32.095 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:39:32.097 | ERROR    | cast.npc_generator:_resolve_npc_location_id:81 - NPCGenerator: scene.location_id is UNKNOWN_SCENE_LOCATION and player has no location; NPC will be created with location_id=None

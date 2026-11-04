@@ -1,1 +1,1 @@
-{"id":"b9256ee673fd982defdaa292f0e61448","fullName":"tests.test_web_mature_content#test_me_reports_mature_content","name":"GET /api/me reports the account's mature-content switch","status":"passed","testResultsByEnv":{"default":"4a9898f9ba3d98458528b66f60af2b17"}}
+{"id":"b9256ee673fd982defdaa292f0e61448","fullName":"tests.test_web_mature_content#test_me_reports_mature_content","name":"GET /api/me reports the account's mature-content switch","status":"passed","testResultsByEnv":{"default":"a78059798ef042eb5784385d72bebad8"}}
