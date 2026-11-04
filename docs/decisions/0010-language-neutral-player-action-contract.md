@@ -93,3 +93,7 @@ What future agents must preserve:
 - `models/npc_card.py`
 - `prompts/locales.py`
 - `docs/decisions/0006-player-dashboard-gui.md`
+
+## Amendment (2026-10-04): hostile NPC intents
+
+Decision owner: Max. `intent` gains `attack` and `steal`, both valid only for `entity_kind = npc` (pairs `attack→npc`, `steal→npc`). Their EN/RU phrases live in `cast/player_gesture_phrases.py` beside the others ("attack {0}" / "напасть на {0}", "steal from {0}" / "обокрасть {0}") and flow through the unchanged turn pipeline — the Director already classifies combat and theft from free text. All guardrails above still apply; the v1 nominative-case limitation of the Russian phrases applies to these too. Verification: `tests/test_web_schemas.py` (new pairs accepted, `attack/steal→poi|item` rejected), `tests/test_player_gestures.py::test_npc_hostile_intents`.

@@ -36,12 +36,16 @@ class GesturePhrases:
 
     examine: str  # "examine {0}"
     talk: str  # "talk to {0}"
+    attack: str  # "attack {0}"
+    steal: str  # "steal from {0}"
     move: str  # "go to {0}"
 
 
 _ENGLISH = GesturePhrases(
     examine="examine {0}",
     talk="talk to {0}",
+    attack="attack {0}",
+    steal="steal from {0}",
     move="go to {0}",
 )
 
@@ -49,6 +53,8 @@ _ENGLISH = GesturePhrases(
 _RUSSIAN = GesturePhrases(
     examine="осмотреть {0}",
     talk="поговорить с {0}",
+    attack="напасть на {0}",
+    steal="обокрасть {0}",
     move="пойти к {0}",
 )
 
