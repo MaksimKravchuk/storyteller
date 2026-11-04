@@ -1461,7 +1461,7 @@ async def test_process_turn_commits_before_returning_response() -> None:
     engine.process_action = AsyncMock(return_value="You look around.")
     engine.assert_running = MagicMock(return_value=(game_state, MagicMock(), MagicMock(all_events=[])))
 
-    with patch("engine.session_ops.create_engine_from_state", new=AsyncMock(return_value=engine)):
+    with patch("engine.session_ops.restore_engine_with_admin_settings", new=AsyncMock(return_value=engine)):
         response = await service.process_turn_for_player(
             repo=repo,
             cfg=MagicMock(),

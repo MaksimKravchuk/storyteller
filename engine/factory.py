@@ -124,9 +124,8 @@ async def create_engine_from_state(
 ) -> GameEngine:
     """Build a GameEngine and restore it from previously saved state.
 
-    DB admin-settings overrides are intentionally NOT consulted here:
-    a restored game keeps the models it started with (as derived from
-    env/Config), so operator model switches only affect new games.
+    DB admin-settings overrides are NOT consulted here (no repo access);
+    web callers go through ``engine.session_ops.restore_engine_with_admin_settings``.
 
     The benchmark harness's temperature-pinning path does NOT use this
     helper — it calls :func:`create_engine` with ``temperature_override``
