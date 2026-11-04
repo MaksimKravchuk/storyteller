@@ -92,7 +92,7 @@ async def _resolve_offscreen_contest(ctx: TickContext, actor: NPCCard, target: N
             ctx.game_state,
         )
     if predicted is not None:
-        commit_outcome(target, predicted)
+        commit_outcome(actor, target, predicted, ctx.game_state.turn_count)
     record_offscreen_progress(actor, hours_advanced, "contest vs {0}".format(target.name))
     maybe_complete_kill_goal(actor, target, ctx.game_state)
 

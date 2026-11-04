@@ -53,7 +53,17 @@ def drift_relationships(
     """Nudge the NPC's relationship toward every subject of its charged memories."""
     for subject_id, valence_sum in _net_valence_by_subject(npc, memories, now).items():
         relationship = _ensure_relationship(npc, subject_id, turn)
-        _apply_intensity(relationship, _intensity_target(valence_sum))
+        _apply_intensity(relationship, math.tanh(valence_sum / MOOD_SATURATION) * _DRIFT_SCALE)
+
+
+def shift_relationship(npc: NPCCard, subject_id: UUID, delta: int, *, turn: int | None = None) -> None:
+    """Step the NPC's relationship toward ``subject_id`` by ``delta`` for one discrete event.
+
+    A witnessed harm or kindness is one whole-step move, clamped and
+    re-banded like drift (structural kinds keep their kind).
+    """
+    relationship = _ensure_relationship(npc, subject_id, turn)
+    _apply_intensity(relationship, relationship.intensity + delta)
 
 
 def _net_valence_by_subject(npc: NPCCard, memories: list[KnowledgeNode], now: float) -> dict[UUID, float]:
@@ -73,10 +83,6 @@ def _net_valence_by_subject(npc: NPCCard, memories: list[KnowledgeNode], now: fl
             continue
         totals[subject_id] += memory_contribution(npc.values_vector, memory, now)
     return totals
-
-
-def _intensity_target(valence_sum: float) -> float:
-    return math.tanh(valence_sum / MOOD_SATURATION) * _DRIFT_SCALE
 
 
 def _ensure_relationship(npc: NPCCard, subject_id: UUID, turn: int | None) -> Relationship:
