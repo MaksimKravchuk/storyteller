@@ -49,9 +49,9 @@ Telegram and CLI clients were retired (ADR-0004); do not add new clients.
   `admin_route_helpers.open_repo(request)` / `session_scope(request)` and
   reply with `admin_json._json_response` (copy `admin_routes_detail.py`).
 - Register a new route as one row in the `_ROUTES` table in `admin.py`.
-- Keep handler modules small: split validation and helpers into sibling
-  modules (`admin_routes_settings_validation.py`,
-  `admin_routes_settings_search_helpers.py`) to stay inside WPS limits.
+- Keep a feature's helpers in its route module; split out only genuinely
+  shared code (`admin_routes_settings_validation.py`, `admin_route_helpers.py`).
+  `max-module-members` is 15, so do not split just to fit the lint limit.
 - Allowed admin values come from their owner, e.g.
   `db.repo_settings_search.ALLOWED_SEARCH_PROVIDERS`.
 
