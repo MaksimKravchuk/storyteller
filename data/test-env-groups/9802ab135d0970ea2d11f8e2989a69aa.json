@@ -1,1 +1,1 @@
-{"id":"9802ab135d0970ea2d11f8e2989a69aa","fullName":"tests.test_relationship_model.TestRelationshipIntensity#test_min_intensity_accepted","name":"Minimum intensity of -3 is accepted","status":"passed","testResultsByEnv":{"default":"b890d0e654cd5d439d1c75691b5c4203"}}
+{"id":"9802ab135d0970ea2d11f8e2989a69aa","fullName":"tests.test_relationship_model.TestRelationshipIntensity#test_min_intensity_accepted","name":"Minimum intensity of -3 is accepted","status":"passed","testResultsByEnv":{"default":"818707e2a3aad5fc4c4da4ee3839bd1b"}}

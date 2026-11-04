@@ -1,1 +1,1 @@
-{"id":"b4ff7019162d870b7d64b987c270f858","fullName":"tests.test_scene_place.TestFormatKnownPlaces#test_empty","name":"No known places renders an empty string so the prompt section is dropped","status":"passed","testResultsByEnv":{"default":"9b536234c21c72a1efe5025be9f7b9d5"}}
+{"id":"b4ff7019162d870b7d64b987c270f858","fullName":"tests.test_scene_place.TestFormatKnownPlaces#test_empty","name":"No known places renders an empty string so the prompt section is dropped","status":"passed","testResultsByEnv":{"default":"92c028be48f46c5402b3325ab2968fa2"}}

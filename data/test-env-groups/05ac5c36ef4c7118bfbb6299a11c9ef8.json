@@ -1,1 +1,1 @@
-{"id":"05ac5c36ef4c7118bfbb6299a11c9ef8","fullName":"tests.test_knowledge.TestKnowledgeScopeOrdering#test_local_lt_city","name":"KnowledgeScope.LOCAL is ordered strictly below KnowledgeScope.CITY","status":"passed","testResultsByEnv":{"default":"6357fe3220d2b044c97c8365f721fd3b"}}
+{"id":"05ac5c36ef4c7118bfbb6299a11c9ef8","fullName":"tests.test_knowledge.TestKnowledgeScopeOrdering#test_local_lt_city","name":"KnowledgeScope.LOCAL is ordered strictly below KnowledgeScope.CITY","status":"passed","testResultsByEnv":{"default":"71c9a1d88cac3e68b34281c4149789eb"}}

@@ -1,1 +1,1 @@
-{"id":"de89d0faeb30bfa54d86146a937d0718","fullName":"tests.test_knowledge.TestKnowledgeNode#test_salience_out_of_range_rejected","name":"A KnowledgeNode rejects salience outside the [0, 1] range","status":"passed","testResultsByEnv":{"default":"ef654dc4f59af4fd9e067cbcd6012fbc"}}
+{"id":"de89d0faeb30bfa54d86146a937d0718","fullName":"tests.test_knowledge.TestKnowledgeNode#test_salience_out_of_range_rejected","name":"A KnowledgeNode rejects salience outside the [0, 1] range","status":"passed","testResultsByEnv":{"default":"21735df0310b8de777bdf00fa0c0aae7"}}

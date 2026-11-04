@@ -1,0 +1,1 @@
+2026-11-04 18:31:49.080 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=violence value='not-a-severity' falling_back_to=HIGH

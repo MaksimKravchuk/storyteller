@@ -1,1 +1,1 @@
-{"id":"107e47001d9ea3cb4acc6bedb273f2c5","fullName":"tests.test_beta_web_policy#test_friend_beta_plan_uses_configured_quota_settings","name":"Friend beta plan uses configured quota settings","status":"passed","testResultsByEnv":{"default":"ece34d6ae6c97eecb1b79e4462024eee"}}
+{"id":"107e47001d9ea3cb4acc6bedb273f2c5","fullName":"tests.test_beta_web_policy#test_friend_beta_plan_uses_configured_quota_settings","name":"Friend beta plan uses configured quota settings","status":"passed","testResultsByEnv":{"default":"5835a661dfba6269982be05f489369a8"}}

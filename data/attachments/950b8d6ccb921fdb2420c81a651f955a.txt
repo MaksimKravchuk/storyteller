@@ -1,1 +1,0 @@
-2026-11-04 18:27:22.462 | WARNING  | cast._npc_generator_goals:build_life_goal:83 - NPCGenerator: dropping goal of kind 'avoid' for role 'wary trader' (not allowed at creation)

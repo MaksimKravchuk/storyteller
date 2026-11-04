@@ -1,1 +1,1 @@
-{"id":"7a4470b8978f980bae53ad10e8df73c0","fullName":"tests.test_models_game.TestGameStateFields#test_has_own_fields","name":"GameState declares fields for turn_count, game_clock, and conversation_log","status":"passed","testResultsByEnv":{"default":"2cbabecd91ad20692d92e94706f4269c"}}
+{"id":"7a4470b8978f980bae53ad10e8df73c0","fullName":"tests.test_models_game.TestGameStateFields#test_has_own_fields","name":"GameState declares fields for turn_count, game_clock, and conversation_log","status":"passed","testResultsByEnv":{"default":"446b175471f0ba496e9b311484ec4964"}}

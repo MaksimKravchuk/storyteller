@@ -1,1 +1,1 @@
-{"id":"3f57888a92a4f5630f9c9f8b8955b949","fullName":"tests.test_director.TestDirectorPrivateAttrs#test_no_public_game_state","name":"Director does not expose game_state as a public attribute","status":"passed","testResultsByEnv":{"default":"24c385ff571f4a2f1a242470c8ab2ecc"}}
+{"id":"3f57888a92a4f5630f9c9f8b8955b949","fullName":"tests.test_director.TestDirectorPrivateAttrs#test_no_public_game_state","name":"Director does not expose game_state as a public attribute","status":"passed","testResultsByEnv":{"default":"2df07bb8edb5e60853c4e76336fc87f3"}}

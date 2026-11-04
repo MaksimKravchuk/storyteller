@@ -1,1 +1,1 @@
-{"id":"edd21f5d11299b5bdc0462f3413f25c6","fullName":"tests.test_repo_settings_mocked#test_set_model_issues_statement","name":"set_model runs an UPSERT-shaped statement through the session","status":"passed","testResultsByEnv":{"default":"db7c931738c4d7839c7084daeb30508d"}}
+{"id":"edd21f5d11299b5bdc0462f3413f25c6","fullName":"tests.test_repo_settings_mocked#test_set_model_issues_statement","name":"set_model runs an UPSERT-shaped statement through the session","status":"passed","testResultsByEnv":{"default":"c1b1673bdec9e765f83e1276da0c9db0"}}

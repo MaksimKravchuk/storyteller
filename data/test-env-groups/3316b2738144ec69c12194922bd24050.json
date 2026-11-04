@@ -1,1 +1,1 @@
-{"id":"3316b2738144ec69c12194922bd24050","fullName":"tests.test_npc_tactical_goal.TestAssignDefendGoals#test_unknown_uuid_is_noop","name":"Unknown UUIDs are silently skipped","status":"passed","testResultsByEnv":{"default":"565a7e45fd8274e976e4d3d1ecfdc610"}}
+{"id":"3316b2738144ec69c12194922bd24050","fullName":"tests.test_npc_tactical_goal.TestAssignDefendGoals#test_unknown_uuid_is_noop","name":"Unknown UUIDs are silently skipped","status":"passed","testResultsByEnv":{"default":"86a6b522ee7b8f46f1e1cdaf677f27f9"}}

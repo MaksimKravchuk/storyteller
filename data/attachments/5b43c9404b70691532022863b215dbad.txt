@@ -1,2 +1,0 @@
-DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
-INFO     aiohttp.access:web_log.py:214 127.0.0.1 [04/Nov/2026:18:27:08 +0000] "POST /api/settings/models HTTP/1.1" 400 197 "-" "Python/3.11 aiohttp/3.13.3"

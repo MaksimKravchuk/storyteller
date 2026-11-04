@@ -1,1 +1,1 @@
-{"id":"ba88bf4d14c12a1d8fd3a843de9b0c18","fullName":"tests.test_web_api#test_current_game_returns_404_when_absent","name":"GET /api/games/current returns 404 when the service has no game for the player","status":"passed","testResultsByEnv":{"default":"befdc4341be55a0e15f613979f46adcf"}}
+{"id":"ba88bf4d14c12a1d8fd3a843de9b0c18","fullName":"tests.test_web_api#test_current_game_returns_404_when_absent","name":"GET /api/games/current returns 404 when the service has no game for the player","status":"passed","testResultsByEnv":{"default":"c69572dd08c7c0b418179c052071afbe"}}

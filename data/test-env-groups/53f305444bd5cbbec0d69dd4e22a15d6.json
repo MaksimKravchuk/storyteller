@@ -1,1 +1,1 @@
-{"id":"53f305444bd5cbbec0d69dd4e22a15d6","fullName":"tests.test_models.TestSetting#test_key_persons_stored","name":"A Setting preserves key_persons entries as supplied dictionaries","status":"passed","testResultsByEnv":{"default":"a22d5f7d28699e759b28f95ba581c1f6"}}
+{"id":"53f305444bd5cbbec0d69dd4e22a15d6","fullName":"tests.test_models.TestSetting#test_key_persons_stored","name":"A Setting preserves key_persons entries as supplied dictionaries","status":"passed","testResultsByEnv":{"default":"4f532a73c4822269715bae482ec9b9fe"}}
