@@ -1,0 +1,9 @@
+DEBUG    asyncio:selector_events.py:54 Using selector: EpollSelector
+ERROR    cast.director_dialogue_anachronism:director_dialogue_anachronism.py:35 Anachronism classifier raised unexpectedly; treating the action as ordinary
+Traceback (most recent call last):
+  File "/home/runner/work/storyteller/storyteller/cast/director_dialogue_anachronism.py", line 28, in assess
+    assessment: AnachronismAssessment = await classifier.act(
+                                        ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/unittest/mock.py", line 2240, in _execute_mock_call
+    raise effect
+RuntimeError: boom

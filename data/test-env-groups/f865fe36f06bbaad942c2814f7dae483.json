@@ -1,1 +1,1 @@
-{"id":"f865fe36f06bbaad942c2814f7dae483","fullName":"tests.test_npc_generator_goals.TestGoalApplier#test_tactical_kind_rejected","name":"Tactical-tier and excluded life kinds are dropped at creation time","status":"passed","testResultsByEnv":{"default":"09f426a422b1619a89a8fd80b08e6f80"}}
+{"id":"f865fe36f06bbaad942c2814f7dae483","fullName":"tests.test_npc_generator_goals.TestGoalApplier#test_tactical_kind_rejected","name":"Tactical-tier and excluded life kinds are dropped at creation time","status":"passed","testResultsByEnv":{"default":"88f9f23916b07acd07e619d12c85bba1"}}

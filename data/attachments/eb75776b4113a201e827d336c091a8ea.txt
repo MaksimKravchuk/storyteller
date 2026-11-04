@@ -1,0 +1,2 @@
+2026-11-04 19:09:16.291 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:16.294 | INFO     | cast.dramaturge:_resolve_verdict:173 - Dramaturge rewrote 1 contradiction(s): ['Caesar was shown with a pistol in the original passage']

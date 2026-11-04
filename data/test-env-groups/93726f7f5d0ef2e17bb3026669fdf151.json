@@ -1,1 +1,1 @@
-{"id":"93726f7f5d0ef2e17bb3026669fdf151","fullName":"tests.test_web_poster_routes#test_route_paint_errors","name":"POST /api/games/{id}/poster maps each refusal to a player-safe status","status":"passed","testResultsByEnv":{"default":"6f5b820c773fe93b26da70640837d9e2"}}
+{"id":"93726f7f5d0ef2e17bb3026669fdf151","fullName":"tests.test_web_poster_routes#test_route_paint_errors","name":"POST /api/games/{id}/poster maps each refusal to a player-safe status","status":"passed","testResultsByEnv":{"default":"dac1af55f326d88aaed88f5e75552953"}}

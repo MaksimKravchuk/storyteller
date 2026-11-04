@@ -1,0 +1,1 @@
+2026-11-04 19:09:21.760 | ERROR    | cast.npc_turn:_filter_successful:239 - NPC turn failed for Alpha (uuid-a): LLM timeout

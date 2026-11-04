@@ -1,1 +1,1 @@
-{"id":"874a8308daff2ae5cbff94543114d547","fullName":"tests.test_beta_web_policy#test_policy_does_not_bypass_checks_for_mock_config","name":"BetaPolicy no longer skips the kill switch for a mock config","status":"passed","testResultsByEnv":{"default":"9acfef0cffc8a15298d1fe878d343702"}}
+{"id":"874a8308daff2ae5cbff94543114d547","fullName":"tests.test_beta_web_policy#test_policy_does_not_bypass_checks_for_mock_config","name":"BetaPolicy no longer skips the kill switch for a mock config","status":"passed","testResultsByEnv":{"default":"8a5781d2a8f572db373cf615ed238c0b"}}

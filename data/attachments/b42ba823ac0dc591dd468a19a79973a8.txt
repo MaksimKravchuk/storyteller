@@ -1,0 +1,400 @@
+2026-11-04 19:09:08.292 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.293 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.295 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.295 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.297 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.298 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.304 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.304 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.405 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.405 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:08.407 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.408 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.409 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.410 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.411 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.412 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:08.413 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.414 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.415 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.415 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.421 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.422 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:08.423 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.424 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:08.425 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.426 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:08.427 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.428 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.430 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.430 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:08.432 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.432 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:08.434 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.434 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:08.437 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.437 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.439 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.439 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:08.441 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.441 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.443 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.443 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.525 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.526 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.528 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.529 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:08.531 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.532 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.533 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.534 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.605 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.606 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:08.608 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.608 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.611 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.611 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:08.613 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.613 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:08.615 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.615 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.617 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.617 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.620 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.620 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:08.622 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.622 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.625 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.625 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:08.627 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.627 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.629 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.629 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.631 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.631 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.633 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.633 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:08.635 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.635 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:08.637 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.637 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.639 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.639 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:08.641 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.641 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:08.766 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.766 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:08.950 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.951 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:08.953 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.953 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:08.955 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.955 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:08.957 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:08.957 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:09.018 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.019 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:09.021 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.021 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:09.070 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.070 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:09.072 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.072 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:09.074 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.075 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:09.078 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.078 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:09.080 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.080 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:09.132 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.132 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:09.136 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.137 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:09.139 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.139 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:09.141 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.141 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:09.144 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.144 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:09.147 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.147 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:09.149 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.149 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:09.151 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.151 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:09.153 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.153 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:09.297 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.298 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:09.301 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.301 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:09.303 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.303 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:09.306 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.306 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:09.356 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.357 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:09.492 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.493 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:09.495 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.496 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:09.498 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.498 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:09.500 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.500 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:09.614 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.615 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:09.619 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.619 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:09.807 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.808 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:09.810 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.810 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:09.812 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.812 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:09.815 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.815 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:09.817 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.818 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:09.918 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.918 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:09.921 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.922 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:09.924 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:09.924 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:10.078 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.079 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:10.176 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.177 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:10.180 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.181 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:10.183 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.183 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:10.275 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.275 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:10.278 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.279 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:10.467 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.467 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:10.550 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.551 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:10.553 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.553 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:10.555 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.556 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:10.640 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.641 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:10.761 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.762 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:10.853 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.854 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:10.929 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.930 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:10.932 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.932 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:10.934 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:10.934 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:11.013 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.014 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.016 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.016 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.030 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.030 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:11.032 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.033 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:11.038 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.038 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.040 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.040 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:11.119 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.120 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.122 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.123 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.173 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.173 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.176 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.176 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:11.178 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.178 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:11.252 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.252 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.333 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.334 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:11.337 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.337 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:11.339 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.339 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:11.395 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.395 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:11.398 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.398 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:11.453 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.454 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:11.456 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.457 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:11.558 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.558 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:11.621 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.621 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:11.624 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.624 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:11.626 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.627 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:11.629 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.629 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:11.723 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.723 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:11.727 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.728 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:11.730 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.730 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:11.795 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.796 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:11.856 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.856 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:11.924 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.924 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:11.927 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.927 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:11.930 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.930 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:11.932 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:11.932 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:12.020 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.021 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:12.023 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.024 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:12.026 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.026 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:12.084 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.085 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:12.087 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.087 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:12.089 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.089 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:12.091 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.092 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:12.094 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.094 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:12.156 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.157 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:12.209 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.209 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:12.376 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.376 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:12.467 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.468 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:12.470 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.471 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:12.548 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.549 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:12.551 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.552 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:12.615 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.615 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:12.721 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.721 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:12.723 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.724 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:12.880 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.881 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:12.884 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.884 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:12.990 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.990 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:12.992 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.993 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:12.995 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:12.995 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:13.180 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.181 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:13.183 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.183 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:13.252 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.252 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:13.321 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.322 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:13.324 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.325 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:13.562 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.563 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:13.658 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.658 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:13.746 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.747 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:13.750 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.750 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:13.821 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.822 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:13.924 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:13.925 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:14.010 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.010 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:14.014 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.014 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:14.091 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.091 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:14.157 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.157 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:14.160 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.160 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:14.163 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.164 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:14.235 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.236 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:14.358 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.358 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:14.426 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.426 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:14.429 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.429 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:14.432 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.432 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:14.596 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.597 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:14.649 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.649 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:14.817 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.818 | INFO     | cast.director_routing:route_action:78 - Director route | tool=wait
+2026-11-04 19:09:14.893 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.894 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:14.989 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.990 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:14.993 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:14.993 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:15.132 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.132 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:15.135 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.135 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 19:09:15.245 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.245 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:15.399 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.399 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 19:09:15.402 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.402 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:15.455 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.455 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:15.457 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.458 | INFO     | cast.director_routing:route_action:78 - Director route | tool=sleep
+2026-11-04 19:09:15.573 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.574 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:15.654 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.655 | INFO     | cast.director_routing:route_action:78 - Director route | tool=other
+2026-11-04 19:09:15.657 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.657 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:15.661 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.661 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact
+2026-11-04 19:09:15.711 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.712 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:15.714 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.715 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:15.765 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.765 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:15.768 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.768 | INFO     | cast.director_routing:route_action:78 - Director route | tool=explore
+2026-11-04 19:09:15.843 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.844 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:15.938 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.938 | INFO     | cast.director_routing:route_action:78 - Director route | tool=examine
+2026-11-04 19:09:15.942 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:15.942 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact

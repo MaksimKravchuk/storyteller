@@ -1,4 +1,0 @@
-2026-11-04 19:00:37.719 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 19:00:37.721 | INFO     | cast.base_performer_class:execute:319 - agent=ItemGenerator parent=None | start
-2026-11-04 19:00:37.722 | INFO     | cast.base_performer_class:execute:336 - agent=ItemGenerator parent=None | done | duration_ms=0
-2026-11-04 19:00:37.722 | WARNING  | cast.director_object_interaction:_persist_delta:120 - _persist_delta: scene.location_id=c4745785-181d-4931-8fd5-bd79294cb168 not in game_state.locations; typed channel skipped

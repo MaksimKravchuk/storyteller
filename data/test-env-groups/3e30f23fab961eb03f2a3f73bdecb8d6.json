@@ -1,1 +1,1 @@
-{"id":"3e30f23fab961eb03f2a3f73bdecb8d6","fullName":"tests.test_knowledge.TestKnowledgeNode#test_custom_salience","name":"A KnowledgeNode accepts an explicit salience score in the [0, 1] range","status":"passed","testResultsByEnv":{"default":"29a2922d5509b7fa8ac5f720e3ef6ae2"}}
+{"id":"3e30f23fab961eb03f2a3f73bdecb8d6","fullName":"tests.test_knowledge.TestKnowledgeNode#test_custom_salience","name":"A KnowledgeNode accepts an explicit salience score in the [0, 1] range","status":"passed","testResultsByEnv":{"default":"f21e8a119eb258fe276e67110254b7f3"}}

@@ -1,1 +1,1 @@
-{"id":"8fc1f9a5259805d4e3033464092a65b7","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_prose_returned_as_is","name":"_strip_markdown_fence returns prose as-is when no fence is present","status":"passed","testResultsByEnv":{"default":"3628244d00e3324754c392ade34e1d24"}}
+{"id":"8fc1f9a5259805d4e3033464092a65b7","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_prose_returned_as_is","name":"_strip_markdown_fence returns prose as-is when no fence is present","status":"passed","testResultsByEnv":{"default":"aa1fa8336cd893092bd5acb0b2a31f76"}}

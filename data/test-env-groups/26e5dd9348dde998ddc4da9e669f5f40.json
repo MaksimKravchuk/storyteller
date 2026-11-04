@@ -1,1 +1,1 @@
-{"id":"26e5dd9348dde998ddc4da9e669f5f40","fullName":"tests.test_benchmarks_bayes.TestScenarioDelta#test_equivalent_when_no_shift","name":"equal means leave the posterior dominated by practical equivalence","status":"passed","testResultsByEnv":{"default":"8fab3c168a938fa875b3ab34e2498779"}}
+{"id":"26e5dd9348dde998ddc4da9e669f5f40","fullName":"tests.test_benchmarks_bayes.TestScenarioDelta#test_equivalent_when_no_shift","name":"equal means leave the posterior dominated by practical equivalence","status":"passed","testResultsByEnv":{"default":"5b938ec589dc4a3c9ab57afc043587c6"}}

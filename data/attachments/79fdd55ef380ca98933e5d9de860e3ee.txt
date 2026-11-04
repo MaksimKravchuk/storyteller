@@ -1,0 +1,2 @@
+2026-11-04 19:09:28.393 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 19:09:28.396 | INFO     | cast.base_performer_class:_send_json:473 - Strict structured outputs unavailable for WorldChronicler; falling back to prompt-based JSON

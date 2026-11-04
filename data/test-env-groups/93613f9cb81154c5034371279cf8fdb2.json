@@ -1,1 +1,1 @@
-{"id":"93613f9cb81154c5034371279cf8fdb2","fullName":"tests.test_admin_lifecycle#test_dashboard_is_served_by_player_app","name":"The player app serves the admin dashboard at /admin and /admin/","status":"passed","testResultsByEnv":{"default":"07582f2aedf023b298c5be174ecdcb9d"}}
+{"id":"93613f9cb81154c5034371279cf8fdb2","fullName":"tests.test_admin_lifecycle#test_dashboard_is_served_by_player_app","name":"The player app serves the admin dashboard at /admin and /admin/","status":"passed","testResultsByEnv":{"default":"f8dafa6be6cf8382c296f7cc61261e10"}}

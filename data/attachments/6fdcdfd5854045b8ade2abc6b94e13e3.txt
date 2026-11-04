@@ -1,0 +1,1 @@
+2026-11-04 19:09:27.317 | WARNING  | interfaces.web.library_rows:_playbill:25 - Library row g1 has an unreadable playbill; showing the plain card

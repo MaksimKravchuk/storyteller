@@ -1,2 +1,0 @@
-2026-11-04 19:00:37.797 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 19:00:37.808 | WARNING  | cast.npc_turn:_parse_npc_response:80 - NPC turn response was not valid JSON: *shoves you back*
