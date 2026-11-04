@@ -1,7 +1,7 @@
 """Tests for the concrete search clients (Wikipedia adapter, Tavily, SearXNG).
 
 The Tavily/SearXNG cases use a hand-rolled async ``httpx.AsyncClient`` fake,
-mirroring the aiohttp fake pattern in ``tests/test_wikipedia_client.py`` — no
+sharing the fake pattern of ``tests/test_wikipedia_client.py`` — no
 network is touched.
 """
 

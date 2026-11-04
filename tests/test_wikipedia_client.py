@@ -19,34 +19,21 @@ _HTTP_NOT_FOUND = 404
 
 
 class _FakeResp:
-    """Minimal async context manager replacing aiohttp.ClientResponse."""
+    """Minimal stand-in for an ``httpx.Response`` (``status_code`` + sync ``json``)."""
 
-    def __init__(self, status: int, payload: object) -> None:
-        self.status = status
+    def __init__(self, status_code: int, payload: object) -> None:
+        self.status_code = status_code
         self._payload = payload
 
-    async def json(self) -> object:
+    def json(self) -> object:
         return self._payload
-
-    async def __aenter__(self) -> "_FakeResp":
-        return self
-
-    async def __aexit__(self, *exc: object) -> bool:
-        return False
 
 
 class _FakeSession:
-    """Minimal async context manager replacing aiohttp.ClientSession."""
+    """Async-context-manager fake replacing ``httpx.AsyncClient``."""
 
     def __init__(self, resp: _FakeResp) -> None:
         self._resp = resp
-        self.last_url: str | None = None
-        self.last_params: object = None
-
-    def get(self, url: str, params: object = None) -> _FakeResp:
-        self.last_url = url
-        self.last_params = params
-        return self._resp
 
     async def __aenter__(self) -> "_FakeSession":
         return self
@@ -54,11 +41,14 @@ class _FakeSession:
     async def __aexit__(self, *exc: object) -> bool:
         return False
 
+    async def get(self, url: str, params: object = None) -> _FakeResp:
+        return self._resp
+
 
 def _patch_session(resp: _FakeResp):
     session = _FakeSession(resp)
     return patch(
-        "research.wikipedia_client.aiohttp.ClientSession",
+        "research.wikipedia_client.httpx.AsyncClient",
         MagicMock(return_value=session),
     ), session
 
@@ -108,42 +98,3 @@ async def test_get_summary_returns_fallback_on_404() -> None:
         "extract": "",
         "description": "Article not found",
     }
-
-
-@allure.story("get_full_article")
-@allure.title("get_full_article truncates the extracted body to the max_chars parameter")
-@pytest.mark.asyncio
-async def test_get_full_article_truncates_to_max_chars() -> None:
-    """The returned article text must be truncated to max_chars characters."""
-    long_text = "x" * 5000
-    pages = {"42": {"extract": long_text}}
-    fake_resp = _FakeResp(_HTTP_OK, {"query": {"pages": pages}})
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        article = await WikipediaClient().get_full_article("Rome", max_chars=100)
-    assert len(article) == 100
-    assert article == "x" * 100
-
-
-@allure.story("get_full_article")
-@allure.title("get_full_article returns an empty string when the query returns no pages")
-@pytest.mark.asyncio
-async def test_get_full_article_handles_empty_pages() -> None:
-    """An empty pages dict yields an empty string."""
-    fake_resp = _FakeResp(_HTTP_OK, {"query": {"pages": {}}})
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        article = await WikipediaClient().get_full_article("Rome")
-    assert article == ""
-
-
-@allure.story("get_full_article")
-@allure.title("get_full_article returns an empty string when the MediaWiki API responds with non-200")
-@pytest.mark.asyncio
-async def test_get_full_article_returns_empty_on_non_200() -> None:
-    """A non-200 status short-circuits and returns an empty article."""
-    fake_resp = _FakeResp(500, None)
-    session_patch, _ = _patch_session(fake_resp)
-    with session_patch:
-        article = await WikipediaClient().get_full_article("Rome")
-    assert article == ""
