@@ -47,12 +47,3 @@ def find_near_duplicate_memory(graph: KnowledgeGraph, npc_id: UUID, new_text: st
         if _jaccard(new_tokens, _tokenize(existing.text)) >= _DEDUP_JACCARD_THRESHOLD:
             return existing
     return None
-
-
-def has_near_duplicate_memory(graph: KnowledgeGraph, npc_id: UUID, new_text: str) -> bool:
-    """Return True when an existing personal memory of *npc_id* is near-identical to *new_text*.
-
-    Uses Jaccard similarity over alphanumeric word tokens; skipping the new write avoids
-    the long-session bloat from repeated dialogue summaries that paraphrase the same topic.
-    """
-    return find_near_duplicate_memory(graph, npc_id, new_text) is not None

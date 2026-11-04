@@ -19,6 +19,7 @@ import pytest
 from cast.data_miner import DataMiner
 from models.setting import Setting
 from research.wikipedia_client import WikipediaClient
+from research.wikipedia_search_client import WikipediaSearchClient
 from tests.e2e._real_llm import real_llm_for
 
 _DISTINCTIVE_NAME = "Lorenzo de' Medici"
@@ -73,7 +74,7 @@ class TestDataMinerRealModel:
         wiki = _mock_wikipedia_with_florence()
         miner = DataMiner(
             llm_client=real_llm_for("data_miner"),
-            wikipedia_client=wiki,
+            search_client=WikipediaSearchClient(wiki),
             language="English",
         )
 
@@ -112,7 +113,7 @@ class TestDataMinerRealModel:
     async def test_real_model_returns_structurally_valid_setting(self):
         miner = DataMiner(
             llm_client=real_llm_for("data_miner"),
-            wikipedia_client=_mock_wikipedia_with_florence(),
+            search_client=WikipediaSearchClient(_mock_wikipedia_with_florence()),
             language="English",
         )
 

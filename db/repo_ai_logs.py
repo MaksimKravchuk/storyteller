@@ -53,18 +53,6 @@ class AILogStore:
         ]
         await self._session.execute(tbl.ai_call_logs.insert(), rows)
 
-    async def max_call_sequence(self, session_id: str, turn_number: int | None) -> int | None:
-        """Return the highest call_sequence for a session+turn, or None."""
-        logs = tbl.ai_call_logs
-        conditions = [logs.c.session_id == session_id]
-        if turn_number is None:
-            conditions.append(logs.c.turn_number.is_(None))
-        else:
-            conditions.append(logs.c.turn_number == turn_number)
-        stmt = select(sa_func.max(logs.c.call_sequence)).where(*conditions)
-        query = await self._session.execute(stmt)
-        return query.scalar()
-
     async def get(
         self,
         session_id: str,
