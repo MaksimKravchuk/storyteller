@@ -31,9 +31,11 @@ the outside (`engine.factory`); it must not hold engine, prompt, or agent logic.
 - `baselines/` — git-tracked pinned per-scenario baselines
   (`<scenario_id>.json`) plus `.calibration.json` (noise floor). Written only by
   `benchmarks pin` / `calibrate` (ADR-0002).
-- `results/` — timestamped per-iteration `*_iterN.json`/`.md` and
+- `results/` — timestamped per-iteration `*_iter*.json`/`.md` and
   `*_aggregate.json`/`.md` archives written by `harness/archive.py`;
-  `set-<name>__` prefixes come from `model_sets/run_sets.sh`.
+  `set-<name>__` prefixes come from `model_sets/run_sets.sh`. Historical
+  archives are tracked in git (`model_sets/` reads them); CI workflows delete
+  them before a run so only fresh results are compared.
 
 # Local Rules
 

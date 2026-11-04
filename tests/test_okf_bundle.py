@@ -33,6 +33,7 @@ _OKF_AGENT_ROOTS = (
 _REQUIRED_AGENT_SECTIONS = ("# Boundary", "# Contents", "# Local Rules", "# Patterns", "# Anti-patterns")
 _DECISIONS_DIR = _REPO_ROOT / "docs" / "decisions"
 _OKF_STATUSES = frozenset(("draft", "stable", "deprecated"))
+_FILE_TOKEN_RE = re.compile(r"`([A-Za-z0-9_.*/-]+\.(?:py|js|css|html|toml|yml|yaml|json|md|sh|mako))`")
 _LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 
@@ -68,6 +69,15 @@ class TestStorytellerOkfAgents:
 
             for section in _REQUIRED_AGENT_SECTIONS:
                 assert section in headings, _message(agent_path, "missing section {0}".format(section))
+
+    @allure.title("Every file an AGENTS file names in backticks still exists")
+    def test_named_files_exist(self) -> None:
+        for agent_path in _okf_agent_paths():
+            for file_token in set(_FILE_TOKEN_RE.findall(agent_path.read_text(encoding="utf-8"))):
+                assert _file_token_exists(agent_path, file_token), _message(
+                    agent_path,
+                    "names missing file {0}".format(file_token),
+                )
 
     @allure.title("Internal markdown links in colocated AGENTS files resolve inside the repo")
     def test_internal_links_resolve_inside_repo(self) -> None:
@@ -106,6 +116,14 @@ class TestStorytellerOkfDecisions:
 
 def _decision_paths() -> list[Path]:
     return sorted(_DECISIONS_DIR.glob("[0-9]*.md"))
+
+
+def _file_token_exists(agent_path: Path, file_token: str) -> bool:
+    if file_token.startswith("/"):
+        return True  # URL route, not a file
+    package_root = _REPO_ROOT / agent_path.relative_to(_REPO_ROOT).parts[0]
+    candidates = (agent_path.parent.glob(file_token), _REPO_ROOT.glob(file_token))
+    return any(any(found) for found in candidates) or any(package_root.glob("**/{0}".format(file_token)))
 
 
 def _governed_paths(decision_path: Path) -> list[str]:

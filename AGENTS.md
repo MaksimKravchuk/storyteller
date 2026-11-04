@@ -22,7 +22,7 @@ Run full local stack:
 ```bash
 docker compose up -d
 # Web UI: http://localhost:8070
-# Admin:  http://localhost:8080
+# Admin:  http://localhost:8070/admin
 docker compose down
 ```
 

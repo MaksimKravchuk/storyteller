@@ -53,8 +53,8 @@ offline. It reuses `benchmarks run`; it must not run scenarios or judges itself.
 - Treating set runs as pinned baselines or `pin`-ning them: set runs swap the
   engine models the baselines record (ADR-0002, ADR-0018).
 - Hard-coding model ids that drift from `defaults/models.py`: `run_sets.sh`
-  still names the retired `claude-sonnet-4-20250514` that #325 removed from
-  the judge panel, while `smoke.py` probes the current `AI_MODELS` entry
+  kept the retired `claude-sonnet-4-20250514` long after #325 removed it from
+  the judge panel. When a model retires, update `run_sets.sh` with it
   (`docs/decisions/0019-refresh-judge-panel-to-current-models.md`).
 
 # Related

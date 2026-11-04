@@ -17,10 +17,10 @@ uv run uvicorn interfaces.web.app:app --reload --host 127.0.0.1 --port 8070
 
 # Run the full stack with Docker Compose (postgres + storyteller)
 # The `storyteller` container runs run_server.py, which boots
-# uvicorn (web UI) and aiohttp (admin) in one process.
+# uvicorn; the admin dashboard is mounted at /admin in the same app.
 docker compose up -d            # postgres + storyteller (web + admin)
 # Web UI:    http://localhost:8070
-# Admin:     http://localhost:8080
+# Admin:     http://localhost:8070/admin
 # Stop:      docker compose down
 
 # Lint / type-check (run individually while iterating)

@@ -61,8 +61,8 @@ or deterministic tests belong in `tests/`, not here.
   `AGENT_TO_MODEL_ATTR == ALL_AGENTS` drift assert in `_real_llm.py`.
 - Letting keys drift between the two maps: a typo'd key silently drops out
   of selection and CI skips the e2e step (see `_agent_matrix.py` docstring).
-- Relying on skips for coverage: `ci.yml` fails loud if `OPENAI_API_KEY` is
-  missing, since all-skipped e2e would pass green with zero real coverage.
+- Relying on skips for coverage: `.github/workflows/ci.yml` fails loud if
+  `OPENAI_API_KEY` is missing, since all-skipped e2e would pass green with zero real coverage.
 
 # Related
 
