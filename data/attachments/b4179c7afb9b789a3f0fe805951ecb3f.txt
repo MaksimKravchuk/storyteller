@@ -1,2 +1,0 @@
-[32m2026-11-04 18:42:35.843[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
-[32m2026-11-04 18:42:35.856[0m | [1mINFO    [0m | [36maiohttp.web_log[0m | session=[33m-[0m | 127.0.0.1 [04/Nov/2026:18:42:35 +0000] "POST /api/settings/models HTTP/1.1" 200 247 "-" "Python/3.11 aiohttp/3.13.3"

@@ -1,1 +1,1 @@
-{"id":"f3cf3308d295c988e1365939f61645d3","fullName":"tests.test_narrator_streaming#test_narrator_without_sink_does_not_stream","name":"Narrator uses the plain send path when no sink is bound","status":"passed","testResultsByEnv":{"default":"eebd7bec3b6cc9b0f2fd8710e45dd8d7"}}
+{"id":"f3cf3308d295c988e1365939f61645d3","fullName":"tests.test_narrator_streaming#test_narrator_without_sink_does_not_stream","name":"Narrator uses the plain send path when no sink is bound","status":"passed","testResultsByEnv":{"default":"e46cce0b785acb9993d8a841840ae625"}}

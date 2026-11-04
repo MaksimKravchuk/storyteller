@@ -1,2 +1,0 @@
-2026-11-04 18:42:51.077 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:42:51.080 | INFO     | cast.base_performer_class:_record_llm_call:71 - LLM | agent=Narrator model=test-model parent=None | prompt_tokens=10 completion_tokens=5 duration_ms=0

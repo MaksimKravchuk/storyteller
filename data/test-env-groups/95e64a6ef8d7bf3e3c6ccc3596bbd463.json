@@ -1,1 +1,1 @@
-{"id":"95e64a6ef8d7bf3e3c6ccc3596bbd463","fullName":"tests.test_player_gestures#test_npc_card_missing_uses_role","name":"npc with no generated card falls back to the scene role","status":"passed","testResultsByEnv":{"default":"6430d9b1c696ebcb8b1a8ed0121e2b48"}}
+{"id":"95e64a6ef8d7bf3e3c6ccc3596bbd463","fullName":"tests.test_player_gestures#test_npc_card_missing_uses_role","name":"npc with no generated card falls back to the scene role","status":"passed","testResultsByEnv":{"default":"1978de3eb3f56690bcd2a7b928593429"}}

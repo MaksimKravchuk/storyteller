@@ -1,2 +1,0 @@
-2026-11-04 18:42:47.980 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:42:47.983 | INFO     | cast.dramaturge:_resolve_verdict:173 - Dramaturge rewrote 1 contradiction(s): ['Guard was called Julius after introducing himself as Marcus']

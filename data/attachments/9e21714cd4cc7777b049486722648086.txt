@@ -1,0 +1,9 @@
+2026-11-04 18:45:55.184 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:45:55.189 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=violence value=<MagicMock name='mock.safety_threshold_violence' id='139893471903376'> falling_back_to=HIGH
+2026-11-04 18:45:55.191 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=sexual value=<MagicMock name='mock.safety_threshold_sexual' id='139893471835408'> falling_back_to=HIGH
+2026-11-04 18:45:55.192 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=sexual_minors value=<MagicMock name='mock.safety_threshold_sexual_minors' id='139893471788240'> falling_back_to=LOW
+2026-11-04 18:45:55.193 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=harassment value=<MagicMock name='mock.safety_threshold_harassment' id='139893476896336'> falling_back_to=HIGH
+2026-11-04 18:45:55.194 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=hate value=<MagicMock name='mock.safety_threshold_hate' id='139893471661904'> falling_back_to=MEDIUM
+2026-11-04 18:45:55.195 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=self_harm value=<MagicMock name='mock.safety_threshold_self_harm' id='139893476952784'> falling_back_to=MEDIUM
+2026-11-04 18:45:55.197 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=illicit value=<MagicMock name='mock.safety_threshold_illicit' id='139893476751056'> falling_back_to=HIGH
+2026-11-04 18:45:55.198 | WARNING  | safety.factory:_severity_from_name:80 - content_safety.threshold_invalid field=prompt_injection value=<MagicMock name='mock.safety_threshold_prompt_injection' id='139893476550160'> falling_back_to=MEDIUM

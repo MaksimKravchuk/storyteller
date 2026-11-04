@@ -1,1 +1,1 @@
-{"id":"57fc0d9b2826125dd8fb91ba7cb2cd50","fullName":"tests.test_models.TestNPCCardPhysicalStatus#test_custom_value","name":"NPCCard accepts a free-form multi-word physical status like 'wounded left arm'","status":"passed","testResultsByEnv":{"default":"3607348fa40196d01bc3db8ce25df322"}}
+{"id":"57fc0d9b2826125dd8fb91ba7cb2cd50","fullName":"tests.test_models.TestNPCCardPhysicalStatus#test_custom_value","name":"NPCCard accepts a free-form multi-word physical status like 'wounded left arm'","status":"passed","testResultsByEnv":{"default":"f928e00b211d0176c432e34d4bd8dc57"}}

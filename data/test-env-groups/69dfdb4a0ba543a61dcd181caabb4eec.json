@@ -1,1 +1,1 @@
-{"id":"69dfdb4a0ba543a61dcd181caabb4eec","fullName":"tests.test_npc_generator_goals.TestGeneratorGoalIntegration#test_no_goal_when_omitted","name":"LLM with no goal block leaves card.life_goal as None","status":"passed","testResultsByEnv":{"default":"958381129b8a8aaec7a0c7747a8a9f67"}}
+{"id":"69dfdb4a0ba543a61dcd181caabb4eec","fullName":"tests.test_npc_generator_goals.TestGeneratorGoalIntegration#test_no_goal_when_omitted","name":"LLM with no goal block leaves card.life_goal as None","status":"passed","testResultsByEnv":{"default":"e867408ba28008eb8ab114698878df0c"}}

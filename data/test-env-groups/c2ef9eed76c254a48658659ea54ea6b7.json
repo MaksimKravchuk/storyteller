@@ -1,0 +1,1 @@
+{"id":"c2ef9eed76c254a48658659ea54ea6b7","fullName":"tests.test_ai_logs_usage_by_model#test_usage_by_model_returns_dicts","name":"usage_by_model returns plain dict rows","status":"passed","testResultsByEnv":{"default":"d0e30a07afa3fe560b77a2673d3e2da5"}}

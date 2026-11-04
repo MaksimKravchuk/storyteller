@@ -1,0 +1,1 @@
+2026-11-04 18:45:57.797 | WARNING  | cast._npc_generator_goals:build_life_goal:83 - NPCGenerator: dropping goal of kind 'flee' for role 'guard' (not allowed at creation)

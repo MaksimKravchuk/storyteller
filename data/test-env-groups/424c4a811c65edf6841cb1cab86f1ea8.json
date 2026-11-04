@@ -1,1 +1,1 @@
-{"id":"424c4a811c65edf6841cb1cab86f1ea8","fullName":"tests.test_entity_markup.TestWrapEntities#test_russian_short_forms_wrap","name":"A long NPC descriptor also matches its head phrase and bare noun","status":"passed","testResultsByEnv":{"default":"7e627550c3c7c908ec4c35aac820ab1e"}}
+{"id":"424c4a811c65edf6841cb1cab86f1ea8","fullName":"tests.test_entity_markup.TestWrapEntities#test_russian_short_forms_wrap","name":"A long NPC descriptor also matches its head phrase and bare noun","status":"passed","testResultsByEnv":{"default":"055a019e019b87252c4f0f96bec3d312"}}

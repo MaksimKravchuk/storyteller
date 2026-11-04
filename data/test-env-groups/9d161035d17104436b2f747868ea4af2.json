@@ -1,1 +1,1 @@
-{"id":"9d161035d17104436b2f747868ea4af2","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_gpt6_luna","name":"AI_MODELS.gpt6_luna is preconfigured as the OpenAI gpt-6-luna model","status":"passed","testResultsByEnv":{"default":"1847e155b0dfc59c45c33311a9582aae"}}
+{"id":"9d161035d17104436b2f747868ea4af2","fullName":"tests.test_config.TestDefaultsExports#test_ai_models_gpt6_luna","name":"AI_MODELS.gpt6_luna is preconfigured as the OpenAI gpt-6-luna model","status":"passed","testResultsByEnv":{"default":"ffa46a4ef55a64b7dea11d07faf90d99"}}
