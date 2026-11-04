@@ -107,7 +107,6 @@ also_copy = [
   "db",
   "defaults",
   "engine",
-  "experiments",
   "formatting",
   "interfaces",
   "llm",

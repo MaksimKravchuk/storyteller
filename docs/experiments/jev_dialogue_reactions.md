@@ -2,6 +2,8 @@
 
 Status: complete exploratory pilot, 2026-09-24. This experiment changes no runtime behavior.
 
+> The runner, cases and raw results (`experiments/jev_dialogue_reactions/`) were removed from the tree; they are in git history at commit `80cf94f`. The commands and file names below refer to that snapshot.
+
 ## Question
 
 Does a Jev judgment about what the NPC understands and how they immediately react improve the actual Actor's spoken reply? Compare it with both the unmodified Actor and the same Actor given a generic reminder to respect its knowledge and distinguish surprise from fear. The reminder arm controls for the effect of adding more prompt text without a Jev decision.
