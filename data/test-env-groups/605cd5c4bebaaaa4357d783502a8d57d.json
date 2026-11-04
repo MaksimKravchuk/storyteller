@@ -1,1 +1,1 @@
-{"id":"605cd5c4bebaaaa4357d783502a8d57d","fullName":"tests.test_benchmarks_auto_compare.TestAnyRegression#test_true_on_any_regression","name":"any_regression is True when at least one verdict regresses","status":"passed","testResultsByEnv":{"default":"0ae40f1d0e373fb5a822cc61176c9ae4"}}
+{"id":"605cd5c4bebaaaa4357d783502a8d57d","fullName":"tests.test_benchmarks_auto_compare.TestAnyRegression#test_true_on_any_regression","name":"any_regression is True when at least one verdict regresses","status":"passed","testResultsByEnv":{"default":"5195a631eddbd65f6278d431aa956896"}}

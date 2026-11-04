@@ -1,1 +1,1 @@
-{"id":"b8c3641e01a7ea43e9622a1638edcddd","fullName":"tests.test_wikipedia_client#test_default_language_urls","name":"WikipediaClient defaults to English Wikipedia URLs when language is not specified","status":"passed","testResultsByEnv":{"default":"d3c82d7d402276f0312d3f56c2a89630"}}
+{"id":"b8c3641e01a7ea43e9622a1638edcddd","fullName":"tests.test_wikipedia_client#test_default_language_urls","name":"WikipediaClient defaults to English Wikipedia URLs when language is not specified","status":"passed","testResultsByEnv":{"default":"a28f571fc618810f92b82fe30099831d"}}

@@ -1,1 +1,1 @@
-{"id":"d2cb01e0af4e25281a2201b297e4188e","fullName":"tests.test_admin_routes_settings_search#test_set_search_invalid_provider","name":"POST /api/settings/search rejects an unknown provider (400)","status":"passed","testResultsByEnv":{"default":"d7219a0cdd1801dcb1a20def5b03843e"}}
+{"id":"d2cb01e0af4e25281a2201b297e4188e","fullName":"tests.test_admin_routes_settings_search#test_set_search_invalid_provider","name":"POST /api/settings/search rejects an unknown provider (400)","status":"passed","testResultsByEnv":{"default":"3e18ade52690d036bcd52ca59cda0d1b"}}

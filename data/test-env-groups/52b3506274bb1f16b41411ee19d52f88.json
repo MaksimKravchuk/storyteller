@@ -1,1 +1,1 @@
-{"id":"52b3506274bb1f16b41411ee19d52f88","fullName":"tests.test_call_logger.TestResetBuffer#test_clears_agent_stack","name":"reset_buffer clears the agent_stack context variable back to empty","status":"passed","testResultsByEnv":{"default":"507a7fbdb2cd5509fa32d5f4d3ef3771"}}
+{"id":"52b3506274bb1f16b41411ee19d52f88","fullName":"tests.test_call_logger.TestResetBuffer#test_clears_agent_stack","name":"reset_buffer clears the agent_stack context variable back to empty","status":"passed","testResultsByEnv":{"default":"20ad6d8d6de8adf4cc084acd401d0904"}}

@@ -1,1 +1,0 @@
-{"id":"834e7799dbb61983fd17d3241cc12fb0","fullName":"tests.test_data_miner_search_seam#test_search_client_precedence_over_wikipedia_client","name":"An explicit search_client wins over wikipedia_client injection (precedence)","status":"passed","testResultsByEnv":{"default":"d869eac9672f42788d7b0bac34c8f504"}}

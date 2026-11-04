@@ -1,0 +1,2 @@
+2026-11-04 18:42:50.221 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 18:42:50.225 | WARNING  | llm.retry:call_with_retry:60 - openai_client transient error (attempt 1/3); retrying in 2.0s: slow down

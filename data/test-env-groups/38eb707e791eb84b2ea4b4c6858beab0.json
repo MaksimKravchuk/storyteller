@@ -1,1 +1,1 @@
-{"id":"38eb707e791eb84b2ea4b4c6858beab0","fullName":"tests.test_effect_applier.TestItemEffects#test_add_item","name":"ADD_ITEM appends the item to the target NPC's inventory","status":"passed","testResultsByEnv":{"default":"c4be08ada1ebb174e09d906c1b8972e1"}}
+{"id":"38eb707e791eb84b2ea4b4c6858beab0","fullName":"tests.test_effect_applier.TestItemEffects#test_add_item","name":"ADD_ITEM appends the item to the target NPC's inventory","status":"passed","testResultsByEnv":{"default":"9c0f499c59d3c570ca012d0d891f6363"}}

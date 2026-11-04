@@ -1,1 +1,1 @@
-{"id":"9b8cad7dc8caa11f3ddc7e71e4037a8e","fullName":"tests.test_models_game.TestSceneNPCSerialization#test_model_validate_roundtrip","name":"SceneNPC model_dump/model_validate round-trips role and UUID","status":"passed","testResultsByEnv":{"default":"3a194ec863555aad602e40ebc4100f1a"}}
+{"id":"9b8cad7dc8caa11f3ddc7e71e4037a8e","fullName":"tests.test_models_game.TestSceneNPCSerialization#test_model_validate_roundtrip","name":"SceneNPC model_dump/model_validate round-trips role and UUID","status":"passed","testResultsByEnv":{"default":"97b4389d42dc910f69666f8040410767"}}

@@ -1,1 +1,1 @@
-{"id":"448e739584814fb39295a3eec756e1f3","fullName":"tests.test_admin_auth#test_rejects_missing_auth","name":"Admin API returns 401 when no session token is sent","status":"passed","testResultsByEnv":{"default":"5f2ecb99e34b8dbd20c88f790995dcb3"}}
+{"id":"448e739584814fb39295a3eec756e1f3","fullName":"tests.test_admin_auth#test_rejects_missing_auth","name":"Admin API returns 401 when no session token is sent","status":"passed","testResultsByEnv":{"default":"05bdc66b36d5c5261266ea7bd6c5189b"}}

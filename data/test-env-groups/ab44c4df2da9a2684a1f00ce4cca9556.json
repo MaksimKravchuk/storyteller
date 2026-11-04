@@ -1,1 +1,1 @@
-{"id":"ab44c4df2da9a2684a1f00ce4cca9556","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_stand_still","name":"The phrase 'stand still' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"e8fd34e01b169feab8ef0e0a198b509c"}}
+{"id":"ab44c4df2da9a2684a1f00ce4cca9556","fullName":"tests.test_wait_action.TestDetectWaitIntentEnglish#test_stand_still","name":"The phrase 'stand still' is detected as a wait intent","status":"passed","testResultsByEnv":{"default":"2cb7f39a26da8f3380612baee34edfcf"}}

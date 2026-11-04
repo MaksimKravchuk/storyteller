@@ -1,0 +1,1 @@
+{"id":"874a8308daff2ae5cbff94543114d547","fullName":"tests.test_beta_web_policy#test_policy_does_not_bypass_checks_for_mock_config","name":"BetaPolicy no longer skips the kill switch for a mock config","status":"passed","testResultsByEnv":{"default":"8163c7c9bac01e1ab9e031c4186beb91"}}

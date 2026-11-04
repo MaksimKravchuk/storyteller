@@ -1,1 +1,1 @@
-{"id":"1ea4cf3a0f13b5a1d5fb18a3a01b7a75","fullName":"tests.test_search_factory#test_factory_routes_searxng","name":"create_search_client routes searxng to SearXNGSearchClient when a base URL is present","status":"passed","testResultsByEnv":{"default":"3f272f7ae081ae51ad730d63d6feee24"}}
+{"id":"1ea4cf3a0f13b5a1d5fb18a3a01b7a75","fullName":"tests.test_search_factory#test_factory_routes_searxng","name":"create_search_client routes searxng to SearXNGSearchClient when a base URL is present","status":"passed","testResultsByEnv":{"default":"ac3f47d920d8e261df97cf056e492ac4"}}

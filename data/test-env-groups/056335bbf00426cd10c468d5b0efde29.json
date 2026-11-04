@@ -1,1 +1,1 @@
-{"id":"056335bbf00426cd10c468d5b0efde29","fullName":"tests.test_admin#test_middleware_no_token_allows_api","name":"Admin API requests pass through the auth middleware when beta auth is disabled","status":"passed","testResultsByEnv":{"default":"743986eaec008dc2e7f1a786665c2b49"}}
+{"id":"056335bbf00426cd10c468d5b0efde29","fullName":"tests.test_admin#test_middleware_no_token_allows_api","name":"Admin API requests pass through the auth middleware when beta auth is disabled","status":"passed","testResultsByEnv":{"default":"4af51ca5c601e57f8e783df6e9ebb3d0"}}

@@ -1,1 +1,1 @@
-{"id":"9d371fcf104061a4a0c4257c560c1ff5","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_combat_type","name":"Combat is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"cbc47d39d7e2dbee3660090935f8f453"}}
+{"id":"9d371fcf104061a4a0c4257c560c1ff5","fullName":"tests.test_dice_contest.TestContestTypeEnum#test_combat_type","name":"Combat is one of the supported contest types","status":"passed","testResultsByEnv":{"default":"b5b5a48070786abf5b7f21c025857058"}}

@@ -1,1 +1,1 @@
-{"id":"3520c647daf0890d41185122136c2102","fullName":"tests.test_effect_applier.TestMoveNpcEffect#test_noop_on_missing_npc","name":"MOVE_NPC is silently ignored when the target NPC does not exist","status":"passed","testResultsByEnv":{"default":"89a0f8ef8b2add1acef77da3c42f0c74"}}
+{"id":"3520c647daf0890d41185122136c2102","fullName":"tests.test_effect_applier.TestMoveNpcEffect#test_noop_on_missing_npc","name":"MOVE_NPC is silently ignored when the target NPC does not exist","status":"passed","testResultsByEnv":{"default":"542b3b9c35723adb5ec50aa70ec81a46"}}

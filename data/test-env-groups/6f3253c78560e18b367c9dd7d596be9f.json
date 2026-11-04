@@ -1,1 +1,1 @@
-{"id":"6f3253c78560e18b367c9dd7d596be9f","fullName":"tests.test_entity_markup.TestWrapEntities#test_any_alias_wraps","name":"Any alias of an introduced NPC wraps with the same entity id","status":"passed","testResultsByEnv":{"default":"831f27186ca1772f7f68d461fd124c77"}}
+{"id":"6f3253c78560e18b367c9dd7d596be9f","fullName":"tests.test_entity_markup.TestWrapEntities#test_any_alias_wraps","name":"Any alias of an introduced NPC wraps with the same entity id","status":"passed","testResultsByEnv":{"default":"0f04df5a05bbc1f2fd921617eb90890f"}}

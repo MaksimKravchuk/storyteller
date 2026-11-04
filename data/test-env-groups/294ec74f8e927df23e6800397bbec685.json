@@ -1,1 +1,1 @@
-{"id":"294ec74f8e927df23e6800397bbec685","fullName":"tests.test_benchmarks_narration_diff#test_cli_missing_current_path","name":"narration-diff exits 2 when the current path is missing","status":"passed","testResultsByEnv":{"default":"41d242e79f0eaff265fee37063c18670"}}
+{"id":"294ec74f8e927df23e6800397bbec685","fullName":"tests.test_benchmarks_narration_diff#test_cli_missing_current_path","name":"narration-diff exits 2 when the current path is missing","status":"passed","testResultsByEnv":{"default":"a3e650163e007c518dd6aaa9b6a14c0a"}}

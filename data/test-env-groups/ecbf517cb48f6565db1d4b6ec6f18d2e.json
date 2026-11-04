@@ -1,1 +1,1 @@
-{"id":"ecbf517cb48f6565db1d4b6ec6f18d2e","fullName":"tests.test_dice_contest.TestRollContestStatistics#test_rolls_in_valid_range","name":"Contest dice always produce rolls within the valid 1..20 range","status":"passed","testResultsByEnv":{"default":"88a4d534153d072ec2362070e1d44f01"}}
+{"id":"ecbf517cb48f6565db1d4b6ec6f18d2e","fullName":"tests.test_dice_contest.TestRollContestStatistics#test_rolls_in_valid_range","name":"Contest dice always produce rolls within the valid 1..20 range","status":"passed","testResultsByEnv":{"default":"19ecf163a7ef428a8f455fbcd7ebbfba"}}

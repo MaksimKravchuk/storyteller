@@ -1,1 +1,1 @@
-{"id":"14e3f0fdcb798783c96810e487ae6ad5","fullName":"tests.test_web_schemas#test_character_info_round_trip","name":"CharacterInfo serialises every field through pydantic","status":"passed","testResultsByEnv":{"default":"94bd50c6b36af899412250f03591b942"}}
+{"id":"14e3f0fdcb798783c96810e487ae6ad5","fullName":"tests.test_web_schemas#test_character_info_round_trip","name":"CharacterInfo serialises every field through pydantic","status":"passed","testResultsByEnv":{"default":"9f73f8aae5a992af330b241e4b2032b9"}}

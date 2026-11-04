@@ -1,1 +1,1 @@
-{"id":"b18e1a879bf26fb80c0aef75786fcb46","fullName":"tests.test_npc_tactical_goal.TestLifeOnSightPromotion#test_no_promotion_without_target","name":"Promotion is a no-op when target is not in the scene","status":"passed","testResultsByEnv":{"default":"24e74ed834b7ef1b355d1bf24f0ea4b3"}}
+{"id":"b18e1a879bf26fb80c0aef75786fcb46","fullName":"tests.test_npc_tactical_goal.TestLifeOnSightPromotion#test_no_promotion_without_target","name":"Promotion is a no-op when target is not in the scene","status":"passed","testResultsByEnv":{"default":"f09874893707addd21c8241ef3eb7023"}}

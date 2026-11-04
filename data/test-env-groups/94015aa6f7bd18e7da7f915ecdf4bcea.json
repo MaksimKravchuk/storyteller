@@ -1,1 +1,1 @@
-{"id":"94015aa6f7bd18e7da7f915ecdf4bcea","fullName":"tests.test_web_poster#test_illustrate_quota_reached","name":"illustrate_poster stops at the daily quota before paying for an image","status":"passed","testResultsByEnv":{"default":"abc1bb9aedee3e3d791e4a279232c938"}}
+{"id":"94015aa6f7bd18e7da7f915ecdf4bcea","fullName":"tests.test_web_poster#test_illustrate_quota_reached","name":"illustrate_poster stops at the daily quota before paying for an image","status":"passed","testResultsByEnv":{"default":"1e79ada62087d30413e4724487505dea"}}

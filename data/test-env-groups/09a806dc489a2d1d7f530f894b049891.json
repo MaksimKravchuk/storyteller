@@ -1,1 +1,0 @@
-{"id":"09a806dc489a2d1d7f530f894b049891","fullName":"tests.test_wikipedia_client#test_get_full_article_truncates_to_max_chars","name":"get_full_article truncates the extracted body to the max_chars parameter","status":"passed","testResultsByEnv":{"default":"778365b1ec97469781ae7551cf307879"}}

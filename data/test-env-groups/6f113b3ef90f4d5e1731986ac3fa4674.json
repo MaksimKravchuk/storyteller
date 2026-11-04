@@ -1,1 +1,1 @@
-{"id":"6f113b3ef90f4d5e1731986ac3fa4674","fullName":"tests.test_call_logger.TestResetBuffer#test_clears_sequence_counter","name":"reset_buffer clears the call_sequence_counter back to zero","status":"passed","testResultsByEnv":{"default":"eaf4e0f66306b2b5fc4bb763edc1548b"}}
+{"id":"6f113b3ef90f4d5e1731986ac3fa4674","fullName":"tests.test_call_logger.TestResetBuffer#test_clears_sequence_counter","name":"reset_buffer clears the call_sequence_counter back to zero","status":"passed","testResultsByEnv":{"default":"ad42100171ef68dc14d147643b27bcf5"}}

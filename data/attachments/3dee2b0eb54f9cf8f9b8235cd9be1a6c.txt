@@ -1,1 +1,0 @@
-Wrote 8 cases to /tmp/pytest-of-runner/pytest-0/test_live_output_defaults_to_p0/storyteller-jev-dialogue-results/results_iter0.json

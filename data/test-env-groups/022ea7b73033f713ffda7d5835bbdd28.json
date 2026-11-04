@@ -1,1 +1,1 @@
-{"id":"022ea7b73033f713ffda7d5835bbdd28","fullName":"tests.test_npc_tactical_goal.TestAssignDefendGoals#test_defend_goal_set_on_target","name":"Player attack stamps a tactical DEFEND on the targeted NPC","status":"passed","testResultsByEnv":{"default":"33c88a675f7d1707fd296302fa2b18db"}}
+{"id":"022ea7b73033f713ffda7d5835bbdd28","fullName":"tests.test_npc_tactical_goal.TestAssignDefendGoals#test_defend_goal_set_on_target","name":"Player attack stamps a tactical DEFEND on the targeted NPC","status":"passed","testResultsByEnv":{"default":"39a6b14b34a3726253af8819f5d3eb6b"}}

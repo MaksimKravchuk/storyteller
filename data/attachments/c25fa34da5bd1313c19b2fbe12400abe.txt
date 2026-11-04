@@ -1,0 +1,2 @@
+[32m2026-11-04 18:42:36.871[0m | [34m[1mDEBUG   [0m | [36masyncio.selector_events[0m | session=[33m-[0m | Using selector: EpollSelector
+Wrote calibration to /tmp/pytest-of-runner/pytest-0/test_calibrate_command_end_to_0/.calibration.json

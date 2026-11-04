@@ -1,3 +1,0 @@
-2026-11-04 18:39:32.132 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 18:39:32.134 | ERROR    | cast.npc_generator:_generate_unique:226 - NPCGenerator: LLM returned taken name 'Фрол Михайлов' for role 'cooper', renaming to 'Фрол Михайлов (guard)'
-2026-11-04 18:39:32.134 | ERROR    | cast.npc_generator:_generate_unique:226 - NPCGenerator: LLM returned taken name 'Фрол Михайлов' for role 'smith', renaming to 'Фрол Михайлов (guard) [2]'

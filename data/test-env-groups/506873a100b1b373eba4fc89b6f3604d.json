@@ -1,1 +1,1 @@
-{"id":"506873a100b1b373eba4fc89b6f3604d","fullName":"tests.test_visible_entities.TestCollectVisibleEntities#test_poi_entities","name":"Typed POIs surface with their alias lists intact, tagged as 'poi'","status":"passed","testResultsByEnv":{"default":"3bb7dc0f10827e707edac86089465de8"}}
+{"id":"506873a100b1b373eba4fc89b6f3604d","fullName":"tests.test_visible_entities.TestCollectVisibleEntities#test_poi_entities","name":"Typed POIs surface with their alias lists intact, tagged as 'poi'","status":"passed","testResultsByEnv":{"default":"9f3926f812f2e730b942df96671066ca"}}

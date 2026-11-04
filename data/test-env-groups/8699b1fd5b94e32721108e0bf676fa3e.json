@@ -1,1 +1,1 @@
-{"id":"8699b1fd5b94e32721108e0bf676fa3e","fullName":"tests.test_dice.TestCombatOutcomeCategories#test_description_not_empty","name":"Every combat outcome category has a human-readable description attached","status":"passed","testResultsByEnv":{"default":"b6e655f9429252a67206714fdf3826cf"}}
+{"id":"8699b1fd5b94e32721108e0bf676fa3e","fullName":"tests.test_dice.TestCombatOutcomeCategories#test_description_not_empty","name":"Every combat outcome category has a human-readable description attached","status":"passed","testResultsByEnv":{"default":"5776dc77fa780e279b72dfa12abf6854"}}

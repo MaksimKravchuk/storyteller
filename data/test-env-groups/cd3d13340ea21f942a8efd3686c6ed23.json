@@ -1,1 +1,1 @@
-{"id":"cd3d13340ea21f942a8efd3686c6ed23","fullName":"tests.test_web_poster#test_illustrate_needs_bare_playbill","name":"illustrate_poster refuses stories without a playbill or with an illustration already","status":"passed","testResultsByEnv":{"default":"6566513e332063ab1bc3f22f752ff296"}}
+{"id":"cd3d13340ea21f942a8efd3686c6ed23","fullName":"tests.test_web_poster#test_illustrate_needs_bare_playbill","name":"illustrate_poster refuses stories without a playbill or with an illustration already","status":"passed","testResultsByEnv":{"default":"381073f979483826d208519078b603ca"}}

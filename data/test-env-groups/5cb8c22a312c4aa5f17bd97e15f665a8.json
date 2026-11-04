@@ -1,1 +1,1 @@
-{"id":"5cb8c22a312c4aa5f17bd97e15f665a8","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_bare_json_unchanged","name":"_strip_markdown_fence returns bare JSON unchanged","status":"passed","testResultsByEnv":{"default":"918fcafc7d5935e6d0fa2f2de43f0175"}}
+{"id":"5cb8c22a312c4aa5f17bd97e15f665a8","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_bare_json_unchanged","name":"_strip_markdown_fence returns bare JSON unchanged","status":"passed","testResultsByEnv":{"default":"afe1f314d09d1c0d8f48a1a98c575aff"}}
