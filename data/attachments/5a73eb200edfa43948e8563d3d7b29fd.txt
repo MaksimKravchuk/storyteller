@@ -1,2 +1,0 @@
-2026-11-04 19:09:16.338 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 19:09:16.343 | WARNING  | cast.dramaturge:_resolve_verdict:164 - Dramaturge returned empty corrected_narration (contradictions=[], unknown_entities=['Pantheon']); falling back

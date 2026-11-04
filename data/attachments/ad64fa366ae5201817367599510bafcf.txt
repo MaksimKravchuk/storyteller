@@ -1,0 +1,2 @@
+2026-11-04 21:13:04.020 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:04.035 | INFO     | cast.director_routing:route_action:78 - Director route | tool=interact

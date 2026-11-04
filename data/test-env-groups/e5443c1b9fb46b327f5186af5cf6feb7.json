@@ -1,1 +1,1 @@
-{"id":"e5443c1b9fb46b327f5186af5cf6feb7","fullName":"tests.test_benchmarks_cli_logging#test_cli_traceback_hides_secret_local","name":"The benchmark CLI logs the exception without the secret frame-local","status":"passed","testResultsByEnv":{"default":"f46dfb7ed7dc75c9b583017524ba5aba"}}
+{"id":"e5443c1b9fb46b327f5186af5cf6feb7","fullName":"tests.test_benchmarks_cli_logging#test_cli_traceback_hides_secret_local","name":"The benchmark CLI logs the exception without the secret frame-local","status":"passed","testResultsByEnv":{"default":"1acc178b25d34797d7f1851445bd546a"}}

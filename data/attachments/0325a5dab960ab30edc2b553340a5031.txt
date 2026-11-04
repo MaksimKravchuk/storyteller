@@ -1,0 +1,6 @@
+2026-11-04 21:13:02.168 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:02.172 | ERROR    | knowledge.scene_consolidation:_significant_phase:117 - Significant-event consolidation failed (action=ATTACK actor=Marcus target=None location=57e7d1da-c9aa-4a3f-acf5-d9a24c38810a clock=1.0 desc='XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+Traceback (most recent call last):
+> File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/unittest/mock.py", line 2240, in _execute_mock_call
+    raise effect
+RuntimeError: graph write failed

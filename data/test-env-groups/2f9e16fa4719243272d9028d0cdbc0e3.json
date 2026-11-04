@@ -1,1 +1,1 @@
-{"id":"2f9e16fa4719243272d9028d0cdbc0e3","fullName":"tests.test_models.TestBaseModel#test_invalid_uuid_rejected","name":"Constructing with a non-UUID string raises ValidationError","status":"passed","testResultsByEnv":{"default":"f9d82fb8c36f547e11f8b6aab7f961f9"}}
+{"id":"2f9e16fa4719243272d9028d0cdbc0e3","fullName":"tests.test_models.TestBaseModel#test_invalid_uuid_rejected","name":"Constructing with a non-UUID string raises ValidationError","status":"passed","testResultsByEnv":{"default":"b603f1af6339f32bb38bf9069928caa2"}}

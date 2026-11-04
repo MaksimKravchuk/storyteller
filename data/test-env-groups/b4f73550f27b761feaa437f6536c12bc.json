@@ -1,1 +1,1 @@
-{"id":"b4f73550f27b761feaa437f6536c12bc","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_strips_json_fenced","name":"_strip_markdown_fence strips ```json fences","status":"passed","testResultsByEnv":{"default":"864c14d1d86735375297a47a99087af6"}}
+{"id":"b4f73550f27b761feaa437f6536c12bc","fullName":"tests.test_base_performer.TestStripMarkdownFence#test_strips_json_fenced","name":"_strip_markdown_fence strips ```json fences","status":"passed","testResultsByEnv":{"default":"ed9bdb844fa24bdd51b994bdb0ecd67b"}}

@@ -1,1 +1,1 @@
-{"id":"c2ef9eed76c254a48658659ea54ea6b7","fullName":"tests.test_ai_logs_usage_by_model#test_usage_by_model_returns_dicts","name":"usage_by_model returns plain dict rows","status":"passed","testResultsByEnv":{"default":"e5342369b898a63c5ac802f188397324"}}
+{"id":"c2ef9eed76c254a48658659ea54ea6b7","fullName":"tests.test_ai_logs_usage_by_model#test_usage_by_model_returns_dicts","name":"usage_by_model returns plain dict rows","status":"passed","testResultsByEnv":{"default":"1869ae560589c2bfa967c742d77342e2"}}

@@ -1,1 +1,0 @@
-2026-11-04 19:09:25.499 | WARNING  | interfaces.web.transcript:_rehydrate_entities:125 - build_transcript: skipped 1 malformed visible_entity payload(s)

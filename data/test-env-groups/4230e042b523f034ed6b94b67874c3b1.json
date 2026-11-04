@@ -1,1 +1,1 @@
-{"id":"4230e042b523f034ed6b94b67874c3b1","fullName":"tests.test_web_api#test_post_action_accepts_gesture","name":"POST /api/games/{id}/actions accepts a structured gesture and returns action_html","status":"passed","testResultsByEnv":{"default":"00615e08f20ae78a4731a2fe3bfc6b26"}}
+{"id":"4230e042b523f034ed6b94b67874c3b1","fullName":"tests.test_web_api#test_post_action_accepts_gesture","name":"POST /api/games/{id}/actions accepts a structured gesture and returns action_html","status":"passed","testResultsByEnv":{"default":"47bae897b4240eefc7d9773065e9ba3d"}}

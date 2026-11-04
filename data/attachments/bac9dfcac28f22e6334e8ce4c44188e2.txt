@@ -1,1 +1,0 @@
-2026-11-04 19:09:20.634 | WARNING  | cast._npc_generator_goals:build_life_goal:83 - NPCGenerator: dropping goal of kind 'defend' for role 'guard' (not allowed at creation)

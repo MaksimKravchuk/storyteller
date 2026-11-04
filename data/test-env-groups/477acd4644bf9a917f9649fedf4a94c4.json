@@ -1,1 +1,1 @@
-{"id":"477acd4644bf9a917f9649fedf4a94c4","fullName":"tests.test_dice_default_rng.TestDiceSeedBase#test_unseeded_fallback_in_range","name":"With no base installed, rolls fall back to a fresh per-call RNG","status":"passed","testResultsByEnv":{"default":"a931c2f788c3bce7ff3cdc2223d61a64"}}
+{"id":"477acd4644bf9a917f9649fedf4a94c4","fullName":"tests.test_dice_default_rng.TestDiceSeedBase#test_unseeded_fallback_in_range","name":"With no base installed, rolls fall back to a fresh per-call RNG","status":"passed","testResultsByEnv":{"default":"aab78ada8ab4f22795ad6b5d8fca1f60"}}

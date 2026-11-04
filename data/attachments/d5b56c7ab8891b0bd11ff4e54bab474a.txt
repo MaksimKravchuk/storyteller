@@ -1,0 +1,14 @@
+2026-11-04 21:13:13.300 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:13.301 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 21:13:13.301 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 21:13:13.301 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=move
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 21:13:13.302 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 21:13:13.303 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk
+2026-11-04 21:13:13.303 | INFO     | cast.director_routing:route_action:78 - Director route | tool=talk

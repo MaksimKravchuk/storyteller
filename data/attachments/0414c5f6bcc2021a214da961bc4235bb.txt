@@ -1,0 +1,4 @@
+2026-11-04 21:13:22.572 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:22.576 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: GET http://testserver/ "HTTP/1.1 200 OK"
+2026-11-04 21:13:22.577 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:22.581 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: GET http://testserver/static/app.js "HTTP/1.1 200 OK"

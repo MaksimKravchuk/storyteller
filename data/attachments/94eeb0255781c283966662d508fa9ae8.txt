@@ -1,0 +1,2 @@
+2026-11-04 21:13:20.578 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:20.579 | WARNING  | safety.moderator:_log_flagged:196 - content_safety.flagged direction=output categories=['violence'] severities={'violence': 'HIGH'} length=106 provider=heuristic,openai

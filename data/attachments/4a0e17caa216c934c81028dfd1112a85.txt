@@ -1,0 +1,2 @@
+2026-11-04 21:13:17.639 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:17.642 | WARNING  | cast.npc_generator:_sanitize_short_descriptor:34 - NPCGenerator: short_descriptor for role 'guard' was 119 chars, truncating to 80

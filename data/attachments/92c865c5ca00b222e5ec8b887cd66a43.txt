@@ -1,0 +1,2 @@
+2026-11-04 21:13:22.967 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:22.972 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: GET http://testserver/api/character-template "HTTP/1.1 200 OK"

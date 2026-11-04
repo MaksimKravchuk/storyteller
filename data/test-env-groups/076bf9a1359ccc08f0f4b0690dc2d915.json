@@ -1,1 +1,1 @@
-{"id":"076bf9a1359ccc08f0f4b0690dc2d915","fullName":"tests.test_dice_default_rng.TestDiceSeedBase#test_same_base_reproduces_rolls","name":"Re-installing the same base reproduces the exact roll sequence","status":"passed","testResultsByEnv":{"default":"ce28789b0e622b59f89d600946a24203"}}
+{"id":"076bf9a1359ccc08f0f4b0690dc2d915","fullName":"tests.test_dice_default_rng.TestDiceSeedBase#test_same_base_reproduces_rolls","name":"Re-installing the same base reproduces the exact roll sequence","status":"passed","testResultsByEnv":{"default":"51dc6ccdaeb901f6b24565b1a143c1e9"}}

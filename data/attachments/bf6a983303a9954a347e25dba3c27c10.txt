@@ -1,2 +1,0 @@
-2026-11-04 19:09:04.880 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 19:09:04.882 | WARNING  | cast.data_miner:_fetch_and_store_fact:136 - ensure_fact: empty search result for 'Nowhere'

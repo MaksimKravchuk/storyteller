@@ -1,1 +1,1 @@
-{"id":"e11f11bb4fb6c9319d8fc1e49540d057","fullName":"tests.test_goal_model.TestGoalModel#test_npc_card_default_goal_is_none","name":"NPCCard.life_goal and tactical_goal both default to None","status":"passed","testResultsByEnv":{"default":"aa3946a1b4b83d91737d141574b56c71"}}
+{"id":"e11f11bb4fb6c9319d8fc1e49540d057","fullName":"tests.test_goal_model.TestGoalModel#test_npc_card_default_goal_is_none","name":"NPCCard.life_goal and tactical_goal both default to None","status":"passed","testResultsByEnv":{"default":"554db41580366b8611c941151700be1d"}}

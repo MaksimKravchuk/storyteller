@@ -1,3 +1,0 @@
-2026-11-04 19:09:26.766 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 19:09:26.770 | WARNING  | interfaces.web.errors:guard_account_query:26 - Account-store query failed in auth gate: SQLAlchemyError
-2026-11-04 19:09:26.772 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games "HTTP/1.1 503 Service Unavailable"

@@ -1,1 +1,1 @@
-{"id":"2143427e1114238e4f6ebec3a589440d","fullName":"tests.test_benchmarks_archive.TestCurrentGitSha#test_returns_stripped_sha","name":"current_git_sha returns the stripped stdout of git rev-parse HEAD","status":"passed","testResultsByEnv":{"default":"ed021cf2c23e3c82c4d1d98b89913cbe"}}
+{"id":"2143427e1114238e4f6ebec3a589440d","fullName":"tests.test_benchmarks_archive.TestCurrentGitSha#test_returns_stripped_sha","name":"current_git_sha returns the stripped stdout of git rev-parse HEAD","status":"passed","testResultsByEnv":{"default":"205f674a2b4fd2ba467489452cad8854"}}

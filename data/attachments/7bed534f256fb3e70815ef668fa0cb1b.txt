@@ -1,0 +1,3 @@
+2026-11-04 21:13:20.275 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
+2026-11-04 21:13:20.276 | WARNING  | safety.moderator:_score_all:140 - content_safety.provider_error provider=raising error_type=RuntimeError error=openai down
+2026-11-04 21:13:20.276 | WARNING  | safety.moderator:_log_flagged:196 - content_safety.flagged direction=input categories=['prompt_injection'] severities={'prompt_injection': 'HIGH'} length=52 provider=heuristic,raising

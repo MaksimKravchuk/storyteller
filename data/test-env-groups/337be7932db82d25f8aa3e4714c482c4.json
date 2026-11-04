@@ -1,1 +1,1 @@
-{"id":"337be7932db82d25f8aa3e4714c482c4","fullName":"tests.test_llm_factory.TestClientCache#test_same_key_returns_same_client","name":"create_llm_client reuses one client per (config, api_key)","status":"passed","testResultsByEnv":{"default":"d7b50e1b4029e114d4d91647defb7031"}}
+{"id":"337be7932db82d25f8aa3e4714c482c4","fullName":"tests.test_llm_factory.TestClientCache#test_same_key_returns_same_client","name":"create_llm_client reuses one client per (config, api_key)","status":"passed","testResultsByEnv":{"default":"05caa2bbb472f637614644d6ee0203e1"}}

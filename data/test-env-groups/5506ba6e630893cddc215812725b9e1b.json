@@ -1,1 +1,1 @@
-{"id":"5506ba6e630893cddc215812725b9e1b","fullName":"tests.test_player_gestures#test_entity_id_is_str_uuid","name":"entity_id types match the ids the server emits for inline spans (str of uuid)","status":"passed","testResultsByEnv":{"default":"8720dc5a5ceb80a3f40d02dd2f0b2b60"}}
+{"id":"5506ba6e630893cddc215812725b9e1b","fullName":"tests.test_player_gestures#test_entity_id_is_str_uuid","name":"entity_id types match the ids the server emits for inline spans (str of uuid)","status":"passed","testResultsByEnv":{"default":"bd0a94f06ff8f9e98f0f74ad111968e0"}}

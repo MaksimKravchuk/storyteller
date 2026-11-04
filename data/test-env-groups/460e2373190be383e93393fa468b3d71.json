@@ -1,1 +1,1 @@
-{"id":"460e2373190be383e93393fa468b3d71","fullName":"tests.test_wikipedia_client#test_non_default_language_urls","name":"WikipediaClient swaps the subdomain to match a non-English language code","status":"passed","testResultsByEnv":{"default":"d8c75adb1a0e2cb5ad51802ff5136221"}}
+{"id":"460e2373190be383e93393fa468b3d71","fullName":"tests.test_wikipedia_client#test_non_default_language_urls","name":"WikipediaClient swaps the subdomain to match a non-English language code","status":"passed","testResultsByEnv":{"default":"cdc20cc86c2f3d4802de5c0ad027fb51"}}

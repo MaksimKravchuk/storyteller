@@ -1,2 +1,0 @@
-2026-11-04 19:09:26.274 | DEBUG    | asyncio.selector_events:__init__:54 - Using selector: EpollSelector
-2026-11-04 19:09:26.280 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST http://testserver/api/games/game-abc/actions "HTTP/1.1 422 Unprocessable Entity"

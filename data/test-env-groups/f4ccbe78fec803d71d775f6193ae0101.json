@@ -1,1 +1,1 @@
-{"id":"f4ccbe78fec803d71d775f6193ae0101","fullName":"tests.test_web_api#test_post_action_gesture_resolution_error_maps_to_422","name":"POST /api/games/{id}/actions maps an unresolvable gesture to 422","status":"passed","testResultsByEnv":{"default":"cc39cb472885848f6ef4511a0848a870"}}
+{"id":"f4ccbe78fec803d71d775f6193ae0101","fullName":"tests.test_web_api#test_post_action_gesture_resolution_error_maps_to_422","name":"POST /api/games/{id}/actions maps an unresolvable gesture to 422","status":"passed","testResultsByEnv":{"default":"506737f94084e3ca7fa799b12b1b59be"}}
