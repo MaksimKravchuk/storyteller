@@ -2,6 +2,8 @@
 
 Status: complete exploratory pilot, 2026-09-24. Three live calls per case to Jev and to the existing Actor; game rules were not changed.
 
+> The runner, cases and raw results (`experiments/jev_npc_reactions/`) were removed from the tree; they are in git history at commit `80cf94f`. The commands and file names below refer to that snapshot.
+
 Validation: the six-case runner completed offline and live. Four automated tests cover the conditional dice baseline, Jev's request and response seam, and the actual `Actor.execute` prompt path. `ruff check`, `ruff format --check`, `flake8`, and `mypy` pass on the experiment and its tests. Human review of the 36 model answers below assesses plausibility; it is a small pilot, not a statistically powered quality estimate.
 
 ## Question

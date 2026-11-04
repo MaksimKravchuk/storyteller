@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING
 
 from cast import _reliability_metrics as reliability_metrics
 from config import Config
-from engine.factory import create_engine, create_engine_from_state
+from engine.factory import create_engine
+from engine.session_restore import restore_engine_with_admin_settings
 from engine.game_engine import GameEngine
 from engine.model_overrides import load_role_overrides
 from engine.search_settings import load_search_override
@@ -121,11 +122,4 @@ async def resume_session(
     loaded = await repo.load_game_state(session_id)
     if loaded is None:
         return None
-    game_state, knowledge_graph, events = loaded
-    return await create_engine_from_state(
-        cfg,
-        game_state,
-        knowledge_graph,
-        events,
-        language=language,
-    )
+    return await restore_engine_with_admin_settings(repo, cfg, loaded, language)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Awaitable, Callable, Mapping
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +13,7 @@ from llm._openai_tools import (
 )
 from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import LLMResponse, Message
+from llm.retry import call_with_retry
 
 if TYPE_CHECKING:
     from openai import APIStatusError
@@ -22,15 +22,8 @@ if TYPE_CHECKING:
 _ALLOWED_CONTROL = frozenset("\t\n\r")
 _SYSTEM_PROMPT_LOG_CHARS = 200
 
-# Bounded backoff for OpenAI 5xx and transient network errors. Mirrors the
-# shape of ``llm.anthropic_client._call_with_retry`` for provider parity.
-_RETRY_MAX_ATTEMPTS = 3
-_RETRY_BASE_DELAY = 2.0
-# SDK default is 600 s; retries live only in ``_call_with_retry`` so they don't multiply.
+# SDK default is 600 s; retries live only in ``llm.retry.call_with_retry`` so they don't multiply.
 _REQUEST_TIMEOUT_S = 120
-# Same ceiling the SDK applied to server-directed ``Retry-After`` delays.
-_MAX_SERVER_DELAY_S = 60.0
-
 # Models whose API default is ``reasoning_effort: medium`` but which accept
 # ``none``. Pinning ``none`` keeps the GPT-5.4-era wire contract: Chat
 # Completions rejects ``temperature`` and function calling once reasoning is
@@ -42,57 +35,11 @@ _REASONING_NONE_MODEL_PREFIXES = ("gpt-6-luna",)
 _REASONING_LOW_MODEL_PREFIXES = ("gpt-6-astra", "gpt-6.1-sol")
 
 
-async def _call_with_retry(
-    create: Callable[[], Awaitable[Any]],
-    max_attempts: int = _RETRY_MAX_ATTEMPTS,
-    base_delay: float = _RETRY_BASE_DELAY,
-    attempt: int = 0,
-) -> Any:
-    """Invoke ``create`` with bounded exponential backoff on OpenAI 5xx and transient errors.
-
-    Retries on :class:`openai.InternalServerError` (5xx),
-    :class:`openai.APIConnectionError` (includes :class:`openai.APITimeoutError`)
-    and :class:`openai.RateLimitError` (429; the SDK's own retries are off).
-    Backoff is ``base_delay * 2**attempt``, or the server's ``Retry-After`` when longer
-    (capped at 60 s, as the SDK did). Other errors (4xx, validation) propagate
-    immediately. Implemented via tail recursion so the retry loop carries its own
-    attempt counter without an ``await`` inside a ``for`` loop body.
-    """
-    from cast import _reliability_metrics
+async def _call_with_retry(create: Callable[[], Awaitable[Any]]) -> Any:
+    """Retry OpenAI 5xx, 429 and transient network errors (the SDK's own retries are off)."""
     from openai import APIConnectionError, InternalServerError, RateLimitError
 
-    try:
-        return await create()
-    except (InternalServerError, APIConnectionError, RateLimitError) as exc:
-        if attempt + 1 >= max_attempts:
-            raise
-        delay = max(base_delay * (2**attempt), _server_delay(exc))
-        _reliability_metrics.record_retry("openai_client", attempt + 1)
-        logger.warning(
-            "OpenAI transient error (attempt {}/{}); retrying in {}s: {}",
-            attempt + 1,
-            max_attempts,
-            delay,
-            exc,
-        )
-        await asyncio.sleep(delay)
-    return await _call_with_retry(create, max_attempts, base_delay, attempt + 1)
-
-
-def _server_delay(exc: Exception) -> float:
-    """Return the response's ``retry-after-ms`` / ``retry-after`` seconds, capped; 0 when absent or unparsable."""
-    response = getattr(exc, "response", None)
-    if response is None:
-        return 0
-    retry_after_ms = response.headers.get("retry-after-ms")
-    try:
-        if retry_after_ms is None:
-            seconds = float(response.headers.get("retry-after", 0))
-        else:
-            seconds = float(retry_after_ms) / 1000
-    except ValueError:  # HTTP-date form: fall back to our own backoff
-        return 0
-    return min(max(seconds, 0), _MAX_SERVER_DELAY_S)
+    return await call_with_retry(create, (InternalServerError, APIConnectionError, RateLimitError), "openai_client")
 
 
 def _is_printable(ch: str) -> bool:

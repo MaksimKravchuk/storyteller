@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import types
 from typing import Any, Awaitable, Callable
@@ -10,12 +9,7 @@ from loguru import logger
 from llm._anthropic_schema import harden_anthropic_schema
 from llm.base_client import BaseLLMClient, OutputFormat
 from llm.message import LLMResponse, Message, Role, Tool, ToolCall
-
-# Bounded backoff for Anthropic 5xx (e.g. transient ``Grammar compilation
-# is temporarily unavailable``). Layered on top of the SDK's own retries
-# to absorb outages that outlast the SDK's default ~1.5s budget.
-_RETRY_MAX_ATTEMPTS = 3
-_RETRY_BASE_DELAY = 2.0
+from llm.retry import call_with_retry
 
 # Claude models whose thinking cannot be switched off and which reject
 # ``temperature``. ``low`` effort is the closest they get to the no-thinking
@@ -84,38 +78,11 @@ def _build_tool_choice(tool_choice: str | None) -> dict[str, Any] | None:
     return {_KEY_TYPE: _TYPE_TOOL, "name": tool_choice}
 
 
-async def _call_with_retry(
-    create: Callable[[], Awaitable[Any]],
-    max_attempts: int = _RETRY_MAX_ATTEMPTS,
-    base_delay: float = _RETRY_BASE_DELAY,
-    attempt: int = 0,
-) -> Any:
-    """Invoke ``create`` with bounded exponential backoff on Anthropic 5xx.
+async def _call_with_retry(create: Callable[[], Awaitable[Any]]) -> Any:
+    """Retry Anthropic 5xx (incl. the transient 503 grammar-compilation error), 429 and network errors."""
+    from anthropic import APIConnectionError, InternalServerError, RateLimitError
 
-    Retries only on :class:`anthropic.InternalServerError` (e.g. the
-    transient ``Grammar compilation is temporarily unavailable`` 503).
-    Backoff is ``base_delay * 2**attempt``. Other errors (4xx, validation,
-    network) propagate immediately. Implemented via tail recursion so the
-    retry loop carries its own attempt counter without an ``await`` inside
-    a ``for`` loop body.
-    """
-    from anthropic import InternalServerError
-
-    try:
-        return await create()
-    except InternalServerError as exc:
-        if attempt + 1 >= max_attempts:
-            raise
-        delay = base_delay * (2**attempt)
-        logger.warning(
-            "Anthropic 5xx (attempt {}/{}); retrying in {}s: {}",
-            attempt + 1,
-            max_attempts,
-            delay,
-            exc,
-        )
-        await asyncio.sleep(delay)
-    return await _call_with_retry(create, max_attempts, base_delay, attempt + 1)
+    return await call_with_retry(create, (InternalServerError, APIConnectionError, RateLimitError), "anthropic_client")
 
 
 def _parse_tool_calls(response: Any) -> list[ToolCall]:
@@ -174,8 +141,8 @@ class AnthropicClient(BaseLLMClient):
         # Lazy import so anthropic is not required when using another provider
         from anthropic import AsyncAnthropic
 
-        # SDK default is 600 s; the SDK's own retries cover 429 / connection errors.
-        self._client = AsyncAnthropic(api_key=self.api_key, timeout=_REQUEST_TIMEOUT_S)
+        # SDK default is 600 s; retries live only in ``llm.retry.call_with_retry`` so they don't multiply.
+        self._client = AsyncAnthropic(api_key=self.api_key, timeout=_REQUEST_TIMEOUT_S, max_retries=0)
         # Schemas the beta endpoint already rejected as "too complex".
         # Subsequent calls with the same ``schema_name`` skip the strict
         # path entirely so we don't pay the 400-roundtrip every turn.

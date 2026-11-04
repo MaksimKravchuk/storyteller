@@ -70,17 +70,6 @@ def record_retry(agent: str, attempt: int) -> None:
     _bump(agent, "validation_retry")
 
 
-def record_schema_failure(agent: str, error: str) -> None:
-    """Record one schema-validation failure for ``agent``.
-
-    Reserved for phase 2 callers; defined now so the surface area
-    stays stable. ``error`` is documented at the call site, not in
-    the key.
-    """
-    assert isinstance(error, str)
-    _bump(agent, "schema_failure")
-
-
 def record_judge_error(agent: str, attempt: int) -> None:
     """Record one judge JSON-parse failure for ``agent``.
 

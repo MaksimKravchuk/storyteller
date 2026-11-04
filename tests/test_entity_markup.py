@@ -88,14 +88,55 @@ class TestWrapEntities:
         wrapped = wrap_entities(html, [_POI], "English")
         assert wrapped.count('data-id="poi-1"') == 2
 
-    @allure.story("Russian")
-    @allure.title("A single-word match does NOT wrap a multi-word alias: lemma order matters")
-    def test_russian_partial_alias_does_not_wrap(self):
-        # The narrator says "Мужчина стоит" — just "man". An alias of
-        # "вооружённый мужчина" (armed man) must NOT match the bare
-        # "мужчина" because the full lemma sequence isn't there.
-        html = "<p>Мужчина стоит у двери.</p>"
-        wrapped = wrap_entities(html, [_NPC_RU], "Russian")
+    @allure.story("Short forms")
+    @allure.title("A long NPC descriptor also matches its head phrase and bare noun")
+    def test_russian_short_forms_wrap(self):
+        npc = VisibleEntity(kind="npc", id="npc-1", names=["Плечистый мужчина с обветренным лицом"])
+        html = "<p>Ты подходишь к плечистому мужчине. Мужчина кивает.</p>"
+        wrapped = wrap_entities(html, [npc], "Russian")
+        assert '<span class="poi" data-kind="npc" data-id="npc-1">плечистому мужчине</span>' in wrapped
+        assert '<span class="poi" data-kind="npc" data-id="npc-1">Мужчина</span>' in wrapped
+
+    @allure.story("Short forms")
+    @allure.title("A descriptor whose head has no noun yields no short form")
+    def test_adjective_only_head_does_not_wrap(self):
+        npc = VisibleEntity(kind="npc", id="npc-1", names=["Высокий, худощавый мужчина"])
+        html = "<p>Высокая башня видна за воротами.</p>"
+        assert "data-id=" not in wrap_entities(html, [npc], "Russian")
+
+    @allure.story("Short forms")
+    @allure.title("A short form shared by two NPCs wraps neither")
+    def test_ambiguous_short_form_does_not_wrap(self):
+        armed = VisibleEntity(kind="npc", id="npc-1", names=["вооружённый мужчина"])
+        old = VisibleEntity(kind="npc", id="npc-2", names=["старый мужчина у окна"])
+        html = "<p>Мужчина стоит у двери. Старый мужчина молчит.</p>"
+        wrapped = wrap_entities(html, [armed, old], "Russian")
+        assert wrapped.count("data-id=") == 1
+        assert 'data-id="npc-2">Старый мужчина</span>' in wrapped
+
+    @allure.story("Short forms")
+    @allure.title("A short form never shadows another entity's own alias")
+    def test_short_form_yields_to_explicit_alias(self):
+        npc = VisibleEntity(kind="npc", id="npc-1", names=["a sailor with a lantern"])
+        lantern = VisibleEntity(kind="npc", id="npc-2", names=["sailor"])
+        wrapped = wrap_entities("<p>The sailor waves.</p>", [npc, lantern], "English")
+        assert 'data-id="npc-2">sailor</span>' in wrapped
+
+    @allure.story("Short forms")
+    @allure.title("A short form found inside another NPC's descriptor wraps neither")
+    def test_short_form_inside_other_alias_does_not_wrap(self):
+        clerk = VisibleEntity(kind="npc", id="npc-1", names=["Сухой писарь в потёртом тулупе"])
+        woman = VisibleEntity(kind="npc", id="npc-2", names=["Потёртый тулуп и спутанный платок"])
+        html = "<p>Писарь кутается в потёртый тулуп.</p>"
+        wrapped = wrap_entities(html, [clerk, woman], "Russian")
+        assert 'data-id="npc-2"' not in wrapped
+        assert 'data-id="npc-1">Писарь</span>' in wrapped
+
+    @allure.story("Short forms")
+    @allure.title("POI aliases are matched only in full")
+    def test_poi_has_no_short_forms(self):
+        poi = VisibleEntity(kind="poi", id="poi-1", names=["old well with a bucket"])
+        wrapped = wrap_entities("<p>The old well is dry.</p>", [poi], "English")
         assert "data-id=" not in wrapped
 
     @allure.story("Multiple entities")

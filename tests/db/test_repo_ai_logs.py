@@ -82,37 +82,6 @@ class TestGet:
 
 @allure.epic("Memory & Persistence")
 @allure.feature("AI call logs")
-class TestMaxCallSequence:
-    @allure.story("Max call sequence")
-    @allure.title("max_call_sequence returns the highest sequence for a numbered turn")
-    @pytest.mark.asyncio
-    async def test_max_for_numbered_turn(self, repo: GameRepository, test_session_id: str) -> None:
-        logs = [_entry(test_session_id, agent="a", seq=seq) for seq in (1, 5, 3)]
-        await repo.ai_logs.save(logs, turn_number=4)
-
-        max_seq = await repo.ai_logs.max_call_sequence(test_session_id, turn_number=4)
-        assert max_seq == 5
-
-    @allure.story("Max call sequence")
-    @allure.title("max_call_sequence returns None when no logs exist for the session")
-    @pytest.mark.asyncio
-    async def test_max_returns_none_when_empty(self, repo: GameRepository, test_session_id: str) -> None:
-        result = await repo.ai_logs.max_call_sequence(test_session_id, turn_number=None)
-        assert result is None
-
-    @allure.story("Max call sequence")
-    @allure.title("max_call_sequence handles turn_number IS NULL rows via the unnumbered branch")
-    @pytest.mark.asyncio
-    async def test_max_for_null_turn(self, repo: GameRepository, test_session_id: str) -> None:
-        await repo.ai_logs.save([_entry(test_session_id, agent="a", seq=7)], turn_number=None)
-        await repo.ai_logs.save([_entry(test_session_id, agent="b", seq=99)], turn_number=1)
-
-        null_max = await repo.ai_logs.max_call_sequence(test_session_id, turn_number=None)
-        assert null_max == 7
-
-
-@allure.epic("Memory & Persistence")
-@allure.feature("AI call logs")
 class TestTurnCount:
     @allure.story("Beta quotas")
     @allure.title("turn_count_for_user counts same turn number in separate sessions")

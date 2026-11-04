@@ -93,7 +93,7 @@ class TestAnthropicClient:
         sdk_class, _ = _install_sdk_mock()
         with patch(_ANTHROPIC_CTOR, sdk_class):
             client = AnthropicClient(model=_MODEL, api_key="ak-xyz")
-        sdk_class.assert_called_once_with(api_key="ak-xyz", timeout=120)
+        sdk_class.assert_called_once_with(api_key="ak-xyz", timeout=120, max_retries=0)
         assert client.model == _MODEL
 
     @allure.story("send_message")
@@ -390,7 +390,7 @@ class TestAnthropicClient:
         sdk_class.return_value = sdk_instance
         with (
             patch(_ANTHROPIC_CTOR, sdk_class),
-            patch("llm.anthropic_client.asyncio.sleep", new=AsyncMock()) as sleep_mock,
+            patch("llm.retry.asyncio.sleep", new=AsyncMock()) as sleep_mock,
         ):
             client = AnthropicClient(model=_MODEL, api_key="k")
             result = await client.send_message(
@@ -412,7 +412,7 @@ class TestAnthropicClient:
         beta_create = AsyncMock(side_effect=[_make_anthropic_5xx(), _make_anthropic_5xx(), final_error])
         sdk_instance.beta.messages.create = beta_create
         sdk_class.return_value = sdk_instance
-        with patch(_ANTHROPIC_CTOR, sdk_class), patch("llm.anthropic_client.asyncio.sleep", new=AsyncMock()):
+        with patch(_ANTHROPIC_CTOR, sdk_class), patch("llm.retry.asyncio.sleep", new=AsyncMock()):
             client = AnthropicClient(model=_MODEL, api_key="k")
             with pytest.raises(InternalServerError) as exc_info:
                 await client.send_message(
@@ -429,7 +429,7 @@ class TestAnthropicClient:
         bad = _make_anthropic_400()
         create = AsyncMock(side_effect=bad)
         sleep_mock = AsyncMock()
-        with patch("llm.anthropic_client.asyncio.sleep", new=sleep_mock):
+        with patch("llm.retry.asyncio.sleep", new=sleep_mock):
             with pytest.raises(BadRequestError):
                 await _call_with_retry(create)
         assert create.await_count == 1

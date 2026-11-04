@@ -5,7 +5,6 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import repo_admin_helpers as helpers
 from db import tables as tbl
 
 
@@ -18,7 +17,7 @@ async def _fetch_npc_row(session: AsyncSession, session_id: str, npc_id: str) ->
         .where(tbl.npcs.c.id == npc_id)
     )
     raw = (await session.execute(stmt)).mappings().first()
-    return helpers._row_dict(raw) if raw else None
+    return dict(raw) if raw else None
 
 
 async def _fetch_edges_from(session: AsyncSession, game_state_id: str, npc_id: str) -> list[dict]:
@@ -27,7 +26,7 @@ async def _fetch_edges_from(session: AsyncSession, game_state_id: str, npc_id: s
     stmt = select(tbl.knowledge_edges).where(ke_cols.game_state_id == game_state_id)
     stmt = stmt.where(ke_cols.from_node_id == npc_id)
     rows = await session.execute(stmt)
-    return list(map(helpers._row_dict, rows.mappings()))
+    return list(map(dict, rows.mappings()))
 
 
 async def _fetch_nodes_by_ids(
@@ -40,7 +39,7 @@ async def _fetch_nodes_by_ids(
     stmt = select(tbl.knowledge_nodes).where(kn_cols.game_state_id == game_state_id)
     stmt = stmt.where(kn_cols.id.in_(node_ids))
     rows = await session.execute(stmt)
-    return list(map(helpers._row_dict, rows.mappings()))
+    return list(map(dict, rows.mappings()))
 
 
 async def _fetch_memory_subgraph(

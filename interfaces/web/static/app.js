@@ -16,6 +16,11 @@
     resetPasswordBtn: $("reset-password-btn"),
     newPasswordForm: $("new-password-form"),
     newPassword: $("new-password"),
+    sendCodeBtn: $("send-code-btn"),
+    codeForm: $("code-form"),
+    loginCode: $("login-code"),
+    verifyBtn: $("verify-btn"),
+    changeEmailBtn: $("change-email-btn"),
     logoutBtn: $("logout-btn"),
     authStatus: $("auth-status"),
     settingPanel: $("setting-panel"),
@@ -48,7 +53,6 @@
     stageCrumbs: $("stage-crumbs"),
     stagePlace: $("stage-place"),
     stageClock: $("stage-clock"),
-    stageCast: $("stage-cast"),
     log: $("log"),
     actionForm: $("action-form"),
     actionInput: $("action-input"),
@@ -123,7 +127,6 @@
   };
 
   // Stage cast chips beyond this count collapse into a "+N" chip.
-  const STAGE_CAST_LIMIT = 4;
 
   // Inline icons. Location types and times of day are drawn rather than
   // written so the chrome stays readable in every story language.
@@ -452,8 +455,9 @@
     renderList(els.peopleList, world.people, prevPeople, renderPerson, personKey);
   }
 
-  // The stage: where the scene is, what time it is, and who is on stage.
-  // Always in view above the prose; it is the theatre's lit proscenium.
+  // The stage: where the scene is and what time it is. Always in view above
+  // the prose; it is the theatre's lit proscenium. Who is on stage lives in
+  // the prose itself — every person mentioned there is tappable.
   function renderStage(world) {
     const map = world.map || {};
     els.stageCrumbs.textContent = crumbNames(map).join(" · ");
@@ -461,21 +465,6 @@
     const clock = world.clock || {};
     fillClock(els.stageClock, clock);
     if (clock.time_of_day) document.body.dataset.daypart = clock.time_of_day;
-    els.stageCast.innerHTML = "";
-    const people = world.people || [];
-    for (const person of people.slice(0, STAGE_CAST_LIMIT)) {
-      const li = document.createElement("li");
-      li.className = person.known ? "cast-known" : "cast-stranger";
-      li.textContent = person.label;
-      li.title = person.role;
-      els.stageCast.appendChild(li);
-    }
-    if (people.length > STAGE_CAST_LIMIT) {
-      const more = document.createElement("li");
-      more.className = "cast-more";
-      more.textContent = "+" + (people.length - STAGE_CAST_LIMIT);
-      els.stageCast.appendChild(more);
-    }
   }
 
   function renderWorld(world) {
@@ -757,6 +746,7 @@
   function setSignedIn(signedIn) {
     if (els.authPanel) els.authPanel.hidden = signedIn;
     if (els.loginForm) els.loginForm.hidden = signedIn;
+    if (els.codeForm) els.codeForm.hidden = true;
     if (els.logoutBtn) els.logoutBtn.hidden = !signedIn;
     if (els.accountBtn) els.accountBtn.hidden = !signedIn;
   }
@@ -879,6 +869,58 @@
     });
     const message = error ? error.message : "Check your email for a link to set a new password.";
     setStatus(els.authStatus, message, error ? "" : "info");
+  }
+
+  // Passwordless option: works inside the installed PWA, where email links open another browser.
+  // The invite gate is enforced server-side, so creating the Supabase user here is safe.
+  async function onSendCode() {
+    if (!supabaseClient) return;
+    const email = els.loginEmail.value.trim();
+    if (!email || !els.loginEmail.reportValidity()) {
+      setStatus(els.authStatus, "Enter your email first.");
+      els.loginEmail.focus();
+      return;
+    }
+    els.sendCodeBtn.disabled = true;
+    setStatus(els.authStatus, "Sending code…", "info");
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true, emailRedirectTo: window.location.origin },
+    });
+    els.sendCodeBtn.disabled = false;
+    if (error) {
+      setStatus(els.authStatus, error.message);
+      return;
+    }
+    hide(els.loginForm);
+    show(els.codeForm);
+    setStatus(els.authStatus, "We sent a code to " + email + ".", "info");
+    els.loginCode.value = "";
+    els.loginCode.focus();
+  }
+
+  async function onVerifyCode(event) {
+    event.preventDefault();
+    if (!supabaseClient) return;
+    const email = els.loginEmail.value.trim();
+    const token = els.loginCode.value.trim();
+    if (!token) return;
+    els.verifyBtn.disabled = true;
+    const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: "email" });
+    els.verifyBtn.disabled = false;
+    if (error) {
+      setStatus(els.authStatus, "That code didn't work: " + error.message);
+      return;
+    }
+    hide(els.codeForm);
+    onSignedIn();
+  }
+
+  function onChangeEmail() {
+    hide(els.codeForm);
+    show(els.loginForm);
+    setStatus(els.authStatus, "");
+    els.loginEmail.focus();
   }
 
   async function onSetNewPassword(event) {
@@ -1402,8 +1444,21 @@
   // ── In-prose entity popover ──
   // Tapping a .poi span offers the verbs valid for its kind; picking one runs
   // a structured gesture (the server composes the localized action phrase).
+  // A verb either runs a gesture (``intent``), opens a sub-menu (``more``),
+  // or hands the moment to the composer (``compose``) for anything else.
   const ENTITY_VERBS = {
-    npc: [{ label: "Look closer", intent: "examine" }, { label: "Talk", intent: "talk" }],
+    npc: [
+      { label: "Look closer", intent: "examine" },
+      { label: "Approach & talk", intent: "talk" },
+      {
+        label: "Act…",
+        more: [
+          { label: "Attack", intent: "attack" },
+          { label: "Steal", intent: "steal" },
+          { label: "Something else…", compose: true },
+        ],
+      },
+    ],
     poi: [{ label: "Investigate", intent: "examine" }],
     item: [{ label: "Investigate", intent: "examine" }],
   };
@@ -1425,6 +1480,30 @@
     openSpan = null;
   }
 
+  function fillVerbs(verbs, kind, id) {
+    els.entPop.querySelectorAll(".ep-act").forEach((btn) => btn.remove());
+    for (const verb of verbs) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = verb.more ? "ep-act ep-more" : "ep-act";
+      btn.textContent = verb.label;
+      btn.addEventListener("click", (event) => {
+        if (verb.more) {
+          // Keep the click from reaching the log, which would close us.
+          event.stopPropagation();
+          fillVerbs(verb.more, kind, id);
+          els.entPop.querySelector(".ep-act").focus();
+        } else if (verb.compose) {
+          closePopover();
+          els.actionInput.focus();
+        } else {
+          submitTurn({ gesture: { intent: verb.intent, entity_kind: kind, entity_id: id } });
+        }
+      });
+      els.entPop.appendChild(btn);
+    }
+  }
+
   function openPopover(span, fromKeyboard) {
     const kind = span.dataset.kind;
     const id = span.dataset.id;
@@ -1438,16 +1517,7 @@
     title.className = "ep-title";
     title.textContent = span.textContent;
     els.entPop.appendChild(title);
-    for (const verb of verbs) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "ep-act";
-      btn.textContent = verb.label;
-      btn.addEventListener("click", () => {
-        submitTurn({ gesture: { intent: verb.intent, entity_kind: kind, entity_id: id } });
-      });
-      els.entPop.appendChild(btn);
-    }
+    fillVerbs(verbs, kind, id);
     // Position near the tapped word, viewport-relative (position:fixed), then
     // reveal so the entry transition runs after layout. Flip above the word
     // when it would run into the composer.
@@ -1570,6 +1640,15 @@
   }
   if (els.newPasswordForm) {
     els.newPasswordForm.addEventListener("submit", onSetNewPassword);
+  }
+  if (els.sendCodeBtn) {
+    els.sendCodeBtn.addEventListener("click", onSendCode);
+  }
+  if (els.codeForm) {
+    els.codeForm.addEventListener("submit", onVerifyCode);
+  }
+  if (els.changeEmailBtn) {
+    els.changeEmailBtn.addEventListener("click", onChangeEmail);
   }
   if (els.logoutBtn) {
     els.logoutBtn.addEventListener("click", onLogout);

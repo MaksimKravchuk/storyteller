@@ -109,8 +109,9 @@ in the existing `admin_settings` key/value table under the `search.` key prefix
 (`db/repo_settings_search.SearchSettingsStore`) — no migration. A new-game
 engine build reads them via `engine.search_settings.load_search_override` and
 passes a `search_override` to `create_engine`, which wins over the env defaults
-(any field the override leaves unset falls back to env). Restored games keep the
-provider they started with, mirroring the model-override behaviour. Admin
+(any field the override leaves unset falls back to env). Restored games read the same
+overrides on every resume (amended: models/provider are not persisted per game,
+so they follow the current admin choice rather than the one at game start). Admin
 endpoints `GET/POST/DELETE /api/settings/search` plus a dashboard card provide
 full management including deletion.
 

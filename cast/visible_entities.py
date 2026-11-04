@@ -10,6 +10,7 @@ uses to wrap inline spans in narrator prose.
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 from loguru import logger
@@ -49,7 +50,7 @@ def collect_for_turn(raw_outputs: Any, game_state: Any) -> list[VisibleEntity]:
     return collect_visible_entities(active_scene, game_state, location)
 
 
-def _make_npc_entity(snpc: Any, game_state: Any, all_npcs: dict) -> VisibleEntity | None:
+def _make_npc_entity(snpc: Any, game_state: Any, all_npcs: dict, shared_roles: set[str]) -> VisibleEntity | None:
     """Return a ``VisibleEntity`` for ``snpc``, or ``None`` to skip it.
 
     Uninitialised stubs (no uuid) and stale uuids that no longer match a
@@ -68,12 +69,20 @@ def _make_npc_entity(snpc: Any, game_state: Any, all_npcs: dict) -> VisibleEntit
         )
         return None
     names = card.known_names_for_player(game_state, snpc.role)
+    # The scene role ("городовой у будки") is how the Narrator's scene prose
+    # tends to refer to the NPC, so it is matched too. It only steers which
+    # words become clickable; the gesture still resolves to the gated label.
+    # A role two NPCs share would link both mentions to one of them, so it is skipped.
+    if snpc.role and snpc.role not in shared_roles and snpc.role not in names:
+        names = [*names, snpc.role]
     return VisibleEntity(kind="npc", id=str(snpc.uuid), names=names)
 
 
 def _npc_entities(scene: Any, game_state: Any) -> list[VisibleEntity]:
     all_npcs = getattr(game_state, "npcs", {}) or {}
-    candidates = (_make_npc_entity(snpc, game_state, all_npcs) for snpc in scene.npcs_present)
+    role_counts = Counter(snpc.role for snpc in scene.npcs_present)
+    shared_roles = {role for role in role_counts if role_counts[role] > 1}
+    candidates = (_make_npc_entity(snpc, game_state, all_npcs, shared_roles) for snpc in scene.npcs_present)
     return [entity for entity in candidates if entity is not None]
 
 

@@ -28,15 +28,6 @@ class AccountStore:
         invite_rows = await self._session.execute(invite_stmt)
         return cast("Mapping[str, Any] | None", invite_rows.mappings().first())
 
-    async def create_invite(self, email: str, invited_by: str | None = None) -> Mapping[str, Any]:
-        """Create an invite for a normalized email address."""
-        invite_values = {"email": normalize_email(email)}
-        if invited_by is not None:
-            invite_values["invited_by"] = invited_by
-        create_stmt = insert(beta_invites).values(**invite_values).returning(beta_invites)
-        invite_rows = await self._session.execute(create_stmt)
-        return cast("Mapping[str, Any]", invite_rows.mappings().one())
-
     async def get_by_supabase_user_id(self, supabase_user_id: str) -> Mapping[str, Any] | None:
         """Return an account by Supabase user id, if present."""
         account_stmt = select(accounts).where(accounts.c.supabase_user_id == str(supabase_user_id))

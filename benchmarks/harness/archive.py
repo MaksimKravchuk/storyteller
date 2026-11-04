@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
 from benchmarks.harness._archive_naming import file_stem
-from benchmarks.harness._git_sha import resolve_git_sha
 from benchmarks.harness._serialise import report_to_serialisable
 from benchmarks.harness.report import render_markdown
 from benchmarks.harness.types._scores import ScenarioReport
@@ -43,5 +43,15 @@ def write_report(report: ScenarioReport) -> tuple[Path, Path]:
 
 
 def current_git_sha() -> str:
-    """Read ``HEAD`` without shelling out (worktree-aware). Empty string when unavailable."""
-    return resolve_git_sha(Path(__file__).resolve().parent.parent.parent / ".git")
+    """Return ``git rev-parse HEAD`` for the checkout; empty string when git or the repo is unavailable."""
+    try:
+        done = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parent,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return ""
+    return done.stdout.strip()

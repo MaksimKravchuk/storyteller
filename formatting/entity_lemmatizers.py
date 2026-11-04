@@ -10,13 +10,14 @@ and is logged loudly so operators can trace the break.
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Callable
+from typing import Any, Callable
 
 from loguru import logger
 
 from prompts.locales import Locale, resolve_locale
 
 Lemmatizer = Callable[[str], str]
+NounTest = Callable[[str], bool]
 
 
 def pick_lemmatizer(language: str) -> Lemmatizer:
@@ -25,6 +26,20 @@ def pick_lemmatizer(language: str) -> Lemmatizer:
     if locale is Locale.RUSSIAN:
         return _russian_lemmatizer()
     return exact_lowercase
+
+
+def pick_noun_test(language: str) -> NounTest | None:
+    """Return a "is this token a noun?" check for ``language``, if one exists.
+
+    Only Russian has a part-of-speech tagger (pymorphy3); other languages
+    return ``None`` and callers fall back to a word-order heuristic.
+    """
+    if resolve_locale(language) is not Locale.RUSSIAN:
+        return None
+    analyzer = _russian_analyzer()
+    if analyzer is None:
+        return None
+    return _PymorphyNounTest(analyzer)
 
 
 def exact_lowercase(token: str) -> str:
@@ -44,6 +59,17 @@ class _PymorphyLemmatizer:
         return parses[0].normal_form
 
 
+class _PymorphyNounTest:
+    """Callable reporting whether pymorphy3's best parse of a token is a noun."""
+
+    def __init__(self, analyzer) -> None:
+        self._analyzer = analyzer
+
+    def __call__(self, token: str) -> bool:
+        parses = self._analyzer.parse(token)
+        return bool(parses) and parses[0].tag.POS == "NOUN"
+
+
 @lru_cache(maxsize=1)
 def _russian_lemmatizer() -> Lemmatizer:
     """Return a Russian lemmatizer backed by pymorphy3, with loud fallback.
@@ -56,6 +82,15 @@ def _russian_lemmatizer() -> Lemmatizer:
     survives — Russian entity matching will silently miss inflected
     forms until the install is fixed.
     """
+    analyzer = _russian_analyzer()
+    if analyzer is None:
+        return exact_lowercase
+    return _PymorphyLemmatizer(analyzer)
+
+
+@lru_cache(maxsize=1)
+def _russian_analyzer() -> Any | None:
+    """Return the shared pymorphy3 ``MorphAnalyzer``, or ``None`` if it can't load."""
     try:
         import pymorphy3
     except ImportError:
@@ -63,12 +98,11 @@ def _russian_lemmatizer() -> Lemmatizer:
             "pymorphy3 not importable — Russian entity_markup degrading to exact-lowercase. "
             "Required dependency missing; check the Python environment.",
         )
-        return exact_lowercase
+        return None
     try:
-        analyzer = pymorphy3.MorphAnalyzer()
+        return pymorphy3.MorphAnalyzer()
     except Exception:
         logger.exception(
             "pymorphy3.MorphAnalyzer() failed — Russian entity_markup degrading to exact-lowercase.",
         )
-        return exact_lowercase
-    return _PymorphyLemmatizer(analyzer)
+        return None
