@@ -5,9 +5,12 @@ from __future__ import annotations
 import asyncio
 import sys
 
+from loguru import logger
+
 from benchmarks.cli._args import parse_args
 from benchmarks.cli._async_commands import ASYNC_COMMANDS
 from benchmarks.cli._sync_commands import SYNC_COMMANDS
+from log_scrubbing import LOGURU_DIAGNOSE_ENABLED, scrub_log_record
 
 _UNKNOWN_COMMAND_EXIT_CODE = 2
 
@@ -21,6 +24,11 @@ def _argv_for(argv: list[str] | None) -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point — dispatch on the parsed subcommand."""
+    # CI logs are public: loguru's default diagnose sink would print Config (API keys) in tracebacks.
+    logger.configure(
+        handlers=[{"sink": sys.stderr, "level": "DEBUG", "diagnose": LOGURU_DIAGNOSE_ENABLED}],
+        patcher=scrub_log_record,
+    )
     args = parse_args(_argv_for(argv))
     async_handler = ASYNC_COMMANDS.get(args.command)
     if async_handler is not None:
